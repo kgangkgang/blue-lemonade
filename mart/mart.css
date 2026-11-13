@@ -58,7 +58,7 @@
 @media (min-width:640px){body[data-mart=frames] .mart-groups .tab>.tab-t,body[data-mart=frames] .mart-groups .tab>.n{translate:0 .5px}}
 @media (max-width:639px){body[data-mart=frames] .mart-groups .tab>.tab-t,body[data-mart=frames] .mart-groups .tab>.n{translate:0 .34px}}   /* 11-12 밤 머리말 한 줄 설명을 접으며 탭 줄이 정수 자리로 옮겨 가 13px 한글 잉크가 0.6px 떠 보였어요(리그 화소 측정) */
 /* 이모지 아이콘의 그림이 칸 아래로 처져 그려지는 것(🛒 · 🧞 · 🍽️)을 1px 올려요 */
-.mart-cart-icon,.mart-genie .em,.mart-taste-open .em{translate:0 -1px}
+.mart-cart-icon,.mart-taste-open .em{translate:0 -1px}
 /* 정보 꼬리표(분류 · 디자인 · 크게 보기 힌트) — 누르는 것 아님: 24 알약 · 1px 선 · 12/400 · 보조색 하나(디자인만 파란 글자) */
 .tag{display:inline-flex;align-items:center;gap:4px;flex:none;height:24px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-size:12px;font-weight:400;line-height:1;white-space:nowrap}
 .tag.is-style{color:var(--pick-ink)}
@@ -948,3 +948,22 @@ html.mart-cart-on{overflow:hidden}
 }
 /* 목록 카드 「HTML 복사」 하나만 든 줄(PC): 오른쪽 끝 단추 하나 대신 줄을 채워요(단추 여럿 든 카드와 같은 꼴) */
 .mart-card .mart-actions.is-solo{display:grid;grid-template-columns:1fr}
+
+/* ══ 11-13 상품 카드 틀 고정(글꾸 · 액자 같은 규칙 — 사용자 「산만하고 줄바꿈이 제멋대로」) ══
+   ① 이름 한 줄(넘치면 …) + 별은 늘 오른쪽 위 같은 자리  ② 꼬리표는 늘 자기 줄(왼쪽부터 · 한 줄)  ③ 설명 한 줄(넘치면 … · 전체 글은 크게 보기와 title)
+   ④ 원작 한 줄(여럿이면 나란히 · 넘치면 …)  ⑤ 단추 줄은 카드 바닥(.mart-actions margin-top:auto · 한 줄의 카드는 격자가 같은 높이로 늘려요). */
+.mart-card .mart-title{flex-wrap:nowrap;gap:8px}
+.mart-card:not(.is-frame) .mart-title{min-height:var(--icon)}
+.mart-card .mart-title b{flex:1 1 0;overflow:hidden}
+.mart-card .mart-title .mart-fav{flex:none;margin:0 -8px 0 0}   /* 별 그림(16)의 오른쪽 끝을 카드 안쪽 줄에 가깝게 — 누르는 칸 34 는 그대로 */
+.mart-card>.mart-tags{flex:none;flex-wrap:nowrap;justify-content:flex-start;margin-left:0;min-width:0;height:24px;overflow:hidden}
+.mart-card>.mart-desc{display:block;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mart-srcs{display:flex;flex:none;gap:12px;min-width:0;height:20px;line-height:19px;overflow:hidden}
+.mart-srcs .mart-source{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+/* 선 아이콘(단색 · 글자색을 따라요 — 이모지 대신): 복사 · 담기 · 내려받기 · 돋보기. 20 격자 가운데에 그려 글자와 세로 가운데가 맞아요 */
+.gi{display:inline-block;flex:none;width:14px;height:14px;background:currentColor;-webkit-mask:var(--g) center/contain no-repeat;mask:var(--g) center/contain no-repeat}
+.gi-copy{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='7' width='10' height='10' rx='2'/%3E%3Cpath d='M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3C/svg%3E")}
+.gi-cart{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 3.5h2.3l2 9h8l1.9-6.3H5.9'/%3E%3Ccircle cx='8' cy='15.6' r='.9'/%3E%3Ccircle cx='14' cy='15.6' r='.9'/%3E%3C/svg%3E")}
+.gi-down{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 3.2v9M6 8.4l4 4 4-4M4 16.8h12'/%3E%3C/svg%3E")}
+.gi-zoom{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='8.8' cy='8.8' r='5.6'/%3E%3Cpath d='M13 13l4.2 4.2'/%3E%3C/svg%3E")}
+.mart-zoom-hint .gi{width:12px;height:12px}

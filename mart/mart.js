@@ -11,7 +11,7 @@ const LIKE_KEY = 'bl-mart-geulkku-like-v1';
 const like = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIKE_KEY) || 'null'); } catch { /* 저장이 막힌 창 */ } const ids = a => (Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && x && x.length < 80))] : []); return { fav: ids(v?.fav).slice(0, 96), recent: ids(v?.recent).slice(0, 5) }; })();
 const saveLike = () => { try { localStorage.setItem(LIKE_KEY, JSON.stringify(like)); } catch { /* 이 화면에서만 */ } };
 const LIKE_CHIPS = { fav: '★ 즐겨찾기', recent: '최근' };
-import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261113p';
+import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261113u';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
@@ -19,8 +19,8 @@ import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110
 import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261113a';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
 import { simpleReady } from './simple-frames.js?v=20261112b';   // 11-11 심플 새 틀 — HTML 복사는 틀 <style> 과 마트 규칙을 하나로
 import { GRID_PATTERN_ENABLED, gridOff } from './grid-off.js?v=20261110w';   // 11-10 밤 틀 디자인 격자 끔(깃발 한 곳 — grid-off.js)
-import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml, itemSources, worldOf, WORLDS, worldSources } from './sources.js?v=20261113p';   // 11-12 밤 원작(출처) 자료 한 곳
-import { mountCast, pickedCreditHtml, dayNightHtml } from './cast.js?v=20261113p';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
+import { WORKS, CHAR_WORKS, ADRIAN_WORKS, workByTitle, sourceHtml, creditsHtml, itemSources, worldOf, WORLDS, worldSources } from './sources.js?v=20261113u';   // 11-12 밤 원작(출처) 자료 한 곳
+import { mountCast, pickedCreditHtml, dayNightHtml } from './cast.js?v=20261113u';                // 11-10 캐릭터 고르기(세계관 묶음 · 꺽쇠 · 라디오)
 import { frameMarkdown } from './mine-text.js?v=20261112f';   // 11-11 글만 복사(마크다운)
 import { makeSet } from './geulkku-set.js?v=20261112e';   // 11-12 설정 꼴 blGeulkku 2
 import { addToggle } from './day-night.js?v=20261113p';   // 11-13 낮 · 밤 전환(허브 지시-1112/낮밤-전환-마트/전환.mjs 와 글자까지 같은 사본)
@@ -29,7 +29,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112f';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml, setFlipInfo } from './tune-ui.js?v=20261113q';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml, setFlipInfo } from './tune-ui.js?v=20261113u';
 setFlipInfo(item => flipInfo(item));
 import { wrapHtml } from './word-wrap.js?v=20261113q';   // 11-13 본문 줄바꿈 글자 단위(기본) · 단어 단위 — 테마 src/log-copy-wrap.js 와 글자까지 같은 사본
 import { wrapState } from './wrap-state.js?v=20261113q';
@@ -411,7 +411,7 @@ let frameMod = null;   // 액자 방 모듈(받은 뒤) — 장바구니 줄의 
 /** 11-12 밤 장바구니 줄에 실을 원작: [{ kind, title, url }] — 카드에 뜨는 원작 줄(글꾸 sourceLinks · 액자 frameLinks)을 그대로 읽어요 */
 const sourcesOf = (item) => {
     const html = item.kind === 'geulkku' ? sourceLinks(item) : (frameMod?.frameLinks ? frameMod.frameLinks(item) : sourceLinks(item));
-    return [...html.matchAll(/<a class="mart-source" href="(https:\/\/kkangtong\.xyz\/posts\/\d+)"[^>]*>🔗 ([^<·]+) · ([^<]*)<\/a>/g)].map(m => ({ kind: m[2].trim(), title: m[3].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"), url: m[1] }));
+    return [...html.matchAll(/<a class="mart-source" href="(https:\/\/kkangtong\.xyz\/posts\/\d+)"[^>]*>(?:🔗 )?([^<·]+) · ([^<]*)<\/a>/g)].map(m => ({ kind: m[2].trim(), title: m[3].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"), url: m[1] }));
 };
 function entryOf(state) {
     const item = state.item, own = receipt(state);
@@ -673,13 +673,13 @@ const sourceLinks = item => {
     let w = item.kind === 'frame' ? FRAME_SOURCES[item.concept] : SOURCES[item.category];
     const ws = [].concat(w || []).filter(x => x && x.url);   // 원작이 둘인 분류(아드리안)는 나란히 · 자리만 있는 원작은 빼요
     w = ws.length ? ws : null;
-    const a = (src, kind) => `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡통 글">🔗 ${kind} · ${esc(src.title)}</a>`;
+    const a = (src, kind) => `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡통 글">${kind} · ${esc(src.title)}</a>`;
     // 틀마다 출처 봇이 다른 분류(11-06 센티넬버스 — 센가시뮬 · 센가 아카데미)는 목록의 source(봇 정식 이름)를 글로만 보여요(깡싸 글 주소는 아직 없어요)
     // 11-12 밤 새 틀(세계관 · 인물 104): 목록 자료의 src(sources.js 열쇠) 그대로 — 깡캐 글 먼저 · 원작 글 전부
     if (Array.isArray(item.src)) return itemSources(item).map(x => sourceHtml(x)).join('');
     const own = !w && item.source ? sourceHtml(workByTitle(item.source) || { title: item.source }, '원작') : '';   // 11-12 밤 주소를 받은 봇(센티넬버스 둘)은 링크로
     // 11-09 노래방 글꾸(kara): 견본 대신 내 mp3 · 가사로 만드는 화면(mart/kara/)으로 — 카드 · 상세 창 둘 다
-    const kara = item.category === 'kara' ? `<a class="mart-source" href="${esc(asset(`kara/?theme=${String(id).replace(/^kara-/, '')}`))}" title="mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 이 테마의 HTML 이 바로 나와요">🎤 내 곡으로 만들기 · 노래방 글꾸</a>` : '';
+    const kara = item.category === 'kara' ? `<a class="mart-source" href="${esc(asset(`kara/?theme=${String(id).replace(/^kara-/, '')}`))}" title="mp3 주소 · 제목 · 이름 · 색 · [분:초] 가사를 넣으면 이 테마의 HTML 이 바로 나와요">내 곡으로 만들기 · 노래방 글꾸</a>` : '';
     return (ch ? a(ch, '깡캐') : '') + (w ? w.map(x => a(x, '원작')).join('') : own) + kara;
 };
 
@@ -692,6 +692,8 @@ let showStyle = false;   // 그림체가 둘 이상일 때만 「기본」까지
 /** 글꾸 이름 앞 그림 — 그 글꾸 틀의 우리 아이콘(목록 icon/…svg · 목록에 없으면 조각의 data URI), 없으면 이모지(아이콘 없는 184종) */
 const iconSrc = item => (item?.icon ? (String(item.icon).startsWith('data:') ? item.icon : asset(`data/geulkku/${item.icon}`)) : '');
 const glyphHtml = (item, fallback = '') => { const src = iconSrc(item); const emoji = item?.emoji || fallback; return src ? `<img class="mart-ico" src="${esc(src)}" alt="" aria-hidden="true" decoding="async">` : emoji ? `<span class="em" aria-hidden="true">${lemonize(esc(emoji))}</span>` : ''; };
+/** 11-13 카드 이름 앞 · 받기 전 자리: 그림 글자(이모지)는 안 쓰고, 그 틀의 우리 아이콘(선 그림)이 있을 때만 */
+const iconHtml = item => { const src = iconSrc(item); return src ? `<img class="mart-ico" src="${esc(src)}" alt="" aria-hidden="true" decoding="async">` : ''; };
 /** 이름 옆 꼬리표: 분류 · 그림체 · ✨ 움직임 · 👆 반응 */
 function tagsHtml(item) {
     const style = item.kind === 'geulkku' && (showStyle || styleOf(item) !== STYLE_DEFAULT) ? `<span class="mart-tag tag is-style" title="디자인">${esc(styleOf(item))}</span>` : '';
@@ -705,14 +707,14 @@ export const NOT_TAKE_HINT = '블루레몬 로그 복사가 아직 이 틀을 �
 const notTakeTag = item => `<span class="mart-tag tag is-notake" title="${esc(`${NOT_TAKE_HINT}(${item.nt}) · 「HTML 복사」로 깡통 글에 붙여 써요`)}">테마 아직 못 받음</span>`;
 const descOf = item => (LABEL_FIX[item.category] ? String(item.desc || '').replace(/강호유람록/g, '무협시뮬') : (item.desc || ''));
 function actionsHtml(item) {
-    const html = item.kind === 'geulkku' ? `<button type="button" class="btn" data-act="html" title="${HTML_TITLE}"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>` : '';
+    const html = item.kind === 'geulkku' ? `<button type="button" class="btn" data-act="html" title="${HTML_TITLE}"><span class="gi gi-copy" aria-hidden="true"></span>HTML 복사</button>` : '';
     // 테마에 들어 있는 글꾸(내장 심플 30 · 로그 복사 기본 틀 19): 받을 것 없음 — 담기 · 테마용 복사 대신 안내 + HTML 복사(시식은 크게 보기에서 그대로)
     if (item.builtin) return `<div class="mart-actions is-geulkku is-builtin"><span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 들어 있어요</span>${html}</div>`;
     if (item.own) return `<div class="mart-actions is-geulkku is-builtin is-copyonly is-own"><button type="button" class="btn mart-own-del" data-act="own-del" title="이 브라우저에서 지워요(두 번 눌러요)">지우기</button>${html}</div>`;   // 11-12 내 글꾸
     // 오리지널 컨셉 30 · 화보 갤러리 · 노래 앨범(copyOnly): 테마로 받지 않는 틀 — 「담기」 · 「테마용 복사」 없이 HTML 복사만
     // 11-12 밤 사용자 「왜 둘 다 html 복사로 써요 html 복사 이거임? 같은 말 아냐?」 — 왼쪽 안내 글을 뺐어요(0개). 테마가 못 받는 틀은 이름 줄 꼬리표 「테마 아직 못 받음」이 말해요
     if (item.copyOnly) return `<div class="mart-actions is-geulkku is-solo">${html}</div>`;
-    return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
+    return `<div class="mart-actions${item.kind === 'geulkku' ? ' is-geulkku' : ''}"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="gi gi-cart" aria-hidden="true"></span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">${item.kind === 'geulkku' ? '테마용 복사' : '바로 복사'}</button>${html}</div>`;
 }
 /** 11-11 즐겨찾기 ☆ · ★(무테 아이콘) — 카드 이름 줄 · 크게 보기 제목 옆 */
 const favHtml = item => { if (item.kind !== 'geulkku' || item.own) return ''; const on = like.fav.includes(item.id); return `<button type="button" class="ibtn mart-fav" data-act="fav" data-fav="${esc(item.id)}" aria-pressed="${on}" aria-label="${esc(item.name || item.label)} 즐겨찾기" title="${on ? '즐겨찾기에서 빼기' : '즐겨찾기'}"></button>`; };   // 별은 마스크 그림(mart.css) — 글자 단추가 아니에요
@@ -757,7 +759,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261113p').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261113u').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -1029,7 +1031,7 @@ function syncSheet() {
     if (!b) return;
     const on = cart.has(entryOf(sheetState).key);
     b.setAttribute('aria-pressed', String(on));
-    b.innerHTML = on ? '담김' : '<span class="em" aria-hidden="true">🛒</span>담기';   // 담김 = 옅은 파랑 면 + 파란 글자 + ✔(CSS)
+    b.innerHTML = on ? '담김' : '<span class="gi gi-cart" aria-hidden="true"></span>담기';   // 담김 = 옅은 파랑 면 + 파란 글자 + ✔(CSS)
 }
 
 function card(item) {
@@ -1042,10 +1044,10 @@ function card(item) {
     el.dataset.text = item._text ?? textOf(item);
     // 글꾸 카드 미리보기: 틀의 머리(제목 · 알약 · 첫 메시지)만 고정 높이로 잘라 보여 주고, 누르면 전체 미리보기 시트(크게 보기). 카드 안에서는 스크롤 · 장식 누르기 없음(inert)
     // 조각을 받기 전에는 「썸네일 글」(틀 바탕색 위 이모지 · 이름) 자리만 — 카드가 화면 가까이 오면 그 조각을 받아 채워요(watchCard)
-    const placeholder = `<div class="mart-ph" style="${item.bg ? `--ph-bg:${esc(item.bg)};` : ''}${item.ink ? `--ph-ink:${esc(item.ink)}` : ''}">${glyphHtml(item, '📝')}<b>${esc(item.name || item.label)}</b></div>`;
+    const placeholder = `<div class="mart-ph" style="${item.bg ? `--ph-bg:${esc(item.bg)};` : ''}${item.ink ? `--ph-ink:${esc(item.ink)}` : ''}">${iconHtml(item)}<b>${esc(item.name || item.label)}</b></div>`;
     const preview = kind === 'frames'
         ? '<div class="mart-preview frame"><div class="mart-fit"></div></div>'
-        : `<div class="mart-preview geulkku is-wait" role="button" tabindex="0" data-act="view" aria-haspopup="dialog" aria-label="${esc(item.label)} 크게 보기"><div class="mart-preview-in" inert>${placeholder}</div><span class="mart-zoom-hint tag" aria-hidden="true"><span class="em">🔍</span>크게 보기</span></div>`;
+        : `<div class="mart-preview geulkku is-wait" role="button" tabindex="0" data-act="view" aria-haspopup="dialog" aria-label="${esc(item.label)} 크게 보기"><div class="mart-preview-in" inert>${placeholder}</div><span class="mart-zoom-hint tag" aria-hidden="true"><span class="gi gi-zoom" aria-hidden="true"></span>크게 보기</span></div>`;
     const params = item.kind === 'frame-preset' ? `<div class="mart-params">
         <label>바탕 <input type="color" data-k="presetColor" value="${esc(item.presetColor)}"></label>
         <label>선 <input type="color" data-k="presetAccent" value="${esc(item.presetAccent)}"></label>
@@ -1056,8 +1058,9 @@ function card(item) {
     </div>` : '';
     const size = item.bytes ? `<small>${item.bytes > 1e6 ? `${(item.bytes / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(item.bytes / 1024))}KB`}</small>` : '';
     el.innerHTML = `${preview}${item.note ? `<p class="mart-note">${esc(item.note)}</p>` : ''}
-        <div class="mart-title"><b>${glyphHtml(item)}<span class="t">${esc(item.name || item.label)}</span></b>${tagsHtml(item)}${favHtml(item)}</div>
-        ${kind === 'geulkku' ? designsHtml(item) : ''}<p class="mart-desc">${esc(descOf(item))}${size ? ` · ${size}` : ''}</p>${sourceLinks(item)}${params}
+        <div class="mart-title"><b>${iconHtml(item)}<span class="t" title="${esc(item.name || item.label)}">${esc(item.name || item.label)}</span></b>${favHtml(item)}</div>
+        ${tagsHtml(item)}
+        ${kind === 'geulkku' ? designsHtml(item) : ''}<p class="mart-desc" title="${esc(descOf(item))}">${esc(descOf(item))}${size ? ` · ${size}` : ''}</p>${(src => (src ? `<div class="mart-srcs">${src}</div>` : ''))(sourceLinks(item))}${params}
         ${actionsHtml(item)}`;
     el.addEventListener('input', (e) => {
         const k = e.target.dataset.k; if (!k) return;
@@ -1119,7 +1122,7 @@ function syncCard(state) {
     const on = cart.has(entryOf(state).key);
     const b = state.el.querySelector('.mart-pick');
     b.setAttribute('aria-pressed', String(on));
-    b.innerHTML = on ? '담김' : '<span class="em" aria-hidden="true">🛒</span>담기';
+    b.innerHTML = on ? '담김' : '<span class="gi gi-cart" aria-hidden="true"></span>담기';
     b.title = on ? '다시 누르면 장바구니에서 빼요' : '장바구니에 담기';
     state.el.classList.toggle('is-picked', on);
 }
@@ -1316,7 +1319,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261113r').then(m => (frameMod = m).start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261113u').then(m => (frameMod = m).start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -1335,6 +1338,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261113r').then(m => (frameMod = m).kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261113u').then(m => (frameMod = m).kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };

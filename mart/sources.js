@@ -62,9 +62,9 @@ export const workByTitle = title => Object.values(WORKS).find(w => w.title === t
 export const ALL_SOURCES = Object.freeze([...Object.values(WORKS), ...Object.values(CHAR_WORKS)]);
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-/** 원작 한 줄(주소가 있으면 🔗 링크 · 없으면 글만 — 액자 마트와 같은 꼴) */
+/** 원작 한 줄(주소가 있으면 링크 · 없으면 글만 — 액자 마트와 같은 꼴) */
 export const sourceHtml = (src, kind = src.kind || '원작') => (src.url
-    ? `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡통 글">🔗 ${esc(kind)} · ${esc(src.title)}</a>`
+    ? `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡통 글">${esc(kind)} · ${esc(src.title)}</a>`
     : `<span class="mart-source is-plain" title="원작 봇">${esc(kind)} · ${esc(src.title)}</span>`);
 /** 「원작」 칸 — 캐릭터를 안 골라도 보이는 묶음별 목록. groups: tone-state.js CAST_GROUPS */
 export function creditsHtml(groups) {

@@ -1,4 +1,4 @@
-import { workByTitle, sourceHtml } from './sources.js?v=20261113p';   // 11-12 밤 원작(출처) 자료 한 곳
+import { workByTitle, sourceHtml } from './sources.js?v=20261113u';   // 11-12 밤 원작(출처) 자료 한 곳
 // 액자 마트 — 그림 액자 수백 종 + 심플 30종 · 「내 사진 넣어 보기」 · 거르기(분류 · 찾기 · 가로/세로 · 그림체) · 조금씩 그리기 · 크게 보기.
 // 크게 보기의 조절 칸은 테마 장식 액자 설정과 같은 이름 · 범위 · 기본값(data/frames.json 의 decor — tools/mart-build.mjs 가 테마 src/decor.js · panel.js · frames.js 에서 옮겨 와요)이고,
 // 그리는 규칙도 테마 css/41-decor.css 와 같아요(액자 그림을 사진 위에 100% 100% · 사진은 마스크 + 사진창 clip-path(round 모서리) 안에서 object-fit · object-position · scale · 기울기 rotate · 그림자 SVG 필터).
@@ -152,11 +152,12 @@ function card(item) {
     el.className = `mart-card is-frame${item.kind === 'frame-preset' ? ' is-simple' : ''}`;
     el.dataset.id = item.id;
     const own = api.isBuiltin(item);   // 심플 20 = 테마 장식 액자에 이미 있어요 — 담기 · 복사 대신 안내 + 그림 받기(테마 없이 쓰는 사람용)
-    el.innerHTML = `<button type="button" class="mart-preview frame" data-act="open" aria-label="${esc(item.name)} — 크게 보고 맞춰 보기"><span class="mart-stage"></span><span class="mart-zoom-hint tag" aria-hidden="true"><span class="em">🔍</span>맞춰 보기</span></button>
-        <div class="mart-title"><b><span class="t">${esc(item.name)}</span></b><span class="mart-tags"><span class="mart-tag tag">${esc(catShow(item.category, item.categoryLabel))}</span>${own ? api.BUILTIN_TAG : ''}</span></div>
-        <p class="mart-desc">${esc(item.kind === 'frame-preset' ? item.desc : `${item.orientation === 'landscape' ? '가로' : '세로'} · ${item.styleLabel || ''}`)}${item.bytes && item.kind === 'frame' ? ` · 테마 받기 약 ${sizeText(item.bytes)}` : ''}</p>${links(item)}
-        ${own ? `<div class="mart-actions is-builtin"><span class="mart-builtin" title="${BUILTIN_TITLE}">✓ 이미 테마에 들어 있어요</span><button type="button" class="btn" data-act="art" title="지금 색 그대로 그린 PNG — 테마 없이 실리태번 순정에서 쓸 때"><span class="em" aria-hidden="true">🖼️</span>그림 받기</button></div>`
-        : '<div class="mart-actions"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">복사</button></div>'}`;
+    el.innerHTML = `<button type="button" class="mart-preview frame" data-act="open" aria-label="${esc(item.name)} — 크게 보고 맞춰 보기"><span class="mart-stage"></span><span class="mart-zoom-hint tag" aria-hidden="true"><span class="gi gi-zoom" aria-hidden="true"></span>맞춰 보기</span></button>
+        <div class="mart-title"><b><span class="t" title="${esc(item.name)}">${esc(item.name)}</span></b></div>
+        <span class="mart-tags"><span class="mart-tag tag">${esc(catShow(item.category, item.categoryLabel))}</span>${own ? api.BUILTIN_TAG : ''}</span>
+        <p class="mart-desc">${esc(item.kind === 'frame-preset' ? item.desc : `${item.orientation === 'landscape' ? '가로' : '세로'} · ${item.styleLabel || ''}`)}${item.bytes && item.kind === 'frame' ? ` · 테마 받기 약 ${sizeText(item.bytes)}` : ''}</p>${(src => (src ? `<div class="mart-srcs">${src}</div>` : ''))(links(item))}
+        ${own ? `<div class="mart-actions is-builtin"><span class="mart-builtin" title="${BUILTIN_TITLE}">✓ 이미 테마에 들어 있어요</span><button type="button" class="btn" data-act="art" title="지금 색 그대로 그린 PNG — 테마 없이 실리태번 순정에서 쓸 때"><span class="gi gi-down" aria-hidden="true"></span>그림 받기</button></div>`
+        : '<div class="mart-actions"><button type="button" class="btn mart-pick" data-act="pick" aria-pressed="false"><span class="gi gi-cart" aria-hidden="true"></span>담기</button><button type="button" class="btn" data-act="copy" title="이것 하나만 바로 복사(테마 「마트에서 가져오기」용)">복사</button></div>'}`;
     paintCard(st);
     syncCard(st);
     return el;
@@ -166,7 +167,7 @@ function syncCard(st) {
     if (!b) return;
     const on = api.cart.has(api.entryOf(st).key);
     b.setAttribute('aria-pressed', String(on));
-    b.innerHTML = on ? '담김' : '<span class="em" aria-hidden="true">🛒</span>담기';
+    b.innerHTML = on ? '담김' : '<span class="gi gi-cart" aria-hidden="true"></span>담기';
     b.title = on ? '다시 누르면 장바구니에서 빼요' : '장바구니에 담기';
     st.el.classList.toggle('is-picked', on);
 }
@@ -434,7 +435,7 @@ function buildRoom() {
         </section>
         <p class="room-note">이름 · 범위 · 기본값은 테마 설정 › 장식 액자 칸과 같아요. 사진 맞춤(진하기 · 기울기 · 색감 · 모서리 · 채우기 · 확대 · 위치)은 모든 액자에 같이 쓰고, 가로 · 세로 비율은 액자마다 따로예요. 색감은 미리 보기용이라 받기에는 안 담겨요 — 테마 설정 › 장식 액자의 같은 칸으로 맞춰요.</p>
       </div>
-      <footer class="room-actions"><button type="button" class="btn" data-room="reset">처음 값</button><button type="button" class="btn mart-pick" data-room="pick"><span class="em" aria-hidden="true">🛒</span>담기</button><button type="button" class="btn" data-room="copy">복사</button><span class="mart-builtin room-builtin" hidden title="${BUILTIN_TITLE}">✓ 이미 테마에 들어 있어요</span><button type="button" class="btn room-art" data-room="art" title="원본 그림 파일 받기 — 테마 없이 실리태번 순정에서 쓸 때"><span class="em" aria-hidden="true">🖼️</span>그림 받기</button></footer>
+      <footer class="room-actions"><button type="button" class="btn" data-room="reset">처음 값</button><button type="button" class="btn mart-pick" data-room="pick"><span class="gi gi-cart" aria-hidden="true"></span>담기</button><button type="button" class="btn" data-room="copy">복사</button><span class="mart-builtin room-builtin" hidden title="${BUILTIN_TITLE}">✓ 이미 테마에 들어 있어요</span><button type="button" class="btn room-art" data-room="art" title="원본 그림 파일 받기 — 테마 없이 실리태번 순정에서 쓸 때"><span class="gi gi-down" aria-hidden="true"></span>그림 받기</button></footer>
     </div>`;
     document.body.append(room);
     widenOdd();
@@ -512,7 +513,7 @@ function syncRoomPick() {
     foot.querySelector('.room-builtin').hidden = !own;
     const on = api.cart.has(api.entryOf(current).key), b = room.querySelector('[data-room="pick"]');
     b.setAttribute('aria-pressed', String(on));
-    b.innerHTML = on ? '담김' : '<span class="em" aria-hidden="true">🛒</span>담기';
+    b.innerHTML = on ? '담김' : '<span class="gi gi-cart" aria-hidden="true"></span>담기';
 }
 function paintRoom() {
     const st = current, box = room.querySelector('.room-frame-box');

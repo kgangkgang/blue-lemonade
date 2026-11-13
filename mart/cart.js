@@ -105,7 +105,7 @@ async function thumb(entry) {
     return `<span class="mart-cart-thumb"${entry.bg ? ` style="background:${esc(entry.bg)}"` : ''}>${entry.icon ? `<img class="mart-ico" alt="" src="${esc(asset(entry.icon))}">` : `<span class="em">${lemonize(esc(entry.emoji || '📝'))}</span>`}</span>`;
 }
 /** 11-12 밤 담은 것의 원작 줄(세계관 · 인물 액자 / 글꾸) — 줄 아래 작은 링크 · 담을 때 entry.src 로 같이 기억해요 */
-const srcHtml = e => (Array.isArray(e.src) && e.src.length ? `<span class="mart-cart-src">${e.src.filter(x => /^https:\/\/kkangtong\.xyz\/posts\/\d+$/.test(x?.url || '')).map(x => `<a class="mart-source" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡통 글">🔗 ${esc(x.kind || '원작')} · ${esc(x.title)}</a>`).join('')}</span>` : '');
+const srcHtml = e => (Array.isArray(e.src) && e.src.length ? `<span class="mart-cart-src">${e.src.filter(x => /^https:\/\/kkangtong\.xyz\/posts\/\d+$/.test(x?.url || '')).map(x => `<a class="mart-source" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡통 글">${esc(x.kind || '원작')} · ${esc(x.title)}</a>`).join('')}</span>` : '');
 let renderId = 0;
 async function render() {
     syncBadge();
