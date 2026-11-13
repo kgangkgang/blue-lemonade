@@ -10,6 +10,7 @@ import { perfErrorText } from './addons/perf/start-error.js';
 import { ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
 import { onGate } from './boot-layers.js';
 import { afterBoot } from './boot-gate.js';
+import { loadSheet } from './focus-copies.js';
 const running=new Set(),failed=new Map(),loading=new Set(),waiting=new Set();
 // 1.0.0: 실행 중인 애드온 모듈 표 — dist 묶음이라 src 를 따로 import 하면 두 번째 인스턴스가 돼요. 검사 도구는 window.Salty.addon(id) 로 받아요
 const modules=new Map();
@@ -63,10 +64,11 @@ export async function disableLegacy(ids=EMBEDDED_PRIVATE){
     changed();
     return targets;
 }
+// 1.4.1 애드온 시트는 loadSheet(focus-copies.js)로 붙여요 — 실리태번이 시트마다 :focus-visible 사본을 훑어 넣던 일을 테마가 같은 결과로 맡고(첫 장 · 전체 장 겹침 한 벌), 훑기는 쉴 때
 function attachStyle(link){
     return new Promise((resolve,reject)=>{
         const timer=setTimeout(()=>{link.remove();reject(Error('스타일 로딩 시간 초과'));},15000);
-        link.onload=()=>{clearTimeout(timer);resolve();};link.onerror=()=>{clearTimeout(timer);link.remove();reject(Error('스타일을 읽지 못했어요.'));};document.head.append(link);
+        loadSheet(link,el=>document.head.append(el)).then(()=>{clearTimeout(timer);resolve();},()=>{clearTimeout(timer);link.remove();reject(Error('스타일을 읽지 못했어요.'));});
     });
 }
 const addonUrl=rel=>new URL(`./addons/${rel}`,import.meta.url).href;
@@ -77,11 +79,11 @@ let bundledStyleIds=[];
 let upgrading=Promise.resolve();
 function swapSheet(link,href){
     return new Promise(resolve=>{
-        const full=document.createElement('link');full.rel='stylesheet';if(link.dataset.blAddonsAll)full.dataset.blAddons=link.dataset.blAddonsAll;
-        const finish=ok=>{clearTimeout(timer);if(ok)link.remove();else{full.remove();pendingSheets.set(link,href);}resolve(ok);};   // 못 받으면 첫 장 그대로 · 다음에 다시
+        const full=document.createElement('link');if(link.dataset.blAddonsAll)full.dataset.blAddons=link.dataset.blAddonsAll;
+        let done=false;const finish=ok=>{if(done)return;done=true;clearTimeout(timer);if(ok)link.remove();else{full.remove();pendingSheets.set(link,href);}resolve(ok);};   // 못 받으면 첫 장 그대로 · 다음에 다시
         const timer=setTimeout(()=>finish(false),15000);
-        full.onload=()=>finish(true);full.onerror=()=>finish(false);full.href=href;
-        if(link.isConnected)link.after(full);else document.head.append(full);
+        full.href=href;
+        loadSheet(full,()=>{if(link.isConnected)link.after(full);else document.head.append(full);}).then(()=>finish(true),()=>finish(false));
     });
 }
 /** 첫 장을 전체 시트로 — 처음 누를 때 · 서랍이나 창이 열릴 때 · 창 뿌리가 나타날 때(표지 규칙의 animationstart) */

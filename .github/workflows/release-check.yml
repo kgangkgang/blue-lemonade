@@ -95,6 +95,7 @@ jobs:
           node tools/tests/send-stop-slot.mjs .
           node tools/tests/addon-gated-bundle.mjs .
           node tools/tests/addon-gated-loading.mjs .
+          node tools/tests/focus-copies.mjs .
           node tools/tests/settings-light-defaults.mjs .
           node tools/tests/dem-selector-classes.mjs .
           node tools/tests/dem-style-slots.mjs .

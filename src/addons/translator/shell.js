@@ -4,6 +4,7 @@
 //   부팅 때 본체가 꼭 있어야 하는 조건(번역 리모컨 켬 · 실리태번 기본 번역 확장이 같이 켜져 알림 · TTS 화자 색이 분석을 봐야 함)이면 그때는 바로 본체를 받아요.
 //   알려진 차이: 저장된 번역문의 옛 결함 수선(repairShownTranslations) · 겹친 용어집 항목 합치기 알림 · 자동 건너뛰기의 「이미 한국어」 판단은 처음 쓸 때 해요.
 import { bootSheetOf } from '../../addon-style-bundle.js';
+import { loadSheet } from '../../focus-copies.js';
 import { eventSource, event_types, chat } from '../../../../../../../script.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
@@ -210,7 +211,7 @@ export const ready = new Promise((resolve, reject) => jQuery(async () => { try {
     if (duplicate) { resolve(); return; }
     started = true;
     globalThis[SHELL] = { ensureBody, bodyLoaded };
-    if (!document.querySelector('link[href$="/addons/translator/style.css"]')) { const link = document.createElement('link'); link.rel = 'stylesheet'; link.type = 'text/css'; link.href = `${folder}/${bootSheetOf('translator').split('/').pop()}`; document.head.append(link); }
+    if (!document.querySelector('link[href$="/addons/translator/style.css"]')) { const link = document.createElement('link'); link.type = 'text/css'; link.href = `${folder}/${bootSheetOf('translator').split('/').pop()}`; loadSheet(link).catch(() => {}); }   // 1.4.1 loadSheet: 키보드 초점 사본은 테마가(focus-copies.js)
     installApi();
     addSlashCommands();
     publishGlossaryNames();
