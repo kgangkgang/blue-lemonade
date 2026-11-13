@@ -4,7 +4,7 @@
 // 결과는 DOM 이 없는 순수 자료(메시지 → 노드 나무)라 단위 시험이 같은 모양을 바로 만든다.
 import { parseColor, cssColor, svgPaint, pillSpan, bandImage, textInk, compose } from './shared/ink-paint.js';
 
-const SKIP = 'script, style, template, textarea, input, select, button, iframe, svg, canvas, video, audio, img, picture, noscript, object, embed, .mes_buttons, .mes_edit_buttons';
+const SKIP = 'script, style, template, textarea, input, select, button, iframe, svg, canvas, video, audio, img, picture, noscript, object, embed, .mes_buttons, .mes_edit_buttons, .ss-slot, .custom-ss-slot, .ss-msgcard';   // 끝 셋: 상태창 확장이 답 글 끝에 다는 변동 칩 칸(글이 아니라 표시 — 복사물에 「체력 −12」 같은 칩 글자가 섞였어요)
 // 상속되는 글자 모양 — 문단마다 다시 적는다 (받는 편집기의 CSS 가 span · div 에 글꼴을 걸어도 이기도록)
 const FONT_KEYS = ['color', 'font-family', 'font-size', 'font-weight', 'font-style', 'letter-spacing', 'line-height', 'word-break'];   // word-break: 한국어 줄 끊김(화면 그대로 — keep-all 을 덧대면 양쪽 맞춤 줄의 낱말 사이가 벌어져요)
 const GENERIC = /(^|,)\s*(serif|sans-serif|monospace|cursive|fantasy|system-ui|ui-serif|ui-sans-serif|ui-monospace)\s*$/i;

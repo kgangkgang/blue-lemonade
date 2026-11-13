@@ -254,6 +254,11 @@ jQuery(() => {
             import('./src/first-run.js').then(m => m.openCssPromptWhenFree()).catch(error => console.warn('[Blue Lemonade] 쓰던 테마 안내', error));
         }, 1500);
     }
+    // 1.2.x 남의 확장 화면 맞춤: 확인한 확장(미트볼 상태창)의 설정 칸이 있을 때만 모듈 · 시트를 받아요 — 없으면 아무것도 안 받아요.
+    //   지난번에 그 확장의 설정 칸이 화면에 있었으면(이 기기 표시) 바로 받아 첫 화면부터 맞춤 시트가 붙어요. 앱이 준비된 뒤 한 번(못 봤으면 조금 뒤 한 번 더) 설정 칸이 실제로 있는지 보고 표시를 고쳐요 —
+    //   그 확장을 지운 사람은 그다음 시작부터 아무것도 안 받아요(감시자 없음 · src/ext-compat.js SETS 와 같은 선택자 · 제로 모드는 안 받음). 받은 뒤에도 설정 칸을 보면 모듈을 한 번 더 불러 탭 · 머리줄 표식을 그때 달아요.
+    //   실리태번은 확장을 깔면 새로 읽지 않아요 — 그 뒤 내는 「확장 설정 읽음」 사건에서 아직 안 받았으면 한 번 더 봐요(되풀이 없음 · 깐 그 세션에도 맞춤이 걸려요)
+    if (!ZERO) { const KEY = 'bl-ext-compat'; let got = null; const go = () => { (got ||= import('./src/ext-compat.js')).then(m => m.startExtCompat()).catch(error => console.warn('[Blue Lemonade] 확장 화면 맞춤', error)); }; try { if (localStorage.getItem(KEY) === '1') go(); } catch { /* 저장소가 막혀 있으면 아래 확인만 */ } const look = again => { const here = !!document.getElementById('ss-settings'); if (!here && again) { setTimeout(() => look(false), 2500); return; } try { if (here) localStorage.setItem(KEY, '1'); else localStorage.removeItem(KEY); } catch { /* 표시 없이 */ } if (here) go(); }; later(() => { look(true); try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.EXTENSION_SETTINGS_LOADED, () => { if (!got) look(true); }); } catch { /* 다음 시작에 봐요 */ } }, 400); }
     // 1층 — 서랍 · 메뉴 입구와 CSS 바로잡기(:has 미루기 · 메뉴 열림 표식)는 바로
     if (!ZERO) startSafe('widenSelectorCache', () => { widenSelectorCache(); }); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
     startSafe('loadCompatCss', () => { if (!loadCompatCss()) setTimeout(() => startSafe('loadCompatCss', loadCompatCss), 1500); });   // 1.0.0 다른 브라우저 · 폭 규칙은 조건이 맞을 때만 (src/compat-css.js)
