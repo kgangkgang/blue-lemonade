@@ -1,5 +1,5 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1730 · 뺀 규칙 3788 (style.css 43fcaab39640) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 7bf8f20b7ab9) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1730 · 뺀 규칙 3785 (style.css 1bfefac00cb9) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build cc58235c9ceb) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
 :root{--bl-release:"1.4.0";}
@@ -43,7 +43,7 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   margin: 0;
   padding: 0;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) .bl-cjk {
+.salty-sample .bl-cjk:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   word-break: normal;
 }
 .salty-sample:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
@@ -67,22 +67,22 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   hyphens: auto;
   text-wrap: wrap;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) p,
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) li {
+.salty-sample p:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample li:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font: inherit !important;
   letter-spacing: inherit !important;
   line-height: inherit !important;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) p {
+.salty-sample p:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   margin: 0 0 var(--salty-para) !important;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) p:last-child {
+.salty-sample p:last-child:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   margin-bottom: 0 !important;
 }
-:is(body.salty.salty-indent :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-indent) p {
+.salty-sample.salty-indent p:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   text-indent: 1em;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) q {
+.salty-sample q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   color: var(--salty-dialogue);
   font-family: var(--salty-font-dialogue, inherit);
   font-size: calc(1em * var(--salty-dialogue-scale, 1));
@@ -91,7 +91,7 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-:is(body.salty.salty-dlg-marker :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-dlg-marker) q {
+.salty-sample.salty-dlg-marker q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   background: var(--salty-marker-bg);
   color: var(--salty-marker-ink, var(--salty-dialogue));
 }
@@ -105,25 +105,25 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   font-size: inherit;
   line-height: inherit;
 }
-:is(body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-dlg-full) q {
+.salty-sample.salty-dlg-full q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   background: var(--salty-fill-marker, var(--salty-marker));
   border-radius: 5px;
   padding: 0.04em 0;
 }
-:is(body.salty.salty-dlg-marker :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-dlg-marker,
-  body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-dlg-full) :is(em, i) q:not(q q) {
+.salty-sample.salty-dlg-marker :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample.salty-dlg-full :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   padding-inline-end: 0.15em;
   margin-inline-end: -0.15em;
 }
-:is(body.salty.salty-dlg-bold :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-dlg-bold) q {
+.salty-sample.salty-dlg-bold q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-weight: 650;
 }
-:is(body.salty.salty-dlg-tint :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-dlg-tint) q {
+.salty-sample.salty-dlg-tint q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   color: var(--salty-accent-dlg);
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) del,
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) s,
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) strike {
+.salty-sample del:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample s:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample strike:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   text-decoration: none;
   font-style: var(--salty-strike-style, normal);
   -webkit-text-fill-color: color-mix(in srgb, currentColor var(--salty-strike-fade, 55%), transparent);
@@ -132,13 +132,13 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   box-decoration-break: clone;
   padding: 0 0.04em;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) em {
+.salty-sample em:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-family: var(--salty-font-em, inherit);
   font-style: var(--salty-em-style);
   font-weight: var(--salty-em-weight);
   color: var(--salty-em);
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) strong {
+.salty-sample strong:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-family: var(--salty-font-strong, inherit);
   font-weight: var(--salty-strong-weight);
   color: var(--salty-strong);
@@ -146,14 +146,14 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) u {
+.salty-sample u:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   text-decoration-color: var(--salty-accent-70);
   text-decoration-thickness: 2px;
   text-underline-offset: 0.22em;
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) code,
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) kbd,
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) samp {
+.salty-sample code:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample kbd:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample samp:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   padding: 0 0.28em !important;
   font-family: var(--salty-font-code, ui-monospace, monospace) !important;
   font-size: var(--salty-code-size, 1em) !important;
@@ -166,7 +166,7 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   padding: 0 !important;
 }
 .bl-dialogue-indent { display: none; }
-:is(body.salty.salty-indent :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-indent) .bl-dialogue-indent { display: inline-block; width: var(--salty-size, 1em); height: 0; }
+.salty-sample.salty-indent .bl-dialogue-indent:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { display: inline-block; width: var(--salty-size, 1em); height: 0; }
 /* css/07-images.css */
 :is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) q em,
 :is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) q i {
@@ -1757,30 +1757,30 @@ body.salty-dark .salty-shapes button.on {
 .salty-prevbox.folded { min-height: 20px; }
 .salty-prevbox.folded > :not(.salty-pvfold) { display: none !important; }
 .salty-prevbox.folded + * { margin-top: 8px; }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) q {
+.salty-sample q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   letter-spacing: var(--salty-dialogue-ls, inherit);
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) em {
+.salty-sample em:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-size: calc(1em * var(--salty-em-scale, 1));
   line-height: max(1.28em, calc(var(--salty-lh) * 1em / var(--salty-em-scale, 1)));
   letter-spacing: var(--salty-em-ls, inherit);
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) strong {
+.salty-sample strong:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-size: calc(1em * var(--salty-strong-scale, 1));
   line-height: max(1.28em, calc(var(--salty-lh) * 1em / var(--salty-strong-scale, 1)));
   letter-spacing: var(--salty-strong-ls, inherit);
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, body.salty :is(#salty-nochat, .salty-preview) .mes .mes_text, .salty-sample, body.salty :is(.cg-mes, .cg-bubble-text)) code {
+.salty-sample code:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   font-weight: var(--salty-code-weight, inherit);
   letter-spacing: var(--salty-code-ls, inherit);
 }
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title),
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) .custom-dem-track:is(bl-s, *),
-:is(body.salty :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample) .custom-dem-track-recovery:is(bl-s, *) {
+.salty-sample details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample .custom-dem-track:is(bl-s, *):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+.salty-sample .custom-dem-track-recovery:is(bl-s, *):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   text-align: start;
   word-break: keep-all;
 }
-:is(body.salty.salty-indent :is(#chat,.bl-chat-like) .mes .mes_text, .salty-sample.salty-indent) :is(details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title), .custom-dem-track, .custom-dem-track-recovery) p {
+.salty-sample.salty-indent :is(details:is(.custom-dem-card, .custom-dem-card__body, .custom-dem-card__caret, .custom-dem-card__icon, .custom-dem-card__tag, .custom-dem-card__title), .custom-dem-track, .custom-dem-track-recovery) p:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   text-indent: 0;
 }
 .salty-fontinfo b em.salty-blank {
@@ -4125,7 +4125,8 @@ html body:not(.salty) dialog.popup[data-bl-popup~="settings"] :is(.salty-panel *
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw.on { background: var(--acc); border-color: var(--acc); }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw.on::after { opacity: 1; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw[disabled] { opacity: .5; }
-:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-cv, .fh-row) .fh-sw { margin-left: 0; }
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-cv .fh-sw,
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-row .fh-sw { margin-left: 0; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-cell:where(:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-cell):has(> .fh-cv > .fh-sw:only-child) {
   position: relative; overflow: hidden; justify-content: flex-start; flex-wrap: nowrap; gap: 8px;
 }
@@ -4137,7 +4138,8 @@ html body:not(.salty) dialog.popup[data-bl-popup~="settings"] :is(.salty-panel *
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-toggle { grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-toggle > .fh-sw { grid-column: 1; grid-row: 1; align-self: center; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-toggle > span > small { grid-column: 2; grid-row: 2; }
-:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-sortrow, .fh-ch) > .fh-sw { align-self: center; }
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sortrow > .fh-sw,
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-ch > .fh-sw { align-self: center; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-seg { border: 1px solid var(--line); padding: 2px; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-seg button { border: 1px solid transparent; box-shadow: none; padding-left: 8px; padding-right: 8px; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-seg button.on { border-color: var(--acc); box-shadow: none; font-weight: 650; }
@@ -4202,7 +4204,8 @@ html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *
 html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *),
 html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *),
 html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"]),
-html body :is(dialog, #rm_extensions_block) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]),
+html body :where(dialog) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]):is(#bl-s, *),
+html body #rm_extensions_block label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]),
 html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *),
 html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *),
 html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *) {
@@ -4224,7 +4227,8 @@ html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *
 html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *)::before,
 html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *)::before,
 html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"])::before,
-html body :is(dialog, #rm_extensions_block) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"])::before,
+html body :where(dialog) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]):is(#bl-s, *)::before,
+html body #rm_extensions_block label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"])::before,
 html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *)::before,
 html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *)::before,
 html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *)::before,
@@ -4252,7 +4256,9 @@ html body .salty-panel .bl-view-resize > button:not(.bl-view-toggle)::after {
     position: relative;
     z-index: 1;
   }
-html body:is(.salty, *) :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-switch::before {
+html body:is(.salty, *) #rm_extensions_block .bl-hs-switch::before,
+html body:is(.salty, *) :where(.bl-assets-dialog) .bl-hs-switch:is(#bl-s, *)::before,
+html body:is(.salty, *) :where(dialog) .bl-hs-switch:is(#bl-s, *)::before {
     inset: auto;
     left: auto;
     right: 0;
@@ -4469,7 +4475,10 @@ html:not(#bl-ui-parts-off) body :where(span):where(.bl-look-switch > span):is(.b
 }
 html:not(#bl-ui-parts-off) body .bl-look-switch { width: var(--bl-ui-sw-w) !important; height: var(--bl-ui-sw-h) !important; }
 html:not(#bl-ui-parts-off) body .salty-switch > span { top: 50% !important; bottom: auto !important; left: 0 !important; right: auto !important; margin-top: calc(var(--bl-ui-sw-h) / -2) !important; }
-html:not(#bl-ui-parts-off) body :is(.cg-switch, .eh-switch, .jj-switch, .bl-hs-switch) > span,
+html:not(#bl-ui-parts-off) body .cg-switch > span,
+html:not(#bl-ui-parts-off) body .eh-switch > span,
+html:not(#bl-ui-parts-off) body .jj-switch > span,
+html:not(#bl-ui-parts-off) body .bl-hs-switch > span,
 html:not(#bl-ui-parts-off) body .bwr_settings .bwr_switch::after,
 html:not(#bl-ui-parts-off) body :where(span):where(.salty-switch > span):is(.bl-s, *):is(.bl-s, *)::after,
 html:not(#bl-ui-parts-off) body :where(span):where(.bl-look-switch > span):is(.bl-s, *):is(.bl-s, *)::after {
@@ -4679,10 +4688,18 @@ html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-tool-dialog, .bl-roomy-dia
 html:not(#bl-ui-parts-off) body :is(.salty-panel, .bl-tool-dialog, .bl-roomy-dialog, .bl-translator-dialog, .bl-assets-dialog, .bl-direction-dialog, .bl-notes-dialog, .bl-ctsi-dialog, .blpt-dialog, .blzi-dialog, .bl-mermaid-dialog, #pt-panel, #cg-panel, .cg-root, .bwr_settings, #lv_settings, .po-dialog, .pa-hub, .rl-root, #char_assets_settings, .jj-settings-body, #bl-deus-popover, .llmt-settings, #model_register_settings, #model-switch-settings, #regex-link-settings) h5:not(.pa-hub-title, #pt-panel-header > h3, .po-title, dialog > header > h3) {
   font-size: var(--bl-ui-h-sub) !important; font-weight: var(--bl-ui-strong) !important;
 }
-html:not(#bl-ui-parts-off) body :is(.bls-panel-body, .bl-credits-dialog, #fruit-heart-v6) h2,
-html:not(#bl-ui-parts-off) body :is(.bls-panel-body, .bl-credits-dialog, #fruit-heart-v6) h3,
-html:not(#bl-ui-parts-off) body :is(.bls-panel-body, .bl-credits-dialog, #fruit-heart-v6) h4,
-html:not(#bl-ui-parts-off) body :is(.bls-panel-body, .bl-credits-dialog, #fruit-heart-v6) h5 { font-size: var(--bl-ui-h-sub) !important; font-weight: var(--bl-ui-strong) !important; }
+html:not(#bl-ui-parts-off) body :where(.bls-panel-body) h2:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body :where(.bl-credits-dialog) h2:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body #fruit-heart-v6 h2,
+html:not(#bl-ui-parts-off) body :where(.bls-panel-body) h3:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body :where(.bl-credits-dialog) h3:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body #fruit-heart-v6 h3,
+html:not(#bl-ui-parts-off) body :where(.bls-panel-body) h4:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body :where(.bl-credits-dialog) h4:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body #fruit-heart-v6 h4,
+html:not(#bl-ui-parts-off) body :where(.bls-panel-body) h5:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body :where(.bl-credits-dialog) h5:is(#bl-s, *),
+html:not(#bl-ui-parts-off) body #fruit-heart-v6 h5 { font-size: var(--bl-ui-h-sub) !important; font-weight: var(--bl-ui-strong) !important; }
 html:not(#bl-ui-parts-off) body .bls-panel-head h2 { font-size: var(--bl-ts-ui, 15px) !important; font-weight: var(--bl-ui-strong) !important; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-close {
   position: relative !important; width: var(--bl-ui-icon) !important; height: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; min-height: var(--bl-ui-icon) !important;
@@ -4738,8 +4755,12 @@ html:not(#bl-ui-parts-off) body .bls-panel-head h2 { font-size: var(--bl-ts-ui, 
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-tag:not(.fh-qr-head > .fh-tag) { min-height: var(--bl-ui-chip) !important; padding-block: 0 !important; }
 html:not(#bl-ui-parts-off) body .bl-ft-shortcut,
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .bl-ft-shortcut { background: var(--bl-control, var(--salty-shade)) !important; border: 1px solid var(--bl-ui-line) !important; font-size: var(--bl-ui-btn-fs) !important; font-weight: 400 !important; }
-html:not(#bl-ui-parts-off) body :is(.bl-tool-field, .bl-mask-number-head, #bl-deus-popover .dq-row) > input:not([type="range"], [type="checkbox"], [type="radio"], [type="color"]),
-html:not(#bl-ui-parts-off) body :is(.bl-tool-field, .bl-mask-number-head, #bl-deus-popover .dq-row) > select:is(.bl-s, *) {
+html:not(#bl-ui-parts-off) body .bl-tool-field > input:not([type="range"], [type="checkbox"], [type="radio"], [type="color"]):is(#bl-s, *),
+html:not(#bl-ui-parts-off) body .bl-mask-number-head > input:not([type="range"], [type="checkbox"], [type="radio"], [type="color"]):is(#bl-s, *),
+html:not(#bl-ui-parts-off) body #bl-deus-popover .dq-row > input:not([type="range"], [type="checkbox"], [type="radio"], [type="color"]),
+html:not(#bl-ui-parts-off) body .bl-tool-field > select:is(.bl-s, *):is(#bl-s, *),
+html:not(#bl-ui-parts-off) body .bl-mask-number-head > select:is(.bl-s, *):is(#bl-s, *),
+html:not(#bl-ui-parts-off) body #bl-deus-popover .dq-row > select:is(.bl-s, *) {
   height: var(--bl-ui-ctl) !important; min-height: var(--bl-ui-ctl) !important; box-sizing: border-box !important; padding-block: 0 !important;
 }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :where(input):is(.fh-search input),
@@ -4836,7 +4857,8 @@ html body .bl-ft-group-toggle {
 html body #pt-panel .pt-btn,
 html body #pt-panel [data-setting-tab] { min-height:var(--bl-ui-ctl, 36px) !important; }
 html body #pt-panel .pt-btn-icon { min-height:var(--bl-ui-icon, 34px) !important; }
-html body :is(.bl-assets-dialog,#char_assets_settings) .eh-search {
+html body :where(.bl-assets-dialog) .eh-search:is(#bl-s, *),
+html body #char_assets_settings .eh-search {
     height:max(var(--bl-form-height,36px),calc(1.5em + 12px)) !important;
     min-height:var(--bl-ui-ctl, 36px) !important;
   }
@@ -5153,7 +5175,7 @@ html:not(#bl-tab-scroll-off) :is(
   .ppt-ta-tabs,
   .jj-seg[role="tablist"],
   .dq-tabs
-) > :is(button,a,li,[role="tab"],[role="button"]) > span,
+) > :where(button) > span:is(.bl-s, *),
 html:not(#bl-tab-scroll-off) :is(
   #pt-panel > #pt-tabs,
   #pt-panel .pt-settings-nav,
@@ -5171,7 +5193,151 @@ html:not(#bl-tab-scroll-off) :is(
   .ppt-ta-tabs,
   .jj-seg[role="tablist"],
   .dq-tabs
-) > :is(button,a,li,[role="tab"],[role="button"]) > a { white-space:nowrap !important; overflow-wrap:normal !important; }
+) > :where(a) > span:is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :where(li) > span:is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > [role="tab"] > span,
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > [role="button"] > span,
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :where(button) > a:is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :where(a) > a:is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > :where(li) > a:is(.bl-s, *),
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > [role="tab"] > a,
+html:not(#bl-tab-scroll-off) :is(
+  #pt-panel > #pt-tabs,
+  #pt-panel .pt-settings-nav,
+  .pt-help-dialog > nav,
+  .bl-notes-help > nav,
+  #lv_settings .lv-tabs,
+  .llmt-settings .llmt-tabs,
+  .po-dialog > .po-menu-tabs,
+  .bwr_settings .bwr_tabs,
+  .pa-hub > .pa-hub-tabs,
+  .rl-root .rl-tabs,
+  .lvs-tabs,
+  body.salty .bl-chat-view-tabs,
+  body.salty .ui-tabs .ui-tabs-nav,
+  .ppt-ta-tabs,
+  .jj-seg[role="tablist"],
+  .dq-tabs
+) > [role="button"] > a { white-space:nowrap !important; overflow-wrap:normal !important; }
 html:not(#bl-tab-scroll-off) [data-bl-fade] { --bl-fade: 28px; }
 html:not(#bl-tab-scroll-off) [data-bl-fade="right"] { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--bl-fade)), transparent); mask-image: linear-gradient(to right, #000 calc(100% - var(--bl-fade)), transparent); }
 html:not(#bl-tab-scroll-off) [data-bl-fade="left"] { -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade)); mask-image: linear-gradient(to right, transparent, #000 var(--bl-fade)); }

@@ -1,0 +1,13 @@
+/* src/gate-rare.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 3개(기본값 · 사용자 스냅숏 모두 꺼진 드문 설정(입력칸 숨기기 · 페르소나 길게 · 메시지 머리 이름만/없음 · 그림 안쪽 배치 · 테두리 자동 색) — 1.4.x 작업자 D · 채팅 배경 그림 · 설명 ? 끔 · 내 그림 모양(salty-bgimg · salty-help-off · salty-shape-custom)은 제자리 :not(.salty-bgimg) 짝 규칙이 있어 미루면 시작 때 배경이 숨었다 나타나요(검토 D-4) — 넣지 않아요) — 고치지 말 것. src/lite.js 가 body 에 salty-edge-auto · salty-header-none · salty-persona-tall 가 붙기 전에 테마 시트 뒤에 붙여요 (build cc58235c9ceb) */
+body.salty.salty-header-none :is(#chat,.bl-chat-like) .mes .ch_name .alignItemsBaseline {
+  visibility: hidden;
+}
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *):is(bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered:is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img:is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is([class*="custom-imageWrapper"] img):is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img[data-autopic-id]:is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img):is(.autopic-media-owner img.mes_img) {
+  border-color: rgb(var(--salty-pick-key, 145 165 186) / var(--salty-edge-alpha)) !important;
+}
+body.salty.salty-persona-tall #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(240px,36dvh,360px); }
