@@ -2,7 +2,7 @@
 // 자료는 마트가 읽는 파일 그대로예요: 글꾸 data/geulkku/index.json(가벼운 목록 · 미리보기는 그 틀의 조각만 나중에) · 액자 data/frames.json. 고른 쪽만 받아요.
 // 결과 카드는 마트 부품을 빌려 써요(mart.js 의 조각 받기 · 미리보기 · 담기 · HTML 복사, frame-room.js 의 액자 그림 · 담기) — 그래서 담기 · 복사 내용이 마트와 똑같아요.
 // 주소: ?kind=frames 면 액자부터 · 캡처용 ?scene=hello|ask|guess|result|party&seed=숫자&answers=0,1,0,0,0
-import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261113q';
+import { geulkkuList, frameKit, mylogOn, cart, esc, ensureItem, previewOf, tagsHtml, glyphHtml, descOf, entryOf, doAct, sourceLinks, LOAD_FAIL, isBuiltin, BUILTIN_TAG } from './mart.js?v=20261113r';
 import { lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
 
 const Q = new URLSearchParams(location.search);
@@ -74,7 +74,7 @@ const FRAME_STEPS = [
         { t: '일상 채팅', i: '📅', react: '매일 보는 액자군요.', w: { cat: { daily: 2, basic: 1, weather: 1, seasons: 1 } } },
         { t: '기념일', i: '🎉', react: '달력에 동그라미 쳐 둔 날이 있군요.', w: { cat: { birthday: 3, christmas: 2 } } },
         { t: '놀이 · 게임', i: '🎮', react: '코인 넣는 소리가 들려요.', w: { cat: { games: 3 } } },
-        { t: '세계관 · 그래픽', i: '🏰', react: '오… 깊은 세계에 사는 분이군요.', w: { cat: { worlds: 3, graphic: 2, 'halo-char': 2, 'gangho-char': 2, 'sentinel-world': 3, 'sentinel-char': 2 } } },
+        { t: '세계관 · 그래픽', i: '🏰', react: '오… 깊은 세계에 사는 분이군요.', w: { cat: { worlds: 3, graphic: 2, 'halo-char': 2, 'hunter-char': 2, 'gangho-char': 2, 'sentinel-world': 3, 'sentinel-char': 2 } } },
     ] },
 ];
 

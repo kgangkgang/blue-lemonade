@@ -1314,7 +1314,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261113p').then(m => (frameMod = m).start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261113r').then(m => (frameMod = m).start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -1333,6 +1333,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261113p').then(m => (frameMod = m).kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261113r').then(m => (frameMod = m).kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };

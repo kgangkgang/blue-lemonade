@@ -15,7 +15,7 @@ const CAT_SHOW = { 'gangho-char': '무협시뮬 · 인물' };   // 「강호유�
 /** 보이는 이름 고침(자료의 옛 이름 → 지금 이름) */
 export const showName = s => String(s).replace(/세라프(?= · 천지합동청)/g, '라파엘').replace(/강호유람록/g, '무협시뮬').replace(/^헌시뮬(?= · |$)/, 'D&H');
 const catShow = (id, label) => CAT_SHOW[id] || label || '';
-const CAT_SEARCH = { 'halo-char': '천지합동청 천악 halo 인물 캐릭터', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬 인물 캐릭터', scenic: '감성 풍경 분위기 참고',
+const CAT_SEARCH = { 'halo-char': '천지합동청 천악 halo 인물 캐릭터', 'hunter-char': '헌시뮬 헌터 던전 dungeons hunters 디앤에이치 인물 캐릭터', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬 인물 캐릭터', scenic: '감성 풍경 분위기 참고',
     'sentinel-world': '센티넬버스 센가 센가시뮬 센가 아카데미 ksa 세계관', 'sentinel-char': '센티넬버스 센가 센가시뮬 센가 아카데미 센티넬 가이드 인물 캐릭터' };
 // 11-06 센티넬버스(세계관 2 · 인물 11) — 깡싸 글 주소가 아직 없어 원작 봇 정식 이름을 글로만 보여요(글꾸 마트 목록 source 와 같은 이름 · 인물은 두 봇에 다 나와요)
 const SENGA_SIM = '[실리/1차] 센티넬버스 시뮬레이션(센가시뮬) v1.3', SENGA_ACADEMY = '[실리/1차] 센티넬버스 아카데미';
@@ -24,8 +24,8 @@ const botText = item => botsOf(item).map(b => sourceHtml(workByTitle(b) || { tit
 // 인물 액자의 원작 링크는 글꾸 인물과 같은 길(분류 SOURCES + 「char-이름」 깡캐 글)로 — mart.js sourceLinks 를 그대로 빌려요
 /** 그 액자의 원작 줄 HTML — 액자 방 · 지니 · 장바구니가 같이 써요(mart.js 가 frameSourceLinks 로 내보내요) */
 export const frameLinks = item => links(item);
-const links = item => item.kind === 'frame' && /^(halo|gangho)-char$/.test(item.category)
-    ? api.sourceLinks({ kind: 'frame-char', category: item.category, id: `char-${String(item.concept).replace(/^(halo|gangho)-/, '')}` }) : api.sourceLinks(item) + botText(item);
+const links = item => item.kind === 'frame' && /^(halo|hunter|gangho)-char$/.test(item.category)   // 11-13 D&H 인물 액자 8(원작 = 헌시뮬 글)
+    ? api.sourceLinks({ kind: 'frame-char', category: item.category, id: `char-${String(item.concept).replace(/^(halo|hunter|gangho)-/, '')}` }) : api.sourceLinks(item) + botText(item);
 const states = new Map();
 let view = {}, shadow = {}, photo = { url: '', label: '', own: false, file: null };
 const root = document.documentElement;

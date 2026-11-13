@@ -406,21 +406,47 @@ await test('옛 글꾸 없음 · 화면: 「옛날 버전」 단추 · 돌아가
     assert.ok(!page.includes('mart-mylog'), '「내 로그로 보기」 단추 없음');
     assert.ok(!/447|1512|1483/.test(page.replace(/\?v=\d+\w*/g, '')) && !/글꾸 1483종|1512/.test(home), '옛 숫자 없음');
     const top = fs.readFileSync(path.join(MART, 'top-mart.js'), 'utf8');
-    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1458, geulkku: ${sixAll.count} \\};`));   // 11-12 심플 액자 20 → 30(그림 액자 1428 그대로)
+    assert.match(top, new RegExp(`const COUNTS = \\{ frames: 1854, geulkku: ${sixAll.count} \\};`));   // 11-13 그림 액자 1428 → 1824(다시 그린 판 + D&H 인물 8 + 참고사진 25) · 심플 30
     assert.ok(!top.includes('geulkkuAll'));
     assert.match(home, new RegExp(`<b>글꾸 마트</b><p>새 글꾸 틀 ${sixAll.count}종`));
     assert.match(page, new RegExp(`<div class="mart-head-help" data-label="쓰는 법">\\s*<p>새 글꾸 틀 ${sixAll.count}개예요\\.`));
-    // 다른 마트(액자) 목록은 그대로 — 11-12 심플 액자만 테마 판 8(30종)로 바꿨어요(아래 「심플 액자 30」 시험)
+    // 11-13 그림 액자는 다시 그린 판으로 바뀌었어요 — 옛 액자의 id 는 그대로 있어야 해요(받아 둔 값 · 주소가 안 깨지게). 그림 파일 · 개수는 아래 「그림 액자 1824」 시험이 잠가요
     const framesNow = JSON.parse(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8')), framesBase = JSON.parse(git('show', `${BASE}:mart/data/frames.json`).toString());
-    const notSimple = d => ({ ...d, items: d.items.filter(x => x.kind !== 'frame-preset') });
-    assert.deepEqual(notSimple(framesNow), notSimple(framesBase));
+    const nowIds = new Set(framesNow.items.filter(x => x.kind === 'frame').map(x => x.id));
+    for (const x of framesBase.items.filter(x => x.kind === 'frame' || x.kind === 'picture')) if (/^mart-[a-z0-9-]+-(portrait|landscape)$/.test(x.id) && x.concept) assert.ok(nowIds.has(x.id), `옛 액자 ${x.id} 가 그대로 있어요`);
+});
+// ── 11-13 그림 액자 다시 그린 판 — 콘셉트마다 여섯 그림체 × 세로 · 가로 12장이 다 있어야 실어요(사용자 「디자인 6개 중에 못 만들어진 거 있으면 올리지 말고」) ──
+await test('그림 액자 1824: 콘셉트 152 × 12 · 파일 넷이 다 있음 · D&H 인물 8 · 사진창 범위', () => {
+    const data = JSON.parse(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8'));
+    const pics = data.items.filter(x => x.kind === 'frame');
+    assert.equal(pics.length, 1824); assert.equal(new Set(pics.map(x => x.id)).size, 1824);
+    const by = new Map(); for (const x of pics) by.set(x.concept, [...(by.get(x.concept) || []), x]);
+    assert.equal(by.size, 152);
+    const STY = ['two-d', 'three-d', 'skeuomorphism', 'clay', 'illustrated', 'glassy'];
+    for (const [c, xs] of by) {
+        assert.deepEqual(xs.map(x => `${x.style}-${x.orientation}`).sort(), STY.flatMap(s => [`${s}-landscape`, `${s}-portrait`]).sort(), `${c} 12장`);
+        assert.equal(new Set(xs.map(x => x.category)).size, 1, `${c} 분류 하나`);
+    }
+    const used = new Set();
+    for (const x of pics) {
+        for (const k of ['thumb', 'maskThumb', 'full', 'mask']) { assert.match(x[k], /^data\/frames\/[a-z0-9-]+\.(webp|png)$/, `${x.id} ${k}`); assert.ok(fs.existsSync(path.join(MART, x[k])), `${x.id} ${k} 파일`); used.add(path.basename(x[k])); }
+        assert.ok(Array.isArray(x.window) && x.window.length === 4 && x.window.every(n => n >= 0 && n < 50), `${x.id} 사진창`);
+        assert.ok(x.ratio > 0.3 && x.ratio < 3 && (x.orientation === 'portrait') === (x.ratio < 1), `${x.id} 비율`);
+        assert.ok(!/[<>]/.test(x.name + x.desc), `${x.id} 글`);
+    }
+    assert.deepEqual(fs.readdirSync(path.join(MART, 'data/frames')).sort(), [...used].sort(), '안 쓰는 그림 파일 없음');
+    const hunter = [...by].filter(([, xs]) => xs[0].category === 'hunter-char');
+    assert.equal(hunter.length, 8); for (const [c, xs] of hunter) { assert.match(c, /^hunter-[a-z]+$/); assert.match(xs[0].conceptLabel, / · D&H$/); }
+    assert.equal(data.categories.findIndex(c => c.id === 'hunter-char'), data.categories.findIndex(c => c.id === 'halo-char') + 1, 'D&H 인물 칩은 천지합동청 인물 바로 뒤');
+    const room = fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8');
+    assert.ok(room.includes("/^(halo|hunter|gangho)-char$/.test(item.category)") && fs.readFileSync(path.join(MART, 'mart.js'), 'utf8').includes("'hunter': WORKS.hunter, 'hunter-char': WORKS.hunter,"), 'D&H 인물 액자에 원작 줄');
 });
 // ── 11-12 액자 마트 심플 액자 30 — 테마(1.1.4 · 판 8)가 넣은 10종(gallery … calendar)까지 · frame-presets.js 는 테마 사본 그대로 · 항목은 테마 mart-build.mjs simpleFrames() 꼴 ──
-await test('심플 액자 30 ① 자료 frames.json = 테마 FRAME_PRESETS 30 · 기본 색 · 칩 글자 · 설명 · 그림 액자 1428 그대로', async () => {
+await test('심플 액자 30 ① 자료 frames.json = 테마 FRAME_PRESETS 30 · 기본 색 · 칩 글자 · 설명 · 그림 액자 1824', async () => {
     const fp = await imp(path.join(MART, 'frame-presets.js'));
     const data = JSON.parse(fs.readFileSync(path.join(MART, 'data/frames.json'), 'utf8'));
     const simple = data.items.filter(x => x.kind === 'frame-preset');
-    assert.equal(data.items.length, 1458); assert.equal(data.items.length - simple.length, 1428);
+    assert.equal(data.items.length, 1854); assert.equal(data.items.length - simple.length, 1824);
     assert.equal(fp.FRAME_PRESET_VERSION, 8);
     assert.deepEqual(simple.map(x => x.presetId), fp.FRAME_PRESETS.map(([id]) => id));
     for (const id of ['gallery', 'corners', 'peg', 'phone', 'petal', 'comic', 'airmail', 'tarot', 'vinyl', 'calendar']) assert.ok(simple.some(x => x.presetId === id), id);
@@ -437,8 +463,8 @@ await test('심플 액자 30 ① 자료 frames.json = 테마 FRAME_PRESETS 30 ·
     if (fs.existsSync(path.join(themeDir, 'src/frame-presets.js'))) assert.equal(fs.readFileSync(path.join(MART, 'frame-presets.js'), 'utf8'), fs.readFileSync(path.join(themeDir, 'src/frame-presets.js'), 'utf8'));
     // 액자 마트 머리 · 홈 숫자
     assert.match(fs.readFileSync(path.join(MART, 'frames/index.html'), 'utf8'), /심플 액자 30종은 테마에 이미/);
-    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /그림 액자 1428종과, 테마에 이미 들어 있는 심플 액자 30종/);
-    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261112d/, f);
+    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /그림 액자 1824종과, 테마에 이미 들어 있는 심플 액자 30종/);
+    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261113r/, f);
 });
 await test('심플 액자 30 ② 가짜 캔버스로 30종 전부 기본값 · 색 · 50 % · 200 % 그려지고 사진 창을 채워요 · 모르는 id 는 던져요(테마 frame-presets-simple.mjs ② 와 같은 셈)', async () => {
     const calls = [];
@@ -2071,7 +2097,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261113q' : '20261113p'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로   // 11-13 줄바꿈 선택 — mart · tune-ui 를 고쳐 그 둘과 부르는 곳(genie)을 q 로
+        assert.deepEqual([...tails], [{ mart: '20261113r', genie: '20261113r', 'frame-room': '20261113r', 'tune-ui': '20261113q', cart: '20261113p' }[mod]], `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 저녁 그림 액자 다시 그린 판 — frame-room(D&H 인물 원작 · 찾기 말)을 고쳐 그것과 부르는 곳(mart · genie)을 r 로   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로   // 11-13 줄바꿈 선택 — mart · tune-ui 를 고쳐 그 둘과 부르는 곳(genie)을 q 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2187,7 +2213,7 @@ await test('줄바꿈: 공용 함수는 테마 src/log-copy-wrap.js 와 같은 �
     assert.ok(/html: item\.preview \|\| '', set \}\] \};/.test(martSrc), '테마로 담기 값은 틀 원래 판 그대로(테마는 제 설정으로)');
     assert.equal((ui.match(/wrapChips\(\)/g) || []).length, 2, '간편 · 세밀(문단) 두 자리');
     assert.ok(ws.includes("wrapMode(globalThis.localStorage?.getItem(KEY))") && ws.includes("next === 'word' ? 'word' : ''"), '기본 글자 단위 · 단어 단위만 기억');
-    for (const f of ['geulkku', 'frames']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.js\?v=20261113q/, `${f} 꼬리`);
+    for (const f of ['geulkku', 'frames']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.js\?v=20261113r/, `${f} 꼬리`);
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);

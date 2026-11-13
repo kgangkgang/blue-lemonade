@@ -26,7 +26,7 @@ try {
         await b.goto(srv.url + 'mart/frames/'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(600);
         // 개수 한 줄: 목록 바로 위 · 화면 안
         const c = await b.eval(`(()=>{const e=document.querySelector('.mart-count'),r=e.getBoundingClientRect(),g=document.querySelector('.mart-grid');return {text:e.textContent,in:r.left>=0&&r.right<=innerWidth+1&&r.width>0,above:e.nextElementSibling===g||!!(e.compareDocumentPosition(g)&4)}})()`);
-        row(vp, '개수가 목록 바로 위 한 줄 · 화면 안(1458개)', c.text === '1458개' && c.in && c.above, J(c));
+        row(vp, '개수가 목록 바로 위 한 줄 · 화면 안(1854개)', c.text === '1854개' && c.in && c.above, J(c));
         // 표본 사진일 때 「이 기기에 기억」 숨김
         row(vp, '표본 사진일 때 「이 기기에 기억」은 안 보여요', !(await b.eval(`document.querySelector('.mart-tryon-keep').checkVisibility()`)), '');
         // 이름 하나로
@@ -43,7 +43,7 @@ try {
         await find('없는말zzz');
         const empty = await b.eval(`document.querySelector('.mart-empty')?.textContent.replace(/\\s+/g,' ').trim()`);
         await tap(vp, '거르기 풀기', '.mart-empty [data-act="clear-filters"]');
-        row(vp, '빈 결과에 「거르기 풀기」 단추 → 전부(1458개)', /거르기 풀기/.test(empty || '') && (await count()) === 1458, `${empty} → ${await count()}개`);
+        row(vp, '빈 결과에 「거르기 풀기」 단추 → 전부(1854개)', /거르기 풀기/.test(empty || '') && (await count()) === 1854, `${empty} → ${await count()}개`);
         // 심플 묶음: 방향 · 디자인 숨김
         await b.eval(`scrollTo(0,0); document.querySelector('.mart-groups [data-group="simple"]').click(); true`); await b.sleep(500);
         const simple = await b.eval(`({n:parseInt(document.querySelector('.mart-count').textContent),segs:[...document.querySelectorAll('[data-filter="orient"], [data-filter="style"]')].filter(e=>e.checkVisibility()).length})`);
