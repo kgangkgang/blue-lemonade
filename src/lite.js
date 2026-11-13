@@ -32,18 +32,26 @@ export function themeRunEnd(node, order = Infinity) {
     for (let n = node?.nextElementSibling; n && (n.id === 'salty-lazy-css' || n.id === 'salty-ext-css' || n.dataset?.blGate != null) && !(Number(n.dataset?.blGate) > order); n = n.nextElementSibling) end = n;
     return end;
 }
-let gateApi = null, gateWant = [];
-const gateLoad = () => import('./gate-css.js').then(m => (gateApi = m));
+let gateApi = null, gateWant = [], gateCool = null, gateTry = 0, gateBusy = null;
+// 못 받은 모듈 주소는 브라우저가 기억해요(weather-load.js · tts shell 과 같은 까닭) — 다시 받을 땐 주소 뒤에 ?retry= 를 붙여요. 받는 중이면 같은 약속을 써요(몸통이 두 벌 되지 않게)
+const gateLoad = () => gateBusy ??= (gateTry ? import(`./gate-css.js?retry=${gateTry}`) : import('./gate-css.js')).then(m => (gateApi = m), (error) => { gateTry++; throw error; }).finally(() => { gateBusy = null; });
+const gated = c => GATE_SHEETS.some(s => s.classes.includes(c) || s.prefixes.some(p => c.startsWith(p)));
 /**
  * applyAll 이 body 클래스를 바꾸기 직전에 불러요(want = 달 클래스 전부). 켠 설정의 시트를 붙이고, 시트가 아직 안 와서 지금 달면
  * 꾸밈 없이 한 번 그려질 클래스 모음(held)을 돌려줘요 — apply.js 는 그 클래스만 빼고 달고, 시트가 오면 src/gate-css.js 가 달아요.
  * 기본값(켠 것 없음)이면 아무것도 받지 않아요.
+ * cool = 미룬 클래스를 나중에 달기 직전에 부를 「긴 채팅 식히기」(apply.js 가 features.js coolChatForRestyle 을 넘겨요 — 여기서 features.js 를 부르면 서로 물려요).
  */
-export function syncGateCss(want) {
+export function syncGateCss(want, cool = null) {
     gateWant = [...want];
-    if (gateApi) return gateApi.syncGateCss(gateWant);
-    const held = new Set(gateWant.filter(c => !document.body.classList.contains(c) && GATE_SHEETS.some(s => s.classes.includes(c) || s.prefixes.some(p => c.startsWith(p)))));
-    if (held.size) gateLoad().then(m => m.syncGateCss(gateWant, true), () => { const add = [...held].filter(c => gateWant.includes(c)); if (add.length) document.body.classList.add(...add); });
+    if (cool) gateCool = cool;
+    if (gateApi) return gateApi.syncGateCss(gateWant, false, gateCool);
+    const held = new Set(gateWant.filter(c => !document.body.classList.contains(c) && gated(c)));
+    // 몸통을 못 받은 적이 있으면(gateTry) 미룰 클래스가 없어도 다시 받아요 — 실패 갈래가 클래스를 이미 달아 held 가 비는데, 시트가 붙어야 켠 꾸밈이 보여요
+    if (held.size || (gateTry && gateWant.some(gated))) gateLoad().then(m => m.syncGateCss(gateWant, true, gateCool), () => {
+        const add = [...held].filter(c => gateWant.includes(c) && !document.body.classList.contains(c));
+        if (add.length) { try { gateCool?.(); } catch { /* 식히기는 덤이에요 */ } document.body.classList.add(...add); }
+    });
     return held;
 }
 /** 테마 설정 창 규칙 시트를 다 받았을 때(못 받았어도) 풀리는 약속 — 창(.salty-panel)을 만들기 전에 기다려요 */

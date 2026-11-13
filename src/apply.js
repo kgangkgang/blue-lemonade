@@ -772,7 +772,8 @@ export function applyAll() {
     syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image), edgeTheme); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
     // 1.1.1 가볍게 → 1.1.6: 켠 설정(고른 마크다운 모양 · 글자 외곽선 · 들여쓰기 · 정보 정렬)의 규칙 시트를 클래스보다 먼저 붙여요(첫 장 · 전체 장에는 없어요 · lite.js syncGateCss).
     //   시트가 아직 안 왔으면 그 클래스(held)는 지금 달지 않고, 시트가 오면 lite.js 가 달아요 — 켜는 순간 꾸밈 없는 한 프레임이 없게
-    const held = syncGateCss(want);
+    //   그때는 applyAll 밖이라 아래 restyleAhead 가 못 닿아요 — 식히는 함수를 넘겨 달기 직전에 부르게 해요(긴 채팅을 식히지 않고 다시 계산하던 것)
+    const held = syncGateCss(want, coolChatForRestyle);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
     const cutoutBefore = cls.contains('salty-cutout-same');

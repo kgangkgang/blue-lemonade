@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Penterson
-// 원본 한국어 사전을 이 도구 안에서만 써요.
+// 원본 한국어 사전을 이 도구 안에서만 써요. 블루레몬 변경: 「이미 꺼져 있거나 지금 채팅에 허용되지 않았어요」 한 줄을 더했어요.
 const ko = {
   "Measuring...": "측정 중...",
   "Features": "기능",
@@ -155,6 +155,7 @@ const ko = {
   "This chat (${0} messages): ${1} ms with the features off, ${2} ms on — ${3} ms saved (${4}%)": "이 채팅 (메시지 ${0}개): 기능을 끄면 ${1} ms, 켜면 ${2} ms. ${3} ms 절약 (${4}%)",
   "\"${0}\" is not in the Regex extension's list.": "\"${0}\" 스크립트를 정규식 확장 목록에서 찾을 수 없어요.",
   "Turned off: ${0}": "껐어요: ${0}",
+  "\"${0}\" is already off or not allowed in this chat.": "\"${0}\" 스크립트는 이미 꺼져 있거나 지금 채팅에 허용되지 않았어요.",
   "Wait until the generation finishes.": "생성이 끝난 뒤에 측정하세요.",
   "The fixed text ② looks for before running this script: every literal joined by & must be present, one of those joined by |. Hover a cell for the shortest possible match.": "②가 실행 전에 확인하는 리터럴. &로 이어진 것은 전부, |로 이어진 것은 하나라도 있어야 실행. 셀에 마우스를 올리면 최소 매치 길이 표시.",
   "Shortest possible match: ${0} characters. ② skips shorter messages.": "최소 매치 길이 ${0}글자. 이보다 짧은 메시지는 ②가 건너뜀.",

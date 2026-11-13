@@ -1561,7 +1561,7 @@ const STYLE = `
   .bl-lc.bl-lc-less .bl-lc-cr { padding-top:8px; }
   /* 분류: 밑줄 글 탭 + 오른쪽 끝 「전부」 */
   .bl-lc-tl { display:flex; align-items:flex-start; gap:2px; min-width:0; padding-right:6px; border-bottom:1px solid var(--salty-line); }   /* 1.2.2 「전부」 꺾쇠는 탭 줄 옆 제자리(탭 위에 겹쳐 띄우지 않아요) — 넘치면 공용 탭 줄 흐림(98-tab-strips · 28px)이 꺾쇠 앞에서 끝나요 */
-  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats { flex:1 1 auto; min-width:0; gap:2px; margin:0; padding:0 0 0 10px; border:0; border-radius:0; background:transparent; box-shadow:none; --bl-tab-reveal-inset:28px !important; }
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats { flex:1 1 auto; min-width:0; gap:2px; margin:-5px 0; padding:5px 0 5px 10px; border:0; border-radius:0; background:transparent; box-shadow:none; --bl-tab-reveal-inset:28px !important; }   /* 위아래 안쪽 여백 5(바깥 여백을 그만큼 줄여 자리 그대로): 탭 높이 34 의 누르는 상자 44 가 이 줄의 overflow-y:hidden 에 잘려 34 로 줄던 것(ext-status 분류 탭과 같은 꼴) */
   .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button { position:relative; flex:none; min-width:0; min-height:var(--bl-ui-chip, 34px); padding:0 8px; border:0; border-radius:8px; background:transparent; box-shadow:none; color:var(--salty-muted); font-size:13px; font-weight:400; }   /* 1.2.2 공용 고르기 묶음 칸(34 · 13 · 여백 8 · 모서리 8 — PC 의 같은 줄과 같아요) 위에 밑줄만 */
   .bl-lc:not(#bl-lc-a) .salty-seg.bl-lc-cats > button.on { isolation:isolate; color:var(--salty-text) !important; font-weight:700 !important; }
   .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button.on::before { content:''; position:absolute; inset:0; width:auto; height:auto; transform:none; z-index:-1; background:var(--salty-bg); }   /* 테마 칩 「고름」 면(층 안 !important 라 덮어쓰지 못해요)을 창 바탕으로 가려 밑줄 탭만 보여요 */

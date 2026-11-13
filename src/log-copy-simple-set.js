@@ -41,19 +41,29 @@ export function prepareFrame(frame, set, { castKnown = false } = {}) {
 /**
  * 칠하기 뒤 — 조절 값을 입혀요(아무것도 안 고친 설정이면 받은 글 그대로).
  * @param {string} html drawSimple 이 그린 글(고칠 자리 「✎」 표시 없이)
- * @param {object} set 조절 값 @param {{ mode?: 'light'|'dark', key?: string, caps?: object }} [o] caps: 틀별 능력표 한 줄(1.1.5 · 마트 측정표에서 정적 값과 다른 칸만 — geulkku-mart/caps-table.js)
+ * @param {object} set 조절 값 @param {{ mode?: 'light'|'dark', key?: string, caps?: object, sample?: boolean }} [o] caps: 틀별 능력표 한 줄(1.1.5 · 마트 측정표에서 정적 값과 다른 칸만 — geulkku-mart/caps-table.js)
+ *   sample: html 이 마트 견본 글일 때만 true(마트 기대값 대조 시험) — 견본 전용 값까지 걸어요. 테마가 그린 실제 로그에는 걸지 않아요(아래 logTune).
  */
-export function applySet(html, set, { mode = 'dark', key = '', caps: row } = {}) {
+export function applySet(html, set, { mode = 'dark', key = '', caps: row, sample = false } = {}) {
     if (!html) return html;
     const r = readFor(set, key);
     if (!r) return html;
-    const t = r.tune, caps = { ...capsStatic(html), ...row };
+    const t = sample ? r.tune : logTune(r.tune), caps = { ...capsStatic(html), ...row };
     const value = r.shape && r.shape.pad != null ? { ...r.shape, pad: padIn(caps, r.shape.pad) } : r.shape;
     const shaped = applyShape(html, value, t?.inks?.[mode], shapeGate(caps, value));
     const L = r.look, ts = L?.title?.size;
     const look = ts == null || !caps?.title || titleIn(caps, ts) === ts ? L : { ...L, title: { ...L.title, size: titleIn(caps, ts) } };
     const styled = applyLook(shaped, look);
     return applyTex(applyMotion(t ? applyTune(styled, valsIn(styled, t), { mine: false }) : styled, r.motion), r.tex);
+}
+
+/** 이 틀 값에서 마트 견본 전용 값을 빼요 — 대사 줄 수(lines) · 고친 글(texts) · 숨긴 줄(spoilers)은 「마트 견본 글의 자리 번호」로 적혀 있어요.
+ *  테마는 그 자리에 실제 로그를 그려서 번호가 다른 줄을 가리켜요: 그대로 걸면 메시지가 빠지거나(lines −1) 한 번 더 붙고(+1 · +2), 이름 · 대사가 마트에서 고친 견본 글로 바뀌고, 엉뚱한 메시지가 숨겨졌어요.
+ *  마트도 내 글을 넣은 동안에는 이 값을 걸지 않아요(mine). 틀 전체에 거는 값(글자 칸 · 색 · 제목 · 이름 숨김 · 기본 색)은 그대로예요. */
+export function logTune(tune) {
+    if (!tune) return tune;
+    const { lines, texts, spoilers, mineTexts, mineSpoilers, ...rest } = tune;
+    return rest;
 }
 
 /** 이 틀 값의 글자 칸(tN) 가운데 그린 글에 없는 칸은 빼요 — 테마는 틀의 「로그 자리 · 숨은 줄」 칸에 실제 로그를 그려 그 글자 칸이 없어요.

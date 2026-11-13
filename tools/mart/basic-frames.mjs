@@ -54,6 +54,13 @@ export function build(genText, pxText, lemonText) {
     // 1.2.1 결함 고침: 깡통은 <details> 안 내용을 class 없는 <div> 로 감싸요. 빈 줄 숨김이 그 칸까지 숨겨 펼쳐도 글(숨긴 글 · blsp-c)이 안 나왔어요
     //   — 빈 줄(<div><br></div> · 안에 class 든 것이 없는 칸)만 숨겨요(글꾸 마트 고침 ce06d4f8b kkGuard 와 같은 선택자)
     code = once(code, '${p} details>summary~:not([class]){display:none}', '${p} details>summary~:not([class]):not(:has([class])){display:none}', '깡통 빈 줄 숨김');
+    // 결함 고침: 본문이 명조(RIDIBatang — 깡통은 400 한 굵기만 실어요)라 굵은 낱말(<b> · <strong>)을 브라우저가 번지게 그린 가짜 굵게로 뭉갰어요
+    //   — 1.2.1 이 심플 새 틀 · 추천에 넣은 「굵게 = 고딕 700」(tools/mart/simple-frames.mjs BOLD_RULE 과 같은 선언)을 기본 글꾸 19틀에도 넣어요.
+    //   문단(p) 안 굵게는 기본 규칙에 한 줄, 메신저(435) 말풍선(.bb — 문단이 아니에요)은 그 틀 규칙에 한 줄. 정보 줄(p.mt b) · 이름(p.nm)은 원래 고딕이라 그대로예요.
+    const BODY_P = '${p} p{margin:0 0 10px;font:400 14.5px/24px ${SERIF};text-indent:1em;word-break:keep-all;overflow-wrap:anywhere}';
+    code = once(code, BODY_P, BODY_P + '\n${p} p strong,${p} p b{font-family:${GOTHIC};font-weight:700}', '본문 굵게(고딕 700)');
+    const BUBBLE = '${p} .bb{grid-template-columns:minmax(0,1fr);padding:8px 12px;';
+    code = once(code, BUBBLE, '${p} .bb strong,${p} .bb b{font-family:${GOTHIC};font-weight:700}\n' + BUBBLE, '말풍선 굵게(고딕 700)');
     const sLine = code.match(/^  const S = aide \? .*$/m)?.[0];
     if (!sLine) throw new Error('frameStyle 의 화자 줄을 못 찾았어요');
     code = once(code, sLine, `${sLine}\n  if (!aide) for (const [x, c] of Object.entries(opt.extra || {})) if (!S[x]) S[x] = speaker(c);   // 테마: 셋째 화자부터`, 'frameStyle 화자');

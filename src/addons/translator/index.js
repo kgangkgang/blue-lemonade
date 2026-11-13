@@ -2193,9 +2193,13 @@ async function translate(text, options = {}) {
         const prepared = { get(body) { if (!built.has(body)) { watcher.check(); built.set(body, PROMPT_LAYOUTS.map(layout => buildFullPrompt(layout, body))); } return built.get(body); } };
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
-        const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, ...(styleProfileSignature(chatCtx?.chatMetadata).length ? ['speech-alias-v2',styleProfileSignature(chatCtx?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
-            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(chatCtx?.chatMetadata)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : []), ...(replyRefAt >= 0 ? ['reply-ref-v2', replyRef?.hash || ''] : [])]));   // 참고 정보를 켠 번역만 열쇠가 달라요 (끄면 예전 열쇠 그대로)
-        const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
+        const digestParts = [connection, finalPrompt, rulePrompt, additionalGuidance, ...(styleProfileSignature(chatCtx?.chatMetadata).length ? ['speech-alias-v2',styleProfileSignature(chatCtx?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(chatCtx?.chatMetadata)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : [])];
+        // 참고 정보를 켠 번역만 열쇠가 달라요 (끄면 예전 열쇠 그대로). refHash = 참고 정보 몫 — 번역문 삭제는 아래에서 다른 몫으로도 한 번씩 더 불러요
+        const digestOf = refHash => checkpointKey(JSON.stringify([...digestParts, ...(replyRefAt >= 0 ? ['reply-ref-v2', refHash || ''] : [])]));
+        const resumeKeyOf = async digest => (chunks.length > 1 ? await checkpointKey(JSON.stringify([digest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '');   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
+        const setupDigest = await digestOf(replyRef?.hash);
+        const key = await resumeKeyOf(setupDigest);
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
         if (options.forget) {
@@ -2207,6 +2211,13 @@ async function translate(text, options = {}) {
             }
             if (parts?.length) await forgetSegments(parts, glossarySegmentSignature(setupDigest), n => protectedBlocks[n]);   // 3.0.1 번역할 때와 같은 열쇠(보호 글 포함)
             if (key && !Array.isArray(options.forget)) await clearCheckpoints(key);
+            // 감사 고침: 참고 월드인포는 번역할 때의 상태(넣음 · 생성 중 건너뜀 · 실패)에 따라 열쇠 몫이 달라요. 지울 때 상태가 다르면(예: 다음 답을 만드는 동안 휴지통)
+            //   그 번역의 캐시 줄을 하나도 못 찾아, 지운 번역이 다시 번역할 때 요청 없이 그대로 돌아왔어요 — 그 메시지가 가질 수 있는 다른 몫으로도 지워요
+            for (const refHash of replyRef?.forgetHashes || []) {
+                const otherDigest = await digestOf(refHash);
+                if (parts?.length) await forgetSegments(parts, glossarySegmentSignature(otherDigest), n => protectedBlocks[n]);
+                if (!Array.isArray(options.forget)) { const otherKey = await resumeKeyOf(otherDigest); if (otherKey) await clearCheckpoints(otherKey); }
+            }
             return '';
         }
 
@@ -4548,6 +4559,7 @@ let referenceInfoModule = null;
 // 못 받은 것은 기억하지 않아요 — 한 번 끊겼다고 새로고침할 때까지 번역이 전부 실패하면 안 돼요 (다음 번역이 다시 받아요)
 const loadReferenceInfo = () => (referenceInfoModule ??= import('./reference-info.js').catch(error => { referenceInfoModule = null; throw error; }));
 let replyReferenceMemo = null;
+let lastLoreBooks = null;   // { chatId, books } — 이 채팅에서 마지막으로 받은 로어북 서명 (번역문 삭제가 「넣음」 몫을 지울 때)
 
 // 실리태번은 건조 실행 스캔에서도 다른 확장이 예약한 강제 발동(WORLDINFO_FORCE_ACTIVATE)을 비워요 — 번역용 스캔이 먹으면 본 생성에서 빠져요.
 // 월드인포 참고를 쓰는 사람만: 예약을 같이 들어 두었다가 번역용 스캔 뒤에 다시 예약해요. 본 생성이 끝나면(실리태번이 이미 쓴 뒤) 잊어요.
@@ -4560,6 +4572,16 @@ function watchForcedActivations() {
 }
 async function restoreForcedActivations() {
     if (forcedActivations?.size) await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, [...forcedActivations.values()]);
+}
+
+// 번역용 스캔이 도는 사이(로어북 읽기 · 토큰 세기를 기다리는 0.1 ~ 1초) 스와이프 · 다시 생성 · 보내기를 누르면, 그 생성이 새로 쓴 작가 노트 · 변수 · 시간 효과(sticky · cooldown)를
+// 뒤늦게 끝난 스캔의 되돌리기가 스캔 전 값으로 덮었어요. 실리태번은 GENERATION_AFTER_COMMANDS 를 듣는 쪽을 기다려 주니(조용한 생성도 지나가요), 거기서 스캔 줄이 빌 때까지 기다려요.
+//   월드인포 참고를 쓰는 사람만 처음 스캔할 때 한 번 걸어요. 줄에 남은 스캔은 본채팅 생성 중이면 건너뛰어(busy) 금방 비어요.
+let generationWaitsForScan = false;
+function holdGenerationForScan(info) {
+    if (generationWaitsForScan || typeof eventSource === 'undefined' || !event_types?.GENERATION_AFTER_COMMANDS || typeof info?.scanIdle !== 'function') return;
+    generationWaitsForScan = true;
+    eventSource.on(event_types.GENERATION_AFTER_COMMANDS, () => info.scanIdle());
 }
 
 // 로어북 서명 재료: 실리태번은 스캔 첫머리에 그 스캔이 볼 수 있는 항목 전부를 WORLDINFO_ENTRIES_LOADED 로 내요. 번역용 스캔 동안 내 온 것만 받아 둬요
@@ -4583,13 +4605,20 @@ function referenceCharacter(ctx, message) {
 /**
  * 월드인포 스캔에 넘길 것 — 본 생성(script.js)과 같은 재료: 이름 붙이기 설정 · 전체 문맥 크기 · globalScanData.
  * 번역은 채팅 상태를 바꾸면 안 돼서, 스캔이 건드릴 수 있는 자리(채팅 변수 · 전역 변수 · 작가 노트 확장 프롬프트)를 수집 함수가 떠 두었다 되돌리게 넘겨요.
- * 되돌린 것이 변수면 실리태번이 예약해 둔 저장이 되돌린 값으로 나가게 저장을 다시 예약해요. (그룹 채팅에서 캐릭터에 묶인 로어북은 실리태번이 「지금 고른 캐릭터」로 골라요 — 말한 멤버와 다를 수 있어요.)
+ * 되돌린 것이 변수면 실리태번이 예약해 둔 저장이 되돌린 값으로 나가게 저장을 다시 예약해요. (캐릭터에 묶인 로어북 · 캐릭터 거르기 항목은 실리태번이 「지금 고른 캐릭터」로 골라요 —
+ * 그룹 채팅은 생성이 끝나면 고른 캐릭터가 비고 번역용 스캔은 쉴 때만 돌아서, 그룹 채팅에서는 그 둘이 늘 빠져요. 화면 글도 그렇게 적어요.)
  */
 function worldInfoScanInputs(info, ctx, owner) {
     let maxContext = 8192;
     try { maxContext = Number(getMaxContextTokens()) || 8192; } catch { /* 연결 전 */ }
     if (typeof watchForcedActivations === 'function') watchForcedActivations();
+    if (typeof holdGenerationForScan === 'function') holdGenerationForScan(info);
+    // 스캔은 줄을 서서 나중에 돌아요. 그사이 채팅이 바뀌면 실리태번 스캔은 새 채팅의 변수 · 작가 노트로 도는데, 여기 떠 둔 것은 옛 채팅 것이라 되돌리지 못해요
+    //   (새 채팅의 변수가 번역용 스캔이 바꾼 채 남았어요) — 차례가 왔을 때 채팅이 그대로인지 보고, 바뀌었으면 스캔하지 않아요
+    const chatIdOf = c => c?.chatId ?? c?.getCurrentChatId?.() ?? null;
+    const startChat = chatIdOf(ctx);
     return {
+        busy: () => (chatIdOf(getContext()) !== startChat ? '채팅 바뀜' : ''),
         includeNames: worldInfoHost.world_info_include_names !== false,
         maxContext,
         maxMessages: info.scanCount(worldInfoHost.world_info_depth, worldInfoHost.world_info_min_activations_depth_max),
@@ -4600,9 +4629,10 @@ function worldInfoScanInputs(info, ctx, owner) {
             return info.scanDataOf({ fields, character: owner?.card ?? null, personaDescription: power_user?.persona_description || '' });
         },
         getWorldInfoPrompt,
-        chatMetadata: ctx.chatMetadata ?? null,
+        // 떠 둘 자리는 스캔 차례가 왔을 때의 것이에요(함수로 넘겨요) — 실리태번은 채팅을 바꾸거나 메타데이터를 고칠 때 이 객체를 새로 만들어요
+        chatMetadata: () => getContext()?.chatMetadata ?? null,
         extensionSettings: typeof extension_settings !== 'undefined' ? extension_settings : null,
-        extensionPrompts: ctx.extensionPrompts ?? null,
+        extensionPrompts: () => getContext()?.extensionPrompts ?? null,
         onRestore: changed => {
             if (changed.includes('variables') && typeof saveMetadataDebounced === 'function') saveMetadataDebounced();
             if (changed.includes('globalVariables') && typeof saveSettingsDebounced === 'function') saveSettingsDebounced();
@@ -4648,7 +4678,9 @@ async function collectReplyReference(at, reuse) {
     const notePrompt = ctx.chatMetadata?.note_prompt || '';
     const limit = info.wiLimit(s.reply_ctx_wi_limit);
     const chatId = ctx.chatId ?? ctx.getCurrentChatId?.() ?? null;
-    const memoKey = JSON.stringify([chatId, at, getStringHash(String(message.mes ?? '')), want, limit, owner?.card?.avatar ?? null, ctx.chatMetadata?.world_info ?? null,
+    // 캐릭터 · 페르소나에 이은 로어북 이름도 열쇠에 넣어요 — 그 연결을 바꿀 때는 실리태번이 사건을 안 내서, 5분 안에 다시 번역하면 옛 참고 글(뗀 로어북 글)이 그대로 나갔어요
+    const bookNames = [owner?.card?.data?.extensions?.world ?? null, worldInfoHost.world_info?.charLore?.find?.(row => row?.name === String(owner?.card?.avatar ?? '').replace(/\.[^/.]+$/, ''))?.extraBooks ?? null, power_user?.persona_description_lorebook ?? null];
+    const memoKey = JSON.stringify([chatId, at, getStringHash(String(message.mes ?? '')), want, limit, owner?.card?.avatar ?? null, ctx.chatMetadata?.world_info ?? null, bookNames,
         getStringHash([owner?.card?.description, owner?.card?.personality, owner?.card?.scenario, personaDescription, notePrompt].map(v => String(v ?? '')).join('\u0001'))]);
     if (!replyReferenceMemo) {
         replyReferenceMemo = info.createReferenceMemo();
@@ -4659,17 +4691,27 @@ async function collectReplyReference(at, reuse) {
     if (held) return held;
     const found = await info.collectReference({ want, character: owner?.card ?? null, userName: ctx.name1, charName: message.is_user ? '' : message.name, personaDescription, notePrompt,
         // 본채팅 생성이 도는 동안(그룹 채팅에서 다음 멤버가 쓰는 중 등)에는 그 생성의 스캔과 겹쳐 되돌릴 수 없으니 월드인포만 건너뛰어요
-        wi: want.wi ? { chat: ctx.chat, at, limit, ...worldInfoScanInputs(info, ctx, owner), busy: () => (typeof isMainChatGenerating === 'function' && isMainChatGenerating() ? '생성 중' : '') } : null });
+        //   줄 서 있는 사이 채팅이 바뀐 때도 건너뛰어요(worldInfoScanInputs 의 busy)
+        wi: want.wi ? (inputs => ({ chat: ctx.chat, at, limit, ...inputs, busy: () => inputs.busy() || (typeof isMainChatGenerating === 'function' && isMainChatGenerating() ? '생성 중' : '') }))(worldInfoScanInputs(info, ctx, owner)) : null });
     const block = info.referenceBlock([...found.stable, ...found.live]);
     const text = block ? `${block}\n${info.REFERENCE_TAIL}` : '';
     const stable = found.stable.length ? info.referenceBlock(found.stable) : '';
     const summary = info.wiSummary(found.wi);
     if (found.wi?.status === 'failed') console.warn(`[LLM Translator] 메시지 #${at}: 월드인포 참고 정보를 못 만들어 빼고 번역해요:`, found.wi.error);
     else if (found.wi?.status === 'empty') console.info(`[LLM Translator] 메시지 #${at}: 걸린 월드인포가 없어 참고 정보에 넣지 않았어요 (스캔 글 = 이 메시지까지).`);
-    else if (found.wi?.status === 'skipped') console.info(`[LLM Translator] 메시지 #${at}: 본채팅 ${found.wi.why}이라 월드인포 스캔을 건너뛰고 번역해요.`);
+    else if (found.wi?.status === 'skipped') console.info(`[LLM Translator] 메시지 #${at}: 월드인포 스캔을 건너뛰고 번역해요 (${found.wi.why === '생성 중' ? '본채팅 생성 중' : found.wi.why}).`);
     else if (found.wi?.status === 'ok') console.debug(`[LLM Translator] 메시지 #${at}: 참고 월드인포 ${found.wi.chars}자${found.wi.clipped ? ' (상한에서 자름)' : ''}`);
     // 문단 캐시 열쇠 몫은 참고 글이 아니라 켠 항목 + 상한 + 고정 부분 + 로어북 서명 — 확률 항목이 다시 굴려져도 같고, 로어북을 고치면 달라져요
-    const value = { text, stable, hash: String(getStringHash(info.referenceKey({ want, limit, stable, wi: found.wi }))), label: summary ? `번역 · 참고 ${summary}` : '' };
+    const keyOf = wi => String(getStringHash(info.referenceKey({ want, limit, stable, wi })));
+    const value = { text, stable, hash: keyOf(found.wi), label: summary ? `번역 · 참고 ${summary}` : '' };
+    // 번역문 삭제용: 이 메시지의 번역이 가졌을 수 있는 다른 열쇠 몫 — 월드인포 상태(넣음 · 건너뜀 · 실패)에 따라 몫이 달라서, 지울 때와 번역할 때 상태가 다르면 캐시 줄을 못 찾았어요.
+    //   「넣음」 몫은 로어북 서명이 있어야 만들 수 있어요 — 지금 스캔을 못 했으면 이 채팅에서 마지막으로 받은 서명을 써요(이 세션에서 한 번도 스캔하지 못했으면 그 몫은 못 지워요)
+    if (want.wi) {
+        if (found.wi?.books && ['ok', 'empty'].includes(found.wi.status)) lastLoreBooks = { chatId, books: found.wi.books };
+        const others = [{ status: 'skipped' }, { status: 'failed' }];
+        if (lastLoreBooks && lastLoreBooks.chatId === chatId) others.push({ status: 'ok', books: lastLoreBooks.books });
+        value.forgetHashes = [...new Set(others.map(keyOf))].filter(hash => hash !== value.hash);
+    }
     // 기억은 그 채팅 그대로일 때만 · 제대로 스캔한 것만 (그사이 채팅이 바뀌었으면 다른 채팅 글로 만든 참고 글이에요 — 번역은 뒤의 지킴이가 멈춰요)
     const now = getContext();
     const sameChat = now.chat === ctx.chat && (now.chatId ?? now.getCurrentChatId?.() ?? null) === chatId;
@@ -4687,7 +4729,8 @@ async function buildSendReference(text, messageId = undefined, report = null) {
     const ctx = getContext();
     const referenceGuard = s.context_message_auto === true ? captureAutoContextGuard(getContext, () => extensionSettings, autoRequestSignature) : null;
     const parts = [];
-    const clip = (value, max = 1500) => { const t = String(value || '').trim(); return t.length > max ? `${t.slice(0, max)}…` : t; };
+    // 자르는 자리가 그림 글자(두 단위짜리) 가운데면 한 단위 덜 잘라요(reference-info.js clip 과 같아요 — 반쪽 글자가 요청에 들어가지 않게)
+    const clip = (value, max = 1500) => { const t = String(value || '').trim(); if (t.length <= max) return t; const lead = t.charCodeAt(max - 1); return `${t.slice(0, lead >= 0xD800 && lead <= 0xDBFF ? max - 1 : max)}…`; };
     const want = { persona: !!s.send_ctx_persona, char: !!s.send_ctx_char, note: !!s.send_ctx_note, wi: !!s.send_ctx_wi };
     if (want.persona || want.char || want.note || want.wi) {
         try {

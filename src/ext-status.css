@@ -2,7 +2,8 @@
    그 확장이 깔려 있을 때만 src/ext-compat.js 가 이 시트를 붙여요(없는 사람은 한 바이트도 받지 않아요 · style.css 에 싣지 않아요).
    · 그 확장이 만든 클래스(.ss-*) · 제 설정 칸(#ss-settings) · 분류 탭 표식(.bl-ext-* · data-bl-tab*)에만, body.salty 아래에서만 걸려요.
    · 그 확장의 코드 · CSS · 그림은 가져오지 않았어요. 색은 그 확장이 여는 색 변수(--ss-*)를 팔레트에 잇고, 크기 · 모서리는 공용 부품 표(css/88-ui-parts.css)의 토큰만 써요.
-   · 그 확장의 「꾸미기」 색 판 · 직접 고른 색은 테마가 켜져 있는 동안 팔레트가 덮어요(모서리 · 글자 배율은 그 확장 값 그대로).
+   · 그 확장의 「꾸미기」 색 판 · 직접 고른 색은 테마가 켜져 있는 동안 팔레트가 덮어요. 본문 글자 배율 · 카드 모서리는 그 확장 값 그대로이고,
+     단추 · 탭 · 칩 · 작은 글 · 입력칸 · 띠 · 알림은 테마 단(공용 부품 표)이라 그 확장의 「글자 크기」 · 「모서리」를 따라가지 않아요.
    · 「다른 확장 원래 색 유지」 표식(data-bl-native-ext-colors)이면 설정 서랍 내용 칸의 칠하기만 비켜 가요(:where(:not(표식, 표식 *)) — 빌드의 확장 색 지킴과 같은 꼴). 자리 · 크기 · 탭은 그대로.
    · 시험: tools/tests/status-ext-css.mjs */
 
@@ -82,8 +83,9 @@ body.salty .ss-scope :is(.ss-cashbox, .ss-tab-mast.board) :is(small, span) { opa
 body.salty .ss-scope .ss-ai { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
 body.salty .ss-scope .ss-btn.pri .ss-ai { background: transparent; color: inherit; }
 /* 알림은 위 띠 아래에서(위 띠 단추를 덮지 않게) — 채팅 위 상태 띠가 있으면 그 띠 바로 아래에서 시작해 수치 줄을 덮지 않아요.
-   (anchor 를 모르는 브라우저 · 띠가 없을 때는 첫 줄 값 그대로) */
-body.salty #ss-hud { anchor-name: --bl-ss-hud; }
+   (anchor 를 모르는 브라우저 · 띠가 없을 때는 첫 줄 값 그대로)
+   띠를 「입력창 위」에 둔 때(.bottom)는 기준으로 삼지 않아요 — 위쪽 알림이 그 띠 아래(화면 맨 아래)로 내려가 입력창을 덮었어요. 그때도 첫 줄 값이에요. */
+body.salty #ss-hud:not(.bottom) { anchor-name: --bl-ss-hud; }
 body.salty .ss-toasts:not(.bottom) { top: calc(var(--topBarBlockSize, 40px) + 8px); }
 body.salty .ss-toasts:not(.bottom) { top: calc(anchor(--bl-ss-hud bottom, calc(var(--topBarBlockSize, 40px) + 2px)) + 6px); }
 
@@ -218,6 +220,8 @@ body.salty .ss-scope .ss-tog { font-size: var(--bl-ts-ui, 14px); min-height: var
 
 /* ---------- 고르기 묶음 · 칩 · 탭: 고른 것 = 옅은 면 + 색 글자(꽉 찬 면 · 뜬 그림자 없음) ---------- */
 body.salty .ss-scope :is(.ss-seg, .ss-seg.wrap, .ss-groups) { border-radius: var(--bl-r-md, 12px); background: var(--bl-hover); }
+/* 「폰 한 손 모드」(그 확장 설정): 묶음 바가 아래에 붙어 내용 위에 떠요 — 반투명 면이면 지나가는 글이 비쳐서, 같은 색을 섞어 둔 불투명 면으로(제자리에 놓인 때 보이는 색은 같아요) */
+body.salty .ss-scope.navbottom .ss-groups { background: var(--salty-surface-shade, var(--ss-bg)); }
 body.salty .ss-scope :is(.ss-seg, .ss-groups) > button { border-radius: var(--bl-ui-radius, 8px); min-height: var(--bl-ui-chip, 34px); font-size: var(--bl-ts-ctl, 14px); font-weight: 400; }
 body.salty .ss-scope .ss-groups > button { font-size: var(--bl-ts-micro, 11.5px); }
 body.salty .ss-scope :is(.ss-seg, .ss-groups) > button.on {
@@ -230,7 +234,8 @@ body.salty .ss-scope .ss-seg > button small { font-size: var(--bl-ts-micro, 11.5
 body.salty .ss-scope .ss-seg > button.on small { color: inherit; }
 body.salty .ss-scope .ss-pill { min-height: var(--bl-ui-chip, 34px); padding: 0 12px; border-radius: var(--bl-ui-radius, 8px); background: var(--bl-hover); border-color: var(--salty-line); font-size: var(--bl-ts-cap, 12.5px); }
 body.salty .ss-scope .ss-pill.on { background: var(--bl-ui-pick-face); border-color: transparent; color: var(--bl-ui-pick-ink); font-weight: var(--bl-ui-strong, 650); }
-/* 안쪽 탭 줄: 두 줄로 꺾지 않고 한 줄로 길게(옆으로 밀기) — 위 여백은 탭 귀퉁이 배지 자리 */
+/* 안쪽 탭 줄: 두 줄로 꺾지 않고 한 줄로 길게(옆으로 밀기) — 위 여백은 탭 귀퉁이 배지 자리.
+   휠 · 넘친 쪽 흐림 · 다시 그려진 뒤 고른 탭 보이기는 공용 가로 탭 줄 등록부가 줘요(src/ext-compat.js ensureStrip — 스크롤바를 숨긴 줄이라 등록부가 없으면 마우스로 넘친 탭에 못 닿아요) */
 body.salty .ss-scope .ss-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; padding-top: 6px; margin-top: 4px; }
 body.salty .ss-scope .ss-tabs > button { flex: none; white-space: nowrap; }
 body.salty .ss-scope .ss-tabs > button { min-height: var(--bl-ui-ctl, 36px); border-radius: var(--bl-ui-radius, 8px); font-size: var(--bl-ui-tab-fs, 13px); font-weight: 400; }

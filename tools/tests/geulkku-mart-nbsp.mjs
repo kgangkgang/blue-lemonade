@@ -34,9 +34,11 @@ await test('받은 글꾸 그리기(applySet): 고친 글 칸에 &amp;nbsp; · &
     const set = JSON.parse(JSON.stringify(fx.set));
     const key = set.frame, texts = set.frames[key].texts;
     texts[nr.i] = texts.NR; delete texts.NR;
-    const out = applySet(html, set, { mode: 'dark', key });
+    const out = applySet(html, set, { mode: 'dark', key, sample: true });   // 견본 글에 거는 길(마트와 같은 결과) — 고친 글이 들어가요
     assert.ok(out.includes(`>${fx.expect}</p>`), out.slice(out.indexOf('gk-nr'), out.indexOf('gk-nr') + 140));
     assert.ok(!/&amp;nbsp;|&nbsp;| /.test(out), '끊기지 않는 빈칸이 남았어요');
+    // 실제 로그를 그리는 길(기본): 마트에서 고친 견본 글은 걸지 않아요(log-copy-simple-set-log.mjs) — 「&nbsp;」가 들어올 길 자체가 없어요
+    assert.equal(applySet(html, set, { mode: 'dark', key }), html);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

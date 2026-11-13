@@ -166,7 +166,7 @@ test('③ 뗀 규칙이 낀 모든 겨루기 짝의 앞뒤가 원래와 같아�
 
 test('④ 붙이는 코드: 클래스보다 시트가 먼저 · 설정 창은 시트를 받은 뒤 · 자리는 테마 시트 뒤 줄 안', () => {
     const apply = read('src/apply.js'), lite = read('src/lite.js'), gate = read('src/gate-css.js'), index = read('index.js'), sheet = read('src/theme-sheet.js'), compat = read('src/compat-css.js'), split = read('src/split-css.js'), first = read('src/first-run.js');
-    assert.match(apply, /const held = syncGateCss\(want\);(?:\s*\/\/[^\n]*)*\s*const cls = document\.body\.classList;/, 'body 클래스를 바꾸기 전에 시트');
+    assert.match(apply, /const held = syncGateCss\(want, coolChatForRestyle\);(?:\s*\/\/[^\n]*)*\s*const cls = document\.body\.classList;/, 'body 클래스를 바꾸기 전에 시트 · 미룬 클래스를 달 때 쓸 식히기 함수를 넘겨요');
     assert.match(apply, /const missing = \[\.\.\.want\]\.filter\(c => !cls\.contains\(c\) && !held\.has\(c\)\);/, '못 받은 시트의 클래스는 미뤄요');
     assert.match(gate, /own\.addEventListener\('load', \(\) => \{ own\.dataset\.blGateReady = '1'; settle\(\); \}/, '받은 뒤에 미룬 클래스를 달아요');
     assert.match(gate, /if \(n\.dataset\?\.blGate != null && Number\(n\.dataset\.blGate\) > order\) break;/, '테마 시트 뒤 줄 안 차례 자리');
@@ -174,7 +174,8 @@ test('④ 붙이는 코드: 클래스보다 시트가 먼저 · 설정 창은 �
     assert.match(lite, /link\.dataset\.blGate = '-1';/, '미리보기는 테마 시트 뒤 줄 맨 앞 칸');
     assert.match(lite, /if \(sheet\?\.ownerNode\?\.isConnected\) themeRunEnd\(sheet\.ownerNode, -1\)\.after\(link\);/, '미리보기는 뗀 규칙 시트 앞');
     assert.match(lite, /sheetTail\(sheet\)\.after\(style\);/, '서랍 전용 칸(첫 장 꼬리)은 줄 끝 뒤');
-    assert.match(lite, /const gateLoad = \(\) => import\('\.\/gate-css\.js'\)/, '몸통은 켤 때만 받아요(시작 묶음 밖)');
+    assert.match(lite, /const gateLoad = \(\) => gateBusy \?\?= \(gateTry \? import\(`\.\/gate-css\.js\?retry=\$\{gateTry\}`\) : import\('\.\/gate-css\.js'\)\)/, '몸통은 켤 때만 받아요(시작 묶음 밖) · 못 받았으면 새 주소로 다시');
+    assert.match(read('tools/build-bundle.mjs'), /'src\/lite\.js': \['src\/gate-css\.js', "\(gateTry \? import\(`\.\/gate-css\.js\?retry=\$\{gateTry\}`\) : import\('\.\/gate-css\.js'\)\)", 'gateTry'\]/, '묶음에서도 다시 받는 주소가 달라요');
     assert.doesNotMatch(lite, /^import [^\n]*gate-css\.js/m);
     assert.match(index, /const loadPanel = \(\) => panelLoading \|\|= Promise\.all\(\[import\('\.\/src\/panel\.js'\), panelCssReady\(\)\]\)/, '설정 창은 시트를 받은 뒤에 만들어요');
     assert.match(first, /m\.panelCssReady\(\)/, '첫 실행 창도');

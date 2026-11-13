@@ -208,5 +208,42 @@ await test('교정 keeps the old translation when the answer is a refusal or cut
     assert.match(fn, /if \(looksCutShort\(existingTranslation, out\) \|\| \(midSentence/);
 });
 
+// 공개판 감사 고침: 참고 월드인포 상태에 따라 문단 캐시 열쇠 몫이 달라요(넣음 · 생성 중 건너뜀 · 실패). 번역문 삭제가 번역할 때와 다른 상태에서 돌면
+//   그 번역의 캐시 줄을 못 찾아, 지운 번역이 다시 번역할 때 요청 없이 그대로 돌아왔어요(5.4.2 가 고친 「삭제 뒤 다시 번역해도 같은 글」이 이 조건에서 되살아남)
+await test('감사 고침: 번역문 삭제는 참고 월드인포 상태가 번역할 때와 달라도 그 번역의 문단 캐시 · 이어하기 줄을 지워요', async () => {
+    const usual = env.callLLMAPI;
+    let ref = { hash: 'books-sig', forgetHashes: ['skipped', 'failed'] };
+    env.replyReferenceIndex = options => (options.contextAt ?? options.referenceAt ?? -1);
+    env.buildReplyReference = async () => ({ text: '', stable: '', label: '', ...ref });
+    env.callLLMAPI = async prompt => { const body = prompt.slice(PREFIX.length).replace(BRACKET_NOTE + '\n\n', ''); sent.push(body); return ko(body.startsWith(seg.BATCH_HEADER) ? body.slice(seg.BATCH_HEADER.length) : body); };
+    try {
+        const translateOnce = async () => { sent.length = 0; const text = await env.translate(MESSAGE, { segmentCache: true, contextAt: 0, report: {} }); return { text, requests: sent.length }; };
+        await seg.clearSegmentCache(); rows.length = 0;
+        const first = await translateOnce();
+        assert.ok(first.requests >= 1 && first.text.includes(KO[0]), '처음 번역은 요청해요');
+        assert.equal((await translateOnce()).requests, 0, '같은 열쇠면 문단 캐시에서 가져와요');
+        // 다음 답을 만드는 동안 휴지통: 월드인포 스캔을 건너뛰어 열쇠 몫이 달라요 — 「넣음」 몫은 다른 몫 목록에 실려 와요
+        ref = { hash: 'skipped', forgetHashes: ['failed', 'books-sig'] };
+        assert.equal(await env.translate(MESSAGE, { segmentCache: true, forget: true, referenceAt: 0 }), '');
+        assert.equal(sent.length, 0, '지우기는 요청하지 않아요');
+        // 생성이 끝난 뒤 다시 번역: 열쇠는 다시 「넣음」 몫 — 지워졌으니 새로 요청해요
+        ref = { hash: 'books-sig', forgetHashes: ['skipped', 'failed'] };
+        assert.ok((await translateOnce()).requests >= 1, '지운 번역이 캐시에서 되살아나지 않아요');
+        // 거꾸로: 생성 중에 만든 번역(건너뜀 몫)을 쉴 때 지워도 같아요
+        ref = { hash: 'skipped', forgetHashes: ['failed', 'books-sig'] };
+        await translateOnce();
+        assert.equal((await translateOnce()).requests, 0);
+        ref = { hash: 'books-sig', forgetHashes: ['skipped', 'failed'] };
+        await env.translate(MESSAGE, { segmentCache: true, forget: true, referenceAt: 0 });
+        ref = { hash: 'skipped', forgetHashes: ['failed', 'books-sig'] };
+        assert.ok((await translateOnce()).requests >= 1);
+        // 다른 몫 목록이 없으면(참고 정보를 안 쓰는 번역) 예전 그대로 한 번만 지워요
+        ref = { hash: 'plain' };
+        await translateOnce();
+        await env.translate(MESSAGE, { segmentCache: true, forget: true, referenceAt: 0 });
+        assert.ok((await translateOnce()).requests >= 1);
+    } finally { delete env.replyReferenceIndex; delete env.buildReplyReference; env.callLLMAPI = usual; }
+});
+
 console.log(`fault-translator: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

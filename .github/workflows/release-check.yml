@@ -50,6 +50,8 @@ jobs:
           node tools/tests/log-copy-simple-pack.mjs .
           # 1.2.1 명조 본문 심플 틀의 굵게가 가짜 굵게로 뭉개지던 것(굵게 = 고딕 700 · 마트 고침 ce06d4f8b 와 같은 규칙)
           node tools/tests/log-copy-simple-bold.mjs .
+          # 기본 글꾸 19틀의 굵은 낱말도 고딕 700 으로(1.2.1 굵게 고침이 빠졌던 곳 — 깡통에 붙이면 가짜 굵게로 뭉개졌어요)
+          node tools/tests/log-copy-basic-bold.mjs .
           node tools/tests/log-copy-basic.mjs .
           # 1.1.5 「레몬 바로가기」를 끄면 기본 글꾸 18틀도 레몬이 그림째 사라지는지(켠 그림은 그대로)
           node tools/tests/log-copy-lemon-off.mjs .
@@ -66,6 +68,8 @@ jobs:
           node tools/tests/log-copy-flip.mjs .
           node tools/tests/log-copy-flip-sheet.mjs .
           node tools/tests/log-copy-simple-set.mjs .
+          # 받은 심플 글꾸: 마트 견본 전용 값(대사 줄 수 · 고친 글 · 숨긴 줄)을 실제 로그에 걸지 않는지(메시지가 빠지거나 겹치거나 덮어써졌어요)
+          node tools/tests/log-copy-simple-set-log.mjs .
           # 1.2.1 받은 글꾸의 고친 글에 「&nbsp;」 글자가 보이던 것(마트 고침 ce06d4f8b 와 같은 규칙)
           node tools/tests/geulkku-mart-nbsp.mjs .
           node tools/tests/log-copy-simple-rows.mjs .
@@ -167,6 +171,8 @@ jobs:
           node tools/tests/boot-graph.mjs .
           node tools/tests/markdown-css-split.mjs .
           node tools/tests/css-gates-order.mjs .
+          # 뗀 규칙 시트 실행 길을 실제로 돌려요: 받는 동안 미룸 · 달기 전 식히기 · 못 받으면 다음에 새 주소로 다시(공개판 감사 결함 둘 + 시험 공백)
+          node tools/tests/gate-css-run.mjs .
           node tools/tests/gradients-core.mjs .
           node tools/tests/chat-appearance.mjs .
           node tools/tests/appearance-lifecycle.mjs .
@@ -277,6 +283,8 @@ jobs:
           node tools/tests/regexlink-performance.mjs .
           node tools/tests/regex-perf.mjs .
           node tools/tests/regex-perf.mjs . other-wrapper
+          # /regexperf off 이름: 같은 이름이 이미 꺼져 있을 때 이름이 들어 있는 다른 스크립트를 끄지 않는지 · 이름으로는 그 하나만 · 제자리 저장
+          node tools/tests/regex-perf-off.mjs .
           node tools/tests/rewrite-apply-message.mjs .
           node tools/tests/rewrite-settings-migrate.mjs .
           node tools/tests/zipinstall-archive.mjs .
@@ -466,6 +474,8 @@ jobs:
           node tools/tests/hidden-details.mjs .
           node tools/tests/observer-budget.mjs .
           node tools/tests/observer-roots.mjs .
+          # 공개판 감사 「시험 공백」: 감시 허브로 옮긴 구독 다섯(안내 팝업 · 단추 묶음 격자 · 실리태번 판 불투명 · 당겨 새로고침 · 스와이프 고르기)을 실제로 돌려요
+          node tools/tests/hub-subscribers-run.mjs .
           node tools/tests/perf-budget-static.mjs .
           node tools/tests/bundle-min-style.mjs .
           node tools/tests/bundle-html-indent.mjs .
@@ -732,6 +742,8 @@ jobs:
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .
+          # 공용 스케줄러가 늦게 온 박자 다음의 제때 온 박자를 건너뛰지 않는지(과일 입구 1.5초 안전망이 약 3초로 늘던 것)
+          node tools/tests/scheduler-late-tick.mjs .
           node tools/tests/fruit-watch-scope.mjs .
           node tools/tests/fruit-watch-records.mjs .
           node tools/tests/fruit-type-catalog-wait.mjs .

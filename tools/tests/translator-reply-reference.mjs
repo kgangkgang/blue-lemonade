@@ -329,7 +329,7 @@ function helpers({ settings = {}, wi = async () => wiResult(), messages = chat()
         console: { warn: (...a) => lines.push(['warn', a.map(String).join(' ')]), info: (...a) => lines.push(['info', a.map(String).join(' ')]), log() {}, debug() {} },
         __load: () => { loads.push(1); return load ? load(loads.length) : Promise.resolve(info); },
         eventSource: { on: (type, fn) => listeners.push([type, fn]), emit: async (type, ...args) => { emitted.push([type, ...args]); for (const [t, fn] of listeners) if (t === type) await fn(...args); } },
-        event_types: { WORLDINFO_UPDATED: 'wi-updated', WORLDINFO_SETTINGS_UPDATED: 'wi-settings', WORLDINFO_FORCE_ACTIVATE: 'wi-force', WORLDINFO_ENTRIES_LOADED: 'wi-entries', GENERATION_ENDED: 'gen-ended', GENERATION_STOPPED: 'gen-stopped', CHAT_CHANGED: 'chat-changed' },
+        event_types: { WORLDINFO_UPDATED: 'wi-updated', WORLDINFO_SETTINGS_UPDATED: 'wi-settings', WORLDINFO_FORCE_ACTIVATE: 'wi-force', WORLDINFO_ENTRIES_LOADED: 'wi-entries', GENERATION_ENDED: 'gen-ended', GENERATION_STOPPED: 'gen-stopped', CHAT_CHANGED: 'chat-changed', GENERATION_AFTER_COMMANDS: 'gen-after-commands' },
         isMainChatGenerating: () => state.busy, extension_settings: { variables: { global: { seen: 1 } } },
         saveMetadataDebounced: () => saves.push('metadata'), saveSettingsDebounced: () => saves.push('settings'),
     });
@@ -606,7 +606,11 @@ await test('고정 부분에 다시 치환하면 달라질 매크로가 있으�
 
 await test('문단 캐시 열쇠 · 요청 로그 이름표 · 캐시 지우기의 끼우는 자리', () => {
     // 참고 정보를 넣는 번역만 열쇠에 표지 + 참고 글 해시 — 꺼져 있으면(replyRefAt = -1) 배열에 아무것도 더하지 않아 예전 열쇠 그대로
-    assert.match(source, /\.\.\.\(keptKorean\.size \? \['korean-keep-v1'\] : \[\]\), \.\.\.\(replyRefAt >= 0 \? \['reply-ref-v2', replyRef\?\.hash \|\| ''\] : \[\]\)\]\)\);/);
+    //   (감사 고침: 참고 정보 몫만 바꿔 다시 만들 수 있게 열쇠 재료를 digestParts 로 뗐어요 — 이어 붙인 배열은 예전과 글자까지 같아요)
+    assert.match(source, /\.\.\.\(keptKorean\.size \? \['korean-keep-v1'\] : \[\]\)\];\n/);
+    assert.match(source, /const digestOf = refHash => checkpointKey\(JSON\.stringify\(\[\.\.\.digestParts, \.\.\.\(replyRefAt >= 0 \? \['reply-ref-v2', refHash \|\| ''\] : \[\]\)\]\)\);/);
+    assert.match(source, /const setupDigest = await digestOf\(replyRef\?\.hash\);/);
+    assert.match(source, /for \(const refHash of replyRef\?\.forgetHashes \|\| \[\]\) \{/);
     assert.match(source, /const replyRef = replyRefAt >= 0 \? await buildReplyReference\(replyRefAt, \{ reuse: Boolean\(options\.segmentCache \|\| options\.forget\) \}\) : null;/);
     assert.match(source, /\.\.\.\(requestLabel \? \{ requestLabel \} : \{\}\)/);
     assert.match(source, /requestLog:\{caller:'llm-translator-custom',purpose:overrides\.requestPurpose\|\|'translation\.chat',\.\.\.\(overrides\.requestLabel\?\{label:overrides\.requestLabel\}:\{\}\)\}/);
@@ -831,6 +835,191 @@ await test('1.2.5 월드인포 글자 수 위쪽 상한 없음: 50,000 · 200,00
         assert.notEqual(cut.hash, whole.hash, `${limit} 와 200,000 은 캐시 열쇠가 달라요`);
     }
     assert.equal(h.scans[0][1], 64000, '스캔에 넘기는 최대 문맥은 그대로(실리태번 월드인포 예산이 먼저 정해요)');
+});
+
+// ── 공개판 감사 고침 ──────────────────────────────────────────────────────────────
+await test('감사 고침: 자르는 자리가 그림 글자 가운데면 반쪽 글자를 남기지 않아요 (수집 함수 · 보내기 번역 둘 다)', async () => {
+    const lone = text => /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(text);
+    const lemon = '\u{1F34B}';   // 두 단위짜리 글자
+    const body = 'a'.repeat(9) + lemon + 'tail';   // 열째 · 열한째 단위가 한 글자
+    assert.equal(info.clip(body, 10), 'a'.repeat(9) + '…', '앞 반쪽에서 끊기면 그 글자를 통째로 빼요');
+    assert.equal(info.clip(body, 11), 'a'.repeat(9) + lemon + '…', '글자 끝에서 끊기면 그대로예요');
+    assert.equal(info.clip('plain text here', 5), 'plain…');
+    assert.equal(info.clip(body, 100), body);
+    // 캐릭터 설명(2500) · 성격(800) · 월드인포 상한에서 걸칠 때 참고 글에 반쪽 글자가 없어요
+    const card = { name: 'Guide', description: 'd'.repeat(2499) + lemon + 'more', personality: 'p'.repeat(799) + lemon + 'x', scenario: '' };
+    const found = await info.collectReference({ want: { char: true, wi: true }, character: card,
+        wi: { chat: chat(), at: 2, limit: 500, getWorldInfoPrompt: async () => wiResult({ worldInfoBefore: 'w'.repeat(499) + lemon + 'rest' }) } });
+    const text = [...found.stable, ...found.live].join('\n');
+    assert.ok(text.includes('<world_info>') && text.includes('<character'));
+    assert.equal(lone(text), false, '참고 글에 외짝 서로게이트가 없어요');
+    // 보내기 번역의 최근 대화 조각(600자)도 같은 자르기예요
+    const send = source.slice(source.indexOf('async function buildSendReference('));
+    const local = /const clip = \(value, max = 1500\) => \{[^\n]*\};/.exec(send)?.[0];
+    assert.ok(local, '보내기 번역의 자르기 줄');
+    const sendClip = vm.runInNewContext(`${local}; clip`);
+    assert.equal(sendClip('m'.repeat(599) + lemon + 'z', 600), 'm'.repeat(599) + '…');
+    assert.equal(sendClip('short', 600), 'short');
+});
+
+await test('감사 고침: 캐릭터 · 페르소나에 이은 로어북을 바꾸면 5분 안이어도 기억한 참고 글을 다시 쓰지 않아요', async () => {
+    const h = helpers({ settings: { reply_ctx_wi: true }, wi: async () => wiResult({ worldInfoBefore: 'Maren: gruff.' }) });
+    await h.api.buildReplyReference(2, { reuse: true });
+    await h.api.buildReplyReference(2, { reuse: true });
+    assert.equal(h.scans.length, 1, '바뀐 것이 없으면 메시지당 스캔 한 번');
+    // 캐릭터 기본 로어북을 이어 붙임(카드 저장 — 월드인포 사건은 안 나요)
+    h.context.characters[0].data = { extensions: { world: 'harbor-book' } };
+    await h.api.buildReplyReference(2, { reuse: true });
+    assert.equal(h.scans.length, 2, '캐릭터 기본 로어북');
+    // 캐릭터 보조 로어북(실리태번 world_info.charLore — 파일 이름은 확장자 뺀 아바타)
+    h.env.worldInfoHost.world_info = { charLore: [{ name: 'guide', extraBooks: ['side-book'] }, { name: 'maren', extraBooks: ['other'] }] };
+    await h.api.buildReplyReference(2, { reuse: true });
+    assert.equal(h.scans.length, 3, '캐릭터 보조 로어북');
+    h.env.worldInfoHost.world_info.charLore[1].extraBooks.push('unrelated');   // 다른 캐릭터의 연결은 상관없어요
+    await h.api.buildReplyReference(2, { reuse: true });
+    assert.equal(h.scans.length, 3);
+    // 페르소나 로어북을 뗌
+    h.env.power_user.persona_description_lorebook = 'persona-book';
+    await h.api.buildReplyReference(2, { reuse: true });
+    assert.equal(h.scans.length, 4, '페르소나 로어북');
+    await h.api.buildReplyReference(2, { reuse: true });
+    assert.equal(h.scans.length, 4, '그대로면 다시 써요');
+});
+
+await test('감사 고침: 줄 서 있는 사이 채팅이 바뀌면 스캔하지 않아요 · 같은 채팅의 메타데이터 객체가 새로 만들어졌으면 새 객체를 떠 두고 되돌려요', async () => {
+    let release = null, calls = 0;
+    const h = helpers({ settings: { reply_ctx_wi: true }, wi: async () => {
+        calls++;
+        h.context.chatMetadata.variables = { ...(h.context.chatMetadata.variables || {}), touched: calls };   // 실리태번은 「지금」 채팅의 변수를 바꿔요
+        if (calls === 1) await new Promise(resolve => { release = resolve; });   // 첫 스캔이 도는 동안 둘째가 줄을 서요
+        return wiResult({ worldInfoBefore: 'Maren: gruff.' });
+    } });
+    h.context.chatMetadata.variables = { turn: 1 };
+    const first = h.api.buildReplyReference(2);
+    const second = h.api.buildReplyReference(5);
+    for (let i = 0; i < 20 && !release; i++) await new Promise(r => setImmediate(r));
+    assert.ok(release, '첫 스캔이 시작됐어요');
+    // 다른 채팅을 열었어요 — 실리태번은 chat 배열은 그대로 두고 메타데이터 객체를 새로 만들어요
+    const oldMeta = h.context.chatMetadata, newMeta = { note_prompt: '', variables: { other: 7 } };
+    h.context.chatId = 'chat-b'; h.context.chatMetadata = newMeta;
+    release();
+    await first;
+    const skipped = await second;
+    assert.equal(calls, 1, '바뀐 채팅에서는 스캔하지 않아요');
+    assert.equal(skipped.label, '번역 · 참고 월드인포 건너뜀(채팅 바뀜)');
+    assert.doesNotMatch(skipped.text, /<world_info>/);
+    assert.deepEqual(newMeta.variables, { other: 7 }, '새 채팅의 변수는 그대로예요');
+    assert.deepEqual(oldMeta.variables, { turn: 1 }, '첫 스캔이 옛 채팅에서 바꾼 변수는 되돌려요');
+    assert.ok(h.lines.some(l => l[0] === 'info' && /채팅 바뀜/.test(l[1])), '콘솔에 한 줄');
+    // 같은 채팅: 줄 서 있는 사이 메타데이터 객체만 새로 만들어진 때(실리태번 updateChatMetadata)는 스캔하고, 새 객체를 되돌려요
+    const g = helpers({ settings: { reply_ctx_wi: true }, wi: async () => { g.context.chatMetadata.variables.turn += 1; return wiResult({ worldInfoBefore: 'x' }); } });
+    g.context.chatMetadata.variables = { turn: 1 };
+    const stale = g.context.chatMetadata;
+    const run = g.api.buildReplyReference(2);
+    g.context.chatMetadata = { ...stale, variables: { turn: 1 } };   // 같은 채팅 id · 새 객체
+    const found = await run;
+    assert.equal(found.label, '번역 · 참고 월드인포');
+    assert.deepEqual(g.context.chatMetadata.variables, { turn: 1 }, '지금 객체의 변수를 되돌려요');
+    assert.deepEqual(g.saves, ['metadata']);
+});
+
+await test('감사 고침: 번역용 스캔이 도는 사이 시작된 생성은 스캔이 끝나 되돌린 뒤에 이어져요 — 생성이 쓴 변수 · 작가 노트 · 시간 효과를 되돌리기가 덮지 않아요', async () => {
+    let release = null;
+    const h = helpers({ settings: { reply_ctx_wi: true }, wi: async () => {
+        h.context.chatMetadata.variables.turn += 1;                               // 스캔이 변수를 건드리고
+        h.context.extensionPrompts['2_floating_prompt'].value = 'TOP\nold note';   // 작가 노트에 항목을 끼운 채
+        await new Promise(resolve => { release = resolve; });                    // 로어북 읽기 · 토큰 세기를 기다려요
+        return wiResult({ worldInfoBefore: 'Turn counter entry.' });
+    } });
+    h.context.chatMetadata.variables = { turn: 5 };
+    h.context.extensionPrompts['2_floating_prompt'] = { value: 'old note' };
+    const gate = () => h.listeners.filter(l => l[0] === 'gen-after-commands');
+    assert.equal(gate().length, 0, '월드인포 참고를 쓰기 전에는 걸지 않아요');
+    const translating = h.api.buildReplyReference(2);
+    for (let i = 0; i < 20 && !release; i++) await new Promise(r => setImmediate(r));
+    assert.ok(release, '스캔이 도는 중이에요');
+    assert.equal(gate().length, 1);
+    // 그사이 스와이프를 눌렀어요 — 실리태번은 이 사건을 듣는 쪽을 기다린 뒤에 작가 노트를 새로 쓰고 진짜 스캔을 돌려요
+    const seen = [];
+    const generation = (async () => {
+        await h.env.eventSource.emit('gen-after-commands', 'swipe');
+        seen.push(h.context.chatMetadata.variables.turn, h.context.extensionPrompts['2_floating_prompt'].value);
+        h.context.extensionPrompts['2_floating_prompt'].value = 'new note';
+        h.context.chatMetadata.variables.turn = 99;
+        h.context.chatMetadata.timedWorldInfo = { sticky: { entry: { start: 6, end: 9 } } };
+    })();
+    for (let i = 0; i < 5; i++) await new Promise(r => setImmediate(r));
+    assert.deepEqual(seen, [], '스캔이 끝나기 전에는 생성이 이어지지 않아요');
+    release();
+    await translating; await generation;
+    assert.deepEqual(seen, [5, 'old note'], '생성은 되돌린 뒤의 값에서 시작해요');
+    assert.equal(h.context.chatMetadata.variables.turn, 99, '생성이 바꾼 변수가 남아요');
+    assert.equal(h.context.extensionPrompts['2_floating_prompt'].value, 'new note', '생성이 새로 쓴 작가 노트가 남아요');
+    assert.deepEqual(h.context.chatMetadata.timedWorldInfo, { sticky: { entry: { start: 6, end: 9 } } }, '생성이 건 시간 효과가 남아요');
+    // 한 번만 걸고, 스캔이 없을 때는 바로 지나가요
+    release = null;
+    const again = h.api.buildReplyReference(5);
+    for (let i = 0; i < 20 && !release; i++) await new Promise(r => setImmediate(r));
+    release(); await again;
+    assert.equal(gate().length, 1, '다시 걸지 않아요');
+    let passedThrough = false;
+    await Promise.race([h.env.eventSource.emit('gen-after-commands', 'normal').then(() => { passedThrough = true; }), new Promise(r => setTimeout(r, 200))]);
+    assert.equal(passedThrough, true, '스캔이 없으면 기다리지 않아요');
+    assert.equal(typeof info.scanIdle, 'function');
+});
+
+await test('감사 고침: 번역문 삭제용 다른 열쇠 몫 — 넣음 · 건너뜀 · 실패 몫을 서로 지울 수 있게 실어 줘요', async () => {
+    const book = () => ({ globalLore: [{ uid: 1, key: ['Maren'], content: 'Maren: gruff.' }], characterLore: [], chatLore: [], personaLore: [] });
+    const h = helpers({ settings: { reply_ctx_wi: true }, wi: async () => wiResult({ worldInfoBefore: 'Maren: gruff.' }), lore: book });
+    const ok = await h.api.buildReplyReference(2);
+    h.state.busy = true;
+    const skipped = await h.api.buildReplyReference(2);
+    assert.notEqual(skipped.hash, ok.hash);
+    assert.ok(skipped.forgetHashes.includes(ok.hash), '생성 중에 지워도 「넣음」 몫(이 채팅에서 마지막으로 받은 로어북 서명)을 같이 지워요');
+    assert.ok(ok.forgetHashes.includes(skipped.hash), '쉴 때 지워도 「건너뜀」 몫을 같이 지워요');
+    assert.ok(!ok.forgetHashes.includes(ok.hash) && !skipped.forgetHashes.includes(skipped.hash), '제 몫은 다시 넣지 않아요');
+    assert.equal(new Set(ok.forgetHashes).size, ok.forgetHashes.length);
+    // 다른 메시지도 같은 로어북 서명이라, 그 메시지를 생성 중에 지울 때도 「넣음」 몫이 실려요
+    h.state.busy = false;
+    const other = await h.api.buildReplyReference(5);
+    h.state.busy = true;
+    assert.ok((await h.api.buildReplyReference(5)).forgetHashes.includes(other.hash));
+    // 이 세션에서 한 번도 스캔하지 못했으면 「넣음」 몫은 만들 수 없어요(건너뜀 · 실패 몫만)
+    const fresh = helpers({ settings: { reply_ctx_wi: true }, wi: async () => wiResult({ worldInfoBefore: 'x' }), lore: book });
+    fresh.state.busy = true;
+    assert.equal((await fresh.api.buildReplyReference(2)).forgetHashes.length, 1);
+    // 다른 채팅에서 받은 서명은 쓰지 않아요
+    h.context.chatId = 'chat-b';
+    assert.equal((await h.api.buildReplyReference(2)).forgetHashes.length, 1);
+    // 월드인포 참고를 안 쓰면 몫이 하나라 목록이 없어요
+    const plain = helpers({ settings: { reply_ctx_note: true } });
+    assert.equal((await plain.api.buildReplyReference(2)).forgetHashes, undefined);
+});
+
+await test('감사 고침: 설정 안내 글이 실제 동작과 같아요 — 그룹 채팅에서는 캐릭터에 묶인 로어북이 빠져요', () => {
+    const html = read('src/addons/translator/index.html');
+    assert.match(html, /그룹 채팅에서는 캐릭터에 묶인 로어북과 특정 캐릭터에만 걸리게 한 항목이 빠져요\./);
+    assert.doesNotMatch(html, /말한 멤버 것과 다를 수 있어요/, '「다를 수 있다」가 아니라 늘 빠져요(생성이 끝나면 고른 캐릭터가 비고, 번역용 스캔은 쉴 때만 돌아요)');
+    assert.doesNotMatch(source, /말한 멤버와 다를 수 있어요/);
+});
+
+await test('감사 고침: 생각 세기 안내 — 「현재 연결」에서는 Claude 만 · 연결의 세기가 더 낮으면 그대로라고 알려요 (동작은 그대로)', () => {
+    const html = read('src/addons/translator/index.html');
+    assert.match(html, /「현재 연결」로 번역할 때는 Claude 에서만 세기를 바꾸고, 그 연결의 세기가 이미 더 낮으면 그대로 둬요/);
+    // 안내가 말하는 동작 그대로인지: 현재 연결 토막은 Claude 가 아니면 손대지 않고, 보통이어도 더 낮은 값(min · low)은 그대로 둬요
+    const fn = source.slice(source.indexOf('function lowerTranslationThinking('), source.indexOf('async function callLLMAPI('));
+    assert.match(fn, /if \(!payload \|\| payload\.chat_completion_source !== 'claude'\) return payload;/);
+    assert.match(fn, /const kept = chosen === 'medium' \? \['min', 'low', 'medium'\] : \['min', 'low'\];/);
+});
+
+await test('감사 고침: 참고 정보 안내 — 내가 보낸 메시지를 번역할 때도 붙는다고 알려요 (동작은 그대로)', () => {
+    const html = read('src/addons/translator/index.html');
+    assert.match(html, /내가 보낸 메시지를 번역할 때\(자동 번역 모드가 「전체 번역」 · 「유저 메시지 만」일 때 · 번역 단추\)도 같이 붙어요\./);
+    // 안내가 말하는 동작 그대로인지: 메시지 번호를 아는 번역이면 내 메시지에도 참고 정보를 넣어요(입력 번역만 빼요)
+    const h = helpers({ settings: { reply_ctx_persona: true } });
+    assert.equal(h.context.chat[1].is_user, true);
+    assert.equal(h.api.replyReferenceIndex({ contextAt: 1 }, 'x'), 1);
+    assert.equal(h.api.replyReferenceIndex({ contextAt: 1, isInputTranslation: true }, 'x'), -1);
 });
 
 console.log(`translator-reply-reference: ${passed} passed, ${failed} failed`);

@@ -250,6 +250,7 @@ ${p} .lmi{display:block;${hw(22, 22)};background:${svgUrl(lemonSvg('#FFE23C', '#
 ${p} .tt{display:block;margin:12px 0 0;font:700 20px/28px ${GOTHIC};letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere}
 ${p} .ul{display:block;${hw(36, 2)};margin:8px 0 0}
 ${p} p{margin:0 0 10px;font:400 14.5px/24px ${SERIF};text-indent:1em;word-break:keep-all;overflow-wrap:anywhere}
+${p} p strong,${p} p b{font-family:${GOTHIC};font-weight:700}
 ${p} p.nm{margin:14px 0 2px;font:700 13px/20px ${GOTHIC}}
 ${p} .lg>p:first-child{margin-top:0}
 ${p} .lg>p:last-child{margin-bottom:0}
@@ -414,6 +415,7 @@ ${p} .lg>.dl:last-child{margin-bottom:8px}
 ${p} .rx{display:block;max-width:80%;margin:0}
 @keyframes kb435-pp{0%{transform:none}32%{transform:scale(.965)}68%{transform:scale(1.02)}100%{transform:none}}
 ${p} .rx[open] .bb{animation:kb435-pp .34s ease-out 0s 1}
+${p} .bb strong,${p} .bb b{font-family:${GOTHIC};font-weight:700}
 ${p} .bb{grid-template-columns:minmax(0,1fr);padding:8px 12px;transition:background-color .2s ease;border-radius:16px 16px 16px 4px;font:400 14.5px/24px ${SERIF};word-break:keep-all;overflow-wrap:anywhere;-webkit-user-select:text;user-select:text}
 ${p} .me .bb{border-radius:16px 16px 4px 16px}
 ${p} .bt{display:block;grid-area:1/1/2/2;min-width:0}

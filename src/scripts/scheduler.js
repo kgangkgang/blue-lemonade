@@ -20,7 +20,9 @@ function tick() {
     if (hidden() || idle()) { arm(); return; }
     const at = now();
     // 박자가 조금 늦게 와도(브라우저가 타이머를 미룸) 그 박자에 같이 돌려요 — 5ms 여유
-    for (const task of [...tasks.values()]) if (tasks.has(task.id) && task.due <= at + 5) { task.due = at + task.ms; run(task); }
+    //   다음 차례는 「박자가 실제로 온 시각」이 아니라 「원래 차례」에서 세요. 늦게 온 박자 기준으로 잡으면(at + ms) 제때 온 다음 박자를 5ms 여유로 못 잡아
+    //   한 박자를 건너뛰었어요(과일 입구 1.5초 안전망이 바쁜 기기에서 약 3초). 오래 멈췄다 온 박자면 밀린 차례는 한 번만 돌리고 지금보다 뒤의 첫 차례로 넘겨요
+    for (const task of [...tasks.values()]) if (tasks.has(task.id) && task.due <= at + 5) { task.due += task.ms * (Math.floor((at + 5 - task.due) / task.ms) + 1); run(task); }
 }
 /** 진짜 타이머를 지금 할 일에 맞춰요: 일이 없거나 · 가려졌거나 · 쉬는 중이면 내리고, 아니면 가장 짧은 간격으로 하나 */
 function arm() {

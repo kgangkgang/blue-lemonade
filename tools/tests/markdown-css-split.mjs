@@ -54,9 +54,9 @@ test('옛 떼는 함수(markdownSplit)는 비교용으로 그대로 — 칸이 �
 
 test('붙이는 코드: 고른 모양이 있을 때만 · 클래스보다 먼저 · 전체 장이 켜져도 켜 둬요', () => {
     const lite = read('src/lite.js'), apply = read('src/apply.js'), sheet = read('src/theme-sheet.js'), table = read('src/css-gates.gen.js');
-    assert.match(apply, /const held = syncGateCss\(want\);/);
+    assert.match(apply, /const held = syncGateCss\(want, coolChatForRestyle\);/);
     assert.match(table, /"id":"md","file":".\/markdown\.gen\.css","prefixes":\["salty-md-"\]/);
-    assert.match(lite, /export function syncGateCss\(want\)/);
+    assert.match(lite, /export function syncGateCss\(want, cool = null\)/);
     assert.doesNotMatch(sheet, /setMarkdown/);
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/markdown-css-split\.mjs \./);
 });

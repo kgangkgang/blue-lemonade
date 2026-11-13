@@ -307,5 +307,20 @@ await test('바닥 줄: 폰에서는 아이콘 + 짧은 이름(「글만」 · 1
     assert.ok(!/\.bl-lc-long/.test(WIDE_CSS), 'PC 는 긴 이름을 숨기지 않아요');
 });
 
+await test('분류 탭 누르는 높이(감사 고침): 탭 34 + 위아래 안쪽 여백 5씩 = 44 — 손가락 화면의 44 상자가 탭 줄의 overflow-y:hidden 에 잘리지 않고, 보이는 자리는 그대로예요', () => {
+    const strip = PHONE_CSS.match(/\.bl-tool-dialog\.bl-lc \.salty-seg\.bl-lc-cats \{([^}]*)\}/)[1];
+    const tab = PHONE_CSS.match(/\.bl-tool-dialog\.bl-lc \.salty-seg\.bl-lc-cats > button \{([^}]*)\}/)[1];
+    assert.match(WIDE_CSS, /\.bl-lc \.salty-seg\.bl-lc-cats \{[^}]*overflow-y:hidden;/, '탭 줄은 위아래로 넘친 것을 잘라요(가로 스크롤 줄)');
+    const hit = Number(WIDE_CSS.match(/\.bl-lc \.salty-seg\.bl-lc-cats > button::before \{[^}]*height:max\(100%, (\d+)px\)/)[1]);
+    const tabHeight = Number(tab.match(/min-height:var\(--bl-ui-chip, (\d+)px\)/)[1]);
+    const pad = strip.match(/padding:(\d+)px 0 (\d+)px \d+px;/), margin = strip.match(/margin:(-?\d+)px 0;/);
+    assert.ok(pad && margin, `탭 줄의 위아래 여백 꼴을 못 읽었어요: ${strip.slice(0, 120)}`);
+    const [top, bottom] = [Number(pad[1]), Number(pad[2])];
+    assert.equal(hit, 44); assert.equal(tabHeight, 34);
+    assert.ok(tabHeight + top + bottom >= hit, `잘리지 않는 높이 ${tabHeight + top + bottom}px 가 누르는 상자 ${hit}px 보다 작아요`);
+    assert.equal(top, bottom, '상자는 탭 가운데에 놓여요');
+    assert.equal(Number(margin[1]), -top, '안쪽 여백만큼 바깥 여백을 줄여 줄 자리 · 밑줄 자리는 그대로');
+});
+
 console.log(`log-copy-phone-sheet: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

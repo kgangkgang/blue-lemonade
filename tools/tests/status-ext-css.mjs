@@ -190,4 +190,11 @@ check('⑫ 숫자 동그라미 · 점: 한 크기(16 · 8) · 한 색(테마 강
     assert.ok(!/salty-danger/.test(badge.body), '알림 숫자는 빨강이 아니라 테마 강조 레몬(사용자 「알림은 노랑」)');
     assert.match(css, /--ss-neg:\s*color-mix\(in srgb, var\(--salty-danger\)/, '게이지 · 수치의 빨강(--ss-neg)은 건드리지 않아요');
 });
+check('⑩ 감사 고침: 띠가 「입력창 위」일 때는 알림의 기준으로 삼지 않아요 · 아래에 붙은 묶음 바는 불투명 면이에요', () => {
+    assert.match(css, /body\.salty #ss-hud:not\(\.bottom\) \{ anchor-name: --bl-ss-hud; \}/);
+    assert.doesNotMatch(css, /body\.salty #ss-hud \{ anchor-name/, '아래 띠까지 기준이면 위쪽 알림이 입력창을 덮어요');
+    assert.match(css, /body\.salty \.ss-toasts:not\(\.bottom\) \{ top: calc\(anchor\(--bl-ss-hud bottom, calc\(var\(--topBarBlockSize, 40px\) \+ 2px\)\) \+ 6px\); \}/, '기준이 없으면 위 막대 아래(대체값)');
+    const face = css.indexOf('body.salty .ss-scope :is(.ss-seg, .ss-seg.wrap, .ss-groups) {'), fixed = css.indexOf('body.salty .ss-scope.navbottom .ss-groups { background: var(--salty-surface-shade, var(--ss-bg)); }');
+    assert.ok(face >= 0 && fixed > face, '같은 세기라 뒤에 와야 이겨요(반투명 면 → 불투명 면)');
+});
 console.log(`status-ext-css: ${passed}개 통과`);

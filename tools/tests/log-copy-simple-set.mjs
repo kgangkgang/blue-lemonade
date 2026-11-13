@@ -22,7 +22,7 @@ await test(`마트와 같은 결과: 틀 ${FIXTURE_FRAMES.length} × 낮밤 × �
     let n = 0;
     for (const [k, html] of Object.entries(fixture.inputs)) {
         const [id, mode] = k.split('|');
-        for (const [name, set] of FIXTURE_SETS) { assert.equal(sha(applySet(html, set, { mode, key: id.replace(/^simple-/, '') })), fixture.expect[`${k}|${name}`], `${k}|${name}`); n++; }
+        for (const [name, set] of FIXTURE_SETS) { assert.equal(sha(applySet(html, set, { mode, key: id.replace(/^simple-/, ''), sample: true })), fixture.expect[`${k}|${name}`], `${k}|${name}`); n++; }   // 입력이 마트 견본 글이라 견본 전용 값(lines · texts · spoilers)까지 걸어 맞대요
     }
     assert.equal(n, Object.keys(fixture.expect).length);
 });

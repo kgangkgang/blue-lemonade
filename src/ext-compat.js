@@ -4,7 +4,8 @@
 //      · 그 확장의 요소는 옮기거나 지우거나 다시 만들지 않아요 — 묶음 번호(data-bl-tab-g)를 달고, 안 고른 묶음에 data-bl-tab-off 를 달아 CSS 로 가리기만 해요(값 저장 · 사건 처리는 그 확장 것 그대로).
 //      · 묶음 머리가 둘 미만이면 아무것도 하지 않아요(원래 긴 꼴 그대로).
 //   ③ 맞춘 판 안내 한 줄: 깔린 판이 확인한 판과 다르면 그 사실을 알려요(맞춤은 그대로 걸어요).
-//   ④ 분류 탭 줄을 공용 가로 탭 줄 등록부(src/tab-scroll.js)에 한 번 넣어요(← → · 휠 · 넘친 쪽 흐림). 등록부는 확장 서랍을 열 때 생겨서, 없으면 다음 누름에 다시 보고 넣은 뒤로는 안 봐요.
+//   ④ 분류 탭 줄과 그 확장의 안쪽 탭 줄(SETS strips — 맞춤 시트가 한 줄 가로 스크롤로 바꾼 줄)을 공용 가로 탭 줄 등록부(src/tab-scroll.js)에 한 번 넣어요(← → · 휠 · 넘친 쪽 흐림 · 고른 탭 보이기).
+//      등록부는 서랍 문이 열릴 때(쉴 때 · 확장 서랍) 생겨서, 없으면 다음 누름에 다시 보고 넣은 뒤로는 안 봐요.
 //   ⑤ 정리한 보기(src/ext-organize.js): 탭을 만든 뒤 한 번 — 탭 한 줄 설명 · 접는 갈래(지금 값) · 숫자 2열 · 긴 설명 「자세히」 · 비용 표시 · 길잡이 · 서랍 머리의 「정리한 보기 ↔ 원작 그대로」.
 //      모르는 구조면 조용히 원래 모습 그대로예요(표가 맞는 줄만 건드려요).
 //   ⑥ 원작 표식(mark)이 있는 칸만: 같은 id · 클래스 이름을 쓰는 다른 확장이 있어도 원작의 표식이 든 설정 칸에만 시트 · 표식(data-bl-ext) · 안내 줄을 붙여요. 설정이 이미 탭으로 나뉜 확장은 분류 탭을 만들지 않아요.
@@ -20,7 +21,8 @@ import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummari
 export const SETS = [
     // 미트볼 상태창 — 2.6.1 · 2.7.0 · 2.7.1 · 2.7.2 화면에서 확인(2026-11-13 · 리그 — 2.6.1 은 재설계 앞 판에서). 판이 달라도 맞춤 CSS 는 그대로 걸고, 안내 한 줄만 바뀌어요.
     //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
-    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2'] },
+    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2'],
+        strips: ['.ss-scope .ss-tabs'] },   // 맞춤 시트가 「한 줄 · 스크롤바 없음」으로 바꾼 그 확장의 탭 줄 — 등록부에 넣어야 휠로 넘친 탭에 닿고, 그 확장이 판을 다시 그린 뒤에도 고른 탭이 보여요
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   「색 두기」 안: 그 확장의 제 색 · 글꼴은 그대로 — 설정 내용 칸(native)에 「원래 색 유지」 표식을 붙여 테마 색 규칙이 비켜 가게 하고, 낮밤 표식(mode)을 테마 밝기에 다시 맞춰요.
     { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60'] },
@@ -150,7 +152,7 @@ export function ensureStrip(doc) {
     try {
         const api = doc[STRIP];
         if (typeof api?.add !== 'function') return false;
-        api.add([`.${NAV}`]);   // 이미 있는 탭 줄은 바로 묶고, 그 뒤에 생기는 탭 줄(그 확장이 설정 칸을 다시 그린 때)은 등록부가 스스로 묶어요
+        api.add([`.${NAV}`, ...SETS.flatMap(set => set.strips || [])]);   // 이미 있는 탭 줄은 바로 묶고, 그 뒤에 생기는 탭 줄(그 확장이 설정 칸 · 판을 다시 그린 때)은 등록부가 스스로 묶어요
         strip = true;
     } catch { /* 등록부가 깨져 있으면 가로 스크롤만 */ }
     return strip;
@@ -215,6 +217,7 @@ export function startExtCompat(doc = globalThis.document) {
         // 탭 누름 + 머리줄 · 확장 서랍 단추를 누를 때 칸 다시 찾기 — 문서 단위 누름 하나(잡는 단계 · 막거나 멈추지 않아요)
         doc.addEventListener('click', event => {
             const target = event.target;
+            if (!strip) ensureStrip(doc);   // 그 확장의 판(안쪽 탭 줄)은 설정 서랍을 거치지 않고도 열려요 — 등록부가 생긴 뒤 첫 누름에 넣어요(넣은 뒤로는 안 봐요)
             if (!target?.closest) return;
             const tab = target.closest(`.${TAB}`);
             if (tab) {

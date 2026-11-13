@@ -450,7 +450,7 @@ await test('index.js 연결: 메시지 번역 · 다시 번역에서만 모으�
     assert.match(js, /glossary_suggest: \{\},/);
     assert.equal((js.match(/noteFixPairs\(/g) || []).length, 3, '정의 1 + 문단 길 1 + 통째 길 1');
     assert.equal((js.match(/collectNames: true/g) || []).length, 2, '다른 translate(translateText · /llm-translate · 입력) 는 모으지 않는다');
-    const digest = js.split('\n').find(line => line.includes('const setupDigest = await checkpointKey('));
+    const digest = js.split('\n').find(line => line.includes('const digestParts = [connection, finalPrompt,'));   // 캐시 서명 재료(감사 고침 뒤 setupDigest = digestOf(…) 가 이 배열을 이어 붙여요)
     assert.ok(digest && !digest.includes('glossary_suggest'), '캐시 서명(setupDigest)에 제안 목록이 안 들어간다');
     assert.equal((js.match(/delete settingsSnapshot\.glossary_suggest;/g) || []).length, 2, '프리셋에 안 담는다 (두 곳)');
     assert.match(js, /if \(mySuggest\) extensionSettings\.glossary_suggest = mySuggest;/, '프리셋을 골라도 제안 목록이 남는다');

@@ -86,10 +86,11 @@ export const noticeFrameHtml = rows => `<div class="salty-notice">
 // 1.2.1 옛 판(1.0.0 앞 · 465판) 공지는 눌러 담은 생성물(notice-old.gen.js · tools/notice-old-gen.mjs)이에요. 창을 열 때 받아 풀어요 — 창은 최근 구간
 //   (notice-data.js)을 먼저 그리고 풀리면 맨 끝 장 바로 뒤에 이어 붙여요(한꺼번에 그리던 1.2.0 과 끝난 DOM 이 같아요 · 경계는 다른 날이라 날짜 장이 안 쪼개져요).
 //   풀 수 없는 브라우저(DecompressionStream 없음 · 크롬 103 · 사파리 16.4 · 파이어폭스 113 앞)는 옛 구간 없이 최근 구간만이에요.
-let oldCache = null;
+//   조각을 못 받았으면(망 끊김) 다음에 창을 열 때 다시 받아요 — 못 받은 모듈 주소는 브라우저가 기억해서 주소 뒤에 ?retry= 를 붙여요(같은 주소로는 새로고침 전까지 옛 구간이 말없이 빠졌어요).
+let oldCache = null, oldTry = 0;
 async function unpackOld() {
     if (typeof DecompressionStream !== 'function' || typeof atob !== 'function') return [];
-    const { OLD_NOTICES_Z } = await import('./notice-old.gen.js');
+    const { OLD_NOTICES_Z } = await (oldTry ? import(`./notice-old.gen.js?retry=${oldTry}`) : import('./notice-old.gen.js')).catch((error) => { oldTry++; throw error; });
     const bytes = Uint8Array.from(atob(OLD_NOTICES_Z), ch => ch.charCodeAt(0));
     return JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text());
 }

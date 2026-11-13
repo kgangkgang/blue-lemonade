@@ -42,6 +42,8 @@ export const clock = {
     pending: () => queue.size,
 };
 export const errors = [];
+// <link> 받기 손잡이: hold 를 켜면 붙인 <link> 의 load 를 스스로 쏘지 않고 pending 에 모아요 — 시험이 load · error 를 골라 쏴요(「받는 동안」 틈을 보는 시험 · gate-css-run.mjs)
+export const linkLoads = { hold: false, pending: [] };
 // 1.1.6(11-12) 노드 22: module.register 로더 훅은 따로 도는 스레드라 동적 import 가 진짜 이벤트 루프 차례를 받아야 풀려요 — 로더를 거는 시험은 realYield(ms) 로
 //   가짜 시간을 보내는 사이사이 진짜로 ms 만큼 쉬게 해요(기본 0 = 예전 그대로). 노드 24 는 쉬지 않아도 풀려 GitHub Actions(노드 22)에서만 깨졌어요.
 import { setTimeout as realWait } from 'node:timers/promises';
@@ -107,7 +109,7 @@ class NodeLite extends EventTargetLite {
     getRootNode() { let n = this; while (n.parentNode) n = n.parentNode; return n; }
     contains(node) { for (let n = node; n; n = n.parentNode) if (n === this) return true; return false; }
     hasChildNodes() { return this.childNodes.length > 0; }
-    _adopt(nodes) { const out = []; queueMicrotask(() => { for (const n of out) if (n.localName === 'link' || n.localName === 'script') { try { n.onload?.(new EventLite('load')); n.dispatchEvent(new EventLite('load')); } catch (error) { errors.push(error); } } }); for (const n of nodes) { if (n == null) continue; const node = typeof n === 'string' || typeof n === 'number' ? new TextLite(String(n)) : n; if (node.nodeType === 11) { out.push(...node.childNodes); node.childNodes.length = 0; } else out.push(node); } return out; }
+    _adopt(nodes) { const out = []; queueMicrotask(() => { for (const n of out) if (n.localName === 'link' || n.localName === 'script') { if (n.localName === 'link' && linkLoads.hold) { linkLoads.pending.push(n); continue; } try { n.onload?.(new EventLite('load')); n.dispatchEvent(new EventLite('load')); } catch (error) { errors.push(error); } } }); for (const n of nodes) { if (n == null) continue; const node = typeof n === 'string' || typeof n === 'number' ? new TextLite(String(n)) : n; if (node.nodeType === 11) { out.push(...node.childNodes); node.childNodes.length = 0; } else out.push(node); } return out; }
     insertBefore(node, ref) { const nodes = this._adopt([node]); for (const n of nodes) { n.parentNode?._detach(n); n.parentNode = this; const i = ref ? this.childNodes.indexOf(ref) : -1; if (i < 0) this.childNodes.push(n); else this.childNodes.splice(i, 0, n); } mutated(this, 'childList', { addedNodes: nodes, removedNodes: [] }); return node; }
     appendChild(node) { return this.insertBefore(node, null); }
     append(...nodes) { const list = this._adopt(nodes); for (const n of list) { n.parentNode?._detach(n); n.parentNode = this; this.childNodes.push(n); } if (list.length) mutated(this, 'childList', { addedNodes: list, removedNodes: [] }); }

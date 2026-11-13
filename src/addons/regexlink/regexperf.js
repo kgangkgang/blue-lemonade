@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Penterson
 // 원본: st-regex-perf e21e666bface5dca6c0ea83bcbce0c6e8fe03824(0.3.0) · 0.5.5(f652757d5c856f1855502eb55814337e1544efef)의 고침 일부를 더함. 라이선스 전문은 THIRD-PARTY-NOTICES.md에 보존해요.
-// 블루레몬 변경: 프롬프트 연동 정규식·늦은 화면 생성·한국어 지역 사전·다른 엔진 패치에 양보를 연결해요.
+// 블루레몬 변경: 프롬프트 연동 정규식·늦은 화면 생성·한국어 지역 사전·다른 엔진 패치에 양보를 연결해요. /regexperf off 이름이 이미 꺼진 같은 이름 대신 이름이 들어 있는 다른 스크립트를 끄지 않게 고쳤어요.
 /**
  * Regex Perf Kit — speeds up SillyTavern's built-in Regex extension without touching any regex script.
  *
@@ -1794,13 +1794,22 @@ function buildReportCsv() {
     return lines.join('\r\n');
 }
 
+/** 블루레몬: 켜짐 · 허용과 상관없이 정규식 확장에 있는 모든 스크립트 이름(소문자) — 「이미 꺼짐」과 「없음」을 가르는 데만 써요 */
+function everyScriptName() {
+    try {
+        const all = typeof getScriptsByType === 'function' && SCRIPT_TYPES ? Object.values(SCRIPT_TYPES).flatMap(type => getScriptsByType(type, { allowedOnly: false }) ?? []) : getRegexScripts({ allowedOnly: false }) ?? [];
+        return all.filter(s => s?.findRegex).map(s => (s.scriptName || t`(no name)`).toLowerCase());
+    } catch { return []; }
+}
 /** Turns off the scripts whose name matches (exactly, else as the only one containing it); the message to show. */
-async function turnOffByName(name) {
+export async function turnOffByName(name) {
     const want = name.trim().toLowerCase();
     if (!want) return t`Usage: /regexperf off <script name>`;
     // 원본 0.5.5: 스크립트마다 제 이름으로 — 같은 식을 쓰는 스크립트는 표의 한 줄을 나눌 뿐, 이 명령으로 같이 꺼지지 않아요
     const scripts = readGroups().flatMap(([, list]) => list).filter(s => s?.findRegex && !s.disabled).map(s => ({ ids: [s.id], name: s.scriptName || t`(no name)` }));
     const found = scripts.filter(r => r.name.toLowerCase() === want);
+    // 블루레몬 고침: 이름이 똑같은 스크립트가 이미 꺼져 있거나 지금 채팅에 허용되지 않아 위 목록에 없을 때, 이름이 「들어 있는」 다른 스크립트로 넘어가 그것을 끄지 않아요
+    if (!found.length && everyScriptName().includes(want)) return t`"${name}" is already off or not allowed in this chat.`;
     const hits = found.length ? found : scripts.filter(r => r.name.toLowerCase().includes(want));
     if (hits.length !== 1) return hits.length ? t`"${name}" matches several scripts: ${hits.map(r => r.name).join(', ')}` : t`"${name}" is not in the Regex extension's list.`;
     await scriptAction(hits[0], true);

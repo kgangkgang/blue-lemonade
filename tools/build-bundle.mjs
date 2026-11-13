@@ -140,6 +140,13 @@ const CHUNK_URL = {
     'src/weather.js': [["new URL('./weather-engine.js', import.meta.url)", 'src/weather-engine.js'], ["new URL('./weather-worker.js', import.meta.url)", 'src/weather-worker.js']],
     'src/weather-engine.js': [["new URL('./weather-scenes.js', import.meta.url)", 'src/weather-scenes.js']],
 };
+// 다시 받기: 못 받은 모듈 주소는 브라우저가 기억해요 — 다시 받을 땐 묶음 조각 주소 뒤에 ?retry=<횟수> 를 붙여요. 파일 → [받을 모듈, src 의 글, 횟수 변수 이름]
+//   src 의 글은 「(횟수 ? import(`./모듈.js?retry=${횟수}`) : import('./모듈.js'))」 꼴 그대로여야 해요(바뀌면 빌드가 멈춰요)
+const RETRY_IMPORT = {
+    'src/addons/tts/shell.js': ['src/addons/tts/index.js', "(attempt ? import(`./index.js?retry=${attempt}`) : import('./index.js'))", 'attempt'],
+    'src/lite.js': ['src/gate-css.js', "(gateTry ? import(`./gate-css.js?retry=${gateTry}`) : import('./gate-css.js'))", 'gateTry'],   // 뗀 규칙 시트 몸통(켠 꾸밈이 있을 때만 받아요)
+    'src/notice.js': ['src/notice-old.gen.js', "(oldTry ? import(`./notice-old.gen.js?retry=${oldTry}`) : import('./notice-old.gen.js'))", 'oldTry'],   // 1.0.0 앞 판 공지(공지 창을 열 때만 받아요)
+};
 // 내장 스크립트 · 제목 사전: 설정의 파일 이름으로 받아요 — dist/plain · dist/titles 에 이름 그대로
 const REAL_META = {
     'src/scripts/runtime.js': ['new URL(`./plain/${item.file}.js${bust?`?r=${Date.now().toString(36)}`:\'\'}`,import.meta.url)', 'new URL(`./titles/${item.file}.gen.js${bust?`?r=${Date.now().toString(36)}`:\'\'}`,import.meta.url)'],
@@ -256,10 +263,10 @@ function plugin(bootModules = new Set(), { root = ROOT, workers = [], worker = n
                 if (!refs.has(target)) refs.set(target, this.emitFile({ type: 'chunk', id: path.join(root, target), preserveSignature: 'strict' }));
                 code = must(code, find, `new URL(import.meta.ROLLUP_FILE_URL_${refs.get(target)})`);
             }
-            if (name === 'src/addons/tts/shell.js') {
-                const target = 'src/addons/tts/index.js';
+            if (RETRY_IMPORT[name]) {
+                const [target, find, count] = RETRY_IMPORT[name];
                 if (!refs.has(target)) refs.set(target, this.emitFile({ type: 'chunk', id: path.join(root, target), preserveSignature: 'strict' }));
-                code = must(code, "(attempt ? import(`./index.js?retry=${attempt}`) : import('./index.js'))", `import(import.meta.ROLLUP_FILE_URL_${refs.get(target)}+(attempt?\`?retry=\${attempt}\`:''))`);
+                code = must(code, find, `import(import.meta.ROLLUP_FILE_URL_${refs.get(target)}+(${count}?\`?retry=\${${count}}\`:''))`);
             }
             const keep = REAL_META[name] || [];
             const held = keep.map((text, i) => { code = must(code, text, `__BL_REAL_META_${i}__`); return text; });

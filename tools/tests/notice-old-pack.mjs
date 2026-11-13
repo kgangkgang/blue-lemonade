@@ -4,13 +4,17 @@
 //   ③ 공지 창(openNotice)을 가짜 DOM 에서 열면: 처음엔 최근 구간만 · 풀린 뒤 DOM(innerHTML) · 글(textContent)이 전체를 한꺼번에 그린 것과 같아요
 //   ④ 묶음: 공지 데이터(notice-data.js)에는 옛 판 공지 글이 없어요 · 옛 구간은 창을 열 때 import() 로만 받아요(시작 그래프 밖)
 //   ⑤ DecompressionStream 이 없으면 옛 구간 없이 최근 구간만(창은 그대로 열려요)
+//   ⑥ 옛 공지 조각을 한 번 못 받아도 다음에 창을 열 때 새 주소(?retry=)로 다시 받아요(공개판 감사 — 같은 주소로는 새로고침 전까지 옛 구간이 말없이 빠졌어요)
 //   node tools/tests/notice-old-pack.mjs [저장소]
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { register } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
+// ⑥ 「조각을 못 받음」 흉내: notice.js?case=fail 이 처음 부르는 import('./notice-old.gen.js') 만 실패해요(다시 받는 주소 ?retry=N 은 그대로 받아요)
+register('data:text/javascript,' + encodeURIComponent("export async function resolve(specifier, context, next) { if (specifier === './notice-old.gen.js' && /[?&]case=fail/.test(context.parentURL || '')) throw new Error('흉내: 조각을 못 받았어요'); return next(specifier, context); }"));
 const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const load = rel => import(pathToFileURL(path.join(root, rel)).href);
@@ -153,6 +157,17 @@ await test('⑤ DecompressionStream 이 없으면: 옛 구간 없이 최근 구�
         assert.equal(dlg.innerHTML, recentOnly.innerHTML, '최근 구간만 · 새 문구를 보태지 않아요');
         dlg.close(); await done;
     } finally { globalThis.DecompressionStream = keep; }
+});
+
+await test('⑥ 옛 공지 조각을 한 번 못 받아도 다음에 다시 받아요 — 새 주소로 · 묶음 표에도 있어요', async () => {
+    const fresh = await import(pathToFileURL(path.join(root, 'src/notice.js')).href + '?case=fail');
+    assert.deepEqual(await fresh.loadOldNotices(), [], '못 받으면 옛 구간 없이(창은 최근 구간으로 열려요)');
+    const again = await fresh.loadOldNotices();
+    assert.equal(again.length, OLD_COUNT, '다음에 열 때 다시 받아요');
+    assert.equal(sha(JSON.stringify(again)), OLD_SHA);
+    assert.equal(await fresh.loadOldNotices(), again, '받은 뒤로는 한 번 푼 것을 다시 써요');
+    assert.match(read('src/notice.js'), /await \(oldTry \? import\(`\.\/notice-old\.gen\.js\?retry=\$\{oldTry\}`\) : import\('\.\/notice-old\.gen\.js'\)\)/);
+    assert.match(read('tools/build-bundle.mjs'), /'src\/notice\.js': \['src\/notice-old\.gen\.js', /, '묶음에서도 다시 받는 주소가 달라요(RETRY_IMPORT)');
 });
 
 console.log(`\nnotice-old-pack: ${pass} passed, ${fail} failed`);
