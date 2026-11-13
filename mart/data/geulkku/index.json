@@ -1,6 +1,6 @@
 {
  "_": "글꾸 마트 목록 — tools/geulkku-simple.mjs 산출물(심플 새 틀 · 고치지 말고 다시 만들어요) · 옛 글꾸는 11-11 에 마트에서 뺐어요(되살리는 법은 W/outputs/지시-1110/심플-새틀-이식/마트-길닦기.md 12절)",
- "count": 419,
+ "count": 420,
  "categories": [
   {
    "id": "simple-open",
@@ -144,9 +144,9 @@
    "bytes": 783322
   },
   "sp-pass-9": {
-   "file": "sp-pass-9.fecaef74.json",
-   "n": 31,
-   "bytes": 532907
+   "file": "sp-pass-9.524a35e2.json",
+   "n": 32,
+   "bytes": 554739
   }
  },
  "items": [
@@ -568,6 +568,7 @@
   {"id":"simple-k1379","name":"사랑 재판","emoji":"⚖️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 법봉 치기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":13260,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"장면 글꾸"},
   {"id":"simple-k1380","name":"스노우볼","emoji":"❄️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 흔들기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":18260,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"크리스마스 · 연말"},
   {"id":"simple-k1448","name":"벨포드 · 무스카와 화분","emoji":"🐈","category":"simple-open","style":"심플","desc":"소품을 누르면 — 화분 밀기","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":20478,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"천지합동청","world":"halo","who":"벨포드","src":["halo"]},
-  {"id":"simple-k1449","name":"벨포드 · 무스카 부비부비","emoji":"🐈","category":"simple-open","style":"심플","desc":"소품을 누르면 — 발치에 부비부비","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":20291,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"천지합동청","world":"halo","who":"벨포드","src":["halo"]}
+  {"id":"simple-k1449","name":"벨포드 · 무스카 부비부비","emoji":"🐈","category":"simple-open","style":"심플","desc":"소품을 누르면 — 발치에 부비부비","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":20291,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"천지합동청","world":"halo","who":"벨포드","src":["halo"]},
+  {"id":"simple-k1450","name":"벨포드 · 무스카 폴짝","emoji":"🐈","category":"simple-open","style":"심플","desc":"소품을 누르면 — 통통 폴짝","c":"sp-pass-9","copyOnly":true,"photo":true,"simple":true,"bytes":21541,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"천지합동청","world":"halo","who":"벨포드","src":["halo"]}
  ]
 }

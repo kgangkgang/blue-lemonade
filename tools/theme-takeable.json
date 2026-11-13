@@ -1,7 +1,7 @@
 {
  "_": "테마가 받는 글꾸 마트 틀 — tools/theme-takeable-pull.mjs 가 테마 받기 검사(src/mart-import.js checkItem)를 마트의 지금 조각에 돌려 뜬 것 · samples(견본 답) · code(판정 선언 지문)도. 고치지 말고 다시 떠요(테마 판이 받는 틀을 늘리면)",
  "theme": "87cfaa36d · v1.1.9 뒤",
- "total": 419,
+ "total": 420,
  "ok": [
   "simple-k1",
   "simple-k2",
@@ -403,7 +403,8 @@
   "simple-k1379",
   "simple-k1380",
   "simple-k1448",
-  "simple-k1449"
+  "simple-k1449",
+  "simple-k1450"
  ],
  "no": {
   "simple-k1429": "상대 화자 색이 없는 틀이라 두 사람 대사를 나눠 칠할 수 없어요 — 이 틀은 마트의 「HTML 복사」로 게시글에 바로 붙여 써요",

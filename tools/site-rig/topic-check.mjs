@@ -72,7 +72,7 @@ const tapText = async (vp, sel, text) => {
 async function topicPart(vp) {
     await fresh(); const all = await idx();
     const tabs = await texts('.mart-groups button');
-    row(vp, '분류 묶음 탭: 전체 · 일상 · 이벤트 · 화면 · 장르 · 세계관 · 인물 · 기본 · 심플(수 그대로)', J(tabs) === J(['전체419', '일상122', '이벤트68', '화면 · 장르87', '세계관 · 인물106', '기본 · 심플36']), tabs.join(' / '));
+    row(vp, '분류 묶음 탭: 전체 · 일상 · 이벤트 · 화면 · 장르 · 세계관 · 인물 · 기본 · 심플(수 그대로)', J(tabs) === J(['전체420', '일상122', '이벤트68', '화면 · 장르87', '세계관 · 인물107', '기본 · 심플36']), tabs.join(' / '));
     const aux = await texts('.mart-chips button');
     row(vp, '보조 거르기 줄: 예전 칩 그대로(★ 즐겨찾기 · 최근 · 내 글꾸 · 눌러서 열어요 · 누르면 바뀌어요 · 가만히 보기) · 「소리 카드」는 0개', ['★ 즐겨찾기', '최근', '내 글꾸', '눌러서 열어요', '누르면 바뀌어요', '가만히 보기'].every(t => aux.some(a => a.startsWith(t))) && !aux.some(a => /소리 카드/.test(a)) && !(await b.eval(`document.body.innerText.includes('소리 카드')`)), aux.join(' / '));
     row(vp, '「전체」에서는 하위 칩 줄이 숨어요', (await texts('.mart-topics button')).length === 0, '');
@@ -92,7 +92,7 @@ async function topicPart(vp) {
     await tapText(vp, '.mart-chips button', '소리 · 음악');
     row(vp, '「소리 · 음악」: 소리 줄이 남은 틀만(할로윈 안)', (await countNow()) === want.filter(x => x.audio).length, `목록 ${await countNow()}개(자료 ${want.filter(x => x.audio).length})`);
     await tapText(vp, '.mart-chips button', '소리 · 음악');
-    for (const [g, n] of [['일상', 122], ['화면 · 장르', 87], ['기본 · 심플', 36], ['전체', 419]]) {
+    for (const [g, n] of [['일상', 122], ['화면 · 장르', 87], ['기본 · 심플', 36], ['전체', 420]]) {
         await tapText(vp, '.mart-groups button', g);
         row(vp, `묶음 「${g}」 → ${n}틀`, (await countNow()) === n, `목록 ${await countNow()}개 · 하위 칩 ${(await texts('.mart-topics button')).length}`);
         if (g === '일상') { await b.eval('scrollTo(0,0)'); await b.sleep(250); await b.shot(path.join(OUT, `${vp}-12-분류-일상.png`)); row(vp, '「일상」 가로 넘침 0', (await over()) <= 0, `넘침 ${await over()}`); }
@@ -105,10 +105,10 @@ async function worldPart(vp) {
     await fresh(); const all = await idx();
     await tapText(vp, '.mart-groups button', '세계관 · 인물');
     const sub = await texts('.mart-topics button');
-    row(vp, '「세계관 · 인물」 하위 칩: 모두 106 · 천지합동청 32 · D&H 17 · 아드리안 12 · 무협시뮬 13 · 센티넬버스 32', J(sub) === J(['모두106', '천지합동청32', 'D&H17', '아드리안12', '무협시뮬13', '센티넬버스32']), sub.join(' / '));
+    row(vp, '「세계관 · 인물」 하위 칩: 모두 107 · 천지합동청 33 · D&H 17 · 아드리안 12 · 무협시뮬 13 · 센티넬버스 32', J(sub) === J(['모두107', '천지합동청33', 'D&H17', '아드리안12', '무협시뮬13', '센티넬버스32']), sub.join(' / '));
     row(vp, '세계관을 고르기 전에는 머리 띠가 없어요', !(await b.eval(`document.querySelector('.mart-band').checkVisibility()`)), '');
     const urls = new Set();
-    for (const [label, id, n] of [['천지합동청', 'halo', 32], ['D&H', 'hunter', 17], ['아드리안', 'adrian', 12], ['무협시뮬', 'gangho', 13], ['센티넬버스', 'sentinel', 32]]) {
+    for (const [label, id, n] of [['천지합동청', 'halo', 33], ['D&H', 'hunter', 17], ['아드리안', 'adrian', 12], ['무협시뮬', 'gangho', 13], ['센티넬버스', 'sentinel', 32]]) {
         await tapText(vp, '.mart-topics button', label);
         const band = await b.eval(`(()=>{const e=document.querySelector('.mart-band');return {on:e.checkVisibility(),h:e.querySelector('h2')?.textContent,n:e.querySelector('.mart-band-n')?.textContent,links:[...e.querySelectorAll('a.mart-source')].map(a=>a.href),chips:[...e.querySelectorAll('.mart-band-people button')].map(x=>x.textContent.replace(/\\s+/g,' ').trim()),dots:e.querySelectorAll('.mart-band-people .mart-cast-dot').length}})()`);
         const list = all.filter(x => x.world === id), people = [...new Set(list.filter(x => x.who).map(x => x.who))];
@@ -127,7 +127,7 @@ async function worldPart(vp) {
     await tapText(vp, '.mart-band-people button', '세계관');
     row(vp, '「세계관」 칩 → 인물 없는 세계관 틀만', (await countNow()) === all.filter(x => x.world === 'sentinel' && !x.who).length, `목록 ${await countNow()}개`);
     await tapText(vp, '.mart-topics button', '모두');
-    row(vp, '「모두」 → 106틀 · 머리 띠는 접혀요', (await countNow()) === 106 && !(await b.eval(`document.querySelector('.mart-band').checkVisibility()`)), `목록 ${await countNow()}개`);
+    row(vp, '「모두」 → 107틀 · 머리 띠는 접혀요', (await countNow()) === 107 && !(await b.eval(`document.querySelector('.mart-band').checkVisibility()`)), `목록 ${await countNow()}개`);
 }
 
 async function castPart(vp) {
@@ -257,7 +257,7 @@ async function extraPart(vp) {
     const d3 = await b.eval(`parseInt(document.querySelector('.mart-count').textContent)`);
     await b.goto('about:blank'); await b.goto(srv.url + 'mart/frames/?cat=halloween'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(700);
     const d4 = await b.eval(`({n:parseInt(document.querySelector('.mart-count').textContent),c:document.querySelector('.mart-chips [aria-pressed="true"]')?.dataset.cat})`);
-    row(vp, '주소로 분류 열기: 글꾸 ?g=event&t=할로윈 32 · ?g=world&t=센티넬버스 머리 띠 32 · 모르는 묶음은 전부 · 액자 ?cat=halloween 96', d1.n === 32 && d1.g === 'event' && d1.t === '할로윈' && d2.n === 32 && d2.band === '센티넬버스' && d3 === 419 && d4.n === 96 && d4.c === 'halloween', J([d1, d2, d3, d4]));
+    row(vp, '주소로 분류 열기: 글꾸 ?g=event&t=할로윈 32 · ?g=world&t=센티넬버스 머리 띠 32 · 모르는 묶음은 전부 · 액자 ?cat=halloween 96', d1.n === 32 && d1.g === 'event' && d1.t === '할로윈' && d2.n === 32 && d2.band === '센티넬버스' && d3 === 420 && d4.n === 96 && d4.c === 'halloween', J([d1, d2, d3, d4]));
     // 장바구니 줄의 원작(인물 액자를 담으면)
     await b.goto('about:blank'); await b.send('Storage.clearDataForOrigin', { origin: new URL(srv.url).origin, storageTypes: 'local_storage,session_storage' }).catch(() => { });
     await b.goto(srv.url + 'mart/frames/'); await b.until(`document.querySelectorAll('.mart-card').length > 3`, 30000); await b.sleep(500);

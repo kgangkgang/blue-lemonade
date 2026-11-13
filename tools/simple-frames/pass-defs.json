@@ -3129,5 +3129,13 @@
   "open": true,
   "peek": true,
   "desc": "소품을 누르면 — 발치에 부비부비"
+ },
+ {
+  "frame": "k1450",
+  "name": "벨포드 · 무스카 폴짝",
+  "emoji": "🐈",
+  "open": true,
+  "peek": true,
+  "desc": "소품을 누르면 — 통통 폴짝"
  }
 ]
