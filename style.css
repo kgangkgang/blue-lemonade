@@ -1,4 +1,4 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 36999d4e2cfd) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 5a35b3bc95e5) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
 :root{--bl-release:"1.4.0";}
@@ -2013,8 +2013,7 @@ body.salty.salty-bgimg #sheld {
 body.salty.salty-bgimg #sheld > [id="chat"] {
   background: transparent !important;
 }
-body.salty #chat .mes,
-body.salty :where(.bl-chat-like) .mes:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes {
   max-width: calc(var(--salty-measure) + var(--salty-gutter) * 2);
   margin: 0 auto !important;
   padding: 12px var(--salty-gutter) 8px !important;
@@ -2026,8 +2025,7 @@ body.salty :where(.bl-chat-like) .mes:is(#bl-s, *) {
 body.salty :is(#chat,.bl-chat-like) .mes + .mes {
   margin-top: 8px !important;
 }
-body.salty #chat .last_mes,
-body.salty :where(.bl-chat-like) .last_mes:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .last_mes {
   padding-bottom: 44px !important;
 }
 :where(html.bl-chat-light) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail]) {
@@ -2035,15 +2033,13 @@ body.salty :where(.bl-chat-like) .last_mes:is(#bl-s, *) {
   contain-intrinsic-size: auto 160px;
   flex-shrink: 0;
 }
-body.salty #chat > .mes[data-bl-warm],
-body.salty :where(.bl-chat-like) > .mes[data-bl-warm]:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) > .mes[data-bl-warm] {
   content-visibility: visible !important;
 }
 body.salty :is(#chat,.bl-chat-like).bl-chat-covered {
   content-visibility: hidden;
 }
-body.salty #chat .mes.selected,
-body.salty :where(.bl-chat-like) .mes.selected:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes.selected {
   background: var(--bl-fill-selected, var(--bl-selected)) !important;
   border-radius: var(--bl-r-md) !important;
   box-shadow: inset 0 0 0 1px var(--salty-accent) !important;
@@ -2073,8 +2069,7 @@ body.salty :is(#chat,.bl-chat-like) .mes .avatar img {
 body.salty :is(#chat,.bl-chat-like) .mes .avatar {
   box-shadow: var(--bl-e2) !important;
 }
-body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) #chat .mes:not(.smallSysMes),
-body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :where(.bl-chat-like) .mes:not(.smallSysMes):is(#bl-s, *) {
+body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes:not(.smallSysMes) {
   display: grid;
   grid-template-columns: auto auto var(--salty-meta-inset, 0px) auto auto auto minmax(0, 1fr);
   grid-template-rows: auto auto;
@@ -2099,8 +2094,7 @@ body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like)
 body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes:not(.smallSysMes) > .mesAvatarWrapper > .tokenCounterDisplay {
   grid-area: 1 / 6;
 }
-body.salty:not(.hideChatAvatars) #chat .mes,
-body.salty:not(.hideChatAvatars) :where(.bl-chat-like) .mes:is(#bl-s, *) {
+body.salty:not(.hideChatAvatars) :is(#chat,.bl-chat-like) .mes {
   --salty-meta-inset: 12px;
 }
 body.salty:not(.no-timer.no-tokenCount.no-mesIDDisplay) :is(#chat,.bl-chat-like) .mes:not(.smallSysMes) > .mes_block {
@@ -2263,8 +2257,7 @@ body.salty:is([data-generating="true"], [data-swiping="true"]) :is(#chat,.bl-cha
   visibility: hidden !important;
   pointer-events: none !important;
 }
-html body.salty #chat .mes,
-html body.salty :where(.bl-chat-like) .mes:is(#bl-s, *) {
+html body.salty :is(#chat,.bl-chat-like) .mes {
   box-sizing: border-box !important;
 }
 html body.salty :is(#chat,.bl-chat-like) .mes > .mes_block {
@@ -2378,8 +2371,7 @@ body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes .extraMesBut
   background: var(--bl-fill-press-bg, var(--bl-press-bg));
   color: var(--salty-text);
 }
-body.salty:not(.expandMessageActions) #chat .mes.bl-menu-open,
-body.salty:not(.expandMessageActions) :where(.bl-chat-like) .mes.bl-menu-open:is(#bl-s, *) {
+body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes.bl-menu-open {
   z-index: 45;
   contain: none !important;
   content-visibility: visible !important;
@@ -2624,12 +2616,9 @@ body.salty :is(#chat,.bl-chat-like) .mes :where(.mes_reasoning_edit_done):is(.me
   background: var(--salty-fill-accent-press, var(--salty-accent-press)) !important;
   box-shadow: var(--bl-press) !important;
 }
-body.salty #chat #curEditTextarea,
-body.salty :where(.bl-chat-like) #curEditTextarea:is(#bl-s, *),
-body.salty #chat :where(.edit_textarea):is(#bl-s, *),
-body.salty :where(.bl-chat-like) :where(.edit_textarea):is(#bl-s, *):is(#bl-s, *),
-body.salty #chat :where(.reasoning_edit_textarea):is(#bl-s, *),
-body.salty :where(.bl-chat-like) :where(.reasoning_edit_textarea):is(#bl-s, *):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) #curEditTextarea,
+body.salty :is(#chat,.bl-chat-like) :where(.edit_textarea):is(#bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :where(.reasoning_edit_textarea):is(#bl-s, *) {
   box-sizing: border-box;
   width: 100%;
   margin: 0 !important;
@@ -2645,8 +2634,7 @@ body.salty :where(.bl-chat-like) :where(.reasoning_edit_textarea):is(#bl-s, *):i
   font-size: var(--salty-size) !important;
   line-height: 1.7 !important;
 }
-body.salty #chat .mes_reasoning_details,
-body.salty :where(.bl-chat-like) .mes_reasoning_details:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes_reasoning_details {
   margin: 2px 0 12px !important;
   padding: 0 !important;
   background: var(--bl-fill-card, var(--bl-card)) !important;
@@ -2661,8 +2649,7 @@ body.salty :is(#chat,.bl-chat-like) .mes_reasoning_details .mes_reasoning_summar
   margin: 0 !important;
   padding: 0 6px 0 12px;
 }
-body.salty #chat .mes_reasoning_header,
-body.salty :where(.bl-chat-like) .mes_reasoning_header:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes_reasoning_header {
   align-items: center !important;
   margin: 0 !important;
   padding: 0 20px 0 0 !important;
@@ -2678,8 +2665,7 @@ body.salty :is(#chat,.bl-chat-like) .mes_reasoning_details .mes_reasoning_arrow 
   color: var(--salty-faint);
   font-size: 12px !important;
 }
-body.salty #chat .mes_reasoning_actions,
-body.salty :where(.bl-chat-like) .mes_reasoning_actions:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes_reasoning_actions {
   gap: 0;
   margin: 0 !important;
   color: var(--salty-faint);
@@ -2705,8 +2691,7 @@ body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes_reasoning_actions .edi
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes_reasoning_details .mes_reasoning_arrow {
   font-size: 15px !important;
 }
-body.salty #chat .mes_reasoning,
-body.salty :where(.bl-chat-like) .mes_reasoning:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes_reasoning {
   margin: 0 !important;
   padding: 0 16px 12px !important;
   border: 0 !important;
@@ -2714,8 +2699,7 @@ body.salty :where(.bl-chat-like) .mes_reasoning:is(#bl-s, *) {
   color: var(--salty-em) !important;
   font-size: 0.92em !important;
 }
-body.salty #chat .mes_reasoning_details[data-bl-reasoning-editing],
-body.salty :where(.bl-chat-like) .mes_reasoning_details[data-bl-reasoning-editing]:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes_reasoning_details[data-bl-reasoning-editing] {
   padding: 8px !important;
 }
 body.salty.salty-reasoning-off #sheld > [id="chat"] .mes_reasoning_details:not([data-bl-reasoning-editing]) {
@@ -2747,8 +2731,7 @@ body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes .extraMesBut
   max-width: min(286px, calc(100dvw - 16px)) !important;
   overflow: auto !important; overscroll-behavior: contain; border: 0;
 }
-body.salty #chat #show_more_messages,
-body.salty :where(.bl-chat-like) #show_more_messages:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) #show_more_messages {
   margin: var(--bl-s2) auto;
   padding: var(--bl-s2) var(--bl-s4);
   border-radius: var(--bl-r-sm);
@@ -3075,14 +3058,10 @@ body.salty :is(#chat,.bl-chat-like) .mes .mes_text > .llmt-progress {
 }
 /* css/07-images.css */
 body.salty :is(#chat,.bl-chat-like) .mes.autopic-media-owner .mes_media_wrapper { display: block !important; }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-wrap:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-wrap:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) [class*="custom-imageWrapper"]:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) [class*="custom-imageWrapper"]:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .autopic-tag-img-wrapper:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .autopic-tag-img-wrapper:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img_container):is(.autopic-media-owner .mes_img_container),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img_container):is(.autopic-media-owner .mes_img_container):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-wrap:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) [class*="custom-imageWrapper"]:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .autopic-tag-img-wrapper:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img_container):is(.autopic-media-owner .mes_img_container) {
   display: block;
   width: auto !important;
   max-width: none !important;
@@ -3091,14 +3070,10 @@ body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_
   background: none !important;
   border-radius: 0 !important;
 }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:hover,
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:hover:is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-inner:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-inner:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:hover,
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-inner:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *) {
   display: block;
   position: static !important;
   z-index: auto !important;
@@ -3107,32 +3082,21 @@ body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_
   transform: none !important;
   box-shadow: none !important;
 }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:hover,
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:hover:is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-inner:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-inner:is(.bl-s, *):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-frame:hover,
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-inner:is(.bl-s, *) {
   overflow: visible !important;
 }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-halo-img,
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-halo-img:is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-glow,
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-glow:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-halo-img,
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-glow {
   display: none !important;
 }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *):is(bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *):is(bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is([class*="custom-imageWrapper"] img):is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is([class*="custom-imageWrapper"] img):is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img[data-autopic-id]:is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img[data-autopic-id]:is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img):is(.autopic-media-owner img.mes_img),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img):is(.autopic-media-owner img.mes_img):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *):is(bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is([class*="custom-imageWrapper"] img):is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img[data-autopic-id]:is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img):is(.autopic-media-owner img.mes_img) {
   display: block;
   width: 100% !important;
   max-width: none !important;
@@ -3146,17 +3110,13 @@ body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_
   border-radius: var(--salty-img-radius) !important;
   box-shadow: none !important;
 }
-body.salty #chat :where([data-autopic-id]):is(.mes_text img[data-autopic-id]):is(.bl-s, *),
-body.salty :where(.bl-chat-like) :where([data-autopic-id]):is(.mes_text img[data-autopic-id]):is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :where(.mes_img):is(.autopic-media-owner .mes_media_wrapper img.mes_img),
-body.salty :where(.bl-chat-like) :where(.mes_img):is(.autopic-media-owner .mes_media_wrapper img.mes_img):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :where([data-autopic-id]):is(.mes_text img[data-autopic-id]):is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :where(.mes_img):is(.autopic-media-owner .mes_media_wrapper img.mes_img) {
   transform: none !important;
   transition: none !important;
 }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered,
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered:is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img,
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered,
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img {
   margin: 1.4em 0 1.75em !important;
 }
 body.salty :is(#chat,.bl-chat-like) .mes_text p > img.character-asset-rendered:only-child,
@@ -3265,14 +3225,10 @@ body.salty.salty-dark {
   --salty-fade-a2: .26;
   --salty-fade-a3: .66;
 }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.custom-cac-img):is(.salty-asset:not(.salty-cutout) .custom-cac-img):is(bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.custom-cac-img):is(.salty-asset:not(.salty-cutout) .custom-cac-img):is(bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered.salty-asset:not(.salty-cutout),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered.salty-asset:not(.salty-cutout):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img.salty-asset:not(.salty-cutout),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img.salty-asset:not(.salty-cutout):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is(.salty-asset:not(.salty-cutout) img):is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is(.salty-asset:not(.salty-cutout) img):is(.bl-s, *):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.custom-cac-img):is(.salty-asset:not(.salty-cutout) .custom-cac-img):is(bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered.salty-asset:not(.salty-cutout),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img.salty-asset:not(.salty-cutout),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is(.salty-asset:not(.salty-cutout) img):is(.bl-s, *) {
   --salty-cut: 0px;
   --salty-mask-angle: 180deg;
   --salty-fy: max(1px, calc(var(--salty-imin, 240px) * var(--salty-feather-y, 0)));
@@ -3291,12 +3247,9 @@ body.salty.salty-shape-rect:not(.salty-fade-off) :is(#chat,.bl-chat-like) :is(.m
   -webkit-mask-image: var(--salty-mask-y);
   mask-image: var(--salty-mask-y);
 }
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.custom-cac-img):is(.salty-cutout .custom-cac-img),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.custom-cac-img):is(.salty-cutout .custom-cac-img):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):where(.salty-cutout img):is(.bl-s, *):is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):where(.salty-cutout img):is(.bl-s, *):is(.bl-s, *):is(#bl-s, *),
-body.salty #chat :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img.salty-cutout):is(.bl-s, *):is(.bl-s, *),
-body.salty :where(.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img.salty-cutout):is(.bl-s, *):is(.bl-s, *):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.custom-cac-img):is(.salty-cutout .custom-cac-img),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):where(.salty-cutout img):is(.bl-s, *):is(.bl-s, *),
+body.salty :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img.salty-cutout):is(.bl-s, *):is(.bl-s, *) {
   height: auto !important;
   max-height: var(--salty-img-cap, none) !important;
   object-fit: contain !important;
@@ -3900,12 +3853,10 @@ body.salty :is(#chat,.bl-chat-like) .mes_reasoning q i:where(:not([data-bl-nativ
 body.salty :is(#chat,.bl-chat-like) .mes_reasoning q em:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 color:var(--salty-dialogue);
 }
-body.salty #chat .mes.lastInContext:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)),
-body.salty :where(.bl-chat-like) .mes.lastInContext:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes.lastInContext:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors] *)) {
 border-top:3px dotted var(--salty-accent-70) !important;
 }
-body.salty #chat .mes.lastInContext:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *),
-body.salty :where(.bl-chat-like) .mes.lastInContext:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *):is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .mes.lastInContext:where([data-bl-native-ext-colors],[data-bl-native-ext-colors] *) {
 border-top-width:3px !important;
 border-top-style:dotted !important;
 }
@@ -4218,8 +4169,7 @@ body.salty.salty-icons-line .welcomePanel .recentChat .deleteChat > i { --salty-
 body.salty.salty-icons-line .welcomePanel .recentChat .counterBlock > i { --salty-mi: var(--salty-mi-chat); }
 body.salty.salty-icons-line .welcomePanel .showMoreChats > small { --salty-mi: var(--salty-mi-chevdown); }
 body.salty.salty-icons-line .welcomePanel .noRecentChat > i { --salty-mi: var(--salty-mi-chatdots); }
-body.salty #chat .welcomePanel,
-body.salty :where(.bl-chat-like) .welcomePanel:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .welcomePanel {
   box-sizing: border-box;
   gap: 2px;
   width: calc(100% - 24px);
@@ -5021,8 +4971,7 @@ body.salty .cg-textarea:is(#bl-s, *),
 body.salty #jj-popup .jj-textarea,
 body.salty .eh-textarea:is(#bl-s, *),
 body.salty :where(.text_pole):where(.jj-prompt textarea.text_pole):is(#bl-s, *):is(.bl-s, *),
-body.salty #chat .translation_edit_textarea,
-body.salty :where(.bl-chat-like) .translation_edit_textarea:is(#bl-s, *) {
+body.salty :is(#chat,.bl-chat-like) .translation_edit_textarea {
   font-family: var(--salty-font-text) !important;
   font-size: var(--bl-ts-read) !important;
   font-weight: var(--salty-weight) !important;
@@ -7257,21 +7206,18 @@ body.salty .bl-eye-pick .salty-pick-rows > button {
   initial-value: 0;
 }
 @media not all {#bl-dem-slot-boot-11-a54d9631daafa4ad{--bl-dem-slot:0}}
-body.salty #chat .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none),
-body.salty :where(.bl-chat-like) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none):is(#bl-s, *),
+body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none),
 body.salty :where(.cg-root) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none):is(#bl-s, *),
 body.salty :where(.salty-preview) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none):is(#bl-s, *) {
   font-size: inherit;
   letter-spacing: inherit;
 }
-body.salty #chat .custom-dem-expressive:is(.custom-dem-expressive--deadpan, .custom-dem-expressive--crying, .custom-dem-expressive--hurt, .custom-dem-expressive--intoxicated):not(#salty-none),
-body.salty :where(.bl-chat-like) .custom-dem-expressive:is(.custom-dem-expressive--deadpan, .custom-dem-expressive--crying, .custom-dem-expressive--hurt, .custom-dem-expressive--intoxicated):not(#salty-none):is(#bl-s, *),
+body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive:is(.custom-dem-expressive--deadpan, .custom-dem-expressive--crying, .custom-dem-expressive--hurt, .custom-dem-expressive--intoxicated):not(#salty-none),
 body.salty :where(.cg-root) .custom-dem-expressive:is(.custom-dem-expressive--deadpan, .custom-dem-expressive--crying, .custom-dem-expressive--hurt, .custom-dem-expressive--intoxicated):not(#salty-none):is(#bl-s, *),
 body.salty :where(.salty-preview) .custom-dem-expressive:is(.custom-dem-expressive--deadpan, .custom-dem-expressive--crying, .custom-dem-expressive--hurt, .custom-dem-expressive--intoxicated):not(#salty-none):is(#bl-s, *) {
   filter: none;
 }
-body.salty #chat .custom-dem-expressive,
-body.salty :where(.bl-chat-like) .custom-dem-expressive:is(#bl-s, *),
+body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive,
 body.salty :where(.cg-root) .custom-dem-expressive:is(#bl-s, *),
 body.salty :where(.salty-preview) .custom-dem-expressive:is(#bl-s, *) {
   text-indent: 0;
@@ -7280,24 +7226,20 @@ body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty
   background-image: none !important;
 }
 @media not all {#bl-dem-slot-boot-12-35da8a7e674345d3{--bl-dem-slot:0}}
-body.salty #chat .custom-dem-expressive.bl-fx-long,
-body.salty :where(.bl-chat-like) .custom-dem-expressive.bl-fx-long:is(#bl-s, *),
+body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive.bl-fx-long,
 body.salty :where(.cg-root) .custom-dem-expressive.bl-fx-long:is(#bl-s, *),
 body.salty :is(:is(#chat,.bl-chat-like), .cg-root) .bl-fx-long .custom-dem-expressive {
   display: inline !important;
 }
 @media not all {#bl-dem-slot-boot-13-89431f2832ad5424{--bl-dem-slot:0}}
-body.salty:not(.salty-demfx-go) #chat .custom-dem-expressive,
-body.salty:not(.salty-demfx-go) :where(.bl-chat-like) .custom-dem-expressive:is(#bl-s, *),
+body.salty:not(.salty-demfx-go) :is(#chat,.bl-chat-like) .custom-dem-expressive,
 body.salty:not(.salty-demfx-go) :where(.cg-root) .custom-dem-expressive:is(#bl-s, *) {
   display: inline !important;
 }
-body.salty #chat .custom-dem-expressive.bl-fx-long,
-body.salty :where(.bl-chat-like) .custom-dem-expressive.bl-fx-long:is(#bl-s, *),
+body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive.bl-fx-long,
 body.salty :where(.cg-root) .custom-dem-expressive.bl-fx-long:is(#bl-s, *),
 body.salty :is(:is(#chat,.bl-chat-like), .cg-root) .bl-fx-long .custom-dem-expressive,
-body.salty:not(.salty-demfx-go) #chat .custom-dem-expressive,
-body.salty:not(.salty-demfx-go) :where(.bl-chat-like) .custom-dem-expressive:is(#bl-s, *),
+body.salty:not(.salty-demfx-go) :is(#chat,.bl-chat-like) .custom-dem-expressive,
 body.salty:not(.salty-demfx-go) :where(.cg-root) .custom-dem-expressive:is(#bl-s, *),
 body.salty .cg-root .custom-dem-expressive {
   -webkit-box-decoration-break: clone;
@@ -7305,9 +7247,8 @@ body.salty .cg-root .custom-dem-expressive {
 }
 
 @media not all {#bl-dem-slot-boot-14-b603b41fe6aebfbe{--bl-dem-slot:0}}
-body.salty:not(.salty-demfx-flow) #chat :is(font[color], span[style*="color" i]) .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none),
-body.salty:not(.salty-demfx-flow) :where(.bl-chat-like) font[color] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none):is(#bl-s, *),
-body.salty:not(.salty-demfx-flow) :where(.bl-chat-like) span[style*="color" i] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none):is(#bl-s, *),
+body.salty:not(.salty-demfx-flow) :is(#chat,.bl-chat-like) font[color] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none),
+body.salty:not(.salty-demfx-flow) :is(#chat,.bl-chat-like) span[style*="color" i] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none),
 body.salty:not(.salty-demfx-flow) :where(.cg-root) font[color] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none):is(#bl-s, *),
 body.salty:not(.salty-demfx-flow) :where(.cg-root) span[style*="color" i] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none):is(#bl-s, *),
 body.salty:not(.salty-demfx-flow) :where(.salty-preview) font[color] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none):is(#bl-s, *),
@@ -7394,8 +7335,7 @@ body.salty:not(.salty-demfx-flow) :where(.salty-preview) span[style*="color" i] 
   to { rotate: calc(.35deg * var(--bl-fx-k, 1)); filter: hue-rotate(58deg) saturate(1.9) brightness(1.16); }
 }
 .salty-preview[data-prev="regex"] .custom-dem-expressive,
-body.salty #chat .custom-dem-expressive.bl-fx-made,
-body.salty :where(.bl-chat-like) .custom-dem-expressive.bl-fx-made:is(#bl-s, *),
+body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive.bl-fx-made,
 body.salty :where(.cg-root) .custom-dem-expressive.bl-fx-made:is(#bl-s, *) {
   display: inline-block;
   max-width: 100%;
