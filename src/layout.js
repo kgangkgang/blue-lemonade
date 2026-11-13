@@ -209,7 +209,7 @@ export function startCompactLayout() {
             updateQrEdges(sendForm?.querySelector('#qr--bar'));
         });
     }
-    // 1.0.1 QR 줄 앞 접기 · 펴기 단추 — body[data-salty-qr-folded] 토글(1.4.0 class → 속성) + chat.qrFolded 에 기억 (css/35-qr-bar.css)
+    // 1.0.1 QR 줄 앞 접기 · 펴기 단추 — body[data-salty-qr-folded] 토글(1.4.1 class → 속성) + chat.qrFolded 에 기억 (css/35-qr-bar.css)
     function syncQrFold(bar, enabled) {
         let fold = bar.querySelector(':scope > #bl-qr-fold');
         const hasButtons = !!bar.querySelector('.qr--button:not([data-bl-fruit-native-entry])');

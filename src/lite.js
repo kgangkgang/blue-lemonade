@@ -271,7 +271,7 @@ function syncPanelCss(inFrame = false) {
         return;
     }
     if (!quick && !panelOn && booting()) { afterBoot(syncPanelCss); return; }   // 7.7.4 시작 덮개 동안 열린 옛 팝업은 없다 — 걷힐 때 한 번 본다
-    // 1.4.0 꺼진 채(서랍 · dialog 없음)에서 옛 팝업 검사(getClientRects — 스타일 · 배치를 그 자리에서 강제)도 다음 프레임 맨 앞에서 해요.
+    // 1.4.1 꺼진 채(서랍 · dialog 없음)에서 옛 팝업 검사(getClientRects — 스타일 · 배치를 그 자리에서 강제)도 다음 프레임 맨 앞에서 해요.
     //   감시 콜백마다 바로 읽어 덮개가 걷힌 뒤 문서 전체를 따로 세 번 다시 계산했어요(폰 리그 추적: 요소 225). 옛 팝업이 열렸으면 그 프레임을 그리기 전에 켜요(보이는 것 같음)
     if (!quick && !panelOn && inFrame !== true && !document.hidden) {
         if (!panelFrame) panelFrame = requestAnimationFrame(() => { panelFrame = 0; syncPanelCss(true); });

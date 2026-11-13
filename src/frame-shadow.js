@@ -31,7 +31,7 @@ export function syncFrameShadows(settings) {
             <feComposite in2="offset" operator="in"/>
             <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>`).join('') + '</defs>';
     }
-    // 1.4.0 끈 것은 지워요('none' 을 쓰지 않음) — 시트가 var(--bl-art-shadow-*, none) 로 받아 값은 같고, 처음 적용 때 <html> style 을 세 번 써
+    // 1.4.1 끈 것은 지워요('none' 을 쓰지 않음) — 시트가 var(--bl-art-shadow-*, none) 로 받아 값은 같고, 처음 적용 때 <html> style 을 세 번 써
     //   시작 덮개 동안 문서 전체를 다시 계산하던 것이 없어요(없는 속성 지우기는 아무것도 안 바꿔요)
     const root = document.documentElement.style;
     for (const [owner, ...values] of config) {

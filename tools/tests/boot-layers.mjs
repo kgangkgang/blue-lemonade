@@ -29,7 +29,7 @@ if (!scenario) {
         if (run.status !== 0) { failed++; process.stdout.write(`FAIL ${name}\n${(run.stderr || '').slice(0, 3000)}\n`); }
     }
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/boot-layers.mjs .'), 'release-check.yml 에 등록');
-    // 1.4.0 덮개가 걷힌 뒤(3층 · 문)는 모듈을 하나씩 시작하고 사이사이 한 박자 — 덮개 아래(2층)는 한 번에(차례는 위 order 시나리오가 봐요)
+    // 1.4.1 덮개가 걷힌 뒤(3층 · 문)는 모듈을 하나씩 시작하고 사이사이 한 박자 — 덮개 아래(2층)는 한 번에(차례는 위 order 시나리오가 봐요)
     const idx = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
     assert.match(idx, /const spread = layer === 3 \|\| !booting\(\);\s*for \(const \[i, \[name, , start\]\] of table\.entries\(\)\) \{[^]*?if \(spread && i\) await new Promise\(resolve => setTimeout\(resolve, 0\)\);/, '덮개가 걷힌 뒤 시작은 나눠서');
     console.log(failed ? `\nboot-layers: ${failed} scenario(s) failed` : `\nboot-layers: ${SCENARIOS.length} scenarios passed`);
