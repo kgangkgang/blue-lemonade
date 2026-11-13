@@ -85,6 +85,9 @@ function fanStep(sel, stats) {
         const [a, b] = segs[k];
         const args = wholeIs(sel.slice(a, b));
         if (!args || args.length < 2 || args.length > MAX_ARGS) continue;
+        // 채팅 별칭 `:is(#chat, .bl-chat-like)`(build-css aliasChat — 다른 확장의 채팅 모양 틀)은 안 펼쳐요: 별칭 짝 시험(chat-like-alias) ·
+        //   규칙 글을 잠근 시험이 그 꼴을 봐요(검토 D-6 「.bl-chat-like 갈래는 펼치지 않거나 확인」 · 공개 검사 11-14)
+        if (args.some(x => /^(#chat|\.bl-chat-like)$/.test(x.trim()))) { stats.chatAlias++; continue; }
         if (args.some(x => RISKY.test(x) || !x.trim())) { stats.risky++; continue; }
         const head = sel.slice(0, a);
         if (k > 0 && args.some(x => /(^|[\s>+~(,])(html|body)(?![\w-])/i.test(x))) { stats.rootArg++; continue; }
@@ -114,7 +117,7 @@ function allRules(nodes, out = []) { for (const n of nodes) { if (n.type === 'ru
 
 /** @returns {{ text: string, stats: object }} */
 function fanout(css) {
-    const stats = { headCombinator: 0, alreadyFiltered: 0, rules: 0, rulesChanged: 0, branchesIn: 0, branchesOut: 0, fanned: 0, wrapped: 0, risky: 0, rootArg: 0, tooMany: 0 };
+    const stats = { chatAlias: 0, headCombinator: 0, alreadyFiltered: 0, rules: 0, rulesChanged: 0, branchesIn: 0, branchesOut: 0, fanned: 0, wrapped: 0, risky: 0, rootArg: 0, tooMany: 0 };
     const tree = lib.parse(css);
     if (tree.problems.length) throw new Error(`[css-fanout] 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
     const edits = [];

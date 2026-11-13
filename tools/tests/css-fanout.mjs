@@ -22,10 +22,14 @@ test('조상 칸 여러 갈래 :is 를 갈래마다 펼치고 특이도는 그�
     for (const o of out) assert.equal(spec(o), spec(src));
 });
 test('특이도가 큰 자리가 다른 갈래는 :where 로 감싸 맞춰요(가상 요소 앞에 짝)', () => {
-    const src = 'body.salty :is(#chat, .bl-chat-like) p::before';
+    const src = 'body.salty :is(#user-settings-block, .popup) p::before';
     const out = F.fanOne(src, st());
-    assert.deepEqual(out, ['body.salty #chat p::before', 'body.salty :where(.bl-chat-like) p:is(#bl-s, *)::before']);
+    assert.deepEqual(out, ['body.salty #user-settings-block p::before', 'body.salty :where(.popup) p:is(#bl-s, *)::before']);
     for (const o of out) assert.equal(spec(o), spec(src));
+});
+test('채팅 별칭 :is(#chat, .bl-chat-like) 은 안 펼쳐요(별칭 짝 · 규칙 글 잠금 시험)', () => {
+    assert.equal(F.fanOne('body.salty :is(#chat, .bl-chat-like) > .mes[data-bl-warm]', st()), null);
+    assert.equal(F.fanOne('body.salty :is(#chat,.bl-chat-like) p::before', st()), null);
 });
 test('다른 조상 칸에 이미 이름이 드러나 있으면 안 펼쳐요', () => {
     assert.equal(F.fanOne('body.salty :is(#chat, .bl-chat-like) .mes .mes_text p', st()), null);
