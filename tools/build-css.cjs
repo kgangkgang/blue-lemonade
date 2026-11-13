@@ -147,7 +147,7 @@ const CHAT_ALIAS = ':is(#chat,.bl-chat-like)';
 const NOT_CHAT = '\u0000NOTCHAT\u0000';
 function aliasChat(text) { return text.replace(/:not\(#chat\)/g, NOT_CHAT).replace(/#chat(?![\w-])/g, CHAT_ALIAS).split(NOT_CHAT).join(':where(:not(.bl-chat-like)):not(#chat)'); }
 
-function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) {   // 1.0.0: 두 장이 기본(--one 이면 split:false)
+function build(dir = CSS_DIR, { bucket = true, key = true, split = true, fan = key } = {}) {   // 1.0.0: 두 장이 기본(--one 이면 split:false)
     const names = modules(dir);
     const raw = [];
     const parts = [];
@@ -193,6 +193,9 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true } = {}) 
         const compatKey = t => (key ? require('./css-key.cjs').keyize(aliasChat(t)).text : aliasChat(t));
         // 1.0.0: :has() 앞 지킴(tools/css-has-guard.cjs) — 앞 칸이 안 맞는 요소는 :has() 를 견주지 않아요
         keyed.text = require('./css-has-guard.cjs').guardHas(keyed.text).text;
+        // 1.4.x(작업자 D): 조상 칸이 여러 갈래 :is 뿐이라 빠른 거절이 안 되는 갈래를 펼쳐요 (tools/css-fanout.cjs — 특이도 · 규칙 수 · 선언이 같은지 스스로 확인)
+        //   펼친 갈래에도 바구니 열쇠를 다시 달아요(:where 로 감싼 갈래 · 미리보기 더미 아이디 꼴) — 열쇠 달기는 두 번 돌려도 같아요
+        if (fan) keyed.text = require('./css-key.cjs').keyize(require('./css-fanout.cjs').fanout(keyed.text).text).text;
         // 1.1.6 css-gates 가 차례를 따질 때 쓰는 글: 미리보기 · 호환을 떼기 전(expanded) · 미리보기만 뗀 글 · 둘 다 뗀 글
         return { parked, keyed, previewText: previewKeyed.text, compat: { ...compat, browser: compat.browser && compatKey(compat.browser), width: compat.width && compatKey(compat.width) }, order: { expanded, parkText: previewParked.text, compatText: compat.text } };
     };
