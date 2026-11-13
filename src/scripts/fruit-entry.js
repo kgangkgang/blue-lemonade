@@ -1,5 +1,6 @@
 import {getSettings,readSettings,saveSettings} from '../settings.js';
 import {entryDisplay,entryIcon,chooseFruitIcon} from './fruit-entry-icons.js';
+import {watchWith} from '../dom-watch.js';
 export const entryMode=value=>['wand','qr','cat'].includes(value)?value:'wand';
 const fruitButtonName=value=>String(value||'').replace(/\s+/g,'')==='🍎果实之心';
 /** One display entry, while the original Helper configuration stays untouched. */
@@ -91,9 +92,11 @@ body[data-bl-fruit-entry] #send_form :is(#qr--bar,#nonQRFormItems)>[data-bl-frui
     // streaming and drawer UI filling in after startup (each flush reads the QR bar's computed style). The 1.5 s timer stays as the safety net.
     // 7.7.4 입구가 생기거나 옮겨질 수 있는 곳(입력 줄 · 요술봉 메뉴 · 과일 창 · body 바로 아래)의 변화이거나, 넣고 뺀 요소가 입구 모양일 때만 —
     // 알림 · 팝업 · 배경처럼 상관없는 곳이 바뀔 때마다 다시 보던 것 (부팅 · 채팅 전환에 수십 번)
+    // 1.4.x opt-chat-open: 감시는 공용 허브 body 구역(#chat 밖)으로 — 예전 감시자는 body 전체(#chat 포함)를 봐서 채팅을 열 때 메시지 기록마다 콜백이 돌고(폰 4배 · 짧은 채팅 열기에 766번)
+    //   기록마다 #chat 안인지 물었어요. 허브는 #chat 쪽 기록을 이 구독 몫으로 만들지도 않아요. 고르는 기록 · 결과는 같아요(콜백의 #chat 거르기는 시험의 가짜 창 몫으로 남겨요)
     const ENTRY='[data-fh-cat],.fh-synthetic-entry,[id^="fruit-heart-v6"],.qr--button,#qr--bar,#quickReplies,#extensionsMenu,#nonQRFormItems,#loader,[data-bl-fruit-entry-proxy]';
     const touches=list=>{for(const n of list)if(n.nodeType===1&&(n.matches(ENTRY)||n.querySelector(ENTRY)))return true;return false;};
-    const observer=new host.MutationObserver(records=>{for(const r of records){const t=r.target.nodeType===1?r.target:r.target.parentElement;if(!t||t.closest?.('#chat,.drawer-content,select'))continue;if(t===doc.body||t.closest('#send_form,#extensionsMenu,#quickReplies,[id^="fruit-heart-v6"],[data-fh-cat]')||touches(r.addedNodes)||touches(r.removedNodes)){schedule();return;}}});observer.observe(doc.body,{childList:true,subtree:true});const timer=repeat(()=>{if(++ticks%10===0||doc.getElementById('fruit-heart-v6')?.classList?.contains('open')||signature()!==lastSig)schedule();},1500);flush();
+    const unwatch=watchWith(host,[[doc.body,{childList:true,subtree:true,exclude:'#chat',name:'과일 입구'}]],records=>{for(const r of records){const t=r.target.nodeType===1?r.target:r.target.parentElement;if(!t||t.closest?.('#chat,.drawer-content,select'))continue;if(t===doc.body||t.closest('#send_form,#extensionsMenu,#quickReplies,[id^="fruit-heart-v6"],[data-fh-cat]')||touches(r.addedNodes)||touches(r.removedNodes)){schedule();return;}}});const timer=repeat(()=>{if(++ticks%10===0||doc.getElementById('fruit-heart-v6')?.classList?.contains('open')||signature()!==lastSig)schedule();},1500);flush();
     if(doc.getElementById('loader'))try{const ctx=host.SillyTavern?.getContext?.();ctx?.eventSource?.once?.(ctx.event_types?.APP_READY,schedule);}catch{/* the 1.5 s timer corrects the place */}
-    return()=>{if(stopped)return;stopped=true;picker?.close();observer.disconnect();stopRepeat(timer);host.cancelAnimationFrame(queued);proxy?.remove();chooser?.remove();doc.body.removeAttribute('data-bl-fruit-entry');for(const [node,before]of nativeEntries){if(before===null)node.removeAttribute('data-bl-fruit-native-entry');else node.setAttribute('data-bl-fruit-native-entry',before);}nativeEntries.clear();for(const [row,before]of hiddenRows)if(row.style.display==='none')row.style.display=before;hiddenRows.clear();for(const [node,change]of hints)if(node.textContent===change.shown)node.textContent=change.original;hints.clear();style.remove();};
+    return()=>{if(stopped)return;stopped=true;picker?.close();unwatch();stopRepeat(timer);host.cancelAnimationFrame(queued);proxy?.remove();chooser?.remove();doc.body.removeAttribute('data-bl-fruit-entry');for(const [node,before]of nativeEntries){if(before===null)node.removeAttribute('data-bl-fruit-native-entry');else node.setAttribute('data-bl-fruit-native-entry',before);}nativeEntries.clear();for(const [row,before]of hiddenRows)if(row.style.display==='none')row.style.display=before;hiddenRows.clear();for(const [node,change]of hints)if(node.textContent===change.shown)node.textContent=change.original;hints.clear();style.remove();};
 }
