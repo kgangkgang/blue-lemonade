@@ -193,7 +193,7 @@ await test('③ 덮개 동안 붙는 시트 여덟 자리가 모두 holdSheet �
 await test('③ 변수 시트 · 글꼴 선언은 꺼 두지 않아요(새로고침 첫 화면이 팔레트 색을 쓰고, 꺼 둔 @font-face 는 글꼴을 안 받아요)', () => {
     const apply = src('src/apply.js');
     assert.doesNotMatch(apply, /holdSheet[(]/);
-    assert.match(apply, /coverOpaque\(want\.has\('salty'\) && \(parseColor\(pal\.bg\)\?\.\[3\] \?\? 0\) >= 1\);\n\s*const held = syncGateCss\(want\);/, '켠 설정 시트를 붙이기 전에 덮개가 불투명한지 알려요');
+    assert.match(apply, /coverOpaque\(want\.has\('salty'\) && \(parseColor\(pal\.bg\)\?\.\[3\] \?\? 0\) >= 1\);\n\s*const held = syncGateCss\(want(?:, coolChatForRestyle)?\);/, '켠 설정 시트를 붙이기 전에 덮개가 불투명한지 알려요');
 });
 const deferred = [
     ['src/ink-contrast.js', /function run\(roots, \{ force = false \} = \{\}\) \{\n\s*if \(!active\) return;\n\s*if \(booting\(\)\) \{ afterBoot\(runAfterBoot\); return; \}/],
