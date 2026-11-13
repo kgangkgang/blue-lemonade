@@ -26,7 +26,7 @@ function world() {
         addEventListener: (k, f) => { (listeners[k] ||= []).push(f); },
         querySelectorAll: () => [...visible].map(name => ({ name, getClientRects: () => [1] })),
     };
-    const ctx = { document, setTimeout: f => timers.push(f), URL, console, panelCssReady() {}, themeSheet: () => null, themeRunEnd: n => n, PREVIEW_URL: 'x', previewLink: null, restored: false };
+    const ctx = { document, setTimeout: f => timers.push(f), requestAnimationFrame: f => timers.push(f), URL, console, panelCssReady() {}, themeSheet: () => null, themeRunEnd: n => n, PREVIEW_URL: 'x', previewLink: null, restored: false };
     vm.createContext(ctx);
     vm.runInContext(`let previewLink=null, restored=false;\n${part}\nthis.api={restorePreviewRules,holdPreviewRules,releasePreviewRules,preloadPreviewCss,get restored(){return restored}};`, ctx);
     const fire = (k, e = {}) => { for (const f of listeners[k] || []) f(e); while (timers.length) timers.shift()(); };
@@ -94,6 +94,6 @@ test('검토 D-2: 메모 창은 그릴 때마다 켜요(한 번만 켜는 표식
 test('듣기는 한 번만 걸어요', () => {
     const w = world();
     w.api.restorePreviewRules(); w.api.restorePreviewRules();
-    assert.match(src, /if \(offWatch \|\| typeof document === 'undefined'\) return;/);
+    assert.match(src, /if \(offWatch\) return;\s*offWatch = true;/);
 });
 console.log(`preview-rules-off: ${pass} passed, 0 failed`);

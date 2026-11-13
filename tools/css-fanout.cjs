@@ -75,7 +75,7 @@ function fanOne(branch, stats) {
 }
 /** 한 번: 왼쪽부터 처음 만나는 펼칠 조상 칸 하나를 펼쳐요 */
 function fanStep(sel, stats) {
-    if (/&|:host|::slotted|::part/.test(sel)) return null;
+    if (/&|:host|::slotted|::part|:has\(/.test(sel)) return null;   // :has 가 든 갈래는 안 펼쳐요 — 첫 장 :has( 수 상한(perf-budget-static ①)을 늘리지 않게
     const segs = key.segments(sel);
     if (segs.length < 2) return null;
     // 다른 조상 칸에 이미 빠른 거절 이름(html · body · .salty 말고 드러난 #id · .class · 태그 · 속성)이 있으면 그 이름이 걸러 줘요 — 안 펼쳐요(글만 늘어요)

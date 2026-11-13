@@ -169,24 +169,20 @@ export function previewCssReady() {
  *  (리그 11-14: 300 메시지 채팅을 다시 계산할 때 요소당 약 +0.8µs · PC). 이제 서랍 단추를 누르거나 창(dialog)이 닫힌 뒤 보이는 표본이 하나도 없으면 다시 꺼요.
  *  다시 열면 index.js · panel.js · 메모가 이 함수를 다시 불러 켜요. 끄고 켤 때 다시 계산은 작은 따로 시트라 맞는 요소만이에요. */
 let holders = 0, offWatch = false;
-const SAMPLES = '.salty-panel, .salty-preview, #salty-nochat, .salty-sample, .bl-inline-preview';
+// 표본(설정 창 · 서랍 · 메모 안 미리보기)이 하나라도 보이나
+const shown = () => [...document.querySelectorAll('.salty-preview,.salty-sample,.bl-inline-preview')].some(el => el.getClientRects().length);
 export function restorePreviewRules() {
     turnOn();
-    if (offWatch || typeof document === 'undefined') return;
+    if (offWatch) return;
     offWatch = true;
-    // 검토 D-1: 확장 서랍을 닫았다 다시 열면(테마 서랍은 펼친 채) 아무도 restorePreviewRules 를 다시 안 불러요 — 그래서 끄기와 똑같이 「보이는 표본이 있으면 켜기」도 봐요.
-    //   다음 프레임(실리태번의 서랍 단추 처리 뒤) · 0.7초 · 2초(서랍이 미끄러지는 동안)
-    const later = () => { (globalThis.requestAnimationFrame || setTimeout)(syncPreviewByView); setTimeout(syncPreviewByView, 700); setTimeout(syncPreviewByView, 2000); };
-    document.addEventListener('click', e => { if (e.target?.closest?.('.inline-drawer-toggle, .drawer-toggle')) later(); }, true);
-    document.addEventListener('close', later, true);   // dialog 닫힘(거품이 없어 잡기 단계로)
+    // 검토 D-1: 확장 서랍을 닫았다 다시 열면(테마 서랍은 펼친 채) 아무도 이 함수를 다시 안 불러요 — 그래서 끄기와 똑같이 「보이는 표본이 있으면 켜기」도 봐요.
+    //   다음 프레임(실리태번의 서랍 단추 처리 뒤) · 0.7초 · 2초(서랍이 미끄러지는 동안). dialog 닫힘은 거품이 없어 잡기 단계로 들어요
+    const sync = () => (shown() ? restored || turnOn() : off()), later = () => { requestAnimationFrame(sync); setTimeout(sync, 700); setTimeout(sync, 2e3); };
+    document.addEventListener('click', e => e.target?.closest?.('.drawer-toggle,.inline-drawer-toggle') && later(), true);
+    document.addEventListener('close', later, true);
 }
-const sampleShown = () => { for (const el of document.querySelectorAll(SAMPLES)) if (el.getClientRects().length) return true; return false; };
-function syncPreviewByView() {
-    if (sampleShown()) { if (!restored) turnOn(); }
-    else maybePreviewOff();
-}
-function maybePreviewOff() {
-    if (holders || !restored || sampleShown()) return;
+function off() {
+    if (holders || !restored || shown()) return;
     restored = false;
     if (previewLink) previewLink.media = 'not all';
 }
@@ -199,7 +195,7 @@ function turnOn() {
 export function holdPreviewRules() { holders++; turnOn(); }
 export function releasePreviewRules() {
     holders = Math.max(0, holders - 1);
-    maybePreviewOff();   // 설정 창 · 서랍이 아직 보이면 그대로 둬요(예전 「세션 끝까지」 대신)
+    off();   // 설정 창 · 서랍이 아직 보이면 그대로 둬요(예전 「세션 끝까지」 대신)
 }
 
 /** 꺼져 있나(1) · 켜져 있나(0) — 9.0.1 부터 규칙 수는 시트를 받기 전이라 세지 않는다(예전엔 꺼 둔 규칙 수) */

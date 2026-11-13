@@ -1,4 +1,4 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build cc58235c9ceb) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 36999d4e2cfd) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
 :root{--bl-release:"1.4.0";}
@@ -2274,6 +2274,9 @@ body.salty :is(#chat,.bl-chat-like) .mes .ch_name .timestamp-icon ellipse {
 body.salty.salty-header-name :is(#chat,.bl-chat-like) .mes .timestamp {
   display: none !important;
 }
+body.salty.salty-header-none :is(#chat,.bl-chat-like) .mes .ch_name .alignItemsBaseline {
+  visibility: hidden;
+}
 body.salty :is(#chat,.bl-chat-like) .mes .mes_buttons {
   align-items: center;
   gap: 0;
@@ -3276,6 +3279,14 @@ body.salty.salty-shape-rect:is(.salty-edge-none, .salty-edge-line, .salty-edge-i
   outline: var(--bl-img-frame-outline) !important;
   outline-offset: var(--bl-img-frame-offset) !important;
   box-shadow: var(--bl-img-frame-shadow) !important;
+}
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) .custom-cac-img:is(.bl-s, *):is(bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.character-asset-rendered:is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img.eh-img:is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(img):is([class*="custom-imageWrapper"] img):is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) img[data-autopic-id]:is(.bl-s, *),
+body.salty.salty-edge-auto.salty-shape-rect :is(#chat,.bl-chat-like) :is(.mes_text, .autopic-media-owner .mes_media_wrapper) :where(.mes_img):is(.autopic-media-owner img.mes_img) {
+  border-color: rgb(var(--salty-pick-key, 145 165 186) / var(--salty-edge-alpha)) !important;
 }
 body.salty {
   --salty-fade-a1: .15;
@@ -17324,10 +17335,7 @@ body.salty :where(.cg-root) .custom-dem-expressive:is(#bl-s, *),
 body.salty :where(.salty-preview) .custom-dem-expressive:is(#bl-s, *) {
   text-indent: 0;
 }
-body.salty:not(.salty-demfx-flow) #chat .custom-dem-expressive:where(body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive):has(> .custom-dem-expressive),
-body.salty:not(.salty-demfx-flow) :where(.bl-chat-like) .custom-dem-expressive:where(body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive):has(> .custom-dem-expressive):is(#bl-s, *),
-body.salty:not(.salty-demfx-flow) :where(.cg-root) .custom-dem-expressive:where(body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive):has(> .custom-dem-expressive):is(#bl-s, *),
-body.salty:not(.salty-demfx-flow) :where(.salty-preview) .custom-dem-expressive:where(body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive):has(> .custom-dem-expressive):is(#bl-s, *) {
+body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:where(body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive):has(> .custom-dem-expressive) {
   background-image: none !important;
 }
 @media not all {#bl-dem-slot-full-12-35da8a7e674345d3{--bl-dem-slot:0}}
@@ -17627,8 +17635,7 @@ html body.salty :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *), ht
 html body.salty :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *), html body.salty :where(h3):is(#PersonaManagement h3):is(.bl-s, *):is(bl-s, *), html body.salty #user-settings-block h3:where(html body.salty #user-settings-block h3):has(> a.notes-link), html body.salty #AdvancedFormatting h3:where(html body.salty #AdvancedFormatting h3):has(> a.notes-link), html body.salty #character_popup h4:where(html body.salty #character_popup h4):has(> a.notes-link) { display:flex; }
 html body.salty #selectChatPopupHeaderText > a { margin-left:6px!important; }
 html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) a.notes-link { margin-left:4px!important; }
-html body.salty #extensions_settings a.notes-link:where(html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link):has(> .note-link-span),
-html body.salty #extensions_settings2 a.notes-link:where(html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link):has(> .note-link-span) { font-size:var(--bl-fs-body)!important; margin:0 0 0 6px!important; }
+html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link:where(html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link):has(> .note-link-span) { font-size:var(--bl-fs-body)!important; margin:0 0 0 6px!important; }
 html body.salty #WorldInfo .world_entry a.notes-link[href*="inclusion-group"] { font-size:inherit!important; margin:0 0 0 0.2em!important; }
 html body.salty #pt-panel .pt-page-fixed .pt-act-row .pt-qhelp-mark {
 position:relative;
@@ -18142,14 +18149,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting small > .fa-circle-i
 html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting small > .fa-info-circle,
 html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting small > .fa-circle-question,
 html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting small > .fa-question-circle { margin-left:calc(var(--bl-help-gap) - 0.17em)!important; }
-html body.salty:not(#bl-h1):not(#bl-h2) :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *),
-html body.salty:not(#bl-h1):not(#bl-h2) :where(h3):is(#PersonaManagement h3):is(.bl-s, *):is(bl-s, *),
-html body.salty:not(#bl-h1):not(#bl-h2) #user-settings-block h3:where(html body.salty:not(#bl-h1):not(#bl-h2) #user-settings-block h3):has(> a.notes-link),
-html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting h3:where(html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting h3):has(> a.notes-link),
-html body.salty:not(#bl-h1):not(#bl-h2) :where(h3:has(> a.notes-link[href*="connection-profiles"])):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
-html body.salty:not(#bl-h1):not(#bl-h2) #character_popup h4:where(html body.salty:not(#bl-h1):not(#bl-h2) #character_popup h4):has(> a.notes-link),
-html body.salty:not(#bl-h1):not(#bl-h2) #extensions_settings b:where(html body.salty:not(#bl-h1):not(#bl-h2) :is(#extensions_settings, #extensions_settings2) b):has(> a.notes-link),
-html body.salty:not(#bl-h1):not(#bl-h2) #extensions_settings2 b:where(html body.salty:not(#bl-h1):not(#bl-h2) :is(#extensions_settings, #extensions_settings2) b):has(> a.notes-link) { column-gap:0!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *), html body.salty:not(#bl-h1):not(#bl-h2) :where(h3):is(#PersonaManagement h3):is(.bl-s, *):is(bl-s, *), html body.salty:not(#bl-h1):not(#bl-h2) #user-settings-block h3:where(html body.salty:not(#bl-h1):not(#bl-h2) #user-settings-block h3):has(> a.notes-link), html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting h3:where(html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting h3):has(> a.notes-link), html body.salty:not(#bl-h1):not(#bl-h2) :where(h3:has(> a.notes-link[href*="connection-profiles"])):is(#bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *), html body.salty:not(#bl-h1):not(#bl-h2) #character_popup h4:where(html body.salty:not(#bl-h1):not(#bl-h2) #character_popup h4):has(> a.notes-link), html body.salty:not(#bl-h1):not(#bl-h2) :is(#extensions_settings, #extensions_settings2) b:where(html body.salty:not(#bl-h1):not(#bl-h2) :is(#extensions_settings, #extensions_settings2) b):has(> a.notes-link) { column-gap:0!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(#WorldInfo > .flex-container > h3, #PersonaManagement h3, #user-settings-block h3, #AdvancedFormatting h3, h3:has(> a.notes-link[href*="connection-profiles"]), #character_popup h4, :is(#extensions_settings, #extensions_settings2) b) > a.notes-link { margin-left:var(--bl-help-gap)!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #AdvancedFormatting :is(h4, h5) > a.notes-link,
 html body.salty:not(#bl-h1):not(#bl-h2) #rm_api_block :is(h4, h5) > a.notes-link,
@@ -18224,6 +18224,7 @@ body.salty #PersonaManagement #persona_controls > .bl-persona-title-row > .perso
 body.salty #PersonaManagement #persona_description { min-height:120px; }
 body.salty #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(120px,18dvh,180px); }
 body.salty.salty-persona-tall #PersonaManagement #persona_description { min-height:clamp(240px,36dvh,360px); }
+body.salty.salty-persona-tall #PersonaManagement #persona_description:not([style*="height"]) { height:clamp(240px,36dvh,360px); }
 body.salty #PersonaManagement .persona_management_current_persona > .flex-container { column-gap:10px; row-gap:8px; }
 body.salty #PersonaManagement #persona_connections_buttons { flex-wrap:wrap!important; gap:8px 10px!important; }
 body.salty #PersonaManagement #persona_connections_buttons > .menu_button { flex:1 1 7em; height:auto; min-height:var(--bl-h-btn, 36px); padding:6px 8px!important; }
@@ -20720,74 +20721,10 @@ html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !imp
 html body.salty dialog:not(.bl-settings-dialog) a[href]:not([class]) { color: var(--salty-accent-ink, var(--salty-accent)); }
 /* css/86-touch-targets.css */
 @media (pointer: coarse) {
-  html body :where(button):is(.salty-panel .salty-seg > button):is(#bl-s, *):is(bl-s, *),
-html body :where(.salty-btn):is(.salty-panel .salty-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.bl-view-toggle):is(.salty-panel .bl-view-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.bl-word-help):is(.salty-panel .bl-word-help):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(button):is(.salty-panel .bl-preview-samples > button):is(#bl-s, *):is(bl-s, *),
-html body :where(.bl-addon-ver):is(.salty-panel .bl-addon-ver):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.bl-addon-credit-all):is(.salty-panel .bl-addon-credit-all):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.bl-rule-swap):is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where([data-rule-delete]):is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(button):is(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(bl-s, *),
-html body :where(.bl-tool-heading):is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.bl-editor-group-toggle):is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(button):is(.salty-panel .bl-settings-toprow button):is(#bl-s, *):is(bl-s, *),
-html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *),
-html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *),
-html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"]),
-html body :where(dialog) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]):is(#bl-s, *),
-html body #rm_extensions_block label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]),
-html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *),
-html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *),
-html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *),
-html body.salty :where(.mes_media_enlarge):is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *),
-html body.salty :is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button,
-html body.salty :is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button,
-html body.salty :where(.checkbox_label):where(#left-nav-panel label.checkbox_label):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *),
-html body.salty :where(.editor_maximize):is(#left-nav-panel .editor_maximize):is(.bl-s, *):is(.bl-s, *),
-html body.salty :where(.menu_button):is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(.bl-s, *):is(.bl-s, *),
-html body.salty :where(.editor_maximize):is(#rm_extensions_block .editor_maximize):is(.bl-s, *):is(.bl-s, *),
-html body.salty :where(.right_menu_button):is(#rm_extensions_block .right_menu_button):is(.bl-s, *):is(.bl-s, *),
-html body.salty :where(.bl-onehand-btn):is(#bl-onehand .bl-onehand-btn):is(.bl-s, *):is(.bl-s, *) {
+  html body :where(button):is(.salty-panel .salty-seg > button):is(#bl-s, *):is(bl-s, *), html body :where(.salty-btn):is(.salty-panel .salty-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(.bl-view-toggle):is(.salty-panel .bl-view-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(.bl-word-help):is(.salty-panel .bl-word-help):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(button):is(.salty-panel .bl-preview-samples > button):is(#bl-s, *):is(bl-s, *), html body :where(.bl-addon-ver):is(.salty-panel .bl-addon-ver):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(.bl-addon-credit-all):is(.salty-panel .bl-addon-credit-all):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(.bl-rule-swap):is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where([data-rule-delete]):is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(button):is(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(bl-s, *), html body :where(.bl-tool-heading):is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(.bl-editor-group-toggle):is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(button):is(.salty-panel .bl-settings-toprow button):is(#bl-s, *):is(bl-s, *), html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *), html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *), html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *), html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"]), html body :is(dialog, #rm_extensions_block) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]), html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *), html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *), html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *), html body.salty :where(.mes_media_enlarge):is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *), html body.salty :is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button, html body.salty :is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button, html body.salty :where(.checkbox_label):where(#left-nav-panel label.checkbox_label):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *), html body.salty :where(.editor_maximize):is(#left-nav-panel .editor_maximize):is(.bl-s, *):is(.bl-s, *), html body.salty :where(.menu_button):is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(.bl-s, *):is(.bl-s, *), html body.salty :where(.editor_maximize):is(#rm_extensions_block .editor_maximize):is(.bl-s, *):is(.bl-s, *), html body.salty :where(.right_menu_button):is(#rm_extensions_block .right_menu_button):is(.bl-s, *):is(.bl-s, *), html body.salty :where(.bl-onehand-btn):is(#bl-onehand .bl-onehand-btn):is(.bl-s, *):is(.bl-s, *) {
     position: relative;
   }
-  html body :where(button):is(.salty-panel .salty-seg > button):is(#bl-s, *):is(bl-s, *)::before,
-html body :where(.salty-btn):is(.salty-panel .salty-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-view-toggle):is(.salty-panel .bl-view-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-word-help):is(.salty-panel .bl-word-help):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-addon-ver):is(.salty-panel .bl-addon-ver):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-addon-credit-all):is(.salty-panel .bl-addon-credit-all):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-rule-swap):is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where([data-rule-delete]):is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(button):is(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-tool-heading):is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-editor-group-toggle):is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *)::before,
-html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *)::before,
-html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"])::before,
-html body :where(dialog) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]):is(#bl-s, *)::before,
-html body #rm_extensions_block label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"])::before,
-html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *)::before,
-html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *)::before,
-html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *)::before,
-html body.salty #left-nav-panel label.checkbox_label::before,
-html body :where(button):is(.salty-panel .bl-settings-toprow button):is(.bl-s, *)::after,
-html body :where(.bl-setting-reset):is(.salty-panel .bl-setting-reset):is(.bl-s, *):is(bl-s, *)::after,
-html body :where(button):is(.salty-panel .bl-preview-samples > button):is(.bl-s, *)::after,
-html body .salty-panel .bl-view-resize > button:not(.bl-view-toggle)::after,
-html body.salty :where(.mes_media_enlarge):is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *)::after,
-html body.salty :is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button::after,
-html body.salty :is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button::after,
-html body.salty :where(.editor_maximize):is(#left-nav-panel .editor_maximize):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.menu_button):is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.editor_maximize):is(#rm_extensions_block .editor_maximize):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.right_menu_button):is(#rm_extensions_block .right_menu_button):is(.bl-s, *):is(.bl-s, *)::after,
-html body.salty :where(.bl-onehand-btn):is(#bl-onehand .bl-onehand-btn):is(.bl-s, *):is(.bl-s, *)::after {
+  html body :where(button):is(.salty-panel .salty-seg > button):is(#bl-s, *):is(bl-s, *)::before, html body :where(.salty-btn):is(.salty-panel .salty-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.bl-view-toggle):is(.salty-panel .bl-view-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.bl-word-help):is(.salty-panel .bl-word-help):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.bl-addon-ver):is(.salty-panel .bl-addon-ver):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.bl-addon-credit-all):is(.salty-panel .bl-addon-credit-all):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.bl-rule-swap):is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where([data-rule-delete]):is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(button):is(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(bl-s, *)::before, html body :where(.bl-tool-heading):is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.bl-editor-group-toggle):is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before, html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *)::before, html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *)::before, html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"])::before, html body :is(dialog, #rm_extensions_block) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"])::before, html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *)::before, html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *)::before, html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *)::before, html body.salty #left-nav-panel label.checkbox_label::before, html body :where(button):is(.salty-panel .bl-settings-toprow button):is(.bl-s, *)::after, html body :where(.bl-setting-reset):is(.salty-panel .bl-setting-reset):is(.bl-s, *):is(bl-s, *)::after, html body :where(button):is(.salty-panel .bl-preview-samples > button):is(.bl-s, *)::after, html body .salty-panel .bl-view-resize > button:not(.bl-view-toggle)::after, html body.salty :where(.mes_media_enlarge):is(:is(#chat,.bl-chat-like) .mes .mes_media_enlarge):is(.bl-s, *)::after, html body.salty :is(#chat,.bl-chat-like) .mes .mes_media_container .right_menu_button::after, html body.salty :is(#chat,.bl-chat-like) .mes .mes_buttons .mes_button::after, html body.salty :where(.editor_maximize):is(#left-nav-panel .editor_maximize):is(.bl-s, *):is(.bl-s, *)::after, html body.salty :where(.menu_button):is(:is(#left-nav-panel, #rm_extensions_block) .menu_button):is(.bl-s, *):is(.bl-s, *)::after, html body.salty :where(.editor_maximize):is(#rm_extensions_block .editor_maximize):is(.bl-s, *):is(.bl-s, *)::after, html body.salty :where(.right_menu_button):is(#rm_extensions_block .right_menu_button):is(.bl-s, *):is(.bl-s, *)::after, html body.salty :where(.bl-onehand-btn):is(#bl-onehand .bl-onehand-btn):is(.bl-s, *):is(.bl-s, *)::after {
     content: '';
     position: absolute;
     left: 50%;
