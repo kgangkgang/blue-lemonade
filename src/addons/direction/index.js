@@ -1920,7 +1920,7 @@ function promptsStatusText() {
 
 /** 설정 맨 위 상태 카드 (전개 지시 · 항상 지시). 입력창에서 켜고 끄거나 내용을 고칠 때도 같이 바뀐다. */
 function refreshSettingsStatus() {
-    if (!settingsRoot) return;
+    if (!settingsRoot || !settingsFilled) return;
     const store = settings();
     for (const kind of KINDS) {
         const card = settingsRoot.querySelector(`.jj-status[data-kind="${kind}"]`);
@@ -1945,10 +1945,12 @@ function refreshSettingsStatus() {
 }
 
 // 캐릭터 에셋 확장과 같은 카드 모양으로, 세로로 짧게: 상태 카드 → 설정 세 줄 → 접어 둔 프롬프트
+// 1.4.x 최적화 C: 카드 머리(제목 · 판 단추)만 부팅 때 확장 서랍에 붙이고, 속(상태 카드 · 설정 · 프롬프트 — 요소 약 110 · 리스너 약 20)은
+//   처음 펼 때(머리 누름 — 실리태번이 펼치기 전 · capture) · 설정 창을 열 때(openPanel) 만들어요. 닫힌 서랍 속이라 화면은 같아요.
+let settingsFilled = false;
 function buildSettings() {
     const container = document.getElementById('extensions_settings');
     if (!container || document.getElementById('jj-settings')) return;
-    const store = settings();
     const wrapper = document.createElement('div');
     wrapper.id = 'jj-settings';
     wrapper.className = 'jj-settings';
@@ -1958,7 +1960,19 @@ function buildSettings() {
                 <b><i class="fa-solid fa-feather-pointed"></i> 전개 지시 <button type="button" class="jj-version ext-version" aria-label="전개 지시 사용방법">v${VERSION}</button></b>
                 <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
             </div>
-            <div class="inline-drawer-content">
+            <div class="inline-drawer-content"></div>
+        </div>`;
+    container.append(wrapper);
+    settingsRoot = wrapper;
+    wrapper.querySelector(".jj-version").onclick = event => {if (!badgeTextHit(event)) return; event.preventDefault();event.stopPropagation();showHelp();};
+    wrapper.querySelector('.inline-drawer-toggle').addEventListener('click', fillSettings, { capture: true, once: true });
+}
+function fillSettings() {
+    if (settingsFilled || !settingsRoot) return;
+    settingsFilled = true;
+    const store = settings();
+    const wrapper = settingsRoot;
+    wrapper.querySelector('.inline-drawer-content').innerHTML = `
               <div class="jj-settings-body">
                 <div class="jj-status" data-kind="direction">
                     <span class="jj-status-dot" aria-hidden="true"></span>
@@ -2030,12 +2044,7 @@ function buildSettings() {
                         </div>
                     </div>
                 </details>
-              </div>
-            </div>
-        </div>`;
-    container.append(wrapper);
-    settingsRoot = wrapper;
-    wrapper.querySelector(".jj-version").onclick = event => {if (!badgeTextHit(event)) return; event.preventDefault();event.stopPropagation();showHelp();};
+              </div>`;
 
     const colorCode = wrapper.querySelector('#jj_on_color');
     const swatch = wrapper.querySelector('#jj_on_color_swatch');
@@ -2227,6 +2236,7 @@ let settingsDialog = null;
 export async function openPanel() {
     await ready;
     if (!settingsRoot || settingsDialog?.open) return;
+    fillSettings();
     refreshSettingsStatus();   // 1.3.0 다른 기기에서 합쳐진 목록 등 — 창을 열 때 상태 카드를 지금 값으로
     const previous = document.activeElement, anchor = document.createComment('direction settings');
     settingsRoot.before(anchor);
