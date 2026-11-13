@@ -31,7 +31,9 @@ function fixture() {
     const nodes = [], requests = [], classes = new Set(); classes.contains = value => classes.has(value);
     let on = true, prepared = 0;
     class Element {
-        constructor(tag = 'style') { this.tagName = tag.toUpperCase(); this.dataset = {}; this.media = 'all'; this.id = ''; this.events = new Map(); }
+        constructor(tag = 'style') { this.tagName = tag.toUpperCase(); this.dataset = {}; this.media = 'all'; this.id = ''; this.events = new Map(); this.relValue = ''; this.relList = { supports: v => v === 'preload' }; }
+        get rel() { return this.relValue; }
+        set rel(v) { const was = this.relValue; this.relValue = v; if (was === 'preload' && v === 'stylesheet' && this.isConnected && this.fetched != null) Promise.resolve().then(() => { this.sheet = cssSheet(this.fetched, this); this.fire('load'); }); }
         get isConnected() { return nodes.includes(this); }
         after(node) { node.remove(); nodes.splice(nodes.indexOf(this) + 1, 0, node); if (node.tagName === 'LINK' && node.id === 'salty-lazy-css') linkLoad(node); }
         remove() { const at = nodes.indexOf(this); if (at >= 0) nodes.splice(at, 1); }
@@ -46,7 +48,7 @@ function fixture() {
     const setOn = value => { on = value; classes.clear(); if (value) { classes.add('salty'); classes.add('salty-dem-skin'); } };
     setOn(true);
     // 1.4.0 전체 장은 <link> — 붙으면 받아서(받기 흉내) 해석한 뒤 load 를 쏴요. 서랍 꼬리 파일(lazy-panel.gen.css)은 따로 받아요
-    const linkLoad = node => Promise.resolve().then(() => globalThis.fetch(node.href)).then(r => r.text()).then(text => { node.sheet = cssSheet(text, node); node.fire('load'); }, () => node.fire('error'));
+    const linkLoad = node => Promise.resolve().then(() => globalThis.fetch(node.href)).then(r => r.text()).then(text => { node.fetched = text; if (node.rel === 'stylesheet') node.sheet = cssSheet(text, node); node.fire('load'); }, () => node.fire('error'));
     const defaultFetch = async url => {
         if (String(url).includes('lazy-panel.gen.css')) return { ok: true, text: async () => '\n.tail{color:red}' };
         requests.push(String(url));

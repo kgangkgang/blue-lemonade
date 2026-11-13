@@ -24,7 +24,12 @@ async function tailText(rules, at, signal) {
 }
 export function loadFullCss(sheet, readyPanel, themeOn) {
     const link = document.createElement('link');
-    link.id = 'salty-lazy-css'; link.rel = 'stylesheet'; link.media = 'not all'; link.dataset.blFullTheme = 'loading';
+    // 실리태번(dynamic-styles.js)은 head 에 「붙는」 <link rel="stylesheet"> 마다 규칙을 전부 훑어 :hover 규칙의 :focus-visible 사본을 더 넣어요(1.36MB 를 훑고 수백 줄을 켜진 시트에 넣는 일).
+    //   예전 <style> 은 그 대상이 아니었어요 — 같게 하려고 미리 받기(rel="preload")로 붙인 뒤, 다 받으면 그 자리에서 rel 을 stylesheet 로 바꿔요(붙는 사건이 아니라 보지 않아요 · 받은 것을 그대로 써요).
+    //   미리 받기를 모르는 브라우저는 처음부터 stylesheet 로(그때는 실리태번이 사본을 더해요 — 동작은 같아요)
+    const viaPreload = !!link.relList?.supports?.('preload');
+    link.id = 'salty-lazy-css'; link.dataset.blFullTheme = 'loading';
+    if (viaPreload) { link.rel = 'preload'; link.as = 'style'; } else { link.rel = 'stylesheet'; link.media = 'not all'; }
     let resolve, done = false;
     const promise = new Promise(callback => { resolve = callback; }), controller = new AbortController();
     const finish = ok => {
@@ -64,7 +69,14 @@ export function loadFullCss(sheet, readyPanel, themeOn) {
         syncThemeSheet(themeOn());
         finish(true);
     };
-    link.addEventListener('load', () => { ready().catch(fail); }, { once: true });
+    let started = false;
+    const onLoad = () => {
+        if (link.rel === 'preload') { if (!live()) return finish(false); link.media = 'not all'; link.rel = 'stylesheet'; return; }   // 꺼진 채 시트로 — 받은 것을 그대로 써서 곧 load 가 한 번 더 와요
+        if (started) return;
+        started = true;
+        ready().catch(fail);
+    };
+    link.addEventListener('load', onLoad);
     link.addEventListener('error', () => fail(Error('전체 CSS를 받지 못했어요')), { once: true });
     link.href = URL;
     sheet.ownerNode.after(link);

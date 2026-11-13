@@ -10,9 +10,13 @@ globalThis.setTimeout = fn => { const id=++nextTimer;timers.set(id,fn);return id
 globalThis.clearTimeout = id => timers.delete(id);
 const sheetOf=text=>{const cssRules=text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>({selectorText:l.slice(0,l.indexOf('{')).trim(),cssText:l}));return {disabled:false,cssRules,deleteRule(i){cssRules.splice(i,1);}};};
 // 1.4.0 전체 시트는 <link> — 붙으면 「받기」(globalThis.fetch 흉내)를 거쳐 load · error 를 쏴요(꺼진 media 여도 받아요)
-const linkLoad=node=>Promise.resolve().then(()=>globalThis.fetch(node.href)).then(async r=>{if(!r.ok)throw Error('HTTP');return r.text();}).then(text=>{node.sheet=sheetOf(text);node.fire('load');},()=>node.fire('error'));
+// 미리 받기(rel=preload)로 붙으면 받은 글만 쥐고 load → 코드가 rel 을 stylesheet 로 바꾸면 그 글로 시트를 만들고 load 를 한 번 더(실제 브라우저처럼)
+const linkLoad=node=>Promise.resolve().then(()=>globalThis.fetch(node.href)).then(async r=>{if(!r.ok)throw Error('HTTP');return r.text();}).then(text=>{node.fetched=text;if(node.rel==='stylesheet')node.sheet=sheetOf(text);node.fire('load');},()=>node.fire('error'));
+let preloads=0;
 class Element {
-    constructor(tag='style') { this.tagName=tag.toUpperCase();this.id='';this.dataset={};this.media='all';this.isConnected=false;this.events=new Map();this.textContent=''; }
+    constructor(tag='style') { this.tagName=tag.toUpperCase();this.id='';this.dataset={};this.media='all';this.isConnected=false;this.events=new Map();this.textContent='';this.relValue='';this.relList={supports:v=>v==='preload'}; }
+    get rel() { return this.relValue; }
+    set rel(v) { const was=this.relValue;this.relValue=v;if(v==='preload')preloads++;if(was==='preload'&&v==='stylesheet'&&this.isConnected&&this.fetched!=null)Promise.resolve().then(()=>{this.sheet=sheetOf(this.fetched);this.fire('load');}); }
     after(node) { node.remove();list.splice(list.indexOf(this)+1,0,node);node.isConnected=true;if(node.tagName==='LINK'&&node.id==='salty-lazy-css'&&!node.loading){node.loading=true;linkLoad(node);} }
     remove() { const at=list.indexOf(this);if(at>=0)list.splice(at,1);this.isConnected=false; }
     get nextElementSibling() { const at=list.indexOf(this);return at>=0?list[at+1]||null:null; }
@@ -53,10 +57,10 @@ try {
     await test('전체 시트를 받기 전에는 첫 시트를 유지하고 성공 뒤 중복 없이 교체해요',async()=>{
         let resolve;globalThis.fetch=route(()=>{requests++;return new Promise(done=>resolve=done);});
         const job=loadFullCss(main.sheet,prepared,()=>true);await settle();
-        assert.equal(main.sheet.disabled,false);assert.equal(full().media,'not all');assert.equal(full().dataset.blFullTheme,'loading');
+        assert.equal(main.sheet.disabled,false);assert.equal(full().rel,'preload','받는 동안은 미리 받기 — 시트가 아니에요');assert.equal(full().dataset.blFullTheme,'loading');
         resolve(response(fullText));assert.equal(await job,true);
         // 1.4.0 <link> 로 받아요(글을 담지 않아요) · 꼬리(경계 포함)는 떼고 서랍 전용 칸은 따로 써 둔 꼬리 파일 원문
-        assert.equal(full().tagName,'LINK');assert.equal(full().rel,'stylesheet');assert.match(full().href,/style-lazy\.gen\.css$/);assert.equal(full().text,'');
+        assert.equal(full().tagName,'LINK');assert.equal(full().rel,'stylesheet');assert.ok(preloads>=1,'미리 받기로 붙여요(실리태번 dynamic-styles 가 붙는 시트만 훑어요)');assert.match(full().href,/style-lazy\.gen\.css$/);assert.equal(full().text,'');
         assert.deepEqual(full().sheet.cssRules.map(r=>r.selectorText),[':root','.card','.card']);
         assert.equal(tail().textContent,TAIL);assert.equal(readyCount,1);
         assert.ok(list.indexOf(main)<list.indexOf(full())&&list.indexOf(full())<list.indexOf(tail()),'차례: 첫 장 → 전체 장 → 서랍 전용');
