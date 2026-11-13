@@ -37,6 +37,7 @@ jobs:
           node tools/tests/char-tone.mjs .
           node tools/tests/char-tone-ladder.mjs .
           node tools/tests/log-copy-tone.mjs .
+          node tools/tests/log-copy-user-color.mjs .
           node tools/tests/log-copy-audit-113.mjs .
           node tools/tests/log-copy-connect-113.mjs .
           node tools/tests/log-copy-connect-sheet-113.mjs .

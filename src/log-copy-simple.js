@@ -9,7 +9,7 @@
 //   - <style> 하나 합치기는 복사 길(log-copy-lift.js insertHead · 뿌리 표시 gk-k<번호> · gk-q<번호>)이 해요.
 // 틀-계약이 정하지 않은 것은 아래 SIMPLE 한 곳에 모았어요. DOM 없는 순수 모듈(시험 tools/tests/log-copy-simple*.mjs).
 import { esc } from './log-copy-render.js';
-import { speakersOf, retintModel } from './log-copy-tone.js';
+import { speakersOf, retintModel, sameSpeaker } from './log-copy-tone.js';
 import { tone, speakerColor } from './shared/char-tone.js';
 import { toneSimple, ORIGINAL, markEdits, simpleFrameInfo, speakerColorsOf } from './log-copy-simple-tone.js';
 import { SIMPLE_FRAMES as REGISTERED } from './log-copy-simple.gen.js';
@@ -136,6 +136,30 @@ export function speakerLetters(model, { main = 'A', second = main === 'A' ? 'B' 
 }
 
 /**
+ * 1.4.1 한 메시지 안에 다른 사람 대사가 섞인 글(인물 메시지 속 사용자 대사 「#424C59」 같은 것) — 다시 칠한 모델(retintModel)이
+ *   띠 조각마다 적어 둔 화자 색(node.who)이 그 메시지 화자 색과 다르면 그 색에 글자를 따로 줘요(이미 그 색을 쓰는 글자가 있으면 그 글자 ·
+ *   없으면 비어 있는 다음 글자 — 둘째 글자(깡캐)부터). 전엔 메시지 하나 = 글자 하나라 섞인 대사가 모두 주인공 색(노랑)으로 나왔어요(11-14).
+ * @returns {object} speakerLetters 결과 + byColor(Map 색 → 글자)
+ */
+export function colorLetters(who, painted, { main = 'A', second = main === 'A' ? 'B' : 'A' } = {}) {
+    const colors = new Map(who.colors), byColor = new Map(), used = new Set(who.letterOf.values());
+    const free = [second, ...[...SIMPLE.letters].filter(x => x !== main && x !== second)].filter(x => !used.has(x));
+    const walk = (nodes, out) => { for (const n of nodes ?? []) if (n.t === 'el') { if (n.who) out.push(n.who); walk(n.children, out); } return out; };
+    for (const message of painted?.messages ?? []) {
+        const own = colors.get(who.letterOf.get(String(message.name ?? '').trim()));
+        for (const hex of walk(message.nodes, [])) {
+            if (byColor.has(hex) || sameSpeaker(hex, own) || sameSpeaker(hex, message.speaker)) continue;
+            const known = [...colors].find(([x, c]) => c && used.has(x) && sameSpeaker(c, hex))?.[0];
+            const letter = known ?? free.shift();
+            if (!letter) continue;   // 글자가 모자라면(26명 넘게) 메시지 글자 그대로
+            if (!known) { colors.set(letter, hex); used.add(letter); }
+            byColor.set(hex, letter);
+        }
+    }
+    return byColor.size ? { ...who, colors, byColor } : who;
+}
+
+/**
  * 1.1.5 시트에서 고른 화자 색을 얹어요 — cast: { main?, other? } 값은 '#rrggbb'(직접 색) · 'orig'(틀을 만든 색 = 색 모름과 같은 길) · 없으면 인물표 색 그대로.
  * 깡캐(other)는 틀의 second 글자예요(로그에 둘째 화자가 없어도 틀 규칙의 색만 바뀌어요).
  */
@@ -188,7 +212,7 @@ function paragraphs(nodes) {
                 if (ctx.s) html = `<s>${html}</s>`;
                 if (ctx.i) html = `<em>${html}</em>`;
                 if (ctx.b) html = `<strong>${html}</strong>`;
-                cur.push({ dlg: ctx.dlg, html, text: node.text });
+                cur.push({ dlg: ctx.dlg, html, text: node.text, who: ctx.dlg ? ctx.who : null });   // 1.4.1 who: 이 대사 띠를 정한 화자 색(retintModel)
             } else if (node.t === 'br') cur.push({ dlg: ctx.dlg, html: '<br>', text: '', br: true });
             else if (node.t === 'hr') flush();
             else if (node.t === 'el' && node.kind === 'spoiler') {   // 1.1.8 미리보기에서 숨긴 글(거둔 모델에만 있어요 — log-copy-basic.js 와 같은 길)
@@ -201,12 +225,13 @@ function paragraphs(nodes) {
                     b: ctx.b || /^(bold|bolder|[6-9]\d\d)$/.test(String(s['font-weight'] ?? '').trim()),
                     i: ctx.i || /italic|oblique/.test(String(s['font-style'] ?? '')),
                     s: ctx.s || /line-through/.test(String(s['text-decoration'] ?? s['text-decoration-line'] ?? '')),
+                    who: node.who ?? ctx.who,
                 };
                 if (node.block) { flush(); walk(node.children, next); flush(); } else walk(node.children, next);
             }
         }
     };
-    walk(nodes, { dlg: false, b: false, i: false, s: false });
+    walk(nodes, { dlg: false, b: false, i: false, s: false, who: null });
     flush();
     return out;
 }
@@ -319,10 +344,13 @@ export function drawSimple(frame, model, o = {}) {
     if (!model?.messages?.length) return empty;
     const parts = splitFrame(frame?.html);
     if (!parts || parts.blocks.length < 2) return empty;
-    const who = castLetters(speakerLetters(model, { main: frame.main, second: frame.second, lookup: o.lookup }), frame, o.cast);
+    const named = speakerLetters(model, { main: frame.main, second: frame.second, lookup: o.lookup });
     // 메시지 글: 깡통 로그 틀과 같은 다시 칠하기(띠 · 따옴표 색 글자 → 대사, 속마음 · 강조 색 → 본문) 뒤 문단으로 · 글꼴은 틀이 맡아요
-    const t = tone(who.main, { mode, plan: 'B' });
+    const t = tone(castLetters(named, frame, o.cast).main, { mode, plan: 'B' });
     const painted = retintModel(model, t, { font: false });
+    // 1.4.1 한 메시지 안 다른 사람 대사는 그 사람 색 글자로(colorLetters) — 고른 화자 색(cast)은 그 뒤에 얹어요(깡캐 = 둘째 글자)
+    const who = castLetters(colorLetters(named, painted, { main: frame.main, second: frame.second }), frame, o.cast);
+    const letterAt = (hex, fallback) => (hex && who.byColor?.get(hex)) || fallback;
     const showNames = o.names !== false && who.count > 1;
     const bandForm = frame.rows.띠 ?? SIMPLE.band;
     let lines = 0;
@@ -334,12 +362,12 @@ export function drawSimple(frame, model, o = {}) {
             const talk = list.filter(p => p.text.trim());
             if (talk.every(p => p.dlg) || SIMPLE.quoted.test(list.map(p => p.text).join(''))) {
                 const delay = seconds(Math.min(SIMPLE.delayStart + SIMPLE.delayStep * lines++, SIMPLE.delayMax));
-                return { kind: '대사', vals: { [SIMPLE.who]: letter, [SIMPLE.delay]: delay, '{{대사}}': list.map(p => p.html).join('').trim() } };
+                return { kind: '대사', vals: { [SIMPLE.who]: letterAt(talk.find(p => p.who)?.who, letter), [SIMPLE.delay]: delay, '{{대사}}': list.map(p => p.html).join('').trim() } };
             }
-            let html = '', run = null;
-            const close = () => { if (run) html += fill(bandForm, { [SIMPLE.who]: letter, '{{대사}}': run }); run = null; };
+            let html = '', run = null, runWho = null;
+            const close = () => { if (run) html += fill(bandForm, { [SIMPLE.who]: letterAt(runWho, letter), '{{대사}}': run }); run = null; runWho = null; };
             for (const p of list) {
-                if (p.dlg) run = (run ?? '') + p.html;
+                if (p.dlg) { if (run != null && p.who && runWho && p.who !== runWho) close(); run = (run ?? '') + p.html; runWho ??= p.who; }
                 else { close(); html += p.html; }
             }
             close();

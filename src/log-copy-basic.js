@@ -13,7 +13,7 @@
 import { esc } from './log-copy-render.js';
 import { retintModel } from './log-copy-tone.js';
 import { tone } from './shared/char-tone.js';
-import { speakerLetters, SIMPLE } from './log-copy-simple.js';
+import { speakerLetters, colorLetters, SIMPLE } from './log-copy-simple.js';
 import { spoilerHtml, unparagraphHtml } from './log-copy-spoiler.js';
 import { buildFrame, frames as GEN_FRAMES, HEIGHTS as GEN_HEIGHTS, LEMON_HOME } from './log-copy-basic.gen.js';
 
@@ -101,7 +101,7 @@ export function paragraphs(nodes) {
                 let html = esc(node.text);
                 if (ctx.i) html = `<i>${html}</i>`;
                 if (ctx.b) html = `<b>${html}</b>`;
-                cur.push({ dlg: ctx.dlg, html, text: node.text });
+                cur.push({ dlg: ctx.dlg, html, text: node.text, who: ctx.dlg ? ctx.who : null });   // 1.4.1 who: 이 대사 띠를 정한 화자 색
             } else if (node.t === 'br') cur.push({ dlg: ctx.dlg, html: '<br>', text: '', br: true });
             else if (node.t === 'hr') flush();
             else if (node.t === 'el' && node.kind === 'spoiler') {
@@ -118,31 +118,34 @@ export function paragraphs(nodes) {
                     dlg: ctx.dlg || (!node.block && /gradient\(/i.test(String(s['background-image'] ?? ''))),
                     b: ctx.b || /^(bold|bolder|[6-9]\d\d)$/.test(String(s['font-weight'] ?? '').trim()),
                     i: ctx.i || /italic|oblique/.test(String(s['font-style'] ?? '')),
+                    who: node.who ?? ctx.who,
                 };
                 if (node.block) { flush(); walk(node.children, next); flush(); } else walk(node.children, next);
             }
         }
     };
-    walk(nodes, { dlg: false, b: false, i: false });
+    walk(nodes, { dlg: false, b: false, i: false, who: null });
     flush();
     return out;
 }
 
-/** 문단 하나 → { dlg, html, plain(띠 없는 글 — 메신저 말풍선 안) } */
-function paraOf(list, letter) {
+/** 1.4.1 대사 문단의 화자 글자가 메시지 글자와 다를 때 붙이는 표지 — 생성기(dl)가 감싼 `<span class="d dA">` 를 그린 뒤 그 글자로 바꿔요(drawBasic) */
+const whoMark = (x, letter) => (x && x !== letter ? `<!--blw:${x}-->` : '');
+/** 문단 하나 → { dlg, html, plain(띠 없는 글 — 메신저 말풍선 안) } · at(화자 색) → 그 대사의 글자(1.4.1 한 메시지에 섞인 다른 사람 대사) */
+function paraOf(list, letter, at = () => null) {
     const talk = list.filter(p => p.text.trim());
     const plain = list.map(p => p.html).join('').trim();
-    if (talk.every(p => p.dlg) || SIMPLE.quoted.test(list.map(p => p.text).join(''))) return { dlg: true, html: plain, plain };
-    let html = '', run = null;
-    const close = () => { if (run) html += `<span class="d d${letter}">${run}</span>`; run = null; };
-    for (const p of list) { if (p.dlg) run = (run ?? '') + p.html; else { close(); html += p.html; } }
+    if (talk.every(p => p.dlg) || SIMPLE.quoted.test(list.map(p => p.text).join(''))) return { dlg: true, html: whoMark(at(talk.find(p => p.who)?.who), letter) + plain, plain };
+    let html = '', run = null, runWho = null;
+    const close = () => { if (run) html += `<span class="d d${at(runWho) || letter}">${run}</span>`; run = null; runWho = null; };
+    for (const p of list) { if (p.dlg) { if (run != null && p.who && runWho && p.who !== runWho) close(); run = (run ?? '') + p.html; runWho ??= p.who; } else { close(); html += p.html; } }
     close();
     return { dlg: false, html: html.trim(), plain };
 }
 
 /** 메시지 → 생성기 메시지 { who, name, lead, rest, nr, dl } (글이 없으면 null) */
-function messageOf(message, letter, names) {
-    const paras = paragraphs(message.nodes).map(list => paraOf(list, letter)).filter(p => p.html);
+function messageOf(message, letter, names, at) {
+    const paras = paragraphs(message.nodes).map(list => paraOf(list, letter, at)).filter(p => p.html);
     if (!paras.length) return null;
     const first = paras.findIndex(p => p.dlg);
     const lead = first > 0 ? paras.slice(0, first).map(p => p.html) : [];
@@ -167,10 +170,12 @@ export function drawBasic(id, model, o = {}) {
     const empty = { html: '', letters: new Map(), colors: new Map() };
     if (!frame || !model?.messages?.length) return empty;
     const mode = o.mode === 'light' ? 'light' : 'dark';
-    const who = speakerLetters(model, { main: 'A', second: 'B', lookup: o.lookup });
-    const painted = retintModel(model, tone(who.main, { mode, plan: 'B' }), { font: false });
+    const named = speakerLetters(model, { main: 'A', second: 'B', lookup: o.lookup });
+    const painted = retintModel(model, tone(named.main, { mode, plan: 'B' }), { font: false });
+    const who = colorLetters(named, painted, { main: 'A', second: 'B' });   // 1.4.1 한 메시지 안 다른 사람 대사는 그 사람 색 글자로
+    const letterAt = hex => (hex && who.byColor?.get(hex)) || null;
     const names = o.names !== false;
-    const msgs = painted.messages.map((message) => messageOf(message, who.letterOf.get(String(message.name ?? '').trim()) ?? 'A', names)).filter(Boolean);
+    const msgs = painted.messages.map((message) => messageOf(message, who.letterOf.get(String(message.name ?? '').trim()) ?? 'A', names, letterAt)).filter(Boolean);
     if (!msgs.length) return empty;
     const f = o.fields ?? {};
     const text = v => esc(String(v ?? '').trim());
@@ -191,6 +196,8 @@ export function drawBasic(id, model, o = {}) {
         night: mode === 'dark', msgs, text: { title: text(f.title), name1: '', name2: '' }, fields, colors, extra,
         info: o.info === 'chip' || o.info === 'tab' ? o.info : 'off', height: GEN_HEIGHTS[o.height] ? o.height : undefined,
     });
+    // 1.4.1 섞인 대사의 글자 표지 → 생성기가 감싼 대사 칸 글자를 그 사람 것으로(표지가 남은 곳 — 말풍선처럼 메시지 하나가 칸 하나인 틀 — 은 표지만 걷어요)
+    html = html.replace(/(<span class="d )d[A-Z]("><!--blw:([A-Z])-->)/g, (all, a, b, x) => `${a}d${x}">`).replace(/<!--blw:[A-Z]-->/g, '');
     // <style> 안 설명 주석(/* … */)은 빼요 — 붙일 곳 소독기가 어차피 걷어요(모양 그대로 · 미리보기와 복사 글이 같게)
     html = html.replace(/(<style>)([\s\S]*?)(<\/style>)/, (all, open, css, close) => open + stripCssNotes(css) + close);
     // 시각: 견본 시각(21:04 …)을 메시지 시각으로 — 생성기는 메시지 차례대로 찍어요(436 알림 · 438 기록)

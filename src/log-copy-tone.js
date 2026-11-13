@@ -17,6 +17,15 @@ const CHROMA_MIN = 0.06;   // 이보다 채도가 높아야 「색 글자」로 
 
 const hexOf = value => { const c = parseColor(value); return c && c.a >= 0.05 ? `#${[c.r, c.g, c.b].map(v => v.toString(16).padStart(2, '0')).join('')}` : null; };
 const chromatic = value => { const h = hexOf(value); return !!h && oklchOf(h).c >= CHROMA_MIN; };
+// 1.4.1 회색 계열 대사색(나이트 「#424C59」 같은 사용자 대사색) — 채도는 낮아도 둘레 본문색과 눈에 띄게 다르면 「그 사람 색」으로 봐요.
+//   전엔 채도만 봐서 회색 대사는 본문으로 떨어지고 띠는 메시지 주인공 색(노랑)으로 칠해졌어요(11-14 사용자 「깡캐 대사는 검정인데 왜 노랑 됨」)
+const SPEAKER_GAP = 0.08;   // OKLab 거리 — 이보다 멀어야 본문색과 다른 색
+const labOf = (h) => { const o = oklchOf(h), r = (o.h * Math.PI) / 180; return [o.l, o.c * Math.cos(r), o.c * Math.sin(r)]; };
+const gap = (a, b) => { const x = labOf(a), y = labOf(b); return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); };
+/** 같은 사람 색으로 볼 만큼 가까운가(화면 띠에서 읽은 색 · 인물표 색이 살짝 달라도 같은 사람) */
+export const sameSpeaker = (a, b) => { const x = hexOf(a), y = hexOf(b); return !!x && !!y && gap(x, y) < SPEAKER_GAP / 2; };
+/** 화자 색으로 볼 글자색인가 — 색이 있거나(채도) · 본문색(base)과 눈에 띄게 다른 회색 */
+const speakerInk = (value, base) => { const h = hexOf(value); if (!h) return false; if (oklchOf(h).c >= CHROMA_MIN) return true; const b = hexOf(base); return !!b && gap(h, b) >= SPEAKER_GAP; };
 /** 인라인 조각의 띠 색(형광펜 그림 · 꽉 찬 바탕) — 없으면 null */
 function bandOf(style) {
     if (!style) return null;
@@ -28,23 +37,25 @@ function bandOf(style) {
 const hasBand = nodes => (nodes ?? []).some(n => n.t === 'el' && !n.block && (bandOf(n.style) || hasBand(n.children)));
 const textOf = nodes => nodes.map(n => (n.t === 'text' ? n.text : n.children ? textOf(n.children) : '')).join('');
 
-/** 메시지 한 개의 화자 색: ① 띠 색 ② 따옴표로 시작하는 색 글자 ③ 이름표 색이 색 글자면 그것 — 없으면 null */
+/** 메시지 한 개의 화자 색: ① 띠 색 ② 따옴표로 시작하는 색 글자 ③ (1.4.1) 본문과 다른 회색 대사색 ④ 이름표 색이 색 글자면 그것 — 없으면 null */
 export function messageSpeakerColor(message) {
-    let band = null, quote = null;
-    const walk = (nodes) => {
+    let band = null, quote = null, grey = null;
+    const walk = (nodes, base) => {
         for (const node of nodes ?? []) {
             if (node.t !== 'el') continue;
             if (!node.block) {
                 const b = bandOf(node.style);
                 if (b && chromatic(b) && !band) band = b;
                 if (!quote && node.style?.color && chromatic(node.style.color) && QUOTE_START.test(textOf(node.children))) quote = hexOf(node.style.color);
+                // 1.4.1 회색 대사색(색 글자로 감싼 띠 · 따옴표로 시작하는 색 글자) — 색 있는 것이 하나도 없을 때만
+                if (!grey && node.style?.color && !chromatic(node.style.color) && speakerInk(node.style.color, base) && (hasBand(node.children) || QUOTE_START.test(textOf(node.children)))) grey = hexOf(node.style.color);
             }
-            walk(node.children);
+            walk(node.children, node.block && node.style?.color ? node.style.color : base);
         }
     };
-    walk(message?.nodes);
+    walk(message?.nodes, message?.font?.color);
     const name = message?.nameStyle?.color && chromatic(message.nameStyle.color) ? hexOf(message.nameStyle.color) : null;
-    return speakerColor(band ?? quote ?? name);
+    return speakerColor(band ?? quote ?? grey ?? name);
 }
 
 /**
@@ -83,7 +94,9 @@ export function retintModel(model, t, { speakers = null, font = true } = {}) {
         if (!font) return;
         for (const key of ['font-family', 'font-size', 'line-height', 'letter-spacing']) if (style[key] && style[key] === baseKeys[key]) style[key] = LOG_FONT[key];
     };
-    const fix = (nodes, fallback) => (nodes ?? []).map((node) => {
+    // base = 둘레 본문색(화면) — 회색 대사색이 본문과 다른지 견줘요. 띠를 단 조각에는 그 띠를 정한 화자 색(who)을 적어 둬요 —
+    //   한 메시지 안에 여러 사람 대사가 섞이면(인물 대사 + 사용자 대사) 줄 꼴 틀(심플 · 기본)이 대사마다 화자 글자를 골라요(log-copy-simple.js colorLetters)
+    const fix = (nodes, fallback, base) => (nodes ?? []).map((node) => {
         if (node.t !== 'el') return node;
         const style = { ...node.style };
         if (t.mode === 'light') delete style['text-shadow'];
@@ -93,26 +106,28 @@ export function retintModel(model, t, { speakers = null, font = true } = {}) {
             delete style['background-color'];
             delete style['background-image'];
             if (style.color) style.color = ink(style.color);
-            return { ...node, style, children: fix(children, fallback) };
+            return { ...node, style, children: fix(children, fallback, node.style?.color || base) };
         }
         const b = bandOf(style);
         if (b) {
+            const who = chromatic(b) ? b : fallback;
             delete style['background-color'];
-            style['background-image'] = band(chromatic(b) ? b : fallback);
+            style['background-image'] = band(who);
             style.color = t.dialogue;
-            return { ...node, style, children: strip(children) };
+            return { ...node, style, children: strip(children), who: speakerColor(who) };
         }
-        if (style.color && chromatic(style.color) && hasBand(children)) {   // 화자 색 글자로 감싼 띠 조각 — 바깥 색은 걷고 안쪽 띠가 칠해요
+        if (style.color && speakerInk(style.color, base) && hasBand(children)) {   // 화자 색 글자로 감싼 띠 조각 — 바깥 색은 걷고 안쪽 띠가 칠해요(1.4.1 회색 대사색도)
             delete style.color;
-            return { ...node, style, children: fix(children, hexOf(node.style.color) ?? fallback) };
+            return { ...node, style, children: fix(children, hexOf(node.style.color) ?? fallback, base) };
         }
-        if (style.color && chromatic(style.color) && QUOTE_START.test(textOf(children))) {
-            style['background-image'] = band(hexOf(style.color));
+        if (style.color && speakerInk(style.color, base) && QUOTE_START.test(textOf(children))) {
+            const who = hexOf(style.color);
+            style['background-image'] = band(who);
             style.color = t.dialogue;
-            return { ...node, style, children: strip(children) };
+            return { ...node, style, children: strip(children), who };
         }
         if (style.color) style.color = ink(style.color);
-        return { ...node, style, children: fix(children, fallback) };
+        return { ...node, style, children: fix(children, fallback, base) };
     });
     // 띠 안쪽 조각: 대사 글자색을 물려받게 색 글자 · 겹친 띠만 걷어요(굵게 · 기울임 같은 모양은 그대로)
     const DROP = new Set(['color', 'background-image', 'background-color']);
@@ -121,7 +136,7 @@ export function retintModel(model, t, { speakers = null, font = true } = {}) {
         const who = speakers?.byName?.get(String(message.name ?? '').trim()) ?? messageSpeakerColor(message);
         baseKeys = message.font ?? {};
         const base = { ...message.font, color: t.text, ...(font ? LOG_FONT : {}) };
-        return { ...message, font: base, bubble: null, nodes: fix(message.nodes, who), speaker: who };
+        return { ...message, font: base, bubble: null, nodes: fix(message.nodes, who, message.font?.color), speaker: who };
     });
     return { ...model, messages, base: { ...model.base, color: t.text, bg: t.log, ...(font ? LOG_FONT : {}) } };
 }
