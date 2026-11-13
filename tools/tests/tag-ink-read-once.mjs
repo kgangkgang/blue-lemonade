@@ -42,6 +42,9 @@ const flush = () => { const list = frames; frames = []; for (const fn of list) f
 const sheet = () => nodes.get('bl-tag-ink')?.textContent ?? null;
 
 const T = await import(pathToFileURL(path.join(root, 'src/tag-ink.js')).href);
+// 모듈을 읽는 동안 걸린 듣기(boot-gate.js 의 APP_READY 안전망 — 모듈을 처음 읽을 때 걸어요)는 이 시험이 보는 것이 아니에요.
+// 아래 handlers 는 태그 글자색이 건 듣기(설정 저장 · 앱 준비 · 캐릭터 목록)만 담아요.
+handlers.length = 0;
 const night = ':root {\n--salty-bg: #141F2E;\n--salty-text: #E8EEF5;\n--salty-text-soft: #9fb0c3;\n}';
 const day = ':root {\n--salty-bg: #FFFFFF;\n--salty-text: #1b2430;\n}';
 /** 매번 읽던 옛 build 가 냈을 글 — pickTagInk 로 그대로 다시 짜요 */
