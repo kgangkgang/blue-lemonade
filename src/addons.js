@@ -10,7 +10,8 @@ import { perfErrorText } from './addons/perf/start-error.js';
 import { ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
 import { onGate } from './boot-layers.js';
 import { afterBoot, booting } from './boot-gate.js';
-import { loadSheet } from './focus-copies.js';
+// 1.4.1 키보드 초점 사본 길(focus-copies.js)은 애드온 시트를 처음 붙일 때(덮개가 걷힌 뒤) 받아요 — 시작 묶음에 넣지 않아요
+const loadSheet=(link,place)=>import('./focus-copies.js').then(m=>m.loadSheet(link,place));
 const running=new Set(),failed=new Map(),loading=new Set(),waiting=new Set();
 // 1.0.0: 실행 중인 애드온 모듈 표 — dist 묶음이라 src 를 따로 import 하면 두 번째 인스턴스가 돼요. 검사 도구는 window.Salty.addon(id) 로 받아요
 const modules=new Map();
