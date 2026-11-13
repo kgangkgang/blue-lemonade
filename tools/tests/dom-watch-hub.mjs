@@ -1,6 +1,6 @@
 // 9.0.4 감시 허브 계약(src/dom-watch.js 구역 · 한 프레임 묶음 · 거르개 · quiet · 누수 없음)
 //   ① html · body · #chat 뿌리의 subtree 구독은 문서마다 감시자 하나 — exclude:'#chat' 구독만 있으면 #chat 가지에는 감시를 걸지 않아요(기록조차 안 생김)
-//   ② body · #sheld 바로 아래 새 가지는 다시 걸고, 빠진 가지는 떼요(떨어진 노드를 보는 등록이 남지 않음)
+//   ② body · #sheld 바로 아래 새 가지는 다시 걸고, 빠진 가지는 떼요(떨어진 노드를 보는 등록이 남지 않음 — 1.4.x 부터 떼기는 한가할 때)
 //   ③ html 바로 아래(body 밖) 창은 html 뿌리 구독만 받아요
 //   ④ 'frame' 구독은 뿌리가 달라도 rAF 하나에 만든 순서대로 · 숨은 탭은 타이머로도
 //   ⑤ quiet(): 콜백 안에서 내가 바꾼 기록은 나만 버리고 다른 구독은 받아요
@@ -64,8 +64,17 @@ await test('② body 바로 아래 새 가지는 다시 걸고, 빠진 가지는
     pop.append(document.createElement('p'));   // 붙은 뒤 다음 작업에서 안쪽이 바뀜
     await tick();
     assert.deepEqual(got.map(r => r.target.localName), ['body', 'dialog'], '새 가지 안 변화도 받아요');
+    observed.length = 0;
     pop.remove();
     await tick(); await tick();
+    // 1.4.x opt-chat-open: 빠지기만 한 가지는 그 자리에서 다시 걸지 않고(채팅 여는 도중 알림이 사라질 때마다 observe 수십 번) 한가할 때 한 번에 떼요
+    assert.equal(observed.length, 0, '빠진 그 자리에서는 감시를 다시 걸지 않아요');
+    got.length = 0;
+    pop.append(document.createElement('p'));
+    await tick();
+    assert.equal(got.length, 0, '떼기 전에도 떨어진 창 안 변화는 안 와요');
+    await dom.clock.advance(50); await tick();
+    assert.ok(observed.length > 0, '한가할 때 다시 걸어요');
     assert.equal(dom.observerCounts().moDetached, 0, '떨어진 창을 보는 등록이 남지 않아요');
     got.length = 0;
     pop.append(document.createElement('p'));
