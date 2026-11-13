@@ -8,7 +8,7 @@
   "css": "style.css",
   "generate_interceptor": "blueLemonadeGenerate",
   "author": "",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "bl_series": 2,
   "auto_update": true
 }

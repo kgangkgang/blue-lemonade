@@ -1,8 +1,8 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1730 · 뺀 규칙 3788 (style.css 33a91c495dd1) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 61f33dbcb1a6) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1730 · 뺀 규칙 3788 (style.css b06593071a0c) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 7d6a9caf0963) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
-:root{--bl-release:"1.4.3";}
+:root{--bl-release:"1.4.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)) {
 :root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}
@@ -4201,11 +4201,13 @@ html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check
 html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
 html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *),
 html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *),
-html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"]),
+html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"]):where(:not([for="regex_disable"])),
 html body :is(dialog, #rm_extensions_block) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"]),
 html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *),
 html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *),
-html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *) {
+html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl-s, *):is(bl-s, *),
+html body :where(.regex-toggle-on):is(:where(#rm_extensions_block .regex-script-label) label > :is(.regex-toggle-on, .regex-toggle-off)):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body :where(.regex-toggle-off):is(:where(#rm_extensions_block .regex-script-label) label > :is(.regex-toggle-on, .regex-toggle-off)):is(#bl-s, *):is(.bl-s, *):is(bl-s, *) {
     position: relative;
   }
 html body :where(button):is(.salty-panel .salty-seg > button):is(#bl-s, *):is(bl-s, *)::before,
@@ -4223,7 +4225,7 @@ html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check
 html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *)::before,
 html body :where(.pt-check):is(#pt-panel label.pt-check):is(.bl-s, *):is(bl-s, *)::before,
-html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"])::before,
+html body #rm_extensions_block label.flex-container:where(html body #rm_extensions_block label.flex-container):has(> input[type="checkbox"]):where(:not([for="regex_disable"]))::before,
 html body :is(dialog, #rm_extensions_block) label:not([class]):where(html body :is(dialog, #rm_extensions_block) label):has(> input[type="checkbox"])::before,
 html body :where(label):is(#model-switch-settings label:is(.ms-target, .ms-lock)):is(.bl-s, *):is(bl-s, *)::before,
 html body :where(.rlk-keep):is(#regex-link-settings label.rlk-keep):is(.bl-s, *):is(bl-s, *)::before,
@@ -4231,7 +4233,9 @@ html body :where(.qr--visible):is(#rm_extensions_block label.qr--visible):is(.bl
 html body :where(button):is(.salty-panel .bl-settings-toprow button):is(.bl-s, *)::after,
 html body :where(.bl-setting-reset):is(.salty-panel .bl-setting-reset):is(.bl-s, *):is(bl-s, *)::after,
 html body :where(button):is(.salty-panel .bl-preview-samples > button):is(.bl-s, *)::after,
-html body .salty-panel .bl-view-resize > button:not(.bl-view-toggle)::after {
+html body .salty-panel .bl-view-resize > button:not(.bl-view-toggle)::after,
+html body :where(.regex-toggle-on):is(:where(#rm_extensions_block .regex-script-label) label > :is(.regex-toggle-on, .regex-toggle-off)):is(.bl-s, *):is(.bl-s, *)::after,
+html body :where(.regex-toggle-off):is(:where(#rm_extensions_block .regex-script-label) label > :is(.regex-toggle-on, .regex-toggle-off)):is(.bl-s, *):is(.bl-s, *)::after {
     content: '';
     position: absolute;
     left: 50%;

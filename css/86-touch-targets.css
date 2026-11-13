@@ -4,6 +4,10 @@
    칸마다 투명한 상자(가운데 맞춤, 너비 · 높이 = max(칸 크기, 44px))를 그 칸이 모양에 쓰지 않는 ::before 나 ::after 로 덧댄다
    (66-ui-rhythm.css 의 머리 스위치와 같은 방식). 상자는 칸의 일부라 누르면 그 칸이 눌린다. 이웃이 44px 보다 가까우면
    겹치는 곳은 뒤 칸이 받는다. 측정 · 사진: ../blue-lemonade-audit/touch-targets-20261017 (시험 tools/tests/touch-targets.mjs).
+   11-14 정규식 줄 켜고 끄기(실리태번 scriptTemplate: <label for="regex_disable"> 안에 숨은 input.disable_regex + 아이콘 둘)는 라벨에 상자를 달지 않는다(for 속성으로 고름 — :has 를 늘리지 않게) —
+   그 라벨은 for 가 없는 id 를 가리켜 눌러도 아무 칸도 안 바뀌고, 실리태번은 아이콘(.regex-toggle-on/off) click 으로만 값을 바꾼다.
+   라벨 상자(::before)가 켜짐 아이콘을 덮어 폰에서 「끄기」가 안 먹었다(꺼짐 아이콘은 실리태번이 준 filter: grayscale 로 쌓임 맥락이 생겨 상자보다 위라 「켜기」는 됐다 · 깡통 질문 11-14).
+   대신 아이콘 자신에 ::after 상자(Font Awesome 글자는 ::before) — 시험 tools/tests/regex-toggle-touch.mjs.
    ===== */
 @media (pointer: coarse) {
   /* 기준점: 원래 static 인 칸만 relative (이미 relative 인 스위치 · ↺ 는 그대로)
@@ -29,11 +33,12 @@
     .salty-panel .bl-ss-btn,
     :is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label,
     #pt-panel label.pt-check,
-    #rm_extensions_block label.flex-container:has(> input[type="checkbox"]),
+    #rm_extensions_block label.flex-container:has(> input[type="checkbox"]):where(:not([for="regex_disable"])),
     :is(dialog, #rm_extensions_block) label:not([class]):has(> input[type="checkbox"]),
     #model-switch-settings label:is(.ms-target, .ms-lock),
     #regex-link-settings label.rlk-keep,
-    #rm_extensions_block label.qr--visible
+    #rm_extensions_block label.qr--visible,
+    :where(#rm_extensions_block .regex-script-label) label > :is(.regex-toggle-on, .regex-toggle-off)
   ),
   html body.salty :is(
     #chat .mes .mes_media_enlarge,
@@ -66,7 +71,7 @@
     .salty-panel .bl-ss-btn,
     :is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label,
     #pt-panel label.pt-check,
-    #rm_extensions_block label.flex-container:has(> input[type="checkbox"]),
+    #rm_extensions_block label.flex-container:has(> input[type="checkbox"]):where(:not([for="regex_disable"])),
     :is(dialog, #rm_extensions_block) label:not([class]):has(> input[type="checkbox"]),
     #model-switch-settings label:is(.ms-target, .ms-lock),
     #regex-link-settings label.rlk-keep,
@@ -80,7 +85,8 @@
     .salty-panel .bl-settings-toprow button,
     .salty-panel .bl-setting-reset,
     .salty-panel .bl-preview-samples > button,
-    .salty-panel .bl-view-resize > button:not(.bl-view-toggle)
+    .salty-panel .bl-view-resize > button:not(.bl-view-toggle),
+    :where(#rm_extensions_block .regex-script-label) label > :is(.regex-toggle-on, .regex-toggle-off)
   )::after,
   html body.salty :is(
     #chat .mes .mes_media_enlarge,
