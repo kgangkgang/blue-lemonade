@@ -24,7 +24,7 @@
 .mart-menu-go[aria-current=page]{background:var(--pick-face)}
 .mart-menu-go[aria-current=page] b{color:var(--pick-ink)}
 .mart-menu-cover{flex:none;width:80px;height:56px;border-radius:8px;background:var(--tint);box-shadow:inset 0 0 0 1px var(--line)}
-.mart-menu-cover.is-frames{background:url(data/frames/picnic-clay-portrait-t-ee8b0db0.webp) 26% 58%/auto 90% no-repeat,url(data/frames/rainbow-illustrated-portrait-t-c05fb545.webp) 76% 58%/auto 90% no-repeat,linear-gradient(165deg,#e3eefa,#f6e9f2)}
+.mart-menu-cover.is-frames{background:url(cover-frames.webp) 50% 50%/contain no-repeat,linear-gradient(165deg,#e3eefa,#f6e9f2)}
 .mart-menu-cover.is-genie{display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#fff3c4,#ffd54a 70%,#f5b800);font-size:30px}
 .mart-menu-cover.is-genie::before{content:"🧞";font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif}
 .mart-menu-cover.is-geulkku{background:url(cover-geulkku.webp) 50% 0/cover no-repeat,#f3f1ec}
