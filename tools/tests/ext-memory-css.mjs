@@ -121,6 +121,15 @@ check('⑫ Memoria 「주입 미리보기」 글상자는 작은 글자 단계�
     const field = [...base.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(m => m[1].trim().startsWith('body.salty :is(.text_pole, select, textarea,') && /font-size:/.test(m[2]));
     assert.ok(field && /font-size:\s*var\(--bl-fs-body\);/.test(field[2]), '테마 입력칸 글자 크기 규칙');
 });
+check('⑬ (11-14) 그 글상자 높이는 글자를 줄이기 전(1.3.7) 그대로 — 본문 글자 12줄 · 줄 높이 1.55 · 위아래 여백 10', () => {
+    const rules = ruleFor('src/ext-memoria.css', 'textarea.memoria__preview');
+    assert.equal(rules.length, 2, '글자 규칙 하나 + 높이 규칙 하나');
+    assert.match(rules[1].body, /^\s*height:\s*calc\(12 \* 1\.55 \* var\(--bl-fs-body, 15px\) \+ 20px\);\s*$/, '높이만 — 손으로 늘이기(resize)는 원작 그대로');
+    // 셈의 근거: 테마 글상자 규칙의 줄 높이 · 위아래 여백과 원작 rows="12"
+    const base = strip(read('css/02-controls.css'));
+    assert.match(base, /body\.salty textarea:where\([^{]*\)\s*\{\s*padding:\s*10px var\(--bl-s3\) !important;\s*line-height:\s*1\.55 !important;/, '테마 글상자: 위아래 여백 10 · 줄 높이 1.55');
+    assert.match(base, /border:\s*0 !important;/, '테마 입력칸은 테두리 0(높이에 안 더해져요)');
+});
 check('⑤ 그 확장이 없는 사람에게는 싣지 않아요', () => {
     for (const always of ['style.css', 'src/style-lazy.gen.css', 'style-ext.css']) {
         const text = read(always);
