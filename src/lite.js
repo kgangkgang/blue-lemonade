@@ -164,11 +164,25 @@ export function previewCssReady() {
     return new Promise(resolve => { link.addEventListener('load', () => resolve(true), { once: true }); link.addEventListener('error', () => resolve(false), { once: true }); });
 }
 
-/** 설정 창을 열 때: 미리보기 시트를 켠다 (이 호출은 세션 끝까지 — 설정 창 · 서랍). */
-let permanent = false, holders = 0;
+/** 설정 창을 열 때: 미리보기 시트를 켠다.
+ *  1.4.x(작업자 D): 예전엔 세션 끝까지 켜 뒀어요 — 그러면 설정 창을 한 번 연 뒤로 채팅 요소마다 미리보기 규칙(700개 남짓)과 견줘요
+ *  (리그 11-14: 300 메시지 채팅을 다시 계산할 때 요소당 약 +0.8µs · PC). 이제 서랍 단추를 누르거나 창(dialog)이 닫힌 뒤 보이는 표본이 하나도 없으면 다시 꺼요.
+ *  다시 열면 index.js · panel.js · 메모가 이 함수를 다시 불러 켜요. 끄고 켤 때 다시 계산은 작은 따로 시트라 맞는 요소만이에요. */
+let holders = 0, offWatch = false;
+const SAMPLES = '.salty-panel, .salty-preview, #salty-nochat, .salty-sample, .bl-inline-preview';
 export function restorePreviewRules() {
-    permanent = true;
     turnOn();
+    if (offWatch || typeof document === 'undefined') return;
+    offWatch = true;
+    const later = () => { setTimeout(maybePreviewOff, 700); setTimeout(maybePreviewOff, 2000); };
+    document.addEventListener('click', e => { if (e.target?.closest?.('.inline-drawer-toggle, .drawer-toggle')) later(); }, true);
+    document.addEventListener('close', later, true);   // dialog 닫힘(거품이 없어 잡기 단계로)
+}
+function maybePreviewOff() {
+    if (holders || !restored) return;
+    for (const el of document.querySelectorAll(SAMPLES)) if (el.getClientRects().length) return;
+    restored = false;
+    if (previewLink) previewLink.media = 'not all';
 }
 function turnOn() {
     restored = true;
@@ -179,9 +193,7 @@ function turnOn() {
 export function holdPreviewRules() { holders++; turnOn(); }
 export function releasePreviewRules() {
     holders = Math.max(0, holders - 1);
-    if (holders || permanent || !restored) return;
-    restored = false;
-    if (previewLink) previewLink.media = 'not all';
+    maybePreviewOff();   // 설정 창 · 서랍이 아직 보이면 그대로 둬요(예전 「세션 끝까지」 대신)
 }
 
 /** 꺼져 있나(1) · 켜져 있나(0) — 9.0.1 부터 규칙 수는 시트를 받기 전이라 세지 않는다(예전엔 꺼 둔 규칙 수) */

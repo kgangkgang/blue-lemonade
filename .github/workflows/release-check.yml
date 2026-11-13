@@ -171,6 +171,7 @@ jobs:
           node tools/tests/boot-graph.mjs .
           node tools/tests/markdown-css-split.mjs .
           node tools/tests/css-gates-order.mjs .
+          node tools/tests/css-fanout.mjs .
           # 뗀 규칙 시트 실행 길을 실제로 돌려요: 받는 동안 미룸 · 달기 전 식히기 · 못 받으면 다음에 새 주소로 다시(공개판 감사 결함 둘 + 시험 공백)
           node tools/tests/gate-css-run.mjs .
           node tools/tests/gradients-core.mjs .
@@ -370,6 +371,7 @@ jobs:
           node tools/tests/ko-locale-bridge.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
+          node tools/tests/preview-rules-off.mjs .
           node tools/tests/css-split.mjs .
           node tools/tests/css-compat.mjs .
           node tools/tests/preview-measure-batch.mjs .
