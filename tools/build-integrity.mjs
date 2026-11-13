@@ -56,7 +56,10 @@ const bundleTool=await import(pathToFileURL(path.join(root,'tools/build-bundle.m
 if(process.argv.includes('--check')){const fresh=bundleTool.bundleFresh(root);if(!fresh.ok)throw Error('Stale dist bundle: '+fresh.why);}
 else if(!bundleTool.bundleFresh(root).ok)await bundleTool.buildBundle();
 const distFiles=fs.existsSync(path.join(root,'dist'))?walk(path.join(root,'dist')).map(file=>path.relative(root,file).split(path.sep).join('/')).filter(file=>file.endsWith('.js')):[];
-const files=[...new Set(['manifest.json','index.js','style.css',...distFiles,...(fs.existsSync(path.join(root,'style-ext.css'))?['style-ext.css']:[]),...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|mjs|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
+// 1.4.x 최적화 C(검토 C 2번): 한국어 글자 사전 JSON 일곱 장도 표에 — 출시 관문(tools/release_gate.py KO_TEXT_PARTS)과 같은 목록(생성기의 INDEX_FILE · partFile)
+const koDict=await import(pathToFileURL(path.join(root,'tools/build-korean-dict.mjs')));
+const koTextFiles=[koDict.INDEX_FILE,...koDict.PART_NAMES.map(koDict.partFile)].filter(rel=>fs.existsSync(path.join(root,rel)));
+const files=[...new Set(['manifest.json','index.js','style.css',...distFiles,...koTextFiles,...(fs.existsSync(path.join(root,'style-ext.css'))?['style-ext.css']:[]),...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|mjs|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/'))])].filter(p=>p!=='src/build-info.js').sort();
 const hashes=Object.fromEntries(files.map(file=>[file,fileFingerprint(fs.readFileSync(path.join(root,file)))]));
 const version=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8')).version;
 const data=`// Generated: installed runtime integrity, excluding this manifest itself.\nexport const BUILD_VERSION = ${JSON.stringify(version)};\nexport const FILE_HASHES = ${JSON.stringify(hashes,null,2)};\n`;

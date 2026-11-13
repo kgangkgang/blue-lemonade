@@ -472,6 +472,13 @@ def validate_scene_music(files):
     require(seen == set(SCENE_MUSIC), 'Scene music catalog is incomplete')
 
 
+# 1.4.x 최적화 C: 한국어 글자 사전 일곱 장(src/ko-ui-text.<이름>.gen.json) — ZIP 목록 · 무결성 표(tools/build-integrity.mjs)가 같이 써요
+KO_TEXT_PARTS = ('index', 'boot', 'drawers', 'templates', 'js', 'html', 'rest')
+# new URL('./…', import.meta.url) 검사에서 빼는 것: 테마에서 부르지 않는 기본값(글꾸 마트 사본 · loadCaps 는 내보내기만 하고 아무도 안 불러요)
+URL_REF_ALLOW = {('src/geulkku-mart/caps.js', './data/geulkku/caps.json')}
+URL_REF = re.compile(r"""new\s+URL\(\s*(['"`])(\.[^'"`]+)\1\s*,\s*import\.meta\.url""")
+
+
 def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
@@ -481,6 +488,12 @@ def inventory(root, kind):
             names += ['server-plugin/' + n for n in ('setup.mjs', 'setup-windows.cmd', 'README.md', 'blue-lemonade-zip/index.mjs', 'blue-lemonade-zip/archive.mjs', 'blue-lemonade-zip/install.mjs')]
         # 9.0.6 노드 시험(*.test.mjs · *.test.js)은 저장소 전용 — 설치 ZIP 에 싣지 않아요
         names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.mjs', '.css'} and not p.name.endswith(('.test.mjs', '.test.js'))]   # 8.3.0 .mjs
+        # 1.4.x 최적화 C: 한국어 글자 사전(색인 + 조각 여섯)은 JSON 파일 — src/ko-ui.js 가 fetch 로 받아요(tools/build-korean-dict.mjs 의 INDEX_FILE · partFile 이름 그대로)
+        ko_ui = root / 'src' / 'ko-ui.js'
+        for part in (KO_TEXT_PARTS if ko_ui.is_file() and '.gen.json' in ko_ui.read_text(encoding='utf-8') else ()):   # 사전을 JSON 으로 받는 판만(옛 판 · 시험 틀은 없음)
+            rel = f'src/ko-ui-text.{part}.gen.json'
+            require((root / rel).is_file(), f'Missing Korean text dictionary: {rel}')
+            names.append(rel)
         # Corresponding editable source, build tools and bundled license/template files.
         for name in ['LICENSE', 'THIRD-PARTY-NOTICES.md']:
             if (root / name).is_file(): names.append(name)
@@ -626,6 +639,19 @@ def validate(files, kind):
             target = posixpath.normpath(posixpath.join(posixpath.dirname(name), spec.split('?')[0]))
             if not target.startswith('../'):
                 require(target in files, f'{name} imports missing file {target}')
+        # 1.4.x 최적화 C: fetch · 워커 · 그림이 쓰는 new URL('./…', import.meta.url) 주소도 ZIP 에 있어야 해요(템플릿의 ${…} 자리는 아무 글자로 보고 하나라도 있으면 돼요).
+        #   폴더 주소('./' · '../' · './addons/')는 파일이 아니라 빼요. 이 검사가 없어 사전 JSON 이 ZIP 에서 빠져도 관문을 지났어요(검토 C 1번)
+        for _, spec in URL_REF.findall(code_text):
+            if spec.endswith(('/', '.')) or (name, spec) in URL_REF_ALLOW:
+                continue
+            target = posixpath.normpath(posixpath.join(posixpath.dirname(name), spec.split('?')[0]))
+            if target.startswith('../'):
+                continue
+            if '${' in target:
+                rx = re.compile('^' + '.+'.join(re.escape(piece) for piece in re.split(r'\$\{[^}]*\}', target)) + '$')
+                require(any(rx.match(f) for f in files), f'{name} fetches missing files {target}')
+            else:
+                require(target in files, f'{name} fetches missing file {target}')
     return version
 
 

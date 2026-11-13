@@ -188,6 +188,23 @@ class GateTests(unittest.TestCase):
         f['core.mjs']=b"export const x = 1; import './gone.mjs';"
         with self.assertRaisesRegex(gate.GateError,'gone'):gate.validate(f,'memory')
         f['gone.mjs']=b'export {};';self.assertEqual(gate.validate(f,'memory'),'1.3.1')
+    def test_import_meta_url_files_must_be_packaged(self):
+        # 1.4.x 최적화 C(검토 C 1번): fetch · 워커가 쓰는 new URL('./…', import.meta.url) 도 ZIP 에 있어야 해요 — 템플릿 자리는 아무 글자
+        f=self.fixture('theme');f['src/ko-ui.js']=b"const read=name=>fetch(new URL(`./ko-ui-text.${name}.gen.json`, import.meta.url));const w=new URL('./worker.js', import.meta.url);const base=new URL('./', import.meta.url);"
+        with self.assertRaisesRegex(gate.GateError,'fetches missing files src/ko-ui-text'):gate.validate(f,'theme')
+        f['src/ko-ui-text.index.gen.json']=b'{}'
+        with self.assertRaisesRegex(gate.GateError,'fetches missing file src/worker.js'):gate.validate(f,'theme')
+        f['src/worker.js']=b'export {};';self.assertEqual(gate.validate(f,'theme'),'1.3.1')
+    def test_korean_text_dictionary_json_is_packaged(self):
+        # 사전을 JSON 으로 받는 판이면 일곱 장이 모두 ZIP 목록에 들어가고, 하나라도 없으면 막아요
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);files=self.fixture('theme');files['src/ko-ui.js']=b"fetch(new URL(`./ko-ui-text.${name}.gen.json`, import.meta.url))"
+            for part in gate.KO_TEXT_PARTS:files[f'src/ko-ui-text.{part}.gen.json']=b'{}'
+            self.write_fixture(root,files)
+            names=gate.inventory(root,'theme')
+            for part in gate.KO_TEXT_PARTS:self.assertIn(f'src/ko-ui-text.{part}.gen.json',names)
+            (root/'src/ko-ui-text.rest.gen.json').unlink()
+            with self.assertRaisesRegex(gate.GateError,'Missing Korean text dictionary: src/ko-ui-text.rest.gen.json'):gate.inventory(root,'theme')
     def test_missing_dependency_blocks(self):
 
         f=self.fixture();f['index.js']=b"import('./missing.js')"
