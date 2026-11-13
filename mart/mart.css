@@ -984,6 +984,9 @@ html.mart-cart-on{overflow:hidden}
 .gi-mic{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7.4' y='2.8' width='5.2' height='9' rx='2.6'/%3E%3Cpath d='M4.6 9.6a5.4 5.4 0 0 0 10.8 0M10 15v2.2'/%3E%3C/svg%3E")}
 .gi-trash{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 5.6h13M8 5.6V3.8h4v1.8M5.4 5.6l.8 10.6a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9l.8-10.6'/%3E%3C/svg%3E")}
 .ibtn .gi{width:16px;height:16px}
+.mart-cart-btn .gi{width:18px;height:18px}   /* 머리줄 장바구니: 옆 레몬(24) · 설치 단추와 무게를 맞춰 선 그림만 한 칸 크게 */
+.mart-sheet-name h2 .gi{width:20px;height:20px}
+.mart-taste-hint .gi{margin-right:4px;vertical-align:-2px}
 .mart-cart-head h2 .gi{width:20px;height:20px}
 .mart-cart-empty>.gi{width:40px;height:40px;color:var(--faint);animation:mart-bounce 1.6s ease-in-out infinite}
 .mart-cart-thumb>.gi{width:20px;height:20px;color:var(--muted)}
