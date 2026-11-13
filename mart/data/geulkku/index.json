@@ -104,9 +104,9 @@
    "bytes": 714690
   },
   "sp-pass-1": {
-   "file": "sp-pass-1.2f3187ed.json",
+   "file": "sp-pass-1.e14cfe1c.json",
    "n": 40,
-   "bytes": 672392
+   "bytes": 672372
   },
   "sp-pass-2": {
    "file": "sp-pass-2.a335d018.json",
@@ -129,14 +129,14 @@
    "bytes": 692144
   },
   "sp-pass-6": {
-   "file": "sp-pass-6.8904be68.json",
+   "file": "sp-pass-6.1be75538.json",
    "n": 40,
-   "bytes": 684665
+   "bytes": 684655
   },
   "sp-pass-7": {
-   "file": "sp-pass-7.00ca6b25.json",
+   "file": "sp-pass-7.9f62ddbd.json",
    "n": 40,
-   "bytes": 614300
+   "bytes": 614270
   },
   "sp-pass-8": {
    "file": "sp-pass-8.344777fd.json",
@@ -240,8 +240,8 @@
   {"id":"simple-k1042","name":"아드리안 · 호텔 룸서비스 주문서","emoji":"🌧️","category":"simple-open","style":"심플","desc":"소품을 누르면 — 뚜껑 열기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":13021,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"D&H","world":"hunter","who":"아드리안 폰 아이젠베르크","src":["hunter","adrian","adrianMod"]},
   {"id":"simple-k1043","name":"레시피 카드","emoji":"🍳","category":"simple-open","style":"심플","desc":"소품을 누르면 — 덮개 열기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":14905,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"장면 글꾸"},
   {"id":"simple-k1044","name":"식당","emoji":"🍽️","category":"simple-open","style":"심플","desc":"소품을 누르면 — 덮개 열기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":13563,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"장소"},
-  {"id":"simple-k1045","name":"서연진 · 청공검 수련 일지","emoji":"🗡️","category":"simple-open","style":"심플","desc":"소품을 누르면 — 검 뽑기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":12540,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"무협시뮬","world":"gangho","who":"서연진","src":["gangho"]},
-  {"id":"simple-k1046","name":"퀘스트 창","emoji":"🗡️","category":"simple-open","style":"심플","desc":"소품을 누르면 — 퀘스트 받기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":15100,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"상태창"},
+  {"id":"simple-k1045","name":"서연진 · 청공검 수련 일지","emoji":"🗡️","category":"simple-open","style":"심플","desc":"소품을 누르면 — 검 뽑기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":12530,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"무협시뮬","world":"gangho","who":"서연진","src":["gangho"]},
+  {"id":"simple-k1046","name":"퀘스트 창","emoji":"🗡️","category":"simple-open","style":"심플","desc":"소품을 누르면 — 퀘스트 받기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":15090,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"상태창"},
   {"id":"simple-k1047","name":"서연진 · 청운무영검 개편 도해","emoji":"🗡️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 검보 펼치기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":18572,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"무협시뮬","world":"gangho","who":"서연진","src":["gangho"]},
   {"id":"simple-k1048","name":"지하철 노선","emoji":"🚪","category":"simple-open","style":"심플","desc":"소품을 누르면 — 문 열기","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":16769,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"장르"},
   {"id":"simple-k1049","name":"은설 · 성문 손글씨 경고문","emoji":"🚪","category":"simple-open","style":"심플","desc":"소품을 누르면 — 노크 두 번","c":"sp-pass-1","copyOnly":true,"photo":true,"simple":true,"bytes":23394,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"센티넬버스","world":"sentinel","who":"은설","src":["sengaSim"]},
@@ -418,7 +418,7 @@
   {"id":"simple-k1223","name":"블로그 글","emoji":"💻","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 공감","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":17423,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"앱 · SNS"},
   {"id":"simple-k1224","name":"통화 기록","emoji":"📞","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 전화 걸기","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":15012,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"앱 · SNS"},
   {"id":"simple-k1225","name":"유튜브 댓글","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 좋아요","c":"sp-pass-5","copyOnly":true,"photo":true,"simple":true,"bytes":13113,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"앱 · SNS"},
-  {"id":"simple-k1226","name":"가브리엘 · 스마트 헤븐 알림","emoji":"🔔","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 알림 종","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":12752,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"천지합동청","world":"halo","who":"가브리엘","src":["halo"]},
+  {"id":"simple-k1226","name":"가브리엘 · 스마트 헤븐 알림","emoji":"🔔","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 알림 종","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":12742,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"천지합동청","world":"halo","who":"가브리엘","src":["halo"]},
   {"id":"simple-k1228","name":"X 타래","emoji":"🐦","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 답글 게시하기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":15076,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"앱 · SNS"},
   {"id":"simple-k1229","name":"야신 · 섭정 결재 · 천위대 명패","emoji":"🗂️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 명패 걸기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":10834,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"무협시뮬","world":"gangho","who":"야신","src":["gangho"]},
   {"id":"simple-k1230","name":"이시온 · 백팩 키링 이름표","emoji":"🧸","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 키링 하나 더 달기","c":"sp-pass-6","copyOnly":true,"photo":true,"simple":true,"bytes":23347,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"센티넬버스","world":"sentinel","who":"이시온","src":["sengaAcademy"]},
@@ -487,10 +487,10 @@
   {"id":"simple-k1294","name":"프랑켄슈타인","emoji":"⚡","category":"simple-open","style":"심플","desc":"소품을 누르면 — 레버 내리기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":11578,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"할로윈"},
   {"id":"simple-k1295","name":"뼈다귀 강아지","emoji":"🐕","category":"simple-open","style":"심플","desc":"소품을 누르면 — 뼈다귀 주기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":16116,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"할로윈"},
   {"id":"simple-k1296","name":"공원","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 현재 위치","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":14391,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#0075d3","topic":"장소"},
-  {"id":"simple-k1297","name":"한이안 · 길드 냉장고 도시락 메모","emoji":"📝","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 도시락 열기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":14871,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"D&H","world":"hunter","who":"한이안","src":["hunter"]},
+  {"id":"simple-k1297","name":"한이안 · 길드 냉장고 도시락 메모","emoji":"📝","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 도시락 열기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":14851,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"D&H","world":"hunter","who":"한이안","src":["hunter"]},
   {"id":"simple-k1298","name":"단톡방","emoji":"🎈","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 말풍선 보내기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":9458,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"앱 · SNS"},
   {"id":"simple-k1299","name":"검색 기록","emoji":"🗡️","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 기록 되감기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":12641,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#0075d3","topic":"앱 · SNS"},
-  {"id":"simple-k1300","name":"게이트 현장 라이브","emoji":"📷","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 촬영 시작","c":"sp-pass-7","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":15251,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"센티넬버스","world":"sentinel","src":["sengaSim"]},
+  {"id":"simple-k1300","name":"게이트 현장 라이브","emoji":"📷","category":"simple-sound","style":"심플","desc":"소품을 누르면 — 촬영 시작","c":"sp-pass-7","copyOnly":true,"photo":true,"audio":true,"simple":true,"bytes":15241,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"센티넬버스","world":"sentinel","src":["sengaSim"]},
   {"id":"simple-k1301","name":"통통 카드","emoji":"✨","category":"simple-tap","style":"심플","desc":"누른 카드가 통 — 통 뛰며 캐릭터 색으로 칠해짐(카드마다 따로) — 없음","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":15016,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"반응 글꾸"},
   {"id":"simple-k1302","name":"뱀파이어","emoji":"✨","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 주스 마시기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":12276,"fx":"e","bg":"#ffffff","ink":"#26272b","accent":"#e90061","topic":"할로윈"},
   {"id":"simple-k1303","name":"별자리 운세 카드","emoji":"⭐","category":"simple-tap","style":"심플","desc":"소품을 누르면 — 운세 보기","c":"sp-pass-7","copyOnly":true,"photo":true,"simple":true,"bytes":14592,"fx":"e","bg":"#fbfbfa","ink":"#26272b","accent":"#e90061","topic":"점 · 별자리"},
