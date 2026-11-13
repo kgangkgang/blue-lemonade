@@ -22,7 +22,7 @@ const js = src => `data:text/javascript,${encodeURIComponent(src)}`;
 const T = globalThis.__perfDedupeTest = { ext: { save_dedupe: { enabled: true, recover: false, flushOnSwitch: false, custom: 'keep me' } } };
 const ST = {
     '../../addon-files-check.js': js('export function verifyAddonCss() {}'),
-    './hub.js': js('export function pane() { return null; }'),
+    './hub.js': js('export function pane() { return null; } export function onFirstShow() {}'),
     '../../../../../../extensions.js': js('export const extension_settings = globalThis.__perfDedupeTest.ext;\nexport function getContext() { return {}; }'),
     '../../../../../../../script.js': js("export const eventSource = { on() {} };\nexport const event_types = { APP_READY: 'app_ready' };\nexport function saveSettingsDebounced() {}"),
     '../../../../../../openai.js': js('export const promptManager = null;'),

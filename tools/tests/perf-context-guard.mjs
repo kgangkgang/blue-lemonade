@@ -21,7 +21,7 @@ const js = src => `data:text/javascript,${encodeURIComponent(src)}`;
 globalThis.__perfCtxTest = { ext: { save_dedupe: { enabled: true, recover: false, flushOnSwitch: false, guardGeneration: true } } };
 const ST = {
     '../../addon-files-check.js': js('export function verifyAddonCss() {}'),
-    './hub.js': js('export function pane() { return null; }'),
+    './hub.js': js('export function pane() { return null; } export function onFirstShow() {}'),
     '../../../../../../extensions.js': js('export const extension_settings = globalThis.__perfCtxTest.ext;\nexport function getContext() { return {}; }'),
     '../../../../../../../script.js': js("export const eventSource = { on() {} };\nexport const event_types = { APP_READY: 'app_ready' };\nexport function saveSettingsDebounced() {}\nexport function isGenerating() { return false; }\nexport let streamingProcessor = null;\nexport const chat = [];"),
     '../../../../../../openai.js': js('export const promptManager = null;'),

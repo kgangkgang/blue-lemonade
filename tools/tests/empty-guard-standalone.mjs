@@ -318,7 +318,7 @@ await test('성능 보조 켜짐: 표식이 이미 perf 면 독립 모듈은 아
     };
     const ST = {
         '../../addon-files-check.js': js('export function verifyAddonCss() {}'),
-        './hub.js': js('export function pane() { return null; }'),
+        './hub.js': js('export function pane() { return null; } export function onFirstShow() {}'),
         '../../../../../../extensions.js': js('export const extension_settings = globalThis.__egTest.ext;\nexport function getContext() { return {}; }'),
         '../../../../../../../script.js': js("export const eventSource = globalThis.__egTest.es;\nexport const event_types = { APP_READY: 'app_ready', CHAT_CHANGED: 'chat_id_changed', MESSAGE_DELETED: 'message_deleted' };\nexport function saveSettingsDebounced() {}\nexport const chat = globalThis.__egTest.chat;\nexport const characters = globalThis.__egTest.characters;\nexport const this_chid = 0;\nexport const chat_metadata = {};\nexport function getCurrentChatId() { return globalThis.__egTest.characters[0].chat; }"),
         '../../../../../../openai.js': js('export const promptManager = null;'),

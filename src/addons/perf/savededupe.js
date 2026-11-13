@@ -10,7 +10,7 @@
 // [1.1.2] 누름이 아닌 길도 막는다 (switchcode.js): 확장 · 스크립트의 getContext().openCharacterChat · openGroupChat,
 //         jQuery .trigger('click'), 그리고 reloadCurrentChat (정규식 편집기 · 페르소나 · 사용자 설정 · /chat-reload …).
 import { verifyAddonCss } from '../../addon-files-check.js';
-import { pane } from './hub.js';
+import { pane, onFirstShow } from './hub.js';
 import * as extensions from '../../../../../../extensions.js';
 import * as script from '../../../../../../../script.js';
 import * as openai from '../../../../../../openai.js';
@@ -908,7 +908,8 @@ window.SaveDedupe = {
 
 jQuery(() => {
     promptDefer?.install();
-    buildDrawer();
+    // 최적화 C(11-14): 설정 칸은 허브가 처음 보일 때(톱니바퀴 창 · 설정 창 안) 만들어요 — 열지 않으면 숨은 자리에 요소를 두지 않아요
+    onFirstShow('dedupe', buildDrawer);
     // 4.2.2: 계산된 스타일은 화면이 한 번 그려진 직후에 읽는다 (그때는 이미 계산돼 있어 공짜) — 시작 도중에 읽으면 문서 전체를 그 자리에서 계산했다. 화면이 꺼져 있으면 5초 뒤 그냥 읽음
     setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
 });

@@ -3,7 +3,7 @@
 // 테마 내장판은 활성화된 뒤에 붙는 확장 script 태그의 시작과 load 시각을 재서
 // 확장별 "받아서 실행하기까지" 걸린 시간을 구한다. 앱 준비(APP_READY)와 첫 채팅이 그려진 시각도 같이 적는다.
 // 폰에서 잠깐 켜 두고 숫자를 보는 용도라, 설정은 없고 켜질 때마다 결과 창이 한 번 뜬다. 마법봉 메뉴 → 로딩 시간 으로 다시 볼 수 있다.
-import { pane } from './hub.js';
+import { pane, onFirstShow } from './hub.js';
 import { copyPlain } from './copy.js';   // 8.2.7 http 폰 복사
 import { eventSource, event_types, saveSettingsDebounced } from '../../../../../../../script.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
@@ -350,7 +350,8 @@ function buildDrawer() {
 
 jQuery(() => {
     settings();
-    buildDrawer();
+    // 최적화 C(11-14): 설정 칸은 허브가 처음 보일 때(톱니바퀴 창 · 설정 창 안) 만들어요 — 열지 않으면 숨은 자리에 요소를 두지 않아요
+    onFirstShow('timer', buildDrawer);
     mountWandButton();
     for (const delay of [1000, 4000]) setTimeout(mountWandButton, delay);
 });

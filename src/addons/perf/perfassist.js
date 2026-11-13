@@ -7,7 +7,7 @@
 //  5. 메시지 속 같은 꾸밈 한 번만 넣기 (styleonce.js) — 실리태번이 메시지마다 같은 CSS 를 다시 해석하지 않게
 // 각 기능은 실리태번 쪽 모양(내보내기 · 이벤트 · 메서드)이 없으면 켜지지 않고 원래대로 둔다.
 import { verifyAddonCss } from '../../addon-files-check.js';
-import { pane } from './hub.js';
+import { pane, onFirstShow } from './hub.js';
 import * as extensions from '../../../../../../extensions.js';
 import * as script from '../../../../../../../script.js';
 import * as openai from '../../../../../../openai.js';
@@ -326,7 +326,8 @@ for (const [name, install] of [['saveInWorker', installSaver], ['morphStream', i
 window.PerfAssist = { settings, unavailable, morph, promptList, saver, styleOnce, version: VERSION };
 
 jQuery(() => {
-    buildDrawer();
+    // 최적화 C(11-14): 설정 칸은 허브가 처음 보일 때(톱니바퀴 창 · 설정 창 안) 만들어요 — 열지 않으면 숨은 자리에 요소를 두지 않아요
+    onFirstShow('perf', buildDrawer);
     // 4.2.2: 계산된 스타일은 화면이 한 번 그려진 직후에 읽는다 (그때는 이미 계산돼 있어 공짜) — 시작 도중에 읽으면 문서 전체를 그 자리에서 계산했다. 화면이 꺼져 있으면 5초 뒤 그냥 읽음
     setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
 });
