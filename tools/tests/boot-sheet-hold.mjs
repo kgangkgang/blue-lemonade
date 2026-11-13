@@ -192,7 +192,12 @@ await test('③ 덮개 동안 붙는 시트 여덟 자리가 모두 holdSheet �
 });
 await test('③ 변수 시트 · 글꼴 선언은 꺼 두지 않아요(새로고침 첫 화면이 팔레트 색을 쓰고, 꺼 둔 @font-face 는 글꼴을 안 받아요)', () => {
     const apply = src('src/apply.js');
-    assert.doesNotMatch(apply, /holdSheet[(]/);
+    // 1.4.0 꺼 두는 것은 액자 · 프로필 변수 한 장(#salty-vars-look)뿐 — #salty-vars · 글꼴 · 그라데이션 · 아이콘은 그대로 바로 켜요
+    assert.equal((apply.match(/holdSheet[(]/g) || []).length, 1);
+    assert.match(apply, /if \(!lookSheet && lookCss\) \{ lookSheet = styleTag\('salty-vars-look'\); holdSheet\(lookSheet\); \}/);
+    const vars = apply.slice(apply.indexOf("const vars = markdownVariables"), apply.indexOf("const variables = styleTag('salty-vars');"));
+    assert.ok(vars.length > 100 && !/decorVars\(|profileVars\(/.test(vars), '#salty-vars 글에는 액자 · 프로필 변수가 없어요(채팅 모양 모듈이 와도 다시 쓰지 않게)');
+    assert.match(apply, /const look = Object\.assign\(\{\}, decorVars\(s\.image\.decor, 'image', s\.image\.radius\), profileVars\(s\.profile, pal\), profileVars\(s\.userProfile, pal, true\)\);/);
     assert.match(apply, /coverOpaque\(want\.has\('salty'\) && \(parseColor\(pal\.bg\)\?\.\[3\] \?\? 0\) >= 1\);\n\s*const held = syncGateCss\(want(?:, coolChatForRestyle)?\);/, '켠 설정 시트를 붙이기 전에 덮개가 불투명한지 알려요');
 });
 const deferred = [

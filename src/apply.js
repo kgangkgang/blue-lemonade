@@ -15,7 +15,7 @@ import { syncFeatures, coolChatForRestyle } from './features.js';
 import { restingFor } from './ext-presence.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { frameReady, trackLate } from './boot-layers.js';
-import { coverOpaque } from './boot-gate.js';   // 1.2.2 덮개 동안 붙는 시트 모으기 — 덮개가 불투명할 때만(boot-gate.js holdSheet)
+import { coverOpaque, holdSheet } from './boot-gate.js';   // 1.2.2 덮개 동안 붙는 시트 모으기 — 덮개가 불투명할 때만(boot-gate.js holdSheet)
 import { syncGateCss } from './lite.js';   // 1.1.1 마크다운 모양 시트 → 1.1.6 뗀 규칙 시트 전부(켠 설정이 있을 때만)
 // 그리기 모듈은 첫 프레임 뒤에 받고, 도착하면 가장 최근 설정을 적용해요.
 const late = new Map();
@@ -631,7 +631,7 @@ export function applyAll() {
         '--salty-side-left': s.image.edgeSideLeft ? '1' : '0',
         '--salty-side-all': edgeSidesAll ? '1' : '0',
         '--salty-side-part': edgeSidesAll ? '0' : '1',
-    }, imageHeight(s.image), imageShape(s.image), cutEdgeVars(s.image.cutEdge, edgeTheme), frameVars(s.image, 'img', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
+    }, imageHeight(s.image), imageShape(s.image), cutEdgeVars(s.image.cutEdge, edgeTheme), frameVars(s.image, 'img', pal.accent));
     Object.assign(vars,gradientFills(s,vars));
     // 테마를 끄면 토큰은 설정 창에만 — :root 에 두면 안 쓰는 변수가 문서 전체에 깔림 (설정 창은 꺼도 자기 색으로 보임)
     // 5.5.6: 설정 창 밖에 뜨는 테마 자체 창(캡처 미리보기 · 단어 치환/성능 도움말 · 출처)도 같이 — 확장만 모드에서 이 창들의 버튼 · 입력칸이
@@ -674,6 +674,15 @@ export function applyAll() {
     }
     const variables = styleTag('salty-vars');
     if (variables.textContent !== css) { restyleAhead(); variables.textContent = css; }
+    // 1.4.0 액자 · 프로필 변수(채팅 모양 모듈 몫 · 약 3KB)는 따로 한 장(#salty-vars-look) — 그 모듈은 첫 적용 뒤에 와서, 예전엔 그때 #salty-vars 를 통째로
+    //   다시 써 시작 덮개 동안 문서 전체를 한 번 더 계산했어요. 이 장은 덮개 동안 꺼 둔 채로 붙여 걷힐 때 다른 시트와 한 번에 켜요(boot-gate.js holdSheet).
+    //   변수 이름(--bl-image-decor-* · --bl-name-* · --bl-profile-* · --bl-user-*)이 #salty-vars 와 겹치지 않아 시트 차례와 상관없이 같은 값이에요.
+    //   새로고침 첫 화면(splash.js)은 팔레트 변수만 써서 #salty-vars 는 그대로 바로 켜 둬요. 그라데이션 채움(--salty-fill-*)은 #salty-vars 에 남겨요(글자색 맞춤 · 북마크가 그 글을 읽어요)
+    const look = Object.assign({}, decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
+    const lookCss = Object.keys(look).length ? `${s.enabled ? ':root' : '.salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog'} {\n${declarations(look)}\n}` : '';
+    let lookSheet = document.getElementById('salty-vars-look');
+    if (!lookSheet && lookCss) { lookSheet = styleTag('salty-vars-look'); holdSheet(lookSheet); }
+    if (lookSheet && lookSheet.textContent !== lookCss) { restyleAhead(); lookSheet.textContent = lookCss; }
     syncDemGlow(s.chat.demGlow);   // 상태창 묶음 · 트래커에만 — 값이 그대로면 시트를 건드리지 않는다
     // Keep selector rules stable while sliders change only the variable sheet.
     const gradients = styleTag('salty-gradients');
