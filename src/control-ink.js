@@ -12,6 +12,7 @@ const metrics = new Map();
 const baselineCache = new Map();   // 7.8.2: 글꼴 · 크기 · 줄 높이별 줄 위 → 기준선 거리
 let canvas, observer, onRecords = null, frame = 0, enabled = false;
 let appearanceKey = null;
+let urgent = false, afterUrgent = null, round = 0;   // round: 끄면 하나 올려 기다리던 맞추기를 무르게   // 1.4.x: 처음 맞추는 창이 기다리는지 · 한가함을 기다리는 동안 바로 돌릴 길
 const pending = new Set();
 
 /** 글자 잉크 위 · 아래(기준선에서 px, 위가 −) — center-ink.js(가운데 줄 세로 맞춤)도 같은 측정을 써요 */
@@ -230,18 +231,26 @@ function queue(root) {
     for (const parent of pending) if (parent.contains(root)) return;
     for (const child of pending) if (root.contains(child)) pending.delete(child);
     pending.add(root);
-    if (frame) return;
+    // 처음 맞추는 창(한 번도 보이게 맞춘 적 없음 — 막 열린 창)은 예전처럼 다음 프레임 뒤 바로 · 이미 맞춘 창 안의 변화만 한가할 때로(검토 A ② — 막 뜬 단추가 늦게 바뀌어 보이지 않게)
+    if (!rootFonts.has(root)) urgent = true;
+    if (frame) { if (urgent && afterUrgent) { const go = afterUrgent; afterUrgent = null; go(); } return; }   // 한가함을 기다리는 사이 막 열린 창이 들어오면 바로
     // 1.0.0 극한 최적화: 읽기(getBoundingClientRect · getClientRects)는 그 프레임 배치가 끝난 뒤(setTimeout 0)에 — rAF 안에서 읽으면 문서 전체 배치를 강제했어요
     // 1.4.x opt-chat-open(고침안 6): 그 뒤로도 페이지가 바쁘면(채팅을 여는 도중 — 실리태번이 메시지 · 서랍을 잇달아 바꿔요) 한가해질 때까지 기다려요(최대 0.3초).
     //   바쁜 틈에 읽으면 그 사이 쌓인 변화의 배치를 이 읽기가 대신 치렀어요(진단 dc-140 · 폰 4배 짧은 채팅 열기: 맞추기 읽기 넷이 약 130ms). 한가하면 바로 와서 평소와 같아요
-    const afterLayout = fn => (typeof globalThis.requestIdleCallback === 'function' ? globalThis.requestIdleCallback(fn, { timeout: 300 })
-        : typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout(fn, 0) : fn());   // 시험의 가짜 창에는 setTimeout 이 없어요
-    frame = requestAnimationFrame(() => afterLayout(() => {
-        frame = 0;
+    const afterNow = fn => (typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout(fn, 0) : fn());   // 시험의 가짜 창에는 setTimeout 이 없어요
+    let done = false; const mine = ++round;
+    const run = () => {
+        if (done || mine !== round) return; done = true;
+        frame = 0; urgent = false; afterUrgent = null;
         if (!enabled) { pending.clear(); return; }   // 기다리는 사이 꺼졌으면 재지 않아요
         alignRoots([...pending].filter(el => el.isConnected));
         pending.clear(); observer?.quiet();   // 맞추면서 바꾼 padding 기록은 이 구독만 버려요(예전: 끊고 다시 걸기)
-    }));
+    };
+    frame = requestAnimationFrame(() => {
+        // 처음 맞추는 창이 끼어 있으면(rAF 를 건 뒤 들어왔어도) 예전 길(setTimeout 0)
+        if (urgent || typeof globalThis.requestIdleCallback !== 'function') afterNow(run);
+        else { globalThis.requestIdleCallback(run, { timeout: 300 }); afterUrgent = () => afterNow(run); }
+    });
 }
 
 export function syncControlInk(active, key = '') {
@@ -274,7 +283,7 @@ export function syncControlInk(active, key = '') {
         watch();
     }
     if (!enabled) {
-        cancelAnimationFrame(frame); frame = 0; pending.clear(); unwatch();
+        cancelAnimationFrame(frame); frame = 0; round++; urgent = false; afterUrgent = null; pending.clear(); unwatch();
         document.querySelectorAll(ROOTS).forEach(root => root.querySelectorAll(BUTTONS).forEach(restore));
         return;
     }

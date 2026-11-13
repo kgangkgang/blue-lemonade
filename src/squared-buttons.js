@@ -272,9 +272,9 @@ export function watchSquaredButtons(doc, host) {
         timer = 0; if (stopped) return;
         if (typeof host.requestAnimationFrame !== 'function') { flush(); return; }
         // 1.0.0 극한 최적화: rAF 안(배치 전) 읽기(offsetParent · getBoundingClientRect 후보 1,000~1,800개)가 문서 전체 배치를 강제했어요 — 그 프레임 배치가 끝난 뒤(setTimeout 0)에 읽어요
-        // 1.4.x opt-chat-open(고침안 6): 그 뒤에도 페이지가 바쁘면(채팅을 여는 도중) 한가할 때까지(최대 0.3초) — 바쁜 틈의 읽기가 남의 배치를 대신 치렀어요(진단 dc-140 checkVisibility 15 ~ 23ms)
+        // 1.4.x opt-chat-open(고침안 6): 그 뒤에도 페이지가 바쁘면(채팅을 여는 도중) 한가할 때까지(최대 0.1초 — 앞의 0.3초 타이머에 더해지는 몫이라 짧게 · 검토 A ②) — 바쁜 틈의 읽기가 남의 배치를 대신 치렀어요(진단 dc-140 checkVisibility 15 ~ 23ms)
         //   아는 생김새는 예전처럼 감시 콜백에서 바로 붙어요(restamp) — 기다리는 것은 처음 보는 단추를 재는 일뿐이에요
-        if (!frame && !idle) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.requestIdleCallback === 'function') { idle = host.requestIdleCallback(() => { idle = 0; flush(); }, { timeout: 300 }); } else if (typeof host.setTimeout === 'function') frame = host.setTimeout(flush, 0); else flush(); });
+        if (!frame && !idle) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.requestIdleCallback === 'function') { idle = host.requestIdleCallback(() => { idle = 0; flush(); }, { timeout: 100 }); } else if (typeof host.setTimeout === 'function') frame = host.setTimeout(flush, 0); else flush(); });
     }
     function flush() {
         frame = 0; timer = 0; if (stopped) return;

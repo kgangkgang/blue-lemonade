@@ -29,18 +29,19 @@ check('ㄱ. 정규식 연동 창: 같은 글은 다시 넣지 않아요 · 비�
     setHtml(null, 'x');   // 칸이 없으면 아무것도 안 해요
 });
 
-check('ㄴ. 단추 글자 맞춤: rAF 뒤 한가할 때(최대 0.3초) · 기다리는 사이 꺼지면 재지 않아요 · 한가 호출이 없으면 예전처럼 setTimeout 0', () => {
+check('ㄴ. 단추 글자 맞춤: 이미 맞춘 창 안 변화는 rAF 뒤 한가할 때(최대 0.3초) · 처음 맞추는 창은 예전처럼 rAF 뒤 setTimeout 0 · 꺼지면 무름', () => {
     const src = read('src/control-ink.js');
-    assert.ok(src.includes("globalThis.requestIdleCallback(fn, { timeout: 300 })"), '한가할 때 · 최대 0.3초');
-    assert.ok(src.includes(": typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout(fn, 0) : fn());"), '없으면 예전 길');
-    assert.ok(src.includes("if (!enabled) { pending.clear(); return; }"), '꺼졌으면 재지 않아요');
-    const q = src.indexOf('frame = requestAnimationFrame(() => afterLayout(() => {'), a = src.indexOf('alignRoots([...pending]', q);
-    assert.ok(q > 0 && a > q, '맞추기는 그 뒤에 한 번');
+    assert.ok(src.includes('if (!rootFonts.has(root)) urgent = true;'), '처음 맞추는 창은 급함');
+    assert.ok(src.includes("if (urgent || typeof globalThis.requestIdleCallback !== 'function') afterNow(run);"), '급하면 예전 길');
+    assert.ok(src.includes('globalThis.requestIdleCallback(run, { timeout: 300 }); afterUrgent = () => afterNow(run);'), '아니면 한가할 때 · 기다리는 사이 급한 창이 오면 바로');
+    assert.ok(src.includes('if (frame) { if (urgent && afterUrgent) { const go = afterUrgent; afterUrgent = null; go(); } return; }'));
+    assert.ok(src.includes('if (done || mine !== round) return; done = true;') && src.includes('round++; urgent = false; afterUrgent = null;'), '끄면 기다리던 맞추기를 물러요');
+    assert.ok(src.includes('if (!enabled) { pending.clear(); return; }'));
 });
 
-check('ㄷ. 네모 단추: rAF 뒤 한가할 때(최대 0.3초) · 겹쳐 걸지 않고 · 끌 때 취소해요', () => {
+check('ㄷ. 네모 단추: rAF 뒤 한가할 때(최대 0.1초 — 앞 0.3초 타이머에 더해지는 몫) · 겹쳐 걸지 않고 · 끌 때 취소해요', () => {
     const src = read('src/squared-buttons.js');
-    assert.ok(src.includes("if (!frame && !idle) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.requestIdleCallback === 'function') { idle = host.requestIdleCallback(() => { idle = 0; flush(); }, { timeout: 300 }); }"));
+    assert.ok(src.includes("if (!frame && !idle) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.requestIdleCallback === 'function') { idle = host.requestIdleCallback(() => { idle = 0; flush(); }, { timeout: 100 }); }"));
     assert.ok(src.includes('if (idle) host.cancelIdleCallback?.(idle);'));
 });
 
