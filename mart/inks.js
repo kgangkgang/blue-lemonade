@@ -49,7 +49,7 @@ export function inksHtml(item) {
     const c = colorsOf(item);
     const chips = INK_ROLES.filter(([r]) => HEX.test(c[r] || '')).map(([r, label]) => `<label class="mart-ink" title="${label} 색 바꾸기"><input type="color" data-ink="${r}" value="${esc(c[r])}" aria-label="${label} 색"><span class="mart-ink-dot" style="background-color:${esc(c[r])}" aria-hidden="true"></span>${label}</label>`).join('');
     if (!chips) return '';
-    return `<div class="mart-inks" role="group" aria-label="글자색 — 눌러서 바꿔요"><span class="mart-inks-title"><span class="em" aria-hidden="true">🎨</span>글자색</span>${chips}${inkChanged(item) ? '<button type="button" class="chip mart-ink-reset" data-ink-reset="1">원래 색</button>' : ''}</div>`;
+    return `<div class="mart-inks" role="group" aria-label="글자색 — 눌러서 바꿔요"><span class="mart-inks-title"><span class="gi gi-palette" aria-hidden="true"></span>글자색</span>${chips}${inkChanged(item) ? '<button type="button" class="chip mart-ink-reset" data-ink-reset="1">원래 색</button>' : ''}</div>`;
 }
 /** 색 고르기를 움직이는 동안 칩 점만 바로 칠해요(다시 그리기는 부르는 쪽이 묶어서) */
 export function paintDot(input) {

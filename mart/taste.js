@@ -5,7 +5,7 @@
 //   붙여 넣은 글 · 바꾸기 · 제목 · 날짜 · 마지막 미리보기 상태는 이 탭 안(sessionStorage)에 남아요. 스크립트 없는 결과 · 외부 의존 없음. 마트 공용 시트 · 단추 규격(mart.css .mart-sheet · .mart-actions)을 써요.
 import { parseLog, buildModel, DEFAULT_NAMES } from './taste-parse.js';
 import { tasteHtml, tasteDocument, canTaste, isConcept, conceptReady, loadConcept, shutPeek } from './taste-render.js?v=20261111c';
-import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261108a';
+import { withInks, setInk, resetInks, paintDot, syncInks } from './inks.js?v=20261114a';
 import { kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
 import { toneOut } from './tone-state.js?v=20261113a';
 import { useColors } from './cast.js?v=20261113u';                 // 11-10 붙여 넣은 채팅 HTML 의 대사색으로 캐릭터 고르기             // 11-10 고른 대사색으로 다시 칠하기   // 11-08 글자색 팔레트   // 11-07 판 꼬리표: 옛 캐시와 섞이지 않게
@@ -152,9 +152,9 @@ function build() {
   <div class="mart-taste-in">
     <textarea class="mart-taste-text" rows="6" spellcheck="false" aria-label="채팅 로그" placeholder="${esc(PLACEHOLDER)}"></textarea>
     <div class="mart-taste-roles" role="group" aria-label="누가 깡통이고 누가 나인지">
-      <label class="mart-taste-chip is-char"><span class="em" aria-hidden="true">🤖</span>깡통<input type="text" class="mart-taste-name" data-side="char" maxlength="24" aria-label="깡통 이름"><small class="mart-taste-more"></small></label>
-      <button type="button" class="btn mart-taste-swap" data-taste="swap" title="깡통 · 나를 뒤집어요"><span class="em" aria-hidden="true">🔁</span>바꾸기</button>
-      <label class="mart-taste-chip is-user"><span class="em" aria-hidden="true">🙂</span>나<input type="text" class="mart-taste-name" data-side="user" maxlength="24" aria-label="내 이름"></label>
+      <label class="mart-taste-chip is-char"><span class="gi gi-chat" aria-hidden="true"></span>깡통<input type="text" class="mart-taste-name" data-side="char" maxlength="24" aria-label="깡통 이름"><small class="mart-taste-more"></small></label>
+      <button type="button" class="btn mart-taste-swap" data-taste="swap" title="깡통 · 나를 뒤집어요"><span class="gi gi-swap" aria-hidden="true"></span>바꾸기</button>
+      <label class="mart-taste-chip is-user"><span class="gi gi-user" aria-hidden="true"></span>나<input type="text" class="mart-taste-name" data-side="user" maxlength="24" aria-label="내 이름"></label>
       <button type="button" class="chip mart-taste-names" data-taste="names" aria-pressed="true" title="메시지마다 이름 줄을 보일지 — 끄면 본문만(간격은 그대로)">이름 보이기</button>
       <button type="button" class="btn mart-taste-sample" data-taste="sample">표본 글 넣기</button>
       <small class="mart-taste-mode" aria-live="polite"></small>
@@ -170,7 +170,7 @@ function build() {
       <label class="is-pill is-last">프롬프트 <input type="text" class="field" data-head="prompt" maxlength="40" placeholder="${esc(HEAD_SAMPLE.prompt)}" aria-label="프롬프트 알약"></label>
     </div>
   </div>
-  <div class="mart-taste-bar"><span class="mart-taste-hint"><span class="em" aria-hidden="true">✏️</span> 미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="btn" data-taste="undo" title="되돌리기 (지운 블록도 돌아와요)"><span aria-hidden="true">↶</span>되돌리기</button><button type="button" class="btn" data-taste="redo" title="다시하기"><span aria-hidden="true">↷</span>다시하기</button></div>
+  <div class="mart-taste-bar"><span class="mart-taste-hint"><span class="gi gi-pen" aria-hidden="true"></span>미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="btn" data-taste="undo" title="되돌리기 (지운 블록도 돌아와요)"><span aria-hidden="true">↶</span>되돌리기</button><button type="button" class="btn" data-taste="redo" title="다시하기"><span aria-hidden="true">↷</span>다시하기</button></div>
   <div class="mart-sheet-preview mart-taste-preview" aria-label="미리보기 — 글씨를 눌러 고쳐요"></div>
 </div>
 <footer class="mart-sheet-foot"></footer>`;
@@ -279,8 +279,8 @@ function sync() {
     dialog.querySelector('[data-taste="undo"]').disabled = hist.at <= 0;
     dialog.querySelector('[data-taste="redo"]').disabled = hist.at >= hist.stack.length - 1;
 }
-const FOOT_TASTE = '<div class="mart-actions is-geulkku is-taste"><button type="button" class="btn" data-taste="download" title="완성 HTML 을 .html 파일로 받아요"><span aria-hidden="true">⬇</span>내려받기</button><button type="button" class="btn primary" data-taste="copy" title="깡통 글쓰기 HTML 칸에 붙이는 완성 HTML(미리보기 그대로 · 고친 글씨 포함)"><span class="em" aria-hidden="true">📋</span>HTML 복사</button></div>';
-const footSetup = on => `<div class="mart-actions is-geulkku is-taste is-setup">${on ? '<button type="button" class="btn" data-taste="off" title="카드 미리보기를 다시 표본 글로">끄기 — 표본 글로</button>' : ''}<button type="button" class="btn primary" data-taste="apply"><span class="em" aria-hidden="true">📝</span>내 로그로 보기</button></div><p class="mart-taste-foot-note">목록의 카드 미리보기와 카드 「📋 HTML 복사」가 전부 이 로그로 그려져요 · 분류 · 디자인 칩을 바꿔도 그대로예요</p>`;
+const FOOT_TASTE = '<div class="mart-actions is-geulkku is-taste"><button type="button" class="btn" data-taste="download" title="완성 HTML 을 .html 파일로 받아요"><span class="gi gi-down" aria-hidden="true"></span>내려받기</button><button type="button" class="btn primary" data-taste="copy" title="깡통 글쓰기 HTML 칸에 붙이는 완성 HTML(미리보기 그대로 · 고친 글씨 포함)"><span class="gi gi-copy" aria-hidden="true"></span>HTML 복사</button></div>';
+const footSetup = on => `<div class="mart-actions is-geulkku is-taste is-setup">${on ? '<button type="button" class="btn" data-taste="off" title="카드 미리보기를 다시 표본 글로">끄기 — 표본 글로</button>' : ''}<button type="button" class="btn primary" data-taste="apply"><span class="gi gi-note" aria-hidden="true"></span>내 로그로 보기</button></div><p class="mart-taste-foot-note">목록의 카드 미리보기와 카드 「HTML 복사」가 전부 이 로그로 그려져요 · 분류 · 디자인 칩을 바꿔도 그대로예요</p>`;
 
 async function copy() {
     flushSnap();
@@ -298,7 +298,7 @@ async function copy() {
         let ok = false;
         try { ok = document.execCommand('copy'); } catch { /* 아래 */ }
         area.remove();
-        if (ok) done(); else state.say?.('복사가 막혔어요 · 「⬇ 내려받기」로 받아 주세요', 3600);
+        if (ok) done(); else state.say?.('복사가 막혔어요 · 「내려받기」로 받아 주세요', 3600);
     }
 }
 function download() {
@@ -330,7 +330,7 @@ export async function openTaste(cardState, { ready = null, say = null, text, swa
     dialog.classList.toggle('is-setup', setup);
     dialog.querySelector('.mart-sheet-foot').innerHTML = setup ? footSetup(on) : FOOT_TASTE;
     // 창 제목: 시식하기 — (그 글꾸 틀의 아이콘 · 없으면 이모지) 이름 — 아이콘은 mart.js 가 glyph 로 넘겨요
-    dialog.querySelector('#mart-taste-title').innerHTML = setup ? '<span class="em" aria-hidden="true">📝</span><span>내 로그로 보기</span>' : `<span class="em" aria-hidden="true">🍽️</span><span>시식하기 —</span>${glyph ? glyph(item) : item.emoji ? `<span class="em" aria-hidden="true">${esc(item.emoji)}</span>` : ''}<span>${esc(item.name || item.label)}</span>`;
+    dialog.querySelector('#mart-taste-title').innerHTML = setup ? '<span class="gi gi-note" aria-hidden="true"></span><span>내 로그로 보기</span>' : `<span class="gi gi-dish" aria-hidden="true"></span><span>시식하기 —</span>${glyph ? glyph(item) : item.emoji ? `<span class="em" aria-hidden="true">${esc(item.emoji)}</span>` : ''}<span>${esc(item.name || item.label)}</span>`;
     dialog.querySelector('.mart-desc').textContent = setup ? '로그를 한 번 넣어 두면 목록을 넘기며 글꾸마다 내 로그가 끼워진 모습을 바로 보고 복사해요. 크게 보기의 시식하기도 같은 로그를 써요.' : '채팅 로그를 붙여 넣으면 이 글꾸에 끼워 보여 줘요. 미리보기 글씨는 눌러서 바로 고치고, 그대로 복사해 깡통 글쓰기 HTML 칸에 붙여요.';
     dialog.querySelector('.mart-taste-text').value = state.text;
     for (const input of dialog.querySelectorAll('[data-field]')) input.value = state.fields[input.dataset.field] ?? '';

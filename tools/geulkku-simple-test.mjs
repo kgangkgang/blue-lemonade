@@ -2103,7 +2103,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'geulkku/index.html', 'frames/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], ['20261113u']   /* 11-13 밤 카드 틀 고정 · 선 아이콘 — 넷 다 u 로 */, `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 저녁 그림 액자 다시 그린 판 — frame-room(D&H 인물 원작 · 찾기 말)을 고쳐 그것과 부르는 곳(mart · genie)을 r 로   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로   // 11-13 줄바꿈 선택 — mart · tune-ui 를 고쳐 그 둘과 부르는 곳(genie)을 q 로
+        assert.deepEqual([...tails], ['20261114a']   /* 11-14 UI 이모지 → 선 아이콘 — 넷 다 20261114a 로 */, `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 저녁 그림 액자 다시 그린 판 — frame-room(D&H 인물 원작 · 찾기 말)을 고쳐 그것과 부르는 곳(mart · genie)을 r 로   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로   // 11-13 줄바꿈 선택 — mart · tune-ui 를 고쳐 그 둘과 부르는 곳(genie)을 q 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2183,7 +2183,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
         for (const [n, t] of [['mart.js', mart]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261113u/, f);
+        for (const f of ['geulkku', 'frames', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261114a/, f);
     });
 }
 // ── 11-13 본문 줄바꿈 「글자 단위」(기본) · 「단어 단위」 — 사용자 「단어 단위 할 건지 글자 단위 할 건지 선택 가능하게 … 난 글자 단위가 좋아서」 ──
@@ -2219,7 +2219,7 @@ await test('줄바꿈: 공용 함수는 테마 src/log-copy-wrap.js 와 같은 �
     assert.ok(/html: item\.preview \|\| '', set \}\] \};/.test(martSrc), '테마로 담기 값은 틀 원래 판 그대로(테마는 제 설정으로)');
     assert.equal((ui.match(/wrapChips\(\)/g) || []).length, 2, '간편 · 세밀(문단) 두 자리');
     assert.ok(ws.includes("wrapMode(globalThis.localStorage?.getItem(KEY))") && ws.includes("next === 'word' ? 'word' : ''"), '기본 글자 단위 · 단어 단위만 기억');
-    for (const f of ['geulkku', 'frames']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.js\?v=20261113u/, `${f} 꼬리`);
+    for (const f of ['geulkku', 'frames']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.js\?v=20261114a/, `${f} 꼬리`);
 });
 
 // ── 11-13 공개되는 주석 · 자료에 「만든 이 표시」가 다시 들어오지 않게(테마 tools/tests/no-maker-names.mjs 와 같은 꼴 셋) ──

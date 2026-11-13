@@ -70,15 +70,15 @@ const btn = document.querySelector('.mart-cart-btn');
 const badge = btn?.querySelector('.mart-cart-badge');
 document.body.insertAdjacentHTML('beforeend', `<div class="mart-cart-scrim" hidden></div>
 <aside class="mart-cart" role="dialog" aria-modal="true" aria-labelledby="mart-cart-title" hidden>
-  <header class="mart-cart-head"><span class="mart-cart-grip" aria-hidden="true"></span><h2 id="mart-cart-title"><span class="em" aria-hidden="true">🛒</span>장바구니</h2><button type="button" class="ibtn x mart-cart-x" data-cart="close" aria-label="장바구니 닫기"></button></header>
+  <header class="mart-cart-head"><span class="mart-cart-grip" aria-hidden="true"></span><h2 id="mart-cart-title"><span class="gi gi-cart" aria-hidden="true"></span>장바구니</h2><button type="button" class="ibtn x mart-cart-x" data-cart="close" aria-label="장바구니 닫기"></button></header>
   <ul class="mart-cart-list" aria-label="담은 것"></ul>
-  <div class="mart-cart-empty"><span class="em" aria-hidden="true">🧺</span><b>장바구니가 비었어요</b><small>마음에 드는 액자 · 글꾸의 「담기」를 눌러요. 액자와 글꾸를 한 바구니에 같이 담을 수 있어요.</small><nav><a class="btn" href="../frames/">액자 구경</a><a class="btn" href="../geulkku/">글꾸 구경</a></nav><button type="button" class="btn mart-cart-undo" data-cart="undo" hidden>↶ 되살리기</button></div>
+  <div class="mart-cart-empty"><span class="gi gi-cart" aria-hidden="true"></span><b>장바구니가 비었어요</b><small>마음에 드는 액자 · 글꾸의 「담기」를 눌러요. 액자와 글꾸를 한 바구니에 같이 담을 수 있어요.</small><nav><a class="btn" href="../frames/">액자 구경</a><a class="btn" href="../geulkku/">글꾸 구경</a></nav><button type="button" class="btn mart-cart-undo" data-cart="undo" hidden>↶ 되살리기</button></div>
   <footer class="mart-cart-foot">
     <div class="mart-cart-sum"><span data-cart-sum>0개</span><span class="mart-cart-got" data-cart-got hidden></span><b data-cart-size></b></div>
-    <button type="button" class="btn primary mart-cart-pay" data-cart="copy"><span class="em" aria-hidden="true">🧾</span>계산하기 — 복사</button>
-    <button type="button" class="btn mart-cart-get" data-cart="file"><span class="em" aria-hidden="true">📦</span>받기<small>.bl-mart.json</small></button>
-    <button type="button" class="btn mart-cart-get mart-cart-art" data-cart="art" hidden title="테마 없이 쓸 액자 그림 파일을 하나씩 받아요"><span class="em" aria-hidden="true">🖼️</span>그림만 받기<small data-cart-art-n></small></button>
-    <p class="mart-cart-note mart-cart-art-note" hidden>🖼️ 그림만 받기는 테마 없이 쓸 액자 그림 파일을 하나씩 받아요(글꾸는 건너뛰어요). 브라우저가 「여러 파일 받기 허용」을 한 번 물을 수 있어요.</p>
+    <button type="button" class="btn primary mart-cart-pay" data-cart="copy"><span class="gi gi-receipt" aria-hidden="true"></span>계산하기 — 복사</button>
+    <button type="button" class="btn mart-cart-get" data-cart="file"><span class="gi gi-box" aria-hidden="true"></span>받기<small>.bl-mart.json</small></button>
+    <button type="button" class="btn mart-cart-get mart-cart-art" data-cart="art" hidden title="테마 없이 쓸 액자 그림 파일을 하나씩 받아요"><span class="gi gi-image" aria-hidden="true"></span>그림만 받기<small data-cart-art-n></small></button>
+    <p class="mart-cart-note mart-cart-art-note" hidden>그림만 받기는 테마 없이 쓸 액자 그림 파일을 하나씩 받아요(글꾸는 건너뛰어요). 브라우저가 「여러 파일 받기 허용」을 한 번 물을 수 있어요.</p>
     <p class="mart-cart-note">테마 설정 「마트에서 가져오기」에 붙여 넣거나 받은 파일을 골라요. 액자는 보관함, 글꾸는 내 글꾸로 들어가요. <button type="button" class="mart-cart-clear" data-cart="clear">비우기</button></p>
   </footer>
 </aside>
@@ -99,7 +99,7 @@ function syncBadge() {
 async function thumb(entry) {
     if (entry.kind === 'frame') return `<span class="mart-cart-thumb is-frame"><img alt="" src="${esc(asset(entry.thumb))}"></span>`;
     if (entry.kind === 'frame-preset') {
-        try { drawPreset ||= (await import('./frame-presets.js?v=20261112b')).drawPreset; const r = entry.receipt; const out = drawPreset(r.presetId, { ...r }); return `<span class="mart-cart-thumb is-frame"><img alt="" src="${out.art}"></span>`; } catch { return '<span class="mart-cart-thumb">🖼️</span>'; }
+        try { drawPreset ||= (await import('./frame-presets.js?v=20261112b')).drawPreset; const r = entry.receipt; const out = drawPreset(r.presetId, { ...r }); return `<span class="mart-cart-thumb is-frame"><img alt="" src="${out.art}"></span>`; } catch { return '<span class="mart-cart-thumb"><span class="gi gi-image" aria-hidden="true"></span></span>'; }
     }
     // 글꾸: 그 틀 바탕색 위에 틀의 우리 아이콘(없으면 이모지)
     return `<span class="mart-cart-thumb"${entry.bg ? ` style="background:${esc(entry.bg)}"` : ''}>${entry.icon ? `<img class="mart-ico" alt="" src="${esc(asset(entry.icon))}">` : `<span class="em">${lemonize(esc(entry.emoji || '📝'))}</span>`}</span>`;

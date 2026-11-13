@@ -410,14 +410,14 @@ function buildRoom() {
       <div class="room-stage-bar">
         <button type="button" class="ibtn room-step" data-room="prev" aria-label="앞 액자"><span aria-hidden="true">‹</span></button><span data-room-pos></span><button type="button" class="ibtn room-step" data-room="next" aria-label="다음 액자"><span aria-hidden="true">›</span></button>
         <button type="button" class="btn" data-room="bg" title="배경 밝게 · 어둡게 · 채팅">배경</button>
-        <button type="button" class="btn" data-room="random" title="지금 거르기 안에서 하나 더 무작위로"><span class="em" aria-hidden="true">🎲</span>다른 거</button>
+        <button type="button" class="btn" data-room="random" title="지금 거르기 안에서 하나 더 무작위로"><span class="gi gi-dice" aria-hidden="true"></span>다른 거</button>
         <span class="room-hint">끌어서 옮기고 · 두 손가락(휠)로 확대</span>
       </div>
       <div class="room-resize"><div class="room-grip" role="separator" tabindex="0" aria-label="미리보기 높이 조절" aria-orientation="horizontal" title="위아래로 끌어서 높이 조절"><i></i></div><button type="button" class="room-undo room-resize-reset" data-room="stage-h" aria-label="미리보기 기본 높이" title="기본 높이로" hidden>↺</button></div>
     </div>
     <div class="room-side">
       <header class="room-head"><div><h2 id="mart-room-title"></h2><p class="room-desc"></p><div class="room-source"></div></div><button type="button" class="ibtn x room-x" data-room="close" aria-label="닫기"></button></header>
-      <div class="room-photo"><button type="button" class="btn primary mart-tryon-pick" data-photo="pick"><span class="em" aria-hidden="true">📷</span>내 사진 넣기</button><div class="room-sample"><select class="room-sample-native" data-photo="sample" aria-hidden="true" tabindex="-1"></select><button type="button" class="field room-sample-btn" data-room="sample-menu" aria-haspopup="listbox" aria-expanded="false" aria-label="표본 사진 고르기"><span class="room-sample-text"></span></button><div class="room-sample-list" role="listbox" aria-label="표본 사진" hidden></div></div><button type="button" class="btn mart-tryon-clear" data-photo="clear" hidden>지우기</button></div>
+      <div class="room-photo"><button type="button" class="btn primary mart-tryon-pick" data-photo="pick"><span class="gi gi-camera" aria-hidden="true"></span>내 사진 넣기</button><div class="room-sample"><select class="room-sample-native" data-photo="sample" aria-hidden="true" tabindex="-1"></select><button type="button" class="field room-sample-btn" data-room="sample-menu" aria-haspopup="listbox" aria-expanded="false" aria-label="표본 사진 고르기"><span class="room-sample-text"></span></button><div class="room-sample-list" role="listbox" aria-label="표본 사진" hidden></div></div><button type="button" class="btn mart-tryon-clear" data-photo="clear" hidden>지우기</button></div>
       <div class="room-controls">
         <section class="room-group" data-group="frame"><h3>액자</h3>
           <div class="room-preset" hidden><span class="room-color"><label>액자 바탕색 <input type="color" data-p="presetColor"></label>${undoBtn('presetColor', '액자 바탕색')}</span><span class="room-color"><label>액자 포인트색 <input type="color" data-p="presetAccent"></label>${undoBtn('presetAccent', '액자 포인트색')}</span><label class="room-color room-label">칩 글자 <input type="text" class="field" data-p="presetLabel" maxlength="12" placeholder="비우면 없음"></label></div>

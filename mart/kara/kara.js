@@ -125,6 +125,6 @@ $('[data-filter="width"]').addEventListener('click', e => {
   frame.width = b.dataset.w; frame.height = b.dataset.w === '760' ? '900' : '760';
 });
 // 「비우기」: 머리줄에 따로 두지 않고 상태 글 옆 링크로(초안은 이 브라우저에만 남아요)
-const clear = Object.assign(document.createElement('button'), { type: 'button', className: 'btn', innerHTML: '<span class="em" aria-hidden="true">🧹</span>비우기', title: '적은 내용을 모두 지워요(이 브라우저에 남은 초안도)' });
+const clear = Object.assign(document.createElement('button'), { type: 'button', className: 'btn', innerHTML: '<span class="gi gi-trash" aria-hidden="true"></span>비우기', title: '적은 내용을 모두 지워요(이 브라우저에 남은 초안도)' });
 clear.addEventListener('click', () => { songs = [blank(songs[0]?.th || 'ign')]; made = ''; code.value = ''; out.hidden = true; btnCopy.disabled = btnDl.disabled = true; render(); try { localStorage.removeItem(DRAFT); } catch { /* 저장이 막힌 창 */ } say('비웠어요'); });
 $('.kb-row-add').append(clear);

@@ -11,9 +11,9 @@ const LIKE_KEY = 'bl-mart-geulkku-like-v1';
 const like = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIKE_KEY) || 'null'); } catch { /* 저장이 막힌 창 */ } const ids = a => (Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && x && x.length < 80))] : []); return { fav: ids(v?.fav).slice(0, 96), recent: ids(v?.recent).slice(0, 5) }; })();
 const saveLike = () => { try { localStorage.setItem(LIKE_KEY, JSON.stringify(like)); } catch { /* 이 화면에서만 */ } };
 const LIKE_CHIPS = { fav: '★ 즐겨찾기', recent: '최근' };
-import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261113u';
+import { cart, say, onCheckout, artName, saveArt, layerHost } from './cart.js?v=20261114a';
 import { lemonHtml, lemonize } from './lemon.js?v=20261109a';   // 11-09 레몬 하나 — 🍋 대신 테마와 같은 레몬 그림(lemon.svg)
-import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261108a';   // 11-08 글꾸 글자색 팔레트
+import { inkChanged, colorsOf, setInk, resetInks, inksHtml, paintDot, syncInks } from './inks.js?v=20261114a';   // 11-08 글꾸 글자색 팔레트
 import './colorpop.js?v=20261108c';   // 11-08 색 칸을 누르면 테마와 같은 색 고르기(폰 기본 창 대신)
 import { toneHtml, toneItem, kkangtongReady } from './tone-geulkku.js?v=20261110v';   // 11-10 대사색 하나로 다시 칠하기 · 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)
 import { toneState, toned, toneOut, toneKey, CAST_GROUPS } from './tone-state.js?v=20261113a';   // 11-10 목록 위 「캐릭터」에서 고른 캐릭터 대사색 · 밤낮
@@ -29,7 +29,7 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112f';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml, setFlipInfo } from './tune-ui.js?v=20261113u';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml, setFlipInfo } from './tune-ui.js?v=20261114a';
 setFlipInfo(item => flipInfo(item));
 import { wrapHtml } from './word-wrap.js?v=20261113q';   // 11-13 본문 줄바꿈 글자 단위(기본) · 단어 단위 — 테마 src/log-copy-wrap.js 와 글자까지 같은 사본
 import { wrapState } from './wrap-state.js?v=20261113q';
@@ -485,7 +485,7 @@ async function copyEntries(entries, quiet = false, place = where) {
             const ok = document.execCommand('copy'); area.remove();
             if (ok) { if (!quiet) say('복사했어요'); return true; }
         } catch { /* 아래 */ }
-        say('복사가 막혔어요 · 장바구니의 「📦 받기」로 받아 주세요', 3200);
+        say('복사가 막혔어요 · 장바구니의 「받기」로 받아 주세요', 3200);
         return false;
     }
 }
@@ -759,7 +759,7 @@ function doAct(state, act, b) {
 // ── 「🍽️ 시식하기」(taste.js · 처음 누를 때 받아요) — 내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고 HTML 복사 · 내려받기 ──
 let tasteModule = null;
 let tasteLoaded = null;   // 11-08 받은 시식 모듈(글자색을 바꾼 글꾸 미리보기를 바로 그리려고)
-const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261113u').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
+const loadTaste = () => (tasteModule ||= import('./taste.js?v=20261114a').then((m) => { tasteLoaded = m; return m; }, (error) => { tasteModule = null; throw error; }));
 function openTaste(state, options = {}) {
     const ready = ensureItem(state.item);
     ready.catch(() => { /* 시식 창이 알려요 */ });
@@ -768,7 +768,7 @@ function openTaste(state, options = {}) {
 // ── 「🎲 랜덤 추천」(글꾸 · 액자 마트 공용 머리줄 단추 .mart-random · 상세 창의 「🎲 다른 거 추천」) — 지금 거르기 안에서(없으면 전체) 하나를 무작위로 골라 상세 창을 열어요 · 직전 것은 피해요 ──
 // 액자 마트는 frame-room.js 가 같은 규칙으로 제 목록에서 골라요. 홈의 「🎲 오늘의 글꾸 · 액자」는 ?random=1 로 와서 바로 하나를 열어요.
 let lastRandom = null;
-export const randomMoreHtml = () => '<button type="button" class="btn mart-random-more" data-act="random" title="지금 거르기 안에서 하나 더 무작위로"><span class="em" aria-hidden="true">🎲</span>다른 거 추천</button>';
+export const randomMoreHtml = () => '<button type="button" class="btn mart-random-more" data-act="random" title="지금 거르기 안에서 하나 더 무작위로"><span class="gi gi-dice" aria-hidden="true"></span>다른 거 추천</button>';
 /** @param {T[]} pool @param {T|null} last @returns {T|null} */
 export function randomPick(pool, last) {
     const list = pool.length > 1 ? pool.filter(x => x !== last) : pool;
@@ -881,7 +881,7 @@ function paintMylogChip() {
     const b = document.querySelector('.mart-mylog'); if (!b) return;
     const has = mylog.mod?.hasLog();
     b.setAttribute('aria-pressed', String(mylog.on));
-    b.innerHTML = `<span class="em" aria-hidden="true">📝</span><span class="t mart-mylog-text">${mylog.on ? '내 로그 · 고치기' : '내 로그로 보기'}</span>`;   // 켬 표시(옅은 파랑 면 + ✔)는 aria-pressed 로 CSS 가
+    b.innerHTML = `<span class="gi gi-note" aria-hidden="true"></span><span class="t mart-mylog-text">${mylog.on ? '내 로그 · 고치기' : '내 로그로 보기'}</span>`;   // 켬 표시(옅은 파랑 면 + ✔)는 aria-pressed 로 CSS 가
     b.setAttribute('aria-label', mylog.on ? '내 로그로 보는 중 · 고치기' : '내 로그로 보기');
     b.title = mylog.on ? '카드 미리보기가 내 로그로 그려지고 있어요 · 누르면 로그를 고쳐요' : has ? '넣어 둔 로그로 카드 미리보기를 그려요' : '로그를 넣어 두면 목록의 카드가 전부 내 로그로 그려져요';
     let off = document.querySelector('.mart-mylog-off');
@@ -901,7 +901,7 @@ async function openMylog() {
 }
 document.addEventListener('bl-taste-change', () => { if (mylog.on) repaintMylog(); else paintMylogChip(); });
 const TASTE_TITLE = '내 채팅 로그를 붙여 넣어 이 글꾸에 끼워 보고, 완성 HTML 을 복사 · 내려받아요';
-const tasteHtml = item => (item.kind === 'geulkku' && !item.photo ? `<button type="button" class="btn mart-taste-open" data-act="taste" title="${TASTE_TITLE}"><span class="em" aria-hidden="true">🍽️</span>시식하기<small>내 로그를 넣어 봐요</small></button>` : '');
+const tasteHtml = item => (item.kind === 'geulkku' && !item.photo ? `<button type="button" class="btn mart-taste-open" data-act="taste" title="${TASTE_TITLE}"><span class="gi gi-dish" aria-hidden="true"></span>시식하기<small>내 로그를 넣어 봐요</small></button>` : '');
 /** 11-09 화보 갤러리(photo): 상세 창 미리보기는 체크박스 id · label for 에 꼬리를 붙여요 — 같은 틀이 카드에도 있어 for= 가 카드(inert) 쪽 체크박스를 가리키지 않게. 복사 글은 원래 id 그대로 */
 // 11-12 미리보기 접기(설계 4-8 — 폰에서 조절 칸을 넓게) · 이 기기에 기억
 const PV_KEY = 'bl-mart-pv-fold-v1';
@@ -1319,7 +1319,7 @@ async function main() {
 }
 // 액자 마트: 수백 종 · 내 사진 넣어 보기 · 거르기 · 조금씩 그리기(frame-room.js) — 받기 · 장바구니는 여기 것을 그대로 써요
 const start = kind === 'frames'
-    ? import('./frame-room.js?v=20261113u').then(m => (frameMod = m).start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
+    ? import('./frame-room.js?v=20261114a').then(m => (frameMod = m).start({ grid, search, chips, esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }))
     : kind === 'geulkku' ? main() : null;   // 그 밖의 페이지(지니)는 아래 부품만 빌려 써요
 start?.catch(e => { grid.innerHTML = `<p class="mart-empty">목록을 못 불러왔어요 · ${esc(e.message)}</p>`; });
 
@@ -1338,6 +1338,6 @@ export async function geulkkuList() {
     return data;
 }
 /** 프레임 방(frame-room.js)의 지니용 준비 — 마트 액자 카드와 같은 그림 · 같은 담기 값 */
-export const frameKit = () => import('./frame-room.js?v=20261113u').then(m => (frameMod = m).kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
+export const frameKit = () => import('./frame-room.js?v=20261114a').then(m => (frameMod = m).kit({ esc, asset, entryOf, copyEntries, cart, say, artName, saveArt, sourceLinks, KIND_LABEL, segHtml, wireSeg, chipGroups, isBuiltin, BUILTIN_TAG, lazyGrid }));
 export const mylogOn = () => mylog.on;
 export { isBuiltin, BUILTIN_TAG, cart, say, esc, asset, ensureItem, previewOf, tagsHtml, glyphHtml, iconSrc, descOf, catLabel, styleOf, entryOf, receipt, doAct, copyEntries, copyHtml, sourceLinks, LOAD_FAIL };
