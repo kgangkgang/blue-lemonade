@@ -115,6 +115,132 @@
           "if \\(userRow !== 'left'\\) want\\.add\\(`salty-user-namerow-\\$\\{userRow\\}`\\);"
         ]
       ]
+    },
+    {
+      "class": "salty-bgimg",
+      "setting": "chat.bgImage (채팅 배경 그림)",
+      "proof": [
+        [
+          "src/settings.js",
+          "bgImage: false,"
+        ],
+        [
+          "src/apply.js",
+          "if \\(s\\.chat\\.bgImage\\) want\\.add\\('salty-bgimg'\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-send-textarea-off",
+      "setting": "chat.hideSendTextarea (채팅 입력칸 숨기기)",
+      "proof": [
+        [
+          "src/settings.js",
+          "hideSendTextarea: false,"
+        ],
+        [
+          "src/apply.js",
+          "if \\(s\\.chat\\.hideSendTextarea\\) want\\.add\\('salty-send-textarea-off'\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-help-off",
+      "setting": "chat.helpMarks === false (설명 ? 단추 숨기기 · 기본 켬)",
+      "proof": [
+        [
+          "src/settings.js",
+          "helpMarks: true,"
+        ],
+        [
+          "src/apply.js",
+          "if \\(s\\.chat\\.helpMarks === false\\) want\\.add\\('salty-help-off'\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-persona-tall",
+      "setting": "chat.personaTall (페르소나 길게)",
+      "proof": [
+        [
+          "src/settings.js",
+          "personaTall: false,"
+        ],
+        [
+          "src/apply.js",
+          "if \\(s\\.chat\\.personaTall\\) want\\.add\\('salty-persona-tall'\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-header-name",
+      "setting": "chat.header (메시지 머리 · 기본 full 만 클래스 salty-header-full)",
+      "proof": [
+        [
+          "src/settings.js",
+          "header: 'full',"
+        ],
+        [
+          "src/apply.js",
+          "`salty-header-\\$\\{s\\.chat\\.header\\}`"
+        ]
+      ]
+    },
+    {
+      "class": "salty-header-none",
+      "setting": "chat.header",
+      "proof": [
+        [
+          "src/settings.js",
+          "header: 'full',"
+        ],
+        [
+          "src/apply.js",
+          "`salty-header-\\$\\{s\\.chat\\.header\\}`"
+        ]
+      ]
+    },
+    {
+      "class": "salty-img-inset",
+      "setting": "image.layout (그림 배치 · 기본 bleed)",
+      "proof": [
+        [
+          "src/settings.js",
+          "layout: 'bleed',"
+        ],
+        [
+          "src/apply.js",
+          "`salty-img-\\$\\{s\\.image\\.layout\\}`"
+        ]
+      ]
+    },
+    {
+      "class": "salty-shape-custom",
+      "setting": "image.shape (그림 모양 · 기본 rect)",
+      "proof": [
+        [
+          "src/settings.js",
+          "shape: 'rect',"
+        ],
+        [
+          "src/apply.js",
+          "`salty-shape-\\$\\{s\\.image\\.shape\\}`"
+        ]
+      ]
+    },
+    {
+      "class": "salty-edge-auto",
+      "setting": "image.edge 가 none 이 아닐 때만(기본 none) + edgeAuto",
+      "proof": [
+        [
+          "src/frames.js",
+          "edge: 'none',"
+        ],
+        [
+          "src/apply.js",
+          "if \\(s\\.image\\.edge !== 'none' && s\\.image\\.edgeAuto && s\\.image\\.shape === 'rect'\\) want\\.add\\('salty-edge-auto'\\);"
+        ]
+      ]
     }
   ],
   "sheets": [
@@ -149,6 +275,23 @@
         "salty-user-namerow-right"
       ],
       "what": "첫 줄 들여쓰기 · 정보 정렬(가운데 · 오른쪽)"
+    },
+    {
+      "id": "rare",
+      "out": "src/gate-rare.gen.css",
+      "prefixes": [],
+      "classes": [
+        "salty-bgimg",
+        "salty-send-textarea-off",
+        "salty-help-off",
+        "salty-persona-tall",
+        "salty-header-name",
+        "salty-header-none",
+        "salty-img-inset",
+        "salty-shape-custom",
+        "salty-edge-auto"
+      ],
+      "what": "기본값 · 사용자 스냅숏 모두 꺼진 드문 설정(채팅 배경 그림 · 입력칸 숨기기 · 설명 ? 끔 · 페르소나 길게 · 메시지 머리 이름만/없음 · 그림 안쪽 배치 · 내 그림 모양 · 테두리 자동 색) — 1.4.x 작업자 D"
     },
     {
       "id": "mixed",
