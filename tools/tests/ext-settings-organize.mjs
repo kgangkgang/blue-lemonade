@@ -107,6 +107,15 @@ test('⑧ 보기 스위치는 문서 몸통에 표식 하나(data-bl-ext-raw)를
     assert.doesNotThrow(() => setView(fake(undefined), true), '문서가 없어도(시험 · 떼어 낸 칸) 조용히');
     assert.doesNotThrow(() => setView(fake({}), false));
     assert.equal((code.match(/toggleAttribute/g) || []).length, 1, '몸통 표식은 이 한 곳에서만');
+    // 보기 스위치는 글 없는 레몬 아이콘 단추 — 이름은 title · aria-label, 누른 상태는 aria-pressed(켜짐 = 블루레몬 맞춤 화면)
+    const btn = { textContent: '옛 글', title: '', attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } };
+    const withBtn = { id: 'ss-settings', dataset: {}, querySelector: () => btn, ownerDocument: doc };
+    setView(withBtn, true);
+    assert.equal(btn.textContent, ''); assert.equal(btn.attrs['aria-pressed'], 'false'); assert.equal(btn.title, '블루레몬 맞춤 화면 끔 — 끄면 원작 화면 그대로'); assert.equal(btn.attrs['aria-label'], btn.title);
+    setView(withBtn, false); assert.equal(btn.attrs['aria-pressed'], 'true'); assert.equal(btn.title, '블루레몬 맞춤 화면 켬 — 끄면 원작 화면 그대로');
+    assert.match(code, /if \(was && was !== now && recall\(root, 'viewtip'\) !== '1'\)/, '처음 바꿀 때 한 번만 알려요(처음 그릴 때는 안 알려요)');
+    assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view::after \{[^}]*mask: var\(--salty-logo\) center \/ contain no-repeat;/, '아이콘은 테마 레몬 표식(단색)');
+    assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view\[aria-pressed="true"\] \{ background: var\(--bl-ui-pick-face\); color: var\(--bl-ui-pick-ink\); \}/, '켜짐은 고른 면 + 테마 파랑');
     assert.ok(!/document\.body|documentElement/.test(code), '칸의 문서를 거쳐서만(전역 문서를 직접 잡지 않아요)');
 });
 console.log(`ext-settings-organize: ${passed}개 통과`);

@@ -135,11 +135,15 @@ export function toggleMore(root, button) {
 }
 /** 정리한 보기 ↔ 원작 그대로 */
 export function setView(root, raw) {
-    root.dataset.blView = raw ? 'raw' : 'org';
+    const was = root.dataset.blView, now = raw ? 'raw' : 'org';
+    root.dataset.blView = now;
     const button = root.querySelector('.bl-ext-view');
-    if (button) { button.setAttribute('aria-pressed', String(!raw)); button.textContent = raw ? '원작 그대로' : '정리한 보기'; button.title = raw ? '누르면 블루레몬에이드가 정리한 보기로 바꿔요' : '누르면 그 확장의 원래 긴 보기로 바꿔요'; }
-    remember(root, 'view', raw ? 'raw' : 'org');
+    // 글 없이 레몬 아이콘 하나(시트가 그려요) — 켜짐 = 블루레몬 맞춤 화면 · 꺼짐 = 원작 화면 그대로. 이름은 title · aria-label 로
+    if (button) { const label = `블루레몬 맞춤 화면 ${raw ? '끔' : '켬'} — 끄면 원작 화면 그대로`; button.setAttribute('aria-pressed', String(!raw)); button.setAttribute('aria-label', label); button.title = label; if (button.textContent) button.textContent = ''; }
+    remember(root, 'view', now);
     root.ownerDocument?.body?.toggleAttribute?.('data-bl-ext-raw', !!raw);   // 채팅방의 고양이 아이콘(띠 카드 · 뜬 단추 · 가장자리 손잡이)도 같은 스위치를 따라가요 — 표식 하나뿐이에요
+    // 처음 바꿀 때 한 번만 알려요(글이 없는 단추라 무엇이 바뀌었는지 한 줄로)
+    if (was && was !== now && recall(root, 'viewtip') !== '1') { remember(root, 'viewtip', '1'); try { globalThis.toastr?.info?.(raw ? '원작 화면으로 바꿨어요. 레몬 단추를 다시 누르면 블루레몬 맞춤 화면으로 돌아와요.' : '블루레몬 맞춤 화면으로 바꿨어요.', '미트볼 상태창'); } catch { /* 알림 없이 */ } }
 }
 export function dismissStart(root) { root.querySelector('.bl-ext-start')?.setAttribute('hidden', ''); remember(root, 'start', '0'); }
 

@@ -595,8 +595,10 @@ body.salty #ss-settings .ss-set-btns { margin: var(--bl-s3, 12px) 0 0; }
    · data-bl-view="org" 일 때만 접고 나눠요. "raw"(원작 그대로)면 탭 · 갈래 · 설명을 감추고 전부 펼쳐요 — 서랍 머리의 스위치.
    · 칠하기는 「원래 색 유지」 표식에서 비켜 가요(자리 · 크기는 그대로) */
 /* 보기 스위치(서랍 머리) */
-body.salty #ss-settings .inline-drawer-header > .bl-ext-view { display: inline-flex !important; align-items: center; flex: none; box-sizing: border-box; height: 26px; margin: 0 var(--bl-s2, 8px) 0 auto; padding: 0 var(--bl-s2, 8px); border: 1px solid var(--salty-line); border-radius: var(--bl-ui-radius, 8px); background: transparent; box-shadow: none; color: var(--salty-muted); font: inherit; font-size: var(--bl-ts-micro, 11.5px); font-weight: 400; line-height: 1; white-space: nowrap; cursor: pointer; }
-body.salty #ss-settings .inline-drawer-header > .bl-ext-view[aria-pressed="true"] { border-color: transparent; background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view { display: inline-flex !important; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 28px; height: 28px; margin: 0 var(--bl-s1, 4px) 0 auto; padding: 0; border: 0; border-radius: var(--bl-ui-radius, 8px); background: transparent; box-shadow: none; color: var(--salty-faint, var(--salty-muted)); font-size: 0; line-height: 0; cursor: pointer; }
+/* 레몬 아이콘 하나(테마 표식과 같은 그림 · 단색) — 켜짐(블루레몬 맞춤 화면)은 고른 면 + 테마 파랑, 꺼짐(원작 그대로)은 흐린 아이콘. 글은 없고 이름은 title · aria-label(11-13 사용자 「걍 블루레몬 아이콘으로 바꿔」) */
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view::after { content: ''; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--salty-logo) center / contain no-repeat; mask: var(--salty-logo) center / contain no-repeat; }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view[aria-pressed="true"] { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
 /* 원작 그대로: 탭 줄 · 설명 · 갈래 줄 · 자세히 · 길잡이를 감춰요(그 확장의 줄은 전부 보여요) */
 body.salty #ss-settings[data-bl-view="raw"] :is(.bl-ext-tabs, .bl-ext-intro, .bl-ext-fold, .bl-ext-more, .bl-ext-start) { display: none !important; }
 /* 정리한 보기: 접힌 갈래의 줄은 숨겨요 */
