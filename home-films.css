@@ -24,3 +24,6 @@ html.device-mobile .home-guide .showcase.scene-film.single .showcase-tall{width:
  .scene-film:not(.single) .showcase-wide{display:none}
  .home-guide .showcase.scene-film:not(.single) .showcase-tall,html.device-mobile .home-guide .showcase.scene-film:not(.single) .showcase-tall{width:64%;margin:0 auto}
 }
+/* 11-13 영상 가장자리 검은 선(실제 모니터 · 배율 125% · 150%): 영상 칸 크기가 소수점이라, 브라우저가 영상을 화면 겹(하드웨어 오버레이)으로 따로 올릴 때 오른쪽 · 아래 한 줄이 비어 검게 보였어요.
+   영상을 페이지와 같은 겹에서 그리게 해요(opacity 가 1 이 아니면 따로 올리지 않아요 · 보이는 모양은 그대로). 홈의 모든 <video> 에 같은 규칙. */
+video{opacity:.999}
