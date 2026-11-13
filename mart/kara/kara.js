@@ -63,7 +63,7 @@ list.addEventListener('click', e => {
 });
 form.addEventListener('click', e => {
   const b = e.target.closest('button[data-act]'); if (!b || b.closest('.kb-song')) return;
-  if (b.dataset.act === 'add') { if (songs.length >= 10) { say('깡싸는 한 글에 mp3 10개까지예요'); return; } songs.push(blank(songs[songs.length - 1].th)); render(); save(); list.lastElementChild?.querySelector('[data-k="mp3"]')?.focus(); }
+  if (b.dataset.act === 'add') { if (songs.length >= 10) { say('깡통은 한 글에 mp3 10개까지예요'); return; } songs.push(blank(songs[songs.length - 1].th)); render(); save(); list.lastElementChild?.querySelector('[data-k="mp3"]')?.focus(); }
   if (b.dataset.act === 'copy') copyOut();
   if (b.dataset.act === 'download') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([made], { type: 'text/html;charset=utf-8' })); a.download = '노래방-글꾸.html'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
 });

@@ -520,7 +520,7 @@ export function checkPost(html) {
   const bad = [];
   const shown = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<style>[\s\S]*?<\/style>/g, '').replace(/<[^>]+>/g, ' ');
   for (const k of ['position:fixed', 'contenteditable', 'blob:', '<script', '@property']) if (html.includes(k)) bad.push(`${k} 가 있어요`);
-  if (/<[a-z]+[^>]*\s(id|for|name)=/i.test(html)) bad.push('id · for · name 속성이 있어요(깡싸가 지워요)');
+  if (/<[a-z]+[^>]*\s(id|for|name)=/i.test(html)) bad.push('id · for · name 속성이 있어요(깡통이 지워요)');
   if (/(^|[;{\s])height:\s*[\d.]+%(?!(!important)?;block-size)/.test(html)) bad.push('height:% 옆에 block-size 가 없어요');
   if (/overflow\s*:\s*hidden(?![^;}]*;[^}]*clip-path)/.test(html.replace(/\s/g, ''))) bad.push('overflow:hidden 옆에 clip-path 가 없어요');
   for (const w of ['원곡', '커버', '가수']) if (shown.includes(w)) bad.push(`화면 글에 「${w}」가 있어요`);
