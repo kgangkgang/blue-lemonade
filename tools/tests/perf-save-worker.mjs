@@ -242,7 +242,7 @@ const T = globalThis.__perfWorkerTest = { ext: { perf_assist: { morphStream: fal
 const js = src => `data:text/javascript,${encodeURIComponent(src)}`;
 const ST = {
     '../../addon-files-check.js': js('export function verifyAddonCss() {}'),
-    './hub.js': js('export function pane() { return null; }'),
+    './hub.js': js('export function pane() { return null; } export function onFirstShow() {}'),
     '../../../../../../extensions.js': js('export const extension_settings = globalThis.__perfWorkerTest.ext;'),
     '../../../../../../../script.js': js("export const eventSource = { on() {}, makeFirst() {} };\nexport const event_types = { APP_READY: 'app_ready' };\nexport function getRequestHeaders() { return { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf-test' }; }\nexport function saveSettingsDebounced() {}"),
     '../../../../../../openai.js': js('export const promptManager = null;'),
