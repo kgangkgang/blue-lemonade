@@ -46,7 +46,7 @@ check('③ 색 글자를 박지 않아요(팔레트 · 부품 토큰만)', () =>
     const palette = rules.find(r => r.selectors.includes('body.salty .ss-scope'));
     assert.ok(palette, '색 변수 잇는 규칙이 없어요');
     for (const r of rules) {
-        let body = r.body.replace(/var\(--bl-knob-face, #fff\)/g, '').replace(/content:\s*'[^']*'/g, '');
+        let body = r.body.replace(/var\(--bl-knob-face, #fff\)/g, '').replace(/var\(--bl-lemon-bright, #FFE23C\)/g, '').replace(/content:\s*'[^']*'/g, '');   // 둘째: 알림 숫자의 낮 판 맑은 레몬(테마에 토큰이 없어 대체값 — ⑫)
         if (r === palette) body = body.replace(/--ss-(neg|love|trust|dim):\s*color-mix\(in srgb, (var\(--salty-(danger|muted)\)|#[0-9a-f]{6}) \d+%, var\(--salty-text\)\);/g, '');
         assert.ok(!/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|color-mix\(/i.test(body), `${r.selectors[0]} → ${body.match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|color-mix\(/i)?.[0]}`);
     }
@@ -181,12 +181,12 @@ check('⑪ 상태창 큰 탭: 아이콘은 글 왼쪽에(폰에서도) · 테마
 check('⑫ 숫자 동그라미 · 점: 한 크기(16 · 8) · 한 색(테마 강조 레몬 면 + 그 위 글자색) · 한 자리 규칙 — 게이지의 빨강은 그대로', () => {
     const badge = rules.find(r => r.selectors.length === 1 && r.selectors[0] === 'body.salty .ss-scope .ss-badge.ss-badge');
     assert.ok(badge, '숫자 동그라미 규칙 하나');
-    for (const want of ['min-width: 16px', 'height: 16px', 'font-size: 10.5px', 'background: var(--salty-lemon, var(--bl-pop))', 'color: var(--salty-text)', 'border: 1px solid var(--salty-text-20', 'width: auto']) assert.ok(badge.body.includes(want), want);
+    for (const want of ['min-width: 16px', 'height: 16px', 'font-size: 10.5px', 'background: var(--bl-lemon-bright, #FFE23C)', 'color: var(--salty-text)', 'border: 1px solid var(--salty-lemon', 'width: auto']) assert.ok(badge.body.includes(want), want);
     const at = sel => rules.find(r => r.selectors.includes(sel))?.body || '';
     assert.match(at('body.salty .ss-scope :is(.ss-ib, .ss-tabs, .ss-groups) .ss-badge.ss-badge'), /top: -4px; right: -4px;/, '단추의 오른쪽 위 모서리에서 4 밖');
     assert.match(at('body.salty .ss-scope .ss-side-handle .ss-badge.ss-badge'), /top: -4px; left: -4px;/, '가장자리 손잡이는 화면 끝이라 왼쪽 위');
-    assert.match(at('body.salty .ss-scope .ss-dot.ss-dot'), /width: 8px; height: 8px;[^}]*background: var\(--salty-lemon, var\(--bl-pop\)\)/, '숫자 없는 점은 지름 8 · 같은 색');
-    assert.match(at('body.salty.salty-dark .ss-scope .ss-badge.ss-badge'), /color: var\(--salty-bg\)/, '밤 판은 레몬 위에 어두운 바탕색 글자(낮 판은 본문색) — 둘 다 어두운 글자');
+    assert.match(at('body.salty .ss-scope .ss-dot.ss-dot'), /width: 8px; height: 8px;[^}]*background: var\(--bl-lemon-bright, #FFE23C\)/, '숫자 없는 점은 지름 8 · 같은 색');
+    assert.match(at('body.salty.salty-dark .ss-scope .ss-badge.ss-badge'), /background: var\(--salty-lemon, var\(--bl-pop\)\); color: var\(--salty-bg\)/, '밤 판은 밝은 레몬 위에 어두운 바탕색 글자(낮 판은 맑은 레몬 + 본문색 + 진한 노랑 테두리) — 둘 다 어두운 글자');
     assert.ok(!/salty-danger/.test(badge.body), '알림 숫자는 빨강이 아니라 테마 강조 레몬(사용자 「알림은 노랑」)');
     assert.match(css, /--ss-neg:\s*color-mix\(in srgb, var\(--salty-danger\)/, '게이지 · 수치의 빨강(--ss-neg)은 건드리지 않아요');
 });
