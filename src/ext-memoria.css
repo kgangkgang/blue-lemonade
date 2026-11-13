@@ -16,8 +16,13 @@ html:not(#bl-i2-off) body.salty #memoria_settings.memoria[data-bl-ext] .memoria_
 /* ---------- 좁은 칸(넓은 화면의 확장 열): 기억 카드 머리의 아이콘 줄이 카드 밖으로 잘렸어요 — 자리가 모자라면 아랫줄로 ---------- */
 body.salty #memoria_settings.memoria[data-bl-ext] .memoria__mem-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); }
 
+/* ---------- 「주입 미리보기」 글상자: 원작은 고정폭 작은 글자(본문의 0.78배 ≈ 12px)인데 테마의 입력칸 글자 크기(본문 크기)가 덮어 폰에서 약 16px 로 커졌어요 — 테마의 가장 작은 글자 단계(12px 부터)로 되돌려요. 글꼴 · 줄 높이는 그대로 ---------- */
+body.salty #memoria_settings.memoria[data-bl-ext] textarea.memoria__preview { font-size: var(--bl-ts-micro, 12px); }
+
 /* ---------- 머리줄의 판 알약: 다른 확장 줄의 알약(css/75-version-pill)과 같은 값 — 테마가 머리줄 글을 간격 8 인 가로 줄로 놓아서 알약 여백은 0. 좁은 칸에서 알약만 아랫줄로 떨어지지 않게 한 줄로 ---------- */
-html:not(#bl-pill-off) body.salty #rm_extensions_block #memoria_settings.memoria[data-bl-ext] .inline-drawer-header > b { flex-wrap: nowrap; min-width: 0; overflow: hidden; white-space: nowrap; }
+/* 넓은 화면의 확장 열에서는 이름 칸이 3px 모자라 알약 오른쪽 둥근 끝이 반듯하게 잘렸어요 — 칸 끝에서 바로 자르지 않고, 머리줄 간격(12) 안쪽 8px 까지는 그대로 보이게 해요(그보다 더 넘치면 접는 화살표에 닿기 전에 잘라요).
+   overflow: clip 을 모르는 브라우저는 앞의 hidden 그대로(전과 같아요) */
+html:not(#bl-pill-off) body.salty #rm_extensions_block #memoria_settings.memoria[data-bl-ext] .inline-drawer-header > b { flex-wrap: nowrap; min-width: 0; overflow: hidden; overflow: clip; overflow-clip-margin: var(--bl-s2, 8px); white-space: nowrap; }
 html:not(#bl-pill-off) body.salty #rm_extensions_block #memoria_settings.memoria[data-bl-ext] .inline-drawer-header .memoria__version {
   box-sizing: border-box !important;
   display: inline-flex !important;

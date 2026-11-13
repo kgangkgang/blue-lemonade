@@ -77,6 +77,50 @@ check('④ 「색 두기」: 그 확장의 색 변수 · 글꼴은 덮지 않고
     const mm = sheets['src/ext-memoria.css'];
     assert.ok(mm.rules.some(r => /--SmartThemeBorderColor:\s*var\(--bl-ui-line, var\(--salty-line\)\)/.test(r.body)), '투명한 선 변수를 팔레트 선으로');
 });
+// ── 게시 뒤 화면 확인에서 나온 작은 고침
+const ruleFor = (file, ending) => sheets[file].rules.filter(r => r.selectors.some(s => s.endsWith(ending)));
+check('⑨ 코끼리 설정 서랍의 고르기 칸 · 숫자 칸에 안쪽 1px 고리가 보여요', () => {
+    const FIELDS = ':is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"])):not(.lm-setsearch input, .lm-quiet)';
+    const [ring] = ruleFor('src/ext-elephant.css', FIELDS), [focus] = ruleFor('src/ext-elephant.css', `${FIELDS}:focus`);
+    assert.ok(ring && focus, '고리 규칙 · 누름 규칙');
+    for (const r of [ring, focus]) for (const sel of r.selectors) assert.ok(sel.startsWith('html:not(#bl-i2-off) body.salty .lm-root[data-bl-ext] .inline-drawer-content '), `설정 서랍 내용 칸에만(창 안은 테마 고리가 이미 그려요): ${sel}`);
+    assert.match(ring.body, /box-shadow:\s*inset 0 0 0 1px var\(--lm-line-strong\) !important/, '그 확장의 선 색으로 1px');
+    assert.match(focus.body, /box-shadow:\s*inset 0 0 0 1px var\(--lm-accent\) !important/, '누르면 그 확장의 강조색');
+    for (const r of [ring, focus]) assert.ok(!/border|background|(^|[;\s])color/.test(r.body), '고리만 — 면 · 글자색 · 테두리 꼴은 건드리지 않아요');
+    // 테마의 고리 규칙이 「원래 색 유지」 칸을 비켜 가는 것이 이 고침의 까닭이에요 — 그 규칙이 바뀌면 이 고침도 다시 봐요
+    assert.ok(read('css/95-fields-i2.css').includes('[data-bl-native-ext-colors] *, .salty-switch input'), '테마 고리 규칙은 원래 색 유지 칸을 비켜 가요');
+});
+check('⑩ 코끼리 설정 서랍의 안내 글자는 그 확장의 흐린 글자색이에요(테마 파랑 아님)', () => {
+    const [hint] = ruleFor('src/ext-elephant.css', '::placeholder');
+    assert.ok(hint, '안내 글자 규칙');
+    assert.deepEqual(hint.selectors, ['body.salty .lm-root[data-bl-ext] .inline-drawer-content :is(.text_pole, textarea)::placeholder'], '설정 서랍 내용 칸에만 · 찾기 칸(.text_pole)을 품어요');
+    assert.match(hint.body, /^\s*color:\s*var\(--lm-muted\) !important;\s*$/, '실리태번의 안내 글자 규칙이 !important 라 같은 세기로 · 색만');
+});
+check('⑪ Memoria 머리줄 판 알약이 좁은 칸에서 칸 끝에 바로 잘리지 않아요', () => {
+    const [head] = ruleFor('src/ext-memoria.css', '.inline-drawer-header > b');
+    assert.ok(head, '머리줄 이름 칸 규칙');
+    // 아랫줄로 떨어지지 않게 한 줄 · 줄어들 수 있게 — 그대로
+    assert.match(head.body, /flex-wrap:\s*nowrap;/); assert.match(head.body, /min-width:\s*0;/); assert.match(head.body, /white-space:\s*nowrap;/);
+    // 칸 끝이 아니라 8px 밖에서 잘라요 · 모르는 브라우저는 hidden(앞에 적힌 값)으로 남아요
+    assert.match(head.body, /overflow:\s*hidden;\s*overflow:\s*clip;\s*overflow-clip-margin:\s*var\(--bl-s2, 8px\);/, 'hidden → clip → 여유 8px 차례');
+    // 여유(8)는 머리줄 간격(12)보다 작아야 접는 화살표에 닿지 않아요
+    const base = read('css/10-foundation.css');
+    assert.match(base, /--bl-s2:\s*8px;/); assert.match(base, /--bl-s3:\s*12px;/);
+    assert.match(read('css/01-smear-topbar-drawers.css'), /body\.salty \.inline-drawer-header:where\(:not\(\.salty-panel \*, \.world_entry \*\)\) \{\s*min-height: 40px;\s*gap: var\(--bl-s3\);/, '머리줄 간격은 12');
+    // 알약은 줄어들지 않아요
+    const [pill] = ruleFor('src/ext-memoria.css', '.inline-drawer-header .memoria__version');
+    assert.match(pill.body, /flex:\s*none !important;/);
+});
+check('⑫ Memoria 「주입 미리보기」 글상자는 작은 글자 단계예요(테마 입력칸 본문 크기 아님)', () => {
+    const [box] = ruleFor('src/ext-memoria.css', 'textarea.memoria__preview');
+    assert.ok(box, '미리보기 글상자 규칙');
+    assert.match(box.body, /^\s*font-size:\s*var\(--bl-ts-micro, 12px\);\s*$/, '글자 크기만 — 글꼴 · 줄 높이 · 면은 그대로');
+    assert.match(read('css/10-foundation.css'), /--bl-fs-micro:\s*max\(12px, /, '가장 작은 단계는 12px 부터');
+    // 테마 입력칸 규칙(본문 크기 · !important 아님)보다 무게가 커서 이겨요 — 그 규칙이 !important 로 바뀌면 이 고침도 다시 봐요
+    const base = strip(read('css/02-controls.css'));
+    const field = [...base.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(m => m[1].trim().startsWith('body.salty :is(.text_pole, select, textarea,') && /font-size:/.test(m[2]));
+    assert.ok(field && /font-size:\s*var\(--bl-fs-body\);/.test(field[2]), '테마 입력칸 글자 크기 규칙');
+});
 check('⑤ 그 확장이 없는 사람에게는 싣지 않아요', () => {
     for (const always of ['style.css', 'src/style-lazy.gen.css', 'style-ext.css']) {
         const text = read(always);

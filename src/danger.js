@@ -11,6 +11,7 @@ const DANGER_SEL = [
     '.redWarningBG', '.red_button', '.danger',
     '.delete_entry_button', '.PastChat_cross', '.deleteChat', '.btn_delete',
     '.delete_regex', '.delete-asset-button', '.eh-btn--danger',
+    '.memoria__danger',   // Memoria 의 「초기화」 단추 — 휴지통 그림이 아니라 글자 · 여백을 눌러도 그 뒤 확인 창을 지우기 창으로 알아봐요(그림만 누르면 되고 글자를 누르면 안 되던 것)
     '.mes_delete_translation', '.mes_edit_delete', '.mes_reasoning_delete',
     '.mes_media_delete', '.mes_file_delete', '.tag_remove',
     '[id*="delete" i]', '[class*="delete" i]',

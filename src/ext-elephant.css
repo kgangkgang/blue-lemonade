@@ -46,10 +46,16 @@ body.salty .lm-root:is([data-lm-mode], [data-bl-ext]) .lm-live-head { flex-wrap:
 
 /* ---------- 설정 찾기 칸: 찾기 틀 안에 테마 입력칸이 한 겹 더 보였어요 — 안쪽 칸은 틀 면 그대로(표식이 없는 때를 위해 남겨 둬요) ---------- */
 html:not(#bl-i2-off) body.salty .lm-root:is([data-lm-mode], [data-bl-ext]) .lm-setsearch input { border: 0 !important; background: transparent !important; box-shadow: none !important; outline: 0 !important; }
+/* 안내 글자(찾기 칸 「설정 찾기…」 같은 것): 내용 칸에서는 테마의 흐린 안내 글자 규칙이 비켜 가서 실리태번 규칙(강조 글자색 = 테마 파랑)이 남았어요 — 적어 넣은 값이나 링크처럼 보이지 않게 그 확장의 흐린 글자색으로 */
+body.salty .lm-root[data-bl-ext] .inline-drawer-content :is(.text_pole, textarea)::placeholder { color: var(--lm-muted) !important; }
 
 /* ---------- 설정 서랍(확장 탭 안) ---------- */
 /* 머리(그림 줄)가 서랍 머리줄에 붙지 않게 */
 body.salty .lm-root:is([data-lm-mode], [data-bl-ext]) .inline-drawer-content > .lm-head { margin-top: var(--bl-s2, 8px); }
+/* 고르기 칸 · 숫자 칸 · 글 칸: 내용 칸은 「원래 색 유지」 표식 때문에 테마의 안쪽 1px 고리(css/95-fields-i2)가 비켜 가는데, 테두리를 0 으로 두는 꼴 규칙은 그대로 걸려서 상자가 안 보였어요 —
+   창 안의 같은 칸처럼 안쪽 1px 고리를 그 확장의 선 색으로 그려요(누르면 그 확장의 강조색). 찾기 틀 안쪽 칸 · 글처럼 읽히는 조용한 칸(.lm-quiet)은 빼요 */
+html:not(#bl-i2-off) body.salty .lm-root[data-bl-ext] .inline-drawer-content :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"])):not(.lm-setsearch input, .lm-quiet) { box-shadow: inset 0 0 0 1px var(--lm-line-strong) !important; }
+html:not(#bl-i2-off) body.salty .lm-root[data-bl-ext] .inline-drawer-content :is(.text_pole, select, textarea, input:is([type="text"], [type="number"], [type="search"])):not(.lm-setsearch input, .lm-quiet):focus { box-shadow: inset 0 0 0 1px var(--lm-accent) !important; }
 /* 맞춘 판 안내 한 줄(src/ext-compat.js) — 제 스타일로 숨겨 두고 테마가 켜져 있을 때만 보여요(내용 칸 안이라 선 · 글자는 코끼리 색) */
 body.salty .lm-root[data-bl-ext] .inline-drawer-content > small.bl-ext-compat { display: block !important; margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s3, 12px); border-top: 1px solid var(--lm-line); font-size: var(--bl-ts-micro, 11.5px); line-height: 1.5; color: var(--lm-muted); }
 
