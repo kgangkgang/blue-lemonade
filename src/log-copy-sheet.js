@@ -1551,7 +1551,8 @@ const STYLE = `
   .bl-lc-colors > .bl-lc-flip { margin-left:16px; }
   .bl-lc-colors:not(.bl-lc-flip-idle) .bl-lc-pals { padding-left:8px; }
   /* 차례: 분류 → 틀 → 미리보기(붙박이) → 색 · 조절 → 「로그 꾸밈」 갈래 → 숨기기 안내 */
-  .bl-lc-scroll { gap:8px; padding:0 0 14px; }
+  .bl-lc-scroll { gap:8px; margin-top:-5px; padding:5px 0 14px; }   /* 11-14 위로 5 올리고 안쪽 여백 5(내용 자리 그대로): 맨 윗줄 분류 탭의 누르는 상자 44 가 위 5px 를 이 칸 위 끝에서 잘려 아래로만 늘던 것 — 올린 5px 는 머리줄 아래 여백 4 + 선 1 자리예요 */
+  .bl-lc-head { position:relative; z-index:4; background:var(--salty-bg); pointer-events:none; } .bl-lc-head > * { pointer-events:auto; }   /* 머리줄이 그 5px 위에 그대로 보이고(내린 글이 비치지 않게 창 바탕) · 빈 여백을 누르면 아래 탭이 받아요 */
   .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-mine { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
   .bl-lc-band.bl-lc-empty { order:2; } .bl-lc-band[data-lc-retired] { margin-top:8px; }   /* 1.1.8 빈 안내는 틀 줄 바로 아래 · 옛 글꾸 띠는 맨 위 */
   .bl-lc-colors { order:6; } .bl-lc-flip-note { order:6; } .bl-lc-easy { order:7; } .bl-lc-inks { order:8; } .bl-lc-sep { order:9; } .bl-lc-folds { order:10; } .bl-lc-hint { order:11; } .bl-lc-scroll > .bl-lc-more { order:12; }

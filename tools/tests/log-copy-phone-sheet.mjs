@@ -322,5 +322,23 @@ await test('분류 탭 누르는 높이(감사 고침): 탭 34 + 위아래 안�
     assert.equal(Number(margin[1]), -top, '안쪽 여백만큼 바깥 여백을 줄여 줄 자리 · 밑줄 자리는 그대로');
 });
 
+await test('분류 탭 누르는 상자 위아래 고르게(11-14): 탭 줄이 스크롤 칸 맨 윗줄이라 위로 내민 5px 가 스크롤 칸 위 끝에서 잘렸어요 — 스크롤 칸을 그만큼 올리고 안쪽 여백으로 내용 자리는 그대로 · 머리줄이 그 위를 덮되 빈 여백의 누름은 아래 탭으로', () => {
+    const strip = PHONE_CSS.match(/\.bl-tool-dialog\.bl-lc \.salty-seg\.bl-lc-cats \{([^}]*)\}/)[1];
+    const top = Number(strip.match(/padding:(\d+)px 0 \d+px \d+px;/)[1]);
+    const scroll = PHONE_CSS.match(/\.bl-lc-scroll \{([^}]*)\}/)[1];
+    const lift = scroll.match(/margin-top:-(\d+)px;/), padTop = scroll.match(/padding:(\d+)px 0 14px;/);
+    assert.ok(lift && padTop, `스크롤 칸 위 여백 꼴을 못 읽었어요: ${scroll}`);
+    assert.equal(Number(lift[1]), top, '탭 줄이 위로 내민 만큼 스크롤 칸을 올려요');
+    assert.equal(Number(padTop[1]), top, '올린 만큼 안쪽 여백 — 탭 · 글자 자리는 그대로');
+    const head = PHONE_CSS.match(/\.bl-lc-head \{ position:relative;([^}]*)\}/);
+    assert.ok(head, '머리줄이 올린 스크롤 칸 위에 그려져요');
+    assert.match(head[1], /z-index:4;/, '붙박이 미리보기(z-index 3)보다 위');
+    assert.match(head[1], /background:var\(--salty-bg\);/, '내린 글이 머리줄 여백에 비치지 않게 창 바탕');
+    assert.match(head[1], /pointer-events:none;/, '머리줄 빈 여백의 누름은 아래 탭으로');
+    assert.match(PHONE_CSS, /\.bl-lc-head > \* \{ pointer-events:auto; \}/, '제목 · 밝기 · 닫기는 그대로 눌러요');
+    assert.match(PHONE_CSS, /\.bl-lc-head \{ gap:8px; padding:4px 6px 4px 16px; \}/, '머리줄 아래 여백 4 + 선 1 = 올린 5px');
+    assert.equal(4 + 1, top);
+});
+
 console.log(`log-copy-phone-sheet: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
