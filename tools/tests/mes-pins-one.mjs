@@ -139,4 +139,20 @@ await test('끄면 단추를 메뉴 제자리로 돌려놓고 이벤트 리스�
     assert.equal([...listeners.values()].flat().length, 0);
     visits = 0; eventSource.emit(event_types.CHARACTER_MESSAGE_RENDERED, 5); advance(1000); assert.equal(visits, 0);
 });
+await test('1.4.x 꺼내고 넣는 동안 문서에 붙은 단추 · 단추 줄의 class 는 바뀌지 않아요(실리태번 keyboard.js 가 다시 훑지 않게) · 끝 모습은 같아요', () => {
+    freshChat(50);
+    const live = [];   // 붙어 있는 요소의 class 바꿈(실제로 바뀐 것 · 같은 값 다시 쓰기 포함)
+    const watch = () => { for (const mes of chat.children) { const bar = mes.children.find(c => c._cls.has('mes_buttons')); for (const el of [bar, ...bar.children.flatMap(n => [n, ...n.children])]) {
+        const list = el.classList; if (list.__w) continue; const { add, remove, toggle } = list;
+        const note = (op, c) => { if (el.isConnected && /^bl-(pinned|menu-empty)$/.test(c)) live.push(op + ' ' + c); };
+        list.add = c => { note('add', c); return add(c); }; list.remove = c => { note('remove', c); return remove(c); };
+        list.toggle = (c, on) => { if ((on ?? !el._cls.has(c)) !== el._cls.has(c)) note('toggle', c); return toggle(c, on); }; list.__w = true; } } };
+    watch();
+    syncMesPins(true, PINS, false);
+    assert.deepEqual(live, [], '꺼낼 때 ' + live.slice(0, 3).join(' · '));
+    assert.ok(snapshot().split('\n').every(line => line.startsWith('mes_translate@0,mes_hide@1,mes_unhide@2,mes_copy@3,extraMesButtonsHint,extraMesButtons,')));
+    watch(); syncMesPins(false, [], false);
+    assert.deepEqual(live, [], '넣을 때 ' + live.slice(0, 3).join(' · '));
+    assert.ok(snapshot().split('\n').every(line => line.startsWith('extraMesButtonsHint,extraMesButtons,mes_edit|mes_translate,mes_narrate,mes_copy,')));
+});
 console.log(`\n${passed} passed`);
