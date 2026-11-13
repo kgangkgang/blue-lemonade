@@ -238,7 +238,7 @@ function geulkkuCard(item) {
     const state = cardState = { item, values: {} };
     const href = martHref(item);
     const ph = `<div class="mart-ph" style="${item.bg ? `--ph-bg:${esc(item.bg)};` : ''}${item.ink ? `--ph-ink:${esc(item.ink)}` : ''}">${glyphHtml(item, '📝')}<b>${esc(item.name)}</b></div>`;
-    const html = '<button type="button" class="btn" data-act="html" title="확장 없이 커뮤니티 글쓰기 HTML 칸에 바로 붙여 쓰는 완성 HTML(보이는 글씨는 전부 바꿔도 돼요)"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>';
+    const html = '<button type="button" class="btn" data-act="html" title="확장 없이 깡통 글쓰기 HTML 칸에 바로 붙여 쓰는 완성 HTML(보이는 글씨는 전부 바꿔도 돼요)"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>';
     const big = `<a class="btn" href="${href}" title="글꾸 마트의 크게 보기 창으로 가요"><span class="em" aria-hidden="true">🔍</span>크게 보기</a>`;
     // 테마에 이미 든 심플(내장) · HTML 로만 쓰는 틀은 마트처럼 담기 대신 표시만 — 11-12 예전 「준비 중」 안내를 지금 길(크게 보기 「테마로 담기」 · 못 받는 틀은 꼬리표)로
     const first = item.builtin ? '<span class="mart-builtin" title="블루레몬에이드 로그 복사에 이미 있어요 · 마트에서 가져오지 않아도 돼요">✓ 이미 테마에 있어요</span>'

@@ -589,7 +589,7 @@ async function copyHtml(state) {
     const item = state.item;
     const ready = ensureItem(item).then(() => (inkChanged(item) && !tasteLoaded ? loadTaste().then(() => { delete state.inkHtml; return previewOf(state); }) : previewOf(state))).then(shutPeek).then(h => finishHtml(item, h));   // 11-11 심플 새 틀: 틀 <style> + 코멘트 빈칸 · 16px 규칙을 <style> 하나로   // 11-10 깡통에 붙일 꼴(인라인 url( → <style> · 글자색 fill)   // 11-09 카드 · 상세 미리보기는 펼침, 복사 글은 닫힘   // 「📝 내 로그로 보기」가 켜져 있으면 내 로그가 든 완성 HTML   // 조각을 아직 안 받았으면 받은 뒤(클립보드는 누른 순간에 열어요)
     ready.catch(() => { /* 아래에서 알려요 */ });
-    const done = () => { noteRecent(item.id); say('복사됐어요 · 깡싸 글쓰기 HTML 칸에 붙여요', 3600); };
+    const done = () => { noteRecent(item.id); say('복사됐어요 · 깡통 글쓰기 HTML 칸에 붙여요', 3600); };
     try {
         if (globalThis.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': ready.then(h => new Blob([h], { type: 'text/html' })), 'text/plain': ready.then(h => new Blob([h], { type: 'text/plain' })) })]);
         else await navigator.clipboard.writeText(await ready);
@@ -654,7 +654,7 @@ const SOURCES = {
 const CHAR_SOURCES = { 'char-uziel': CHAR_WORKS.uziel, 'char-lucifer': CHAR_WORKS.lucifer, 'char-asmodeus': CHAR_WORKS.asmodeus };
 // 보이는 분류 이름 — 「강호유람록」은 실제 봇 이름 「무협시뮬」로 보여 주되, 옛 이름으로도 찾아지게 검색어에 남겨요
 const LABEL_FIX = { 'gangho': '무협시뮬', 'gangho-char': '무협시뮬 · 인물' };
-const SEARCH_ALSO = { 'song': '노래 앨범 mp3 음악 오디오 플레이리스트 트랙 싱글 깡싸 커뮤니티 게시글 글꾸', 'hwabo': '화보 사진 갤러리 사진첩 앨범 깡싸 커뮤니티 게시글 글꾸', 'gangho': '강호유람록 무협 시뮬 무협시뮬', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬' };
+const SEARCH_ALSO = { 'song': '노래 앨범 mp3 음악 오디오 플레이리스트 트랙 싱글 깡통 게시글 깡싸 커뮤니티 글꾸', 'hwabo': '화보 사진 갤러리 사진첩 앨범 깡통 게시글 깡싸 커뮤니티 글꾸', 'gangho': '강호유람록 무협 시뮬 무협시뮬', 'gangho-char': '강호유람록 무협 시뮬 무협시뮬' };
 const catLabel = (id, label) => LABEL_FIX[id] || label || '';
 // 세계관 액자의 원작 봇 — 콘셉트 id 로 묶어요(url 이 빈 칸이면 링크를 안 보여요)
 const FRAME_SOURCES = {
@@ -669,7 +669,7 @@ const sourceLinks = item => {
     let w = item.kind === 'frame' ? FRAME_SOURCES[item.concept] : SOURCES[item.category];
     const ws = [].concat(w || []).filter(x => x && x.url);   // 원작이 둘인 분류(아드리안)는 나란히 · 자리만 있는 원작은 빼요
     w = ws.length ? ws : null;
-    const a = (src, kind) => `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡싸 글">🔗 ${kind} · ${esc(src.title)}</a>`;
+    const a = (src, kind) => `<a class="mart-source" href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" title="원작 깡통 글">🔗 ${kind} · ${esc(src.title)}</a>`;
     // 틀마다 출처 봇이 다른 분류(11-06 센티넬버스 — 센가시뮬 · 센가 아카데미)는 목록의 source(봇 정식 이름)를 글로만 보여요(깡싸 글 주소는 아직 없어요)
     // 11-12 밤 새 틀(세계관 · 인물 104): 목록 자료의 src(sources.js 열쇠) 그대로 — 깡캐 글 먼저 · 원작 글 전부
     if (Array.isArray(item.src)) return itemSources(item).map(x => sourceHtml(x)).join('');
@@ -680,7 +680,7 @@ const sourceLinks = item => {
 };
 
 // ── 카드 한 줄 정보 · 단추(카드와 크게 보기 시트가 같이 써요) ──
-const HTML_TITLE = '확장 없이 커뮤니티 글쓰기 HTML 칸에 바로 붙여 쓰는 완성 HTML(보이는 글씨는 전부 바꿔도 돼요)';
+const HTML_TITLE = '확장 없이 깡통 글쓰기 HTML 칸에 바로 붙여 쓰는 완성 HTML(보이는 글씨는 전부 바꿔도 돼요)';
 // 글꾸 목록의 fx(m 움직임 · e 반응)는 나누기 도구가 미리보기에서 미리 재 둔 값이에요(조각을 받기 전에도 꼬리표를 달아요)
 const hasMotion = item => (item.fx !== undefined || item.c ? String(item.fx || '').includes('m') : /style="[^"]*animation\s*:/.test(String(item.preview || '').replace(/<style>[\s\S]*?<\/style>/g, '')));
 const hasEgg = item => (item.fx !== undefined || item.c ? String(item.fx || '').includes('e') : / data-bl-egg="/.test(item.preview || ''));
@@ -698,7 +698,7 @@ function tagsHtml(item) {
 }
 /** 11-12 「테마 아직 못 받음」 꼬리표 — item.nt = 테마 받기 검사가 건너뛰는 까닭(theme-take.js why) */
 export const NOT_TAKE_HINT = '블루레몬 로그 복사가 아직 이 틀을 받지 못해요';
-const notTakeTag = item => `<span class="mart-tag tag is-notake" title="${esc(`${NOT_TAKE_HINT}(${item.nt}) · 「HTML 복사」로 커뮤니티 글에 붙여 써요`)}">테마 아직 못 받음</span>`;
+const notTakeTag = item => `<span class="mart-tag tag is-notake" title="${esc(`${NOT_TAKE_HINT}(${item.nt}) · 「HTML 복사」로 깡통 글에 붙여 써요`)}">테마 아직 못 받음</span>`;
 const descOf = item => (LABEL_FIX[item.category] ? String(item.desc || '').replace(/강호유람록/g, '무협시뮬') : (item.desc || ''));
 function actionsHtml(item) {
     const html = item.kind === 'geulkku' ? `<button type="button" class="btn" data-act="html" title="${HTML_TITLE}"><span class="em" aria-hidden="true">📋</span>HTML 복사</button>` : '';

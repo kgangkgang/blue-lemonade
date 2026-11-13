@@ -412,7 +412,7 @@ function downloadSets(rows, name) {
 function themeBoxHtml(item) {
     const no = item.nt ? ' disabled aria-describedby="mart-notake-why"' : '';
     const hint = item.nt
-        ? `<p class="mart-tune-hint is-notake" id="mart-notake-why"><b>테마 아직 못 받음</b> — 블루레몬 로그 복사가 아직 이 틀을 받지 못해요(${esc(item.nt)}) · 위 「HTML 복사」 · 「파일로 내려받기」로 커뮤니티 글에 붙여 써요</p>`
+        ? `<p class="mart-tune-hint is-notake" id="mart-notake-why"><b>테마 아직 못 받음</b> — 블루레몬 로그 복사가 아직 이 틀을 받지 못해요(${esc(item.nt)}) · 위 「HTML 복사」 · 「파일로 내려받기」로 깡통 글에 붙여 써요</p>`
         : '<p class="mart-tune-hint">블루레몬 1.2.0 부터 이 틀을 받아요 · 1.1.9 까지는 일부 틀을 못 받아요(테마를 최신 판으로 올려요)</p>';
     return `<h3 class="mart-tune-h">테마로 담기 <small>블루레몬 로그 복사에 이 틀 + 지금 조절 값 그대로</small></h3><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-act="theme-copy"${no} title="테마 「마트에서 가져오기」에 붙여 넣는 글(bl-mart 꾸러미)을 복사해요">테마용 복사</button><button type="button" class="chip" data-act="theme-file"${no} title="같은 꾸러미를 .bl-mart.json 파일로 받아요">테마용 파일 받기</button></div>${hint}`;
 }
