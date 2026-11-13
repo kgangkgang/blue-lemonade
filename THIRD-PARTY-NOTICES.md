@@ -14,7 +14,7 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 | LLM Translator | [1234anon](https://github.com/1234anon/llm-translator) / 수정판 [NamelessKkang](https://github.com/NamelessKkang/llm-translator-custom) | [AGPL-3.0](src/addons/translator/LICENSE) |
 | 번역 리모컨 (LLM Translator 안) | 번역 리모컨 — 태번 헬퍼 스크립트(원작자의 허락으로 수정 · 통합) | 원작자의 수정 · 사용 허락 · 애드온 구조에 맞춰 다시 짠 [remote.js](src/addons/translator/remote.js) |
 | Prompt Panel | [anon4961](https://github.com/anon4961/prompt-panel) / [개인개조+++ 게시글 작성자 「깡」](https://kkangtong.xyz/posts/138394) | [AGPL-3.0](src/addons/prompt/LICENSE) |
-| 태번 헬퍼 한글화 사전(짧은 단추 · 메뉴 이름만) | 태번 헬퍼 [JS-Slash-Runner](https://github.com/N0VI028/JS-Slash-Runner)(KAKAA · N0VI028, [GitLab](https://gitlab.com/novi028/JS-Slash-Runner)) 화면 문구 | 원작은 [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0). 원작 문구가 든 [사전 파일](src/scripts/plain/helper.js)만 **PolyForm Noncommercial License 1.0.0** 조건으로 배포해요(비상업 목적만 · 테마의 다른 파일은 AGPL-3.0) |
+| 태번 헬퍼 한글화 사전(짧은 단추 · 메뉴 이름만) | 태번 헬퍼 [JS-Slash-Runner](https://github.com/N0VI028/JS-Slash-Runner)(KAKAA · N0VI028, [GitLab](https://gitlab.com/novi028/JS-Slash-Runner)) 화면 문구 | 원작은 [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0). 원작 문구가 든 [사전 파일](src/scripts/plain/helper.js)만 **PolyForm Noncommercial License 1.0.0** 조건으로 배포해요(비상업 목적만 · 테마의 다른 파일은 AGPL-3.0). 헬퍼 업데이트 창의 변경 기록(4.10.0 ~ 4.12.1) 번역은 원작 문구를 담지 않아요 — [한글화 모듈](src/scripts/plain/korean.js)에는 화면 조각의 지문(되돌릴 수 없는 짧은 값)과 Blue Lemonade 가 쓴 번역만 있고, 화면의 원문과 지문이 같을 때만 바꿔 보여요(과일의 마음 화면 사전과 같은 방식) |
 | 설정 창 그림 표본 5장(src/preview-art/sample-*.webp) | 실리태번 기본 캐릭터 화면을 찍은 그림 — [SillyTavern](https://github.com/SillyTavern/SillyTavern) 기본 캐릭터 세라피나 표정 그림(`default/content/Seraphina/*.png`)과 기본 배경(`default/content/backgrounds/` 의 tavern day · landscape beach day · japan path cherry blossom · cityscape medieval night · landscape winter lake house)을 실리태번 화면에 띄워 찍고 webp 로 담음(그림 편집 없음) | [AGPL-3.0](LICENSE) |
 | 날씨 그림 6장(src/weather-art/*.webp) | Blue Lemonade 작업 중 이미지 생성 도구로 만든 그림(원작 그림 없음 · 원본과 만든 지시문은 비공개 작업 기록에 보관) | 테마와 같은 조건 [AGPL-3.0](LICENSE) |
 | 설정 창 투명 그림 표본(src/preview-art/character.webp) | [SillyTavern](https://github.com/SillyTavern/SillyTavern) 기본 캐릭터 세라피나 표정 그림(`default/content/Seraphina/joy.png`, webp 로 다시 담음) | [AGPL-3.0](LICENSE) |
@@ -116,6 +116,8 @@ zonde306 · [ST-Prompt-Template](https://github.com/zonde306/ST-Prompt-Template)
 아이디어 참고: [URMIIE/SillyTavern-PromptFolders](https://github.com/URMIIE/SillyTavern-PromptFolders)(AGPL-3.0) — 코드는 옮기지 않음.
 참고한 원본 커밋 8cd30867c2db421b492bb1cae8b32cb5a5258a85 (2026-11-04, manifest 1.2.6).
 1.4.0(d6329e44)의 프리셋 그룹 가져오기·이름 한글화 아이디어와 저장 형식을 참고했어요. 가져오기 편집창·번역 연결·검증은 이 테마의 기존 구조로 따로 구현했어요.
+2026-11-11 4290d595(같은 이름의 새 판 프리셋 파일이 든 폴더 받기) 아이디어를 참고했고, 2026-11-12 e95849610d3139fa0587a8e2690168136cf242cc(1.4.3 — 그룹 안 줄을 복사본 대신 실제 줄로)까지 검토했어요. 1.4.3 의 고침은 이 테마가 처음부터 줄을 옮기거나 복제하지 않아 해당이 없어요.
+2026-11-13 d7df49dc53d6cadd49b02c6c098b76e101f9dc53(1.4.5)까지 검토했어요. 1.4.4(편집기가 쥔 설정 칸이 바꿔 끼워져 자동 그룹이 저장되지 않던 고침)는 이 테마의 폴더 창이 사본을 고치고 저장할 때 그 자리에 새로 써서 해당이 없고, 1.4.5(AI 지시문 · 다른 확장 모델 목록)는 이 테마에 없는 기능이라 옮기지 않았어요.
 
 
 ## Regex Perf Kit (정규식 성능)

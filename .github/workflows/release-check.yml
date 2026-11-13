@@ -700,6 +700,8 @@ jobs:
           node tools/tests/fruit-heart-hashed.mjs .
           # 1.1.6 과일의 마음 알림 · 확인 창 · 오류 문구(클릭 15초 창 없이 표와 맞으면 언제든)
           node tools/tests/fruit-toast-ko.mjs .
+          # 1.2.x 태번 헬퍼 업데이트 창 번역: 원작(PolyForm) 변경 기록 원문 대신 지문 표 · 고지 맞춤
+          node tools/tests/helper-notice-prints.mjs .
           node tools/tests/localization-override-tools.mjs .
           node tools/tests/diag-copy.mjs .
           node tools/tests/diag-file.mjs .
@@ -837,6 +839,8 @@ jobs:
           node tools/tests/audit113-ko-dead.mjs .
           node tools/tests/gap-reset-multi-avatar.mjs .
           node tools/tests/reset-keep-drift.mjs .
+          # 공개되는 소스 주석 · 문서에 만든 이 표시(모델 이름 + 날짜 · 작업 분기 이름)가 다시 들어오지 않게
+          node tools/tests/no-maker-names.mjs .
           node tools/tests/bundle-fresh.mjs
           node tools/build-integrity.mjs . --check
       - name: Check that generated files match their sources

@@ -560,65 +560,90 @@ export default function blueLemonadeScript(BlueLemonade, window) {
 
   // Helper release notes are excluded from the general dictionary. Only known
   // update prose is translated here; script editors and arbitrary popups stay intact.
-  // v1.4.7: 실리태번 헬퍼 업데이트 창은 CHANGELOG 를 '설치된 판 다음 ~ 최신 판'만큼 한 창에 보여 준다 (4.10.0 ~ 4.11.3 을 안다).
+  // v1.4.7: 실리태번 헬퍼 업데이트 창은 CHANGELOG 를 '설치된 판 다음 ~ 최신 판'만큼 한 창에 보여 준다 (4.10.0 ~ 4.12.1 을 안다).
   // 버전 제목(h1~h3 의 '4.11.3' 따위) 다음부터 다음 버전 제목 전까지가 한 칸이고, 아는 버전이며 그 칸의 code 에 sign 이 있을 때만 바꾼다.
-  // 문단(h3 · li · p)은 코드 밖 글자 노드들이 원문 조각과 모두 같을 때만 통째로 바꾼다 (같은 '新增'도 문단마다 다르게 옮겨야 해서 낱개 사전은 못 쓴다).
-  // 그 문단 안 code 는 예시 값만(code 표), pre 는 주석 · 예시 문자열만(pre 표) — 함수 · 인자 · 매크로 이름은 그대로. 원문이 바뀐 문단은 중국어 그대로 둔다.
+  // 문단(h3 · li · p)은 코드 밖 글자 노드들이 원문 조각과 모두 같을 때만 통째로 바꾼다 (같은 낱말도 문단마다 다르게 옮겨야 해서 낱개 사전은 못 쓴다).
+  // 그 문단 안 code 는 예시 값만(code 표), pre 는 주석 · 예시 문자열만(pre 표) — 함수 · 인자 · 매크로 이름은 그대로. 원문이 바뀐 문단은 원문 그대로 둔다.
+  // 원작 조건 정리(1.2.4 뒤): 태번 헬퍼는 PolyForm Noncommercial 1.0.0 이라 그 변경 기록 원문은 이 파일(AGPL)에 싣지 않는다.
+  //   표에는 화면 조각의 지문(noticePrint · 53비트 36진)과 Blue Lemonade 가 쓴 번역만 있다(과일의 마음 사전과 같은 방식).
+  //   머리 · 문단 = noticePrint(noticeKey(조각들)), code = noticePrint(normalize(글)), sign = noticePrint(normalize(code 글)) 이 같은지,
+  //   pre = [원문 길이, 지문, 번역] — 그 길이의 창을 밀며 지문이 같은 자리를 차례대로 바꾼다(예전 replaceAll 과 같은 결과).
+  //   표 만들기 · 맞춰 보기: node tools/helper-notice-prints.mjs <원문 짝 JSON(저장소 밖)> --write | --check
   const helperObservers=new Map();
+  /*BL-NOTICE-PRINT-START*/
+  const noticePrint=text=>{
+    const key=String(text);
+    let h1=0xdeadbeef^key.length,h2=0x41c6ce57^key.length;
+    for(let i=0;i<key.length;i++){const c=key.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+    h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+    h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+    return (4294967296*(2097151&h2)+(h1>>>0)).toString(36);
+  };
+  /*BL-NOTICE-PRINT-END*/
+  /*BL-HELPER-NOTICES-START*/
   const NOTICE_HEADINGS=[
-    ["📦函数", "📦 함수"],
-    ["🐛修复", "🐛 수정"],
-    ["💬酒馆助手宏", "💬 실리태번 헬퍼 매크로"],
-    ["🗣提示词查看器", "🗣 프롬프트 뷰어"],
-    ["🪪许可证", "🪪 라이선스"],
-    ["⏫功能", "⏫ 기능"],
-    ["💻界面", "💻 화면"],
-    ["🎨渲染器", "🎨 렌더러"],
-    ["📕脚本库", "📕 스크립트 라이브러리"],
-    ["📚脚本库", "📚 스크립트 라이브러리"],
-    ["🔧杂项", "🔧 기타"],
-    ["🔢变量管理器", "🔢 변수 관리자"],
-    ["🔍日志查看器", "🔍 로그 뷰어"],
+    ["ec9fem3gd8", "📦 함수"],
+    ["1431o8xo4te", "🐛 수정"],
+    ["2e8zkg2er9m", "💬 실리태번 헬퍼 매크로"],
+    ["1rqa20ls5o5", "🗣 프롬프트 뷰어"],
+    ["1c1tvznsh50", "🪪 라이선스"],
+    ["s7082lsb1t", "⏫ 기능"],
+    ["l5x7t8uw4y", "💻 화면"],
+    ["1vx4cb2kms", "🎨 렌더러"],
+    ["27weaxmragc", "📕 스크립트 라이브러리"],
+    ["ep6sc43xzz", "📚 스크립트 라이브러리"],
+    ["1oy4tfil2a4", "🔧 기타"],
+    ["rnqk3fbooz", "🔢 변수 관리자"],
+    ["kxii74r2sc", "🔍 로그 뷰어"],
+    ["ezvdhstxxt", "🌐 i18n 다국어"],
   ];
   const HELPER_NOTICES=new Map(Object.entries({
-    "4.11.3":{sign:"{{format_message|chat|character|preset|global_variable_quoted::}}",blocks:[
-      [["新增", "宏 (by @fengzgk).", "相比起", "宏, 它会始终给字符串两边添加双引号.", "例如", "用", "替换后将显示成", ", 避免 AI 误认为是 100 除以 100."],
-       ["새로", "매크로를 추가했어요 (by @fengzgk).", "기존", "매크로와 달리 문자열 양쪽에 항상 큰따옴표를 붙여요.", "예를 들어", "같은 값은", "매크로로 치환하면", "처럼 표시되어, AI 가 100 나누기 100 으로 오해하지 않아요."]],
-    ],code:[["体力值: 100/100", "체력: 100/100"], ["{{format_message_variable_quoted::体力值}}", "{{format_message_variable_quoted::체력}}"], ["体力值: \"100/100\"", "체력: \"100/100\""]]},
-    "4.11.2":{sign:"1.14.0",blocks:[
-      [["对酒馆", "~", "版本的兼容性"],
-       ["실리태번", "~", "버전과의 호환성 문제를 수정했어요."]],
+    "4.12.1":{sign:"21vjsdzxnxx",blocks:[
+      ["11kq6065mt3", ["의 도구 호출이 일부 환경에서","오류로 실패하던 문제를 수정했어요."]],
     ]},
-    "4.11.1":{sign:"should_return_reasoning",blocks:[
-      [["为", "和", "新增", "参数, 启用后将能在返回值中获得 AI 的思考过程和思考签名."],
-       ["이제", "및", "함수에서", "인자를 쓸 수 있어요. 켜면 반환값에 AI 의 추론 과정과 추론 서명이 함께 담겨요."]],
-      [["新增", "实验选项, 容易受第三方插件和脚本影响而显示不准确, 因此开关放在提示词查看器里的某个神秘位置, 默认关闭. 启用后能在提示词查看器中查看提示词内容来源于哪里, 例如来自世界书中名为", "的条目."],
-       ["새로 ", " 실험 옵션을 추가했어요. 다른 확장 프로그램이나 스크립트의 영향으로 틀리게 표시되기 쉬워서, 스위치는 프롬프트 뷰어 속 어딘가 비밀스러운 곳에 두었고 기본값은 꺼짐이에요. 켜면 프롬프트 뷰어에서 프롬프트 내용이 어디에서 왔는지 볼 수 있어요. 예를 들어 로어북의", "항목에서 왔다고 알려 줘요."]],
-    ],code:[["启用内容溯源", "내용 출처 표시 사용"]],pre:[["'你好'", "'안녕하세요'"], ["// 获取 AI 的回复正文", "// AI 답변 본문 가져오기"], ["// 获取 AI 的思考过程 (reasoning)", "// AI 추론 과정 (reasoning) 가져오기"]]},
-    "4.11.0":{sign:"replaceCharacter",blocks:[
-      [["现在", "、", "等函数支持使用角色卡的头像id/文件名称作为参数. 例如如果你在酒馆网页上复制了一张", "角色卡, 两张角色卡虽然都显示成", ", 但它们的头像id/文件名称将分别是", "和", "——现在你可以使用", "或", "来操作对应角色卡."],
-       ["이제", ", ", "등의 함수에서 캐릭터 카드의 아바타 id/파일 이름을 인자로 쓸 수 있어요. 예를 들어 실리태번 웹 화면에서", "캐릭터 카드를 복제하면 두 카드의 표시 이름은 모두", "이지만, 아바타 id/파일 이름은 서로 달라요:", "및", ". 이제", "또는", "이름으로 해당 캐릭터 카드를 다룰 수 있어요."]],
-      [["修复了有多张显示名称相同的角色卡时，酒馆助手脚本只会对其中一张角色卡生效的问题"],
-       ["표시 이름이 같은 캐릭터 카드가 여러 장일 때 실리태번 헬퍼 스크립트가 그중 한 장에만 적용되던 문제를 수정했어요."]],
-      [["从原来的 Aladdin 禁止商业化许可证, 切换为表述更清楚、对开源更宽松的 PolyForm NonCommercial 1.0.0 禁止商业化许可证"],
-       ["라이선스를 기존 Aladdin 상업적 이용 금지 라이선스에서, 표현이 더 분명하고 오픈 소스에 더 너그러운 PolyForm NonCommercial 1.0.0 상업적 이용 금지 라이선스로 바꿨어요."]],
-    ],code:[["'少女歌剧'", "'소녀가극'"], ["'少女歌剧.png'", "'소녀가극.png'"], ["'少女歌剧_1.png'", "'소녀가극_1.png'"]],pre:[["// 显示名称:", "// 표시 이름:"], ["// 头像id/文件名称:", "// 아바타 id/파일 이름:"], ["// 获取 '少女歌剧_1.png' 角色卡对应的数据", "// '소녀가극_1.png' 캐릭터 카드의 데이터 가져오기"], ["少女歌剧", "소녀가극"]]},
-    "4.10.0":{sign:"iframe_events.GENERATION_REQUESTED",blocks:[
-      [["现在", "和", "在调用最初时会触发", "事件, 允许你监听情况和修改生成配置"],
-       ["이제", "및", "호출을 시작할 때", "이벤트가 발생하여, 생성 요청을 감지하고 생성 설정을 바꿀 수 있어요."]],
-      [["在极端情况下没正常发送世界书提示词的问题"],
-       ["특정 예외 상황에서 월드 정보 프롬프트가 정상적으로 전송되지 않던 문제를 수정했어요."]],
-      [["在酒馆欢迎页面开关“禁用酒馆助手宏”时，酒馆版本号和最近聊天面板消失的问题"],
-       ["시작 화면에서 “헬퍼 매크로 사용 안 함”을 켜거나 끌 때 실리태번 버전과 최근 대화 목록이 사라지던 문제를 수정했어요."]],
-    ],pre:[["你想要监听的生成id", "감지할_생성_ID"], ["新的用户输入", "새로운 사용자 입력"]]},
+    "4.12.0":{sign:"x5631schg7",blocks:[
+      ["1iyhcdw0ioy", ["메시지의 오른쪽 화살표로 새 답변 후보를 요청하다가 AI 답변 본문이 나오기 전에 멈추면, 원래 답변으로 돌아갈 때 화면이 다시 그려지지 않던 문제를 수정했어요 (by @syxupu)."]],
+      ["19edasdg1c8", ["브라우저가 일부 영어권 지역 설정일 때 영어 화면으로 제대로 바뀌지 않던 문제를 수정했어요 (by @neptalu0)."]],
+      ["1ezrfj0qa2i", ["새로",", ",", ","함수를 추가했어요. 실리태번 파일을 가져오고 · 올리고 · 지울 때 써요."]],
+    ],pre:[[44,"wyzs36vqye","// `실리태번 데이터 폴더/users/files/CV-vibes.json` 파일 가져오기"]]},
+    "4.11.3":{sign:"2c7q9h2dflo",blocks:[
+      ["1oj9zefy3ie", ["새로","매크로를 추가했어요 (by @fengzgk).","기존","매크로와 달리 문자열 양쪽에 항상 큰따옴표를 붙여요.","예를 들어","같은 값은","매크로로 치환하면","처럼 표시되어, AI 가 100 나누기 100 으로 오해하지 않아요."]],
+    ],code:[["2cgsxidm5lm","체력: 100/100"],["1s2t5pkeity","{{format_message_variable_quoted::체력}}"],["m2yzo74izv","체력: \"100/100\""]]},
+    "4.11.2":{sign:"2d8agq3byqh",blocks:[
+      ["98cehcd6ac", ["실리태번","~","버전과의 호환성 문제를 수정했어요."]],
+    ]},
+    "4.11.1":{sign:"1opdvq8flhe",blocks:[
+      ["118ok4xu9y", ["이제","및","함수에서","인자를 쓸 수 있어요. 켜면 반환값에 AI 의 추론 과정과 추론 서명이 함께 담겨요."]],
+      ["ohxcwizyk7", ["새로 "," 실험 옵션을 추가했어요. 다른 확장 프로그램이나 스크립트의 영향으로 틀리게 표시되기 쉬워서, 스위치는 프롬프트 뷰어 속 어딘가 비밀스러운 곳에 두었고 기본값은 꺼짐이에요. 켜면 프롬프트 뷰어에서 프롬프트 내용이 어디에서 왔는지 볼 수 있어요. 예를 들어 로어북의","항목에서 왔다고 알려 줘요."]],
+    ],code:[["gny4k9nnsy","내용 출처 표시 사용"]],pre:[[4,"24rwnmrrlka","'안녕하세요'"],[14,"25k1b4mdmvz","// AI 답변 본문 가져오기"],[26,"1q8dfij6tta","// AI 추론 과정 (reasoning) 가져오기"]]},
+    "4.11.0":{sign:"nr0wfbm8ol",blocks:[
+      ["1er4gjd495a", ["이제",", ","등의 함수에서 캐릭터 카드의 아바타 id/파일 이름을 인자로 쓸 수 있어요. 예를 들어 실리태번 웹 화면에서","캐릭터 카드를 복제하면 두 카드의 표시 이름은 모두","이지만, 아바타 id/파일 이름은 서로 달라요:","및",". 이제","또는","이름으로 해당 캐릭터 카드를 다룰 수 있어요."]],
+      ["280p2ptrgas", ["표시 이름이 같은 캐릭터 카드가 여러 장일 때 실리태번 헬퍼 스크립트가 그중 한 장에만 적용되던 문제를 수정했어요."]],
+      ["2gojldg2wte", ["라이선스를 기존 Aladdin 상업적 이용 금지 라이선스에서, 표현이 더 분명하고 오픈 소스에 더 너그러운 PolyForm NonCommercial 1.0.0 상업적 이용 금지 라이선스로 바꿨어요."]],
+    ],code:[["1uqe9gpj7ln","'소녀가극'"],["1wj29hdlbam","'소녀가극.png'"],["1vvui4r5c0s","'소녀가극_1.png'"]],pre:[[8,"13hv810xusj","// 표시 이름:"],[13,"j84jiar1ts","// 아바타 id/파일 이름:"],[27,"18uiyov2nzt","// '소녀가극_1.png' 캐릭터 카드의 데이터 가져오기"],[4,"1yfaffwc2fe","소녀가극"]]},
+    "4.10.0":{sign:"yf7vl1o3zt",blocks:[
+      ["28rcy3yapof", ["이제","및","호출을 시작할 때","이벤트가 발생하여, 생성 요청을 감지하고 생성 설정을 바꿀 수 있어요."]],
+      ["rc0s6o3w9x", ["특정 예외 상황에서 월드 정보 프롬프트가 정상적으로 전송되지 않던 문제를 수정했어요."]],
+      ["2dph6ulw118", ["시작 화면에서 “헬퍼 매크로 사용 안 함”을 켜거나 끌 때 실리태번 버전과 최근 대화 목록이 사라지던 문제를 수정했어요."]],
+    ],pre:[[10,"mxrlz13sas","감지할_생성_ID"],[6,"1xlqv2qsp7n","새로운 사용자 입력"]]},
   }));
+  /*BL-HELPER-NOTICES-END*/
   const noticeKey=texts=>JSON.stringify(texts.map(normalize));
   for(const notice of HELPER_NOTICES.values()){
-    notice.blocks=new Map([...NOTICE_HEADINGS.map(([zh,ko])=>[[zh],[ko]]),...notice.blocks].map(([zh,ko])=>[noticeKey(zh),ko]));
-    notice.code=new Map((notice.code??[]).map(([zh,ko])=>[normalize(zh),ko]));
+    notice.blocks=new Map([...NOTICE_HEADINGS.map(([print,ko])=>[print,[ko]]),...notice.blocks]);
+    notice.code=new Map(notice.code??[]);
     notice.pre??=[];
   }
-  const NOTICE_HEADING='h1,h2,h3',NOTICE_BLOCK='h1,h2,h3,h4,h5,h6,li,p',NOTICE_VERSION=/^\d+\.\d+\.\d+$/;
+  const NOTICE_HEADING='h1,h2,h3',NOTICE_BLOCK='h1,h2,h3,h4,h5,h6,li,p',NOTICE_VERSION=/^\d+\.\d+\.\d+$/,NOTICE_HAN=/[\u3400-\u9fff]/;
+  // pre 한 마디에서 길이 length 의 창 가운데 지문이 print 인 자리를 왼쪽부터 겹치지 않게 ko 로 바꾼다(원문 replaceAll 과 같은 결과)
+  function replacePrinted(text,length,print,ko){
+    let out='',from=0;
+    for(let i=0;i+length<=text.length;){
+      if(noticePrint(text.slice(i,i+length))===print){out+=text.slice(from,i)+ko;i+=length;from=i;}
+      else i++;
+    }
+    return from?out+text.slice(from):text;
+  }
   function translateNoticeSection(notice,elements){
     for(const element of elements){
       const groups=new Map();
@@ -627,7 +652,8 @@ export default function blueLemonadeScript(BlueLemonade, window) {
         const node=walker.currentNode,parent=node.parentElement;
         if(parent.closest('pre')){
           // 앞뒤 공백은 swapText 가 원문에서 다시 붙이므로 잘라서 돌려준다 (1.4.5 까지는 첫 줄 들여쓰기가 두 배가 됐다)
-          swapText(node,text=>{let next=text;for(const [zh,ko] of notice.pre)next=next.replaceAll(zh,ko);return next===text?null:next.trim();});
+          // pre 원문은 모두 한자를 품어요(도구가 확인) — 한자 없는 마디(코드 낱말)는 창을 밀지 않아요
+          swapText(node,text=>{if(!NOTICE_HAN.test(text))return null;let next=text;for(const [length,print,ko] of notice.pre)next=replacePrinted(next,length,print,ko);return next===text?null:next.trim();});
           continue;
         }
         const block=parent.closest(NOTICE_BLOCK);
@@ -636,10 +662,10 @@ export default function blueLemonadeScript(BlueLemonade, window) {
         groups.get(block)[parent.closest('code')?'codes':'texts'].push(node);
       }
       for(const {texts,codes} of groups.values()){
-        const korean=notice.blocks.get(noticeKey(texts.map(node=>node.nodeValue)));
+        const korean=notice.blocks.get(noticePrint(noticeKey(texts.map(node=>node.nodeValue))));
         if(!korean||korean.length!==texts.length)continue;
         texts.forEach((node,index)=>swapText(node,()=>korean[index]));
-        for(const node of codes)swapText(node,text=>notice.code.get(normalize(text))??null);
+        for(const node of codes)swapText(node,text=>notice.code.get(noticePrint(normalize(text)))??null);
       }
     }
   }
@@ -650,7 +676,7 @@ export default function blueLemonadeScript(BlueLemonade, window) {
       if(!notice)continue;
       const elements=[];
       for(let next=heading.nextElementSibling;next&&!(next.matches(NOTICE_HEADING)&&NOTICE_VERSION.test(normalize(next.textContent)));next=next.nextElementSibling)elements.push(next);
-      if(elements.some(element=>[...element.querySelectorAll('code')].some(code=>code.textContent.includes(notice.sign))))translateNoticeSection(notice,elements);
+      if(elements.some(element=>[...element.querySelectorAll('code')].some(code=>noticePrint(normalize(code.textContent))===notice.sign)))translateNoticeSection(notice,elements);
     }
   }
   // 헬퍼 창 감시도 하나: 기록마다 어느 창인지 거슬러 올라가 창마다 한 번씩

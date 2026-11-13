@@ -2,7 +2,7 @@
 // 실행기(src/scripts/runtime.js)가 BlueLemonade(테마 API)와 스크립트별 창 대리 window(src/scripts/realm.js — 타이머 · 감시 모음, setInterval 은 공용 스케줄러)를 넘겨요.
 export default function blueLemonadeScript(BlueLemonade, window) {
 /*BL-SCRIPT-START*/
-// Tavern Helper 4.11.3 Korean UI, v1.4.0
+// Tavern Helper 4.11.3 Korean UI, v1.4.0 (4.12.0 · 4.12.1 은 새 화면 문구가 없어 그대로예요 — 원본 b1566767 대조 · 11-13 다시 봄: 그 뒤 원본 커밋은 의존성 갱신뿐)
 // Short UI labels only (buttons, menus, item names): no prompts, script code, user variables, stored names, or settings are rewritten.
 // 1.4.0: 긴 원문(도움말 문단 · 변경 내역 · 공지 · 긴 알림)의 번역은 뺐어요 — 원문 폭 30 이하(한자 · 한글 2칸, 영문 1칸, ${n} 자리 뺌)인 짧은 이름만 남겨요.
 //   그 밖의 글은 헬퍼 원래 말로 보여요. 기준은 tools/tests/preset-text-short.mjs 가 지켜요.

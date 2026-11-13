@@ -1,4 +1,4 @@
-// 글꾸 틀 하나에 「낮 | 밤」 전환을 달아요 — DOM 없는 순수 함수(마트 · 테마 · node 어디서나) (Fable 5.2 · 11-12)
+// 글꾸 틀 하나에 「낮 | 밤」 전환을 달아요 — DOM 없는 순수 함수(마트 · 테마 · node 어디서나)
 //   import { addToggle } from './전환.mjs';
 //   const out = addToggle(html);              // html: 마트 복사 길의 결과(toneSimple → … → simpleReady) 또는 조각 preview — 낮 판이든 밤 판이든, 캐릭터 색을 입혔든
 //   out.html  전환 달린 HTML(판은 한 벌 · <style> 도 하나 그대로)      out.info  { key, base, start, 바꾼선택자, 늘어난바이트, 자리, 주의[] }

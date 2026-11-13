@@ -1,4 +1,4 @@
-/* src/panel.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 163개(테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요) — 고치지 말 것. src/lite.js 가 테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js) 테마 시트 뒤에 붙여요 (build 235b6fe941b2) */
+/* src/panel.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 163개(테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요) — 고치지 말 것. src/lite.js 가 테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js) 테마 시트 뒤에 붙여요 (build 41de51fe1bea) */
 body.salty-dark .salty-panel {
   --danger: var(--salty-danger);
 }

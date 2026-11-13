@@ -83,7 +83,7 @@ const good = (where, draw, simple) => {
 
 await t.test('① 공용 함수 사본: 글꾸 마트 mart/day-night.js(허브 전환.mjs)와 같은 글 — 고칠 때는 허브 원본 · 마트 · 테마 셋을 같이 바꾸고 이 해시를 고쳐요', () => {
     const body = read('src/log-copy-day-night.js').replace(/\r\n/g, '\n');
-    assert.equal(crypto.createHash('sha256').update(body).digest('hex'), '3d4f0c0c7d990679e1e157d8602c4b5ff94aa4b666ea4fdfa5aecacd458c0160');
+    assert.equal(crypto.createHash('sha256').update(body).digest('hex'), '5fc107499709327dfd539a0322755c43b5af5d3fe406657e5fd8c7efa5cef684');
     assert.equal(typeof addToggle, 'function');
     // 11-13 해 · 달 둘 다 테마 파랑(고른 쪽 = 옅은 파랑 칸 + 파랑 아이콘 · 안 고른 쪽 = 바탕 없는 회색) — 해만 따로 칠하는 값(호박색 해 · 흰 칸)이 남으면 실패
     assert.ok(!/#E8A100|#FFFFFF|#2F3742|#D5DDE7|#4A5564/i.test(body), '해 전용 색(호박색 해 · 흰 칸 · 그 테)이 남았어요');

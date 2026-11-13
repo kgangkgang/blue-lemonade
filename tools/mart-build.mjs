@@ -82,7 +82,7 @@ for a in job['assets']:
         'art': 'data:image/png;base64,' + base64.b64encode(png(art2)).decode(), 'mask': 'data:image/png;base64,' + base64.b64encode(png(mask2)).decode() })
 json.dump(out, open(job['out'], 'w', encoding='utf-8'))
 `;
-// 1.0.1 코덱스 액자 컬렉션(마트 팩 · format "bl-mart-pack" — W/work/frame-production/build-mart-pack.py 산출물): 그림을 다시 만들지 않고 옮기기만 해요.
+// 1.0.1 액자 컬렉션(마트 팩 · format "bl-mart-pack" — W/work/frame-production/build-mart-pack.py 산출물): 그림을 다시 만들지 않고 옮기기만 해요.
 //   목록 썸네일(WebP 긴 변 400) + 썸네일 마스크 · 크게 보기 · 받기용(WebP 긴 변 1086 + 마스크 PNG). 받기 JSON(PNG data URL)은 받는 순간 브라우저가 만들어요(mart.js frameReceipt) —
 //   사이트에는 PNG 를 두지 않아요(수백 장이라 GitHub Pages 용량). 크기 · 화질은 팩이 정해요(build-mart-pack.py · 11-04 결정 긴 변 1086 · q78).
 const PACK_ID = /^[a-z0-9-]{1,60}$/;
