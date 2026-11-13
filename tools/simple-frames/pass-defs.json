@@ -3116,10 +3116,18 @@
  },
  {
   "frame": "k1448",
-  "name": "회색 고양이",
+  "name": "벨포드 · 무스카와 화분",
   "emoji": "🐈",
   "open": true,
   "peek": true,
   "desc": "소품을 누르면 — 화분 밀기"
+ },
+ {
+  "frame": "k1449",
+  "name": "벨포드 · 무스카 부비부비",
+  "emoji": "🐈",
+  "open": true,
+  "peek": true,
+  "desc": "소품을 누르면 — 발치에 부비부비"
  }
 ]
