@@ -55,9 +55,6 @@ async function cardPart(vp) {
     const sh = await b.eval(`(()=>{const s=document.querySelector('.mart-sheet[open]'),m=s.querySelector('.mart-sheet-meta');const a=[...m.querySelectorAll(':scope > a.mart-source')];const r=s.getBoundingClientRect();return {links:a.map(x=>x.href),out:a.filter(x=>x.getBoundingClientRect().right>r.right+1).length}})()`);
     row(vp, '크게 보기 머리: 캐릭터를 안 골라도 그 틀의 원작(은설 · 29037)', sh.links.length === 1 && sh.links[0].endsWith('/posts/29037') && !sh.out, sh.links.join(' · ') || '줄 없음');
     await b.shot(path.join(OUT, `${vp}-3-크게-보기-은설.png`));
-    // 지니 결과 카드에도 「HTML 복사로 써요」 없음(글자만)
-    const genie = await b.eval(`fetch(${J(srv.url + 'mart/genie.js')}).then(r=>r.text()).then(t=>t.includes('>HTML 복사로 써요<'))`);
-    row(vp, '지니 결과 카드에도 「HTML 복사로 써요」 없음', genie === false, String(genie));
 }
 
 const idx = async () => b.eval(`fetch(${J(srv.url + 'mart/data/geulkku/index.json')},{cache:'no-store'}).then(r=>r.json()).then(d=>d.items.map(x=>({id:x.id,topic:x.topic,world:x.world||'',who:x.who||'',cat:x.category,audio:!!x.audio})))`);

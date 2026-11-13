@@ -12,7 +12,7 @@
     menu.className = 'mart-menu'; menu.id = 'mart-menu'; menu.hidden = true;
     menu.setAttribute('role', 'dialog');
     menu.setAttribute('aria-labelledby', 'mart-menu-title');
-    menu.innerHTML = `<span class="mart-menu-grip" aria-hidden="true"></span><p class="mart-menu-title" id="mart-menu-title">어느 마트로 갈까요?</p>${go('frames', '액자 마트', `사진 · 프로필 장식 액자 <b>${COUNTS.frames}</b>종`)}${go('geulkku', '글꾸 마트', `로그 복사 꾸밈 틀 <b>${COUNTS.geulkku}</b>종`)}${go('genie', '🧞 글꾸 지니', '질문 몇 개로 글꾸 · 액자를 맞혀 줘요')}`;
+    menu.innerHTML = `<span class="mart-menu-grip" aria-hidden="true"></span><p class="mart-menu-title" id="mart-menu-title">어느 마트로 갈까요?</p>${go('frames', '액자 마트', `사진 · 프로필 장식 액자 <b>${COUNTS.frames}</b>종`)}${go('geulkku', '글꾸 마트', `로그 복사 꾸밈 틀 <b>${COUNTS.geulkku}</b>종`)}`;
     const scrim = Object.assign(document.createElement('div'), { className: 'mart-menu-scrim', hidden: true });
     document.body.append(scrim, menu);
     btn.setAttribute('aria-controls', 'mart-menu');
@@ -46,7 +46,7 @@
     addEventListener('scroll', () => { if (!menu.hidden && !phone.matches) place(); }, { passive: true });
 })();
 
-// 11-12 밤 PC 가로 넘김 줄: 세로 휠만 돌려도 옆으로 넘겨요(사용자 「걍 스크롤 마우스 휠 돌리면 되는 걸로 해 줘 … 쉬프트 누르고 해야 함 PC」) — 홈 · 글꾸 마트 · 액자 마트 · 지니 공용.
+// 11-12 밤 PC 가로 넘김 줄: 세로 휠만 돌려도 옆으로 넘겨요(사용자 「걍 스크롤 마우스 휠 돌리면 되는 걸로 해 줘 … 쉬프트 누르고 해야 함 PC」) — 홈 · 글꾸 마트 · 액자 마트 공용.
 //   가로로 넘치는 줄(overflow-x auto · scroll — .mart-hscroll · 분류 칩 · 묶음 탭 · 거르기 줄 · 표본 사진 줄 · 홈 주제 탭 …) 위에서 세로 휠 → 그 줄을 옆으로.
 //   줄 끝에 닿았거나 넘칠 것이 없으면 막지 않아요(페이지 · 창이 그대로 내려가요 — 갇히지 않게). 트랙패드 가로 제스처 · Shift+휠 · Ctrl+휠(확대) · 폰 터치는 그대로.
 //   안 건드리는 것: 세로로도 넘기는 칸(그 칸의 세로 스크롤이 먼저) · 한 장씩 딱 멈추는 넘김(scroll-snap — 홈 큰 사진 띠: 페이지를 내리다 갇혀요) · 글꾸 틀 안(.gk — 복사 글 그대로).

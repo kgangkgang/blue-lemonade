@@ -392,7 +392,7 @@ await test('옛 글꾸 없음 · 목록: index.json 은 심플 새 틀 28 하나
     const ids = new Set(six.items.map(x => x.id));
     assert.equal(old.items.filter(x => ids.has(x.id)).length, 0);
     // 옛 조각 파일 이름을 부르는 곳이 사이트에 없어요
-    const site = ['mart/mart.js', 'mart/genie.js', 'mart/taste.js', 'mart/taste-render.js', 'mart/cart.js', 'mart/top-mart.js', 'index.html', 'mart/geulkku/index.html', 'mart/genie/index.html'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+    const site = ['mart/mart.js', 'mart/taste.js', 'mart/taste-render.js', 'mart/cart.js', 'mart/top-mart.js', 'index.html', 'mart/geulkku/index.html'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
     for (const c of Object.values(old.chunks)) assert.ok(!site.includes(c.file), c.file);
     assert.doesNotMatch(site, /simple-index\.json|data\/geulkku\/icon\//);
 });
@@ -437,12 +437,13 @@ await test('그림 액자 1824: 콘셉트 152 × 12 · 파일 넷이 다 있음 
     assert.deepEqual(fs.readdirSync(path.join(MART, 'data/frames')).sort(), [...used].sort(), '안 쓰는 그림 파일 없음');
     // 홈 카드 · 마트 메뉴 그림처럼 파일 이름(내용 해시)을 직접 부르는 곳 — 그림을 다시 만들면 이름이 바뀌니 같이 고쳐야 해요(11-13 홈 · 메뉴 그림 404)
     const direct = [];
-    for (const f of ['index.html', 'mart/home.css', 'mart/top-mart.css', 'mart/mart.css', 'mart/frame-room.css', 'mart/top-mart.js', 'mart/mart.js', 'mart/frame-room.js', 'mart/genie.js', 'mart/frames/index.html', 'mart/genie/index.html'])
+    for (const f of ['index.html', 'mart/home.css', 'mart/top-mart.css', 'mart/mart.css', 'mart/frame-room.css', 'mart/top-mart.js', 'mart/mart.js', 'mart/frame-room.js', 'mart/frames/index.html'])
         for (const m of fs.readFileSync(path.join(ROOT, f), 'utf8').matchAll(/data\/frames\/([a-z0-9-]+\.(?:webp|png))/g)) direct.push([f, m[1]]);
     assert.ok(direct.length >= 2, '직접 부르는 곳을 찾았어요');
     // 머리줄 「마트」 창의 액자 마트 썸네일은 따로 구운 그림 한 장(cover-frames.webp · 368×256 · 바탕 #ECF3FB — 실린 액자 두 점에 표본 사진을 넣은 진짜 합성).
     //   규격은 메뉴 썸네일을 고치는 갈래와 같아요(그 갈래가 얹히면 CSS 줄은 그쪽 것을 살리고 그림 파일은 이것을 써요)
     assert.ok(fs.existsSync(path.join(MART, 'cover-frames.webp')) && /\.mart-menu-cover\.is-frames\{[^}]*cover-frames\.webp/.test(fs.readFileSync(path.join(MART, 'top-mart.css'), 'utf8')), '액자 마트 메뉴 썸네일');
+    assert.ok(fs.existsSync(path.join(MART, 'menu-geulkku.webp')) && /\.mart-menu-cover\.is-geulkku\{[^}]*menu-geulkku\.webp/.test(fs.readFileSync(path.join(MART, 'top-mart.css'), 'utf8')), '글꾸 마트 메뉴 썸네일(진짜 틀 세 점 · 368×256)');
     for (const [f, name] of direct) assert.ok(used.has(name), `${f} 가 부르는 ${name} 이 있어요`);
     // 옛 액자는 다시 그려도 파일 이름이 그대로예요(옛 주소가 새 그림을 보여 줘요) — 공개판(11-05 ~ 11-13)의 이름 여섯을 표본으로 잠가요 · 마트 안에서는 asset() 이 ?v= 꼬리로 캐시만 갈아요
     for (const [id, k, name] of [['mart-watercolor-two-d-portrait', 'full', 'watercolor-two-d-portrait-d9f0b57e.webp'], ['mart-watercolor-two-d-portrait', 'mask', 'watercolor-two-d-portrait-m-f89766ac.png'],
@@ -479,7 +480,7 @@ await test('심플 액자 30 ① 자료 frames.json = 테마 FRAME_PRESETS 30 ·
     // 액자 마트 머리 · 홈 숫자
     assert.match(fs.readFileSync(path.join(MART, 'frames/index.html'), 'utf8'), /심플 액자 30종은 테마에 이미/);
     assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /그림 액자 1824종과, 테마에 이미 들어 있는 심플 액자 30종/);
-    for (const f of ['mart/geulkku', 'mart/frames', 'mart/genie', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261113s/, f);
+    for (const f of ['mart/geulkku', 'mart/frames', 'mart/kara', '.']) assert.match(fs.readFileSync(path.join(ROOT, f, 'index.html'), 'utf8'), /top-mart\.js\?v=20261113u/, f);   // 11-13 밤 지니를 없애며 메뉴 두 줄 · 썸네일 규격 통일 → u
 });
 await test('심플 액자 30 ② 가짜 캔버스로 30종 전부 기본값 · 색 · 50 % · 200 % 그려지고 사진 창을 채워요 · 모르는 id 는 던져요(테마 frame-presets-simple.mjs ② 와 같은 셈)', async () => {
     const calls = [];
@@ -508,28 +509,17 @@ await test('심플 액자 30 ② 가짜 캔버스로 30종 전부 기본값 · �
     } finally { if (had) globalThis.document = keep; else delete globalThis.document; }
 });
 
-// 지니: 글꾸 질문표를 글 그대로 꺼내 새 틀 28개에 돌려 봐요(genie.js 의 score · candidates 와 같은 셈)
-const genieSrc = fs.readFileSync(path.join(MART, 'genie.js'), 'utf8');
-const STEPS = new Function(`${genieSrc.slice(genieSrc.indexOf('const GEULKKU_STEPS = ['), genieSrc.indexOf('const FRAME_STEPS = ['))}; return GEULKKU_STEPS;`)();
-await test('지니: 글꾸 질문표가 새 틀 이름 · 분류만 써요 · 그림 결 · 세계관 질문 없음 · 모든 답 조합에서 후보가 있고 점수가 붙어요 · 스물여덟 틀이 다 한 번은 1등 후보에 들어요', () => {
-    const names = new Set(six.items.map(x => x.name)), cats = new Set(six.items.map(x => x.category));
-    for (const st of STEPS) {
-        assert.ok(!st.when, `${st.id} 갈림 질문 없음`);
-        for (const o of st.opts) {
-            assert.ok(!o.set, `${st.id} ${o.t} 거름망 없음`);
-            for (const k of Object.keys(o.w?.name || {})) assert.ok(names.has(k), `${st.id} 이름 ${k}`);
-            for (const k of Object.keys(o.w?.cat || {})) assert.ok(cats.has(k), `${st.id} 분류 ${k}`);
-        }
+// 11-13 글꾸 지니를 사이트에서 없앴어요(사용자 「지니는 걍 없애라」) — 지니로 가는 링크 · 단추 · 글 0 · 지니 전용 파일 없음 · 옛 주소는 마트 첫 화면으로 넘겨요
+await test('지니 없음: 홈 · 마트 · 노래방 화면과 마트 메뉴에 지니로 가는 링크 · 단추 · 글이 없어요 · genie.js · genie.css 없음 · 옛 주소(mart/genie/)는 글꾸 마트로 넘기는 쪽 하나', () => {
+    for (const f of ['index.html', 'mart/geulkku/index.html', 'mart/frames/index.html', 'mart/kara/index.html', 'mart/top-mart.js', 'mart/top-mart.css', 'mart/home.css']) {
+        const t = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+        assert.ok(!/genie|지니|🧞/.test(t), `${f} 에 지니가 남았어요`);
     }
-    const score = (item, ans) => STEPS.reduce((s, st, i) => { const w = st.opts[ans[i]].w || {}; let v = s + (w.cat?.[item.category] || 0); for (const k in (w.name || {})) if (item.name.includes(k)) v += w.name[k]; return v; }, 0);
-    const tops = new Set();
-    const combos = STEPS.reduce((acc, st) => acc.flatMap(a => st.opts.map((_, i) => [...a, i])), [[]]);
-    for (const ans of combos) {
-        const sc = six.items.map(i => [i, score(i, ans)]).sort((a, b) => b[1] - a[1]);
-        assert.ok(sc.length && sc[0][1] > 0, `답 ${ans} 점수 없음`);
-        for (const [i, s] of sc) if (s >= sc[0][1]) tops.add(i.name);
-    }
-    assert.equal(tops.size, 28, `1등 후보에 한 번도 안 드는 틀: ${[...names].filter(n => !tops.has(n)).join(' · ')}`);
+    for (const f of ['genie.js', 'genie.css']) assert.ok(!fs.existsSync(path.join(MART, f)), `${f} 가 남았어요`);
+    const moved = fs.readFileSync(path.join(MART, 'genie/index.html'), 'utf8');
+    assert.match(moved, /<meta http-equiv="refresh" content="0;\s*url=\.\.\/geulkku\/">/); assert.match(moved, /location\.replace\(/); assert.match(moved, /<a href="\.\.\/geulkku\/">/);
+    assert.ok(!/<script[^>]+src=|<link[^>]+stylesheet/.test(moved) && moved.length < 1500, '넘김 쪽은 다른 파일을 부르지 않는 짧은 쪽');
+    assert.deepEqual(fs.readdirSync(path.join(MART, 'genie')), ['index.html']);
 });
 
 await test('옛 글꾸 도구는 쉬어요: 자료를 만들고 점검하던 열한 도구가 --check 에서 한 줄 알리고 0 으로 끝나요(소스는 그대로) · 새 틀 생성기 --check 는 그대로 돌아요', () => {
@@ -546,7 +536,8 @@ await test('site-rig: 글꾸 화면은 새 틀로 열려요(아무 카드나 크
     const live = rig.split('\n').filter(l => /^\s*\{ group:/.test(l));
     const where = live.map(l => (l.match(/where: '([^']+)'/) || [])[1]);
     for (const w of ['글꾸 · 시식', '글꾸 · 내 로그 설정', '글꾸 · 내 로그 켬', '글꾸 · 담김 카드']) assert.ok(!where.includes(w), w);
-    for (const w of ['글꾸 · 목록', '글꾸 · 상세', '글꾸 · 캐릭터 펼침', '지니 · 글꾸 결과', '장바구니 · 담김']) assert.ok(where.includes(w), w);
+    for (const w of ['글꾸 · 목록', '글꾸 · 상세', '글꾸 · 캐릭터 펼침', '장바구니 · 담김']) assert.ok(where.includes(w), w);
+    assert.ok(!where.some(w => /지니/.test(w)), '지니 화면 없음');
     assert.match(live.find(l => l.includes("'장바구니 · 담김'")), /url: 'mart\/frames\/'/);
     assert.doesNotMatch(rig.match(/const REQUIRED = [^\n]+/)[0], /시식/);
     assert.match(rig, /const openSheetBy = [^\n]*'\.mart-card:not\(\[hidden\]\) \.mart-preview'/);
@@ -990,9 +981,9 @@ await test('카드 원작: 세계관 · 인물 틀 104장이 모두 원작 줄�
     for (const w of so.WORLDS) assert.ok(so.worldSources(w.id).length >= 1 && so.worldSources(w.id).every(s => s.url), `${w.label} 머리 띠 원작`);
     assert.deepEqual(so.itemSources(sixAll.items.find(x => x.id === 'simple-k1042')).map(s => s.url.split('/').pop()), ['5150', '81234', '43794'], 'D&H 쪽 아드리안 틀은 세 글 다');
     assert.deepEqual(so.itemSources(sixAll.items.find(x => x.id === 'simple-k1049')).map(s => s.url.split('/').pop()), ['29037']);
-    const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), genieSrc = fs.readFileSync(path.join(MART, 'genie.js'), 'utf8');
+    const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
     assert.ok(martSrc.includes("if (Array.isArray(item.src)) return itemSources(item).map(x => sourceHtml(x)).join('');"), '카드 · 크게 보기가 같은 줄(sourceLinks)');
-    for (const [f, t] of [['mart.js', martSrc], ['genie.js', genieSrc]]) assert.ok(!t.includes('>HTML 복사로 써요<'), `${f} 에 「HTML 복사로 써요」 글이 남았어요`);
+    for (const [f, t] of [['mart.js', martSrc]]) assert.ok(!t.includes('>HTML 복사로 써요<'), `${f} 에 「HTML 복사로 써요」 글이 남았어요`);
     assert.ok(so.creditsHtml([]).includes('세계관 · 인물'), '「원작」 칸 설명에 세계관 틀');
 });
 
@@ -1032,8 +1023,8 @@ await test('분류 화면 · 캐릭터 칸 · 머리말(11-12 밤 시안 안 A):
     // 간편 「움직임」 줄의 「소품만」 — 글 움직임 끔 · 소품 움직임은 지금 세기(끔이었으면 중) · 세밀과 같은 값
     { const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
       assert.ok(ui.includes('data-simple-motion="prop" aria-pressed="${propOnly}"') && ui.includes("setMotion(v === 'prop' ? { text: '0', prop: cur.prop === '0' ? 'm' : cur.prop } : { text: v, prop: v })") && ui.includes("const propOnly = m.text === '0' && m.prop !== '0', canPropOnly = !!caps.text['0'];")); }
-    // 지니 액자 결과 카드 · 장바구니 줄에도 원작 줄(액자 방과 같은 줄 · 담을 때 같이 기억)
-    assert.ok(fs.readFileSync(path.join(MART, 'genie.js'), 'utf8').includes('${frames?.links ? frames.links(item) : sourceLinks(item)}') && fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8').includes('export const frameLinks = item => links(item);'));
+    // 장바구니 줄에도 원작 줄(액자 방과 같은 줄 · 담을 때 같이 기억)
+    assert.ok(fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8').includes('export const frameLinks = item => links(item);'));
     assert.ok(martSrc.includes("...((src => (src.length ? { src } : {}))(sourcesOf(item)))") && fs.readFileSync(path.join(MART, 'cart.js'), 'utf8').includes('${srcHtml(e)}'));
 });
 await test('소리 줄 정리(11-12 밤 「mp3 에 효과 들어간 특이한 글꾸들 아니면 … mp3 가 들어가야 할 이유도 없고」): 소리가 연출인 틀 · 애매한 틀만 소리 줄이 남고 나머지 91틀은 줄 · 규칙 · 설명 글까지 0 · 「소리 카드」 칩 이름 0', async () => {
@@ -1054,7 +1045,7 @@ await test('소리 줄 정리(11-12 밤 「mp3 에 효과 들어간 특이한 �
     }
     assert.equal(dropped, 91);
     assert.ok(!sixAll.categories.some(c => /소리 카드/.test(c.label)) && sixAll.categories.find(c => c.id === 'simple-sound').label === '소리 · 음악');
-    for (const f of ['mart.js', 'cast.js', 'genie.js', 'geulkku/index.html', 'genie/index.html']) assert.ok(!fs.readFileSync(path.join(MART, f), 'utf8').replace(/\/\/.*$/gm, '').includes('소리 카드'), `${f} 화면 글에 「소리 카드」`);
+    for (const f of ['mart.js', 'cast.js', 'geulkku/index.html']) assert.ok(!fs.readFileSync(path.join(MART, f), 'utf8').replace(/\/\/.*$/gm, '').includes('소리 카드'), `${f} 화면 글에 「소리 카드」`);
     // 다른 규칙은 그대로: 소리 줄을 뺀 틀의 규칙 수 = 원래 − 소리 규칙
     const html = '<div class="gk gk-k1"><style>\n.gk-k1 p{margin:0}\n.gk-k1 .gk-sd{display:flex}\n.gk-k1 .gk-nm.gk-nA,.gk-k1 .gk-sn.gk-sA{color:red}\n.gk-k1 audio{display:block}\n\n.gk-k1.gk-tl .gk-sc{color:blue}\n</style><p>가</p>\n<div class="gk-sd"><span class="gk-sn gk-sA">이름</span><audio controls></audio></div>\n<p>나</p></div>';
     assert.equal(gen.dropSound(html), '<div class="gk gk-k1"><style>\n.gk-k1 p{margin:0}\n.gk-k1 .gk-nm.gk-nA{color:red}\n\n.gk-k1.gk-tl .gk-sc{color:blue}\n</style><p>가</p>\n<p>나</p></div>');
@@ -2109,10 +2100,10 @@ await test('AI 점검 ⑦ 장바구니 계산하기 · 받기는 만드는 동�
     assert.ok(srcOf('mart.js').includes("onCheckout((act, entries) => (act === 'copy' ? copyEntries(entries, true)"), '복사는 첫 await 전에 클립보드를 열어요(사파리)');
 });
 await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-ui · frame-room)을 부르는 곳은 모두 같은 새 꼬리예요(옛 캐시와 섞이지 않게 · 같은 모듈 두 벌 금지)', () => {
-    const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
-    for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
+    const files = ['mart.js', 'geulkku/index.html', 'frames/index.html'].map(f => [f, srcOf(f)]);
+    for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], [{ mart: '20261113r', genie: '20261113r', 'frame-room': '20261113r', 'tune-ui': '20261113q', cart: '20261113p' }[mod]], `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 저녁 그림 액자 다시 그린 판 — frame-room(D&H 인물 원작 · 찾기 말)을 고쳐 그것과 부르는 곳(mart · genie)을 r 로   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로   // 11-13 줄바꿈 선택 — mart · tune-ui 를 고쳐 그 둘과 부르는 곳(genie)을 q 로
+        assert.deepEqual([...tails], [{ mart: '20261113r', 'frame-room': '20261113r', 'tune-ui': '20261113q', cart: '20261113p' }[mod]], `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 저녁 그림 액자 다시 그린 판 — frame-room(D&H 인물 원작 · 찾기 말)을 고쳐 그것과 부르는 곳(mart · genie)을 r 로   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로   // 11-13 줄바꿈 선택 — mart · tune-ui 를 고쳐 그 둘과 부르는 곳(genie)을 q 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2183,16 +2174,16 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         });
     } else console.log('건너뜀  테마 못 받음 ③ 테마 사본 바로 대조 — GK_THEME_DIR 가 없어요(고정 자료 대조 ①이 대신 지켜요)');
     await test('테마 못 받음 ④ 화면: 카드 꼬리표 · 크게 보기 「테마로 담기」 단추 막음 · 담기 함수도 막음 · 내 글꾸도 판정 · 지니 낡은 글 없음', () => {
-        const mart = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8'), genie = fs.readFileSync(path.join(MART, 'genie.js'), 'utf8');
+        const mart = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
         assert.match(mart, /\$\{own\}\$\{nt\}<\/span>/);
         assert.match(mart, /테마 아직 못 받음/);
         assert.match(mart, /async function themeTake\(state, file\) \{\n {4}const item = state\.item;\n {4}if \(item\.nt\)/);
         assert.match(mart, /themeTakeable\(x\.preview, \{ id: x\.id, key: themeKey\(x\) \}\)/);
         assert.match(ui, /data-act="theme-copy"\$\{no\}/);
         assert.match(ui, /data-act="theme-file"\$\{no\}/);
-        for (const [n, t] of [['mart.js', mart], ['genie.js', genie]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
+        for (const [n, t] of [['mart.js', mart]]) assert.doesNotMatch(t, /테마로 받기는 준비 중/, n);
         assert.match(fs.readFileSync(path.join(MART, 'mart.css'), 'utf8'), /\.tag\.is-notake\{/);
-        for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261113p/, f);
+        for (const f of ['geulkku', 'frames', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261113p/, f);
     });
 }
 // ── 11-13 본문 줄바꿈 「글자 단위」(기본) · 「단어 단위」 — 사용자 「단어 단위 할 건지 글자 단위 할 건지 선택 가능하게 … 난 글자 단위가 좋아서」 ──

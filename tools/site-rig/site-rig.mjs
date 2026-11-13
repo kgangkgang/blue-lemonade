@@ -49,23 +49,6 @@ const READY_PREVIEWS = n => `document.querySelectorAll('.mart-card .mart-preview
 const PICKABLE = '.mart-card:not([hidden]):has(.mart-pick) .mart-preview';
 const tapAll = async (b, list) => { for (const [sel, o, wait] of list) { const r = await b.tap(sel, o || {}); if (r !== true) return r; if (wait) await b.until(wait, 15000); else await b.sleep(300); } return true; };
 const openSheetBy = async b => { await b.until(READY_GRID, 20000); await b.until(READY_PREVIEWS(1), 25000).catch(() => { }); return tapAll(b, [['.mart-card:not([hidden]) .mart-preview', null, `document.querySelector('.mart-sheet[open]')`]]); };   // 11-11 새 글꾸 틀은 담기가 없어(HTML 복사만) 아무 카드나 열어요
-/** 지니: 마트 머리줄 🧞 를 눌러 들어가 질문 단추(첫째)를 결과 카드가 나올 때까지 눌러요 */
-const genieRun = async (b, toResult) => {
-    await b.until(READY_GRID, 20000);
-    const r = await b.tap('.mart-genie'); if (r !== true) return r;
-    await b.until(`location.pathname.includes('/genie/') && document.querySelector('#gn-choices button')`, 20000);
-    if (!toResult) { await b.sleep(500); return true; }
-    const done = `!!document.querySelector('#gn-result:not([hidden]) .mart-card')`;
-    for (let k = 0; k < 16; k++) {
-        if (await b.eval(done)) break;
-        await b.until(`document.querySelector('#gn-choices:not([hidden]) button') || ${done}`, 8000);
-        if (await b.eval(done)) break;
-        const t = await b.tap('#gn-choices button'); if (t !== true) return t;
-        await b.sleep(1000);
-    }
-    await b.until(done, 15000);
-    await b.sleep(900); return true;
-};
 /** 폰 거르기 띠 접힘: 화면을 조금씩 내려 띠가 저절로 한 줄(찾기 + 필터 요약 ⌄)로 접히는지 보고, 직접 접은 상태로 재요 */
 const barFold = async b => { for (let k = 0; k < 14; k++) { await b.eval('window.scrollBy(0, 120)'); await b.sleep(60); } await b.until(`document.querySelector('.mart-tools.is-collapsed')`, 5000);
     // 재는 동안 리그가 굴려도(위로 굴리면 저절로 펼쳐져요) 접힌 채 재게: 「필터」로 펼쳤다가 ⌄ 로 직접 접어 둬요(직접 고른 것은 스크롤로 안 뒤집혀요)
@@ -110,12 +93,9 @@ const SCREENS = [
     { group: '액자', where: '액자 · 띠 접힘(고름 요약)', url: 'mart/frames/', root: '.mart-tools', widths: [390], open: async b => { await b.until(READY_GRID, 20000); const t = await tapAll(b, [['[data-filter="orient"] button', { nth: 1 }], ['.mart-chips button', { nth: 3 }]]); if (t !== true) return t; return barFold(b); } },
     { group: '액자', where: '액자 · 방', url: 'mart/frames/', root: '.mart-room', open: async b => { await b.until(READY_GRID, 20000); await b.sleep(600); const r = await tapAll(b, [['.mart-card .mart-preview.frame', null, `document.querySelector('.mart-room[open]')`]]); if (r !== true) return r; await b.sleep(900); return true; } },
     { group: '액자', where: '액자 · 담김 카드', url: 'mart/frames/', root: '.mart-card.is-picked', open: async b => { await b.until(READY_GRID, 20000); await b.sleep(600); const t = await tapAll(b, [['.mart-card .mart-pick', null, `document.querySelector('.mart-card.is-picked')`]]); if (t !== true) return t; await b.sleep(900); await b.eval(`document.querySelector('.mart-card.is-picked').scrollIntoView({block:'center'});true`); await b.sleep(300); return true; } },
-    { group: '지니', where: '지니 · 처음', url: 'mart/geulkku/', root: 'main.gn', open: b => genieRun(b, false) },
-    { group: '지니', where: '지니 · 글꾸 결과', url: 'mart/geulkku/', root: 'main.gn', open: b => genieRun(b, true) },
-    { group: '지니', where: '지니 · 액자 결과', url: 'mart/frames/', root: 'main.gn', open: b => genieRun(b, true) },
 ];
 // 화면 목록 누락 0(사이트 전용 규칙): 이 화면들은 두 폭 모두에서 열려야 해요
-const REQUIRED = ['홈 · 머리줄', '홈 · 마트 메뉴', '글꾸 · 목록', '글꾸 · 상세', '액자 · 목록', '액자 · 방', '장바구니 · 담김', '지니 · 글꾸 결과', '지니 · 액자 결과'];
+const REQUIRED = ['홈 · 머리줄', '홈 · 마트 메뉴', '글꾸 · 목록', '글꾸 · 상세', '액자 · 목록', '액자 · 방', '장바구니 · 담김'];   // 11-13 지니를 없애며 지니 화면 셋을 뺐어요
 const RESET = `(()=>{try{localStorage.removeItem('bl-mart-chips-folded');localStorage.removeItem('bl-mart-cart-v1');localStorage.removeItem('bl-mart-tone-v1');['bl-mart-pv-fold-v1','bl-mart-geulkku-view-v1','bl-mart-geulkku-open-v1','bl-mart-motion-v1','bl-mart-texture-v1','bl-mart-look-v1'].forEach(k=>localStorage.removeItem(k));sessionStorage.clear()}catch{}return true})()`;
 
 // ---------------------------------------------------------------- 모으기
