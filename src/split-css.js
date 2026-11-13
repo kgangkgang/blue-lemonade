@@ -26,7 +26,9 @@ export function loadFullCss(sheet, readyPanel, themeOn) {
     const link = document.createElement('link');
     // 실리태번(dynamic-styles.js)은 head 에 「붙는」 <link rel="stylesheet"> 마다 규칙을 전부 훑어 :hover 규칙의 :focus-visible 사본을 더 넣어요(1.36MB 를 훑고 수백 줄을 켜진 시트에 넣는 일).
     //   예전 <style> 은 그 대상이 아니었어요 — 같게 하려고 미리 받기(rel="preload")로 붙인 뒤, 다 받으면 그 자리에서 rel 을 stylesheet 로 바꿔요(붙는 사건이 아니라 보지 않아요 · 받은 것을 그대로 써요).
-    //   미리 받기를 모르는 브라우저는 처음부터 stylesheet 로(그때는 실리태번이 사본을 더해요 — 동작은 같아요)
+    //   미리 받기를 모르는 브라우저(지금 크로미움 · 사파리 · 파이어폭스는 다 알아요)는 처음부터 꺼진 stylesheet 로 붙어서, 그때만은 예전과 달리 실리태번이 둘째 장도 훑어
+    //   :focus-visible 사본을 늘 켜진 시트에 더해요(키보드 초점 모양에만 닿고, 확장만 모드로 바꿔도 그 사본은 남아요)
+    //   media 를 바꿔도 시트를 다시 읽지 않아요(엣지 157 확인 — 뗀 꼬리 · 데우스 준비 · sheet.disabled 가 그대로 · load 도 다시 안 와요)
     const viaPreload = !!link.relList?.supports?.('preload');
     link.id = 'salty-lazy-css'; link.dataset.blFullTheme = 'loading';
     if (viaPreload) { link.rel = 'preload'; link.as = 'style'; } else { link.rel = 'stylesheet'; link.media = 'not all'; }

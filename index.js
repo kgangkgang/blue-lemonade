@@ -170,9 +170,10 @@ async function startLayer(layer, table) {
     }
     const loaded = await Promise.allSettled(table.map(([, load]) => load()));
     const running = [];
-    // 덮개가 걷힌 뒤(3층 · 처음 쓸 때 · 쉴 때 서랍 문)에는 모듈을 하나씩 시작하고 사이사이 한 박자 쉬어요 — 예전엔 받은 모듈 전부를 한 작업에서 시작해
-    //   첫 화면 뒤 「조용해짐」 구간에 긴 작업 하나로 화면을 잡았어요(누름 · 입력이 그 사이에 끼어들 수 있게). 차례 · 시작 함수는 그대로예요. 덮개 아래(2층)는 예전처럼 한 번에
-    const spread = layer === 3 || !booting();
+    // 3층(덮개가 걷힌 뒤 쉴 때 · 처음 쓸 때 · 3층 표의 문)은 모듈을 하나씩 시작하고 사이사이 한 박자 쉬어요 — 예전엔 받은 모듈 전부를 한 작업에서 시작해
+    //   첫 화면 뒤 「조용해짐」 구간에 긴 작업 하나로 화면을 잡았어요(누름 · 입력이 그 사이에 끼어들 수 있게). 차례 · 시작 함수는 그대로예요.
+    //   2층은 덮개가 있든 없든(테마를 나중에 켬 · 덮개 없는 옛 실리태번 · 2층 표의 문) 예전처럼 한 작업에서 — 첫 화면 표식이 한 프레임에 모두 맞게
+    const spread = layer === 3;
     for (const [i, [name, , start]] of table.entries()) {
         const result = loaded[i];
         if (result.status === 'rejected') { console.warn(`[Blue Lemonade] 시작하지 못했어요(${name})`, result.reason); continue; }
