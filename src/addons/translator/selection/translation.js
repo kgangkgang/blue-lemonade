@@ -94,7 +94,7 @@ export async function prepareTranslation(selection, isClosed, { alignOnly = fals
         alive();
         const original = alignedParagraphs(jsonAnswer(raw), blocks);
         if (alignOnly) return {...job,source,translated,span,original};
-        const result = String(await api.command.callback({ assertValid: alive }, original)).trim();
+        const result = String(await api.command.callback({ assertValid: alive, referenceAt: job.id }, original)).trim();
         alive();
         if (!result || /^LLM 번역 중 오류|^번역할 텍스트를/.test(result) || result.includes('[차단된 문단') || result === original || !/[가-힣]/.test(result)) throw Error('새 한국어 번역을 받지 못했어요. 기존 번역은 유지돼요.');
         return { ...job, source, translated, span, original, result, render: api.render, clean: api.clean, remember: api.remember, refresh: api.refresh, complete: api.complete };

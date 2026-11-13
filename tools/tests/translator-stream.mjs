@@ -509,7 +509,7 @@ await check('1.0.1 (a) 진행 문구: 생각 중 n초 · 첫 글 기다림(3초�
     assert.equal(progressLabel({ stage: 'kana' }, started, { phase: 'thinking', since: now - 9000 }), '번역 중 · 마무리 · 46초');
 });
 await check('1.0.1 (a) 현재 연결의 번역 요청도 생각은 짧게: Claude 5 · Fable 의 auto · medium 이상 → low, min · low 는 그대로, 다른 공급자 · 옛 모델은 손대지 않음', () => {
-    const lower = new Function('env', `with(env){return (${cut('lowerTranslationThinking')});}`)({ LiveModels });
+    const lower = new Function('env', `with(env){return (${cut('lowerTranslationThinking')});}`)({ LiveModels, extensionSettings: {} });   // 생각 세기 설정은 기본(낮음)
     const run = (source, model, effort) => lower({ chat_completion_source: source, model, ...(effort === undefined ? {} : { reasoning_effort: effort }) }).reasoning_effort;
     assert.equal(run('claude', 'claude-opus-5-5', 'auto'), 'low');
     assert.equal(run('claude', 'claude-opus-5-5', 'high'), 'low');
@@ -520,7 +520,7 @@ await check('1.0.1 (a) 현재 연결의 번역 요청도 생각은 짧게: Claud
     assert.equal(run('openai', 'gpt-4o', 'auto'), 'auto', 'other providers: as before');
     assert.equal(run('vertexai', 'gemini-3-pro', 'high'), 'high');
     assert.equal(lower(null), null);
-    assert(/preparePayload: async payload => withPromptCache\(await prepareAutoTranslationPayload\(lowerTranslationThinking\(payload\),/.test(source), 'wired into the current-connection payload');
+    assert(/preparePayload: async payload => withPromptCache\(await prepareAutoTranslationPayload\(lowerTranslationThinking\(payload, overrides\),/.test(source), 'wired into the current-connection payload');
 });
 await check('1.0.1 (b) 새 클로드 이벤트 꼴: redacted_thinking · 시작 없는 signature_delta · 모르는 델타 · 모르는 이벤트 · JSON 아닌 조각은 지나가고 답은 같다', async () => {
     const text = PASSAGES.slice(0, 4).join('\n\n');

@@ -53,7 +53,7 @@ import { matchingTranslation, translationFromDisplay } from './archive-bridge.js
 import { rememberSource, recordedSource, forgetSource, pruneSource } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
 import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
 import { withPromptCache, pureMacros } from '../../prompt-cache.js';   // 7.7.2 프롬프트 캐시 (Claude 직접 연결)
-import { whenMainChatIdle } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성 · 테마의 붙잡음만 (조용한 생성 · 헬퍼 generate 는 기다리지 않음)
+import { whenMainChatIdle, isMainChatGenerating } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성 · 테마의 붙잡음만 (조용한 생성 · 헬퍼 generate 는 기다리지 않음)
 import {
     eventSource,
     event_types,
@@ -90,6 +90,7 @@ import { getStringHash } from '../../../../../../utils.js';               // [1.
 import { countTokensOpenAIAsync, getTokenizerModel } from '../../../../../../tokenizers.js';
 import { power_user } from '../../../../../../power-user.js';           // [1.6.0] 보내기 번역 참고: 페르소나 설명
 import { getWorldInfoPrompt, getSortedEntries } from '../../../../../../world-info.js';   // [1.6.0] 보내기 번역 참고: 월드인포 (건조 실행) · [1.8.4] 용어집: 키워드 뽑기
+import * as worldInfoHost from '../../../../../../world-info.js';   // 참고 정보: 「스캔 글에 이름 붙이기」 설정 (이름으로 가져오면 그 이름이 없는 판에서 번역기가 통째로 안 켜져요)
 import { SECRET_KEYS, secret_state } from '../../../../../../secrets.js';
 import { oai_settings } from '../../../../../../openai.js';
 import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../popup.js';
@@ -291,6 +292,13 @@ const defaultSettings = {
     send_ctx_note: false,
     send_ctx_wi: false,
     send_ctx_history: false,
+    // AI 답 번역(자동 · 단추 · 다시 번역 · 문단 · 고른 글)에도 참고 정보 넣기 — 기본 끔. 켠 항목만, 번역할 그 메시지 시점까지 스캔해요 (reference-info.js)
+    reply_ctx_char: false,
+    reply_ctx_persona: false,
+    reply_ctx_wi: false,
+    reply_ctx_note: false,
+    reply_ctx_wi_limit: 4000,        // 월드인포 참고 글 길이 상한(글자)
+    think_effort: 'low',             // 생각하는 모델의 번역 요청 생각 세기: low 낮음(6.3.5 부터 하던 대로) | medium 보통 | model 모델 기본(세기를 보내지 않음)
     llm_prompt_send: `Translate the user's message below.
 {{languageRules}}
 - Keep the meaning, tone and register. Keep the formatting exactly: quotes, *asterisks*, markdown, line breaks, emoji.
@@ -376,6 +384,7 @@ function updateConnectionVisibility() {
     $('#llm_current_settings').toggle(current);
     $('#llm_direct_settings, #llm_direct_params, #llm_direct_hint').toggle(!current);   // 3.1.3 공급자 · 모델 카드와 생성 파라미터 사이에 「검열되면 대신 쓸 모델」 카드(늘 보임)
     $('#llm_profile_max_tokens').val(extensionSettings.profile_max_tokens || 0);
+    $('#llm_think_effort').val(['medium', 'model'].includes(extensionSettings.think_effort) ? extensionSettings.think_effort : 'low');
 }
 
 // 6.4.5 「검열당했을 때」 칸 — 3.1.3 부터 모델 탭 › 공급자 · 모델 카드 아래 따로 「검열되면 대신 쓸 모델」 카드 (어느 연결 방식에서도). 저장 = extensionSettings.fallback,
@@ -559,6 +568,8 @@ function loadSettings() {
     }
     $('#llm_send_display').val(extensionSettings.send_display);
     for (const key of SEND_CTX_KEYS) $(`#llm_${key}`).prop('checked', !!extensionSettings[key]);
+    for (const key of REPLY_CTX_KEYS) $(`#llm_${key}`).prop('checked', extensionSettings[key] === true);
+    $('#llm_reply_ctx_wi_limit').val(Number(extensionSettings.reply_ctx_wi_limit) || defaultSettings.reply_ctx_wi_limit);
 
     updateConnectionVisibility();
     mountTranslatorFallback();   // 6.4.5
@@ -1489,7 +1500,7 @@ const STREAM_IDLE_MS = 90000;   // 7.1.2 흘려받는 번역: 글이 오다가 �
  *   { phase: 'waiting', since } 첫 글을 기다림 · { phase: 'thinking', since } 모델이 생각 중(글 없음) · { phase: 'writing', since, last } 글이 옴(last = 마지막 글 시각) ·
  *   { phase: 'fallback', reason } 흘려받지 못해 예전 요청(통째)으로 받는 중
  */
-async function streamedReply({ body, source, onText, onState = null, signal = null, timeoutMs = 0, idleMs = 0, timedOut = null, purpose = null }) {
+async function streamedReply({ body, source, onText, onState = null, signal = null, timeoutMs = 0, idleMs = 0, timedOut = null, purpose = null, label = '' }) {
     if (typeof onText !== 'function') return null;
     const tell = state => { try { onState?.(state); } catch { /* 보여 주기는 받기를 막지 않는다 */ } };
     try { streamParts ??= await import('./translation-stream.js'); } catch { tell({ phase: 'fallback', reason: '흘려받기 모듈을 못 불러왔어요' }); return null; }
@@ -1524,7 +1535,7 @@ async function streamedReply({ body, source, onText, onState = null, signal = nu
     };
     try {
         const response = await fetch(new Request('/api/backends/chat-completions/generate', { method: 'POST', headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
-            cache: 'no-cache', body: JSON.stringify({ ...body, stream: true }), signal: controller.signal }), purpose ? { requestLog: { caller: 'llm-translator-custom', purpose } } : undefined);
+            cache: 'no-cache', body: JSON.stringify({ ...body, stream: true }), signal: controller.signal }), purpose ? { requestLog: { caller: 'llm-translator-custom', purpose, ...(label ? { label } : {}) } } : undefined);
         if (!response.ok) {
             const text = await response.text();
             // 429 · 5xx 는 예전 요청의 오류처럼 읽는다 (다시 보내기는 늘 하던 대로 — 곧장 또 보내지 않는다). 나머지(400 등)는 예전 요청으로
@@ -1555,10 +1566,14 @@ async function streamedReply({ body, source, onText, onState = null, signal = nu
  * 본채팅 설정의 'auto' · 'medium' 이상을 그대로 실어 번역 묶음마다 한참 생각한 뒤 글이 한꺼번에 쏟아졌다 (11-03 「캐시 0개 · 수정 문단 0/86 · 46초」).
  * Claude 만 — 다른 공급자는 'low' 를 모르는 모델에 보내면 거절하는 곳이 있어 예전 그대로. 사용자가 더 낮게(min) 둔 값은 그대로
  */
-function lowerTranslationThinking(payload) {
+function lowerTranslationThinking(payload, overrides = {}) {
     if (!payload || payload.chat_completion_source !== 'claude') return payload;
     const effort = LiveModels.lowEffort('claude', payload.model);
-    if (effort && !['min', 'low'].includes(String(payload.reasoning_effort ?? ''))) payload.reasoning_effort = effort;
+    // 번역 설정 「생각 세기」: 낮음(기본 · 전과 같음) · 보통(medium 까지만 올려 둠) · 모델 기본(현재 연결의 값 그대로). 용어집 뽑기 · TTS 줄은 늘 낮게
+    const chosen = /^translation\.(?:glossary|tts)$/.test(String(overrides?.requestPurpose || '')) || !['medium', 'model'].includes(extensionSettings.think_effort) ? 'low' : extensionSettings.think_effort;
+    if (!effort || chosen === 'model') return payload;
+    const kept = chosen === 'medium' ? ['min', 'low', 'medium'] : ['min', 'low'];
+    if (!kept.includes(String(payload.reasoning_effort ?? ''))) payload.reasoning_effort = chosen === 'medium' ? 'medium' : effort;
     return payload;
 }
 
@@ -1591,7 +1606,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             // 2026-10-06: 텍스트 완성 설정엔 max_new_tokens 가 없어 늘 2048 이었다 — 실리태번 응답 길이(amount_gen)를 따르되 2048 아래로는 안 줄인다
             buildText: (settings, input, limit) => createTextGenGenerationData(settings, getTextGenModel(settings), createRawPrompt(input, 'textgenerationwebui', false, false, '', ''), limit || settings.max_new_tokens || textOutputLimit(), false, false, null, 'quiet'),
             log: globalThis[Symbol.for('st.request-log.v1')],
-            preparePayload: async payload => withPromptCache(await prepareAutoTranslationPayload(lowerTranslationThinking(payload), overrides, Number(getContext().chatCompletionSettings?.openai_max_context) || null), overrides.promptCache),   // 7.7.2 · 1.0.1 생각 짧게
+            preparePayload: async payload => withPromptCache(await prepareAutoTranslationPayload(lowerTranslationThinking(payload, overrides), overrides, Number(getContext().chatCompletionSettings?.openai_max_context) || null), overrides.promptCache),   // 7.7.2 · 1.0.1 생각 짧게
             // 2.6.2 묶음 번역 흘려받기 — 실리태번 ChatCompletionService 와 같은 본문 · 같은 오류 (null = 예전 요청 그대로)
             stream: typeof overrides.onStream === 'function' ? async (live, payload, signal, touch) => {   // 7.1.3 touch: 글이 올 때마다 현재 연결의 제한 시간을 다시 센다
                 const body = typeof live.ChatCompletionService?.createRequestData === 'function' ? live.ChatCompletionService.createRequestData(payload) : payload;
@@ -1691,7 +1706,9 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     //   출력 한도는 생각까지 담게 최소 8192 (기본 1000 이면 하이쿠 5.5 가 생각만 하다 글이 안 왔다)
     const thinkEffort = LiveModels.lowEffort(chatCompletionSource, model);
     if (thinkEffort) {
-        parameters.reasoning_effort = thinkEffort;
+        // 번역 설정 「생각 세기」: 낮음(기본 · 전과 같음) · 보통 · 모델 기본(세기를 보내지 않아 모델이 정해요). 용어집 뽑기 · TTS 줄은 늘 낮게
+        const chosen = /^translation\.(?:glossary|tts)$/.test(String(overrides.requestPurpose || '')) || !['medium', 'model'].includes(extensionSettings.think_effort) ? 'low' : extensionSettings.think_effort;
+        if (chosen !== 'model') parameters.reasoning_effort = chosen === 'medium' ? 'medium' : thinkEffort;
         if (parameters.max_tokens > 0 && parameters.max_tokens < LiveModels.THINK_MIN_TOKENS) parameters.max_tokens = LiveModels.THINK_MIN_TOKENS;
     }
     LiveModels.applyModelRequestRules(provider, model, parameters);
@@ -1733,7 +1750,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     const timedOut = (ms = timeoutMs, idle = false) => Object.assign(new Error(idle ? `${Math.round(ms / 1000)}초 동안 번역 글이 더 오지 않아 끊었어요. 받은 문단은 남아 있어요 — 다시 누르면 나머지만 보내요.` : `${Math.round(ms / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true });
     // 2.6.2 묶음 번역은 되면 흘려받는다 — 못 쓰는 공급자 · 실패 · 중간에 끊김이면 아래 예전 요청 그대로 (묶음 끝에 한꺼번에)
     const streamed = typeof overrides.onStream === 'function' ? await streamedReply({ body: preparedParameters, source: chatCompletionSource, onText: overrides.onStream, onState: overrides.onStreamState,
-        signal: overrides.signal, timeoutMs, idleMs: STREAM_IDLE_MS, timedOut, purpose: overrides.requestPurpose || 'translation.chat' }) : null;
+        signal: overrides.signal, timeoutMs, idleMs: STREAM_IDLE_MS, timedOut, purpose: overrides.requestPurpose || 'translation.chat', label: overrides.requestLabel }) : null;
     if (streamed?.data) return extractTranslationResult(streamed.data, provider);
     let response;
     const controller = new AbortController();
@@ -1746,7 +1763,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         response = streamed?.replay ?? await fetch('/api/backends/chat-completions/generate', {   // 2.6.2 흘려받기 요청이 받은 오류 · 통째 본문은 다시 보내지 않고 여기서 읽는다
             method: 'POST',
             headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
-            requestLog:{caller:'llm-translator-custom',purpose:overrides.requestPurpose||'translation.chat'},
+            requestLog:{caller:'llm-translator-custom',purpose:overrides.requestPurpose||'translation.chat',...(overrides.requestLabel?{label:overrides.requestLabel}:{})},
             body: JSON.stringify(preparedParameters),
             signal: controller?.signal,
         });
@@ -1925,6 +1942,7 @@ function connectionSignature() {
             vertex: s.llm_provider === 'vertexai' ? [oai_settings.vertexai_auth_mode, oai_settings.vertexai_region, oai_settings.vertexai_express_project_id] : null,
         } : null,
         limit: s.profile_max_tokens, api: c.mainApi,
+        ...(['medium', 'model'].includes(s.think_effort) ? { think: s.think_effort } : {}),   // 기본(낮음)이면 서명이 예전 그대로 — 저장한 문단 캐시를 그대로 써요
         connection: s.connection_mode === 'direct' ? null : activeConnectionFields(c) });
 }
 
@@ -1957,6 +1975,7 @@ async function translate(text, options = {}) {
     let autoContextGuard = null;
     const cacheHeads = new Map();   // 7.7.2 캐시 배치(1) 프롬프트 → 그 고정 앞부분 (치환 뒤) — buildFullPrompt 가 채우고 request 가 붙인다
     const tagRestores = new Map();   // 8.0.6 태그 속성을 줄여 보낸 프롬프트 → 답의 짧은 태그를 되돌리는 함수 (tag-compact.js) — buildFullPrompt 가 채우고 request 가 쓴다
+    let requestLabel = options.requestLabel || '';   // 참고 정보를 켠 번역의 요청 로그 이름표 (월드인포가 몇 자 들어갔는지 · 0개 · 실패)
     const compactTransport = extensionSettings.compact_tags !== false && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined;
     const watcher = watchGuard(() => {
         chatGuard.assert(); options.assertValid?.();
@@ -1973,7 +1992,7 @@ async function translate(text, options = {}) {
         // [BL 7.4.0] 요청 로그 · 사용량 장부의 용도: 화살표 다시 번역(교정)과 보낼 글 번역을 채팅 번역과 따로 센다
         const purpose = options.requestPurpose || (options.isRetranslation ? 'translation.retranslate' : options.isInputTranslation ? 'translation.input' : undefined);
         const untag = tagRestores.get(prompt);   // 8.0.6 짧게 보낸 태그를 흘려받는 글 · 다 받은 답 모두에서 원래 태그로
-        const sendExtra = { ...(streamNote && typeof extra.onStream === 'function' ? { onStreamState: streamNote } : {}),
+        const sendExtra = { ...(streamNote && typeof extra.onStream === 'function' ? { onStreamState: streamNote } : {}), ...(requestLabel ? { requestLabel } : {}),
             ...(untag && typeof extra.onStream === 'function' ? { ...extra, onStream: (text, ...rest) => extra.onStream(untag(text), ...rest) } : extra) };
         let raw;
         try { raw = await callLLMAPI(prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...(cacheHeads.has(prompt) ? { promptCache: cacheHeads.get(prompt) } : {}), ...sendExtra }); }
@@ -2064,6 +2083,11 @@ async function translate(text, options = {}) {
             isRetranslation = false
         } = options;
         const suggestPairs = [];   // 6.4.5 남김 다시 보내기로 고쳐 온 이름 짝 (새 이름 용어집 제안 — 유료 호출 없음)
+        // AI 답 번역 참고 정보 (기본 끔): 켠 사람만, 메시지 번호를 아는 번역에서 한 번 만들어 이 메시지의 모든 문단 요청이 같이 써요
+        const replyRefAt = typeof replyReferenceIndex === 'function' ? replyReferenceIndex(options, text) : -1;   // typeof: translate 만 잘라 도는 시험
+        const replyRef = replyRefAt >= 0 ? await buildReplyReference(replyRefAt, { reuse: Boolean(options.segmentCache || options.forget) }) : null;
+        if (replyRefAt >= 0) watcher.check();
+        if (replyRef?.label) requestLabel = replyRef.label;
 
         // 커스텀 프롬프트 적용 (실시간 텍스트필드 값 사용) — [2.7.4] liveChatPrompt 로 떼어 냄: 자동 번역 건너뛰기(chatPromptTargetsKorean)가 같은 글을 본다
         let finalPrompt = prompt;
@@ -2106,8 +2130,14 @@ async function translate(text, options = {}) {
                 built = `[Additional Rules]:\n${rulePrompt}\n\n${finalPrompt}`;
             }
 
+            // 참고 글은 지시문 바로 뒤 · 용어집 앞 — 캐릭터 설정 · 페르소나 · 작가 노트(메시지가 바뀌어도 같은 글)가 먼저, 월드인포(메시지마다 다름)가 뒤
+            const instruction = built;
+            const ref = typeof replyRef !== 'undefined' && replyRef?.text ? replyRef : null;   // typeof: 이 함수만 잘라 도는 시험
+            if (ref) built = `${built}\n\n${ref.text}`;
             const terms = paragraphParts ? buildGlossaryBlock(body, { reverse: false }) : glossaryBlock;
-            const head = cacheFirst && (layout === 1 || (layout === 0 && !terms)) && pureMacros(built) ? built : null;   // 7.7.2 용어집이 없으면 배치 0 도 지시문이 맨 앞
+            // 7.7.2 용어집이 없으면 배치 0 도 지시문이 맨 앞. 참고 글의 고정 부분은 캐시 앞부분에 같이 실어요 (매크로가 섞여 있으면 지시문까지만)
+            const fixedHead = ref?.stable && pureMacros(`${instruction}\n\n${ref.stable}`) ? `${instruction}\n\n${ref.stable}` : instruction;
+            const head = cacheFirst && (layout === 1 || (layout === 0 && !terms)) && pureMacros(fixedHead) ? fixedHead : null;
             if (terms) {
                 built = layout === 1 ? `${built}\n\n${terms}` : `${terms}\n\n${built}`;
             }
@@ -2133,6 +2163,8 @@ async function translate(text, options = {}) {
             }
 
             // 마스킹된 텍스트를 AI에게 전달
+            // 참고 글이 붙은 요청에만: 어디부터가 옮길 글인지 한 줄 (다시 번역은 원문 · 번역문 묶음이라 지시문이 이미 갈라 줘요)
+            if (ref && !isRetranslation) built += `\n\n${REPLY_TEXT_MARK}`;
             built += `\n\n${body}`;
             // 8.0.6 보이는 본문의 태그 속성(대사색 style · class …)은 보내지 않고 짧은 이름(<span a1>)으로 — 답을 받자마자 request 가 되돌린다 (tag-compact.js)
             //       잘라 돌리는 시험은 compactTransport 없이 예전 그대로. 용어집 · 말투 지침은 위에서 원래 본문으로 이미 골랐다
@@ -2155,7 +2187,7 @@ async function translate(text, options = {}) {
         // 문단 캐시 · 이어하기 키의 서명: 준비된 프롬프트 전체 대신 연결 · 프롬프트 · 지침 · 용어집(범위 + 항목) 요약 하나 (paragraph-v2)
         const chatCtx = getContext();
         const setupDigest = await checkpointKey(JSON.stringify([connection, finalPrompt, rulePrompt, additionalGuidance, ...(styleProfileSignature(chatCtx?.chatMetadata).length ? ['speech-alias-v2',styleProfileSignature(chatCtx?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
-            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(chatCtx?.chatMetadata)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : [])]));
+            : [chatCtx?.groupId ?? null, chatCtx?.characters?.[chatCtx?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(chatCtx?.chatMetadata)], ...(displayCards.count ? ['display-cards-v1'] : []), ...(autoContextGuard ? ['auto-context-v1', autoContextGuard.stamp] : []), ...(keptKorean.size ? ['korean-keep-v1'] : []), ...(replyRefAt >= 0 ? ['reply-ref-v2', replyRef?.hash || ''] : [])]));   // 참고 정보를 켠 번역만 열쇠가 달라요 (끄면 예전 열쇠 그대로)
         const key = chunks.length > 1 ? await checkpointKey(JSON.stringify([setupDigest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '';   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
@@ -3399,9 +3431,9 @@ async function runCheckAction(kind, id, index, row, { auto = false, expectedStat
         // 옛 (의심) 번역이 캐시에서 그대로 나오지 않게 — 메시지 전체로 나눈 문단 키 · 이 문단만 보낸 키 둘 다
         const numbers = Array.from({ length: to - from + 1 }, (_, n) => from + n);
         assertReviewPolicy();
-        await translate(state.source, { segmentCache: true, forget: numbers });
+        await translate(state.source, { segmentCache: true, forget: numbers, referenceAt: Number(id) });
         assertReviewPolicy();
-        await translate(srcText, { segmentCache: true, forget: true });
+        await translate(srcText, { segmentCache: true, forget: true, referenceAt: Number(id) });
         assertReviewPolicy();
         const report = {};
         let out = await translate(srcText, { segmentCache: true, contextAt: Number(id), assertValid: () => { runToken.guard.assert(); assertReviewPolicy(); }, onProgress: badge.update, onStreamNote: badge.note, report });
@@ -4201,7 +4233,7 @@ async function editTranslation(messageId) {
         // 삭제 로직
         if (newText.trim() === "") {
             try {
-                await forgetParagraphCache(originalTextForDbKey); // 5.4.2
+                await forgetParagraphCache(originalTextForDbKey, Number(messageId)); // 5.4.2
                 // 5.4.2: 이 기기 DB 에 줄이 없어도(캐시에 안 넣은 번역 · 다른 기기) 붙은 번역문은 지운다 — 휴지통과 같게
                 await deleteTranslationByOriginalText(originalTextForDbKey).catch(error => { if (!String(error?.message).includes('no matching data')) throw error; });
                 delete message.extra.display_text; // 명시적 삭제
@@ -4498,45 +4530,188 @@ function bindSendButton(btn) {
     });
 }
 
-/** 보내기 번역에 붙이는 참고 정보 — 이름 · 용어 · 말투를 맞추라고 주는 것 (번역 대상 아님). 켠 항목만 */
-async function buildSendReference(text) {
+// ── 참고 정보 (보내기 번역 · AI 답 번역 공용) ────────────────────────────────────────────
+// 수집은 reference-info.js 한 곳. 참고 정보를 켠 사람이 처음 번역할 때만 불러와요 (꺼 두면 가져오기 · 감시자 · 타이머가 하나도 늘지 않아요)
+const REPLY_CTX_KEYS = ['reply_ctx_char', 'reply_ctx_persona', 'reply_ctx_wi', 'reply_ctx_note'];
+const REPLY_TEXT_MARK = '[Text to translate]';
+const replyReferenceOn = () => REPLY_CTX_KEYS.some(key => extensionSettings[key] === true);
+let referenceInfoModule = null;
+// 못 받은 것은 기억하지 않아요 — 한 번 끊겼다고 새로고침할 때까지 번역이 전부 실패하면 안 돼요 (다음 번역이 다시 받아요)
+const loadReferenceInfo = () => (referenceInfoModule ??= import('./reference-info.js').catch(error => { referenceInfoModule = null; throw error; }));
+let replyReferenceMemo = null;
+
+// 실리태번은 건조 실행 스캔에서도 다른 확장이 예약한 강제 발동(WORLDINFO_FORCE_ACTIVATE)을 비워요 — 번역용 스캔이 먹으면 본 생성에서 빠져요.
+// 월드인포 참고를 쓰는 사람만: 예약을 같이 들어 두었다가 번역용 스캔 뒤에 다시 예약해요. 본 생성이 끝나면(실리태번이 이미 쓴 뒤) 잊어요.
+let forcedActivations = null;
+function watchForcedActivations() {
+    if (forcedActivations || typeof eventSource === 'undefined' || !event_types?.WORLDINFO_FORCE_ACTIVATE) return;
+    forcedActivations = new Map();
+    eventSource.on(event_types.WORLDINFO_FORCE_ACTIVATE, entries => { for (const entry of Array.isArray(entries) ? entries : []) { if (entry && entry.world !== undefined && entry.uid !== undefined) forcedActivations.set(`${entry.world}.${entry.uid}`, entry); } });
+    for (const type of [event_types.GENERATION_ENDED, event_types.GENERATION_STOPPED, event_types.CHAT_CHANGED]) { if (type) eventSource.on(type, () => forcedActivations.clear()); }
+}
+async function restoreForcedActivations() {
+    if (forcedActivations?.size) await eventSource.emit(event_types.WORLDINFO_FORCE_ACTIVATE, [...forcedActivations.values()]);
+}
+
+// 로어북 서명 재료: 실리태번은 스캔 첫머리에 그 스캔이 볼 수 있는 항목 전부를 WORLDINFO_ENTRIES_LOADED 로 내요. 번역용 스캔 동안 내 온 것만 받아 둬요
+//   (월드인포 참고를 쓰는 사람만 처음 스캔할 때 한 번 걸어요 · 스캔은 한 번에 하나씩이라 받는 자리도 하나)
+let loreCapture = null, loreListening = false;
+function loreWatch() {
+    if (typeof eventSource === 'undefined' || !event_types?.WORLDINFO_ENTRIES_LOADED) return null;
+    if (!loreListening) { loreListening = true; eventSource.on(event_types.WORLDINFO_ENTRIES_LOADED, lore => { if (loreCapture) loreCapture.lore = lore; }); }
+    return { begin() { loreCapture = { lore: null }; }, end() { const seen = loreCapture?.lore ?? null; loreCapture = null; return seen; } };
+}
+
+/** 그 메시지의 캐릭터 카드 — 그룹 채팅이면 그 메시지를 말한 멤버(내 메시지면 없음) */
+function referenceCharacter(ctx, message) {
+    const list = ctx.characters || [];
+    if (ctx.groupId === null || ctx.groupId === undefined) { const chid = Number(ctx.characterId); return Number.isInteger(chid) && list[chid] ? { chid, card: list[chid] } : null; }
+    if (!message || message.is_user || !message.original_avatar) return null;
+    const chid = list.findIndex(ch => ch?.avatar === message.original_avatar);
+    return chid >= 0 ? { chid, card: list[chid] } : null;
+}
+
+/**
+ * 월드인포 스캔에 넘길 것 — 본 생성(script.js)과 같은 재료: 이름 붙이기 설정 · 전체 문맥 크기 · globalScanData.
+ * 번역은 채팅 상태를 바꾸면 안 돼서, 스캔이 건드릴 수 있는 자리(채팅 변수 · 전역 변수 · 작가 노트 확장 프롬프트)를 수집 함수가 떠 두었다 되돌리게 넘겨요.
+ * 되돌린 것이 변수면 실리태번이 예약해 둔 저장이 되돌린 값으로 나가게 저장을 다시 예약해요. (그룹 채팅에서 캐릭터에 묶인 로어북은 실리태번이 「지금 고른 캐릭터」로 골라요 — 말한 멤버와 다를 수 있어요.)
+ */
+function worldInfoScanInputs(info, ctx, owner) {
+    let maxContext = 8192;
+    try { maxContext = Number(getMaxContextTokens()) || 8192; } catch { /* 연결 전 */ }
+    if (typeof watchForcedActivations === 'function') watchForcedActivations();
+    return {
+        includeNames: worldInfoHost.world_info_include_names !== false,
+        maxContext,
+        maxMessages: info.scanCount(worldInfoHost.world_info_depth, worldInfoHost.world_info_min_activations_depth_max),
+        // 카드 글을 읽는 것도 매크로를 돌려요 — 떠 둔 뒤(수집 함수 안)에 읽어요
+        scanData: () => {
+            let fields = null;
+            try { fields = typeof ctx.getCharacterCardFields === 'function' ? ctx.getCharacterCardFields(owner ? { chid: owner.chid } : {}) : null; } catch { fields = null; }
+            return info.scanDataOf({ fields, character: owner?.card ?? null, personaDescription: power_user?.persona_description || '' });
+        },
+        getWorldInfoPrompt,
+        chatMetadata: ctx.chatMetadata ?? null,
+        extensionSettings: typeof extension_settings !== 'undefined' ? extension_settings : null,
+        extensionPrompts: ctx.extensionPrompts ?? null,
+        onRestore: changed => {
+            if (changed.includes('variables') && typeof saveMetadataDebounced === 'function') saveMetadataDebounced();
+            if (changed.includes('globalVariables') && typeof saveSettingsDebounced === 'function') saveSettingsDebounced();
+            console.debug('[LLM Translator] 번역용 월드인포 스캔이 건드린 채팅 상태를 되돌렸어요:', changed.join(' · '));
+        },
+        afterScan: typeof restoreForcedActivations === 'function' ? restoreForcedActivations : null,
+        lore: typeof loreWatch === 'function' ? loreWatch() : null,
+    };
+}
+
+/** 이 번역에 참고 정보를 넣을 메시지 번호 (-1 = 안 넣음). 꺼져 있으면 여기서 바로 끝나요 */
+function replyReferenceIndex(options, text) {
+    if (options.isInputTranslation || !replyReferenceOn()) return -1;
+    const chat = getContext().chat || [];
+    const given = options.referenceAt ?? options.contextAt;
+    if (given !== undefined && given !== null) { const at = Number(given); return Number.isInteger(at) && at >= 0 && at < chat.length ? at : -1; }
+    // 글만 받은 문단 캐시 지우기: 그 글의 메시지를 찾아 번역할 때와 같은 열쇠를 만들어요
+    if (!options.forget) return -1;
+    for (let i = chat.length - 1; i >= 0; i--) if (chat[i] && chat[i].mes === text) return i;
+    return -1;
+}
+
+/**
+ * AI 답 번역 참고 정보 — { text, stable, hash, label }. text 는 요청에 붙일 글('' = 없음), stable 은 그 앞쪽 고정 부분(캐시 앞부분용),
+ * hash 는 문단 캐시 열쇠에 넣는 값, label 은 요청 로그 이름표(고정 글자). 던지지 않아요 — 참고 모듈을 못 받거나 무엇이 틀어져도 번역은 참고 글 없이 그대로 가요.
+ * 월드인포가 실패 · 0개 · 건너뜀(본채팅 생성 중)이면 콘솔과 요청 로그 이름표에 한 줄 남겨요
+ */
+async function buildReplyReference(at, { reuse = false } = {}) {
+    try {
+        return await collectReplyReference(at, reuse);
+    } catch (error) {
+        console.warn(`[LLM Translator] 메시지 #${at}: 참고 정보를 못 만들어 빼고 번역해요:`, error);
+        return { text: '', stable: '', hash: '', label: '번역 · 참고 정보 실패' };
+    }
+}
+async function collectReplyReference(at, reuse) {
+    const s = extensionSettings, ctx = getContext(), message = ctx.chat?.[at];
+    if (!message) return null;
+    const info = await loadReferenceInfo();
+    const want = { char: s.reply_ctx_char === true, persona: s.reply_ctx_persona === true, wi: s.reply_ctx_wi === true, note: s.reply_ctx_note === true };
+    const owner = referenceCharacter(ctx, message);
+    const personaDescription = power_user?.persona_description || '';
+    const notePrompt = ctx.chatMetadata?.note_prompt || '';
+    const limit = info.wiLimit(s.reply_ctx_wi_limit);
+    const chatId = ctx.chatId ?? ctx.getCurrentChatId?.() ?? null;
+    const memoKey = JSON.stringify([chatId, at, getStringHash(String(message.mes ?? '')), want, limit, owner?.card?.avatar ?? null, ctx.chatMetadata?.world_info ?? null,
+        getStringHash([owner?.card?.description, owner?.card?.personality, owner?.card?.scenario, personaDescription, notePrompt].map(v => String(v ?? '')).join('\u0001'))]);
+    if (!replyReferenceMemo) {
+        replyReferenceMemo = info.createReferenceMemo();
+        // 로어북을 고치거나 월드인포 설정을 바꾸면 기억한 참고 글을 버려요 — 고친 뒤 바로 다시 번역해도 새로 스캔하게 (참고 정보를 처음 쓸 때 한 번만 걸어요)
+        if (typeof eventSource !== 'undefined') for (const type of [event_types.WORLDINFO_UPDATED, event_types.WORLDINFO_SETTINGS_UPDATED]) { if (type) eventSource.on(type, () => replyReferenceMemo?.clear()); }
+    }
+    const held = reuse ? replyReferenceMemo.get(memoKey) : null;
+    if (held) return held;
+    const found = await info.collectReference({ want, character: owner?.card ?? null, userName: ctx.name1, charName: message.is_user ? '' : message.name, personaDescription, notePrompt,
+        // 본채팅 생성이 도는 동안(그룹 채팅에서 다음 멤버가 쓰는 중 등)에는 그 생성의 스캔과 겹쳐 되돌릴 수 없으니 월드인포만 건너뛰어요
+        wi: want.wi ? { chat: ctx.chat, at, limit, ...worldInfoScanInputs(info, ctx, owner), busy: () => (typeof isMainChatGenerating === 'function' && isMainChatGenerating() ? '생성 중' : '') } : null });
+    const block = info.referenceBlock([...found.stable, ...found.live]);
+    const text = block ? `${block}\n${info.REFERENCE_TAIL}` : '';
+    const stable = found.stable.length ? info.referenceBlock(found.stable) : '';
+    const summary = info.wiSummary(found.wi);
+    if (found.wi?.status === 'failed') console.warn(`[LLM Translator] 메시지 #${at}: 월드인포 참고 정보를 못 만들어 빼고 번역해요:`, found.wi.error);
+    else if (found.wi?.status === 'empty') console.info(`[LLM Translator] 메시지 #${at}: 걸린 월드인포가 없어 참고 정보에 넣지 않았어요 (스캔 글 = 이 메시지까지).`);
+    else if (found.wi?.status === 'skipped') console.info(`[LLM Translator] 메시지 #${at}: 본채팅 ${found.wi.why}이라 월드인포 스캔을 건너뛰고 번역해요.`);
+    else if (found.wi?.status === 'ok') console.debug(`[LLM Translator] 메시지 #${at}: 참고 월드인포 ${found.wi.chars}자${found.wi.clipped ? ' (상한에서 자름)' : ''}`);
+    // 문단 캐시 열쇠 몫은 참고 글이 아니라 켠 항목 + 상한 + 고정 부분 + 로어북 서명 — 확률 항목이 다시 굴려져도 같고, 로어북을 고치면 달라져요
+    const value = { text, stable, hash: String(getStringHash(info.referenceKey({ want, limit, stable, wi: found.wi }))), label: summary ? `번역 · 참고 ${summary}` : '' };
+    // 기억은 그 채팅 그대로일 때만 · 제대로 스캔한 것만 (그사이 채팅이 바뀌었으면 다른 채팅 글로 만든 참고 글이에요 — 번역은 뒤의 지킴이가 멈춰요)
+    const now = getContext();
+    const sameChat = now.chat === ctx.chat && (now.chatId ?? now.getCurrentChatId?.() ?? null) === chatId;
+    return sameChat && !['failed', 'skipped'].includes(found.wi?.status) ? replyReferenceMemo.set(memoKey, value) : value;
+}
+
+/**
+ * 보내기 번역에 붙이는 참고 정보 — 이름 · 용어 · 말투를 맞추라고 주는 것 (번역 대상 아님). 켠 항목만.
+ * 월드인포는 AI 답 번역과 같은 수집 함수(reference-info.js)예요: 스캔 범위는 번역기의 「참고할 최근 대화 개수」가 아니라 실리태번 스캔 깊이,
+ * globalScanData 를 넘기고, 발동된 항목은 삽입 위치와 상관없이 넣어요. 스캔이 건드린 채팅 변수 · 작가 노트 · 강제 발동 예약은 되돌려요(1.2.0 까지는 그대로 남았어요).
+ * 실패하면 알림 한 번 · 콘솔 · 요청 로그 이름표(report.label). 참고 모듈을 못 받아도 번역은 참고 글 없이 가요
+ */
+async function buildSendReference(text, messageId = undefined, report = null) {
     const s = extensionSettings;
     const ctx = getContext();
     const referenceGuard = s.context_message_auto === true ? captureAutoContextGuard(getContext, () => extensionSettings, autoRequestSignature) : null;
     const parts = [];
     const clip = (value, max = 1500) => { const t = String(value || '').trim(); return t.length > max ? `${t.slice(0, max)}…` : t; };
-    if (s.send_ctx_persona) {
-        const desc = power_user?.persona_description || '';
-        if (desc.trim()) parts.push(`<persona name="${ctx.name1}">\n${clip(desc)}\n</persona>`);
-    }
-    if (s.send_ctx_char) {
-        const ch = ctx.characters?.[ctx.characterId];
-        if (ch) {
-            const body = [
-                ch.description && `Description: ${clip(ch.description, 2500)}`,
-                ch.personality && `Personality: ${clip(ch.personality, 800)}`,
-                ch.scenario && `Scenario: ${clip(ch.scenario, 800)}`,
-            ].filter(Boolean).join('\n');
-            if (body) parts.push(`<character name="${ch.name}">\n${body}\n</character>`);
+    const want = { persona: !!s.send_ctx_persona, char: !!s.send_ctx_char, note: !!s.send_ctx_note, wi: !!s.send_ctx_wi };
+    if (want.persona || want.char || want.note || want.wi) {
+        try {
+            const info = await loadReferenceInfo();
+            const chat = ctx.chat || [];
+            const at = Number.isInteger(messageId) && chat[messageId] ? messageId : chat.length - 1;   // 방금 보낸 메시지 (그 글 자리에 입력한 원문을 끼워 스캔)
+            const owner = referenceCharacter(ctx, null);   // 그룹 채팅이면 캐릭터 설정은 예전처럼 빠져요
+            // 보내기 번역은 실리태번이 기다려 주는 자리(MESSAGE_SENT)라 본 생성의 스캔과 겹치지 않아요 — 생성 중이어도 스캔해요
+            const found = await info.collectReference({ want, character: owner?.card ?? null, userName: ctx.name1, charName: ctx.name2, personaDescription: power_user?.persona_description || '',
+                notePrompt: ctx.chatMetadata?.note_prompt || '',
+                wi: want.wi ? { chat, at, text, limit: info.WI_LIMIT_DEFAULT, ...worldInfoScanInputs(info, ctx, owner) } : null });
+            parts.push(...found.stable, ...found.live);
+            const summary = info.wiSummary(found.wi);
+            if (report && summary) report.label = `보낼 글 번역 · 참고 ${summary}`;
+            if (found.wi?.status === 'failed') {
+                console.warn('[LLM Translator] 월드인포 참고 정보를 못 만들어 빼고 번역해요:', found.wi.error);
+                toastr.warning('월드인포 참고 정보를 못 만들어서 빼고 번역했어요.', '보내기 번역', { timeOut: 6000 });
+            } else if (found.wi?.status === 'empty') {
+                console.info('[LLM Translator] 보내기 번역: 걸린 월드인포가 없어 참고 정보에 넣지 않았어요.');
+            } else if (found.wi?.status === 'ok') {
+                console.debug(`[LLM Translator] 보내기 번역: 참고 월드인포 ${found.wi.chars}자${found.wi.clipped ? ' (상한에서 자름)' : ''}`);
+            }
+        } catch (error) {
+            if (error?.cancelled) throw error;
+            parts.length = 0;
+            if (report) report.label = '보낼 글 번역 · 참고 정보 실패';
+            console.warn('[LLM Translator] 참고 정보를 못 만들어 빼고 번역해요:', error);
+            toastr.warning('참고 정보를 못 만들어서 빼고 번역했어요.', '보내기 번역', { timeOut: 6000 });
         }
-    }
-    if (s.send_ctx_note) {
-        const note = ctx.chatMetadata?.note_prompt || '';
-        if (note.trim()) parts.push(`<authors_note>\n${clip(note)}\n</authors_note>`);
     }
     const count = Math.max(1, Number(s.context_message_count) || 5);
     const recentSource = (s.context_message_auto === true ? (ctx.chat || []).slice(0, -1) : (ctx.chat || []).slice(-count - 1, -1)).filter(m => m && !m.is_system); // 방금 보낸 것은 뺌
     const recent = s.context_message_auto === true ? recentSource.map(m => ({ name: m.name, mes: m.mes })) : recentSource;
-    if (s.send_ctx_wi) {
-        try {
-            // 실리태번이 프롬프트를 만들 때와 같은 식으로 최근 글(새 글 포함)을 훑어 걸리는 월드인포만 (건조 실행: 부작용 없음)
-            const scan = [...recent.map(m => m.mes), text].reverse();
-            const { worldInfoString } = await getWorldInfoPrompt(scan, 8192, true);
-            if (worldInfoString && worldInfoString.trim()) parts.push(`<world_info>\n${clip(worldInfoString, 4000)}\n</world_info>`);
-        } catch (error) {
-            console.warn('[LLM Translator] 월드인포 참고 정보를 못 만들었어요:', error);
-        }
-    }
     referenceGuard?.assert();
     if (s.send_ctx_history && s.context_message_auto === true) {
         parts.push(`<recent_chat>\n${AUTO_CONTEXT.send}\n</recent_chat>`);
@@ -4579,11 +4754,12 @@ async function onMessageSentTranslate(messageId) {
             .replace(/\{\{languageRules\}\}/g, () => sendLanguageRules())
             .replace(/\{\{targetLang\}\}/g, () => sendLang())
             .replace(/\{\{dialogueLang\}\}/g, () => sendDialogueLang() || sendLang());
-        const reference = await buildSendReference(text);
+        const referenceReport = {};
+        const reference = await buildSendReference(text, messageId, referenceReport);
         assertSend();
         if (reference) prompt += `\n\n${reference}`;
         prompt += '\n\n[Message to translate]';
-        const translated = String(await translate(text, { prompt, isInputTranslation: true, assertValid: assertSend }) || '').trim();
+        const translated = String(await translate(text, { prompt, isInputTranslation: true, assertValid: assertSend, ...(referenceReport.label ? { requestLabel: referenceReport.label } : {}) }) || '').trim();
         if (!translated) throw new Error('번역 결과가 비어 있어요');
         assertSend();
         message.extra.llmt_sent_original = text;
@@ -6126,6 +6302,11 @@ function initializeEventHandlers() {
         saveSettingsDebounced();
         autoRefreshModels();
     });
+    // 생각 세기 — 다음 번역부터 (낮음이 아니면 연결 서명이 달라져 「다시 번역」하면 새로 번역돼요)
+    $('#llm_think_effort').on('change', function () {
+        extensionSettings.think_effort = ['medium', 'model'].includes(this.value) ? this.value : 'low';
+        saveSettingsDebounced();
+    });
     $('#llm_profile_max_tokens').on('change', function () {
         extensionSettings.profile_max_tokens = Math.max(0, Math.min(160000, Math.floor(Number(this.value) || 0)));
         this.value = extensionSettings.profile_max_tokens;
@@ -6286,6 +6467,21 @@ function initializeEventHandlers() {
             saveSettingsDebounced();
         });
     }
+    // AI 답 번역 참고 정보 — 다음 번역부터 (켠 번역은 문단 캐시 열쇠가 달라져 「다시 번역」하면 새로 번역돼요)
+    for (const key of REPLY_CTX_KEYS) {
+        $(`#llm_${key}`).off('change').on('change', function () {
+            extensionSettings[key] = $(this).is(':checked');
+            saveSettingsDebounced();
+        });
+    }
+    $('#llm_reply_ctx_wi_limit').off('change').on('change', function () {
+        const n = Math.floor(Number(this.value));
+        extensionSettings.reply_ctx_wi_limit = Number.isFinite(n) && n > 0 ? Math.max(500, Math.min(40000, n)) : defaultSettings.reply_ctx_wi_limit;
+        this.value = extensionSettings.reply_ctx_wi_limit;
+        saveSettingsDebounced();
+    });
+    // 월드인포 참고를 켜 둔 사람만: 다른 확장의 강제 발동 예약을 처음부터 같이 들어 둬요 (번역용 스캔 뒤에 다시 예약 — 꺼 둔 사람에게는 감시가 없어요)
+    if (extensionSettings.send_ctx_wi === true || extensionSettings.reply_ctx_wi === true) watchForcedActivations();
     // 보내는 메시지를 채팅에 넣은 직후(프롬프트 만들기 전)에 번역 — emit 이 기다려 주므로 번역이 끝난 뒤 생성이 이어진다
     listen(event_types.MESSAGE_SENT, onMessageSentTranslate);
     // 번역 리모컨: 채팅을 바꾸면 열린 메뉴를 닫고 단추 자리 · 모양을 다시 맞춘다 (켜 둔 사람만 — remote 가 없으면 아무 일 없음)
@@ -6823,8 +7019,8 @@ async function readCachedTranslation(originalText) {
 }
 // 5.4.2: 사용자가 번역문을 지우면(휴지통 · 수정 창에서 비우기 · 삭제 명령) 그 글의 문단 캐시도 지운다 — 메시지 캐시만 지워서
 //        다시 번역하면 요청 없이 문단 캐시가 옛 번역을 그대로 돌려줬다 ('번역을 시작합니다' 만 뜨고 같은 글)
-async function forgetParagraphCache(originalText) {
-    try { await translate(originalText, { segmentCache: true, forget: true }); }
+async function forgetParagraphCache(originalText, messageId = undefined) {
+    try { await translate(originalText, { segmentCache: true, forget: true, ...(Number.isInteger(messageId) ? { referenceAt: messageId } : {}) }); }
     catch (error) { console.warn('[LLM Translator] 문단 캐시 지우기 실패:', error?.message || error); }
 }
 /**
@@ -7741,7 +7937,7 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
 
     // 4. DB에서 해당 번역 데이터 삭제 시도
     try {
-        await forgetParagraphCache(originalText); // 5.4.2
+        await forgetParagraphCache(originalText, Number(messageId)); // 5.4.2
         try {
             await deleteTranslationByOriginalText(originalText); // 기존에 만든 DB 삭제 함수 사용
         } catch (error) {

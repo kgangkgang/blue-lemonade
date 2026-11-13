@@ -7,6 +7,7 @@ const root = path.resolve(process.argv[2] || '.'), dir = path.join(root, 'src/ad
 const source = fs.readFileSync(path.join(dir, 'index.js'), 'utf8');
 const auto = await import(pathToFileURL(path.join(dir, 'context-auto.js')));
 const { requestCurrentConnection } = await import(pathToFileURL(path.join(dir, 'current-connection.js')));
+const referenceInfo = await import(pathToFileURL(path.join(dir, 'reference-info.js')));   // 보내기 번역 참고 정보 수집 (buildSendReference 가 처음 쓸 때 불러와요)
 const { withPromptCache } = await import(pathToFileURL(path.join(root, 'src/prompt-cache.js')));   // 7.7.2 callLLMAPI 가 부른다
 function cut(name) {
     const start = source.search(new RegExp(`\\n(?:async )?function ${name}\\(`)); assert(start >= 0, name);
@@ -37,7 +38,8 @@ function fixture() {
         createRawPrompt: messages => messages.map(m => m.content).join('\n'), textOutputLimit: () => 100,
         power_user: { persona_description: 'Persona reference' }, getWorldInfoPrompt: async () => ({ worldInfoString: 'World information reference' }),
         sendLangLabel: () => '한국어', sendLanguageRules: () => 'Korean', sendLang: () => 'ko', sendDialogueLang: () => '',
-        defaultSettings: { llm_prompt_send: 'Translate.' }, toastr: { info() {}, error() {}, clear() {} }, setSendButtonBusy() {},
+        defaultSettings: { llm_prompt_send: 'Translate.' }, toastr: { info() {}, error() {}, warning() {}, clear() {} },
+        loadReferenceInfo: async () => referenceInfo, worldInfoHost: { world_info_include_names: true }, console: { warn() {}, info() {}, log() {}, error() {}, debug() {} }, setSendButtonBusy() {},
         event_types: { GENERATION_STOPPED: 'stop' }, eventSource: { on() {}, removeListener() {} }, substituteParams: x => x,
         guards: { capture: message => { const original = message.mes; return { assert() { if (message.mes !== original) throw Object.assign(Error('edited'), { cancelled: true }); } }; } },
         markTranslatedOriginal: (message, text) => { message.extra.original_text_hash = text; },
@@ -45,7 +47,7 @@ function fixture() {
     context.saveChat = async () => saved.push(true);
     context.ChatCompletionService = { processRequest: async payload => { sent.push(structuredClone(payload)); return { text: '번역한 입력' }; } };
     context.TextCompletionService = { processRequest: async payload => { sent.push(structuredClone(payload)); return { text: '번역한 입력' }; } };
-    for (const name of ['substituteCustomPlaceholders', 'prepareAutoTranslationPayload', 'lowerTranslationThinking', 'callLLMAPI', 'buildSendReference', 'onMessageSentTranslate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
+    for (const name of ['substituteCustomPlaceholders', 'prepareAutoTranslationPayload', 'lowerTranslationThinking', 'callLLMAPI', 'referenceCharacter', 'worldInfoScanInputs', 'buildSendReference', 'onMessageSentTranslate']) env[name] = new Function('env', `with(env){return (${cut(name)});}`)(env);
     env.translate = async (text, options) => env.callLLMAPI(env.substituteCustomPlaceholders(options.prompt, true) + '\n\n' + text);
     return { env, settings, context, sent, counted, saved, logs };
 }

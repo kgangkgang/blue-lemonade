@@ -17,7 +17,7 @@ export function createComparison(selection,{closed=()=>false,update=()=>{}}={}){
    job=await prepareTranslation(selection,()=>stopped||closed(),{alignOnly:true,onRequest:onRequest('alignment')});alive();
    for(const mode of COMPARISON_MODES){
     alive();update({stage:mode.id,counts:{...counts},candidates:[...candidates],busy});
-    const result=await exclusive(async()=>{alive();const api=await adapter();const text=String(await api.command.callback({assertValid:alive,guidance:mode.guidance,onRequest:onRequest(mode.id)},job.original)).trim();alive();if(!text||text===job.original||!/[가-힣]/.test(text)||/\[차단된 문단|^LLM 번역 중 오류/.test(text))throw Error('사용할 수 있는 한국어 후보를 받지 못했어요.');return text;});
+    const result=await exclusive(async()=>{alive();const api=await adapter();const text=String(await api.command.callback({assertValid:alive,guidance:mode.guidance,onRequest:onRequest(mode.id),referenceAt:job.id},job.original)).trim();alive();if(!text||text===job.original||!/[가-힣]/.test(text)||/\[차단된 문단|^LLM 번역 중 오류/.test(text))throw Error('사용할 수 있는 한국어 후보를 받지 못했어요.');return text;});
     candidates.push({...mode,result,calls:counts[mode.id]});update({stage:mode.id,counts:{...counts},candidates:[...candidates],busy});
    }
    return {job,candidates:[...candidates],counts:{...counts}};

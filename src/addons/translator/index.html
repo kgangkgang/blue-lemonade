@@ -127,6 +127,36 @@
                     </div>
                 </section>
 
+                <!-- AI 답 번역 참고 정보 (기본 끔) -->
+                <section class="llmt-card">
+                    <header class="llmt-card-head"><i class="fa-solid fa-book-open"></i><span>AI 답 번역 참고 정보</span></header>
+                    <div class="llmt-card-body">
+                        <label class="llmt-label">AI 답 번역에도 참고 정보 넣기</label>
+                        <small class="llmt-desc">AI 답을 한국어로 옮길 때(자동 번역 · 번역 단추 · 다시 번역 · 문단 번역 · 고른 글 번역) 이름 · 말투 · 캐릭터 해석을 맞추라고 번역 요청에 같이 넣어요 (번역되진 않아요). 메시지마다 토큰이 늘고 조금 느려져요 — 긴 답이 여러 묶음으로 나뉘면 번역 요청마다 붙어요. 기본은 모두 꺼져 있어요.</small>
+                        <small class="llmt-desc">켜면 고른 정보(캐릭터 설정 · 페르소나 · 월드인포 · 작가 노트)가 번역에 쓰는 연결(모델 탭에서 고른 공급자 · 모델)로 함께 보내져요. 채팅과 다른 공급자를 번역에 쓰고 있다면 그쪽으로 가요.</small>
+                        <div class="llmt-checks llmt-checks--grid">
+                            <label class="checkbox_label llmt-check" for="llm_reply_ctx_char">
+                                <input type="checkbox" id="llm_reply_ctx_char"><span>캐릭터 설정</span>
+                            </label>
+                            <label class="checkbox_label llmt-check" for="llm_reply_ctx_persona">
+                                <input type="checkbox" id="llm_reply_ctx_persona"><span>페르소나</span>
+                            </label>
+                            <label class="checkbox_label llmt-check" for="llm_reply_ctx_wi">
+                                <input type="checkbox" id="llm_reply_ctx_wi"><span>월드인포</span>
+                            </label>
+                            <label class="checkbox_label llmt-check" for="llm_reply_ctx_note">
+                                <input type="checkbox" id="llm_reply_ctx_note"><span>작가 노트</span>
+                            </label>
+                        </div>
+                        <small class="llmt-desc">월드인포는 번역할 그 메시지와 그 앞 대화를 실리태번 스캔 깊이만큼 훑어, 그 장면에서 걸린 항목만 넣어요(옛 메시지도 그 시점까지만 봐요). 인물이 월드인포 항목으로 들어 있는 카드에 켜 두면 좋아요. 켜거나 끈 뒤 「다시 번역」하면 새로 번역돼요. 답을 만드는 동안(그룹 채팅에서 다음 멤버가 쓰는 중)에는 월드인포를 건너뛰고, 그룹 채팅에서 캐릭터에 묶인 로어북은 말한 멤버 것과 다를 수 있어요.</small>
+                        <div class="llmt-field">
+                            <label for="llm_reply_ctx_wi_limit" class="llmt-label">월드인포 길이 상한 (글자)</label>
+                            <input id="llm_reply_ctx_wi_limit" type="number" class="text_pole" min="500" max="40000" step="500" value="4000">
+                            <small class="llmt-desc">걸린 항목이 이보다 길면 뒤를 잘라요. 기본 4000자 — 늘리면 그만큼 토큰이 더 들어요.</small>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- [1.6.0] 보내기 번역 -->
                 <section class="llmt-card">
                     <header class="llmt-card-head"><i class="fa-solid fa-paper-plane"></i><span>보내기 번역</span></header>
@@ -156,6 +186,7 @@
                         <div class="llmt-divider"></div>
                         <label class="llmt-label">참고 정보 함께 보내기</label>
                         <small class="llmt-desc">이름 · 용어 · 말투를 맞추라고 번역 요청에 같이 넣습니다 (번역되진 않음). 넣을수록 토큰이 늘고 조금 느려져요.</small>
+                        <small class="llmt-desc">아래 체크는 내가 보내는 글을 옮기는 보내기 번역에만 쓰여요. AI 답을 한국어로 옮길 때 넣을 것은 위 「AI 답 번역 참고 정보」에서 따로 켜요. 켠 정보는 번역에 쓰는 연결(모델 탭에서 고른 공급자 · 모델)로 함께 보내져요 — 채팅과 다른 공급자를 번역에 쓰고 있다면 그쪽으로 가요.</small>
                         <div class="llmt-checks llmt-checks--grid">
                             <label class="checkbox_label llmt-check" for="llm_send_ctx_char">
                                 <input type="checkbox" id="llm_send_ctx_char"><span>캐릭터 설정</span>
@@ -273,6 +304,15 @@
                             </div>
                         </div>
                         <small id="llm_direct_hint" class="llmt-desc" style="display:none">아래 공급자 · 모델로 번역해요.</small>
+                        <div class="llmt-field">
+                            <label for="llm_think_effort" class="llmt-label">생각 세기</label>
+                            <select id="llm_think_effort" class="text_pole">
+                                <option value="low">낮음 (기본)</option>
+                                <option value="medium">보통</option>
+                                <option value="model">모델 기본</option>
+                            </select>
+                            <small class="llmt-desc">생각하는 모델(Claude 5 이후 · Gemini 3 이후 · OpenAI 추론 모델)이 번역하기 전에 얼마나 생각할지예요. 낮음이 가장 빠르고 싸요. 말투 · 캐릭터 해석이 밋밋하면 보통으로 올려 보세요 — 느려지고 생각 토큰만큼 비용이 늘어요. 모델 기본은 세기를 보내지 않아요(현재 연결이면 그 연결의 설정대로).</small>
+                        </div>
                     </div>
                 </section>
                 <div id="llm_direct_settings">

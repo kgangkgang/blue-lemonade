@@ -604,6 +604,7 @@ jobs:
           node tools/tests/capture-open.mjs
           node tools/tests/translator-style-profiles.mjs
           node tools/tests/translator-style-aliases.mjs
+          node tools/tests/translator-reply-reference.mjs .
           node --test tools/tests/translator-book-transfer.mjs
           node --test tools/tests/translator-book-list.mjs
           node tools/tests/translator-access-tools.mjs

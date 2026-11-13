@@ -31,7 +31,7 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
     const rearm=(ms,isIdle)=>{clearTimeout(timer);timeout=ms;idle=isIdle;timer=setTimeout(()=>controller.abort(),ms);};
     const sized=tokens=>{if(!(overrides.timeoutMs>0))rearm(Math.min(600000,90000+Math.max(0,Number(tokens)||0)*10),false);};
     const touch=()=>rearm(IDLE,true);
-    const release=log?.begin?.({caller:'llm-translator-custom',purpose:overrides.requestPurpose||'translation.chat',user:messages[0]?.content});
+    const release=log?.begin?.({caller:'llm-translator-custom',purpose:overrides.requestPurpose||'translation.chat',user:messages[0]?.content,...(overrides.requestLabel?{label:overrides.requestLabel}:{})});
     const limit=overrides.maxTokens>0?overrides.maxTokens:maxTokens>0?maxTokens:undefined;
     try{
         if(overrides.signal?.aborted)throw overrides.signal.reason;
