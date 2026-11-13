@@ -430,13 +430,16 @@ export function panelCssEnabled() {
 // 메시지 ··· 메뉴가 열린 메시지 표시 (2.5.3): style.css 가 `.mes:has(.extraMesButtons.visible)` 로 알아내던 것.
 // :has() 는 메뉴 하나가 열릴 때 그 메시지 안 요소 전부(긴 답변이면 수백 개)를 다시 계산하게 만들어 ··· 탭이 굼떴다.
 // 대신 실리태번이 .extraMesButtons 에 .visible 을 붙이는 순간 여기서 .mes 에 bl-menu-open 을 붙인다 (클래스 하나 = 그 요소만 다시 계산).
+const MES_MENU_OPEN = 'data-bl-mes-menu-open';
 export function startMenuOpenMark() {
     const chat = document.getElementById('chat');
     if (!chat) return;
     // _blClosedAt: 이 메뉴가 마지막으로 닫힌 때 (아래 0.45초 뒤 강제 닫기가 '실리태번이 이미 닫았다가 사용자가 다시 연 메뉴'를 가려낼 때 쓴다)
     const sync = (el) => { const visible = el.classList.contains('visible'); if (!visible) el._blClosedAt = performance.now(); el.closest('.mes')?.classList.toggle('bl-menu-open', visible); positionMessageMenu(el, visible); };
-    // 2.9.4: ··· 메뉴 위치가 쓰는 #chat 앵커(--salty-chat)는 열린 메뉴가 있을 때만 — style.css 가 #chat.bl-mes-menu-open 에만 이름을 준다
-    const syncChat = () => chat.classList.toggle('bl-mes-menu-open', !!chat.querySelector(':scope > .mes.bl-menu-open'));
+    // 2.9.4: ··· 메뉴 위치가 쓰는 #chat 앵커(--salty-chat)는 열린 메뉴가 있을 때만 — style.css 가 #chat[data-bl-mes-menu-open] 에만 이름을 준다
+    // 1.2.2: 표식은 class 가 아니라 data 속성 — #chat 의 class 가 바뀌면 실리태번 keyboard.js 가 채팅의 단추 전부를 선택자 27개로 다시 훑고(··· 를 열 때 한 번 · 닫을 때 한 번),
+    //   네모 단추 감시도 #chat 을 통째로 다시 쟀어요. 이 표식은 #chat 에 앵커 이름만 주니 단추 모양 · 보임은 그대로예요(서랍 덮개 data-bl-chat-covered 와 같은 길)
+    const syncChat = () => { const open = !!chat.querySelector(':scope > .mes.bl-menu-open'); if (chat.hasAttribute(MES_MENU_OPEN) !== open) chat.toggleAttribute(MES_MENU_OPEN, open); };
     chat.querySelectorAll('.extraMesButtons').forEach(sync);
     syncChat();
     // 4.2.8 '··· 버튼이 아예 없고 버튼들이 늘 펼쳐져 있는' 환경: 다른 CSS(확장 · 커스텀 CSS · 옛 테마 조각)가 버튼 칸을 늘 보이게 하고 ··· 를 숨긴 경우다.
@@ -493,7 +496,7 @@ export function startMenuOpenMark() {
         if (menu) syncChat();
     });
     // 열린 메뉴째로 메시지가 지워진 경우도 (메시지를 넣고 뺄 때만 불림 — 스트리밍 글자는 .mes 안쪽이라 안 불림)
-    watchDom(chat, { childList: true, name: 'lite 메뉴 연 메시지 지움' }, () => { if (chat.classList.contains('bl-mes-menu-open')) syncChat(); });
+    watchDom(chat, { childList: true, name: 'lite 메뉴 연 메시지 지움' }, () => { if (chat.hasAttribute(MES_MENU_OPEN)) syncChat(); });
 }
 
 // ── 앵커 이름은 쓸 때만 (2.9.4) ─────────────────────────────────────────────

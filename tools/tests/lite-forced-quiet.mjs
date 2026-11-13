@@ -20,9 +20,11 @@ function classes(initial = []) {
     list.values = () => [...set].sort();
     return list;
 }
-const env = { checked: false, menu: null };
+const env = { checked: false, menu: null, openMes: null };
 const body = { classList: classes(['salty']) };
-const chat = { classList: classes(), querySelector: sel => sel.includes('last-of-type') ? env.menu : null, querySelectorAll: () => [], getElementsByClassName: () => [] };
+const chatAttrs = new Set(); let chatAttrWrites = 0;
+const chat = { classList: classes(), querySelector: sel => sel.includes('last-of-type') ? env.menu : sel.includes('.mes.bl-menu-open') ? env.openMes : null, querySelectorAll: () => [], getElementsByClassName: () => [],
+    hasAttribute: k => chatAttrs.has(k), toggleAttribute: (k, on) => { chatAttrWrites++; if (on) chatAttrs.add(k); else chatAttrs.delete(k); return on; } };
 globalThis.document = { body, getElementById: id => id === 'chat' ? chat : id === 'expandMessageActions' ? { checked: env.checked } : null, getElementsByClassName: () => [], addEventListener() {}, querySelector: () => null, querySelectorAll: () => [] };
 globalThis.getComputedStyle = el => ({ display: el.display });
 globalThis.MutationObserver = class { observe() {} disconnect() {} };
@@ -37,6 +39,15 @@ const menu = (display, extra = {}) => ({ classList: classes(), getAttribute: () 
 const changeChats = n => { for (let i = 0; i < n; i++) handlers.forEach(fn => fn()); flush(); };
 
 startMenuOpenMark();
+await test('(1.2.2) ··· 메뉴 열림 표식은 #chat 의 data 속성 — class 는 한 번도 안 쓰고(실리태번 keyboard.js 가 채팅 단추 전부를 다시 훑지 않게), 닫힌 채로 시작하면 속성도 안 써요', () => {
+    assert.equal(chat.classList.records, 0); assert.equal(chatAttrWrites, 0); assert.equal(chatAttrs.size, 0);
+    const src = fs.readFileSync(path.join(root, 'src/lite.js'), 'utf8');
+    assert.ok(!src.includes("classList.toggle('bl-mes-menu-open'") && !src.includes("classList.contains('bl-mes-menu-open'"), 'lite.js 에 #chat class 쓰기 · 읽기가 없어요');
+    assert.ok(src.includes('if (chat.hasAttribute(MES_MENU_OPEN) !== open) chat.toggleAttribute(MES_MENU_OPEN, open)'), '바뀔 때만 써요');
+    assert.match(fs.readFileSync(path.join(root, 'css/05-chat.css'), 'utf8'), /body\.salty:not\(\.expandMessageActions\) #chat\[data-bl-mes-menu-open\] \{\s*anchor-name: --salty-chat;/);
+    const built = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
+    assert.ok(built.includes('[data-bl-mes-menu-open]') && !built.includes('.bl-mes-menu-open'), 'style.css 에 빌드');
+});
 await test('실리태번 「메시지 작업 펼치기」를 켠 사람: 시작 · 채팅 바꾸기 10번에도 body class 변경 기록 0', () => {
     env.checked = true; env.menu = menu('flex');
     body.classList.records = 0; flush(); changeChats(10);

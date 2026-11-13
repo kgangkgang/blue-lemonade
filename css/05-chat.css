@@ -461,9 +461,9 @@ body.salty #chat .mes.bl-menu-open :is(.swipe_left, .swipe_right) {
 /* 위 · 아래 고르기: 버튼 줄에 앵커 → 채팅 칸(입력창 위) 안에 들어가면 아래, 모자라면 이름 줄 위로
    (앵커 위치를 모르는 브라우저는 늘 아래) */
 @supports (position-try-fallbacks: flip-block) and (position-anchor: --a) {
-  /* 2.9.4: ··· 메뉴가 열린 메시지가 있을 때만 (lite.js 가 #chat 에 bl-mes-menu-open) — 늘 붙어 있으면 답변이 자랄 때마다
+  /* 2.9.4: ··· 메뉴가 열린 메시지가 있을 때만 (lite.js 가 #chat 에 data-bl-mes-menu-open · 1.2.2 부터 class 가 아니라 속성) — 늘 붙어 있으면 답변이 자랄 때마다
      레이아웃이 문서 전체로 번졌다 (스트리밍 한 단계 레이아웃 25ms → 5ms, 4배 느린 CPU) */
-  body.salty:not(.expandMessageActions) #chat.bl-mes-menu-open {
+  body.salty:not(.expandMessageActions) #chat[data-bl-mes-menu-open] {
     anchor-name: --salty-chat;
   }
   /* 9.0.1 `.mes_buttons:has(> .extraMesButtons.visible)` 대신 lite.js 가 붙이는 .mes.bl-menu-open (특이도는 :is(.bl-s, *) 로 같게) */
