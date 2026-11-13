@@ -5,7 +5,7 @@ import { eventSource, event_types } from '../../../../../../../script.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { OLD_MODULE, TITLE, VERSION, initSettings, saveSettings, settings } from './state.js';
 import { applyAll, scheduleAll, watchPicks } from './inject.js';
-import { buildPanel, render } from './panel.js';
+import { render } from './panel.js';
 import { offerNewModels, pruneNative } from './offer.js';
 
 initSettings();
@@ -60,7 +60,7 @@ function offerWhenReady() {
 }
 
 jQuery(async () => {
-    buildPanel();
+    // 최적화 C(11-14): 등록 창은 처음 열 때(openPanel · mountInline) 만들어요 — 부팅 때 숨은 보관함에 요소 · 리스너를 두지 않아요(render 는 root 가 없으면 쉬어요)
     applyAll();
     watchPicks();
     render();
