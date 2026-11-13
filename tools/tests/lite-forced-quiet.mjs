@@ -77,6 +77,15 @@ await test('펼친 환경이 아니면(메뉴가 닫혀 숨음) 아무것도 쓰
     assert.equal(body.classList.records, 0);
     assert.deepEqual(body.classList.values(), ['salty']);
 });
+await test('1.4.0 서랍 전용 칸이 꺼진 채면 옛 팝업 검사(getClientRects)를 감시 콜백에서 바로 하지 않고 다음 프레임 맨 앞에서 해요', () => {
+    const src = fs.readFileSync(path.join(root, 'src/lite.js'), 'utf8');
+    const body = src.slice(src.indexOf('function syncPanelCss('), src.indexOf('export function deferPanelHasRules'));
+    const frameGate = body.indexOf("if (!quick && !panelOn && inFrame !== true && !document.hidden) {");
+    assert.ok(frameGate > 0, '꺼진 채 · 프레임 밖이면 rAF 로');
+    assert.ok(frameGate < body.indexOf('const want = quick || legacyOpen();'), '옛 팝업 검사보다 앞');
+    assert.ok(body.indexOf('if (!quick && !panelOn && booting())') < frameGate, '덮개 동안은 예전처럼 걷힐 때 한 번');
+    assert.match(body.slice(frameGate, frameGate + 200), /panelFrame = requestAnimationFrame\(\(\) => \{ panelFrame = 0; syncPanelCss\(true\); \}\)/);
+});
 await test('CI 등록', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/lite-forced-quiet\.mjs \./);
 });
