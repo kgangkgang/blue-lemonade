@@ -280,15 +280,25 @@ function moduleTable() {
     return rowsHtml;
 }
 
+// 1.4.x opt-chat-open(고침안 6): 채팅을 열 때마다(CHAT_CHANGED → 0.3초 뒤) 요약 · 모듈 표를 같은 글로 다시 넣던 것 — 글이 같으면 손대지 않아요.
+//   다시 넣으면 HTML 풀기에 더해, 이 창(#regex-link-settings)을 보는 단추 글자 맞춤(control-ink)이 새 단추를 보고 창을 다시 재려고 배치를 강제했어요(창이 닫혀 있어도 보이는지 묻는 읽기).
+//   넣은 글을 요소마다 기억해 두고, 누가 그 칸을 비웠으면(자식 없음) 다시 넣어요
+const shownHtml = new WeakMap();
+function setHtml(el, html) {
+    if (!el) return;
+    if (shownHtml.get(el) === html && (el.firstChild || !html)) return;
+    el.innerHTML = html; shownHtml.set(el, html);
+}
+
 function render() {
     if (!root) return;
     const s = store(), { on, off, keep, manual, skip, total } = summary();
-    root.querySelector('.rl-summary').innerHTML = total
+    setHtml(root.querySelector('.rl-summary'), total
         ? `정규식 ${total}개 중 <b>${on}개 켜짐</b> · <b>${off}개 꺼짐</b>${manual ? ` · ${manual}개는 직접 바꿔 그대로` : ''}${keep ? ` · ${keep}개는 늘 필요해 그대로` : ''}${skip ? ` · ${skip}개는 태그나 짝 프롬프트가 없어 그대로` : ''}`
-        : '연동 중인 정규식 없음';
+        : '연동 중인 정규식 없음');
     root.querySelector('[data-keep]').checked = s.keepRecent;
     root.querySelector('[data-recent]').value = s.recent;
-    root.querySelector('.rl-modules').innerHTML = moduleTable();
+    setHtml(root.querySelector('.rl-modules'), moduleTable());
     const performanceToggle = root.querySelector('[data-performance]');
     if (performanceToggle) performanceToggle.checked = s.performanceOn;
     void syncPerformance();
