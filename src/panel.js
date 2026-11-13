@@ -1,4 +1,5 @@
 import { deviceKind } from './device-layout-options.js';
+import { trackerWeatherOn } from './weather-readability.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { syncProfileClip } from './profile-clip.js';
 import { refreshPreset, FRAME_PRESETS, FRAME_LIMIT, PRESET_LABELS, PRESET_LABEL_MAX, PRESET_MOTIONS, presetFrame, saveFrame, useFrame, deleteFrame } from './frame-library.js';
@@ -160,7 +161,7 @@ function edgeThemeNow() {
 }
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isSet = v => !!v && typeof v === 'object'; // 글꼴 칸이 언어별 묶음인지 ('same' 이 아닌지)
-const previewChat = s => !s.enabled || s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather:'off' } : s.chat;
+const previewChat = s => !s.enabled || s.chat?.weather === 'tracker' && !trackerWeatherOn(s) ? { ...s.chat, weather:'off' } : s.chat?.weather === 'tracker' ? { ...s.chat, weatherDeusRead: !!s.deus?.on } : s.chat;
 const history = new SettingsHistory();
 for (const event of ["bl:device-layout", "bl:settings-replaced"]) window.addEventListener(event, () => { history.clear(); syncHistoryButtons(); });
 let historyToast;
@@ -1748,12 +1749,13 @@ function tabChat(s, sub) {
             ${row('글 읽기 우선', toggle('chat.weatherReadability', s.chat.weatherReadability), '날씨를 조금 옅게 하고, 그림자를 따로 쓰지 않을 때 글자 그림자를 자동으로 보완해요.')}
             ${sceneSoundMarkup(s, { row, stack, slider, toggle })}
 
-            ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
+            ${stack('채팅 뒤 효과', weatherSeg(s), weatherMode(s) === 'tracker' && !s.deus?.on ? '미트볼 상태창의 오늘 날씨를 따라가요. 데우스 트래커 · 상태창 글은 데우스 호환을 켜면 같이 읽어요' : weatherMode(s) === 'tracker' ? '트래커 날씨를 읽어 비 · 눈 · 안개 · 햇살 · 밤의 별을 보여요. 안개비 · 여우비처럼 둘이면 겹쳐요' : '')}
             ${weatherMode(s) === 'custom' ? weatherImageControls(s) : ''}
             ${['sun','star','firefly','shadow','breeze','lemon','petal'].includes(weatherMode(s)) ? row('그림 효과 사용',toggle('chat.weatherIllustrated',s.chat.weatherIllustrated).replace('<input','<input aria-label="그림 효과 사용"'),'기본은 작고 단순하게. 켜면 이전 그림체를 골라 쓸 수 있어요.') : ''}
             ${s.chat.weatherIllustrated && ['sun','star','firefly','shadow','breeze','lemon','petal'].includes(weatherMode(s)) ? stack('그림 스타일',seg('chat.weatherArtStyle',[['real','실사풍'],['anime','일러스트풍'],['cel','셀 애니풍']],'real'),'색과 움직임은 그대로, 그림의 느낌만 바꿔요. 날씨마다 기억해요.') : ''}
             ${['rain','snow'].includes(weatherMode(s)) ? slider('chat.weatherAmount', weatherMode(s)==='rain'?'비의 양':'눈의 양', 0, 200, 1, 100)+'<p class="salty-note">100%가 기본 양이에요. 숫자를 직접 입력해도 돼요.</p>' : !['off', 'tracker'].includes(weatherMode(s)) ? stack('세기', seg('chat.weatherLevel', [[1, '약하게'], [2, '보통'], [3, '강하게']])) : ''}
-            ${weatherMode(s) === 'tracker' ? `<p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
+            ${weatherMode(s) === 'tracker' ? `${row('날씨 따라가기: 미트볼 상태창', toggle('chat.weatherFollowMeatball', s.chat.weatherFollowMeatball !== false), '미트볼 상태창의 달력이 켜진 채팅이면 그 오늘 날씨를 먼저 따라가요. 없거나 달력이 꺼져 있으면 트래커 · 상태창 글을 봐요.')}
+            <p class="salty-note">세기 · 색 · 모양은 그 날씨를 직접 골랐을 때 맞춰 둔 값을 그대로 써요. 비는 비대로, 눈은 눈대로요.</p>
             <button type="button" class="salty-btn bl-weather-skip-fold" data-act="weather-skip-fold" aria-expanded="${!!ui.weatherSkipOpen}">제외할 날씨${(s.chat.weatherTrackerSkip || []).length ? ` · ${s.chat.weatherTrackerSkip.length}` : ''} <i class="fa-solid fa-chevron-${ui.weatherSkipOpen ? 'up' : 'down'}"></i></button>
             ${ui.weatherSkipOpen ? `<div class="salty-seg bl-weather-choices bl-weather-skip">${[['rain', '비'], ['snow', '눈'], ['fog', '안개'], ['sun', '햇살'], ['star', '별'], ['rainbow', '무지개'], ['breeze', '흩날림']].map(([value, label]) => `<button data-act="weather-skip" data-value="${value}" aria-pressed="${(s.chat.weatherTrackerSkip || []).includes(value)}" class="${(s.chat.weatherTrackerSkip || []).includes(value) ? 'on' : ''}">${label}</button>`).join('')}</div><p class="salty-note">고른 날씨는 트래커에 나와도 화면에 그리지 않아요.</p>` : ''}` : ''}
             ${weatherMode(s) !== 'off' ? `${slider('chat.weatherBubble', '내 메시지 농도', 30, 100, 1, 70)}<p class="salty-note">날씨를 켠 동안 내 메시지 면(말풍선 · 카드 · 테이블)이 이만큼만 칠해져 그 뒤의 날씨가 비쳐요. 100이면 불투명해요.</p>` : ''}
@@ -1835,7 +1837,7 @@ function maskControls(s) {
 /** 지금 실제로 쓰이는 날씨 (3.4.0): 트래커 따라는 데우스 호환이 꺼져 있으면 끔으로 보인다 (값은 남음) */
 function weatherMode(s) {
     const mode = s.chat.weather || 'off';
-    return mode === 'tracker' && !s.deus?.on ? 'off' : mode;
+    return mode === 'tracker' && !trackerWeatherOn(s) ? 'off' : mode;
 }
 
 /** 날씨 자리 (4.2.8): 화면을 줄인 네모 안에서 점을 끌어 옮긴다 — 나무 그림자는 가지마다, 무지개는 꼭대기, 햇살은 빛의 자리. 놓을 때 저장한다 */
@@ -1862,7 +1864,7 @@ const weatherMixing = s => !['off', 'tracker'].includes(weatherMode(s)) && (ui.w
 function weatherSeg(s) {
     const first = weatherMode(s), mixing = weatherMixing(s), slot = mixing && ui.weatherSlot === 2 ? 2 : 1;
     const path = slot === 2 ? 'chat.weather2' : 'chat.weather', current = slot === 2 ? (s.chat.weather2 || 'off') : first;
-    const allowed = ([value]) => (value !== 'tracker' || s.deus?.on) && (slot === 1 || (!['custom', 'tracker'].includes(value) && value !== first));
+    const allowed = ([value]) => (value !== 'tracker' || trackerWeatherOn(s)) && (slot === 1 || (!['custom', 'tracker'].includes(value) && value !== first));
     const cats = WEATHER_CATS.map(([id, label, items]) => [id, label, items.filter(allowed)]).filter(cat => cat[2].length);
     const cat = cats.find(c => c[0] === ui.weatherCat) || cats.find(c => c[2].some(item => item[0] === current)) || cats[0];
     const button = (value, label) => `<button data-act="seg" data-path="${path}" data-value="${value}" class="${current === value ? 'on' : ''}">${label}</button>`;

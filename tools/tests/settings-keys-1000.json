@@ -1,5 +1,5 @@
 {
- "_": "1.0.0 설정창 간단화(10-31) 때 고정한 설정 키 목록 — 화면을 고쳐도 저장 키 · 기본값 자리는 그대로여야 옛 설정이 이어져요(tools/tests/settings-simplify.mjs). 키를 일부러 더하거나 옮기면 이 목록도 같이 고치고 옛 키 옮기기(migrate)를 넣어요. 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.1 심플 액자: 액자 기울기 presetTilt(image · profile · userProfile .decor) 셋을 더했어요(기본 0 · 옛 설정은 정리 함수가 채워요). 1.0.1 프롬프트 폴더(promptFolders.on · promptFolders.presets)는 새 키라 옮길 옛 키가 없어요. 1.0.3 API 서버 상태(apiStatus.on)는 새 키라 옮길 옛 키가 없어요. 1.0.7 액자 색감 frameHue · frameSat · frameBright(image · profile · userProfile .decor) 아홉을 더했어요(기본 0 · 100 · 100 · 옛 설정은 정리 함수가 채워요).",
+ "_": "1.0.0 설정창 간단화(10-31) 때 고정한 설정 키 목록 — 화면을 고쳐도 저장 키 · 기본값 자리는 그대로여야 옛 설정이 이어져요(tools/tests/settings-simplify.mjs). 키를 일부러 더하거나 옮기면 이 목록도 같이 고치고 옛 키 옮기기(migrate)를 넣어요. 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.0 되살리기(revive-1001): 8.2.5 에 있던 기능을 되살리며 8.2.5 와 같은 이름의 키를 더했어요(사용자 저장값이 그대로 이어져요). 1.0.1 심플 액자: 액자 기울기 presetTilt(image · profile · userProfile .decor) 셋을 더했어요(기본 0 · 옛 설정은 정리 함수가 채워요). 1.0.1 프롬프트 폴더(promptFolders.on · promptFolders.presets)는 새 키라 옮길 옛 키가 없어요. 1.0.3 API 서버 상태(apiStatus.on)는 새 키라 옮길 옛 키가 없어요. 1.0.7 액자 색감 frameHue · frameSat · frameBright(image · profile · userProfile .decor) 아홉을 더했어요(기본 0 · 100 · 100 · 옛 설정은 정리 함수가 채워요). 1.4.x 날씨 따라가기: 미트볼 상태창(chat.weatherFollowMeatball · 기본 켬)은 새 키라 옮길 옛 키가 없어요.",
  "keys": [
   "activeCustomPalette",
   "activeStyle",
@@ -151,6 +151,7 @@
   "chat.weatherArtOutline",
   "chat.weatherArtStyle",
   "chat.weatherAutoRest",
+  "chat.weatherFollowMeatball",
   "chat.weatherBubble",
   "chat.weatherColor",
   "chat.weatherColorMode",

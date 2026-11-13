@@ -48,6 +48,7 @@ export const SELF_ROWS = [
 ["event","CHARACTER_MESSAGE_RENDERED","src/addons/prompt-template/index.js",355,"prompt-template","",0],
 ["event","CHARACTER_MESSAGE_RENDERED","src/addons/tts/index.js",599,"tts","",0],
 ["event","CHARACTER_MESSAGE_RENDERED","src/addons/tts/src/player.js",3734,"tts","",0],
+["event","CHARACTER_MESSAGE_RENDERED","src/weather.js",406,"","",0],
 ["event","CHARACTER_PAGE_LOADED","src/multi-avatar/index.js",105,"","",0],
 ["event","CHARACTER_RENAMED","src/addons/assets/index.js",95,"assets","",0],
 ["event","CHARACTER_RENAMED","src/addons/notes/index.js",1670,"notes","",0],
@@ -227,8 +228,8 @@ export const SELF_ROWS = [
 ["id","bl-deus-popover","src/scripts/plain/deus-qr.js",606,"","",0],
 ["id","bl-deus-quick","src/scripts/plain/deus-qr.js",305,"","",0],
 ["id","bl-eb-css","src/geulkku-mart/edit-blocks.js",71,"","guarded",0],
-["id","bl-enabled-drawer","src/panel.js",2240,"","",0],
-["id","bl-enabled-popup","src/panel.js",2238,"","",0],
+["id","bl-enabled-drawer","src/panel.js",2242,"","",0],
+["id","bl-enabled-popup","src/panel.js",2240,"","",0],
 ["id","bl-flow","src/capture-resources.js",15,"","svg",0],
 ["id","bl-fr-title","src/first-run.js",174,"","",0],
 ["id","bl-frame-motion","src/frame-motion.js",128,"","",0],
@@ -242,7 +243,7 @@ export const SELF_ROWS = [
 ["id","bl-lt-style","src/log-copy-sheet.js",259,"","guarded",0],
 ["id","bl-mart-style","src/mart-import-ui.js",143,"","guarded",0],
 ["id","bl-mart-title","src/mart-import-ui.js",74,"","",0],
-["id","bl-mav-button","src/features.js",244,"","guarded",0],
+["id","bl-mav-button","src/features.js",245,"","guarded",0],
 ["id","bl-mav-title","src/multi-avatar/dialog.js",41,"","",0],
 ["id","bl-natural-slash","src/natural-slash.js",198,"","",0],
 ["id","bl-onehand","src/onehand.js",84,"","",0],
@@ -262,7 +263,7 @@ export const SELF_ROWS = [
 ["id","bl-tab-scroll-style","src/tab-scroll.js",61,"","guarded",0],
 ["id","bl-tool-menu-modelswitch","src/addons/modelswitch/menu.js",6,"modelswitch","guarded",0],
 ["id","bl-tts-holder","src/addons/tts/index.js",561,"tts","",0],
-["id","bl-weather-place","src/weather.js",497,"","guarded",0],
+["id","bl-weather-place","src/weather.js",548,"","guarded",0],
 ["id","blend","src/gradients.js",74,"","svg",0],
 ["id","bwr_ai_open","src/addons/rewrite/settings-html.js",2,"rewrite","",0],
 ["id","bwr_attempts","src/addons/rewrite/settings-html.js",2,"rewrite","",0],
@@ -719,5 +720,5 @@ export const SELF_ROWS = [
 ["settingsKey","regex_link","src/addons/regexlink/index.js",35,"regexlink","??=",0],
 ["settingsKey","regex_perf_kit","src/addons/regexlink/regexperf.js",62,"regexlink","||=",0],
 ["settingsKey","request_log","src/addons/perf/state.js",125,"perf","=",0],
-["settingsKey","salty","src/panel.js",3056,"","=",0]
+["settingsKey","salty","src/panel.js",3058,"","=",0]
 ];

@@ -6,11 +6,13 @@ import { bindWeatherRest } from './weather-rest.js';
 // 캔버스는 #sheld 맨 앞 자식(z-index -1)이라 채팅 글 뒤 · 채팅 바탕 앞에 그려진다 — 켜 두는 동안 채팅 칸 바탕을 투명하게 하고 같은 바탕색을 #sheld 에 옮긴다
 // (css/32-weather.css). 화면이 꺼지면 멈추고, 동작 줄이기면 멈춘 한 장만.
 // 트래커 따라: 마지막 AI 답의 데우스 트래커 날씨 칸 글자를 보고 비 · 눈 · 없음을 고른다 (번역된 한국어 · 영어 둘 다).
+// 1.4.x 미트볼 상태창 달력이 켜진 채팅이면 그 오늘 날씨가 먼저예요(weather-meatball.js) — 직접 고른 날씨 > 미트볼 > 트래커 · 상태창 글.
 // 켜 두었을 때만 불러온다 (features.js). 설정 창 채팅 표본에도 같은 효과를 작게 (previewWeather).
 import { weatherAmount, weatherPixelRatio, activeWeather } from './weather-options.js';
 import { parseColor } from './palettes.js';
 import { getSettings, saveSettings } from './settings.js';
 import { loadWeatherModule } from './weather-load.js';
+import { readMeatballWeather, meatballWeatherModes } from './weather-meatball.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let rendererRetryAfter = 0;
@@ -311,13 +313,34 @@ function recoveryWeatherText(value) {
     const emoji = [...raw.matchAll(/\p{Extended_Pictographic}/gu)].at(-1);
     return emoji ? raw.slice(emoji.index) : raw;
 }
-const trackerMode = () => trackerWeather().modes[0] || 'off';
+// 미트볼 상태창 날씨(달력)가 먼저 — 그 확장은 답 끝 상태 줄을 본문에서 떼어 보관해서 본문만 보던 트래커 따라에는 날씨가 안 보였어요.
+//   모르는 글이면 끄지 않아요: 이 채팅에서 마지막으로 알아들은 미트볼 날씨를 두고, 그것도 없으면 예전 소스(트래커 · 상태창 글)를 봐요.
+let meatballLast = null, trackerFrom = 'tracker', meatballText = '';
+function meatballFollow(chat) {
+    if (chat?.weatherFollowMeatball === false) return null;
+    const ctx = SillyTavern.getContext();
+    const read = readMeatballWeather(ctx);
+    meatballText = read?.text || '';
+    if (!read) return null;
+    const id = ctx.getCurrentChatId?.() ?? '';
+    const found = meatballWeatherModes(read.text, read.time, detectWeatherAll);
+    if (found.known) { meatballLast = { id, found }; return found; }
+    return meatballLast?.id === id ? meatballLast.found : null;
+}
+function trackerSource(chat) {
+    const found = meatballFollow(chat);
+    trackerFrom = found ? 'meatball' : 'tracker';
+    // 데우스 호환이 꺼진 채 미트볼 상태창으로 고른 「트래커 따라」는 미트볼 날씨만 — 데우스 칸 · 상태창 글은 읽지 않아요(features.js weatherDeusRead)
+    if (!found && chat?.weatherDeusRead === false) return NO_WEATHER;
+    return found || trackerWeather();
+}
+const trackerMode = () => trackerSource(wanted.chat).modes[0] || 'off';
 // 그 날씨를 골랐을 때 맞춰 둔 값(날씨마다 따로 기억)을 쓴다 — 트래커 · 둘째 효과가 안개를 부르면 안개 탭에서 다듬은 모양 그대로 나온다
 // 한 번도 고른 적 없는 날씨는 기본값으로 (지금 칸의 값을 물려받지 않는다)
 const profileOf = (chat, mode) => (mode === chat.weather ? chat : chat.weatherProfiles?.[mode] ? { ...chat, weatherColorMode: 'auto', ...chat.weatherProfiles[mode] } : { weatherSpots: chat.weatherSpots });
 function plan(chat, level) {
     if (chat.weather === 'tracker') {
-        const found = trackerWeather(), warm = found.warm, skip = Array.isArray(chat.weatherTrackerSkip) ? chat.weatherTrackerSkip : [];
+        const found = trackerSource(chat), warm = found.warm, skip = Array.isArray(chat.weatherTrackerSkip) ? chat.weatherTrackerSkip : [];
         // 제외해 둔 날씨는 트래커에 나와도 그리지 않는다 — 두 자리로 자르기 전에 걸러서 셋째로 잡힌 날씨가 빈자리를 채운다 ("안개비, 바람"에서 비를 빼면 안개 + 바람)
         const modes = found.all.filter(mode => !skip.includes(mode)).slice(0, 2);
         if (!modes.length) return { mode: 'off', level, params: {} };
@@ -329,9 +352,14 @@ function plan(chat, level) {
     return { mode: chat.weather, level, params: { ...paramsFrom(chat), warm: false, second } };
 }
 
-function refresh() {
+let lastPlanKey = '';
+/** fromEvent: 사건(답 · 그 확장 화면)으로 다시 본 것 — 고른 날씨가 그대로면 워커에 다시 보내지 않아요(설정이 바뀐 때는 늘 보냄) */
+function refresh(fromEvent = false) {
     if (!layer) return;
     const next = plan(wanted.chat, wanted.level);
+    const key = JSON.stringify([next, wanted.sprite.length]);
+    if (fromEvent && key === lastPlanKey) return;
+    lastPlanKey = key;
     layer.set(next.mode, next.level, next.params, wanted.sprite);
 }
 
@@ -340,7 +368,7 @@ function refresh() {
 function refreshTracker() {
     trackerTimer = 0;
     if (document.body?.dataset?.generating === 'true') { trackerTimer = setTimeout(refreshTracker, 400); return; }
-    refresh();
+    refresh(true);
 }
 
 function scheduleTracker() {
@@ -349,13 +377,35 @@ function scheduleTracker() {
     trackerTimer = setTimeout(refreshTracker, 400);
 }
 
+// 미트볼 상태창 날씨는 실리태번 사건 없이도 바뀌어요(달력에서 날씨 바꾸기 · 하루 지나기 · 별도 분석 · /ss-set).
+//   ① 그 확장 화면 · 실리 창(.popup)에서 누른 뒤 ② 보내기(Enter · 보내기 단추 — /ss-set 같은 명령) 뒤 ③ 별도 분석(그 확장 sync: analyze · tagPlus)이면 답 뒤 4 · 12 · 30초에 한 번씩 다시 봐요.
+//   그 확장 머리 띠에는 날씨가 안 보여 띠를 지켜봐도 날씨만 바뀐 것은 알 수 없었어요(리그 11-14).
+const MEATBALL_UI = '.ss-scope, #ss-float, .popup, dialog, #send_but';
+const followsMeatball = () => wanted.on && wanted.mode === 'tracker' && wanted.chat?.weatherFollowMeatball !== false;
+function onMeatballPress(event) {
+    if (followsMeatball() && event.target?.closest?.(MEATBALL_UI)) scheduleTracker();
+}
+function onMeatballSend(event) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.target?.id === 'send_textarea' && followsMeatball()) scheduleTracker();
+}
+let analyzeTimers = [];
+function afterReply() {
+    scheduleTracker();
+    for (const id of analyzeTimers) clearTimeout(id);
+    analyzeTimers = [];
+    const sync = followsMeatball() && SillyTavern.getContext().extensionSettings?.statussim?.sync;
+    if (sync === 'analyze' || sync === 'tagPlus') analyzeTimers = [4000, 12000, 30000].map(ms => setTimeout(scheduleTracker, ms));
+}
 function listen() {
     if (listening) return;
     listening = true;
     const { eventSource, event_types } = SillyTavern.getContext();
-    for (const name of ['CHARACTER_MESSAGE_RENDERED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'CHAT_CHANGED', 'MESSAGE_EDITED']) {
+    for (const name of ['MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_DELETED', 'CHAT_CHANGED', 'MESSAGE_EDITED', 'MESSAGE_RECEIVED', 'GENERATION_ENDED']) {
         if (event_types[name]) eventSource.on(event_types[name], scheduleTracker);
     }
+    if (event_types.CHARACTER_MESSAGE_RENDERED) eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, afterReply);
+    document.addEventListener?.('click', onMeatballPress, { capture: true, passive: true });
+    document.addEventListener?.('keydown', onMeatballSend, { capture: true, passive: true });
 }
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
@@ -364,6 +414,7 @@ export function syncWeather(on, chat = {}) {
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     wanted = { on: !!on && mode !== 'off', mode, level, chat: { ...chat, weather: mode }, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
+        lastPlanKey = '';
         restBinding?.dispose();restBinding=null;
         layer?.destroy();
         layer = null;
@@ -443,7 +494,7 @@ export function previewWeather(stage, chat = {}) {
 
 /** 시험용 */
 export function weatherState() {
-    return { wanted, layer: !!layer, current: layer?.current() ?? null, tracker: trackerMode() };
+    return { wanted, layer: !!layer, current: layer?.current() ?? null, tracker: trackerMode(), source: wanted.mode === 'tracker' ? trackerFrom : 'set', meatball: meatballText };
 }
 
 /** A still of the current effect, rendered at export resolution for long captures. */
@@ -506,7 +557,7 @@ export function placeWeatherSpots(mode, defaults, onDone) {
     const apply = (spots) => { // 설정 · 지금 도는 효과에 바로 반영
         s.chat.weatherSpots = spots;
         if (wanted.chat) wanted.chat.weatherSpots = spots;
-        cancelAnimationFrame(queued); queued = requestAnimationFrame(refresh);
+        cancelAnimationFrame(queued); queued = requestAnimationFrame(() => refresh());
     };
     const live = () => apply({ ...(s.chat.weatherSpots || {}), [mode]: list.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 })) });
     const previousFocus = document.activeElement;

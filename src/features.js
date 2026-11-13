@@ -2,6 +2,7 @@ import { frameReady, trackLate, onGate } from './boot-layers.js';
 // 선택 기능은 첫 프레임 뒤에 받아요. 끄면 모듈이 듣기와 화면을 정리해요.
 // 겹치는 성능 기능은 설치된 다른 확장에 맡겨요.
 import { startPresence, onPresenceChange, restingFor } from './ext-presence.js';
+import { trackerWeatherOn } from './weather-readability.js';
 import { zeroMode, zeroSkips } from './usage-mode.js';   // 1.0.2 제로: ZERO_LOOK 밖의 기능 모듈은 받지 않아요
 let presenceBound = false, zeroNow = null;
 
@@ -180,8 +181,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     const onehand = on && !!s.onehand?.on;
     if (onehand || modules.onehand) load('onehand', './onehand.js').then(m => m?.syncOneHand(onehand, s.onehand));
     // 3.3.0 날씨 효과 (weather.js — 그리기는 워커)
-    // 트래커 따라는 데우스 호환이 켜졌을 때만 (3.4.0)
-    const weatherChat = s.chat?.weather === 'tracker' && !s.deus?.on ? { ...s.chat, weather: 'off' } : s.chat;
+    // 트래커 따라는 데우스 호환이 켜졌거나(3.4.0) 미트볼 상태창이 켜졌을 때만(1.4.x) — 데우스 호환이 꺼져 있으면 미트볼 날씨만 따라가요(weatherDeusRead: false)
+    const weatherChat = s.chat?.weather !== 'tracker' ? s.chat : trackerWeatherOn(s) ? { ...s.chat, weatherDeusRead: !!s.deus?.on } : { ...s.chat, weather: 'off' };
     const weather = on && !!weatherChat?.weather && weatherChat.weather !== 'off';
     if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));
     // 6.9.8 장면 소리: 날씨 효과에 맞춘 배경 소리 (scene-sound.js — 켤 때만 불러온다 · 다리 Symbol.for('blue-lemonade.ambient') 로 TTS 효과음과 겹치지 않게)

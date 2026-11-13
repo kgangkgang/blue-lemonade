@@ -217,6 +217,7 @@ jobs:
           node tools/tests/tts-open-comment.mjs .
           node tools/tests/weather-status.mjs .
           node tools/tests/weather-status-ko.mjs .
+          node tools/tests/weather-meatball.mjs .
           node tools/tests/translator-stub.mjs .
           node tools/tests/translator-cancel-reason.mjs .
           node tools/tests/translator-group-guard.mjs .

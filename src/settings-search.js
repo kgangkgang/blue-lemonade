@@ -81,6 +81,7 @@ const rows = [
  ['chat','screen','추론 요청을 끄면 지난 추론도 숨기기','추론 생각 사고 thinking reasoning 모델 추론 요청 생각 칸 숨기기 가리기 지난 이전 예전 메시지', '', 'chat.reasoningFollow'],
  ['chat','screen','날씨 효과','날씨 비 눈 꽃잎 하트 별 배경 효과 세기 크기 속도 각도 이미지 내 그림 트래커 그림 효과 사용 그림 스타일 그림체 안개 모양 안개 위치 가장자리 선명하게 부풀기 깊이감 그림자 모양 그림자 흐리기 유성우 곡률 원 크기 도는 방향 둘째 날씨 세기 내 메시지 농도 비침 날씨 색 색상','날씨'],
  ['chat','screen','날씨 그림 효과','날씨 그림 효과 사용 그림 스타일 그림체 일러스트 외곽선','','chat.weatherIllustrated'],
+ ['chat','screen','날씨 따라가기: 미트볼 상태창','미트볼 상태창 달력 오늘 날씨 따라가기 트래커 따라 비 눈 맑음 날씨 효과 연결 meatball weather','','chat.weatherFollowMeatball'],
  ['chat','screen','날씨 · 내 메시지 비침','날씨 내 메시지 농도 비침 비치기 내 말 위 날씨','','chat.weatherBubble'],
  ['chat','screen','장면 소리','장면 소리 배경 소리 빗소리 비 소리 바람 소리 천둥 물결 파도 환경음 앰비언트 ambient 날씨 소리 소리 크기 볼륨 내 소리 파일 화면 밖에서도 TTS 효과음 겹침','','sceneSound.on'],
  ['chat','screen','분위기 음악','분위기 음악 배경 음악 BGM 브금 음악 크기 일상 긴장 전투 로맨스 슬픔 신비 축제 분위기 고정 내 곡 덕킹','','sceneSound.music.on'],
