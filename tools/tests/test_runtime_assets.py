@@ -159,6 +159,19 @@ fetch(`https://example.invalid/${x}`);
         self.assertTrue(runtime <= files.keys(), '무결성 표 목록(--runtime-list)은 ZIP 목록 안에 있어요')
         self.assertTrue(needed <= runtime)
 
+    def test_integrity_list_stays_small(self):
+        # 「다시 검사」가 받는 양: 코드가 받는 작은 자원만 더해요(링크 · 큰 묶음 · 글꼴 한 벌은 빼요)
+        files = gate.inventory(ROOT, 'theme')
+        extra = gate.integrity_files(ROOT, list(files))
+        self.assertIn('src/ext-status-icons.woff2', extra)
+        for gone in ('LICENSE', 'THIRD-PARTY-NOTICES.md', 'src/addons/prompt-template/ST-Prompt-Template.zip', 'src/weather-art/nature.webp'):
+            self.assertNotIn(gone, extra)
+        self.assertFalse([n for n in extra if n.startswith('fonts/')])
+        # 효과음 · 장면 음악 mp3 는 1.4.0 표에도 있던 것이라 빼고 재요
+        assets = [n for n in extra if not n.endswith(gate.RUNTIME_CODE_SUFFIXES + ('.mp3',)) and not n.startswith('dist/')]
+        self.assertLess(sum((ROOT / n).stat().st_size for n in assets), 512 * 1024)
+        self.assertTrue(extra <= gate.runtime_files(ROOT, list(files)))
+
     def test_bundled_addon_license_texts_ship(self):
         files = gate.inventory(ROOT, 'theme')
         for folder in sorted((ROOT / 'src/addons').iterdir()):

@@ -491,6 +491,7 @@ RUNTIME_CODE_SUFFIXES = ('.js', '.mjs', '.css', '.html')
 #   ('strings', '읽을 파일', 정규식, '기준 폴더') — 그 파일의 표에서 이름을 뽑아(정규식 첫 묶음) 기준 폴더에 붙여요
 #   ('helper', '함수 이름', 인자 차례, '틀')   — 같은 파일에서 그 함수를 부를 때 넘기는 글자를 틀의 {} 에 넣어 이 파일 자리 기준으로 풀어요
 #                                              (글자가 아닌 인자를 넘기면 「확인 필요」)
+#   helper 끝에 'link' 를 붙이면 코드가 받지 않고 사용자가 여는 링크(출처 창의 라이선스 전문 등)예요 — ZIP 에는 싣고 무결성 표에서는 빼요
 #   ('none', '까닭')                 — 테마 파일을 받지 않아요(폴더 이름 · 주소 앞부분만 씀 · 실리태번 쪽) 또는 다른 줄에서 이미 셈
 # 새 주소를 쓰면 관문이 그 줄을 알려 줘요 — 무엇을 받는지 확인하고 여기 한 줄 더해요.
 RUNTIME_REFS = {
@@ -523,14 +524,14 @@ RUNTIME_REFS = {
     ('src/addons/translator/index.js', "'./'"): ('names', tuple('src/addons/translator/' + n for n in ('sendform.html', 'index.html', 'buttons.html', 'style.css'))),
     ('src/addons/translator/shell.js', "'./'"): ('names', ('src/addons/translator/buttons.html', 'src/addons/translator/style.boot.gen.css')),
     # TTS: 출처 창 링크 local('./LICENSE-MultiCast.txt') 등 · 설정 틀 PATH + '/settings.html' · 효과음
-    ('src/addons/tts/credits.js', 'file'): ('helper', 'local', 0, '{}'),
+    ('src/addons/tts/credits.js', 'file'): ('helper', 'local', 0, '{}', 'link'),
     ('src/addons/tts/src/settings.js', "'../'"): ('names', ('src/addons/tts/settings.html',)),
     ('src/addons/tts/src/sfx-library.js', 'meta.assetPath || `../sfx/${id}.mp3`'): ('names', tuple(
         ['src/addons/tts/sfx/' + n for n in TTS_SFX_FILES] + [f'src/addons/tts/sfx-extra/{i}.mp3' for i in TTS_EXTRA_IDS])),
     # 로컬 글꼴: fonts-local.gen.js 의 조각 — 검토한 고정 목록(FONT_FILES)만
     ('src/catalog.js', '`../fonts/${f.file}`'): ('names', tuple('fonts/' + n for n in FONT_FILES)),
     # 출처 창 링크 local('LICENSE') · local('src/addons/…/NOTICE.md') …
-    ('src/credits.js', '`../${rel}`'): ('helper', 'local', 0, '../{}'),
+    ('src/credits.js', '`../${rel}`'): ('helper', 'local', 0, '../{}', 'link'),
     # 켤 때만 받는 모듈 load('이름', './x.js')
     ('src/features.js', 'url'): ('helper', 'load', 1, '{}'),
     # 뗀 규칙 시트: css-gates.gen.js 표의 file · PANEL_SHEET
@@ -757,7 +758,7 @@ def _entry_targets(name, entry, files, names, problems):
             problems.append(f'{name}: 받는 파일 이름표({source} · {pattern})를 못 찾았어요(확인 필요)')
         return {posixpath.normpath(posixpath.join(base, item)) for item in found}
     if tag == 'helper':
-        _, fn, index, template = entry
+        _, fn, index, template = entry[:4]
         body, here, out = _strip_comments(files[name].decode('utf-8')), posixpath.dirname(name), set()
         calls = 0
         for m in re.finditer(r'(?<![\w.$])' + re.escape(fn) + r'\s*\(', body):
@@ -787,9 +788,10 @@ def _entry_targets(name, entry, files, names, problems):
     raise GateError(f'Unknown RUNTIME_REFS kind: {tag}')
 
 
-def runtime_requirements(files, candidates=None):
+def runtime_requirements(files, candidates=None, links=True):
     """files: {경로: bytes} 에서 실행 때 받는 파일을 모아요.
-    돌려줌: (필요한 루트 기준 경로 집합, 문제 목록). candidates 는 패턴을 맞춰 볼 파일 이름들(없으면 files)."""
+    돌려줌: (필요한 루트 기준 경로 집합, 문제 목록). candidates 는 패턴을 맞춰 볼 파일 이름들(없으면 files).
+    links=False 면 사용자가 여는 링크('link' 표시)는 빼요 — 무결성 표용."""
     import posixpath
     names = set(candidates if candidates is not None else files)
     needed, problems = set(), []
@@ -803,7 +805,8 @@ def runtime_requirements(files, candidates=None):
         for kind, expr, parsed in code_references(name, text):
             entry = RUNTIME_REFS.get((name, _norm_expr(expr)))
             if entry:
-                needed |= _entry_targets(name, entry, files, names, problems)
+                if links or entry[-1] != 'link':
+                    needed |= _entry_targets(name, entry, files, names, problems)
                 continue
             if parsed is None:
                 # 생성된 자료 모듈(*.gen.js)은 글 안의 낱말이 import( 로 보일 뿐이라 변수 주소는 따지지 않아요(글자 주소는 그대로 봐요)
@@ -850,7 +853,7 @@ def _disk_names(root):
     return out
 
 
-def runtime_files(root, base_names):
+def runtime_files(root, base_names, links=True):
     """소스 나무에서 실행 때 받는 파일 전부(코드 + 코드가 받는 자원). 새로 들어온 코드(.css 등)도 다시 읽어요."""
     root = Path(root).resolve()
     candidates = _disk_names(root)
@@ -863,13 +866,28 @@ def runtime_files(root, base_names):
             path = root / name
             if path.is_file():
                 files[name] = path.read_bytes()
-        needed, problems = runtime_requirements(files, candidates)
+        needed, problems = runtime_requirements(files, candidates, links)
         require(not problems, 'Runtime asset check (확인 필요): ' + ' | '.join(sorted(set(problems))[:20]))
         missing = sorted(n for n in needed if not (root / n).is_file())
         require(not missing, f'Code fetches files that do not exist: {missing[:20]}')
         pending = needed - result
         result |= needed
     return result
+
+
+# 무결성 표(설정 › 「다시 검사」가 받아 지문을 견주는 표)에는 코드가 실제로 받는 파일 중 작은 것만 넣어요.
+# 큰 묶음(로컬 글꼴 · 그림 · ST-Prompt-Template.zip)은 받는 양이 몇 MB 라 빼요 — 그런 파일은 이 관문의 ZIP 목록 검사와
+# 각자의 고정 해시 검사(validate_fonts · validate_tts_sfx · 장면 음악 · prompt-template ZIP_SHA256)가 지켜요.
+INTEGRITY_MAX_ASSET_BYTES = 64 * 1024
+
+
+def integrity_files(root, base_names):
+    """무결성 표에 더할 목록: 실행 때 받는 파일(링크 제외) 가운데 코드 전부 + 64KB 이하 자원."""
+    root = Path(root).resolve()
+    fetched = runtime_files(root, base_names, links=False)
+    # 로컬 글꼴 조각은 한 벌(약 1MB)로 다루고 validate_fonts 의 SHA256 이 지켜요 — 작은 조각만 골라 넣지 않아요
+    return {n for n in fetched if _is_runtime_code(n) or n.startswith('dist/')
+            or (not n.startswith('fonts/') and (root / n).stat().st_size <= INTEGRITY_MAX_ASSET_BYTES)}
 
 
 def inventory(root, kind):
@@ -1101,13 +1119,16 @@ def main():
     parser.add_argument('--zip', type=Path, action='append', default=[])
     parser.add_argument('--build', type=Path)
     parser.add_argument('--runtime-list', action='store_true',
-                        help='실행 때 받는 파일 목록(JSON)만 찍어요 — tools/build-integrity.mjs 가 무결성 표에 같은 목록을 써요')
+                        help='실행 때 받는 파일 목록(JSON · 링크 포함)만 찍어요')
+    parser.add_argument('--integrity-list', action='store_true',
+                        help='무결성 표에 더할 목록(JSON)만 찍어요 — 같은 목록에서 링크 · 64KB 넘는 자원을 뺀 것(tools/build-integrity.mjs)')
     args = parser.parse_args()
     try:
-        if args.runtime_list:
-            require(args.kind == 'theme', '--runtime-list 는 kind=theme 만')
+        if args.runtime_list or args.integrity_list:
+            require(args.kind == 'theme', '--runtime-list · --integrity-list 는 kind=theme 만')
             files = inventory(args.source, args.kind)
-            print(json.dumps({'ok': True, 'files': sorted(runtime_files(args.source, list(files)))}, ensure_ascii=False))
+            pick = integrity_files if args.integrity_list else runtime_files
+            print(json.dumps({'ok': True, 'files': sorted(pick(args.source, list(files)))}, ensure_ascii=False))
             return
         files = inventory(args.source, args.kind)
         version = validate(files, args.kind)

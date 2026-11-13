@@ -57,17 +57,17 @@ const bundleTool=await import(pathToFileURL(path.join(root,'tools/build-bundle.m
 if(process.argv.includes('--check')){const fresh=bundleTool.bundleFresh(root);if(!fresh.ok)throw Error('Stale dist bundle: '+fresh.why);}
 else if(!bundleTool.bundleFresh(root).ok)await bundleTool.buildBundle();
 const distFiles=fs.existsSync(path.join(root,'dist'))?walk(path.join(root,'dist')).map(file=>path.relative(root,file).split(path.sep).join('/')).filter(file=>file.endsWith('.js')):[];
-// 1.4.1 실행 때 받는 파일(.json · 글꼴 · 그림까지)은 설치 ZIP 목록 · 빠진 파일 검사와 같은 목록을 써요 — tools/release_gate.py --runtime-list
+// 1.4.1 실행 때 받는 파일(.json · 글꼴 · 그림까지)은 설치 ZIP 목록 · 빠진 파일 검사와 같은 목록을 써요 — tools/release_gate.py --integrity-list(링크 · 64KB 넘는 자원 제외)
 //   (확장자 화이트리스트만 쓰던 때 src/ext-status-icons.woff2 같은 자원이 표에서 빠져 설치 점검이 못 잡았어요)
 const runtimeList=()=>{
   const gate=path.join(path.dirname(fileURLToPath(import.meta.url)),'release_gate.py');
-  const args=[gate,'--kind','theme','--source',root,'--runtime-list'];
+  const args=[gate,'--kind','theme','--source',root,'--integrity-list'];
   const tries=process.env.BL_PYTHON?[[process.env.BL_PYTHON,[]]]:[['python',[]],['py',['-3']],['python3',[]]];
   let last='';
   for(const [cmd,pre] of tries){
     const run=spawnSync(cmd,[...pre,...args],{encoding:'utf8',maxBuffer:64*1024*1024,env:{...process.env,PYTHONIOENCODING:'utf-8'}});
     if(run.error){last=String(run.error.message);continue;}
-    if(run.status!==0)throw Error('release_gate --runtime-list 실패: '+(run.stderr||run.stdout).trim());
+    if(run.status!==0)throw Error('release_gate --integrity-list 실패: '+(run.stderr||run.stdout).trim());
     return JSON.parse(run.stdout).files;
   }
   throw Error('파이썬을 못 찾았어요(BL_PYTHON 으로 정할 수 있어요): '+last);
