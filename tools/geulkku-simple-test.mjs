@@ -2158,7 +2158,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
 await test('줄바꿈: 공용 함수는 테마 src/log-copy-wrap.js 와 같은 글 · 417틀 모두 글자 단위면 본문 줄만 normal(제목 · 이름표 그대로) · 단어 단위면 그대로 · 카드 · 크게 보기 · 복사 글이 한 길 · 테마로 담기에는 안 실어요', async () => {
     const ww = await imp(path.join(MART, 'word-wrap.js'));
     const copy = fs.readFileSync(path.join(MART, 'word-wrap.js'));
-    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), 'a826332a33fe25865251ef1589556eb9fad7749a59185747b96a811b4891a43c', '마트 사본(mart/word-wrap.js)이 바뀌었어요 — 테마 src/log-copy-wrap.js 와 같이 고치고 두 시험의 값을 맞춰요');
+    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), 'be2579b33d3766427b921dc5f00a505e69d368e97abb617e7eb8ecbacf28056b', '마트 사본(mart/word-wrap.js)이 바뀌었어요 — 테마 src/log-copy-wrap.js 와 같이 고치고 두 시험의 값을 맞춰요');
     const styles = h => [...h.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]).join('\n');
     const last = (css, sel) => [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].trim() === sel).map(m => (m[2].match(/word-break:\s*([\w-]+)/) || [])[1]).filter(Boolean).pop();
     const all = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(all, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
