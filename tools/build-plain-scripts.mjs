@@ -14,7 +14,7 @@ export const START = '/*BL-SCRIPT-START*/', END = '/*BL-SCRIPT-END*/';
 // 실행기가 넘기는 인자 — src/scripts/runtime.js 의 install(api, realm.window) 와 같아야 해요 (tools/tests/scripts-same-window.mjs 가 봐요)
 export const PARAMS = ['BlueLemonade', 'window'];
 const ORIGIN = {
-    korean: '만든 파일 — tools/build-korean-dict.mjs 가 tools/scripts-src/korean.js 에서 만들어요(사전은 src/ko-ui-text.index.gen.js 색인 + ko-ui-text.<조각>.gen.js). 손으로 고치지 않아요',
+    korean: '만든 파일 — tools/build-korean-dict.mjs 가 tools/scripts-src/korean.js 에서 만들어요(사전은 src/ko-ui-text.index.gen.json 색인 + ko-ui-text.<조각>.gen.json). 손으로 고치지 않아요',
     fruit: '만든 파일 — tools/build-fruit-family.mjs 가 tools/scripts-src/fruit-family/ 에서 만들어요. 손으로 고치지 않아요',
     qingguo: '만든 파일 — tools/build-fruit-family.mjs 가 tools/scripts-src/fruit-family/qingguo-ui.* 에서 만들어요. 손으로 고치지 않아요',
     'fruit-heart': '원본이에요 — 끝의 사전 호출은 tools/build-fruit-family.mjs 가 fruit-heart-additions.json 을 합쳐 고쳐 써요',

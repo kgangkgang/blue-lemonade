@@ -859,7 +859,7 @@ jobs:
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:
         # css/23-preview.gen.css (check mode fails on new root declarations),
-        # src/scripts/plain/korean.js + src/ko-ui-text.index.gen.js · ko-ui-text.<조각>.gen.js (9.0.7 · 1.0.0 조각: from tools/scripts-src/korean.js minus tools/scripts-src/korean-prune.json, precomputed dictionary checked against the source),
+        # src/scripts/plain/korean.js + src/ko-ui-text.index.gen.json · ko-ui-text.<조각>.gen.json (9.0.7 · 1.0.0 조각 · 1.3.x JSON: from tools/scripts-src/korean.js minus tools/scripts-src/korean-prune.json, precomputed dictionary checked against the source),
         # src/scripts/plain/{fruit,qingguo,fruit-heart}.js (from tools/scripts-src/fruit-family/, the fruit-family dictionary),
         # src/scripts/plain/fruit-style.js keeps its rule-bucket keys (tools/key-bundled-css.mjs --check; the keys were missing from 8.2.5 and earlier),
         # src/scripts/plain/* module headers (9.0.7: one copy, run in the page without iframes), style.css, src/lazy-panel.gen.css and src/preview.gen.css (9.0.1: settings-preview rules, loaded only when the settings window opens).
