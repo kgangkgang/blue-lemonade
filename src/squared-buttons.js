@@ -124,12 +124,13 @@ export function paddingOnly(record) {
     return changed;
 }
 
-// (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light(8.2.7 부터 html) · bl-chat-covered)만 바뀐 class 기록은 단추의 모양 · 보임을 바꾸지 않는다.
+// (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light(8.2.7 부터 html) · 서랍 덮개(1.2.2 부터 data-bl-chat-covered 속성))만 바뀐 기록은 단추의 모양 · 보임을 바꾸지 않는다.
 //   예전에는 그 기록도 #chat 을 뿌리로 넣어 메시지 300개의 후보(.mes_button 등 수천 개)를 offsetParent 로 다시 쟀다 — 서랍 덮개(chat-light.js)가
 //   #chat 을 content-visibility:hidden 으로 둔 동안에는 그 읽기가 하나하나 건너뛴 내용을 그 자리에서 계산하게 해, 폰 리그에서 서랍 열기가 0.25 → 3.5초(재계산 284번)가 됐다.
 // 8.2.7 폰: 몰입 읽기(reader.js)는 채팅을 내리고 올릴 때마다 body 에 bl-bars-hidden 을 붙였다 뗀다 — 위 바 · 입력판을 top · transform 으로 밀기만 해서
 //   (css/29-reader-onehand.css) 단추 보임 · 크기 · 모서리는 같다. 예전에는 그때마다 body 를 뿌리로 문서 전체를 다시 쟀다(스크롤 중 0.3초대 끊김)
-const PERF_MARKS = new Set(['bl-chat-light', 'bl-chat-covered', 'bl-bars-hidden']);
+const PERF_MARKS = new Set(['bl-chat-light', 'bl-bars-hidden']);
+const COVER_ATTR = 'data-bl-chat-covered';   // chat-light.js 와 같은 이름(1.2.2 class → 속성 · 그 모듈을 여기서 끌어오지 않아요)
 export function perfMarkOnly(record) {
     if (record.type !== 'attributes' || record.attributeName !== 'class' || typeof record.target?.getAttribute !== 'function') return false;
     const words = v => new Set(String(v || '').split(/\s+/).filter(Boolean));
@@ -142,7 +143,7 @@ export function perfMarkOnly(record) {
     }
     return changed;
 }
-const COVERED = '#chat.bl-chat-covered';
+const COVERED = `#chat[${COVER_ATTR}]`;
 // 10-30 perf-icon: 속성을 같은 값으로 다시 쓴 기록(oldValue 가 지금 값과 같음)은 모양 · 보임을 바꾸지 않아요.
 //   실리태번 refreshSwipeButtons 는 메시지가 하나 붙을 때마다 넘길 수 없는 메시지 전부에 classList.remove('swipes_visible', 'last_swipe') 를 불러
 //   (없는 클래스를 빼도 class 기록이 나요) 메시지마다 기록이 하나씩 났고, 이 감시는 그때마다 메시지 하나하나를 다시 쟀어요(긴 채팅에서 메시지 1개 그리기마다 150번 남짓).
@@ -176,6 +177,7 @@ export function recordKind(r, htmlEl) {
     if (r.target === htmlEl) return 'html';
     if (r.type === 'attributes') {
         if (r.attributeName === 'data-generating') return 'gen';
+        if (r.attributeName === COVER_ATTR) return 'perf';   // 덮개가 붙고 떨어짐 — 단추 모양 · 보임은 그대로(떨어질 때 미뤄 둔 것만 다시 재요)
         if (unchangedAttr(r)) return 'skip';
         if (r.attributeName === 'class') {
             if (perfMarkOnly(r)) return 'perf';
@@ -192,7 +194,7 @@ export function recordKind(r, htmlEl) {
 //   checkVisibility({ contentVisibilityAuto: true }) 는 풀지 않고 「건너뛴 채인지」만 알려 줘요(300개 1ms). 건너뛴 메시지 안 후보는 재지 않고
 //   그 메시지를 적어 두었다가, 화면 가까이 와서 크롬이 계산을 시작할 때(contentvisibilityautostatechange · skipped=false — 보이기 전 여유 거리에서 와요)
 //   다음 프레임 맨 앞에서 그 메시지만 재요. 판정 · 표시는 같아요(알려진 생김새는 예전처럼 변화 때 바로 붙음 · restamp).
-//   서랍 덮개(bl-chat-covered · content-visibility:hidden)일 때는 예전 길 그대로예요.
+//   서랍 덮개(data-bl-chat-covered · content-visibility:hidden)일 때는 예전 길 그대로예요.
 export const LIGHT_MES = '#chat > .mes';
 /** 후보가 「건너뛴 content-visibility:auto 메시지」 안이면 그 메시지, 아니면 null — 계산을 풀지 않는 읽기만
  *  10-30 perf-icon: 예전에는 후보마다 checkVisibility 를 물었어요(부팅 · 긴 채팅에서 메시지 수백 개 × 후보 수십 개 — 폰 4배 부팅 0.23초).
@@ -255,7 +257,7 @@ export function watchSquaredButtons(doc, host) {
         if (!root?.isConnected) return;
         const got = candidates(root); if (!got) return;
         const { areas, list } = got;
-        const light = !doc.getElementById?.('chat')?.classList?.contains('bl-chat-covered'), cache = new Map();
+        const light = !doc.getElementById?.('chat')?.hasAttribute?.(COVER_ATTR), cache = new Map();
         const rootMes = light ? root.closest?.(LIGHT_MES) || null : null;
         const check = mayHide(root);   // 1.0.4 닫힌 details 가 없으면 후보마다 조상을 오르지 않아요   // 메시지 하나를 훑을 때는 후보마다 그 메시지를 다시 찾지 않아요
         for (const el of list) {
@@ -320,7 +322,7 @@ export function watchSquaredButtons(doc, host) {
             // 긴 채팅 가볍게가 꺼지면(메시지가 줄어 bl-chat-light 가 빠짐) 건너뛰던 메시지는 사건 없이 그려져요 — 적어 둔 것을 다시 재요
             //   8.2.7 lean-perf: 그 표식은 이제 #chat 이 아니라 html 에 달려요(perf-fade) — html 자기 class 기록만 따로 받아 보고, 다른 html 기록은 훑지 않아요
             if (kind === 'html') { if (skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !htmlEl.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); } continue; }
-            if (kind === 'perf') { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
+            if (kind === 'perf') { if (!r.target.hasAttribute?.(COVER_ATTR) && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); }   // 'gen'
         }
         queueMany(pending);
@@ -328,7 +330,7 @@ export function watchSquaredButtons(doc, host) {
     // 9.0.4: 공용 감시 허브 구독 — body 구역(채팅 안 단추도 봐요: 메시지마다 붙는 다른 확장 단추) + html 자기 class(subtree 없음 — 긴 채팅 가볍게 꺼짐).
     //   콜백은 예전처럼 그리기 전에(when 'now') — 아는 생김새는 콜백에서 바로 붙여요. 시험이 넘긴 가짜 창(host)은 그 창 감시자 하나(watchWith)
     const unwatch = watchWith(host, [
-        [doc.body, { childList: true, subtree: true, attributes: ['class', 'style', 'hidden', 'open', 'data-generating'], attributeOldValue: true, name: '네모 단추' }],
+        [doc.body, { childList: true, subtree: true, attributes: ['class', 'style', 'hidden', 'open', 'data-generating', COVER_ATTR], attributeOldValue: true, name: '네모 단추' }],
         [htmlEl, { attributes: ['class'], attributeOldValue: true, name: '네모 단추 (html class)' }],
     ], onRecords);
     const resize = () => queue(doc.body);

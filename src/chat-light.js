@@ -91,7 +91,7 @@ function afterLayout(el, fn) {
 // ---------------------------------------------------------------- (10-29 perf-persona) 서랍이 채팅을 다 덮으면 뒤의 #chat 을 통째로 건너뛰기
 // 제보: 「모바일 기준 유저 페르소나 편집하는데 많이 버벅거림 · 300챗 장기 챗」. 폰에서는 페르소나 관리 같은 서랍이 채팅을 화면 가득 덮는데도
 //   서랍 안의 일(페르소나 고르기 → 실리태번이 메시지 300개의 아바타 src 를 다시 씀 · 설명 글 갱신 → body :has 무효화)마다 뒤의 #chat 요소가 전부 다시 계산됐다.
-//   서랍이 #chat 의 보이는 자리를 다 덮고 바탕이 불투명할 때만 #chat 에 COVER_CLASS(css/05-chat.css: content-visibility: hidden)를 붙인다 — 보이지 않는 것만 건너뛰니 모양은 같다.
+//   서랍이 #chat 의 보이는 자리를 다 덮고 바탕이 불투명할 때만 #chat 에 COVER_ATTR(css/05-chat.css: content-visibility: hidden)를 붙인다 — 보이지 않는 것만 건너뛰니 모양은 같다.
 //   닫히는 순간(openDrawer 가 빠짐) 바로 뗀다. 숨긴 동안 채팅이 바뀌면(새 메시지 · 다른 채팅 · 생성 시작) 바로 떼고 다시 붙이지 않는다(다음에 서랍을 열 때까지).
 //   뗄 때 스크롤: 숨기기 전 바닥이었으면 바닥으로, 아니면 그 자리로(값이 다를 때만 쓴다).
 //   리그(폰 384): 숨기면 브라우저가 #chat 의 스크롤 범위를 0 으로 보고 scroll 이벤트(scrollTop 0)를 한 번, 다시 보이면 원래 자리로 되돌리며 한 번 더 쏜다.
@@ -102,7 +102,10 @@ function afterLayout(el, fn) {
 //   떼기(show)는 class 만 빼고 바로 돌아가요. 예전에는 class 를 뺀 그 자리에서 scrollHeight · scrollTop 을 읽어(폰 157+184ms) 서랍을 닫는 클릭 안에서
 //   채팅 전체 배치를 강제로 끝냈고, 같은 클릭의 다른 쓰기(아이콘 · 다른 서랍)로 그 프레임이 배치를 한 번 더 했어요 — 이제 그 프레임의 배치 한 번에 모여요.
 //   덮였는지 재기도 예전에는 타이머(서랍을 연 뒤 0 · 120 · 300 · 600 · 1000ms)에서 바로 읽어, 여는 전환 중 더러워진 스타일 · 배치를 그때마다 강제로 끝냈어요.
-export const COVER_CLASS = 'bl-chat-covered';
+// (1.2.2) 표식은 class 가 아니라 data 속성이에요 — 실리태번 keyboard.js 는 body 아래 class 가 바뀐 요소의 안쪽 전부를 선택자 27개로 다시 훑어요.
+//   #chat 에 class 를 붙였다 떼면 서랍을 여닫을 때마다 채팅의 단추 전부(메시지 150개면 3천 개 남짓)를 두 번 훑었어요(폰 리그 4배 · 설정 서랍 장면: keyboard.js 콜백 순정 4ms → 150ms 안팎 · PC 는 서랍이 채팅을 안 덮어 3.8ms).
+//   속성은 그 감시자(class 만)가 보지 않아요. 모양은 같아요(같은 규칙을 속성 선택자로 · 미리 그리기 표식 data-bl-warm 과 같은 길).
+export const COVER_ATTR = 'data-bl-chat-covered';
 const COVER_CHECKS = [0, 120, 300, 600, 1000];   // 서랍 여는 전환(opacity · transform) 이 끝난 뒤에야 덮였는지 알 수 있다
 const freshCover = () => ({ on: false, drawers: [], mo: null, chatMo: null, covered: false, saved: null, timers: [], offs: [], blocked: false, mute: false, muted: 0, check: null, restoring: null });
 let cover = freshCover();
@@ -134,7 +137,7 @@ export function drawerCoversChat(drawers, el, win) {
     return open.some(d => rectCovers(d.getBoundingClientRect(), view) && opaqueStyle(win.getComputedStyle(d)));
 }
 const anyOpenDrawer = () => cover.drawers.some(d => d.classList.contains('openDrawer'));
-/** 덮는다 — 읽기(지금 스크롤) 먼저, 쓰기(class) 마지막. evaluate(afterLayout) 에서만 불러요 */
+/** 덮는다 — 읽기(지금 스크롤) 먼저, 쓰기(표식) 마지막. evaluate(afterLayout) 에서만 불러요 */
 function hide(el) {
     if (cover.covered) return;
     const pending = cover.restoring;   // 떼고 아직 되돌리기 전에 다시 덮이면 그때 적어 둔 자리를 그대로 이어요
@@ -142,16 +145,16 @@ function hide(el) {
     const saved = pending ? pending.saved : { top: el.scrollTop, bottom: el.scrollHeight - el.clientHeight - el.scrollTop < 5 };
     cover.saved = saved;
     cover.covered = true; cover.mute = true;
-    el.classList.add(COVER_CLASS);
+    el.setAttribute(COVER_ATTR, '');
 }
 const nextFrames = fn => (hasRaf() ? requestAnimationFrame(() => requestAnimationFrame(fn)) : setTimeout(fn, 34));
-/** 뗀다 — class 만 빼고(쓰기만) 스크롤은 그 프레임의 배치가 끝난 뒤 되돌려요(restoreScroll: 읽기 → 쓰기 한 번) */
+/** 뗀다 — 표식만 빼고(쓰기만) 스크롤은 그 프레임의 배치가 끝난 뒤 되돌려요(restoreScroll: 읽기 → 쓰기 한 번) */
 function show(el = document.getElementById('chat')) {
     if (!cover.covered) return;
     cover.covered = false;
     const saved = cover.saved; cover.saved = null;
     if (!el) { cover.mute = false; return; }
-    el.classList.remove(COVER_CLASS);
+    el.removeAttribute(COVER_ATTR);
     if (!saved) { cover.mute = false; return; }
     cover.restoring?.cancel();
     const job = { saved, cancel: null };

@@ -53,6 +53,14 @@ await test('무작위 기록 2만 개에서 예전 차례와 같은 갈래예요
     for (const k of ['html', 'perf', 'gen', 'skip', 'child', 'target']) assert.ok(tally[k] > 50, `${k} 갈래가 시험에 있어야 해요`);
 });
 
+await test('(1.2.2) 서랍 덮개 속성(data-bl-chat-covered) 기록은 붙을 때도 떨어질 때도 perf 갈래 — 다시 훑지 않고, 옛 덮개 class 는 보통 class', () => {
+    const on = new El({ 'data-bl-chat-covered': '' }), off = new El({});
+    assert.equal(recordKind({ type: 'attributes', attributeName: 'data-bl-chat-covered', target: on, oldValue: null }, null), 'perf');
+    assert.equal(recordKind({ type: 'attributes', attributeName: 'data-bl-chat-covered', target: off, oldValue: '' }, null), 'perf');
+    assert.equal(recordKind({ type: 'attributes', attributeName: 'class', target: new El({ class: 'bl-chat-covered' }), oldValue: '' }, null), 'target');
+    assert.equal(recordKind({ type: 'attributes', attributeName: 'class', target: new El({ class: 'bl-bars-hidden' }), oldValue: '' }, null), 'perf');
+});
+
 await test('같은 값을 다시 쓴 class 기록은 getAttribute 한 번(예전: perfMarkOnly 에서 한 번 + 같은 값 비교 한 번)', () => {
     const el = new El({ class: 'mes last_mes' });
     const r = { type: 'attributes', attributeName: 'class', target: el, oldValue: 'mes last_mes' };

@@ -22,7 +22,7 @@ class El {
     lockedBy() { for (let p = this.parentElement; p; p = p.parentElement) if (p.cv === 'auto' && p.skipped) return p; return null; }
     checkVisibility(o = {}) { if (!o.contentVisibilityAuto) { if (this.lockedBy()) reads++; return true; } return !this.lockedBy(); }
     matches(s) { return this.tagName === 'BUTTON' && s.startsWith('button,a,summary'); }
-    closest(s) { if (s === '#chat > .mes') { for (let p = this; p; p = p.parentElement) if (p.isMes()) return p; return null; } if (s === '#chat.bl-chat-covered') { for (let p = this; p; p = p.parentElement) if (p.id === 'chat' && p.cls.has('bl-chat-covered')) return p; } return null; }
+    closest(s) { if (s === '#chat > .mes') { for (let p = this; p; p = p.parentElement) if (p.isMes()) return p; return null; } if (s === '#chat[data-bl-chat-covered]') { for (let p = this; p; p = p.parentElement) if (p.id === 'chat' && p.attrs.has('data-bl-chat-covered')) return p; } return null; }
     querySelectorAll(s) { if (s && !s.startsWith('button,a,summary')) return []; const out = []; const walk = e => e.children.forEach(c => { if (c.tagName === 'BUTTON') out.push(c); walk(c); }); walk(this); return out; }
     getBoundingClientRect() { if (this.lockedBy()) reads++; return { width: 80, height: 32 }; }
     hasAttribute(k) { return this.attrs.has(k); } setAttribute(k) { this.attrs.add(k); } removeAttribute(k) { this.attrs.delete(k); }
@@ -82,8 +82,8 @@ test('html 의 다른 class 기록(몰입 읽기 바 숨김 등)은 문서를 �
     assert.equal(walks, 0); assert.deepEqual(r.mes.map(marked), [false, false, false, true, true], '건너뛴 메시지는 그대로 미뤄 둬요');
     r.stop();
 });
-test('서랍 덮개(bl-chat-covered) 동안에는 예전 길 그대로(미루지 않음)', () => {
-    const r = rig(); r.chat.cls.add('bl-chat-covered'); reads = 0;
+test('서랍 덮개(data-bl-chat-covered) 동안에는 예전 길 그대로(미루지 않음)', () => {
+    const r = rig(); r.chat.setAttribute('data-bl-chat-covered'); reads = 0;
     r.host.notify([{ type: 'childList', addedNodes: [r.body] }]); r.flush();
     r.stop();
     assert.equal(typeof mod.skippedMessageOf, 'function');
