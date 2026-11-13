@@ -34,6 +34,7 @@ export function takeOf(id, preview, key) {
   if (TAKE.no[id]) return { ok: false, why: shortWhy(TAKE.no[id]) };
   return themeTakeable(preview, { id, key });   // 고정 자료에 아직 없는 새 틀: 마트 사본 판정(자료를 다시 뜨면 테마 판정으로 바뀌어요)
 }
+const { fixKkGuardHtml } = await import(pathToFileURL(path.join(ROOT, 'mart', 'lib', 'log-copy', 'log-copy-polish.js')).href);   // 11-13 깡통 빈 줄 막기 옛 규칙 고침(아래 kkFix)
 const src = await import(pathToFileURL(path.join(ROOT, 'mart', 'sources.js')).href);   // 11-12 밤 세계관 · 원작 열쇠(분류 자료 topics.json 이 맞는지 봐요)
 const OUT = path.join(DIR, 'index.json');   // 11-11 옛 글꾸를 뺀 뒤로 글꾸 마트 목록은 이 도구가 써요
 const KEY = 'sp-simple';
@@ -264,6 +265,10 @@ const boldFix = (html) => {
   const key = html.match(/\bgk-((?:k|q)\d+)\b/)[1], at = html.indexOf('<style>') + 7, end = html.indexOf('\n\n', at);
   return end < 0 ? html : `${html.slice(0, end)}\n${BOLD_RULE(key)}${html.slice(end)}`;
 };
+/** 11-13 깡통 빈 줄 막기 옛 규칙 고침 — 깡통은 <details> 직속 내용에 class 가 없으면 class 없는 <div> 로 감싸요. 틀 원래 판(이식판)에 든
+ *   details>summary~:not([class]){display:none} 이 그 칸(숨긴 글 · 글 줄)까지 숨겨 펼쳐도 글이 안 나왔어요 → 끝에 :not(:has([class])) 를 붙여 빈 줄만 숨겨요.
+ *   원래 판 파일(tools/simple-frames/)은 그대로 두고 여기서 고쳐요(--pull 로 다시 꺼내도 고친 채). 바꾸는 꼴은 테마 로그 복사와 같은 함수(lib/log-copy/log-copy-polish.js fixKkGuard)예요 */
+const kkFix = html => fixKkGuardHtml(html);
 const fitFix = (html) => {
   const key = (html.match(/^\s*<div\b[^>]*\sclass="gk [^"]*\bgk-((?:k|q)\d+)\b/) || [])[1], add = (FIT_RULES[key] || []).filter(r => !html.includes(r));
   if (!add.length) return html;
@@ -300,7 +305,7 @@ export function frameHtml(d) {
   const file = fileOf(d);
   if (!file) throw new Error(`${d.id}: 틀 파일이 없어요`);
   const raw = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-  const html = boldFix(fitFix(sampleNames(focusRing(fillSlots(martAudio(wrapLoose(uniqInner((src0 => (d.sample || keepsSound(d) ? src0 : dropSound(src0)))(stripAlias(raw.trim()))))), d.values)))));
+  const html = kkFix(boldFix(fitFix(sampleNames(focusRing(fillSlots(martAudio(wrapLoose(uniqInner((src0 => (d.sample || keepsSound(d) ? src0 : dropSound(src0)))(stripAlias(raw.trim()))))), d.values))))));
   const bad = problems(html);
   if (bad.length) throw new Error(`${d.id}: ${bad.join(' · ')}`);
   const info = sf.simpleFrameInfo(html);

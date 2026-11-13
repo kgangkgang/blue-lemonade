@@ -1061,6 +1061,25 @@ await test('블라인드(details 안에 글이 든 틀): 깡통이 내용을 cla
     const src = fs.readFileSync(path.join(MART, 'simple-frames.js'), 'utf8');
     assert.ok(src.includes('details>summary~:not([class]):not(:has([class])){display:none}`'));
 });
+await test('11-13 깡통 빈 줄 막기 옛 규칙: 마트 자료 전부(원래 판에 옛 규칙이 든 틀 포함)에 옛 꼴 0 · 복사 글에도 0 · 고친 꼴은 테마 로그 복사와 같은 함수(fixKkGuard)', async () => {
+    const all = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(all, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
+    const OLD_RULE = /details\s*>\s*summary\s*~\s*(?:\*|div)?:not\(\[class\]\)\s*\{\s*display\s*:\s*none/;
+    let had = 0;
+    for (const it of sixAll.items) {
+        const p = all[it.id].preview;
+        assert.ok(!OLD_RULE.test(p), `${it.id}: 자료에 옛 규칙(감싼 칸까지 숨김)이 남았어요`);
+        if (/<details\b/.test(p)) assert.ok(!OLD_RULE.test(sf.simpleReady(shutPeek(p))), `${it.id}: 복사 글에 옛 규칙이 남았어요`);
+        const def = [...gen.DEFS, ...gen.PASS_DEFS].find(d => d.id === it.id), file = def && gen.fileOf(def);
+        if (file && OLD_RULE.test(fs.readFileSync(file, 'utf8'))) { had++; assert.ok(p.includes('details>summary~:not([class]):not(:has([class])){display:none}'), `${it.id}: 원래 판의 옛 규칙이 고친 꼴로 안 바뀌었어요`); }
+    }
+    assert.ok(had >= 389, `원래 판에 옛 규칙이 든 틀 ${had}`);
+    const pol = await imp(path.join(MART, 'lib/log-copy/log-copy-polish.js'));
+    assert.equal(pol.fixKkGuard('.gk-k1 details>summary~:not([class]){display:none}'), '.gk-k1 details>summary~:not([class]):not(:has([class])){display:none}');
+    assert.equal(pol.fixKkGuard('div.gk-k8 details > summary ~ :not([class]) { display: none !important; }'), 'div.gk-k8 details > summary ~ :not([class]):not(:has([class])) { display: none !important; }');
+    for (const keep of ['.gk-k1 details>summary~:not([class]):has(>br:only-child){display:none}', '.gk-k1 details:not([open])>summary~:not([class]){display:none}', '.gk-k1 details>summary~div{display:none}', '.gk-k1 details>summary~:not([class]){display:none;margin:0}', '.gk-k1 .x:not([class]){display:none}'])
+        assert.equal(pol.fixKkGuard(keep), keep, `다른 뜻의 규칙은 그대로: ${keep}`);
+    assert.ok(/^\/\/ 원본 블루레몬에이드/.test(fs.readFileSync(path.join(MART, 'lib/log-copy/log-copy-polish.js'), 'utf8')), '테마 사본 머리 그대로');
+});
 await test('액자 마트 고침(11-12 밤 전수조사 고침 안 3 · 4 · 5): 보이는 이름 하나(라파엘 · 무협시뮬 · D&H · 옛 이름으로도 찾아짐) · 장바구니는 받은 뒤에도 그대로 · 비우기 되살리기 · 작은 고장 다섯', async () => {
     const room = fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8'), cartSrc = fs.readFileSync(path.join(MART, 'cart.js'), 'utf8'), martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');
     const showName = (0, eval)(room.match(/export const showName = (s => [^\n]+);\n/)[1]);
