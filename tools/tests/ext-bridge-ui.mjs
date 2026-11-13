@@ -5,6 +5,7 @@
 //   ④ 용어집 켬끔 → 테마 쪽 설정에만 적어요 · 안내 줄 · 지난 요청에 실은 줄
 //   ⑤ 모델 칸: 「확장 AI 전체」 + 여섯 갈래 · 회사를 고르면 모델 칸이 열리고 · 직접 입력이면 이름 칸이 열려요
 //   ⑥ 자리를 못 찾으면 맨 아래(맞춘 판 안내 줄 앞) · 기능을 안 쓰는 모드면 넣지 않고 있던 칸은 치워요
+//   ⑦ 번역 탭 「번역 모델 (연결 프로필)」 아래 번역 모델 직접 고르기 — 확장 AI 탭 「번역」 줄과 같은 값 · 실리 기본 번역이면 흐리게
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -93,13 +94,14 @@ const fire = (target, type) => { for (let node = target; node; node = node.paren
 const make = (doc, tag, attrs = {}, kids = [], text = '') => { const node = doc.createElement(tag); for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value); node.text = text; node.append(...kids); return node; };
 
 /** 그 확장 설정 칸의 뼈대(선택자만 같은 가짜 — 그 확장의 글 · 코드는 들어 있지 않아요) */
-function page({ anchors = true, tabs = true, note = true } = {}) {
+function page({ anchors = true, tabs = true, note = true, translate = false } = {}) {
     const doc = makeDoc();
     const row = (key, group, off) => make(doc, 'label', tabs ? { 'data-bl-tab-g': group, ...(off ? { 'data-bl-tab-off': '' } : {}) } : {}, [make(doc, 'select', { class: 'text_pole', 'data-s': key })], `원작 칸 ${key}`);
     const kids = [row('enabled', '0', false)];
     const head = (text, group, off) => make(doc, 'b', { class: 'ss-set-h', ...(tabs ? { 'data-bl-tab-g': group, ...(off ? { 'data-bl-tab-off': '' } : {}) } : {}) }, [], text);
     if (anchors) {
         kids.push(head('언어', '1', false), row('ssGenLang', '1', false), make(doc, 'label', tabs ? { 'data-bl-tab-g': '1' } : {}, [make(doc, 'textarea', { 'data-s': 'trRules' })], '원작 지침 칸'), row('trAuto', '1', false));
+        if (translate) kids.push(make(doc, 'details', { class: 'ss-set-more', ...(tabs ? { 'data-bl-tab-g': '1' } : {}) }, [make(doc, 'summary', {}, [], '번역 모델 · 언어'), row('trProfile', '', false), row('trEngine', '', false), row('trLang', '', false)]));
         kids.push(head('확장 AI', '2', true), row('aiProfile', '2', true), make(doc, 'details', { class: 'ss-set-more', ...(tabs ? { 'data-bl-tab-g': '2', 'data-bl-tab-off': '' } : {}) }, [row('profContact', '', false)]), row('aiFallbackMain', '2', true));
     } else kids.push(row('other', '1', true));
     if (note) kids.push(make(doc, 'small', { class: 'bl-ext-compat', ...(tabs ? { 'data-bl-tab-g': '2', 'data-bl-tab-off': '' } : {}) }, [], '맞춘 판 안내'));
@@ -116,7 +118,7 @@ function fakeBridge({ features = true, saved } = {}) {
         calls, state,
         config: () => C.readBridge({ meatball: store.value }),
         update(mutate) { const next = C.readBridge({ meatball: store.value }); mutate(next); const tidy = C.readBridge({ meatball: next }); store.value = tidy; calls.push(structuredClone(tidy)); return tidy; },   // 진짜 다리처럼 고친 값을 한 번 정리해요
-        status: () => ({ features: state.features, addon: true, enabled: true, count: 278, mode: 'ko', engine: 'llm', trLang: '한국어', fallback: true, owner: state.owner, last: state.last }),
+        status: () => ({ features: state.features, addon: true, enabled: true, count: 278, mode: 'ko', engine: state.engine || 'llm', trLang: '한국어', fallback: true, owner: state.owner, last: state.last }),
     };
 }
 
@@ -267,6 +269,46 @@ await test('⑥ 기능을 안 쓰는 모드면 넣지 않고, 있던 칸은 치�
     assert.deepEqual(p.content.children, p.foreign);
     const none = makeDoc(); use(none);
     assert.equal(mountBridgeUi(none, fakeBridge()), false);
+});
+
+await test('⑦ 번역 탭: 「번역 모델 (연결 프로필)」 바로 아래에 번역 모델 직접 고르기 — 확장 AI 탭 「번역」 줄과 같은 값 · 실리 기본 번역이면 흐리게', async () => {
+    const p = page({ translate: true }); use(p.doc);
+    const bridge = fakeBridge();
+    mountBridgeUi(p.doc, bridge); mountBridgeUi(p.doc, bridge);
+    const details = p.content.children.find(node => node.localName === 'details' && node.querySelector('[data-s="trProfile"]'));
+    assert.deepEqual(details.children.map(node => node.getAttribute('data-bl-bridge') || node.querySelector('[data-s]')?.getAttribute('data-s') || node.localName), ['summary', 'trProfile', 'translate', 'trEngine', 'trLang'], '그 확장 줄 바로 아래 · 한 벌');
+    const mine = details.querySelector('[data-bl-bridge="translate"]');
+    const other = p.content.querySelector('[data-bl-bridge="models"]').querySelector('[data-bl-bridge-slot="translate"]');
+    assert.match(other.textContent, /^번역 번역 담당이 「번역 모델 \(LLM\)」일 때/, '확장 AI 탭 줄 이름은 「번역」');
+    const provider = mine.querySelector('[data-bl-bridge-provider]');
+    assert.deepEqual(provider.children.map(option => option.value), ['', ...Object.keys(Providers.PROVIDERS)], '회사는 번역기와 같은 여덟 곳');
+    provider.value = 'claude'; fire(provider, 'change');
+    assert.deepEqual(bridge.calls.at(-1).models.translate, { provider: 'claude', model: '', name: '' });
+    assert.equal(other.querySelector('[data-bl-bridge-provider]').children.find(option => option.selected).value, 'claude', '확장 AI 탭 줄도 같은 값');
+    const model = other.querySelector('[data-bl-bridge-model]'), wanted = model.children[1].value; model.value = wanted; fire(model, 'change');
+    assert.equal(mine.querySelector('[data-bl-bridge-model]').children.find(option => option.selected).value, wanted, '반대쪽에서 바꿔도 같이');
+    assert.equal('blOff' in mine.dataset, false);
+    assert.match(mine.querySelector('[data-bl-bridge-note]').textContent, /비우면 「확장 AI 전체」와 같아요/);
+    bridge.state.engine = 'st';
+    fire(details.querySelector('[data-s="trEngine"]'), 'change');
+    assert.equal('blOff' in mine.dataset, true);
+    assert.equal(provider.disabled, true);
+    assert.equal(mine.querySelector('[data-bl-bridge-note]').textContent, '번역 담당을 「번역 모델 (LLM)」로 바꾸면 써요.');
+    for (const node of [mine, ...mine.all()]) for (const name of ['data-s', 'data-s-act']) assert.equal(node.hasAttribute(name), false);
+    bridge.state.features = false; mountBridgeUi(p.doc, bridge);
+    assert.equal(p.content.querySelector('[data-bl-bridge="translate"]'), null, '기능을 안 쓰는 모드면 이 칸도 치워요');
+    // 정리한 보기가 그 줄을 갈래로 접어 두면(표식만) 이 칸도 같은 표식 — 갈래를 펴고 접을 때 같이 움직여요
+    const flat = page(); use(flat.doc);
+    const trRow = make(flat.doc, 'label', { 'data-bl-tab-g': '1', 'data-bl-fold': 'f3', 'data-bl-fold-off': '' }, [make(flat.doc, 'select', { 'data-s': 'trProfile' })]);
+    flat.content.children[2].after(trRow);
+    mountBridgeUi(flat.doc, fakeBridge());
+    const folded = flat.content.querySelector('[data-bl-bridge="translate"]');
+    assert.equal(folded.previousElementSibling, trRow);
+    assert.deepEqual([folded.dataset.blTabG, folded.dataset.blFold, 'blFoldOff' in folded.dataset], ['1', 'f3', true]);
+    delete trRow.dataset.blFoldOff; mountBridgeUi(flat.doc, fakeBridge());
+    assert.equal('blFoldOff' in folded.dataset, false, '갈래를 펴면 같이 보여요');
+    const old = page(); use(old.doc); mountBridgeUi(old.doc, fakeBridge());
+    assert.equal(old.content.querySelector('[data-bl-bridge="translate"]'), null, '그 줄이 없는 판이면 넣지 않아요');
 });
 
 console.log(`\next-bridge-ui: ${passed}개 통과`);

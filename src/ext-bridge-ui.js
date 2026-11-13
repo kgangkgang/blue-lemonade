@@ -2,6 +2,7 @@
 //   두 칸을 그 확장의 설정 칸 안에 넣어요. 그 확장의 요소는 옮기거나 지우거나 고치지 않아요 — 우리 칸만 끼워요.
 //     ① 번역 용어집(「번역 지침」 칸이 든 묶음의 맨 끝): 켬끔 둘 · 지금 상태 한 줄 · 지난 요청에 실은 줄 보기
 //     ② 모델 직접 고르기(「확장 AI」 모델 칸 아래): 「확장 AI 전체」 + 기능 여섯 갈래, 칸마다 회사 · 모델. 목록은 번역기와 같은 것(src/live-models.js)
+//     ③ 번역 탭의 「번역 모델 (연결 프로필)」 아래에 ② 의 「번역」 줄과 같은 칸을 한 번 더(같은 값)
 //        그 확장 칸에 연결 프로필이 골라져 있는 칸에는 「그쪽이 먼저」라고 알려요.
 //   우리 칸의 입력에는 그 확장의 data-s 표식이 없어서 그 확장의 저장 처리에 걸리지 않아요. 값은 테마 쪽 설정(extension_settings[BRIDGE_KEY])에만 적어요.
 //   분류 탭(src/ext-compat.js)이 있으면 끼운 자리의 묶음 번호(data-bl-tab-g)를 물려받아 그 탭과 함께 보이고 숨어요.
@@ -127,6 +128,23 @@ function slotRow(doc, id, label, covers) {
         el(doc, 'small', { text: '위 미트볼 칸에 연결 프로필이 골라져 있어 그쪽이 먼저예요. 여기서 고른 모델을 쓰려면 그 칸을 「메인 연결 그대로」로 돌려 주세요.', attrs: { 'data-bl-bridge-hint': '' } }),
     ] });
 }
+/** 모델 칸 하나가 바뀌었을 때 저장해요 — 확장 AI 탭의 줄과 번역 탭의 같은 칸이 같은 값을 써요. 바뀐 칸이 없으면 false */
+function changeSlot(bridge, target, listOptions) {
+    const id = target?.closest?.('[data-bl-bridge-slot]')?.dataset.blBridgeSlot;
+    if (!id) return false;
+    if (target.matches('[data-bl-bridge-provider]')) {
+        bridge.update(config => { config.models[id] = { provider: target.value, model: '', name: '' }; });
+        if (known(target.value)) Providers.autoFetchModelList(target.value, listOptions());   // 목록이 없거나 하루 지났을 때만 조용히
+    } else if (target.matches('[data-bl-bridge-model]')) bridge.update(config => { config.models[id].model = target.value; if (target.value !== 'custom') config.models[id].name = ''; });
+    else if (target.matches('[data-bl-bridge-name]')) bridge.update(config => { config.models[id].name = target.value; });
+    else return false;
+    return true;
+}
+const listOptions = () => ({ endpoint: endpoint(), includeHeaders: hostSettings().custom_include_headers || '', headers: () => context().getRequestHeaders?.() || {} });
+/** 그 설정 칸 안 우리 칸을 모두 다시 그려요(한쪽에서 바꾼 번역 모델이 다른 쪽에도 보이게) */
+function refreshAll(content) {
+    for (const block of content?.querySelectorAll?.('[data-bl-bridge]') || []) refreshers.get(block)?.();
+}
 function modelNote(status, message) {
     if (message) return message;
     const last = status.last?.model;
@@ -165,18 +183,10 @@ function buildModels(doc, bridge) {
         button.textContent = pending ? '목록을 불러오는 중…' : '모델 목록 새로고침';
         note.textContent = modelNote(status, message);
     };
-    const listOptions = () => ({ endpoint: endpoint(), includeHeaders: hostSettings().custom_include_headers || '', headers: () => context().getRequestHeaders?.() || {} });
     block.addEventListener('change', event => {
-        const target = event.target, id = target?.closest?.('[data-bl-bridge-slot]')?.dataset.blBridgeSlot;
-        if (!id) return;
-        if (target.matches('[data-bl-bridge-provider]')) {
-            bridge.update(config => { config.models[id] = { provider: target.value, model: '', name: '' }; });
-            if (known(target.value)) Providers.autoFetchModelList(target.value, listOptions());   // 목록이 없거나 하루 지났을 때만 조용히
-        } else if (target.matches('[data-bl-bridge-model]')) bridge.update(config => { config.models[id].model = target.value; if (target.value !== 'custom') config.models[id].name = ''; });
-        else if (target.matches('[data-bl-bridge-name]')) bridge.update(config => { config.models[id].name = target.value; });
-        else return;
+        if (!changeSlot(bridge, event.target, listOptions)) return;
         message = '';
-        refresh();
+        if (block.parentElement) refreshAll(block.parentElement); else refresh();
     });
     block.addEventListener('click', async event => {
         if (!event.target?.closest?.('[data-bl-bridge-refresh]') || pending) return;
@@ -198,15 +208,50 @@ function buildModels(doc, bridge) {
     return block;
 }
 
+// ── ③ 번역 탭의 번역 모델 직접 고르기 ─────────────────
+//   그 확장 「번역 모델 · 언어」 펼침 안, 「번역 모델 (연결 프로필)」 줄 바로 아래. 값은 ② 의 「번역」 줄과 같아요(같은 설정 칸 · 바꾸면 둘 다 다시 그려요).
+//   번역 담당이 「실리 기본 번역」이면 이 모델로 갈 요청이 없어 흐리게 두고 한 줄로 알려요.
+const TR_ID = 'translate';
+function buildTranslate(doc, bridge) {
+    const [, , covers] = Core.SLOTS.find(([id]) => id === TR_ID);
+    const row = slotRow(doc, TR_ID, '번역 모델 직접 고르기', '');
+    const note = el(doc, 'small', { attrs: { 'data-bl-bridge-note': '', role: 'status' } });
+    const block = el(doc, 'div', { cls: 'bl-ext-bridge bl-ext-bridge-inline', attrs: { 'data-bl-bridge': 'translate' }, kids: [row, note] });
+    row.querySelector('span')?.append(el(doc, 'small', { text: ' 블루레몬에이드' }));
+    const refresh = () => {
+        const config = bridge.config(), status = bridge.status();
+        // 바로 위 그 확장 줄의 탭 · 접힘 표식을 그대로 따라요(정리한 보기가 그 줄을 「번역 모델 · 언어」 갈래로 접으면 이 칸도 같이 접혀요)
+        const above = block.previousElementSibling;
+        if (above) for (const key of ['blTabG', 'blTabOff', 'blFold', 'blFoldOff']) { if (key in above.dataset) block.dataset[key] = above.dataset[key]; else delete block.dataset[key]; }
+        paintRow(row, config.models[TR_ID], !!status.owner?.[TR_ID]);
+        const off = status.engine === 'st';
+        if (off) block.dataset.blOff = ''; else delete block.dataset.blOff;
+        for (const select of row.querySelectorAll('select')) select.disabled = off;
+        note.textContent = off ? '번역 담당을 「번역 모델 (LLM)」로 바꾸면 써요.' : `회사 · 모델을 바로 골라요(키는 실리태번에 저장된 것 그대로). 비우면 「확장 AI 전체」와 같아요 — 「확장 AI」 탭의 「번역」 줄과 같은 칸이에요. ${covers}.`;
+    };
+    block.addEventListener('change', event => { if (changeSlot(bridge, event.target, listOptions)) refreshAll(block.closest?.(Core.TARGET.root) || block.parentElement); });
+    refreshers.set(block, refresh);
+    return block;
+}
+const watched = new WeakSet();
+
 /** 그 확장의 설정 칸에 우리 칸 둘을 넣어요(이미 있으면 안내 줄 · 목록만 다시). 기능을 안 쓰는 모드면 넣지 않고, 있던 칸은 치워요 */
 export function mountBridgeUi(doc, bridge) {
     const content = doc.querySelector(`${Core.TARGET.root} .inline-drawer-content`);
     if (!content || !bridge) return false;
-    const blocks = () => [...content.querySelectorAll(':scope > [data-bl-bridge]')];
+    const blocks = () => [...content.querySelectorAll('[data-bl-bridge]')];
     if (!bridge.status().features) { for (const block of blocks()) block.remove(); return false; }
     attachSheet(doc);
     if (!content.querySelector(':scope > [data-bl-bridge="glossary"]')) place(content, buildGlossary(doc, bridge), groupEnd(rowOf(content, 'trRules')));
     if (!content.querySelector(':scope > [data-bl-bridge="models"]')) place(content, buildModels(doc, bridge), rowOf(content, 'profContact') || rowOf(content, 'aiProfile'));
-    for (const block of blocks()) refreshers.get(block)?.();
+    // 번역 탭: 「번역 모델 (연결 프로필)」 줄 바로 아래(펼침 안이면 그 안) — 그 줄이 없는 판이면 넣지 않아요
+    const trRow = content.querySelector('[data-s="trProfile"]')?.closest?.('label');
+    if (trRow && !content.querySelector('[data-bl-bridge="translate"]')) trRow.after(buildTranslate(doc, bridge));
+    // 번역 담당 · 번역 프로필을 바꾸면 흐림 · 안내를 다시(그 확장 칸의 바뀜을 듣기만 해요)
+    if (!watched.has(content)) {
+        watched.add(content);
+        content.addEventListener('change', event => { const key = event.target?.getAttribute?.('data-s'); if (key === 'trEngine' || key === 'trProfile') { refreshAll(content); setTimeout(() => refreshAll(content), 0); } });   // 그 확장이 값을 저장한 뒤에 한 번 더(저장 처리가 문서 쪽에서 늦게 돌아요)
+    }
+    refreshAll(content);
     return true;
 }

@@ -23,8 +23,12 @@
 .bl-ext-bridge-acts > .menu_button { width: auto; min-width: max-content; max-width: 100%; margin: 0; white-space: nowrap; }
 .bl-ext-bridge > small[data-bl-bridge-note] { display: block; margin-top: 8px; }
 .bl-ext-bridge > small[data-bl-bridge-note]:empty { display: none; }
+/* 번역 탭 안 한 줄짜리 칸(그 확장 「번역 모델 (연결 프로필)」 바로 아래) — 묶음 머리 · 윗줄 없이 그 확장 줄처럼 · 번역 담당이 실리 기본 번역이면 흐리게 */
+.bl-ext-bridge.bl-ext-bridge-inline { margin: 8px 0 0; padding: 0; border-top: 0; }
+.bl-ext-bridge-inline > label[data-bl-bridge-slot] { margin-top: 0; }
+.bl-ext-bridge-inline[data-bl-off] > label { opacity: 0.55; }
 
-body.salty .bl-ext-bridge { margin-top: var(--bl-s5, 20px); padding-top: var(--bl-s4, 16px); }
+body.salty .bl-ext-bridge:not(.bl-ext-bridge-inline) { margin-top: var(--bl-s5, 20px); padding-top: var(--bl-s4, 16px); }
 body.salty .bl-ext-bridge:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top-color: var(--salty-line); }
 body.salty .bl-ext-bridge > .bl-ext-bridge-h { font-size: var(--bl-ts-ui, 14px); font-weight: var(--bl-ui-strong, 650); }
 body.salty .bl-ext-bridge-pick { gap: var(--bl-s2, 8px); margin-top: var(--bl-s1, 4px); }

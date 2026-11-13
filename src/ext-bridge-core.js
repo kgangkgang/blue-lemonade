@@ -26,7 +26,7 @@ export const SLOTS = Object.freeze([
     ['feeds', '소식', '뉴스 · 가십 · 게시판 · 의뢰 · SNS · 추천 음악', 'profFeeds'],
     ['analyze', '별도 분석', '자동 반영이 B · A+B 일 때 답마다 스스로 불려요', 'profAnalyze'],
     ['help', '도우미', '', 'profHelp'],
-    ['translate', '상태창 번역', '', 'trProfile'],
+    ['translate', '번역', '번역 담당이 「번역 모델 (LLM)」일 때 · 상태창 칸 · 편지 · 메시지 번역', 'trProfile'],
 ]);
 const SLOT_IDS = SLOTS.map(([id]) => id);
 export const slotLabel = id => (SLOTS.find(([key]) => key === id) || ['', ''])[1];
