@@ -3,7 +3,8 @@ import {FRUIT_TYPES,tidyFruitType,fruitTypeCss,fruitDecorCss,decorFilterMarkup,t
 import {findFont,fontStack,loadFont} from './fonts.js';
 import {loadFullCatalog,catalogReady} from './catalog.js';   // 1.0.0 상태창 글자에 고른 글꼴 — 전체 목록(1,016개)은 시작 목록 밖 글꼴을 골랐을 때만 받아요(극한 최적화: 부팅 때 152KB 를 늘 받던 것)
 import {watchWith} from './dom-watch.js';   // 9.0.4 공용 감시 허브(시험의 가짜 창은 그 창 감시자 하나)
-import {framePoll} from './frame-poll.js';   // 1.1.4 1.5초 폴링 · 서명 계산을 과일 계열 세 모듈이 하나로
+import {framePoll} from './frame-poll.js';
+import {holdSheet} from './boot-gate.js';   // 1.2.2 꾸미기 시트(83KB)가 덮개 동안 붙으면 꺼 둔 채로 — 걷힐 때 한 번에 켜요   // 1.1.4 1.5초 폴링 · 서명 계산을 과일 계열 세 모듈이 하나로
 let stop=null, latest={on:false};
 function family(id){const f=id==='original'?null:findFont(id);if(!f||f.unusable)return '';loadFont(f);return fontStack(f);}
 // 7.0.4 글꼴 설정을 안 켜도(anyTypeEnabled 아님) 테마가 켜져 있으면 감시한다 — 채팅 iframe 상태창의 한국어 낱말 꺾임 막기(wrapCss)는 늘 넣는다.
@@ -57,7 +58,7 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const readPalette=()=>['accent','text','muted','line'].map(tokenValue).join('|');
     function paintFrameDecor(d,text){let s=frameDecors.get(d);if(!text){s?.remove();frameDecors.delete(d);return;}if(!s?.isConnected){s=d.createElement('style');s.dataset.blFruitDecor='';(d.head||d.documentElement).append(s);frameDecors.set(d,s);}if(s.textContent!==text)s.textContent=text;}
     let filters=null;
-    function paintDecor(config){const text=fruitDecorCss(config);if(!text){decor?.remove();decor=null;filters?.remove();filters=null;return;}if(!decor?.isConnected){decor=doc.createElement('style');decor.dataset.blFruitDecor='';(doc.head||doc.documentElement).append(decor);}if(decor.textContent!==text)decor.textContent=text;
+    function paintDecor(config){const text=fruitDecorCss(config);if(!text){decor?.remove();decor=null;filters?.remove();filters=null;return;}if(!decor?.isConnected){decor=doc.createElement('style');decor.dataset.blFruitDecor='';(doc.head||doc.documentElement).append(decor);holdSheet(decor);}if(decor.textContent!==text)decor.textContent=text;
         // 그림 장식 필터(팔레트 색 · 밝기는 불투명도로) — body 끝에 숨은 svg 한 벌
         if(!filters?.isConnected&&doc.body){const box=doc.createElement('div');box.innerHTML=decorFilterMarkup();const el=box.firstElementChild;if(el){filters=el;doc.body.append(el);}}}
     function flush(){

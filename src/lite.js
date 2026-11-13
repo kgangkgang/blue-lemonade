@@ -328,17 +328,23 @@ export function deferPanelHasRules(tries = 25) {
             const from = lazyStart(sheet);
             const live = from < 0 ? [] : [...sheet.cssRules].slice(from + 1);
             if (from < 0 || !sameShape(live, probe.cssRules)) { reasons.push(`${cut ? 'style.css' : 'lazy-panel.gen.css'} 규칙 ${probe.cssRules.length}개 ↔ 시트 ${live.length}개`); continue; }
-            const style = document.createElement('style');
-            style.id = 'salty-panel-css';
-            style.media = 'not all';
-            style.textContent = tail;
-            sheetTail(sheet).after(style); // 1.1.6 테마 시트 뒤 줄(미리보기 · 뗀 규칙 시트 포함) 끝 뒤 · 9.0.1 미리보기 <link> 가 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
-            for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
-            panelCount = live.length;
-            panelStyle = style;
-            panelOn = false;
-            syncPanelCss();
-            watchPanelOpen();
+            // 1.2.2 시작 덮개 동안이면 옮기기(새 시트 붙이기 + 첫 장에서 규칙 지우기)는 걷힐 때 — 켜진 시트를 고치는 일이라 media 로 못 모아요.
+            //   걷힐 때 꺼 둔 시트 켜기와 같은 마이크로태스크에서 하면 다시 계산이 한 번이에요(boot-gate.js). 그동안 규칙은 첫 장에 켜진 채라 화면은 같아요
+            const commit = () => {
+                if (panelStyle || !sheet.ownerNode?.isConnected || lazyStart(sheet) !== from || sheet.cssRules.length - from - 1 !== live.length) { panelPending = false; return; }
+                const style = document.createElement('style');
+                style.id = 'salty-panel-css';
+                style.media = 'not all';
+                style.textContent = tail;
+                sheetTail(sheet).after(style); // 1.1.6 테마 시트 뒤 줄(미리보기 · 뗀 규칙 시트 포함) 끝 뒤 · 9.0.1 미리보기 <link> 가 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
+                for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
+                panelCount = live.length;
+                panelStyle = style;
+                panelOn = false;
+                syncPanelCss();
+                watchPanelOpen();
+            };
+            if (booting()) afterBoot(commit); else commit();
             return;
         }
         console.info('[Blue Lemonade] 서랍 전용 규칙은 style.css 안에 켜 둠 (화면은 같음):', reasons.join(' / '));

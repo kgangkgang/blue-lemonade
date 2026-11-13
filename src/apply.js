@@ -15,6 +15,7 @@ import { syncFeatures, coolChatForRestyle } from './features.js';
 import { restingFor } from './ext-presence.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { frameReady, trackLate } from './boot-layers.js';
+import { coverOpaque } from './boot-gate.js';   // 1.2.2 덮개 동안 붙는 시트 모으기 — 덮개가 불투명할 때만(boot-gate.js holdSheet)
 import { syncGateCss } from './lite.js';   // 1.1.1 마크다운 모양 시트 → 1.1.6 뗀 규칙 시트 전부(켠 설정이 있을 때만)
 // 그리기 모듈은 첫 프레임 뒤에 받고, 도착하면 가장 최근 설정을 적용해요.
 const late = new Map();
@@ -773,6 +774,9 @@ export function applyAll() {
     // 1.1.1 가볍게 → 1.1.6: 켠 설정(고른 마크다운 모양 · 글자 외곽선 · 들여쓰기 · 정보 정렬)의 규칙 시트를 클래스보다 먼저 붙여요(첫 장 · 전체 장에는 없어요 · lite.js syncGateCss).
     //   시트가 아직 안 왔으면 그 클래스(held)는 지금 달지 않고, 시트가 오면 lite.js 가 달아요 — 켜는 순간 꾸밈 없는 한 프레임이 없게
     //   그때는 applyAll 밖이라 아래 restyleAhead 가 못 닿아요 — 식히는 함수를 넘겨 달기 직전에 부르게 해요(긴 채팅을 식히지 않고 다시 계산하던 것)
+    // 1.2.2 시작 덮개가 불투명한가 — 테마를 칠하면 css/09 가 #preloader 를 팔레트 바탕(--salty-bg)으로 덮어요. 바탕이 반투명이거나 테마가 꺼져 있으면(실리태번 기본 덮개 = 반투명 + 흐림)
+    //   덮개 동안 붙는 시트를 꺼 두지 않아요(boot-gate.js holdSheet — 뒤가 비쳐 「시트 없는 모습」이 보일 수 있어서)
+    coverOpaque(want.has('salty') && (parseColor(pal.bg)?.[3] ?? 0) >= 1);
     const held = syncGateCss(want, coolChatForRestyle);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;

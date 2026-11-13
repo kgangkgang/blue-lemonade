@@ -1,7 +1,7 @@
 // Theme look: text buttons that SillyTavern or other extensions draw as thick pills or circles become
 // slim rounded rectangles. Only a marker attribute is added; removing it restores the original shape.
 // Switches, dots, badges, progress bars, avatars and icon-only round buttons keep their shape.
-import { booting, afterBoot } from './boot-gate.js';
+import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { watchWith } from './dom-watch.js';
 import { hiddenQueue, mayHide } from './hidden-details.js';
 
@@ -222,6 +222,7 @@ export function watchSquaredButtons(doc, host) {
     style.dataset.blSquaredStyle = '';
     style.textContent = `[${ATTR}]{border-radius:var(--bl-r-btn,8px)!important}`;
     (doc.head || doc.documentElement).append(style);
+    holdSheet(style);   // 1.2.2 덮개 동안이면 꺼 둔 채로(다른 문서면 아무 일 없음)
     const roots = new Set(), waiting = new Set(), skippedMes = new Set(), lockState = new WeakMap();   // lockState: 메시지마다 크롬이 마지막으로 알린 건너뜀 여부
     // 7.5.4 한 번 표시한 생김새 — 목록을 innerHTML 로 다시 그리는 확장(탭 · 칩이 새 요소가 됨)에서 새 요소가 0.3초 동안 둥글게 보였다가 네모가 되던 것을 막는다
     const seen = new Map();

@@ -9,6 +9,7 @@
 // 채팅이 화면보다 짧아 단추가 계속 미리보기 영역에 있으면 화면이 찰 때까지 이어서 부른다(한 프레임에 한 번).
 // 감시는 IntersectionObserver 하나(root #chat · rootMargin 위 300% · threshold 0) · 단추가 있을 때만. 숨은 탭에서는 관찰자가 안 돌아 아무 일도 없다.
 // 설정: 채팅 › 화면 「이전 메시지 저절로 불러오기」 (chat.showMoreAuto, 기본 켬) — 끄면 관찰자 · 이벤트를 모두 뗀다.
+import { booting, afterBoot } from './boot-gate.js';   // 1.2.2 덮개 동안은 부르지 않아요 — 꺼 둔 시트(채팅 모양)가 빠져 메시지가 짧게 재이면 안 불러도 될 옛 메시지를 불러와요
 let on = false, bound = false, io = null, watched = null, resting = false, pending = 0, holdUntil = 0;
 const offs = [];
 const button = () => document.getElementById('show_more_messages');
@@ -48,6 +49,7 @@ export function holdAuto(ms) {
 function onSeen(entries) {
     if (!on || resting) return;
     if (!entries.some(e => e.target === watched && e.isIntersecting)) return;
+    if (booting()) { afterBoot(watch); return; }   // 1.2.2 걷힌 뒤 다시 걸어(관찰자가 그때 상태를 한 번 더 알려요) 그때 판단해요
     if (Date.now() < holdUntil) return;   // 손으로 눌러 보여 준 자리 — holdAuto 가 쉰 뒤 다시 본다
     const b = button(); if (!b || b !== watched) return;
     resting = true;

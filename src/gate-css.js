@@ -9,6 +9,7 @@
 // 자리: 테마 시트 뒤 줄(첫 장 → 가벼운 사본 · 전체 장 → 미리보기(-1) → 켜짐 시트들(표 차례 0..) → 설정 창 시트(99)) 안. 서랍 전용 칸 · 호환 시트는 그 줄 뒤예요(lite.js themeRunEnd).
 //   원래 뒤에 있던 규칙과 덮어쓰기를 겨루는 규칙은 빌드가 떼지 않아서, 이 자리로 와도 화면이 같아요(tools/tests/css-gates-order.mjs).
 import { GATE_SHEETS, PANEL_SHEET } from './css-gates.gen.js';
+import { holdSheet, setSheetMedia, sheetMedia } from './boot-gate.js';   // 1.2.2 덮개 동안 붙는 켜짐 시트는 꺼 둔 채로 — 걷힐 때 한 번에 켜요
 
 const OWN_SHEET = new URL('../style.css', import.meta.url).href;
 const PANEL_ORDER = 99;
@@ -66,6 +67,7 @@ function attach(id, file, order) {
         }
         at.after(own);
     } else document.head.append(own);
+    if (order !== PANEL_ORDER) holdSheet(own);   // 1.2.2 켜짐 시트만 — 설정 창 시트는 창을 열 때 붙고 덮개 동안엔 열 창이 없어요
     links.set(id, own);
     return own;
 }
@@ -81,7 +83,8 @@ export function syncGateCss(list, late = false, coolAhead = null) {
     for (const [i, s] of GATE_SHEETS.entries()) {
         const on = [...want].some(c => needs(s, c));
         const link = on ? attach(s.id, s.file, i) : links.get(s.id);
-        if (link && link.media !== (on ? 'all' : 'not all')) link.media = on ? 'all' : 'not all';
+        // 1.2.2 덮개 동안 꺼 둔 시트(boot-gate.js holdSheet)는 「켤 때 쓸 값」만 맞춰요 — 지금 바로 켜면 모으기가 풀려요
+        if (link && sheetMedia(link) !== (on ? 'all' : 'not all')) setSheetMedia(link, on ? 'all' : 'not all');
     }
     held = new Set([...want].filter(c => !document.body.classList.contains(c) && GATE_SHEETS.some(s => needs(s, c)) && blocked(c)));
     if (late) addClasses([...want].filter(c => GATE_SHEETS.some(s => needs(s, c)) && !blocked(c)));
@@ -102,5 +105,5 @@ export function panelCssReady() {
 
 /** 진단용: 붙은 시트와 미룬 클래스 */
 export function gateState() {
-    return { sheets: [...links].map(([id, l]) => ({ id, ready: ready(l), on: l.media !== 'not all' })), held: [...held] };
+    return { sheets: [...links].map(([id, l]) => ({ id, ready: ready(l), on: sheetMedia(l) !== 'not all', held: l.getAttribute('media') === 'not all' && sheetMedia(l) !== 'not all' })), held: [...held] };
 }

@@ -1,3 +1,4 @@
+import { booting, afterBoot } from './boot-gate.js';   // 1.2.2 덮개 동안 채팅이 열리면(자동 불러오기) 자리 맞추기는 걷힌 뒤에 — 꺼 둔 시트가 빠진 높이로 맞추고 2.2초 창이 덮개 안에서 끝나면 틀린 자리에 멈춰요
 import { captureReadingAnchor, readingAnchorTarget, readingChatKey, normalizeReadingEntries } from './reading-resume-anchor.js';
 const STORAGE_KEY='bl-reading-positions-v1';
 let running=null;
@@ -47,7 +48,9 @@ export function installReadingResume({getContext,getAccount,isEnabled=()=>true,d
         if(Date.now()>=job.until){stop();return;}
         job.timer=setTimeout(()=>attempt(job),200);
     }
+    let enterAfterBoot=null;
     function enter(){
+        if(booting()){afterBoot(enterAfterBoot??=()=>{if(!disposed)enter();});return;}
         flush();stop();userScroll=false;key=currentKey();lastFirst=getContext().chat?.[0];
         try{entries=normalizeReadingEntries(JSON.parse(storage.getItem(STORAGE_KEY)||'{}'));}catch{/* keep in-memory state */}
         if(!key||!isEnabled()||busy())return;

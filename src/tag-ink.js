@@ -12,6 +12,7 @@
 // 그 자리에서 문서 스타일 계산을 강제했다(폰 리그 추적: 부팅 18번). 두 끝 색이 나오는 곳은 정해져 있다 — 테마 변수 시트(#salty-vars 의 선언) ·
 // <html> · <body> 인라인 값 · 사용자 정의 CSS(#custom-style). 그 재료와 태그 목록(id · 바탕색 · 글자색)이 지난번과 같으면 결과도 같으므로 읽지 않는다.
 import { parseColor } from './palettes.js';
+import { holdSheet } from './boot-gate.js';   // 1.2.2 덮개 동안 붙으면 꺼 둔 채로 — 걷힐 때 한 번에 켜요
 
 const STYLE_ID = 'bl-tag-ink';
 let enabled = false, hooked = false, frame = 0, lastCss = null, lastInputs = null;
@@ -76,7 +77,7 @@ function build() {
     lastCss = css;
     const style = el || Object.assign(document.createElement('style'), { id: STYLE_ID });
     style.textContent = css;
-    if (!el) document.head.appendChild(style);
+    if (!el) { document.head.appendChild(style); holdSheet(style); }
 }
 
 const soon = () => { if (!frame) frame = requestAnimationFrame(build); };

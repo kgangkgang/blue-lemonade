@@ -1,5 +1,6 @@
 import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브 — body · html 자기 감시는 문서마다 감시자 하나
-import { hiddenQueue, mayHide } from './hidden-details.js';   // 1.0.4 닫힌 details 안 카드는 쉴 때 · 열릴 때
+import { hiddenQueue, mayHide } from './hidden-details.js';
+import { booting, afterBoot } from './boot-gate.js';   // 1.2.2 덮개 동안은 재지 않아요 — 꺼 둔 시트(채팅 모양 · 과일 글자 꾸미기)의 색이 빠진 채 재면 인라인 색이 틀린 채 남아요   // 1.0.4 닫힌 details 안 카드는 쉴 때 · 열릴 때
 // 메시지 안 HTML 카드의 글자색 — 프리셋이 AI 에게 "매번 HTML/CSS 를 직접 만들라" 고 시키면(데우스의
 // 시각적 연출 등) AI 는 카드 배경만 칠하고 글자색은 안 정하는 일이 잦다. 그러면 테마 글자색을 물려받아,
 // 밝은 팔레트에서 어두운 카드 위에 어두운 글자가 얹힌다 — 실측 대비 1.23(사실상 안 보임).
@@ -164,6 +165,7 @@ export const _cardInk = { inkByLevels, fixRoots, schedule };
 let queued = false;
 let whole = false, more = false, started = false;
 const pending = new Set();
+const scheduleAfterBoot = () => schedule(null);
 function schedule(root, fresh = false) {
     if (root) pending.add(root); else if (fresh) more = true; else whole = true;
     if (queued) return;
@@ -172,6 +174,7 @@ function schedule(root, fresh = false) {
     // 백그라운드에서 답이 와도 돌아 있어야 탭을 다시 열었을 때 이미 읽히는 상태다.
     setTimeout(() => {
         queued = false;
+        if (booting()) { afterBoot(scheduleAfterBoot); return; }   // 1.2.2 모아 둔 것(pending · whole)은 그대로 두고 걷힐 때 한 번
         const all = whole || (!pending.size && !more), fresh = more && !all;
         const roots = all ? [document.getElementById('chat'),...pending] : [...pending];
         whole = more = false;

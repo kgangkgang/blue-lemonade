@@ -782,6 +782,7 @@ jobs:
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/manifest-reuse.mjs .
           node tools/tests/boot-gate.mjs .
+          node tools/tests/boot-sheet-hold.mjs .
           node tools/tests/usage-ledger-core-edges.mjs .
           node tools/tests/usage-ledger-store.mjs .
           node tools/tests/pricing-quote-edges.mjs .

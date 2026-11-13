@@ -1,3 +1,4 @@
+import { holdSheet } from './boot-gate.js';   // 1.2.2 덮개 동안 붙으면 꺼 둔 채로 — 걷힐 때 한 번에 켜요
 // 6.6.9 대사만 보기 — ··· 메뉴에 단추 하나. 화면(dialogue-view.js)은 단추를 처음 누를 때 불러온다.
 // 감시자 · 타이머 없음: 실리태번 메시지 틀(#message_template)에 단추를 넣어 두면 새로 그리는 메시지가 틀째 복제해 간다.
 //   이미 그려진 메시지에는 켤 때 한 번만 넣는다. 끄면 틀과 채팅에서 모두 뗀다.
@@ -58,6 +59,7 @@ export function syncDialogueOnly(on) {
         style.dataset.blDialogueIcon = '1';
         style.textContent = ICON;
         document.head.append(style);
+        holdSheet(style);
     }
     if (!bound) {
         bound = true;

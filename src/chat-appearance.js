@@ -9,6 +9,7 @@ import { syncProfile } from './profile.js';
 import { syncProfileClip } from './profile-clip.js';
 import { syncFrameShadows } from './frame-shadow.js';
 import { invalidateSettings } from './settings.js';
+import { holdSheet } from './boot-gate.js';   // 1.2.2 덮개 동안 붙으면 꺼 둔 채로 — 걷힐 때 한 번에 켜요
 const { decorVars } = decor;
 export function profileVars(p, pal, user = false) {
     const vars = Object.assign(frameVars(p, 'profile', pal.accent), decorVars(p.decor, 'profile', p.radius), {
@@ -42,6 +43,7 @@ export function syncAppearanceSheet(on) {
         sheet.rel = 'stylesheet'; sheet.id = 'bl-chat-appearance';
         sheet.href = new URL('./chat-appearance.css', import.meta.url).href;
         document.head.appendChild(sheet);
+        holdSheet(sheet);
     }
     if (sheet) sheet.disabled = !on;
 }
