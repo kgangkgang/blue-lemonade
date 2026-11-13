@@ -5,20 +5,22 @@
 //      · 묶음 머리가 둘 미만이면 아무것도 하지 않아요(원래 긴 꼴 그대로).
 //   ③ 맞춘 판 안내 한 줄: 깔린 판이 확인한 판과 다르면 그 사실을 알려요(맞춤은 그대로 걸어요).
 //   ④ 분류 탭 줄을 공용 가로 탭 줄 등록부(src/tab-scroll.js)에 한 번 넣어요(← → · 휠 · 넘친 쪽 흐림). 등록부는 확장 서랍을 열 때 생겨서, 없으면 다음 누름에 다시 보고 넣은 뒤로는 안 봐요.
-//   ⑤ 머리줄 그림 글자가 SETS 의 icon 이면 표식(data-bl-ext-icon)만 — 시트가 그 글자를 화면에서만 감추고 테마 선 아이콘으로 그려요.
+//   ⑤ 정리한 보기(src/ext-organize.js): 탭을 만든 뒤 한 번 — 탭 한 줄 설명 · 접는 갈래(지금 값) · 숫자 2열 · 긴 설명 「자세히」 · 비용 표시 · 길잡이 · 서랍 머리의 「정리한 보기 ↔ 원작 그대로」.
+//      모르는 구조면 조용히 원래 모습 그대로예요(표가 맞는 줄만 건드려요).
 //   ⑥ 원작 표식(mark)이 있는 칸만: 같은 id · 클래스 이름을 쓰는 다른 확장이 있어도 원작의 표식이 든 설정 칸에만 시트 · 표식(data-bl-ext) · 안내 줄을 붙여요. 설정이 이미 탭으로 나뉜 확장은 분류 탭을 만들지 않아요.
 //   감시자 · 타이머 없음: 불릴 때마다 한 번(index.js) + 문서 누름 받기 하나(잡는 단계 — 실리태번이 서랍을 펼치며 높이를 재기 전에 탭을 만들고, 확장 서랍 단추를 누르면 칸을 다시 봐요).
 //   받는 조건(index.js): 확인한 확장의 설정 칸이 화면에 있을 때만. 있었던 칸 id 를 이 기기에 표시(localStorage 'bl-ext-compat')해 두고 다음 시작에는 바로 받아 첫 화면부터 시트가 붙어요 —
 //     그 확장을 지우면 그다음 시작에 표시가 지워지고, 그 뒤로는 모듈도 시트도 받지 않아요. 일찍 붙이는 시트는 원작 표식을 안 보는 갈래(mark 없음)이면서 지난번에 그 칸이 있었던 것만이에요.
 //   켬 조건 · 확인한 판은 아래 SETS 한 곳(index.js 의 선택자와 같은 값) · 시험: tools/tests/ext-settings-tabs.mjs · tools/tests/status-ext-css.mjs · tools/tests/ext-memory-css.mjs
 
+import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey } from './ext-organize.js';
+
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
- *  title: 머리줄 이름 칸 · icon: [그 이름 칸 맨 앞 그림 글자, 시트가 그릴 선 아이콘 이름]
  *  mark: 원작만 가진 요소(이것이 든 설정 칸에만 맞춰요 — 있으면 분류 탭 대신 표식 · 안내 줄만) · sheet: 판 번호를 화면에 안 적는 확장의 제 시트 첫 규칙(그 시트 옆 manifest.json 에서 판을 읽어요) */
 export const SETS = [
-    // 미트볼 상태창 — 2.6.1 화면에서 확인(2026-11-13) · 2.7.0 은 원작 사본과 코드로 맞대 확인(2026-11-13 · 화면은 리그 대기). 판이 달라도 맞춤 CSS 는 그대로 걸고, 안내 한 줄만 바뀌어요.
-    //   2.7.0 머리줄의 고양이 얼굴(U+1F63C)만 테마 선 아이콘으로 — 2.6.1 의 그림 글자는 그대로 둬요.
-    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', title: '.inline-drawer-header b', icon: ['\u{1F63C}', 'cat'], name: '미트볼 상태창', verified: ['2.6.1', '2.7.0'] },
+    // 미트볼 상태창 — 2.6.1 · 2.7.0 · 2.7.1 화면에서 확인(2026-11-13 · 리그). 판이 달라도 맞춤 CSS 는 그대로 걸고, 안내 한 줄만 바뀌어요.
+    //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
+    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1'] },
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   「색 두기」 안: 그 확장의 제 색 · 글꼴은 그대로 — 설정 내용 칸(native)에 「원래 색 유지」 표식을 붙여 테마 색 규칙이 비켜 가게 하고, 낮밤 표식(mode)을 테마 밝기에 다시 맞춰요.
     { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60'] },
@@ -102,17 +104,6 @@ export function buildTabs(root, set) {
     return true;
 }
 
-/** 머리줄 이름 칸 맨 앞 그림 글자가 SETS 의 icon 과 같으면 그 칸에 표식 — 다르면(다른 판) 표식을 떼어 원작 글자가 그대로 보여요. 단 표식 이름을 돌려줘요 */
-export function markIcon(root, set) {
-    if (!set.icon || !set.title) return '';
-    const first = root.querySelector(set.title)?.childNodes?.[0];
-    const text = first?.nodeType === 3 ? String(first.nodeValue || '').trimStart() : '';
-    const want = text.startsWith(set.icon[0]) ? set.icon[1] : '';
-    if (want) { if (root.dataset.blExtIcon !== want) root.dataset.blExtIcon = want; }
-    else if ('blExtIcon' in root.dataset) delete root.dataset.blExtIcon;
-    return want;
-}
-
 const installed = new Map();   // 판을 화면에 안 적는 확장: manifest.json 에서 읽은 판(한 번)
 /** 안내 한 줄을 내용 칸 끝에(있으면 글만 다시) — 원작이 판 번호를 늦게 채우는 칸이 있어 부를 때마다 글을 맞춰요 */
 export function addNote(root, set) {
@@ -192,7 +183,12 @@ export function buildAll(doc) {
     for (const set of SETS) {
         const root = doc.querySelector(set.root);
         if (!root) continue;
-        if (!set.mark) { attachSheet(doc, set); markIcon(root, set); buildTabs(root, set); continue; }
+        if (!set.mark) {
+            attachSheet(doc, set); buildTabs(root, set);
+            // 정리한 보기: 탭이 있을 때만 · 한 번만. 구조를 모르면(다른 판 · 시험 DOM) 아무것도 안 하고 원래 모습 그대로
+            try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }
+            continue;
+        }
         if (!root.querySelector(set.mark)) continue;   // 이름만 같은 다른 확장의 칸
         attachSheet(doc, set);
         root.dataset.blExt = '';
@@ -209,7 +205,7 @@ export function seenBefore(set, mark) {
 }
 
 let started = false;
-/** 여러 번 불러도 돼요 — 누름 감시자 · 시트는 한 번, 칸 찾기(탭 · 표식)와 등록부 넣기는 부를 때마다 */
+/** 여러 번 불러도 돼요 — 누름 감시자 · 시트는 한 번, 칸 찾기(탭)와 등록부 넣기는 부를 때마다 */
 export function startExtCompat(doc = globalThis.document) {
     if (!doc?.addEventListener) return;
     if (!started) {
@@ -227,8 +223,23 @@ export function startExtCompat(doc = globalThis.document) {
                 ensureStrip(doc);
                 return;
             }
+            // 정리한 보기의 단추들: 갈래 펼침 · 자세히 · 보기 스위치 · 길잡이
+            const own = target.closest('.bl-ext-fold') || target.closest('.bl-ext-more') || target.closest('.bl-ext-view') || target.closest('.bl-ext-jump') || target.closest('.bl-ext-start-x');
+            if (own) {
+                const root = SETS.map(set => own.closest(set.root)).find(Boolean);
+                const has = name => own.classList.contains(name);
+                if (!root) return;
+                if (has('bl-ext-fold')) toggleFold(root, own);
+                else if (has('bl-ext-more')) toggleMore(root, own);
+                else if (has('bl-ext-start-x')) dismissStart(root);
+                else if (has('bl-ext-jump')) { const group = groupOfKey(root, own.dataset.blJump); if (group >= 0) showGroup(root, group); }
+                else { setView(root, root.dataset.blView !== 'raw'); event.stopPropagation?.(); event.preventDefault?.(); }   // 머리줄 안의 단추 — 서랍이 같이 접히지 않게 이 누름만 멈춰요
+                return;
+            }
             if (target.closest('.inline-drawer-header') || target.closest('.drawer-toggle')?.parentElement?.id === 'extensions-settings-button') { buildAll(doc); ensureStrip(doc); }
         }, true);
+        // 값이 바뀌면 접힌 줄의 「지금 값」을 다시 적어요(그 확장 칸 안의 바뀜만)
+        doc.addEventListener('change', event => { const root = SETS.map(set => event.target?.closest?.(set.root)).find(Boolean); if (root?.dataset?.blOrg) refreshSummaries(root); }, true);
     }
     buildAll(doc);
     ensureStrip(doc);

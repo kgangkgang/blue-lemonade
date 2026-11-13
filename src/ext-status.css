@@ -1,10 +1,24 @@
 /* 상태창 확장 맞춤 시트 — 미트볼 상태창 2.6.1 화면에서 확인 · 2.7.0 은 원작 사본과 코드로 맞댐(2026-11-13).
    그 확장이 깔려 있을 때만 src/ext-compat.js 가 이 시트를 붙여요(없는 사람은 한 바이트도 받지 않아요 · style.css 에 싣지 않아요).
-   · 그 확장이 만든 클래스(.ss-*) · 제 설정 칸(#ss-settings) · 분류 탭 표식(.bl-ext-* · data-bl-tab* · data-bl-ext-icon)에만, body.salty 아래에서만 걸려요.
+   · 그 확장이 만든 클래스(.ss-*) · 제 설정 칸(#ss-settings) · 분류 탭 표식(.bl-ext-* · data-bl-tab*)에만, body.salty 아래에서만 걸려요.
    · 그 확장의 코드 · CSS · 그림은 가져오지 않았어요. 색은 그 확장이 여는 색 변수(--ss-*)를 팔레트에 잇고, 크기 · 모서리는 공용 부품 표(css/88-ui-parts.css)의 토큰만 써요.
    · 그 확장의 「꾸미기」 색 판 · 직접 고른 색은 테마가 켜져 있는 동안 팔레트가 덮어요(모서리 · 글자 배율은 그 확장 값 그대로).
    · 「다른 확장 원래 색 유지」 표식(data-bl-native-ext-colors)이면 설정 서랍 내용 칸의 칠하기만 비켜 가요(:where(:not(표식, 표식 *)) — 빌드의 확장 색 지킴과 같은 꼴). 자리 · 크기 · 탭은 그대로.
    · 시험: tools/tests/status-ext-css.mjs */
+
+/* ---------- 그림 글자(이모지) → 테마 선 아이콘 ----------
+   그 확장 화면에 나오는 그림 글자(2.6.1 · 2.7.0 · 2.7.1 원작에서 모은 125자)만 이 글꼴로 그려요 — 테마 선 아이콘 꼴(24 칸 · 선 1.8 · 둥근 끝 · 글자색)로 직접 그렸어요(표: src/ext-status-icons.json).
+   글자는 DOM · 저장 · AI 에 보내는 글 · 복사 글 그대로이고 화면 그림만 바뀌어요(읽어 주는 이름도 그대로). 목록 밖 그림 글자는 원래대로(unicode-range 밖) · 글꼴은 그 글자가 화면에 나올 때만 받아요.
+   그 확장의 뿌리(창 · 띠 · 옆 서랍 · 변동 칩 · 알림 · 설정 칸)에만 걸고, 입력칸 · 메신저 말풍선 글(사용자 · AI 가 쓴 글)은 빼요 */
+@font-face {
+  font-family: 'bl-mb-icons';
+  src: url('./ext-status-icons.woff2') format('woff2');
+  font-display: block;
+  unicode-range: U+200D, U+2194, U+21A9, U+23F8, U+2600, U+2601, U+2605, U+2620, U+2661, U+2665, U+266A, U+267B, U+2696, U+2699, U+26A0, U+26A1, U+26C5, U+26C8, U+26F6, U+2702, U+2705, U+2709, U+270D, U+270F, U+2714, U+2715, U+2728, U+2744, U+274C, U+2753, U+2764, U+2B50, U+FE0F, U+1F0CF, U+1F193, U+1F300, U+1F310, U+1F319, U+1F327, U+1F328, U+1F32B, U+1F331, U+1F338, U+1F342, U+1F35D, U+1F377, U+1F381, U+1F382, U+1F389, U+1F392, U+1F39B, U+1F3AC, U+1F3AD, U+1F3B2, U+1F3C6, U+1F3CE, U+1F3E0, U+1F3EA, U+1F3F7, U+1F40E, U+1F415, U+1F41E, U+1F426, U+1F431, U+1F43E, U+1F441, U+1F449, U+1F44D, U+1F464, U+1F465, U+1F48C, U+1F48D, U+1F494, U+1F497, U+1F49E, U+1F4A1, U+1F4A2, U+1F4A4, U+1F4A8, U+1F4AC, U+1F4AD, U+1F4B0, U+1F4B1, U+1F4B8, U+1F4C2, U+1F4C5, U+1F4CA, U+1F4CB, U+1F4CC, U+1F4CD, U+1F4DA, U+1F4DC, U+1F4DD, U+1F4E3, U+1F4EC, U+1F4F0, U+1F4F1, U+1F4F7, U+1F500, U+1F501, U+1F504, U+1F507, U+1F50D, U+1F50E, U+1F512, U+1F514, U+1F525, U+1F527, U+1F52E, U+1F54A, U+1F550, U+1F5BC, U+1F5D1, U+1F5E8, U+1F5FA, U+1F602, U+1F622, U+1F62D, U+1F62E, U+1F63C, U+1F63F, U+1F648, U+1F6AB, U+1F6B2, U+1F6DF, U+1F6E1, U+1F916, U+1F91D, U+1F976, U+1F989, U+1F9E9, U+1F9ED, U+1F9F0, U+1F9F1, U+1F9F8, U+1FAE7;
+}
+body.salty :is(#ss-settings, #ss-settings select, .ss-toasts, .ss-mbubble, dialog.popup.ss-dlg .popup-controls) { font-family: 'bl-mb-icons', var(--salty-font-ui); }
+body.salty .ss-scope :is(input, textarea):where(:not(.ss-letter *, .ss-paper *, .ss-pdef *, .ss-json)), body.salty .ss-scope :where(.ss-bub > span) { font-family: var(--salty-font-ui); }
+body.salty .ss-scope :is(input, textarea)::placeholder { font-family: 'bl-mb-icons', var(--salty-font-ui); }
 
 /* ---------- 색: 그 확장의 색 변수 → 팔레트 (낮 · 밤 · 에이드 모두 따라가요) ---------- */
 body.salty .ss-scope {
@@ -31,7 +45,7 @@ body.salty.salty-dark .ss-scope { color-scheme: dark; }
 /* ---------- 글자: 본문 = 줄 이름 단, 작은 글자는 사다리의 가까운 단 ---------- */
 body.salty :is(.ss-root, .ss-hud, .ss-side, .ss-float, .ss-msgcard, dialog.ss-dlg .popup-content) {
   font-size: calc(var(--bl-ts-ui, 14px) * var(--ss-fs, 1));
-  font-family: inherit;
+  font-family: 'bl-mb-icons', var(--salty-font-ui);
 }
 body.salty .ss-scope :is(small, .ss-hint, .ss-meta) { font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
 /* 2.7.0: 작은 글 80% 흐림 → 되돌림(2.6.1 과 같음) · 원작이 따로 흐리게 둔 칸은 그대로 */
@@ -47,7 +61,19 @@ body.salty .ss-scope .ss-ib:hover { background: var(--bl-hover); }
 body.salty .ss-scope .ss-ib.on { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
 
 /* 빨간 배지 위 글자: 삭제색 위 글자색(밤에는 흰 글자가 안 읽혀요) */
-body.salty .ss-scope .ss-badge { color: var(--salty-danger-ink); }
+/* 숫자 동그라미 · 점: 한 크기 · 한 색 · 한 자리 규칙(11-13 사용자 「동그라미 크기가 서로 달라요 · 색이 낯설어요」) —
+   지름 16 · 글자 10.5 · 굵기 650 · 단추의 오른쪽 위 모서리에서 4 밖(가장자리 손잡이는 화면 끝이라 왼쪽 위 · 둥근 뜬 단추는 2). 숫자 없는 점은 지름 8.
+   색은 테마의 레몬 노랑(--salty-lemon — 낮 · 밤 둘 다 노랑인 상표 레몬 · 밤 판의 강조색 --bl-pop 과 같은 색) · 사용자 「빨강 말고 블루레몬에서 정한 색 · 알림은 노랑」.
+   낮 판은 --bl-pop 이 파랑이라(흰 글자 대비 3.4) 두 판 모두 노랑인 쪽을 썼어요. 그 위 글자는 어두운 쪽(낮 본문색 · 밤 바탕색 — 대비 7.8 · 13.5), 밝은 바탕에서 묻히지 않게 옅은 테두리.
+   숫자 동그라미와 점에만 걸어요 — 게이지 · 수치의 빨강(--ss-neg)은 그대로예요. 그 확장이 아이콘 요소(i)로 그려서 아이콘 크기 규칙에 끌려 크기가 달라졌어요 */
+body.salty .ss-scope .ss-badge.ss-badge { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 16px; height: 16px; margin: 0; padding: 0 4px; border: 1px solid var(--salty-text-20, var(--salty-line)); border-radius: 999px; background: var(--salty-lemon, var(--bl-pop)); color: var(--salty-text); font-family: var(--salty-font-ui); font-size: 10.5px; font-style: normal; font-weight: var(--bl-ui-strong, 650); line-height: 14px; letter-spacing: 0; }
+body.salty .ss-scope :is(.ss-ib, .ss-tabs, .ss-groups) .ss-badge.ss-badge { position: absolute; top: -4px; right: -4px; left: auto; }
+body.salty .ss-scope .ss-side-handle .ss-badge.ss-badge { position: absolute; top: -4px; left: -4px; right: auto; }
+body.salty .ss-float .ss-badge.ss-badge { position: absolute; top: -2px; right: -2px; left: auto; }
+body.salty .ss-scope .ss-badge.ss-badge.ss-hide { display: none; }
+body.salty.salty-dark .ss-scope .ss-badge.ss-badge { border-color: transparent; color: var(--salty-bg); }
+body.salty .ss-scope .ss-dot.ss-dot { box-sizing: border-box; width: 8px; height: 8px; border: 1px solid var(--salty-text-20, var(--salty-line)); border-radius: 50%; background: var(--salty-lemon, var(--bl-pop)); }
+body.salty.salty-dark .ss-scope .ss-dot.ss-dot { border-color: transparent; }
 /* 넓은 강조색 면(소지금 띠 · 게시판 머리)은 옅은 강조 면 + 본문색으로 — 그 위의 작은 글 · 단추가 읽혀요 */
 body.salty .ss-scope :is(.ss-cashbox, .ss-tab-mast.board) { background: var(--bl-ui-pick-face); color: var(--salty-text); }
 body.salty .ss-scope :is(.ss-cashbox, .ss-tab-mast.board) :is(small, span) { opacity: 1; color: var(--ss-dim); }
@@ -94,6 +120,20 @@ body.salty .ss-side-handle {
 }
 /* 누르는 넓이 44 는 손가락 화면 묶음에(맨 아래) */
 
+/* ---------- 채팅방의 계기판 아이콘 → 선 고양이(2026-11-13 사용자 「오른쪽 작은 아이콘이랑 왼쪽 상단 아이콘도 고양이로 … 귀랑 눈만 보이게 90도 돌려놓는다던가」) ----------
+   그 확장의 계기판 아이콘(i.fa-gauge-high) 네 곳을 화면에서만 바꿔요 — 요소 · 읽어 주는 이름(title)은 그대로예요.
+   · 띠 카드 머리 · 뜬 단추 · 설정의 「상태창 열기」: 서랍 머리줄과 같은 선 고양이 글자(같은 글꼴 · 굵기 400 · 옆 글자와 세로 가운데 — 실리태번이 아이콘 앞 그림에 거는 middle 은 풀어요)
+   · 가장자리 손잡이: 화면 끝에서 빼꼼 내다보는 고양이 — 같은 그림을 왼쪽으로 눕혀 귀와 눈만 보이고 입 아래는 화면 밖이에요(칸 폭 16 안 · 왼쪽 여백 3).
+     세 안(통째로 작게 · 세운 채 반쪽 · 눕혀 빼꼼)을 진짜 브라우저로 그려 보고 골랐어요: 통째는 10px 로 작아지고, 반쪽은 귀 하나 · 눈 하나라 고양이로 안 읽혀요.
+   「원작 그대로 보기」(body[data-bl-ext-raw] — 설정 칸의 보기 스위치가 달아요)면 원래 아이콘이에요. 그 확장에는 옆 서랍을 왼쪽에 두는 설정이 없어 오른쪽 한 꼴이에요. */
+body.salty:not([data-bl-ext-raw]) :is(#ss-hud .ss-hud-t b, #ss-float, #ss-settings [data-s-act="open"]) > i.fa-gauge-high { display: inline; font: inherit; font-family: 'bl-mb-icons', var(--salty-font-ui); font-weight: 400; }
+body.salty:not([data-bl-ext-raw]) :is(#ss-hud .ss-hud-t b, #ss-float, #ss-settings [data-s-act="open"]) > i.fa-gauge-high::before { content: '\1F431'; vertical-align: baseline; }
+body.salty:not([data-bl-ext-raw]) #ss-hud .ss-hud-t b > i.fa-gauge-high { margin-inline: -0.2em 0; }
+body.salty:not([data-bl-ext-raw]) button#ss-float.ss-float > i.fa-gauge-high { font-size: 20px; }
+body.salty .ss-side-handle { --bl-ext-cat-peek: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='3 2.4 13.55 19.2' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='rotate(-90 12 12)'%3E%3Cpath d='M4.8 10.2 4.5 4.2l4.7 2.7q2.8-.8 5.6 0l4.7-2.7-.3 6c1.4 2.2 1.2 4.8-.2 6.6Q16.6 19.8 12 19.8T5 16.8c-1.4-1.8-1.6-4.4-.2-6.6z'/%3E%3Cpath stroke-width='2.2' d='M9.2 13h.01M14.8 13h.01'/%3E%3C/g%3E%3C/svg%3E"); }
+body.salty:not([data-bl-ext-raw]) .ss-side-handle > i.fa-gauge-high { position: absolute; right: 0; top: 50%; width: 12px; height: 17px; transform: translateY(-50%); }
+body.salty:not([data-bl-ext-raw]) .ss-side-handle > i.fa-gauge-high::before { content: ''; display: block; width: 100%; height: 100%; background: currentColor; -webkit-mask: var(--bl-ext-cat-peek) center / 100% 100% no-repeat; mask: var(--bl-ext-cat-peek) center / 100% 100% no-repeat; }
+
 /* ---------- 옆 서랍 · 작은 판 · 알림: 흐림 끄기(번짐 방지) · 테마 그림자 ---------- */
 body.salty :is(.ss-side-mini, .ss-toast) {
   -webkit-backdrop-filter: none;
@@ -104,7 +144,7 @@ body.salty :is(.ss-side-mini, .ss-toast) {
 body.salty .ss-side-full { box-shadow: var(--bl-e4); }
 
 /* ---------- 메시지 변동 칩: 딱지 단 · 칸 면 ---------- */
-body.salty .ss-msgcard { font-family: var(--salty-font-ui, inherit); }
+body.salty .ss-msgcard { font-family: 'bl-mb-icons', var(--salty-font-ui); }
 /* 긴 이름이 든 칩이 화면 밖으로 나가 잘렸어요 — 화면 폭 안에서 줄을 바꿔요(모서리는 카드 값 — 한 줄일 때는 알약으로 보여요) */
 body.salty .ss-mchip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: start; border-radius: var(--bl-r-md, 12px); }
 body.salty .ss-mchip { background: var(--bl-hover); border-color: var(--salty-line); font-size: var(--bl-ts-micro, 11.5px); font-weight: 500; }
@@ -204,13 +244,41 @@ body.salty .ss-scope .ss-wz-head > i { border-radius: var(--bl-r-md, 12px); back
 
 /* ---------- 창: 테마 팝업 면 · 모서리 · 그림자 ---------- */
 body.salty dialog.popup.ss-dlg { border: 0 !important; box-shadow: var(--bl-e5) !important; }
+/* 큰 창은 아래 닫기 줄을 감춰서, 열릴 때 초점이 밀리는 내용 칸에 브라우저 초점 테두리가 한 겹 그려졌어요(리그 사진 · 칸 가장자리 1px) — 내용 칸은 누르는 것이 아니라 테두리를 그리지 않아요(안의 단추 초점 모양은 그대로) */
+body.salty dialog.popup.ss-dlg .popup-content:focus-visible { outline: none; }
 body.salty dialog.popup.ss-dlg .popup-controls .menu_button { border-radius: var(--bl-ui-radius, 8px); background: var(--salty-control); border-color: var(--salty-line); }
 body.salty dialog.popup.ss-dlg .popup-controls .menu_button.popup-button-ok { background: var(--salty-accent); border-color: transparent; color: var(--salty-on-accent); }
+/* ---------- 조절 칸(슬라이더 · 숫자)은 세로 2열(11-13 사용자 「파라미터는 다 세로 2열」) ----------
+   그 확장의 창에서 이름표 아래에 슬라이더 · 숫자 칸을 둔 줄(.ss-f)이 한 줄에 하나씩 놓였어요(꾸미기 창 「글자 크기 · 모서리 둥글기 · 사이드 패널 너비」) —
+   반 폭으로 둘씩 나란히, 홀수면 마지막 칸은 왼쪽 열만 차지해요. 이름표는 칸 위 그대로이고 길면 줄이 바뀌어요. 폰 384 에서도 2열이에요. */
+body.salty .ss-scope label.ss-f:has(> input:is([type="range"], [type="number"])) { display: inline-flex; flex: 0 1 calc(50% - 16px); width: calc(50% - 16px); margin-inline-end: var(--bl-s3, 12px); vertical-align: top; }
+body.salty .ss-scope label.ss-f > input:is([type="range"], [type="number"]) { width: 100%; min-width: 0; }
+/* ---------- 꾸미기 창: 색 직접 고르기 ----------
+   테마 공용 색 칸(동그라미 34 · 손가락 화면 44 + 투명 테두리 5 · 위아래 −5)에 그 확장의 「테두리 1px !important」가 겹쳐, 손가락 화면에서 44 동그라미가 다 보이고 줄끼리 겹쳤어요 —
+   그 확장 색 칸만 34 동그라미 · 여백 0 으로 두고, 누르는 넓이는 이름표 줄 전체가 맡아요(칸을 감싼 label) */
+body.salty .ss-scope input.ss-color.ss-color {
+  flex: 0 0 auto;
+  width: var(--bl-ui-icon, 34px) !important;
+  height: var(--bl-ui-icon, 34px) !important;
+  min-width: 0;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-sizing: border-box;
+}
+body.salty .ss-scope .ss-colors { gap: var(--bl-s1, 4px) var(--bl-s3, 12px); align-items: center; }
+body.salty .ss-scope .ss-colorf { min-height: var(--bl-ui-ctl, 36px); gap: var(--bl-s2, 8px); font-size: var(--bl-ts-meta, 13px); line-height: 1.3; cursor: pointer; }
+body.salty .ss-scope .ss-colorf > span { overflow-wrap: anywhere; }
+/* 「직접 고른 색 모두 되돌리기」: 흐린 글자 단추 → 테마 보조 단추(칸 면 · 선) */
+body.salty .ss-scope.ss-tw [data-creset] { margin-top: var(--bl-s2, 8px); background: var(--salty-control); border-color: var(--salty-line); }
 
 /* 창 안의 판은 창 면 그대로(같은 면이 두 겹으로 보이지 않게) */
 body.salty dialog.ss-dlg .popup-content > :is(.ss-root, .ss-panel > .ss-root) { background: transparent; }
 /* 색 판 고르기: 테마가 켜져 있는 동안은 팔레트가 색을 정해요 — 그 자리에서 알려요 */
-body.salty .ss-scope .ss-swatches::after { content: '블루레몬에이드가 켜져 있는 동안은 테마의 낮 · 밤 색을 따라가요. 여기서 고른 색 판은 테마를 끄면 보여요.'; grid-column: 1 / -1; font-size: var(--bl-ts-meta, 13px); color: var(--salty-muted); line-height: 1.45; }
+body.salty .ss-scope .ss-swatches::after { content: '지금은 블루레몬에이드의 낮 · 밤 색을 따라가서 여기서 색을 고를 수 없어요. 색 판 · 색 직접 고르기는 블루레몬에이드를 끄면 이 자리에 다시 나와요.'; grid-column: 1 / -1; font-size: var(--bl-ts-meta, 13px); color: var(--salty-muted); line-height: 1.45; }
 
 /* ---------- 설정 서랍(확장 탭 안) ---------- */
 /* 머리줄: [앞 그림 글자] 8 [이름] 8 [판 알약] — 그림 글자와 이름이 한 글자 덩이라 첫 글자 여백으로 띄워요(빈칸 폭 + 여백 = 8). 알약은 75-version-pill 과 같은 값 */
@@ -237,24 +305,7 @@ html:not(#bl-pill-off) body.salty #rm_extensions_block #ss-settings .inline-draw
   top: -1px;
   opacity: 1 !important;
 }
-/* 머리줄 고양이(2.7.0 · 표식은 ext-compat.js markIcon): 원작 글자는 DOM 에 두고(읽어 주는 이름 그대로) 화면에서만 0 크기 → 테마 선 아이콘 꼴(24 · 선 1.8 · 둥근 끝)로 새로 그린 고양이 · 1.2em · 글자색.
-   판 알약과 같은 문(#bl-pill-off) — 머리줄이 블록일 때만 첫 글자 꾸밈이 돼요 */
-html:not(#bl-pill-off) body.salty #rm_extensions_block #ss-settings[data-bl-ext-icon="cat"] .inline-drawer-header > b { position: relative; padding-inline-start: 1.2em; }
-html:not(#bl-pill-off) body.salty #rm_extensions_block #ss-settings[data-bl-ext-icon="cat"] .inline-drawer-header > b::first-letter { font-size: 0; margin-inline-end: 4px; }
-html:not(#bl-pill-off) body.salty #rm_extensions_block #ss-settings[data-bl-ext-icon="cat"] .inline-drawer-header > b::after {
-  --bl-ext-cat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.8%2010.2%204.5%204.2l4.7%202.7q2.8-.8%205.6%200l4.7-2.7-.3%206c1.4%202.2%201.2%204.8-.2%206.6Q16.6%2019.8%2012%2019.8T5%2016.8c-1.4-1.8-1.6-4.4-.2-6.6z%22%2F%3E%3Cpath%20d%3D%22M9.2%2012.4v1.2M14.8%2012.4v1.2M10.4%2015.8q.8.8%201.6%200%20.8.8%201.6%200%22%2F%3E%3C%2Fsvg%3E");
-  content: '';
-  position: absolute;
-  inset-inline-start: 0;
-  top: 50%;
-  width: 1.2em;
-  height: 1.2em;
-  transform: translateY(-50%);
-  background-color: currentColor;
-  -webkit-mask: var(--bl-ext-cat) center / contain no-repeat;
-  mask: var(--bl-ext-cat) center / contain no-repeat;
-  pointer-events: none;
-}
+/* 머리줄 그림 글자(2.7.0 고양이 · 2.6.1 그릇)도 위 선 아이콘 글꼴이 그려요 — 다른 자리와 같은 세로 가운데 · 같은 크기. 따로 가리거나 덧그리지 않아요 */
 /* 작은 글(설명): 설명 단 · 보조색(원작 75% 흐림은 테마 글자색과 겹쳐 대비가 모자라요) · 안내 줄은 제 규칙대로 */
 body.salty #ss-settings .inline-drawer-content small:not(.bl-ext-compat) { font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
 body.salty #ss-settings .inline-drawer-content small:not(.bl-ext-compat):where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); opacity: 1; }
@@ -291,8 +342,8 @@ body.salty #ss-settings .ss-set-more > summary:where(:not([data-bl-native-ext-co
    ← → · 휠 · 넘친 쪽 흐림은 공용 가로 탭 줄 등록부가 줘요(ensureStrip) */
 body.salty .bl-ext-tabs { display: flex !important; flex-wrap: nowrap; gap: 6px; min-width: 0; max-width: 100%; margin: var(--bl-s1, 4px) 0 0; padding: var(--bl-s1, 4px) 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
 body.salty .bl-ext-tabs > .bl-ext-tab { flex: 1 0 auto; width: auto; min-width: max-content; }
-body.salty .inline-drawer-content > [data-bl-tab-off] { display: none !important; }
-body.salty #ss-settings[data-bl-tabs] .inline-drawer-content > .ss-set-h { margin-top: var(--bl-s3, 12px); padding-top: 0; border-top: 0; }
+body.salty #ss-settings:not([data-bl-view="raw"]) .inline-drawer-content > [data-bl-tab-off] { display: none !important; }   /* 「원작 그대로」 보기면 모든 묶음을 한 쪽에 */
+body.salty #ss-settings[data-bl-tabs]:not([data-bl-view="raw"]) .inline-drawer-content > .ss-set-h { margin-top: var(--bl-s3, 12px); padding-top: 0; border-top: 0; }
 body.salty .inline-drawer-content > small.bl-ext-compat { display: block !important; margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s3, 12px); border-top: 1px solid var(--SmartThemeBorderColor); font-size: var(--bl-ts-micro, 11.5px); line-height: 1.45; }
 body.salty .inline-drawer-content > small.bl-ext-compat:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top-color: var(--salty-line); color: var(--salty-muted); opacity: 1; }
 
@@ -321,20 +372,321 @@ body.salty .ss-scope :is(.ss-letter-meta, .ss-letter.me .ss-letter-meta, .ss-pap
 body.salty .ss-scope .ss-letter-meta b { color: var(--ss-warn); }
 body.salty .ss-scope :is(.ss-paper, .ss-letter) textarea { background-color: transparent !important; color: var(--salty-text) !important; box-shadow: none !important; }
 
+/* ====================== 전면 재설계(2026-11-13) ======================
+   사용자: 「안에 구석구석 다 손봐야지」 · 「UI UX 진짜 다 뜯어고쳐라」 — 그 확장 화면을 블루레몬 부품 표(css/88-ui-parts.css)의 값으로 맞춰요.
+   · 굵기는 400 · 650 둘 · 모서리 8(누르는 것) · 12(면) · 간격 4 · 8 · 12 · 16 · 24 · 32 · 고른 것 = 옅은 면 + 색 글자
+   · 꽉 찬 강조색 면 · 박힌 색 · 장식 그라데이션은 팔레트의 옅은 면 · 글자색으로(새 색 없음)
+   · 그 확장의 선택자보다 body.salty 만큼 높은 특이도로만 이겨요(시트 차례에 기대지 않아요) */
+
+/* ---------- 굵기: 400 / 650 ----------
+   그 확장의 550 ~ 600 은 테마 글꼴(400 · 700 두 벌)에서 모두 굵은 벌로 그려져 화면 전체가 굵게 보였어요 */
+body.salty .ss-scope :is(.ss-chip, .ss-ib.t, .ss-tool, .ss-more > summary, .ss-dl dt, .ss-today span, .ss-cal-w, .ss-cal-c span, .ss-memo-f > small, .ss-dice-res.idle span, .ss-tr > span, .ss-letter-meta, .ss-t-btn, .ss-compose-sns summary, .ss-mbanner span, .ss-hero-t small, .ss-pausebar, .ss-f > span, .ss-meter.off span, .ss-meter.off em) { font-weight: 400; }
+body.salty #ss-hud .ss-hud-alert button { font-weight: 400; }
+body.salty .ss-scope :is(.ss-head-t b, .ss-hero-t b, .ss-toolrow-t, .ss-list legend, .ss-dice-res b, .ss-goss-h b, .ss-tab-mast b, .ss-mast b, .ss-ribbon, .ss-unread, .ss-erow > summary, .ss-sec-h h4, .ss-modgrp > small) { font-weight: var(--bl-ui-strong, 650); }
+body.salty .ss-mchip { font-weight: 400; }
+
+/* ---------- 창: 실리태번 팝업 한 겹 · 큰 창은 아래 「닫기」 줄 대신 오른쪽 위 ✕ ----------
+   테마가 다른 애드온 창에 쓰는 것과 같은 방식(css/85-addon-unify.css) — 실리태번 자신의 닫기 단추(.popup-button-close)를 보이게 해요(누르면 실리태번이 창을 닫아요).
+   그 확장의 큰 창(상태창 · 만들기 · 프롬프트 · 꾸미기 · 알림함 …)은 단추가 「닫기」 하나뿐이에요. 고르는 창(적용 · 취소 · 저장)은 아래 단추 그대로 */
+body.salty dialog.ss-dlg .popup-content > :is(.ss-root, .ss-panel > .ss-root) { padding: 0; border-radius: 0; }
+body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-body > .popup-controls { display: none !important; }
+body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close {
+  display: block !important; position: absolute !important;
+  top: 22px !important; right: var(--bl-s3, 12px) !important;   /* 창 여백 20 + 머리 줄(44 안팎) 가운데 — 머리 줄의 아이콘 단추와 같은 높이에 와요 */
+  width: var(--bl-ui-icon, 34px) !important; height: var(--bl-ui-icon, 34px) !important; z-index: 2 !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius, 8px) !important;
+  background: var(--bl-fill-card, var(--bl-card)) !important; color: var(--salty-text) !important; opacity: 1 !important; filter: none !important;   /* 창 면과 같은 색 — 내용이 밀려 올라와도 ✕ 밑에서 겹쳐 보이지 않아요 */
+  font: 400 var(--bl-deco-glyph-22, 22px)/34px sans-serif !important; text-align: center !important;
+}
+body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close::before { content: "×" !important; font: inherit !important; }
+body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close:hover { box-shadow: inset 0 0 0 99px var(--bl-hover) !important; }
+/* ✕ 자리만큼 첫 줄 오른쪽을 비워요 */
+body.salty dialog.popup.ss-dlg.large_dialogue_popup :is(.ss-head, .ss-wz-head) { padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s1, 4px)); }
+
+/* ---------- 창 머리 ---------- */
+body.salty .ss-scope .ss-head { gap: var(--bl-s2, 8px); padding: 0 0 var(--bl-s3, 12px); }
+body.salty .ss-scope .ss-head-t small { font-size: var(--bl-ts-cap, 12.5px); color: var(--salty-muted); }
+body.salty .ss-scope .ss-head-a { gap: 0; }
+body.salty .ss-scope .ss-wz-head { gap: var(--bl-s3, 12px); margin-bottom: var(--bl-s4, 16px); }
+body.salty .ss-scope .ss-wz-head > i { width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); border-radius: var(--bl-ui-radius, 8px); font-size: var(--bl-ts-ui, 15px); }
+body.salty .ss-scope .ss-wz-head b { font-size: var(--bl-ts-head, 18px); line-height: 1.3; }
+body.salty .ss-scope .ss-wz-head small { font-size: var(--bl-ts-meta, 13px); color: var(--salty-muted); }
+body.salty .ss-scope .ss-pausebar { padding: var(--bl-s2, 8px) var(--bl-s3, 12px); margin-bottom: var(--bl-s2, 8px); border-radius: var(--bl-ui-radius, 8px); border-color: var(--salty-line); background: var(--bl-hover); font-size: var(--bl-ts-meta, 13px); }
+
+/* ---------- 묶음 탭(홈 · 나 · 세계 …): 위아래 두 줄 → 글자 옆 아이콘 한 줄(공용 글자 탭) ---------- */
+body.salty .ss-scope .ss-groups { gap: var(--bl-s1, 4px); padding: var(--bl-s1, 4px); border: 0; }
+body.salty .ss-scope .ss-groups > button { flex-direction: row; justify-content: center; gap: var(--bl-s1, 4px); min-height: var(--bl-ui-chip, 34px); padding: 0 var(--bl-s1, 4px); font-size: var(--bl-ui-tab-fs, 13px); line-height: 1.3; }
+body.salty .ss-scope .ss-groups > button i { font-size: var(--bl-ui-ink-fa, 12.5px); }
+/* 큰 탭 아이콘: 글 왼쪽에 한 줄로(11-13 사용자 「저 아이콘은 귀엽지 않아? 글 옆에 둬 주지 · 블루레몬에 비슷한 아이콘 먼저 쓰는 거 있으면 그걸로」) —
+   그 확장의 아이콘 요소는 그대로 두고 화면 그림만 테마 선 아이콘 꼴(같은 선 아이콘 글꼴)로 바꿔요: 집 · 사람 · 지구 · 여러 사람 · 확성기 · 조절 막대 · 별. 표에 없는 아이콘은 원작 것이 글자색 한 가지로 그대로 보여요.
+   폰에서도 보이고(탭 높이 그대로), 탭이 많아 한 줄에 안 들어가면 글을 줄이지 않고 줄을 옆으로 밀어요. 「원작 그대로」 보기에서는 원래 아이콘이에요. */
+body.salty .ss-scope .ss-groups { overflow-x: auto; scrollbar-width: none; }
+body.salty .ss-scope .ss-groups > button { flex: 1 0 auto; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i:first-child:is(.fa-house, .fa-user, .fa-earth-asia, .fa-user-group, .fa-bullhorn, .fa-sliders, .fa-star) { font: inherit; font-family: 'bl-mb-icons', var(--salty-font-ui); font-weight: 400; }   /* 글과 같은 크기 · 같은 줄 높이 — 크기가 다르면 화소 맞춤이 따로 걸려 아이콘이 0.5px 쯤 내려앉아요(잰 값) */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.fa-house::before { content: '\1F3E0'; vertical-align: baseline; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.fa-user::before { content: '\1F464'; vertical-align: baseline; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.fa-earth-asia::before { content: '\1F310'; vertical-align: baseline; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.fa-user-group::before { content: '\1F465'; vertical-align: baseline; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.fa-bullhorn::before { content: '\1F4E3'; vertical-align: baseline; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.fa-sliders::before { content: '\1F39B'; vertical-align: baseline; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.fa-star::before { content: '\2B50'; vertical-align: baseline; }
+body.salty .ss-scope .ss-groups > button .ss-dot { top: var(--bl-s1, 4px); right: var(--bl-s1, 4px); }
+/* 안쪽 탭 · 도구 줄 */
+body.salty .ss-scope .ss-tabs { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); }
+body.salty .ss-scope .ss-tabs > button { gap: 6px; padding: 0 10px; border-color: transparent; }
+body.salty .ss-scope .ss-tabs > button i { font-size: var(--bl-ui-ink-fa, 12.5px); }
+body.salty .ss-scope .ss-tabs > button.on i { color: inherit; }
+body.salty .ss-scope .ss-toolrow { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); padding-bottom: var(--bl-s2, 8px); border-bottom-color: var(--salty-line); }
+body.salty .ss-scope .ss-toolrow-t { gap: var(--bl-s2, 8px); font-size: var(--bl-ts-ui, 15px); }
+body.salty .ss-scope .ss-toolrow-t i { color: var(--salty-muted); font-size: var(--bl-ui-ink-fa, 12.5px); }
+body.salty .ss-scope .ss-tool { min-width: var(--bl-ui-icon, 34px); justify-content: center; padding: 0 var(--bl-s2, 8px); color: var(--salty-muted); font-weight: 400; }
+body.salty .ss-scope :is(.ss-tool:hover, .ss-tool.on) { background: var(--bl-hover); color: var(--salty-text); }
+body.salty .ss-scope .ss-tool.on { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
+body.salty .ss-scope .ss-tool.on i { color: inherit; }
+body.salty .ss-scope .ss-body { padding-top: var(--bl-s3, 12px); }
+body.salty .ss-scope .ss-instruct { margin-top: var(--bl-s2, 8px); padding: var(--bl-s3, 12px); border-color: var(--salty-line); background: var(--bl-hover); }
+body.salty .ss-scope .ss-editbar { gap: var(--bl-s2, 8px); margin-top: var(--bl-s3, 12px); padding: var(--bl-s2, 8px) 0 var(--bl-s1, 4px); background: var(--salty-surface); border-top-color: var(--salty-line); }
+
+/* ---------- 면 · 줄: 간격 사다리 ---------- */
+body.salty .ss-scope .ss-card { padding: var(--bl-s3, 12px); }
+body.salty .ss-scope .ss-stack { gap: var(--bl-s2, 8px); }
+body.salty .ss-scope .ss-sec { margin: var(--bl-s4, 16px) 0 var(--bl-s1, 4px); }
+body.salty .ss-scope .ss-sec:first-child { margin-top: 0; }
+body.salty .ss-scope .ss-sec-h { gap: var(--bl-s2, 8px); margin-bottom: var(--bl-s2, 8px); min-height: 24px; }
+body.salty .ss-scope .ss-row-btns { gap: var(--bl-s2, 8px); margin-top: var(--bl-s3, 12px); }
+body.salty .ss-scope .ss-inline { gap: var(--bl-s2, 8px); margin-top: var(--bl-s2, 8px); }
+body.salty .ss-scope .ss-pills { gap: var(--bl-s2, 8px); }
+body.salty .ss-scope .ss-chips { gap: var(--bl-s1, 4px); }
+body.salty .ss-scope .ss-callout { gap: var(--bl-s3, 12px); padding: var(--bl-s3, 12px); margin-bottom: var(--bl-s2, 8px); }
+/* 뜻 색으로 물들인 면 · 줄무늬 → 같은 칸 면 하나(뜻은 아이콘 색이 말해요) */
+body.salty .ss-scope .ss-callout:is(.warn, .mail, .new, .pause) { background: var(--ss-surface); border-color: var(--ss-line); }
+body.salty .ss-scope .ss-callout > div span { font-size: var(--bl-ts-meta, 13px); }
+body.salty .ss-scope .ss-empty-s { padding: var(--bl-s6, 24px) var(--bl-s3, 12px); gap: var(--bl-s2, 8px); font-size: var(--bl-ts-meta, 13px); }
+body.salty .ss-scope .ss-empty { gap: var(--bl-s3, 12px); padding: var(--bl-s8, 32px) var(--bl-s4, 16px); }
+body.salty .ss-scope .ss-empty > i { color: var(--salty-muted); }
+/* 칩(딱지): 판 알약과 같은 꼴 — 높이 22 · 1px 선 · 옅은 면 */
+/* 위아래 2: 원작 2.7.1 이 긴 이름 칩을 칩 안에서 줄바꿈하게 고쳤어요 — 두 줄이 된 칩의 글이 테두리에 붙지 않게(한 줄 칩은 최소 높이 22 그대로) */
+body.salty .ss-scope .ss-chip { min-height: 22px; padding: 2px var(--bl-s2, 8px); gap: var(--bl-s1, 4px); background: var(--bl-hover); border-color: var(--salty-line); }
+body.salty .ss-scope .ss-chip:is(.hi, .warn) { background: var(--bl-hover); border-color: var(--salty-line); }
+body.salty .ss-scope .ss-chip.hi { color: var(--ss-hi); }
+body.salty .ss-scope .ss-chip.warn { color: var(--ss-warn); }
+body.salty .ss-scope :is(.ss-role, .ss-stage) { background: var(--bl-hover); color: var(--salty-text); }   /* 흐린 글 + 옅은 면은 낮 판에서 대비 4.38(리그) — 본문색으로 */
+body.salty .ss-scope .ss-role.user { color: var(--ss-pos); }
+body.salty .ss-scope .ss-role.main { color: var(--ss-hi); }
+body.salty .ss-scope .ss-stage:is(.s2, .s3, .s4, .s5, .s6) { background: var(--bl-hover); }
+/* 더하기 빼기 · 숫자 칸 */
+body.salty .ss-scope .ss-step { height: var(--bl-ui-ctl, 36px); border-radius: var(--bl-ui-radius, 8px); border-color: var(--salty-line); }
+body.salty .ss-scope .ss-step button { width: var(--bl-ui-ctl, 36px); }
+body.salty .ss-scope .ss-in.n { text-align: end; font-variant-numeric: tabular-nums; }
+body.salty .ss-scope input[type="range"] { accent-color: var(--salty-accent); }
+
+/* ---------- 꽉 찬 강조색 면 → 옅은 강조 면 + 강조 글자 ---------- */
+body.salty .ss-scope :is(.ss-cal-c.today, .ss-dice-eq span.d, .ss-np-ico, .ss-t-play, .ss-mini-play, .ss-help-msg.user .ss-help-b) { background: var(--bl-ui-pick-face); border-color: transparent; color: var(--bl-ui-pick-ink); }
+body.salty .ss-scope :is(.ss-t-play, .ss-mini-play) { color: var(--bl-ui-pick-ink) !important; }
+body.salty .ss-scope .ss-bub.me > span { background: var(--bl-ui-pick-face); border-color: transparent; color: var(--salty-text); }
+body.salty .ss-float { background: var(--salty-surface); border-color: var(--salty-line); color: var(--salty-text); box-shadow: var(--bl-e3); }
+body.salty .ss-scope .ss-cal-c.sel { box-shadow: inset 0 0 0 1px var(--salty-accent); }
+body.salty .ss-scope .ss-cal-c.ev { background: var(--bl-hover); }
+/* ---------- 박힌 색 · 장식 그라데이션 → 팔레트 ---------- */
+body.salty .ss-scope .ss-tab-mast { background: var(--bl-hover); color: var(--salty-text); }
+body.salty .ss-scope .ss-tab-mast b { font-style: normal; letter-spacing: 0; font-size: var(--bl-ui-h-sub, 16px); }
+body.salty .ss-scope .ss-snspic { background: var(--bl-hover); }
+body.salty .ss-scope .ss-dice-stage { background: var(--ss-surface); border-radius: var(--ss-r); }
+body.salty .ss-scope .ss-dice-stage.res-crit { border-color: var(--ss-warn); box-shadow: none; }
+body.salty .ss-scope .ss-dice-stage.res-crit::after { content: none; }
+body.salty .ss-scope .ss-dice-stage.res-crit .ss-die-svg .body { stroke: var(--ss-warn); fill: var(--ss-bg); }
+body.salty .ss-scope .ss-dice-res.crit b { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--ss-warn); }
+body.salty .ss-scope .ss-dice-res b { letter-spacing: 0; }
+body.salty .ss-scope .ss-die { filter: none; }
+body.salty .ss-scope .ss-log-row.crit > i { background: var(--ss-warn); }
+body.salty .ss-scope .ss-ach.done { background: var(--ss-surface); border-color: var(--ss-line); }
+body.salty .ss-scope :is(.ss-ach.done > i, .ss-reward > i) { color: var(--ss-warn); }
+body.salty .ss-scope .ss-goss.h3 { background: var(--ss-bg); border-color: var(--ss-warn); }
+body.salty .ss-scope .ss-ribbon { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); box-shadow: none; }
+body.salty .ss-scope :is(.ss-env, .ss-env.rush) { background: var(--salty-field); border-color: var(--salty-line); color: var(--salty-text); }
+body.salty .ss-scope .ss-env-b small { color: var(--ss-dim); }
+body.salty .ss-scope .ss-env-flap { background: none; border-bottom: 1px solid var(--salty-line); }
+body.salty .ss-scope .ss-env-flap::after { background: var(--ss-neg); box-shadow: none; animation: none; }
+body.salty .ss-scope .ss-env.due { box-shadow: inset 0 0 0 1px var(--ss-love); }
+body.salty .ss-scope .ss-cour.on, body.salty .ss-scope .ss-cour.express.on { border-color: var(--salty-accent); box-shadow: none; background: var(--bl-ui-pick-face); }
+body.salty .ss-scope .ss-swatch.on { border-color: var(--salty-accent); box-shadow: none; }
+body.salty .ss-scope .ss-mod.on { border-color: var(--salty-accent); }
+body.salty .ss-mbubble { background: var(--salty-surface); border: 1px solid var(--salty-line); color: var(--salty-text); box-shadow: var(--bl-e3); }
+body.salty .ss-scope .ss-bub.ping > span { box-shadow: inset 0 0 0 1px var(--ss-love); }
+body.salty .ss-scope .ss-bub > span { border-radius: var(--bl-r-md, 12px); }
+body.salty .ss-scope .ss-phone-in textarea { border-radius: var(--bl-ui-radius, 8px); }
+body.salty .ss-scope :is(.ss-phone, .ss-letters, .ss-snspost) { border-radius: var(--ss-r); }
+
+/* ---------- 채팅 위 띠 · 알림 · 변동 칩 ---------- */
+body.salty #ss-hud.ss-hud { border-color: var(--salty-line); }
+body.salty #ss-hud.paused { background: var(--salty-surface); }
+body.salty #ss-hud .ss-hud-row { gap: var(--bl-s2, 8px); }
+body.salty #ss-hud .ss-hud-t { padding: 0 var(--bl-s1, 4px); min-height: var(--bl-ui-icon, 34px); justify-content: center; }
+body.salty #ss-hud .ss-hud-t small { color: var(--salty-muted); }
+body.salty #ss-hud .ss-hud-chips { gap: var(--bl-s1, 4px); }
+body.salty #ss-hud .ss-hud-bars { gap: var(--bl-s1, 4px) var(--bl-s3, 12px); margin-top: var(--bl-s1, 4px); padding: 0 var(--bl-s1, 4px); }
+body.salty #ss-hud .ss-hud-alert { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); }
+body.salty #ss-hud .ss-hud-alert button { min-height: 28px; padding: 0 10px; border: 1px solid var(--salty-line); border-radius: var(--bl-ui-radius, 8px); background: var(--bl-hover); color: var(--salty-text); font-size: var(--bl-ts-cap, 12.5px); }
+body.salty #ss-hud .ss-hud-pause { color: var(--salty-muted); font-size: var(--bl-ts-micro, 11.5px); }
+body.salty .ss-toasts { gap: var(--bl-s2, 8px); }
+body.salty .ss-toast { gap: var(--bl-s2, 8px); padding: var(--bl-s2, 8px) var(--bl-s2, 8px) var(--bl-s2, 8px) var(--bl-s3, 12px); border-color: var(--salty-line); box-shadow: var(--bl-e4); color: var(--salty-text); }
+body.salty .ss-toast.k-ending { border-color: var(--salty-line); }
+/* 알림 아이콘 칸: 글자 크기는 제목과 같게 · 줄 높이는 칸 높이(34)로 — 줄 상자가 칸에 꼭 맞아 반올림으로 반 화소씩 밀리지 않아요. 여러 줄 알림도 글 덩이 가운데에 */
+body.salty .ss-scope .ss-t-ico { width: var(--bl-ui-icon, 34px); height: var(--bl-ui-icon, 34px); border-radius: var(--bl-ui-radius, 8px); background: var(--bl-hover); font-size: var(--bl-ts-ctl, 14px); line-height: var(--bl-ui-icon, 34px); }
+body.salty .ss-toast.k-day:not(.open) { align-items: center; }   /* 2.7.1: 눌러 펼친 알림(.open)은 원작대로 위쪽 맞춤 — 긴 글 옆에서 아이콘이 가운데로 내려가지 않게 */
+body.salty .ss-toast.open { border-color: var(--salty-accent-40, var(--salty-line)); }
+body.salty .ss-scope :is(.ss-toast.k-music, .ss-toast.k-stage, .ss-toast.k-msg) .ss-t-ico { background: var(--bl-hover); color: var(--salty-text); }
+/* 줄 높이를 짝수 화소로 올려 둬요 — 글 덩이 높이가 짝수라 34 칸 아이콘과 가운데가 반 화소 어긋나지 않아요 */
+body.salty .ss-scope .ss-t-b b { font-size: var(--bl-ts-ctl, 14px); line-height: 1.35; line-height: round(up, 1.35em, 2px); }
+body.salty .ss-scope .ss-t-b small { font-size: var(--bl-ts-cap, 12.5px); line-height: 1.4; line-height: round(up, 1.4em, 2px); color: var(--salty-muted); }
+body.salty .ss-scope .ss-t-btn { min-height: 30px; padding: 0 10px; border-color: var(--salty-line); border-radius: var(--bl-ui-radius, 8px); background: var(--salty-control); font-size: var(--bl-ts-meta, 13px); white-space: nowrap; }
+body.salty .ss-scope .ss-t-btn.ghost { background: transparent; border-color: transparent; color: var(--salty-muted); }
+body.salty .ss-scope .ss-t-tip { display: inline-flex; flex: none; gap: var(--bl-s1, 4px); }
+body.salty .ss-scope .ss-t-x { width: 30px; height: 30px; border-radius: var(--bl-ui-radius, 8px); color: var(--salty-muted); font-size: var(--bl-ts-head, 18px); line-height: 1; }
+body.salty .ss-scope .ss-t-x:hover { background: var(--bl-hover); }
+body.salty .ss-scope .ss-note { gap: var(--bl-s3, 12px); padding: var(--bl-s2, 8px) var(--bl-s3, 12px); }
+body.salty .ss-scope .ss-note.new { background: var(--bl-ui-pick-face); border-color: transparent; }
+body.salty .ss-msgcard { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); }
+body.salty .ss-mchip { min-height: 22px; padding: 0 var(--bl-s2, 8px); line-height: 1.5; }
+
+/* ---------- 꾸미기 창 ----------
+   색 판 · 색 직접 고르기는 블루레몬에이드가 켜져 있는 동안 아무것도 바꾸지 않아요(팔레트가 색을 정해요) — 눌러도 안 바뀌는 큰 색 면을 늘어놓지 않고 그 자리에 한 줄로 알려요(테마를 끄면 그대로 보여요).
+   켬끔 줄은 같은 폭 칸으로 줄을 맞춰요 */
+body.salty .ss-scope.ss-tw .ss-swatches { display: block; }
+body.salty .ss-scope.ss-tw .ss-swatches > .ss-swatch { display: none; }
+body.salty .ss-scope.ss-tw .ss-sec:has(> .ss-colors) { display: none; }
+body.salty .ss-scope.ss-tw .ss-pills { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5em), 1fr)); gap: 0 var(--bl-s3, 12px); }
+body.salty .ss-scope.ss-tw .ss-tog { min-height: var(--bl-ui-ctl, 36px); margin-inline-end: 0; }
+body.salty .ss-scope.ss-tw .ss-f { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); font-size: var(--bl-ts-ctl, 14px); }
+body.salty .ss-scope.ss-tw .ss-f.wide > span { color: var(--salty-text); font-size: var(--bl-ts-ctl, 14px); }
+
+/* ---------- 설정 서랍: 줄 맞춤 ----------
+   · 줄 사이 12 · 이름표와 칸 사이 4 · 모든 줄의 왼쪽 끝이 같은 선
+   · 숫자 칸: 폭을 하나로(여섯 자리) · 오른쪽 끝 맞춤 · 숫자는 오른쪽 정렬 — 자릿수마다 폭이 달라 칸이 들쭉날쭉했어요
+   · 체크 줄: 상자(테마 체크 20)는 첫 줄 글자 높이 가운데 · 글은 8 띄우고 · 덧글은 글 아래
+   · 접는 줄: 높이 36 · 오른쪽 끝 화살표 하나(공용 접힘 머리) — 같은 서랍에 끼는 기능 다리의 접힌 묶음(.bl-ext-bridge-more)도 같은 꼴 */
+/* (그 확장의 줄에만 — 기능 다리 칸(.bl-ext-bridge)은 제 시트의 간격을 그대로 써요) */
+body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label > :is(select, textarea, .ss-set-inline), body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label > input.text_pole:not([type="number"]) { margin: var(--bl-s1, 4px) 0 0; }
+/* 숫자 칸 폭 하나: 테마의 「값 길이만큼」 규칙(css/95-fields-i2.css · html:not(#bl-num-off) … !important)보다 앞서야 해서 같은 문 + 서랍 id 를 더해요 — 여섯 자리(100000)까지 들어가는 폭 */
+html:not(#bl-num-off) body.salty #rm_extensions_block #ss-settings .inline-drawer-content label > input[type="number"] { box-sizing: border-box; width: calc(6ch + 28px) !important; min-width: calc(6ch + 28px) !important; font-variant-numeric: tabular-nums; }
+body.salty #ss-settings .inline-drawer-content label.checkbox_label { column-gap: var(--bl-s2, 8px); align-items: start; padding: 0; }
+body.salty #ss-settings .inline-drawer-content label.checkbox_label > input[type="checkbox"] { margin: 1px 0 0; }
+body.salty #ss-settings .inline-drawer-content label.checkbox_label > small { margin-top: 2px; }
+body.salty #ss-settings .inline-drawer-content > small { display: block; margin: var(--bl-s2, 8px) 0 0; }
+body.salty #ss-settings .inline-drawer-content label > input[type="range"] { display: block; width: 100%; margin: var(--bl-s2, 8px) 0 0; accent-color: var(--salty-accent); }
+body.salty #ss-settings .ss-set-inline > select { flex: 1 1 auto; min-width: 0; margin: 0; }
+body.salty #ss-settings .ss-set-inline > .menu_button { flex: none; width: var(--bl-ui-ctl, 36px); min-width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0; }
+body.salty #ss-settings .inline-drawer-content > .ss-set-inline { gap: var(--bl-s3, 12px); margin: var(--bl-s2, 8px) 0 0; align-items: stretch; }
+body.salty #ss-settings .inline-drawer-content > .ss-set-inline > label { flex: 1 1 0; min-width: 0; margin: 0; }
+/* 한 줄에 숫자 둘(애정 · 우정 최대): 반 칸에 이름과 숫자 칸을 나란히 두면 이름이 꺾여요 — 칸마다 윗줄 이름 · 아랫줄 숫자 칸(2열 격자의 칸 꼴) */
+body.salty #ss-settings .inline-drawer-content > .ss-set-inline > label:has(> input[type="number"]) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: var(--bl-s1, 4px); align-items: start; }
+html:not(#bl-num-off) body.salty #rm_extensions_block #ss-settings .inline-drawer-content > .ss-set-inline > label > input[type="number"] { grid-column: 1; grid-row: 2; width: 100% !important; min-width: 0 !important; }
+body.salty #ss-settings .ss-set-more { margin: var(--bl-s2, 8px) 0 0; }
+body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary { display: flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-ui-ctl, 36px); padding: 0; list-style: none; font-size: var(--bl-ts-ctl, 14px); }
+body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::-webkit-details-marker { display: none; }
+body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::after { content: ''; flex: none; width: var(--bl-ui-chev, 14px); height: var(--bl-ui-chev, 14px); margin-inline-start: auto; background-color: currentColor; -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat; mask: var(--bl-ui-glyph-chev) center / contain no-repeat; }
+body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more)[open] > summary::after { transform: rotate(180deg); }
+body.salty #ss-settings .ss-set-btns { margin: var(--bl-s3, 12px) 0 0; }
+
+/* ---------- 설정 서랍 「정리한 보기」(src/ext-organize.js) ----------
+   사용자: 「지금 너무 세로로 길고, 가독성도 떨어지고, 뭐 하는 기능인지도 모르겠고」 — 탭마다 한 줄 설명 · 자주 쓰는 줄만 펼치고 나머지는 접는 갈래(지금 값) · 숫자 줄 2열 · 긴 설명은 한 줄 + 「자세히」 · 비용 표시 · 길잡이.
+   · 끼운 것(.bl-ext-intro · -fold · -more · -start · -view)은 제 스타일로 숨겨져 있고 여기서만 보여요(테마를 끄면 그 확장의 원래 모습).
+   · data-bl-view="org" 일 때만 접고 나눠요. "raw"(원작 그대로)면 탭 · 갈래 · 설명을 감추고 전부 펼쳐요 — 서랍 머리의 스위치.
+   · 칠하기는 「원래 색 유지」 표식에서 비켜 가요(자리 · 크기는 그대로) */
+/* 보기 스위치(서랍 머리) */
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view { display: inline-flex !important; align-items: center; flex: none; box-sizing: border-box; height: 26px; margin: 0 var(--bl-s2, 8px) 0 auto; padding: 0 var(--bl-s2, 8px); border: 1px solid var(--salty-line); border-radius: var(--bl-ui-radius, 8px); background: transparent; box-shadow: none; color: var(--salty-muted); font: inherit; font-size: var(--bl-ts-micro, 11.5px); font-weight: 400; line-height: 1; white-space: nowrap; cursor: pointer; }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view[aria-pressed="true"] { border-color: transparent; background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
+/* 원작 그대로: 탭 줄 · 설명 · 갈래 줄 · 자세히 · 길잡이를 감춰요(그 확장의 줄은 전부 보여요) */
+body.salty #ss-settings[data-bl-view="raw"] :is(.bl-ext-tabs, .bl-ext-intro, .bl-ext-fold, .bl-ext-more, .bl-ext-start) { display: none !important; }
+/* 정리한 보기: 접힌 갈래의 줄은 숨겨요 */
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > [data-bl-fold-off] { display: none !important; }
+/* 내용 칸을 2열 격자로 — 모든 줄은 두 칸을 다 쓰고, 숫자 줄(data-bl-col)은 한 칸씩(홀수면 마지막 칸은 왼쪽 열만). 실리태번이 서랍을 펼쳐 둔 동안에만(인라인 display: block) — 접힌 서랍은 건드리지 않아요 */
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content[style*="display: block"] { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bl-s3, 12px); align-items: start; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > * { grid-column: 1 / -1; min-width: 0; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > label[data-bl-col] { grid-column: auto; align-self: stretch; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; row-gap: var(--bl-s1, 4px); align-content: space-between; }
+html:not(#bl-num-off) body.salty #rm_extensions_block #ss-settings[data-bl-view="org"] .inline-drawer-content > label[data-bl-col] > input[type="number"] { grid-column: 1; grid-row: auto; width: 100% !important; min-width: 0 !important; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > label[data-bl-col] > small { grid-column: 1; grid-row: auto; }
+/* 탭 한 줄 설명 */
+body.salty #ss-settings[data-bl-view="org"] .bl-ext-intro { display: block !important; margin: var(--bl-s2, 8px) 0 0; font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
+body.salty #ss-settings[data-bl-view="org"] .bl-ext-intro:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
+/* 접는 갈래 줄: 공용 접힘 머리(36 · 오른쪽 끝 화살표) — 왼쪽 제목 · 가운데 지금 값(넘치면 말줄임) */
+body.salty #ss-settings[data-bl-view="org"] .bl-ext-fold { display: flex !important; align-items: center; gap: var(--bl-s2, 8px); box-sizing: border-box; width: 100%; min-height: var(--bl-ui-ctl, 36px); margin: var(--bl-s2, 8px) 0 0; padding: 0 var(--bl-s3, 12px); border-width: 1px; border-style: solid; border-radius: var(--bl-ui-radius, 8px); box-shadow: none; font: inherit; font-size: var(--bl-ts-ctl, 14px); font-weight: 400; line-height: 1.3; text-align: start; cursor: pointer; }
+body.salty #ss-settings .bl-ext-fold > .bl-ext-fold-t { flex: none; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.salty #ss-settings .bl-ext-fold > .bl-ext-fold-v { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end; font-size: var(--bl-ts-cap, 12.5px); opacity: 1; }
+body.salty #ss-settings .bl-ext-fold::after { content: ''; flex: none; width: var(--bl-ui-chev, 14px); height: var(--bl-ui-chev, 14px); background-color: currentColor; -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat; mask: var(--bl-ui-glyph-chev) center / contain no-repeat; }
+body.salty #ss-settings .bl-ext-fold[aria-expanded="true"]::after { transform: rotate(180deg); }
+body.salty #ss-settings .bl-ext-fold[aria-expanded="true"] > .bl-ext-fold-v { visibility: hidden; }
+body.salty #ss-settings .bl-ext-fold:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-color: var(--salty-line); background: var(--bl-hover); color: var(--salty-text); }
+body.salty #ss-settings .bl-ext-fold:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) > .bl-ext-fold-v { color: var(--salty-muted); }
+body.salty #ss-settings .bl-ext-fold:where([data-bl-native-ext-colors], [data-bl-native-ext-colors] *) { border-color: var(--SmartThemeBorderColor); background: transparent; color: inherit; }
+body.salty #ss-settings .bl-ext-fold:focus-visible { outline: none; box-shadow: inset 0 0 0 2px currentColor; }
+/* 긴 설명 문단: 한 줄 + 「자세히」 */
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > small[data-bl-clamp=""] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > small[data-bl-clamp="hide"] { display: none; }   /* 탭 맨 위 문단: 탭 한 줄 설명이 요약 — 설명 줄 끝의 「자세히」로 펼쳐요 */
+body.salty #ss-settings[data-bl-view="org"] .bl-ext-intro > .bl-ext-more { display: inline !important; height: auto; margin-inline-start: var(--bl-s1, 4px); font-size: inherit; line-height: inherit; vertical-align: baseline; }
+body.salty #ss-settings[data-bl-view="org"] .bl-ext-more { display: inline-flex !important; justify-self: start; align-items: center; height: 24px; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; font: inherit; font-size: var(--bl-ts-cap, 12.5px); font-weight: 400; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+body.salty #ss-settings .bl-ext-more:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
+body.salty #ss-settings .bl-ext-more:where([data-bl-native-ext-colors], [data-bl-native-ext-colors] *) { color: inherit; }
+/* 처음 길잡이 */
+body.salty #ss-settings[data-bl-view="org"] .bl-ext-start { display: flex !important; position: relative; flex-wrap: wrap; align-items: center; gap: var(--bl-s1, 4px) var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0 0; padding: var(--bl-s2, 8px) calc(var(--bl-s8, 32px) + var(--bl-s1, 4px)) var(--bl-s2, 8px) var(--bl-s3, 12px); border-radius: var(--bl-ui-radius, 8px); font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
+body.salty #ss-settings[data-bl-view="org"] .bl-ext-start[hidden] { display: none !important; }
+body.salty #ss-settings .bl-ext-start > .bl-ext-start-t { flex: 1 1 100%; }
+body.salty #ss-settings .bl-ext-start > .bl-ext-jump { display: inline-flex; align-items: center; height: 30px; margin: 0; padding: 0 10px; border: 1px solid; border-radius: var(--bl-ui-radius, 8px); box-shadow: none; font: inherit; font-size: var(--bl-ts-meta, 13px); font-weight: 400; cursor: pointer; }
+body.salty #ss-settings .bl-ext-start > .bl-ext-start-x { position: absolute; top: 2px; right: 2px; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; font: inherit; font-size: var(--bl-ts-head, 18px); line-height: 1; cursor: pointer; }
+body.salty #ss-settings .bl-ext-start:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { background: var(--bl-hover); color: var(--salty-text); }
+body.salty #ss-settings .bl-ext-start:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) > .bl-ext-jump { border-color: var(--salty-line); background: var(--salty-control); color: var(--salty-text); }
+body.salty #ss-settings .bl-ext-start:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) > .bl-ext-start-x { color: var(--salty-muted); }
+body.salty #ss-settings .bl-ext-start:where([data-bl-native-ext-colors], [data-bl-native-ext-colors] *) > :is(.bl-ext-jump, .bl-ext-start-x) { border-color: var(--SmartThemeBorderColor); background: transparent; color: inherit; }
+/* 비용 표시: 체크 줄 오른쪽 끝의 작은 알약 — 그 확장이 줄마다 적어 둔 말(토큰 · AI 요청)을 같은 꼴로(같은 서랍에 끼는 기능 다리 칸의 체크 줄도 같은 표식을 써요) */
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost] { grid-template-columns: auto minmax(0, 1fr) auto; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost] > small { grid-column: 2; padding-inline-end: 68px; }   /* 덧글 줄 오른쪽 끝에 비용 표시가 얹혀요 */
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost]::after { grid-column: 3; grid-row: 1; align-self: center; box-sizing: border-box; height: 20px; margin: 0 0 0 var(--bl-s2, 8px); padding: 0 6px; border: 1px solid; border-radius: 999px; font-size: var(--bl-ts-micro, 11.5px); font-weight: 400; line-height: 18px; white-space: nowrap; }
+/* 덧글이 있는 줄은 표시를 덧글 줄 오른쪽 끝에 얹어요 — 이름 줄 폭을 깎지 않아 줄이 늘지 않아요(덧글은 그만큼 오른쪽을 비워요) */
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost]:has(> small) { position: relative; grid-template-columns: auto minmax(0, 1fr); }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost]:has(> small)::after { position: absolute; inset-inline-end: 0; bottom: 0; margin: 0; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost="ai"]::after { content: 'AI 요청 +'; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost="tok"]::after { content: '토큰 +'; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost="save"]::after { content: '토큰 절약'; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost="free"]::after { content: '비용 없음'; }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label[data-bl-cost]:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *))::after { border-color: var(--salty-line); color: var(--salty-muted); }
+body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content label.checkbox_label:is([data-bl-cost="ai"], [data-bl-cost="tok"]):where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *))::after { color: var(--bl-pop-ink, var(--salty-text)); }
+/* 같은 서랍에 끼는 기능 다리 칸(.bl-ext-bridge) 다음 줄은 한 묶음 띄워요 — 그 칸의 줄처럼 보이지 않게 */
+body.salty #ss-settings .inline-drawer-content > .bl-ext-bridge + :not(.bl-ext-compat) { margin-top: var(--bl-s6, 24px); }
+/* 가독성: 굵게는 묶음 제목에만 — 설명 글 속 강조는 굵기 대신 본문색으로 · 설명 줄 폭 제한 */
+body.salty #ss-settings .inline-drawer-content :is(small, label) b { font-weight: 400; }
+body.salty #ss-settings .inline-drawer-content :is(small, label) b:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-text); }
+body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max-width: 72ch; }
+
 /* 화면 높이가 낮을 때(가로로 눕힌 폰 · 키보드가 화면을 줄이는 기기): 띠는 제목 줄만 남기고 수치 · 칩 줄을 접어 본문 자리를 지켜요 */
 @media (max-height: 520px) {
   body.salty #ss-hud :is(.ss-hud-bars, .ss-hud-chips, .ss-hud-alert) { display: none; }
 }
 
+/* 좁은 화면(그 확장이 폰 꼴로 바꾸는 폭과 같은 700): 큰 창 머리는 제목 줄 · 단추 줄 두 줄로(묶음 탭 아이콘은 폰에서도 글 왼쪽에 보여요 — 위 「큰 탭 아이콘」) */
+@media (max-width: 700px) {
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-t { flex: 1 1 calc(100% - 60px); padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s1, 4px)); }
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-a { flex: 1 1 100%; justify-content: flex-end; }
+}
+
 /* ---------- 손가락 화면: 누르는 넓이 44 — 보이는 크기는 그대로, 가운데 맞춘 투명 상자(86-touch-targets 와 같은 방식) ---------- */
 @media (pointer: coarse) {
   /* .ss-ib · .ss-tabs > button · .ss-groups > button 은 원작도 relative(같은 값 · 원작이 빼도 안전) · 알림 단추(.ss-t-btn · .ss-t-x · 2.7.0) */
-  body.salty .ss-scope :is(.ss-btn, .ss-ib, .ss-pill, .ss-seg > button, .ss-tabs > button, .ss-groups > button, .ss-tog, .ss-tool, .ss-chip.btn, button.ss-chip, .ss-x, .ss-step button, .ss-t-btn, .ss-t-x, details > summary), body.salty :is(.bl-ext-tab, #ss-hud .ss-hud-t) { position: relative; }
+  body.salty .ss-scope :is(.ss-btn, .ss-ib, .ss-pill, .ss-seg > button, .ss-tabs > button, .ss-groups > button, .ss-tog, .ss-tool, .ss-chip.btn, button.ss-chip, button.ss-mchip, .ss-x, .ss-step button, .ss-t-btn, .ss-t-x, details > summary), body.salty :is(.bl-ext-tab, #ss-hud .ss-hud-t) { position: relative; }
+  /* 설정 서랍의 접는 줄(화살표가 ::after 라 상자는 ::before) · 띠의 알림 단추 */
+  body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary, body.salty #ss-hud .ss-hud-alert button { position: relative; }
+  body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::before, body.salty #ss-hud .ss-hud-alert button::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: var(--bl-ui-touch, 44px); transform: translateY(-50%); }
+  /* 정리한 보기의 단추들(보기 스위치 · 길잡이 · 갈래 줄 · 자세히) — 갈래 줄은 화살표가 ::after 라 상자는 ::before */
+  body.salty #ss-settings :is(.bl-ext-view, .bl-ext-jump, .bl-ext-fold, .bl-ext-more) { position: relative; }
+  body.salty #ss-settings :is(.bl-ext-view, .bl-ext-jump, .bl-ext-start-x, .bl-ext-fold, .bl-ext-more)::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }
   /* 안쪽 탭 줄: 아래 여백 4 — 누르는 상자가 안 잘리게(손가락 화면만) */
   body.salty .ss-scope .ss-tabs { padding-bottom: var(--bl-s1, 4px); }
+  /* 꾸미기 색 줄은 줄 전체가 누르는 칸(44) · 큰 창 위아래 빈틈으로 뒤 설정 글이 비치지 않게 뒷막을 테마 바탕색으로 */
+  body.salty .ss-scope .ss-colorf { min-height: var(--bl-ui-touch, 44px); }
+  body.salty dialog.popup.ss-dlg::backdrop { background: var(--salty-bg, Canvas) !important; }
   /* 가장자리 손잡이: 손잡이 가운데 44 칸(채팅 쪽 14px · 마우스 화면엔 없음) */
   body.salty .ss-side-handle::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }
-  body.salty .ss-scope :is(.ss-btn, .ss-ib, .ss-pill, .ss-seg > button, .ss-tabs > button, .ss-groups > button, .ss-tog, .ss-tool, .ss-chip.btn, button.ss-chip, .ss-x, .ss-step button, .ss-t-btn, .ss-t-x, details > summary)::after, body.salty :is(.bl-ext-tab, #ss-hud .ss-hud-t, .ss-side-x)::after {
+  body.salty .ss-scope :is(.ss-btn, .ss-ib, .ss-pill, .ss-seg > button, .ss-tabs > button, .ss-groups > button, .ss-tog, .ss-tool, .ss-chip.btn, button.ss-chip, button.ss-mchip, .ss-x, .ss-step button, .ss-t-btn, .ss-t-x, details > summary)::after, body.salty :is(.bl-ext-tab, #ss-hud .ss-hud-t, .ss-side-x)::after, body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close::after {
     content: '';
     position: absolute;
     left: 50%;

@@ -1,0 +1,35 @@
+/* 남의 확장 기능 다리의 설정 칸 (src/ext-bridge-ui.js) — 그 확장의 설정 칸을 볼 때 한 번 붙는 시트예요. style.css 에는 싣지 않아요.
+   · 우리 칸(.bl-ext-bridge)과 그 안에만 걸려요. 그 확장의 요소에는 닿지 않아요.
+   · 줄 · 덧글 · 체크 줄의 모양은 맞춤 시트(src/ext-status.css)의 설정 줄 규칙을 그대로 받아요 — 여기는 묶음 머리 · 두 칸 줄 · 접힌 묶음만.
+   · 테마 모양이 꺼져 있어도(확장만 모드) 읽히게 실리태번 색으로 먼저 그리고, body.salty 아래에서 테마 부품 값으로 덮어요. */
+.bl-ext-bridge { display: block; margin: 16px 0 0; padding: 12px 0 0; border-top: 1px solid var(--SmartThemeBorderColor, rgba(127, 127, 127, 0.3)); }
+.bl-ext-bridge [hidden] { display: none !important; }
+.bl-ext-bridge > .bl-ext-bridge-h { display: block; font-size: 14px; font-weight: 650; line-height: 1.35; }
+.bl-ext-bridge > .bl-ext-bridge-h + small { display: block; margin-top: 4px; }
+.bl-ext-bridge label > span { display: block; }
+.bl-ext-bridge label > span > small { font-weight: 400; opacity: 0.75; }   /* 이름 옆 덧글(그 칸이 맡는 기능) */
+.bl-ext-bridge label > small[data-bl-bridge-hint] { display: block; margin-top: 6px; }
+.bl-ext-bridge .bl-ext-bridge-foot { display: block; margin-top: 4px; }
+.bl-ext-bridge label[data-bl-bridge-slot] { display: block; margin-top: 12px; }
+.bl-ext-bridge-more > label[data-bl-bridge-slot]:first-of-type { margin-top: 8px; }
+.bl-ext-bridge-pick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.bl-ext-bridge-pick > select { flex: 1 1 110px; min-width: 0; max-width: 100%; margin: 0; }
+.bl-ext-bridge-pick > select[data-bl-bridge-model] { flex: 2 1 150px; }   /* 회사 · 모델은 한 쌍이라 한 줄에(모델이 두 배 폭) — 칸 폭이 270 아래로 좁아지면 붙여서 두 줄 */
+.bl-ext-bridge input[data-bl-bridge-name] { margin: 8px 0 0; }
+.bl-ext-bridge-more { margin-top: 12px; }
+.bl-ext-bridge-more > summary { padding: 8px 0; cursor: pointer; }
+.bl-ext-bridge-more > pre { margin: 4px 0 0; padding: 8px 10px; max-height: 40vh; overflow: auto; border: 1px solid var(--SmartThemeBorderColor, rgba(127, 127, 127, 0.3)); border-radius: 8px; font-family: inherit; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bl-ext-bridge-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.bl-ext-bridge-acts > .menu_button { width: auto; min-width: max-content; max-width: 100%; margin: 0; white-space: nowrap; }
+.bl-ext-bridge > small[data-bl-bridge-note] { display: block; margin-top: 8px; }
+.bl-ext-bridge > small[data-bl-bridge-note]:empty { display: none; }
+
+body.salty .bl-ext-bridge { margin-top: var(--bl-s5, 20px); padding-top: var(--bl-s4, 16px); }
+body.salty .bl-ext-bridge:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top-color: var(--salty-line); }
+body.salty .bl-ext-bridge > .bl-ext-bridge-h { font-size: var(--bl-ts-ui, 14px); font-weight: var(--bl-ui-strong, 650); }
+body.salty .bl-ext-bridge-pick { gap: var(--bl-s2, 8px); margin-top: var(--bl-s1, 4px); }
+body.salty .bl-ext-bridge-more > summary { padding: var(--bl-s2, 8px) 0; }
+body.salty .bl-ext-bridge-more > summary:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
+body.salty .bl-ext-bridge-more > pre { border-radius: var(--bl-ui-radius, 8px); font-size: var(--bl-ts-micro, 11.5px); }
+body.salty .bl-ext-bridge-more > pre:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-color: var(--salty-line); background: var(--bl-hover, transparent); color: var(--salty-muted); }
+body.salty .bl-ext-bridge-acts > .menu_button { min-height: var(--bl-ui-ctl, 36px); padding: 0 10px; font-size: var(--bl-ui-btn-fs, 14px); }

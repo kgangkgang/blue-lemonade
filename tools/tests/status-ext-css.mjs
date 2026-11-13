@@ -7,25 +7,32 @@
 //   ⑥ 로그 복사는 변동 칩 칸을 건너뛰어요 · 탭 줄은 테마가 켜졌을 때만 보여요
 //   ⑦ 「다른 확장 원래 색 유지」: 설정 서랍 내용 칸의 칠하기(글자색 · 면 · 선 색 · 그림자)는 표식에서 비켜 가요(빌드의 확장 색 지킴과 같은 꼴) — 자리 · 크기는 그대로
 //   ⑧ 누르는 넓이: 손잡이 덮개는 손가락 화면에서만 · 손잡이 가운데 · 분류 탭 줄은 위아래 안쪽 여백 4(누르는 상자 · 초점 테두리가 안 잘려요)
-//   ⑨ 머리줄 고양이: 표식이 있을 때만 · 원작 글자는 화면에서만 0 크기 · 테마 선 아이콘 꼴(선 1.8 · 채움 없음) · 글자색 · 판 알약과 같은 문 아래
+//   ⑨ 머리줄 그림 글자: 다른 자리와 같은 선 아이콘 글꼴이 그려요(설정 칸 뿌리에 글꼴) — 표식 · 가림 그림 · 0 크기 글자 없음 · 첫 글자 여백만
+//   ⑪ 상태창 큰 탭(홈 · 나 · 세계 · 사람 · 관리): 아이콘은 글 왼쪽에 · 테마 선 아이콘 꼴 · 글과 같은 크기
+//   ⑩ 채팅방 고양이: 그 확장의 계기판 아이콘 네 곳(띠 카드 머리 · 뜬 단추 · 설정의 「상태창 열기」 · 가장자리 손잡이)만 선 고양이로 — 「원작 그대로 보기」면 원래 아이콘 · 손잡이는 칸 안 빼꼼
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 const root = path.resolve(process.argv[2] || '.');
 const SHEET = 'src/ext-status.css';
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const raw = read(SHEET).replace(/\/\*[\s\S]*?\*\//g, '');
-// 조건 묶음은 둘만 허용(손가락 화면 · 낮은 화면) — 껍데기를 벗겨 안의 갈래를 같은 규칙으로 봐요
-const css = raw.replace(/@media \((?:pointer: coarse|max-height: 520px)\) \{([\s\S]*?\})\s*\}/g, '$1');
+const raw0 = read(SHEET).replace(/\/\*[\s\S]*?\*\//g, '');
+// 그림 글자 → 선 아이콘 글꼴(@font-face 하나 · tools/tests/ext-status-icons.mjs 가 따로 봐요)은 갈래 검사에서 빼요
+const FACES = raw0.match(/@font-face\s*\{[^}]*\}/g) || [];
+const raw = raw0.replace(/@font-face\s*\{[^}]*\}/g, '');
+// 조건 묶음은 셋만 허용(손가락 화면 · 낮은 화면 · 좁은 화면 700) — 껍데기를 벗겨 안의 갈래를 같은 규칙으로 봐요
+const css = raw.replace(/@media \((?:pointer: coarse|max-height: 520px|max-width: 700px)\) \{([\s\S]*?\})\s*\}/g, '$1');
 const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ selectors: m[1].trim().split(/,\s*(?![^()]*\))/).map(s => s.trim()), body: m[2] }));
 let passed = 0;
 const check = (name, fn) => { fn(); passed++; console.log('ok', name); };
 
-check('규칙이 있고 at-규칙은 손가락 화면 · 낮은 화면 묶음 둘뿐이에요', () => {
+check('규칙이 있고 at-규칙은 손가락 화면 · 낮은 화면 · 좁은 화면 묶음 셋뿐이에요', () => {
     assert.ok(rules.length >= 20, `규칙 ${rules.length}개`);
-    assert.ok(!/@(media|supports|layer|container|import|font-face)/.test(css), '허용한 두 묶음 밖의 at-규칙은 이 시험이 갈래를 못 읽어요');
-    assert.equal((raw.match(/@media/g) || []).length, 2);
+    assert.ok(!/@(media|supports|layer|container|import|font-face)/.test(css), '허용한 세 묶음 밖의 at-규칙은 이 시험이 갈래를 못 읽어요');
+    assert.equal((raw.match(/@media/g) || []).length, 3);
     assert.ok(!/url\((?!"data:image\/svg\+xml,)/.test(css), '바깥 자원을 부르지 않아요(글 속 SVG 그림만)');
+    assert.equal(FACES.length, 1, '@font-face 는 선 아이콘 글꼴 하나');
+    assert.match(FACES[0], /url\('\.\/ext-status-icons\.woff2'\)/, '글꼴은 맞춤 시트 옆 파일 하나');
 });
 check('① 모든 갈래가 body.salty 아래이고 그 확장의 이름을 거쳐요', () => {
     const OWN = /\.ss-[\w-]+|#ss-[\w-]+|\.bl-ext-[\w-]+|\[data-bl-tab[\w-]*\]/;
@@ -110,7 +117,7 @@ check('⑦ 「다른 확장 원래 색 유지」: 설정 서랍 내용 칸의 �
 });
 check('⑧ 누르는 넓이: 손잡이 덮개는 손가락 화면에서만 · 분류 탭 줄 안쪽 여백', () => {
     const coarse = raw.match(/@media \(pointer: coarse\) \{([\s\S]*?\})\s*\}/)?.[1] || '';
-    const outside = raw.replace(/@media \((?:pointer: coarse|max-height: 520px)\) \{[\s\S]*?\}\s*\}/g, '');
+    const outside = raw.replace(/@media \((?:pointer: coarse|max-height: 520px|max-width: 700px)\) \{[\s\S]*?\}\s*\}/g, '');
     assert.ok(!/\.ss-side-handle::before/.test(outside), '마우스 화면에는 손잡이 덮개가 없어요(옆 서랍 · 채팅 끝을 덮었어요)');
     assert.match(coarse, /body\.salty \.ss-side-handle::before \{[^}]*left: 50%;[^}]*transform: translate\(-50%, -50%\)/, '손잡이 가운데에 맞춘 상자(왼쪽으로 덮는 폭이 반으로)');
     assert.match(css, /body\.salty \.bl-ext-tabs \{[^}]*padding: var\(--bl-s1, 4px\) 0;/, '분류 탭 줄 위아래 안쪽 여백 4 — 36 + 4 + 4 = 44 가 안 잘려요');
@@ -122,19 +129,65 @@ check('⑧ 누르는 넓이: 손잡이 덮개는 손가락 화면에서만 · �
     }
     assert.match(css, /body\.salty \.bl-ext-tab:focus-visible:where\(:not\(/, '분류 탭 초점 모양');
 });
-check('⑨ 머리줄 고양이: 표식이 있을 때만 · 원작 글자는 화면에서만 감추고 테마 선 아이콘으로', () => {
-    const cat = rules.filter(r => r.selectors.some(s => s.includes('[data-bl-ext-icon="cat"]')));
-    assert.equal(cat.length, 3, '머리줄 · 첫 글자 · 아이콘');
-    for (const r of cat) for (const s of r.selectors) assert.ok(s.startsWith('html:not(#bl-pill-off) body.salty #rm_extensions_block #ss-settings[data-bl-ext-icon="cat"] .inline-drawer-header > b'), `판 알약과 같은 문 아래(머리줄이 블록일 때만 첫 글자 꾸밈이 돼요): ${s}`);
-    const first = cat.find(r => r.selectors[0].endsWith('::first-letter'));
-    assert.match(first.body, /font-size: 0;/, '원작 글자는 화면에서만 0 크기(DOM · 읽어 주는 이름은 그대로)');
-    const icon = cat.find(r => r.selectors[0].endsWith('::after'));
-    assert.match(icon.body, /background-color: currentColor;/, '글자색을 따라가요(낮밤 · 새 색 없음)');
-    assert.match(icon.body, /-webkit-mask: var\(--bl-ext-cat\)/);
-    const svg = decodeURIComponent(icon.body.match(/url\("data:image\/svg\+xml,([^"]+)"\)/)?.[1] || '');
-    assert.match(svg, /viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1\.8" stroke-linecap="round" stroke-linejoin="round"/, '테마 선 아이콘과 같은 꼴(css/11-chrome.css --salty-mi-*)');
-    assert.ok(!/fill="(?!none)/.test(svg) && !/<(image|use|text)\b/.test(svg), '채운 면 · 그림 · 글자 없음');
-    assert.ok(read('css/11-chrome.css').includes('stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22'), '테마 선 아이콘의 선 굵기 · 끝 모양이 바뀌면 고양이도 같이 봐요');
-    assert.ok(rules.some(r => r.selectors.some(s => /#ss-settings \.inline-drawer-header > b::first-letter$/.test(s)) && /margin-inline-end: 5px/.test(r.body)), '표식이 없는 판(2.6.1)은 첫 글자 여백 그대로');
+check('⑨ 머리줄 그림 글자: 선 아이콘 글꼴 하나로 — 표식 · 가림 그림 없음 · 첫 글자 여백만', () => {
+    assert.ok(!/data-bl-ext-icon/.test(raw0), '머리줄만 따로 그리는 표식이 없어요(세로 가운데 · 크기가 다른 자리와 달라져요)');
+    assert.ok(!/mask:\s*var\(--bl-ext-(?!cat-peek\))/.test(raw0) && !rules.some(r => /mask:/.test(r.body) && r.selectors.some(s => /inline-drawer-header > b/.test(s))) && !/::first-letter\s*\{[^}]*font-size:\s*0/.test(raw0), '글자를 0 크기로 감추고 덧그리지 않아요(가림 그림 변수는 가장자리 손잡이의 빼꼼 고양이 하나뿐 — ⑩)');
+    const font = rules.find(r => /font-family:\s*'bl-mb-icons'/.test(r.body) && r.selectors.some(s => /#ss-settings\b/.test(s)));
+    assert.ok(font, '설정 칸 뿌리(머리줄 포함)에 선 아이콘 글꼴');
+    assert.ok(rules.some(r => r.selectors.some(s => /#ss-settings \.inline-drawer-header > b::first-letter$/.test(s)) && /margin-inline-end: 5px/.test(r.body)), '그림 글자와 이름 사이 첫 글자 여백');
+    assert.ok(!/blExtIcon|markIcon/.test(read('src/ext-compat.js')));
+});
+check('⑩ 채팅방 고양이: 계기판 아이콘 네 곳만 · 「원작 그대로 보기」면 원래 아이콘 · 글자는 선 아이콘 글꼴 · 손잡이는 칸 안 빼꼼', () => {
+    const cat = rules.filter(r => r.selectors.some(s => /fa-gauge-high/.test(s)));
+    assert.ok(cat.length >= 5, `고양이 규칙 ${cat.length}개`);
+    for (const r of cat) for (const s of r.selectors) {
+        assert.ok(s.startsWith('body.salty:not([data-bl-ext-raw]) '), `「원작 그대로 보기」에서는 원래 아이콘이어야 해요: ${s}`);
+        assert.match(s, /> i\.fa-gauge-high(::before)?$/, `그 확장의 계기판 아이콘 요소만 골라요: ${s}`);
+        assert.ok(/#ss-hud \.ss-hud-t b|#ss-float|#ss-settings \[data-s-act="open"\]|\.ss-side-handle/.test(s), `띠 카드 머리 · 뜬 단추 · 설정의 「상태창 열기」 · 가장자리 손잡이 네 곳뿐이에요: ${s}`);
+    }
+    // 글자 고양이 셋: 서랍 머리줄과 같은 글자(U+1F431) · 같은 글꼴 · 굵기 400 · 옆 글자 기준선(실리태번의 middle 을 풀어요) · 첫 글꼴이 테마 글꼴로 이어져야 줄 상자가 안 흔들려요
+    const glyph = cat.find(r => /content:\s*'\\1F431'/.test(r.body));
+    assert.ok(glyph && /vertical-align:\s*baseline/.test(glyph.body) && glyph.selectors.every(s => s.endsWith('::before') && !/ss-side-handle/.test(s)), '글자 고양이는 기준선에 · 손잡이에는 안 써요');
+    const font = cat.find(r => /font-family:/.test(r.body));
+    assert.match(font.body, /font: inherit; font-family: 'bl-mb-icons', var\(--salty-font-ui\); font-weight: 400;/);
+    assert.equal(JSON.parse(read('src/ext-status-icons.json')).map['1F431'], 'cat', '그 글자는 선 아이콘 글꼴의 고양이');
+    // 손잡이: 글 속 SVG 가림 그림 하나 · 칸 폭 16 안(왼쪽 여백 3 이상) · 화면 끝에 붙임 · 넘침 가리기 없이(그림 자체가 화면 끝에서 잘린 꼴)
+    const peek = rules.find(r => /--bl-ext-cat-peek:\s*url\("data:image\/svg\+xml,/.test(r.body));
+    assert.ok(peek && peek.selectors.length === 1 && peek.selectors[0] === 'body.salty .ss-side-handle', '가림 그림 변수는 손잡이에만');
+    assert.match(peek.body, /rotate\(-90 12 12\)/, '왼쪽으로 눕힌 고양이(귀가 왼쪽)');
+    assert.ok(!/%23|#[0-9a-f]{3,8}\b/i.test(peek.body), '그림 속에도 색 글자 없이(가림 그림은 글자색으로 칠해요)');
+    const box = cat.find(r => r.selectors.some(s => /\.ss-side-handle > i\.fa-gauge-high$/.test(s)));
+    const w = Number(box.body.match(/width:\s*(\d+)px/)?.[1]), h = Number(box.body.match(/height:\s*(\d+)px/)?.[1]);
+    assert.ok(w >= 10 && w <= 13 && h <= 20 && /right:\s*0/.test(box.body) && /top:\s*50%/.test(box.body) && /translateY\(-50%\)/.test(box.body), `손잡이 그림 ${w}×${h} — 칸 폭 16 안 · 화면 끝 · 세로 가운데`);
+    const paint = cat.find(r => r.selectors.some(s => /\.ss-side-handle > i\.fa-gauge-high::before$/.test(s)));
+    assert.match(paint.body, /background:\s*currentColor;/); assert.match(paint.body, /mask:\s*var\(--bl-ext-cat-peek\) center \/ 100% 100% no-repeat/);
+    // 표식은 정리한 보기의 보기 스위치가 달아요(한 곳)
+    assert.ok(read('src/ext-organize.js').includes("root.ownerDocument?.body?.toggleAttribute?.('data-bl-ext-raw', !!raw);"));
+    assert.ok(!/fa-gauge-high|data-bl-ext-raw|bl-ext-cat-peek/.test(read('style.css')), '늘 붙는 시트에는 없어요');
+});
+check('⑪ 상태창 큰 탭: 아이콘은 글 왼쪽에(폰에서도) · 테마 선 아이콘 꼴 · 글과 같은 크기 · 「원작 그대로 보기」면 원래 아이콘', () => {
+    const map = JSON.parse(read('src/ext-status-icons.json')).map;
+    for (const [cls, cp] of [['fa-house', '1F3E0'], ['fa-user', '1F464'], ['fa-earth-asia', '1F310'], ['fa-user-group', '1F465'], ['fa-bullhorn', '1F4E3'], ['fa-sliders', '1F39B'], ['fa-star', '2B50']]) {
+        const r = rules.find(x => x.selectors.length === 1 && x.selectors[0] === `body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > i.${cls}::before`);
+        assert.ok(r && r.body.includes(`content: '\\${cp}';`) && /vertical-align:\s*baseline/.test(r.body), `${cls} → U+${cp}`);
+        assert.ok(map[cp], `U+${cp} 가 선 아이콘 글꼴 표에 있어요`);
+    }
+    assert.ok(!rules.some(r => r.selectors.some(sel => /\.ss-groups > button > i(:first-child)?$/.test(sel)) && /display:\s*none/.test(r.body)), '큰 탭 아이콘을 감추지 않아요(폰에서도 글 왼쪽에)');
+    const font = rules.find(r => r.selectors.some(sel => /\.ss-groups > button > i:first-child:is\(/.test(sel)));
+    assert.ok(font && /font: inherit; font-family: 'bl-mb-icons', var\(--salty-font-ui\); font-weight: 400;/.test(font.body) && !/font-size/.test(font.body), '아이콘은 글과 같은 크기 · 같은 줄 높이(크기가 다르면 화소 맞춤이 따로 걸려 0.5px 쯤 어긋나요)');
+    const row = rules.find(r => r.selectors.includes('body.salty .ss-scope .ss-groups > button') && /flex-direction:\s*row/.test(r.body));
+    assert.ok(row, '아이콘과 글은 가로 한 줄');
+});
+check('⑫ 숫자 동그라미 · 점: 한 크기(16 · 8) · 한 색(테마 강조 레몬 면 + 그 위 글자색) · 한 자리 규칙 — 게이지의 빨강은 그대로', () => {
+    const badge = rules.find(r => r.selectors.length === 1 && r.selectors[0] === 'body.salty .ss-scope .ss-badge.ss-badge');
+    assert.ok(badge, '숫자 동그라미 규칙 하나');
+    for (const want of ['min-width: 16px', 'height: 16px', 'font-size: 10.5px', 'background: var(--salty-lemon, var(--bl-pop))', 'color: var(--salty-text)', 'border: 1px solid var(--salty-text-20', 'width: auto']) assert.ok(badge.body.includes(want), want);
+    const at = sel => rules.find(r => r.selectors.includes(sel))?.body || '';
+    assert.match(at('body.salty .ss-scope :is(.ss-ib, .ss-tabs, .ss-groups) .ss-badge.ss-badge'), /top: -4px; right: -4px;/, '단추의 오른쪽 위 모서리에서 4 밖');
+    assert.match(at('body.salty .ss-scope .ss-side-handle .ss-badge.ss-badge'), /top: -4px; left: -4px;/, '가장자리 손잡이는 화면 끝이라 왼쪽 위');
+    assert.match(at('body.salty .ss-scope .ss-dot.ss-dot'), /width: 8px; height: 8px;[^}]*background: var\(--salty-lemon, var\(--bl-pop\)\)/, '숫자 없는 점은 지름 8 · 같은 색');
+    assert.match(at('body.salty.salty-dark .ss-scope .ss-badge.ss-badge'), /color: var\(--salty-bg\)/, '밤 판은 레몬 위에 어두운 바탕색 글자(낮 판은 본문색) — 둘 다 어두운 글자');
+    assert.ok(!/salty-danger/.test(badge.body), '알림 숫자는 빨강이 아니라 테마 강조 레몬(사용자 「알림은 노랑」)');
+    assert.match(css, /--ss-neg:\s*color-mix\(in srgb, var\(--salty-danger\)/, '게이지 · 수치의 빨강(--ss-neg)은 건드리지 않아요');
 });
 console.log(`status-ext-css: ${passed}개 통과`);

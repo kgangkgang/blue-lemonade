@@ -7,7 +7,7 @@
 //   ⑥ 감시자 · 타이머를 쓰지 않아요 · 맞춤 시트는 한 번만 붙여요
 //   ⑦ 누름 길(문서 누름 감시자 하나 · 잡는 단계): 머리줄 누를 때 늦게 만들기 · 탭 누름 · 원래 이름으로 기억
 //   ⑧ 공용 가로 탭 줄 등록부: 모듈이 먼저 떠도(등록부 없음) 머리줄 · 확장 서랍 단추 · 탭을 누를 때 한 번만 넣어요 — 감시자 · 타이머 없이, 두 번 넣지 않아요
-//   ⑨ 머리줄 그림 글자: 고양이(2.7.0)면 표식, 다른 글자(2.6.1)면 표식 없음 · 그 확장이 칸을 다시 그려도 확장 서랍 단추를 누를 때 다시 봐요
+//   ⑨ 그 확장이 설정 칸을 다시 그려도 확장 서랍 단추를 누를 때 다시 봐요 · 머리줄 그림 글자에는 표식을 달지 않아요(선 아이콘 글꼴이 그려요)
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -77,7 +77,7 @@ const settings = (version, heads, icon = '') => {
 };
 globalThis.localStorage = { store: {}, getItem(k) { return this.store[k] ?? null; }, setItem(k, v) { this.store[k] = String(v); } };
 
-const { SETS, FIRST_TAB, buildTabs, showGroup, headLabel, versionOf, compatText, attachSheet, startExtCompat, markIcon, ensureStrip } = await import(pathToFileURL(path.join(root, 'src/ext-compat.js')).href);
+const { SETS, FIRST_TAB, buildTabs, showGroup, headLabel, versionOf, compatText, attachSheet, startExtCompat, ensureStrip } = await import(pathToFileURL(path.join(root, 'src/ext-compat.js')).href);
 const SET = SETS[0];
 const tabsOf = box => box.querySelector('.bl-ext-tabs').children;
 const shown = content => content.children.filter(k => 'blTabG' in k.dataset && !('blTabOff' in k.dataset));
@@ -136,7 +136,7 @@ test('⑤ 안내 한 줄 — 확인한 판 · 다른 판', () => {
     assert.ok(content.children.at(-1).textContent.includes('지금 판은 9.9.9'));
     const unread = compatText(SET, '');
     assert.ok(/읽지 못했어요/.test(unread) && !/맞춰 뒀어요/.test(unread), '판을 못 읽으면 맞는 판처럼 적지 않아요: ' + unread);
-    assert.deepEqual(SET.verified, ['2.6.1', '2.7.0'], '확인한 판(2.7.0 은 코드 대조 · 화면은 리그 대기)');
+    assert.deepEqual(SET.verified, ['2.6.1', '2.7.0', '2.7.1'], '확인한 판(리그 사진 · 점검 대본으로 본 것만)');
     for (const v of SET.verified) assert.match(compatText(SET, v), /화면에 맞춰 뒀어요/);
 });
 test('⑥ 감시자 · 타이머가 없고 맞춤 시트는 한 번만 붙여요', () => {
@@ -191,27 +191,19 @@ test('⑧ 공용 가로 탭 줄 등록부: 모듈이 먼저 떠도 등록부가 
     assert.ok(fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8').includes("Symbol.for('blue-lemonade.tab-scroll.v1')"), 'src/tab-scroll.js 와 같은 열쇠');
     assert.ok(fs.readFileSync(path.join(root, 'src/tab-scroll.js'), 'utf8').includes("Symbol.for('blue-lemonade.tab-scroll.v1')"));
 });
-test('⑨ 머리줄 그림 글자: 고양이면 표식 · 다른 글자면 표식 없음 · 확장 서랍 단추를 누르면 다시 그린 칸도 다시 봐요', () => {
-    const cat = settings('2.7.0', [['가'], ['나']], '\u{1F63C} ');
-    assert.equal(markIcon(cat.box, SET), 'cat');
-    assert.equal(cat.box.dataset.blExtIcon, 'cat');
-    const old = settings('2.6.1', [['가'], ['나']], '\u{1F35D} ');
-    assert.equal(markIcon(old.box, SET), '');
-    assert.ok(!('blExtIcon' in old.box.dataset), '2.6.1 의 그림 글자는 그대로');
-    old.box.dataset.blExtIcon = 'cat';                              // 판이 바뀌어 다시 그려진 칸
-    markIcon(old.box, SET);
-    assert.ok(!('blExtIcon' in old.box.dataset), '고양이가 아니면 표식을 떼요');
+test('⑨ 그 확장이 칸을 다시 그려도 확장 서랍 단추를 누르면 다시 봐요 · 머리줄 그림 글자에는 표식을 달지 않아요', () => {
     const again = settings('2.7.0', [['가'], ['나']], '\u{1F63C} ');   // 그 확장이 설정 칸을 다시 그림(2.7.0 판 올림 창 뒤)
     const toggle = el('div', 'drawer-toggle');
     new El('div', 'drawer', [toggle], 'extensions-settings-button');
     listeners.click[0]({ target: toggle });                         // 확장 서랍 단추
-    assert.equal(again.box.dataset.blExtIcon, 'cat', '서랍이 그려지기 전에 표식');
-    assert.ok(again.box.querySelector('.bl-ext-tabs'), '탭도 그때 만들어요');
+    assert.ok(again.box.querySelector('.bl-ext-tabs'), '서랍이 그려지기 전에 탭을 만들어요');
+    assert.ok(!('blExtIcon' in again.box.dataset), '머리줄 그림 글자는 선 아이콘 글꼴이 그려요 — 표식 · 글자 바꾸기 없음');
     const fresh = settings('2.7.0', [['가'], ['나']], '\u{1F63C} ');
     const other = el('div', 'drawer-toggle');
     new El('div', 'drawer', [other], 'user-settings-button');
     listeners.click[0]({ target: other });                          // 다른 서랍 단추 — 아무 일 없음
     assert.equal(fresh.box.querySelector('.bl-ext-tabs'), null);
-    assert.ok(!('blExtIcon' in fresh.box.dataset));
+    const mod = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8');
+    assert.ok(!/blExtIcon|data-bl-ext-icon|markIcon/.test(mod));
 });
 console.log(`ext-settings-tabs: ${passed}개 통과`);

@@ -38,3 +38,4 @@
 /tools/pricing/ export-ignore
 *.test.mjs export-ignore
 *.test.js export-ignore
+/src/*.woff2 binary

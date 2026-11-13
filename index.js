@@ -24,7 +24,7 @@ try {
 // 공용 모델 목록(live-models.js)은 맨 위 await(실리태번 모듈 · 모델 등록 상태 받기)가 있어 정적 import 하면 테마 시작 전체가 그만큼 기다렸다 —
 //   기다리지 않고 바로 받는다. 실리태번이 연결하며 받은 목록을 받아 두는 훅은 예전처럼 시작할 때 걸린다 (연결은 확장을 다 실은 뒤)
 if (!ZERO) import('./src/live-models.js').catch(error => console.warn('[Blue Lemonade] 모델 목록', error));
-import { themeEnabled, publicSettings, zeroMode } from './src/usage-mode.js';
+import { themeEnabled, addonsEnabled, publicSettings, zeroMode } from './src/usage-mode.js';
 import { bindSettingsDialog } from './src/settings-dialog.js';
 import { loadRemainingFaces } from './src/fonts.js';
 import { startAddons, syncAddonIcons, startLateAddons, lateReason, waitAddonModule } from './src/addons.js';
@@ -258,7 +258,8 @@ jQuery(() => {
     //   지난번에 그 확장의 설정 칸이 화면에 있었으면(이 기기 표시 — 있었던 칸 id 를 띄어 적어요) 바로 받아 첫 화면부터 맞춤 시트가 붙어요. 앱이 준비된 뒤 한 번(못 봤으면 조금 뒤 한 번 더) 설정 칸이 실제로 있는지 보고 표시를 고쳐요 —
     //   그 확장을 지운 사람은 그다음 시작부터 아무것도 안 받아요(감시자 없음 · src/ext-compat.js SETS 와 같은 선택자 · 제로 모드는 안 받음). 받은 뒤에도 설정 칸을 보면 모듈을 한 번 더 불러 탭 · 머리줄 표식을 그때 달아요.
     //   실리태번은 확장을 깔면 새로 읽지 않아요 — 그 뒤 내는 「확장 설정 읽음」 사건에서 아직 안 받았으면 한 번 더 봐요(되풀이 없음 · 깐 그 세션에도 맞춤이 걸려요)
-    if (!ZERO) { const KEY = 'bl-ext-compat'; let got = null; const go = () => { (got ||= import('./src/ext-compat.js')).then(m => m.startExtCompat()).catch(error => console.warn('[Blue Lemonade] 확장 화면 맞춤', error)); }; try { if (localStorage.getItem(KEY)) go(); } catch { /* 저장소가 막혀 있으면 아래 확인만 */ } const look = again => { const here = ['ss-settings', 'lm_settings', 'memoria_settings'].filter(id => document.getElementById(id)).join(' '); if (!here && again) { setTimeout(() => look(false), 2500); return; } try { if (here) localStorage.setItem(KEY, here); else localStorage.removeItem(KEY); } catch { /* 표시 없이 */ } if (here) go(); }; later(() => { look(true); try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.EXTENSION_SETTINGS_LOADED, () => { if (!got) look(true); }); } catch { /* 다음 시작에 봐요 */ } }, 400); }
+    //   1.2.x 기능 다리(src/ext-bridge.js): 같은 문에서, 미트볼 상태창 칸이 있고 기능을 쓰는 모드일 때만 받아요 — 번역 용어집 이름을 그 확장의 AI 요청에 싣고, 고른 회사 · 모델로 보내요(그 확장이 없으면 안 받아요)
+    if (!ZERO) { const KEY = 'bl-ext-compat'; let got = null; const bridge = () => { try { if (addonsEnabled(getSettings())) import('./src/ext-bridge.js').then(m => m.startExtBridge()).catch(error => console.warn('[Blue Lemonade] 확장 기능 다리', error)); } catch { /* 설정을 못 읽으면 다음 시작에 */ } }; const go = () => { (got ||= import('./src/ext-compat.js')).then(m => m.startExtCompat()).catch(error => console.warn('[Blue Lemonade] 확장 화면 맞춤', error)); if (document.getElementById('ss-settings')) bridge(); }; try { if (localStorage.getItem(KEY)) go(); } catch { /* 저장소가 막혀 있으면 아래 확인만 */ } const look = again => { const here = ['ss-settings', 'lm_settings', 'memoria_settings'].filter(id => document.getElementById(id)).join(' '); if (!here && again) { setTimeout(() => look(false), 2500); return; } try { if (here) localStorage.setItem(KEY, here); else localStorage.removeItem(KEY); } catch { /* 표시 없이 */ } if (here) go(); }; later(() => { look(true); try { const { eventSource, event_types } = SillyTavern.getContext(); eventSource.on(event_types.EXTENSION_SETTINGS_LOADED, () => { if (!got) look(true); }); } catch { /* 다음 시작에 봐요 */ } }, 400); }
     // 1층 — 서랍 · 메뉴 입구와 CSS 바로잡기(:has 미루기 · 메뉴 열림 표식)는 바로
     if (!ZERO) startSafe('widenSelectorCache', () => { widenSelectorCache(); }); // 실리태번의 위임 핸들러 선택자를 jQuery 가 매번 다시 컴파일하지 않게 (2.9.4, lite.js)
     startSafe('loadCompatCss', () => { if (!loadCompatCss()) setTimeout(() => startSafe('loadCompatCss', loadCompatCss), 1500); });   // 1.0.0 다른 브라우저 · 폭 규칙은 조건이 맞을 때만 (src/compat-css.js)

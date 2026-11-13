@@ -432,6 +432,8 @@ jobs:
           node tools/tests/status-ext-css.mjs .
           node tools/tests/ext-settings-tabs.mjs .
           node tools/tests/ext-memory-css.mjs .
+          node tools/tests/ext-settings-organize.mjs .
+          node tools/tests/ext-status-icons.mjs .
           node tools/tests/assets-watch-leaf.mjs .
           node tools/tests/startup-730.mjs .
           node tools/tests/numcomma-fit.mjs .
@@ -494,6 +496,9 @@ jobs:
           node tools/tests/after-work.mjs .
           node tools/tests/show-more-auto.mjs .
           node tools/tests/ext-presence.mjs .
+          node tools/tests/ext-bridge-core.mjs .
+          node tools/tests/ext-bridge-hook.mjs .
+          node tools/tests/ext-bridge-ui.mjs .
           node tools/tests/lazy-avatars.mjs .
           node tools/tests/lazy-avatars-detach.mjs .
           node tools/tests/search-ime.mjs .
