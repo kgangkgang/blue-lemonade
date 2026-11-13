@@ -4,6 +4,7 @@ import { SOURCES, sourceById } from './sources.js';
 import { TITLE, VERSION, modelsOf, movePick, pickOf, setModels, settings } from './state.js';
 import { applyOne } from './inject.js';
 import { builtInLists } from './offer.js';
+import { verifyAddonCss } from '../../addon-files-check.js';
 // 공용 모델 목록 — state.js 는 이것을 불러오면 안 된다 (live-models.js 가 맨 위 await 로 state.js 를 읽음)
 import * as LM from '../../live-models.js';
 
@@ -85,6 +86,8 @@ export function buildPanel() {
     startDrag($('.mr-list'));
 
     render();
+    // 창을 처음 만들 때 한 번 — 코드와 스타일이 같은 판인지(기다려 보고 · 다시 받아 보고 · 그래도 다를 때만 알림 · src/addon-files-check.js)
+    verifyAddonCss({ folder: 'models', name: '--mr-css-version', version: VERSION, title: TITLE, selector: '.mr-settings' });
 }
 
 function firstUsedSource() {

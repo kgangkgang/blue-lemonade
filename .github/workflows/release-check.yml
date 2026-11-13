@@ -751,6 +751,7 @@ jobs:
           node tools/tests/script-watch-records.mjs .
           node tools/tests/scripts-same-window.mjs .
           node tools/tests/ko-text-package-list.mjs
+          node tools/tests/lazy-panels-c.mjs
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-option-coverage.mjs .
           node tools/tests/option-help-standing.mjs .

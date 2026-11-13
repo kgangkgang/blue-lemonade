@@ -5216,8 +5216,8 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     else PDOC.querySelector('.pt-extension-settings .inline-drawer-toggle')?.addEventListener('click', () => {
         if (uiBuilt) return;
         ensureUi();
-        // 이 누름에는 mountUi 가 거는 머리 리스너가 아직 안 불려요(같은 사건 도중에 건 것) — 같은 일을 여기서 한 번
-        setTimeout(() => { dockPanel(); const panel = PDOC.getElementById('pt-panel'); if (panel?.getClientRects().length) panel.dispatchEvent(new Event('pt:opened')); }, 0);
+        // mountUi 가 같은 머리에 거는 보통(bubble) 리스너는 이 누름의 bubble 단계에서 불려요(리스너 목록은 단계마다 그때 복사) —
+        //   그 리스너가 패널을 서랍에 붙이고 pt:opened 를 한 번 내요. 여기서 또 하면 두 번이 돼요(검토 C 5번)
     }, { capture: true });
     console.log(`[${EXT}] loaded`);
     resolve();

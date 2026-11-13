@@ -122,11 +122,15 @@ export function markBroken(id, error) {
 // 도구는 여기에 만드는 함수를 맡겨 두고, 허브가 열릴 때(팝업 · 설정 창 안 둘 다) 한 번만 불린다.
 const builders = new Map();
 const built = new Set();
+// 1.4.x 최적화 C(검토 C 4번): 허브가 한 번이라도 보인 뒤에 맡겨진 도구는 그 자리에서 만들어요 — 예전에는 처음 보일 때 맡겨져 있던 id 만 기억해서,
+//   느린 폰에서 도구가 다 오기 전에 허브를 열면(start.js 가 하나씩 받아요) 늦게 온 도구의 탭이 다음에 열 때까지 비었어요
+let shownOnce = false;
 export function onFirstShow(id, build) {
-    if (built.has(id)) { runBuilder(id, build); return; }   // 이미 한 번 보였으면 그 자리에서
+    if (shownOnce || built.has(id)) { built.add(id); runBuilder(id, build); return; }   // 이미 한 번 보였으면 그 자리에서
     builders.set(id, build);
 }
 function runBuilders() {
+    shownOnce = true;
     for (const [id, build] of builders) {
         builders.delete(id); built.add(id);
         runBuilder(id, build);
