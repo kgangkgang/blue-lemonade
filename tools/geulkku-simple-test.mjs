@@ -44,7 +44,7 @@ const rootOf = h => h.match(/^<div class="([^"]*)"/)[1];
 const shutSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8').match(/export const shutPeek = (html => [^\n]+);\n/)[1];
 const shutPeek = (0, eval)(shutSrc);
 
-// 테마 시험의 기대값(codex/tone-ladder-113 tools/tests/char-tone-ladder.mjs CONFIRMED) + 보고서 6절 표
+// 테마 시험의 기대값(톤 사다리 판 4564922f 의 tools/tests/char-tone-ladder.mjs CONFIRMED) + 보고서 6절 표
 const CONFIRMED = {
     '#3aa7ff': { c100: '#e4f1fc', c300: '#95cefc', c500: '#3aa7ff', c700: '#0f6ab4', c900: '#10395a' },
     '#ff5fa2': { c100: '#fde9f1', c300: '#fda9cc', c500: '#ff5fa2', c700: '#c9105e', c900: '#651235' },
@@ -63,7 +63,7 @@ await test('톤 사다리: 확정 두 색 · 다른 색 다섯 단계가 테마 
 });
 
 const THEME = path.resolve(ROOT, '../tone-ladder-113/src/shared/char-tone.js');
-await test('톤 사다리: 마트 사본 = 테마 codex/tone-ladder-113 char-tone.js(첫 줄 출처 주석만 다름 · 결과도 같음)', async () => {
+await test('톤 사다리: 마트 사본 = 테마 톤 사다리 판(4564922f) char-tone.js(첫 줄 출처 주석만 다름 · 결과도 같음)', async () => {
     if (!fs.existsSync(THEME)) { console.log('      (테마 사본이 이 PC 에 없어 파일 대조는 건너뛰어요 — 기대값 시험이 대신 지켜요)'); return; }
     const mine = fs.readFileSync(path.join(MART, 'lib/log-copy/shared/char-tone.js'), 'utf8').split('\n').slice(1).join('\n');
     assert.equal(mine, fs.readFileSync(THEME, 'utf8'));
@@ -1150,7 +1150,7 @@ await test('액자 마트 고침(11-12 밤 전수조사 고침 안 3 · 4 · 5):
 await test('낮 · 밤 전환 넣기: 공용 함수 사본은 허브 원본과 글자까지 같아요 · 복사 길(simpleReady 뒤)에만 걸어요 · 기본 끔 · 테마로 담기 값에는 안 실어요 · 417틀 모두 달려요', async () => {
     const dn = await imp(path.join(MART, 'day-night.js'));
     const copy = fs.readFileSync(path.join(MART, 'day-night.js'));
-    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), '3d4f0c0c7d990679e1e157d8602c4b5ff94aa4b666ea4fdfa5aecacd458c0160', '마트 사본(mart/day-night.js)이 바뀌었어요 — 허브 지시-1112/낮밤-전환-마트/전환.mjs 를 고친 뒤 다시 복사하고 이 값을 맞춰요');
+    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), '5fc107499709327dfd539a0322755c43b5af5d3fe406657e5fd8c7efa5cef684', '마트 사본(mart/day-night.js)이 바뀌었어요 — 허브 지시-1112/낮밤-전환-마트/전환.mjs 를 고친 뒤 다시 복사하고 이 값을 맞춰요');
     const hub = process.env.GK_TOGGLE_SRC || path.resolve(ROOT, '../../../../2026-10-24/w/outputs/지시-1112/낮밤-전환-마트/전환.mjs');
     if (fs.existsSync(hub)) assert.ok(copy.equals(fs.readFileSync(hub)), '허브 원본과 마트 사본이 달라요');
     const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ts = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
@@ -1246,7 +1246,7 @@ await test('내 글 넣기 상태: 켬 · 글을 이 브라우저에 기억 · �
     delete globalThis.localStorage;
 });
 
-// ── 11-11 남은 칸(Opus 5.5): 형광펜 모양 · 속마음 · 강조 · 취소선 · 이름 글자 · 대사 줄 · 틀 넘침 손봄 ──
+// ── 11-11 남은 칸: 형광펜 모양 · 속마음 · 강조 · 취소선 · 이름 글자 · 대사 줄 · 틀 넘침 손봄 ──
 await test('남은 칸: 형광펜 모양 · 기울기 = 테마 markerGeometry 와 같은 값(펜 자국 · 직사각형 · 알약) · 속마음 · 강조 · 취소선 · 이름 글자 규칙(fill 짝) · 테마 스타일에서 속마음 · 강조 · 취소선 · 이름도 읽기 · 견본 글 한 줄 em · strong · s 가 글 칸', () => {
     // 테마 apply.js 값(두께 54 · 일직선 → 30~84 · 대각선 → 왼 38 오른 20 · 아래 → 띠 아랫변 96)
     const svgOf = t => [...String(t).matchAll(/data:image\/svg\+xml,([^"]+)/g)].map(m => decodeURIComponent(m[1])).join('\n');

@@ -1,4 +1,4 @@
-// 원본 블루레몬에이드 1.1.2(codex/release-112)의 src/log-copy-builtin.gen.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」 · 「HTML 복사」가 테마 로그 복사와 같은 모양 · 같은 붙여 넣기 꼴로 내려고 써요)
+// 원본 블루레몬에이드 1.1.2 의 src/log-copy-builtin.gen.js 를 복사한 것이에요 · 고치지 말고 다시 복사해요(글꾸 마트 「🍽️ 시식하기」 · 「HTML 복사」가 테마 로그 복사와 같은 모양 · 같은 붙여 넣기 꼴로 내려고 써요)
 // 생성물 — tools/mart/build-builtin.mjs 가 글꾸 마트 「심플」 그림체 자료(convert-sian 산출물)에서 만들어요. 고치지 말고 다시 만들어요.
 // 테마 내장 심플 글꾸(틈 템플릿) — log-copy-presets.js 가 받은 글꾸와 같은 길(drawTemplate)로 그려요. was: 같은 주제의 옛 내장 컨셉 id(1.0.1 시험판에서 고른 모양 옮김)
 export const BUILTIN_TEMPLATES = [

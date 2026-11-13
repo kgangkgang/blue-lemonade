@@ -417,7 +417,7 @@ function entryOf(state) {
     const item = state.item, own = receipt(state);
     const base = { kind: item.kind, id: own?.id || item.id, key: `${item.kind}:${own?.id || item.id}`, name: own?.name || item.name || item.label, label: KIND_LABEL[item.kind], emoji: item.emoji || (item.kind === 'geulkku' ? '📝' : '🖼️'), ...((src => (src.length ? { src } : {}))(sourcesOf(item))), ...(item.kind === 'geulkku' && item.icon && !String(item.icon).startsWith('data:') ? { icon: `data/geulkku/${item.icon}` } : {}), href: asset(`${item.kind === 'geulkku' ? 'geulkku' : 'frames'}/#${item.id}`) };   // 마트 밖(지니)에서 담아도 제 마트로 돌아가요
     if (own) return { ...base, receipt: own, bytes: JSON.stringify(own).length, bg: item.colors?.bg };
-    // 그림 액자(코덱스 컬렉션): 받기 그림 주소만 두고 받는 순간 PNG 로 만들어요(frameReceipt)
+    // 그림 액자(마트 팩 컬렉션): 받기 그림 주소만 두고 받는 순간 PNG 로 만들어요(frameReceipt)
     if (item.full) return { ...base, art: item.full, mask: item.mask, ratio: item.ratio, thumb: item.thumb, bytes: item.bytes || 0, ...(state.view ? { view: { ...state.view } } : {}) };
     return { ...base, file: item.file, thumb: item.thumb, bytes: item.bytes || 0 };
 }

@@ -2,7 +2,7 @@
 //   설계: W/outputs/지시-1110/심플-새틀-이식/이식-설계.md 1절 · 틀-계약.md · 보고 마트-길닦기.md
 //   ① 캐릭터 색 다시 칠하기(toneSimple) — 틀 <style> 의 「색 블록」(화자 색 + 소품 톤)만 갈아 끼우고, 낮 · 밤은 뿌리 클래스만 바꿔요.
 //      화자 색: 그 화자의 색이 틀을 만든 색 그대로면 시안 규칙을 한 글자도 안 바꾸고(사용자가 합격시킨 색), 다른 색이면 시안 식(HSL 명도 맞춤 4.6 · 띠 rgba .18)으로 만들어요.
-//      소품 톤: 테마와 같은 톤 사다리(lib/log-copy/shared/char-tone.js toneLadder — 테마 codex/tone-ladder-113 사본 · 시안 tones 와 같은 값).
+//      소품 톤: 테마와 같은 톤 사다리(lib/log-copy/shared/char-tone.js toneLadder — 테마 톤 사다리 판(4564922f) 사본 · 시안 tones 와 같은 값).
 //   ② 「HTML 복사」(simpleReady) — 틀 <style> 과 마트가 넣는 규칙(코멘트 빈칸 · 16px 간격 · 그림 규칙)을 <style> 하나로 합쳐 감싸는 div 첫 자식으로 · 고칠 자리에 「✎」 주석.
 //   ③ 카드 미리보기 상태(peekSimple) — 처음엔 닫힌 틀은 미리보기만 열린 판(details open + data-bl-peek). 복사 글은 mart.js shutPeek 가 원래(닫힌) 상태로.
 //   11-11 사용자 「마트에 옛날것들 다 없애라」 — 글꾸 마트 목록(data/geulkku/index.json)은 이제 심플 새 틀만이에요(tools/geulkku-simple.mjs 가 써요).
