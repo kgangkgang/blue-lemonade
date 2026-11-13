@@ -121,6 +121,12 @@ let stageBig = false;   // 1.1.6 폰 화면 미리보기 크기 — 작게(화�
 const PHONE = '(max-width: 600px)';   // 1.1.6 폰 화면 규칙이 걸리는 폭(STYLE 의 @media 와 같아요)
 const MART_GEULKKU = `${PAGES}/mart/geulkku/`;   // 1.1.8 글꾸를 얻는 곳(1.1.7 부터 내장 글꾸 없이 마트 → 「테마용 복사」 → 여기 붙여 넣기 하나)
 
+// 「전환 넣기」(복사 글에 해 · 달 전환 단추 — log-copy-flip.js) 켬끔 기억: 이 기기에만(localStorage) — 설정 꼴 · 시작 묶음은 그대로예요
+const FLIP_KEY = 'bl-lc-flip';
+const flipSaved = () => { try { return globalThis.localStorage?.getItem(FLIP_KEY) === '1'; } catch { return false; } };
+const flipSave = (on) => { try { if (on) globalThis.localStorage?.setItem(FLIP_KEY, '1'); else globalThis.localStorage?.removeItem(FLIP_KEY); } catch { /* 사생활 모드 · 막힘 — 이번 창에만 */ } };
+const FLIP_NONE = '이 글꾸는 낮 · 밤 두 판이 없어요';   // log-copy-flip.js FLIP_NONE 과 같은 글(조각을 받기 전에도 보여요)
+
 /** @param {object} model captureLog() 결과 */
 export async function openLogSheet(model) {
     if (!model?.messages?.length) { toastr.warning('글을 다시 골라 주세요.', '', { timeOut: 1800 }); return; }
@@ -131,6 +137,10 @@ export async function openLogSheet(model) {
     // 1.1.8 「블루레몬 추천」 기본 글꾸(log-copy-picks.js) — 창을 열 때만 받아요(따로 조각 · 못 받거나 못 풀면 추천 줄 없이 예전 그대로)
     let pk = { picks: [], mod: null };
     try { const mod = await import('./log-copy-picks.js'); pk = { picks: await mod.loadPicks(), mod }; } catch { /* 추천 없이 */ }
+    // 「전환 넣기」 조각(log-copy-flip.js) — 켜 둔 사람만, 창을 열 때나 처음 켤 때 받아요(못 받으면 전환 없이 예전 그대로)
+    let flipMod = null;
+    const needFlip = async () => { if (!flipMod) { try { flipMod = await import('./log-copy-flip.js'); } catch { /* 전환 없이 */ } } return flipMod; };
+    if (flipSaved()) await needFlip();
     const pickOn = id => !!pk.mod && pk.mod.pickIds(pk.picks, store().custom).includes(id);   // 보이는 추천 글꾸인가(마트에서 같은 틀을 받아 뒀으면 받은 쪽이 이겨요)
     const catOf = id => (pickOn(id) ? pk.mod.PICK_CATEGORY.id : categoryOf(id));
     const catList = pk.picks.length ? [CATEGORIES[0], pk.mod.PICK_CATEGORY, ...CATEGORIES.slice(1)] : CATEGORIES;   // 「기본」 바로 뒤
@@ -155,6 +165,7 @@ export async function openLogSheet(model) {
         folds: {}, allCats: false, allShapes: false,   // 1.1.6 폰 화면: 펼친 갈래 · 분류 · 틀 줄 전부 보기(이번 창에만)
         pickOpen: null,   // 1.1.8 판 고르기를 펼친 추천 묶음(이번 창에만)
         ed: { on: false, shape: null, texts: new Map(), orig: new Map(), step: null },   // 11-12 「글 고치기」 켬 · 소품 안 고친 글(그 틀에만) · 고른 소품 단계(이번 창에만)
+        flip: !!flipMod, flipPlan: null, flipDrawn: false, flipLive: false, flipWhy: false,   // 「전환 넣기」 켬 (켜 둔 사람은 위에서 조각을 받았어요 — 못 받았으면 끈 채) · 막 그린 글의 전환 계획(못 다는 글꾸면 null) · 계획을 세워 봤나 · 미리보기에 알약이 얹혔나 · 못 다는 까닭 줄을 눌러 열었나
     };
     // 1.0.8 비워 둔 머리 칸(깡통 · 모델 · 프롬프트 알약 · 날짜 · 제목)은 다음에 열어도 빈 채로 — 전엔 열 때마다 지금 연결 이름으로 다시 채워 지운 알약이 돌아왔어요(사용자 「없애 뒀으면 없는 상태로 시작」)
     for (const key of s.blank || []) state.fields[key] = '';
@@ -180,7 +191,8 @@ export async function openLogSheet(model) {
             <div class="bl-lc-band bl-lc-empty" data-lc-empty hidden><span>아직 받은 글꾸가 없어요. <b>글꾸 마트</b>에서 마음에 드는 틀을 크게 보고 <b>테마용 복사</b>를 누른 뒤, 여기에 붙여 넣어 받아요.</span><span class="bl-lc-band-go"><a class="salty-btn" href="${esc(MART_GEULKKU)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트 열기</span></a><button type="button" class="salty-btn" data-lc="paste"><i class="fa-solid fa-paste" aria-hidden="true"></i><span>붙여 넣기</span></button></span></div>
             <div class="bl-lc-mine" data-lc-mine hidden></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
-            <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode salty-mode-switch" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
+            <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode salty-mode-switch" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><button type="button" class="bl-lc-chip bl-lc-flip" data-lc="flip" aria-pressed="false" aria-label="낮 · 밤 전환 넣기"><i class="fa-regular fa-sun" aria-hidden="true"></i><i class="fa-regular fa-moon" aria-hidden="true"></i><span>전환 넣기</span></button><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
+            <div class="bl-lc-note bl-lc-flip-note" role="status" data-lc-flip-note hidden></div>
             <div class="bl-lc-easy" role="group" aria-label="조절 — 간편 · 세밀" data-lc-easy hidden></div>
             <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
             <div class="bl-lc-tools bl-chip-row" role="group" aria-label="글 도구"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button><button type="button" class="bl-lc-chip" data-lc="wrap" aria-pressed="false" title="본문 줄바꿈 — 켜면 단어 단위 · 끄면 글자 단위(기본)"><i class="fa-solid fa-text-width" aria-hidden="true"></i><span>단어 단위 줄바꿈</span></button></div>
@@ -674,14 +686,34 @@ export async function openLogSheet(model) {
             : `<span><b>「${name}」 글꾸는 이제 없어요.</b> 마트에도 새 판이 없어 깡통 로그로 보여 드려요.</span>`;
         band.insertAdjacentHTML('beforeend', '<button type="button" class="salty-btn bl-lc-icon bl-lc-band-x" data-lc="retired-x" aria-label="안내 닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>');
     };
+    // 「전환 넣기」 켬끔(밝기 옆) — 낮 · 밤 두 판 규칙이 다 있는 갈래(블루레몬 추천 · 받은 심플 글꾸 · 기본 글꾸 새 틀)에서만 켜져요. 그린 뒤 flipPlan 이 한 번 더 확인해요(log-copy-flip.js)
+    //   못 다는 글꾸(깡통 로그 틀 · 에이드 색 틀 · 옛 마트 글꾸 · 붙여 넣은 HTML)와 깡통 글 하나 크기를 넘는 글은 흐리게 + 까닭 한 줄. 색을 뒤집어 지어내지 않아요.
+    const flipCan = () => simpleOn() || basicOn();
+    const flipOn = () => state.flipLive && !!state.flipPlan && !!flipMod;   // 지금 미리보기에 알약이 얹혀 있고 복사 글에 전환이 실리는가
+    const flipFull = text => (flipOn() ? flipMod.flipCopy(text) ?? text : text);   // 내려받기 문서에도 같은 전환(문서 글 통째로 넘겨도 틀 뿌리를 찾아 달아요)
+    const drawFlip = () => {
+        const chip = $('[data-lc="flip"]'), note = $('[data-lc-flip-note]'), plan = state.flipPlan;
+        const none = !flipCan() || (state.flipDrawn && !plan), over = !none && !!plan?.over, off = none || over;
+        const on = state.flip && !off;
+        if (!off) state.flipWhy = false;
+        const why = none ? FLIP_NONE : over ? flipMod.flipNote(plan) : '';
+        chip.setAttribute('aria-pressed', String(on));
+        chip.setAttribute('aria-disabled', String(off));
+        chip.title = off ? why : '복사 글에 해 · 달 단추를 넣어요 — 읽는 사람이 낮 · 밤을 바꿔 봐요';
+        const text = off ? (state.flip || state.flipWhy ? why : '') : on && plan ? flipMod.flipNote(plan) : '';
+        note.hidden = !text;
+        note.textContent = text;
+        $('[data-lc-colors]').classList.toggle('bl-lc-flip-idle', off && !state.flip && !state.flipWhy);   // 폰: 쓸 수 없고 켜 두지도 않았으면 줄을 늘리지 않아요
+    };
     // ② 색 칩 — 테마 「색」 화면의 에이드 카드(.salty-pal) 그대로, 작게
     const drawColors = keepFocus(() => {
         const mode = modeOf(state.palette);
         const plain = !!custom() && !simpleOn();   // 내 글꾸는 에이드 색 칩이 없어요(1.1.4 받은 심플 글꾸는 밝기만)
-        $('[data-lc-colors]').hidden = plain;
+        $('[data-lc-colors] > .bl-lc-mode').hidden = plain;   // 내 글꾸(옛 마트 글꾸 · 붙여 넣은 HTML)는 밝기 · 색 칩이 없어요 — 이 줄에는 「전환 넣기」(흐림)만 남아요
         $('[data-lc-hd-mode]').hidden = plain;   // 1.1.6 폰: 밝기는 머리 줄로(색 칩 줄에는 에이드 카드만)
-        $('[data-lc-colors]').classList.toggle('bl-lc-pal-off', toneOn() || basicOn() || simpleOn());
-        if (plain) return;
+        $('[data-lc-colors]').classList.toggle('bl-lc-pal-off', plain || toneOn() || basicOn() || simpleOn());
+        drawFlip();
+        if (plain) { $('[data-lc-pals]').hidden = true; $('[data-lc-pals]').replaceChildren(); return; }
         for (const button of dialog.querySelectorAll('[data-lc-mode]')) button.setAttribute('aria-pressed', String(button.dataset.lcMode === mode));
         // 1.1.3 깡통 로그 틀 묶음은 색 칩을 숨기고 밝기(화이트 · 나이트)만 남겨요 — 틀 색은 대사색에서 나와요
         const tn = toneOn();
@@ -742,14 +774,22 @@ export async function openLogSheet(model) {
             const known = castLetters(speakerLetters(shown.model, { main: mine.frame.main, second: mine.frame.second, lookup }), mine.frame, mine.set?.themeCast).main != null;
             if (known !== (state.castKnown !== false)) { state.castKnown = known; drawEasy(); }
         }
-        if (mine?.frame) { needSet(); html = renderLog(shown.model, { simple: mine, setMod, caps: capRow(mine.frame.key), mode: toneMode, lookup, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}) }, names: !s3.namesOff, lemonLink: !!s3.lemonLink, rows: true }); }   // 1.1.4 받은 심플 글꾸(제목 끄기는 칸을 비워서) · 1.1.8 rows: 고친 글을 거둘 줄 표지(복사 때 걷어요)
+        let again = null;   // 같은 글을 다른 밝기로 한 번 더 그리는 길(「전환 넣기」가 낮 판 · 밤 판을 견줘요) — 받은 심플 글꾸 · 기본 글꾸 새 틀만
+        if (mine?.frame) { needSet(); again = mode => renderLog(shown.model, { simple: mine, setMod, caps: capRow(mine.frame.key), mode, lookup, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}) }, names: !s3.namesOff, lemonLink: !!s3.lemonLink, rows: true }); html = again(toneMode); }   // 1.1.4 받은 심플 글꾸(제목 끄기는 칸을 비워서) · 1.1.8 rows: 고친 글을 거둘 줄 표지(복사 때 걷어요)
         else if (rawOf(mine)) html = mine.html;
-        else if (basicOn()) html = renderLog(shown.model, { shape: state.shape, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}), ...(s3.dateOff ? { date: '' } : {}) }, images: shown.rewriteImages(state.images), names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup, info: s3.basicInfo, height: s3.basicHeight, marks: true });   // 1.1.3 기본 글꾸 새 틀(제목 · 날짜 끄기는 칸을 비워서 — 틀이 그 줄째 빼요)
+        else if (basicOn()) { again = mode => renderLog(shown.model, { shape: state.shape, fields: { ...fields, ...(s3.titleOff ? { title: '' } : {}), ...(s3.dateOff ? { date: '' } : {}) }, images: shown.rewriteImages(state.images), names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode, lookup, info: s3.basicInfo, height: s3.basicHeight, marks: true }); html = again(toneMode); }   // 1.1.3 기본 글꾸 새 틀(제목 · 날짜 끄기는 칸을 비워서 — 틀이 그 줄째 빼요)
         else html = renderLog(shown.model, { shape: state.shape, colors: state.shape === 'plain' ? null : colorsOf(paletteFor(state.shape, state.palette)), ui, fields: drawFields, images: shown.rewriteImages(state.images), screen: tokensOf(nowPalette()), template: inkTemplate() ?? mine, names: !s3.namesOff, lemonLink: !!s3.lemonLink, mode: toneMode, lookup });
         if ((!mine || mine.template) && !toneNow && !basicOn()) { const full = html; html = fitBare(full, bareLog(full, { top: s3.topOff, bottom: s3.bottomOff, drop })); }   // 1.0.7 위 글 · 아래 글 · 칸 빼기 → 글을 덮게 된 장식 걷기
         // 1.1.3 깡통 로그 틀 묶음: 붙인 뒤 덮일 글자색(바탕 대비 4.6 아래)은 그릴 때 밝기만 맞춰요 — 미리보기와 복사 글이 같게
         if (toneNow) html = siteCheck(html, { mode: toneMode }).html;
         html = wrapHtml(html, store().wrap);   // 11-13 틀 <style> 의 본문 줄바꿈을 고른 값으로(미리보기 = 복사 글) — 제목 · 이름표 · 소품 글자는 틀 그대로
+        // 「전환 넣기」: 켜 뒀고 두 판이 있는 갈래면 반대 밝기로 한 번 더 그려(줄바꿈도 같은 값으로) 견주고(뿌리 class 만 달라야 해요) 전환 계획을 세워요 — 못 세우면 전환 없이 예전 그대로
+        state.flipPlan = null; state.flipDrawn = false; state.flipLive = false;
+        if (state.flip && flipMod && again) {
+            try { state.flipPlan = flipMod.flipPlan({ now: html, other: wrapHtml(again(toneMode === 'light' ? 'dark' : 'light'), store().wrap), mode: toneMode, full: liftForCopy(mine?.frame ? stripRowMarks(html) : html, motionStyleFor(html)).full }); } catch { state.flipPlan = null; }
+            state.flipDrawn = true;
+        }
+        drawFlip();
         $('[data-lc-pick]').hidden = !(rawOf(mine) && (state.picking || !mine.slot));
         // 1.2.0 눌러야 글이 나오는 소품(닫힌 채 시작하는 details): 미리보기에서 눌러 연 것은 「미리보기로만 연 것」(data-bl-peek)이라 복사 글에서는 닫힌 채로 가고,
         //   조절 · 밝기로 다시 그려도 같은 틀이면 연 채로 둬요(전엔 칩을 누를 때마다 글이 도로 접혀 소품을 또 눌러야 했고, 연 채 복사하면 붙인 글이 열린 채 시작했어요)
@@ -854,6 +894,16 @@ export async function openLogSheet(model) {
                 const sel = doc.getSelection(); sel.selectAllChildren(cell); sel.collapseToEnd();
             }, true);
             doc.addEventListener('focusout', () => setTimeout(drawHist, 0));
+            // 「전환 넣기」: 틀 앞에 해 · 달 알약 한 줄(복사 글과 같은 모양 · 자리) — 누르면 뿌리의 낮밤 class 만 바꿔 반대 판을 미리 봐요. 살아 있는 글은 그대로라 고친 글 거두기 · 글 고치기 · 되돌리기는 예전 길이에요
+            if (state.flipPlan && !state.flipPlan.over && editRoot(doc)) {
+                flipMod.flipArm(doc, editRoot(doc), state.flipPlan);
+                state.flipLive = true;
+                doc.addEventListener('click', (event) => {
+                    if (!event.target?.closest?.('[data-bl-dn] .gkt-t')) return;
+                    event.preventDefault(); event.stopPropagation();
+                    if (flipOn() && editRoot(doc)) flipMod.flipPress(doc, editRoot(doc), state.flipPlan);
+                }, true);
+            }
             armEdit(doc);
             resetHist(doc);
         };
@@ -867,9 +917,11 @@ export async function openLogSheet(model) {
         const doc = frame.contentDocument;
         if (!doc?.body) return '';
         // 글자색 굳히기: 미리보기에서 고친 글 · 숨긴 글 · 내 글꾸까지 (붙인 곳의 바탕 · 글자색 · <style> 이 무엇이든 안 보이는 글자 0 — 사용자 규칙) — pinColors
-        const live = basicOn() ? null : [...doc.body.querySelectorAll('[style], strong, em, b, i, s, span')].map(el => [el, el.getAttribute('style')]);   // 1.2.0 굳힌 색은 사본에만 남겨요 — 살아 있는 미리보기에 남으면 「글 고치기」가 굵게 · 기울임 든 줄을 칸으로 못 잡았어요
-        if (!basicOn()) pinColors(doc.body, frame.contentWindow);   // 1.1.3 기본 글꾸 새 틀은 글자색을 틀 <style> 이 color + fill 로 맡아요(인라인으로 굳히면 탭 · 도장 누름의 글자색 바뀜이 멈춰요)
+        const pin = !basicOn() && !flipOn();   // 전환을 싣는 글은 글자색을 인라인으로 굳히지 않아요 — 굳히면 읽는 사람이 밤 판으로 바꿔도 글자가 낮 색 그대로예요(색은 틀 <style> 의 낮 · 밤 규칙이 맡아요 · 기본 글꾸 새 틀과 같은 길)
+        const live = !pin ? null : [...doc.body.querySelectorAll('[style], strong, em, b, i, s, span')].map(el => [el, el.getAttribute('style')]);   // 1.2.0 굳힌 색은 사본에만 남겨요 — 살아 있는 미리보기에 남으면 「글 고치기」가 굵게 · 기울임 든 줄을 칸으로 못 잡았어요
+        if (pin) pinColors(doc.body, frame.contentWindow);   // 1.1.3 기본 글꾸 새 틀은 글자색을 틀 <style> 이 color + fill 로 맡아요(인라인으로 굳히면 탭 · 도장 누름의 글자색 바뀜이 멈춰요)
         const body = doc.body.cloneNode(true);
+        if (flipOn()) flipMod.flipStrip(body, state.flipPlan);   // 미리보기 알약 줄은 걷고 틀은 처음 판으로 — 전환은 맨 끝(copyPack)에서 공용 함수가 달아요
         if (live) { const had = new Map(live); for (const el of doc.body.querySelectorAll('[style]')) { const was = had.get(el); if (was === undefined || was === null) el.removeAttribute('style'); else if (el.getAttribute('style') !== was) el.setAttribute('style', was); } }
         // 1.0.9+ 미리보기로만 펼친 상자(닫힌 채 시작하는 틀 · data-bl-peek)는 복사 글에서 다시 닫아요 — 붙인 곳에서는 닫힌 채 시작해 누르면 열려요
         for (const box of body.querySelectorAll('details[data-bl-peek]')) { box.removeAttribute('open'); box.removeAttribute('data-bl-peek'); }
@@ -881,7 +933,7 @@ export async function openLogSheet(model) {
     };
 
     /** 1.2.0 붙일 글 한 벌 — html: 서식(text/html) · code: 글(text/plain · 「HTML」 칸 · 「코드 보기」 칸) · 「HTML 복사」와 「코드 보기」가 같은 글을 써요 */
-    const copyPack = () => {
+    const packPlain = () => {
         const shown = result();
         if (!shown) return null;
         // 1.0.1 글꾸 움직임 · 누르면 반응: 붙인 곳엔 테마 CSS 가 없어서 그 글꾸가 쓰는 키프레임만 맨 앞 <style> 로
@@ -891,6 +943,13 @@ export async function openLogSheet(model) {
         // 1.0.1 서식(text/html)은 한 줄 그대로, 글(text/plain — HTML 칸 · 코드 편집기에 붙는 쪽)은 사람이 고치기 쉬운 꼴(줄 나눔 · 주석, 모양은 같아요 — log-copy-pretty.js) · 맨 앞 <style> 은 안내 주석 바로 아래
         const code = withCommentSlots(prettyLogHtml(insertHead(copyBody(result({ marks: true })).html, lifted.head), { label: PRESETS.find(p => p.id === state.shape)?.label ?? custom()?.name ?? '', head: '' }));
         return { html, code };
+    };
+    // 「전환 넣기」: 다 만든 글 두 벌에 같은 전환을 달아요(둘 다 달릴 때만 — 한쪽만 달린 글은 내지 않아요) · 꺼 두면 위에서 만든 글 그대로예요
+    const copyPack = () => {
+        const pack = packPlain();
+        if (!pack || !flipOn()) return pack;
+        const a = flipMod.flipCopy(pack.html), b = flipMod.flipCopy(pack.code);
+        return a && b ? { html: a, code: b } : pack;
     };
     const mdText = () => {
         const fromPreview = frame.contentDocument ? previewModel(frame.contentDocument) : null;   // 미리보기에서 고친 글 · 숨긴 글까지
@@ -1063,6 +1122,15 @@ export async function openLogSheet(model) {
         if (target.dataset.lcMode) { state.palette = paletteVariant(paletteFamily(state.palette), target.dataset.lcMode); state.picked = true; drawColors(); draw(); return; }
         switch (target.dataset.lc) {
             case 'close': dialog.close(); break;
+            case 'flip': {   // 「전환 넣기」 켬끔 — 흐린 채(못 다는 글꾸 · 너무 큰 글)로 누르면 까닭 줄을 열고 닫아요(켜 둔 채였으면 꺼요)
+                if (target.getAttribute('aria-disabled') === 'true') { if (state.flip) { state.flip = false; flipSave(false); state.flipWhy = true; } else state.flipWhy = !state.flipWhy; drawFlip(); break; }
+                const next = !state.flip;
+                if (next && !(await needFlip())) { toastr.warning('전환 조각을 받지 못했어요 — 잠시 뒤 다시 켜 보세요', '로그 복사', { timeOut: 4000 }); break; }
+                if (!dialog.isConnected) return;
+                state.flip = next; flipSave(next);
+                draw();
+                break;
+            }
             case 'cats-all': state.allCats = !state.allCats; drawShapes(); break;   // 1.1.6 폰: 분류 탭 전부 보기
             case 'shapes-all': {   // 1.1.6 폰: 틀 줄 「+n」 · 「접기」
                 const held = document.activeElement === target;
@@ -1174,7 +1242,7 @@ export async function openLogSheet(model) {
                 // 1.0.7 「⬇ 내려받기」(글꾸 마트 시식 창과 같은 꼴) — 복사한 HTML 을 따로 열어도 같은 모양
                 const heading = store().titleOff ? '' : view().rewriteFields({ title: fieldOf('title') }).title;   // 1.1.8 이름 숨김 · 바꾸기를 거친 제목(전엔 채팅 제목 그대로라 이름이 문서 제목으로 샜어요) · 제목을 껐으면 틀 이름
                 const doc = `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(String(heading ?? '').trim() || name)}</title>\n</head>\n<body style="margin:0;padding:16px;background:${esc(pageBg())};-webkit-text-size-adjust:100%">\n${liftForCopy(shown, motionStyleFor(shown)).full}\n</body>\n</html>\n`;
-                const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([doc], { type: 'text/html' })), download: `로그-${String(name).replace(/[\\/:*?"<>|#%]+/g, '').replace(/\s+/g, '-')}.html`, hidden: true });
+                const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([flipFull(doc)], { type: 'text/html' })), download: `로그-${String(name).replace(/[\\/:*?"<>|#%]+/g, '').replace(/\s+/g, '-')}.html`, hidden: true });
                 document.body.append(a); a.click();
                 setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
                 toastr.success('받았어요 — 열면 복사한 것과 같은 모양이에요', '', { timeOut: 1800 });
@@ -1377,6 +1445,12 @@ const STYLE = `
 .bl-lc-mode { display:flex; flex:none; gap:4px; padding:4px; border-radius:12px; background:var(--salty-fill-shade, var(--salty-shade)); }
 .bl-lc-mode button { display:grid; place-items:center; width:38px; height:34px; margin:0; padding:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font-size:var(--bl-deco-glyph-17, 17px); cursor:pointer; }
 .bl-lc-mode button[aria-pressed="true"] { background:var(--bl-ui-pick-face, var(--salty-tint-18)); color:var(--bl-ui-pick-ink, var(--salty-accent)); }   /* 1.2.2 공용 밝기 스위치(.salty-mode-switch — 설정 › 색의 해 · 달)와 같은 꼴: 38×34 · 그림 17 · 고른 칸 = 옅은 고른 면 + 색 그림 */
+.bl-lc-mode[hidden] { display:none; }
+.bl-lc-colors > .bl-lc-flip { margin-left:8px; gap:3px; }
+.bl-lc-mode[hidden] + .bl-lc-flip { margin-left:0; }
+.bl-lc-flip[aria-pressed="true"] > i { color:var(--salty-accent-ink, var(--salty-accent)); }
+.bl-lc-chip[aria-disabled="true"] { opacity:.5; cursor:default; }
+.bl-lc-flip-note { padding:0 16px; font-size:12px; line-height:1.4; }
 .bl-lc .bl-lc-pals .salty-pal { flex:none; width:96px; gap:4px; padding:4px 4px 6px; margin:4px 0; cursor:pointer; }
 .bl-lc .bl-lc-pals .salty-pal.on { box-shadow:0 0 0 2px var(--salty-bg), 0 0 0 4px var(--salty-accent); }
 .bl-lc .bl-lc-pals .salty-pal-page { padding:6px 8px; font-size:12px; }
@@ -1471,14 +1545,16 @@ const STYLE = `
   .bl-lc-head { gap:8px; padding:4px 6px 4px 16px; }   /* 1.2.2 머리줄 간격 8(철칙 §7) · 밝기 스위치(38 높이)가 들어가도 줄 높이는 그대로 46 */
   .bl-lc-head h3 { flex:1; }
   .bl-lc .bl-lc-mode.bl-lc-hd-mode { display:flex; gap:2px; padding:2px; border-radius:10px; }
-  .bl-lc .bl-lc-mode.bl-lc-hd-mode[hidden], .bl-lc-colors > .bl-lc-mode, .bl-lc-colors.bl-lc-pal-off { display:none; }
+  .bl-lc .bl-lc-mode.bl-lc-hd-mode[hidden], .bl-lc-colors > .bl-lc-mode, .bl-lc-colors.bl-lc-pal-off.bl-lc-flip-idle, .bl-lc-flip-idle > .bl-lc-flip { display:none; }
   .bl-lc-colors { padding-left:0; }
   .bl-lc-colors .bl-lc-pals { padding-left:16px; }
+  .bl-lc-colors > .bl-lc-flip { margin-left:16px; }
+  .bl-lc-colors:not(.bl-lc-flip-idle) .bl-lc-pals { padding-left:8px; }
   /* 차례: 분류 → 틀 → 미리보기(붙박이) → 색 · 조절 → 「로그 꾸밈」 갈래 → 숨기기 안내 */
   .bl-lc-scroll { gap:8px; padding:0 0 14px; }
   .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-mine { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
   .bl-lc-band.bl-lc-empty { order:2; } .bl-lc-band[data-lc-retired] { margin-top:8px; }   /* 1.1.8 빈 안내는 틀 줄 바로 아래 · 옛 글꾸 띠는 맨 위 */
-  .bl-lc-colors { order:6; } .bl-lc-easy { order:7; } .bl-lc-inks { order:8; } .bl-lc-sep { order:9; } .bl-lc-folds { order:10; } .bl-lc-hint { order:11; } .bl-lc-scroll > .bl-lc-more { order:12; }
+  .bl-lc-colors { order:6; } .bl-lc-flip-note { order:6; } .bl-lc-easy { order:7; } .bl-lc-inks { order:8; } .bl-lc-sep { order:9; } .bl-lc-folds { order:10; } .bl-lc-hint { order:11; } .bl-lc-scroll > .bl-lc-more { order:12; }
   .bl-lc-tools { display:none; }
   .bl-lc:not(.bl-lc-less) .bl-lc-scroll > .bl-lc-more { display:none; }
   .bl-lc.bl-lc-less :is(.bl-lc-tl, .bl-lc-cr-more, .bl-lc-sep, .bl-lc-folds, .bl-lc-hint) { display:none; }

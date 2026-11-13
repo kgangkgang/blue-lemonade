@@ -620,7 +620,9 @@ def validate(files, kind):
             continue
         if name == 'tools/build-bundle.mjs':
             continue   # 1.0.0 묶음 도구는 소스 고쳐 쓰기용 import('./x') 꼴 문자열을 품어요(실제 import 아님) — 11-03 출하 관문
-        for spec in re.findall(r'(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)[\'"](\.[^\'"]+)[\'"]', content.decode('utf-8')):
+        # 1.3.0 줄 전체가 // 주석인 줄은 빼고 봐요 — 머리 주석의 쓰는 법 보기(import … from './x')가 실제 import 로 읽혀 막혔어요(주석은 import 가 아니라서 빠진 파일을 가리지 않아요)
+        code_text = re.sub(r'(?m)^[ \t]*//.*$', '', content.decode('utf-8'))
+        for spec in re.findall(r'(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)[\'"](\.[^\'"]+)[\'"]', code_text):
             target = posixpath.normpath(posixpath.join(posixpath.dirname(name), spec.split('?')[0]))
             if not target.startswith('../'):
                 require(target in files, f'{name} imports missing file {target}')
