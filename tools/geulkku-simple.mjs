@@ -24,7 +24,7 @@ const { AUD } = createRequire(import.meta.url)('./song-templates.cjs');
 const sf = await import(pathToFileURL(path.join(ROOT, 'mart', 'simple-frames.js')).href);
 const { themeTakeable } = await import(pathToFileURL(path.join(ROOT, 'mart', 'theme-take.js')).href);   // 11-12 테마가 못 받는 틀 → 목록 nt(짧은 까닭)
 // 11-12 밤 테마 1.2.0 이 받는 틀을 늘려서(417 중 399) 목록의 nt 는 테마 받기 검사를 직접 돌려 뜬 고정 자료에서 써요(tools/theme-takeable-pull.mjs <테마 폴더> 로 다시 떠요).
-//   마트 사본(mart/theme-take.js — 1.1.x 때 옮긴 판정)은 내 글꾸(붙여 넣은 남의 HTML)와 고정 자료에 아직 없는 새 틀에만 써요.
+//   마트 사본(mart/theme-take.js — 11-13 테마 1.2.0 판정으로 다시 옮김 · 고정 자료와 417틀 같음)은 내 글꾸(붙여 넣은 남의 HTML)와 고정 자료에 아직 없는 새 틀에만 써요.
 const TAKE_FILE = path.join(ROOT, 'tools', 'theme-takeable.json');
 export const TAKE = fs.existsSync(TAKE_FILE) ? JSON.parse(fs.readFileSync(TAKE_FILE, 'utf8')) : { ok: [], no: {} };
 /** 테마가 건너뛸 때 보여 주는 글 → 마트 꼬리표에 적는 짧은 까닭 */

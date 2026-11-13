@@ -3,6 +3,7 @@
 //   node tools/theme-takeable-pull.mjs <테마 저장소 폴더> [--check] [--out <파일>]
 //   마트의 지금 조각(mart/data/geulkku — 꾸러미에 싣는 preview 그대로)을 틀마다 checkItem 에 넣어 받음 · 못 받음(까닭 글)을 적어요.
 //   생성기(tools/geulkku-simple.mjs)는 이 자료로 목록의 nt(「테마 아직 못 받음」 꼬리표 · 「테마용 복사」 막힘)를 써요 — 테마 판이 받는 틀을 늘리면 이 도구만 다시 돌리고 자료를 다시 만들어요.
+//   11-13 마트 사본(mart/theme-take.js) 맞대기 몫도 같이 떠요: samples(tools/theme-take-test.mjs sampleSet 견본의 테마 답) · code(옮긴 판정 선언의 지문).
 //   --check: 쓰지 않고 지금 자료와 같은지만(다르면 1). 테마 저장소는 읽기만 해요.
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath, pathToFileURL } from 'node:url'; import { execFileSync } from 'node:child_process';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), DIR = path.join(ROOT, 'mart/data/geulkku');
@@ -20,8 +21,12 @@ for (const it of index.items) {
     const r = checkItem({ kind: 'geulkku-simple', v: 1, id: it.id, key, name: it.name, emoji: it.emoji, html, set: { blGeulkku: 2 } });
     if (r.item) ok.push(it.id); else no[it.id] = r.reason;
 }
+// 11-13 마트 사본(mart/theme-take.js) 맞대기 몫 — 일부러 짠 견본의 테마 답 · 옮긴 판정 선언의 지문(tools/theme-take-test.mjs 가 테마 사본 없이도 맞대요)
+const { sampleSet, themeAnswer, codePrint } = await import(pathToFileURL(path.join(ROOT, 'tools/theme-take-test.mjs')).href);
+const samples = Object.fromEntries(sampleSet(previews).map(([n, x]) => [n, themeAnswer(checkItem, x)]));
+const code = codePrint(f => fs.readFileSync(path.join(THEME, 'src', f), 'utf8'));
 let tag = ''; try { tag = git('describe', '--tags', '--abbrev=0'); } catch { /* 태그 없음 */ }
-const doc = { _: '테마가 받는 글꾸 마트 틀 — tools/theme-takeable-pull.mjs 가 테마 받기 검사(src/mart-import.js checkItem)를 마트의 지금 조각에 돌려 뜬 것. 고치지 말고 다시 떠요(테마 판이 받는 틀을 늘리면)', theme: `${git('rev-parse', '--short=9', 'HEAD')}${tag ? ` · ${tag} 뒤` : ''}`, total: index.items.length, ok, no };
+const doc = { _: '테마가 받는 글꾸 마트 틀 — tools/theme-takeable-pull.mjs 가 테마 받기 검사(src/mart-import.js checkItem)를 마트의 지금 조각에 돌려 뜬 것 · samples(견본 답) · code(판정 선언 지문)도. 고치지 말고 다시 떠요(테마 판이 받는 틀을 늘리면)', theme: `${git('rev-parse', '--short=9', 'HEAD')}${tag ? ` · ${tag} 뒤` : ''}`, total: index.items.length, ok, no, samples, code };
 const text = `${JSON.stringify(doc, null, 1)}\n`;
 if (argv.includes('--check')) { const same = fs.existsSync(OUT) && JSON.stringify({ ...JSON.parse(fs.readFileSync(OUT, 'utf8')), theme: 0, _: 0 }) === JSON.stringify({ ...doc, theme: 0, _: 0 }); console.log(same ? `확인: 테마 받기 판정 ${index.items.length}틀 그대로예요(받음 ${ok.length})` : '테마 받기 판정이 달라요 — 다시 떠요'); process.exit(same ? 0 : 1); }
 fs.writeFileSync(OUT, text);

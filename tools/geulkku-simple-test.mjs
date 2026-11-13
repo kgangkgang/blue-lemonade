@@ -2086,14 +2086,15 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
     for (const c of Object.values(sixAll.chunks)) Object.assign(previews, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
     const keyOf = html => sf.simpleFrameInfo(html)?.key || '';   // mart.js themeKey 와 같아요(조각 preview 뿌리 class)
     const judge = it => tt.themeTakeable(previews[it.id].preview, { id: it.id, key: keyOf(previews[it.id].preview) });
-    await test('테마 못 받음 ① 고정 자료(tools/theme-takeable.json — 테마 1.2.0 받기 검사를 직접 돌려 뜬 것): 417틀 · 받음 399 · 못 받음 18 · 마트 사본 판정은 테마보다 깐깐한 쪽(받는다고 한 틀은 테마도 받아요)', () => {
+    // 11-13 마트 사본을 테마 1.2.0 판정으로 다시 옮겼어요 — 이제 「깐깐한 쪽」이 아니라 같아요(선언 글자 · 견본 맞대기는 tools/theme-take-test.mjs)
+    await test('테마 못 받음 ① 고정 자료(tools/theme-takeable.json — 테마 1.2.0 받기 검사를 직접 돌려 뜬 것): 417틀 · 받음 399 · 못 받음 18 · 마트 사본 판정이 417틀 모두 같아요(까닭 글 · 짧은 까닭 nt 까지)', () => {
         assert.equal(sixAll.items.length, fixture.total); assert.equal(fixture.total, 417);
         assert.equal(fixture.ok.length, 399); assert.equal(Object.keys(fixture.no).length, 18);
         assert.deepEqual([...fixture.ok, ...Object.keys(fixture.no)].sort(), sixAll.items.map(x => x.id).sort());
         const ok = new Set(fixture.ok);
-        const loose = sixAll.items.filter(it => judge(it).ok && !ok.has(it.id)).map(it => it.id);
-        assert.deepEqual(loose, [], '마트 사본이 받는다고 한 틀을 테마가 못 받아요');
-        assert.ok(sixAll.items.filter(it => judge(it).ok).length <= 399);
+        const diff = sixAll.items.filter((it) => { const r = judge(it); return r.ok !== ok.has(it.id) || (!r.ok && (r.reason !== fixture.no[it.id] || r.why !== gen.shortWhy(fixture.no[it.id]))); }).map(it => it.id);
+        assert.deepEqual(diff, [], '마트 사본 판정이 테마와 달라요');
+        assert.equal(sixAll.items.filter(it => judge(it).ok).length, 399);
     });
     await test('테마 못 받음 ② 목록 index.json 의 nt = 고정 자료의 까닭(받는 틀엔 nt 없음 · 18틀) · 생성기가 고정 자료에서 써요', () => {
         const bad = sixAll.items.filter(it => (fixture.ok.includes(it.id) ? 'nt' in it : it.nt !== gen.shortWhy(fixture.no[it.id]))).map(it => it.id);
