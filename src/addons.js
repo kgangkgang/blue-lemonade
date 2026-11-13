@@ -9,7 +9,7 @@ import { legacyFolders } from './extension-folder.js';
 import { perfErrorText } from './addons/perf/start-error.js';
 import { ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
 import { onGate } from './boot-layers.js';
-import { afterBoot } from './boot-gate.js';
+import { afterBoot, booting } from './boot-gate.js';
 import { loadSheet } from './focus-copies.js';
 const running=new Set(),failed=new Map(),loading=new Set(),waiting=new Set();
 // 1.0.0: 실행 중인 애드온 모듈 표 — dist 묶음이라 src 를 따로 import 하면 두 번째 인스턴스가 돼요. 검사 도구는 window.Salty.addon(id) 로 받아요
@@ -26,6 +26,16 @@ export const LATE_ADDONS=new Set(['rewrite','prompt','modelswitch']);
 let lateIds=[],lateStarted=null,lateLayers=null,lateStyling=null;
 /** 처음 쓸 때 시작하는 애드온(LATE_ADDONS)을 지금 시작해요 — 한 번만. 1층 애드온(3층 유휴) 시작이 끝난 뒤에 차례로 */
 export let lateReason='';
+// 1.4.1 덮개가 걷힌 뒤(3층 · 처음 쓸 때)에는 애드온을 하나씩 시작하고 사이사이 한 박자 쉬어요 — 예전엔 한 작업에서 모두의 import 를 걸어, 이미 받은 모듈이면
+//   같은 작업 안에서 줄줄이 시작해 「조용해짐」 구간에 긴 작업 하나로 화면을 잡았어요. 시작 차례 · 시작 함수 · 기다리는 것은 그대로(앞 것이 끝나길 기다리지 않아 받기는 겹쳐요).
+//   덮개 아래(처음 쓸 때로 당겨 덮개 중에 돈 경우)는 예전처럼 한 번에 — 덮개 없는 앞 층까지 나누면 표식이 늦게 붙어요(1.4.1 B 독립 검토)
+const beat=()=>new Promise(resolve=>setTimeout(resolve,0));
+async function startEach(ids){
+    if(ids.length<2||booting())return Promise.allSettled(ids.map(startOne));
+    const jobs=[];
+    for(const [i,id] of ids.entries()){if(i)await beat();jobs.push(startOne(id));}
+    return Promise.allSettled(jobs);
+}
 let lateFired=false;const lateHooks=new Set();
 /** 처음 쓸 때를 같이 듣는 껍데기 */
 export function onLateAddons(fn){if(lateFired)fn(lateReason);else lateHooks.add(fn);}
@@ -34,7 +44,7 @@ export function startLateAddons(reason='?'){
     lateReason=reason;
     if(!lateFired){lateFired=true;for(const fn of lateHooks){try{fn(reason);}catch(error){console.warn('[Blue Lemonade] 훅',error);}}lateHooks.clear();}
     if(!started||!lateIds.length)return Promise.resolve();
-    lateStarted=(async()=>{try{if(lateStyling)await lateStyling();const run=async()=>{await Promise.allSettled(lateIds.map(startOne));await lateLayers?.lateSettled?.();};await(lateLayers?lateLayers.withReplay('늦은 애드온',run):run());try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}finally{changed();}})();
+    lateStarted=(async()=>{try{if(lateStyling)await lateStyling();const run=async()=>{await startEach(lateIds);await lateLayers?.lateSettled?.();};await(lateLayers?lateLayers.withReplay('늦은 애드온',run,{spread:true}):run());try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}finally{changed();}})();
     return lateStarted;
 }   // waiting: 옛 단독 폴더가 켜져 있어 내장본이 대기 중인 개인 확장 (카드에 「옛 단독 확장 끄기」)
 let started=false,saving=0,saveError='';
@@ -226,8 +236,8 @@ async function startAddonsOnce(layers){
     const startRest=async()=>{
         await ensureStyling();
         // 늦게 붙은 애드온이 놓친 채팅 바뀜은 지금 채팅으로 한 번 (boot-layers.js withReplay — APP_READY 는 실리태번이 늦은 리스너에도 바로 불러 줘요)
-        const run=async()=>{await Promise.allSettled(rest.map(startOne));await layers?.lateSettled?.();};   // 모듈이 jQuery 준비 · 다음 작업에 거는 리스너까지 덮어요
-        await(layers?layers.withReplay('애드온',run):run());
+        const run=async()=>{await startEach(rest);await layers?.lateSettled?.();};   // 모듈이 jQuery 준비 · 다음 작업에 거는 리스너까지 덮어요
+        await(layers?layers.withReplay('애드온',run,{spread:true}):run());
         try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}
     };
     lateLayers=layers;

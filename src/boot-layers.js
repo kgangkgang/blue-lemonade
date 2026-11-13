@@ -1,6 +1,6 @@
 // 9.0.2 부팅 3층: 1층(정적 import)은 설정 · CSS 변수 · 글꼴 · 핵심 배치 · 요청 훅만, 2층은 첫 프레임 뒤(덮개 아래), 3층은 덮개가 걷힌 뒤 유휴(처음 쓰면 kickIdle 로 당김).
 //   늦게 붙은 리스너가 놓친 CHAT_CHANGED 는 withReplay() 가 지금 채팅으로 한 번 불러요(APP_READY 는 실리태번이 늦은 리스너에도 바로 불러요).
-import { afterBoot } from './boot-gate.js';
+import { afterBoot, booting } from './boot-gate.js';
 
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 export const layerLog = [];   // 시험 · 진단: [층, 이름, performance.now()]
@@ -121,12 +121,17 @@ function listeners(es, type) {
     return Array.isArray(list) ? list : [];
 }
 const replayed = new WeakSet();   // 층이 겹쳐 끝나도 한 리스너에 한 번만
+const currentChat = c => { try { return c?.getCurrentChatId?.() ?? c?.chatId; } catch { return c?.chatId; } };
 const isOnceWrapper = fn => fn?.name === 'g';   // 실리태번 eventSource.once 의 감싸개 — 「다음 사건 한 번」이라 지금 상태로 부르지 않아요
 /**
  * batch() 동안 새로 걸린 CHAT_CHANGED 리스너를, 채팅이 열려 있으면 지금 채팅 id 로 한 번 불러요.
  * batch 도중 진짜 CHAT_CHANGED 가 오면 그때 걸려 있던 리스너는 이미 받았으니 다시 부르지 않아요.
  */
-export async function withReplay(name, batch) {
+/**
+ * spread: true 이고 덮개가 걷혔으면 다시 알릴 리스너 사이사이 한 박자 쉬어요(1.4.1 · 덮개가 걷힌 뒤 애드온 시작) — 예전엔 줄줄이 한 작업이었어요.
+ *   쉬는 사이 진짜 CHAT_CHANGED 가 오거나 채팅이 바뀌면 남은 리스너는 그 사건을 이미 받았으니 더 부르지 않아요. 덮개 아래 · 앞 층은 예전처럼(spread 없음)
+ */
+export async function withReplay(name, batch, { spread = false } = {}) {
     const c = ctx(), es = c?.eventSource, types = c?.eventTypes ?? c?.event_types ?? {};
     const before = new Map(), served = new Map(), marks = [];
     for (const key of REPLAY) {
@@ -141,16 +146,27 @@ export async function withReplay(name, batch) {
     try { return await batch(); }
     finally {
         for (const [type, mark] of marks) try { es?.removeListener?.(type, mark); } catch { /* 그대로 */ }
-        const chatId = (() => { try { return c?.getCurrentChatId?.() ?? c?.chatId; } catch { return c?.chatId; } })();
+        const chatId = currentChat(c);
         if (chatId !== undefined && chatId !== null && chatId !== '') {
             for (const [key, seen] of before) {
                 const type = types[key];
                 const fresh = listeners(es, type).filter(fn => !seen.has(fn) && !served.get(key).has(fn) && !replayed.has(fn) && !isOnceWrapper(fn) && !fn.blLayerMark && !marks.some(([, m]) => m === fn));
                 for (const fn of fresh) replayed.add(fn);   // 부르기 전에 모두 표시 — 다른 층이 기다리는 사이 끝나도 같은 리스너를 또 고르지 않게
-                for (const fn of fresh) {
-                    note('replay', `${name}:${key}`);
-                    try { await fn.call(es, chatId); } catch (error) { console.warn(`[Blue Lemonade] 늦게 붙은 모듈에 지금 채팅 알리기(${name})`, error); }
-                }
+                const split = spread && fresh.length > 1 && !booting();
+                let real = false;
+                const heard = () => { real = true; };
+                heard.blLayerMark = true;
+                if (split) try { if (typeof es?.makeFirst === 'function') es.makeFirst(type, heard); else es?.on?.(type, heard); } catch { /* 흉내 eventSource */ }   // 맨 앞 — 진짜 사건이 남은 리스너에 닿기 전에 알아채요
+                try {
+                    for (const [i, fn] of fresh.entries()) {
+                        if (split && i) {
+                            await new Promise(resolve => setTimeout(resolve, 0));
+                            if (real || currentChat(c) !== chatId) break;   // 그 사이 진짜 사건이 남은 리스너에게 갔어요
+                        }
+                        note('replay', `${name}:${key}`);
+                        try { await fn.call(es, chatId); } catch (error) { console.warn(`[Blue Lemonade] 늦게 붙은 모듈에 지금 채팅 알리기(${name})`, error); }
+                    }
+                } finally { if (split) try { es?.removeListener?.(type, heard); } catch { /* 그대로 */ } }
             }
         }
     }
