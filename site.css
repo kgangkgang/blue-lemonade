@@ -23,6 +23,7 @@
   --glyph-chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E");
   --glyph-chev-muted:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23566B83' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E");
   --mask:16px;--chev:14px;
+  --lh-body:1.7;   /* 본문 줄 높이 토큰(11-13 간격 리그 · mart.css 의 같은 이름과 같은 값) — 홈 · 마트 문단이 같이 써요 */
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
@@ -52,7 +53,7 @@
 
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:72px;-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.7;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;transition:background-color .35s ease,color .35s ease}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:var(--lh-body);letter-spacing:-.01em;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;transition:background-color .35s ease,color .35s ease}
 h1,h2,h3,h4{color:var(--ink)}
 a{color:inherit;text-decoration:none}
 button{font:inherit;cursor:pointer}
@@ -60,7 +61,7 @@ a,button,summary{-webkit-tap-highlight-color:transparent}
 a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:6px}
 img{max-width:100%}
 main{overflow-x:clip}
-p{line-height:1.75}
+p{line-height:var(--lh-body)}   /* 11-13: 옛 1.75 가 홈 안내 글(.extension-body 1.7 등)의 줄 높이 토큰을 덮었어요 — 문단도 본문 토큰으로 */
 code{font-family:ui-monospace,SFMono-Regular,Consolas,'D2Coding',monospace;font-size:.92em}
 
 /* header */
@@ -153,7 +154,7 @@ h1{font-size:clamp(58px,7.6vw,108px);line-height:1.06;letter-spacing:-.058em;fon
 /* updates */
 .notice-guide{display:flex;gap:14px;align-items:flex-start;max-width:860px;margin:0 0 28px;padding:18px 22px;border-radius:18px;background:var(--tint)}
 .notice-guide>span{color:var(--lemon-deep);font-size:18px;line-height:1.6}
-.notice-guide p{margin:0;font-size:14px;line-height:1.75;color:var(--muted)}
+.notice-guide p{margin:0;font-size:14px;line-height:var(--lh-body);color:var(--muted)}
 .notice-guide strong,.notice-guide b{color:var(--ink);font-weight:650}
 #notes{max-width:860px}
 .note{border-bottom:1px solid var(--line)}
