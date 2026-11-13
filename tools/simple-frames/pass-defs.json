@@ -3113,5 +3113,13 @@
   "open": false,
   "peek": false,
   "desc": "소품을 누르면 — 흔들기"
+ },
+ {
+  "frame": "k1448",
+  "name": "회색 고양이",
+  "emoji": "🐈",
+  "open": true,
+  "peek": true,
+  "desc": "소품을 누르면 — 화분 밀기"
  }
 ]

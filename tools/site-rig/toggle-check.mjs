@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 11-13 「낮 · 밤 전환 넣기」 화면 확인 — 마트 복사 길로 만든 글을 깡통이 바꾸는 꼴(details 안을 class 없는 div 로 감싸고 빈 줄 끼움)로 그려 낮 → 밤 → 낮을 눌러 봐요.
-//   ① 417틀 전부(마트 모듈 그대로: toneSimple → simpleReady → addToggle): 닫힘 = 낮 판 단독 · 열림 = 밤 판 단독 · 다시 닫힘 = 낮 판과 틀 안 모든 요소의 계산된 모습이 같은지 · 해 · 달 단추 하나 · 끼운 빈 줄 숨김 · 가로 넘침 0
+//   ① 418틀 전부(마트 모듈 그대로: toneSimple → simpleReady → addToggle): 닫힘 = 낮 판 단독 · 열림 = 밤 판 단독 · 다시 닫힘 = 낮 판과 틀 안 모든 요소의 계산된 모습이 같은지 · 해 · 달 단추 하나 · 끼운 빈 줄 숨김 · 가로 넘침 0
 //   ② 실제 화면 조합(크게 보기에서 「전환 넣기」를 켜고 「HTML 복사」를 눌러 나온 글): 기본 · 캐릭터 색 · 밤으로 시작 · 소품만 움직임 · 내 글 · 글 고치기 · 눌러야 보이게 — 같은 견줌 + 미리보기에서 해 · 달이 눌리는지 · 「테마용 복사」 값에는 전환 0
 //   node tools/site-rig/toggle-check.mjs <사이트 폴더 | 주소> <결과 폴더> [--only all,combo] [--vp pc,phone] [--port 18991 --cdp 19477]
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
@@ -64,8 +64,8 @@ async function allPart(vp, w) {
         adds.sort((a, b) => a - b);
         return { n, bad, add: [adds[0], adds[adds.length >> 1], adds.at(-1)] };
     })()`, 900000);
-    row(vp, `417틀 전부(폭 ${w}) — 깡통 꼴에서 닫힘 = 낮 판 · 열림 = 밤 판 · 다시 닫힘 = 낮 판(틀 안 모든 요소) · 해 · 달 단추 하나 · 빈 줄 숨김 · 넘침 0`, res.n === 417 && res.bad.length === 0, `틀 ${res.n} · 실패 ${res.bad.length} · 늘어난 바이트 ${res.add.join(' · ')}${res.bad.length ? ' · ' + res.bad.slice(0, 3).join(' / ') : ''}`);
-    fs.writeFileSync(path.join(OUT, `${vp}-417-실패.json`), JSON.stringify(res.bad, null, 1));
+    row(vp, `418틀 전부(폭 ${w}) — 깡통 꼴에서 닫힘 = 낮 판 · 열림 = 밤 판 · 다시 닫힘 = 낮 판(틀 안 모든 요소) · 해 · 달 단추 하나 · 빈 줄 숨김 · 넘침 0`, res.n === 418 && res.bad.length === 0, `틀 ${res.n} · 실패 ${res.bad.length} · 늘어난 바이트 ${res.add.join(' · ')}${res.bad.length ? ' · ' + res.bad.slice(0, 3).join(' / ') : ''}`);
+    fs.writeFileSync(path.join(OUT, `${vp}-418-실패.json`), JSON.stringify(res.bad, null, 1));
 }
 
 // 실제 화면에서 복사: 저장 값을 깔고 크게 보기를 열어 「HTML 복사」(또는 「테마용 복사」)를 눌러 나온 글
