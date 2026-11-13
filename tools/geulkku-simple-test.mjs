@@ -984,8 +984,9 @@ await test('분류 화면 · 캐릭터 칸 · 머리말(11-12 밤 시안 안 A):
       assert.ok(!/>밤<|>낮</.test(html) && !/>밤<\/button>|>낮<\/button>/.test(castSrc + ui), '글자 「밤」 「낮」 단추 0');
       assert.equal((ui.match(/dayNightHtml\('data-tune-mode', ''\)/g) || []).length, 2, '크게 보기 간편 · 세밀 색 갈래');
       assert.ok(ts.includes("mode = saved.mode === 'dark' ? 'dark' : 'light';"), '저장된 값이 없으면 낮');
-      // 11-13 고른 칸 색 「섞은 안」: 해 = 흰 칸 + 호박색 해 + 가는 선 · 달 = 옅은 파랑 칸 + 파랑 달 · 두 칸 같은 꼴(안쪽 1px 선) · 꽉 찬 레몬 · 파랑 0
-      for (const k of ['.mart-dn-b{box-shadow:inset 0 0 0 1px transparent}', '.mart-dn-b.is-day[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}', '.mart-dn-b.is-day[aria-pressed=true]>i{background:var(--sun)}', '.mart-dn-b.is-night[aria-pressed=true]{background:var(--pick-face);box-shadow:inset 0 0 0 1px var(--pick-face)}', '.mart-dn-b.is-night[aria-pressed=true]>i{background:var(--blue-strong)}', ':root{--sun:#E8A100}']) assert.ok(css.includes(k), k);
+      // 11-13 고른 칸 색: 해 · 달 둘 다 옅은 파랑 칸 + 파랑 아이콘(사용자 「해 파랑 달 파랑인 게 낫지 않아? 테마색 따라가게 둬」) · 두 칸 같은 꼴(안쪽 1px 선) · 호박색 해 · 흰 칸 · 꽉 찬 레몬 · 파랑 면 0
+      for (const k of ['.mart-dn-b{box-shadow:inset 0 0 0 1px transparent}', '.mart-dn-b[aria-pressed=true]{background:var(--pick-face);box-shadow:inset 0 0 0 1px var(--pick-face)}', '.mart-dn-b[aria-pressed=true]>i{background:var(--blue-strong)}']) assert.ok(css.includes(k), k);
+      assert.ok(!/--sun|#E8A100|\.mart-dn-b\.is-(?:day|night)\[aria-pressed=true\]/i.test(css), '해만 따로 칠하는 규칙(호박색 · 흰 칸)이 남았어요');
       assert.ok(!/\.mart-dn-b(?:\.is-\w+)?(?:\[aria-pressed=true\])?\{[^}]*(?:--lemon|background:var\(--blue-strong\))/.test(css), '밝기 단추에 꽉 찬 레몬 · 파랑 면이 남았어요'); }
     // 간편 「움직임」 줄의 「소품만」 — 글 움직임 끔 · 소품 움직임은 지금 세기(끔이었으면 중) · 세밀과 같은 값
     { const ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');
@@ -1084,7 +1085,7 @@ await test('액자 마트 고침(11-12 밤 전수조사 고침 안 3 · 4 · 5):
 await test('낮 · 밤 전환 넣기: 공용 함수 사본은 허브 원본과 글자까지 같아요 · 복사 길(simpleReady 뒤)에만 걸어요 · 기본 끔 · 테마로 담기 값에는 안 실어요 · 417틀 모두 달려요', async () => {
     const dn = await imp(path.join(MART, 'day-night.js'));
     const copy = fs.readFileSync(path.join(MART, 'day-night.js'));
-    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), '50b2bed434d6261994d43d83e817318455bbc34c4034bbddfe21254d7d8a99d7', '마트 사본(mart/day-night.js)이 바뀌었어요 — 허브 지시-1112/낮밤-전환-마트/전환.mjs 를 고친 뒤 다시 복사하고 이 값을 맞춰요');
+    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), '3d4f0c0c7d990679e1e157d8602c4b5ff94aa4b666ea4fdfa5aecacd458c0160', '마트 사본(mart/day-night.js)이 바뀌었어요 — 허브 지시-1112/낮밤-전환-마트/전환.mjs 를 고친 뒤 다시 복사하고 이 값을 맞춰요');
     const hub = process.env.GK_TOGGLE_SRC || path.resolve(ROOT, '../../../../2026-10-24/w/outputs/지시-1112/낮밤-전환-마트/전환.mjs');
     if (fs.existsSync(hub)) assert.ok(copy.equals(fs.readFileSync(hub)), '허브 원본과 마트 사본이 달라요');
     const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ts = fs.readFileSync(path.join(MART, 'tone-state.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8');

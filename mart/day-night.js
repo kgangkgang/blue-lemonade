@@ -79,11 +79,9 @@ function shellCss(K, { maxWidth, band, cond, side }) {
         `${R} .gkt-i{display:block;width:16px;height:16px;block-size:16px;background-color:#4F6279;background-color:light-dark(#4F6279,#B4BECB);-webkit-mask:center/100% 100% no-repeat;mask:center/100% 100% no-repeat}`,
         `${R} .gkt-d .gkt-i{-webkit-mask-image:${SUN};mask-image:${SUN}}`,
         `${R} .gkt-n .gkt-i{-webkit-mask-image:${MOON};mask-image:${MOON}}`,
-        `${cond.day} .gkt-t .gkt-d{background-color:#FFFFFF;background-color:light-dark(#FFFFFF,#2F3742);box-shadow:inset 0 0 0 1px #D5DDE7;box-shadow:inset 0 0 0 1px light-dark(#D5DDE7,#4A5564)}`,   // 고른 쪽만 켜짐: 해 = 흰 칸 + 호박색 해 + 가는 테 · 달 = 옅은 파랑 칸 + 파랑 달(11-13 사용자 — 꽉 찬 레몬 · 파랑 칸은 뺌) · 어두운 깡통에서는 한 단계 낮춘 값
-        `${cond.night} .gkt-t .gkt-n{background-color:#D6E6F7;background-color:light-dark(#D6E6F7,#1E3F63);box-shadow:inset 0 0 0 1px #C3D8EE;box-shadow:inset 0 0 0 1px light-dark(#C3D8EE,#2C5482)}`,
+        `${cond.day} .gkt-t .gkt-d,${cond.night} .gkt-t .gkt-n{background-color:#D6E6F7;background-color:light-dark(#D6E6F7,#1E3F63);box-shadow:inset 0 0 0 1px #C3D8EE;box-shadow:inset 0 0 0 1px light-dark(#C3D8EE,#2C5482)}`,   // 고른 쪽만 켜짐: 해 · 달 둘 다 옅은 파랑 칸 + 파랑 아이콘(11-13 사용자 「해 파랑 달 파랑인 게 낫지 않아? 테마색 따라가게 둬」 — 호박색 해 · 흰 칸은 뺌) · 어두운 깡통에서는 한 단계 낮춘 값
         `${cond.night} .gkt-t .gkt-d,${cond.day} .gkt-t .gkt-n{background-color:transparent;box-shadow:inset 0 0 0 1px transparent}`,
-        `${cond.day} .gkt-t .gkt-d .gkt-i{background-color:#E8A100}`,
-        `${cond.night} .gkt-t .gkt-n .gkt-i{background-color:#2264A5;background-color:light-dark(#2264A5,#9CC7F2)}`,
+        `${cond.day} .gkt-t .gkt-d .gkt-i,${cond.night} .gkt-t .gkt-n .gkt-i{background-color:#2264A5;background-color:light-dark(#2264A5,#9CC7F2)}`,
         `${cond.night} .gkt-t .gkt-d .gkt-i,${cond.day} .gkt-t .gkt-n .gkt-i{background-color:#4F6279;background-color:light-dark(#4F6279,#B4BECB)}`,
     ].join('\n');
 }
