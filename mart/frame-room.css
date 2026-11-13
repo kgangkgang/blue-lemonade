@@ -12,7 +12,7 @@ body[data-mart=frames] .mart-preview.frame{display:block;width:100%;padding:0;bo
 /* 「🔍 맞춰 보기」 꼬리표 · 초점 테두리는 공용(mart.css .mart-zoom-hint) */
 
 /* 내 사진 넣기 띠(시안6: 그라데이션 → 단색 tint-2 · 글자 토큰 · 단추 36 · 모서리 12) */
-.mart-tryon{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 16px;border-radius:var(--r-card);background:var(--tint-2);color:var(--text)}
+.mart-tryon{display:flex;align-items:center;gap:12px;margin:0 0 4px;padding:12px 16px;border-radius:var(--r-card);background:var(--tint-2);color:var(--text)}
 .mart-tryon-photo{flex:none;width:64px;height:64px;border-radius:var(--r-ctl);overflow:hidden;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 .mart-tryon-photo img{display:block;width:100%;height:100%;object-fit:cover}
 .mart-tryon-body{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}

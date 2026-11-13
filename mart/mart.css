@@ -935,3 +935,16 @@ html.mart-cart-on{overflow:hidden}
 .mart-cart-empty nav{margin-top:0}
 .mart-cart-undo{margin-top:4px}
 .mart-cast-credit{padding-top:4px}   /* 캐릭터 칸 머리(단추 줄) ↔ 원작 줄 8 → 12 */
+/* 11-13 쪽 뼈대 간격(간격 리그 · 조정자 결정 · 첫인상이 바뀌는 묶음이라 따로 커밋 · 액자 사진 칸 아래 4 는 frame-room.css): 머리줄 ↔ 본문 24(폰 · 머리줄 56) · 40(PC · 머리줄 64) — 머리줄 안 부품(34)이 가운데라 그 아래 빈칸 11 · 15 를 더해 맞춰요(허용 값 「자리|header.top → main.mart-main」)
+   · 캐릭터 칸 ↔ 거르기 띠 ↔ 목록 12(묶음 · 띠 안쪽 8 + 바깥 4) · 액자 사진 칸 ↔ 띠도 12 */
+.mart-main{padding-top:25px}
+@media (max-width:760px){.mart-main{padding-top:13px}}
+.mart-cast{margin-bottom:4px}
+.mart-tools{margin-bottom:4px}
+/* 폰 캐릭터 칸 머리: 해 · 달 알약이 혼자 한 줄을 차지하던 것 — 깡통 · 바꾸기 첫 줄 끝으로 올려요(깡캐 · 내 글은 다음 줄) */
+@media (max-width:639px){
+  .mart-cast-head>.mart-cast-slots{display:contents}
+  .mart-cast-head [data-toggle="other"],.mart-cast-head [data-toggle="text"]{order:1}
+}
+/* 목록 카드 「HTML 복사」 하나만 든 줄(PC): 오른쪽 끝 단추 하나 대신 줄을 채워요(단추 여럿 든 카드와 같은 꼴) */
+.mart-card .mart-actions.is-solo{display:grid;grid-template-columns:1fr}
