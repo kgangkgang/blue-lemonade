@@ -151,8 +151,8 @@
                         <small class="llmt-desc">월드인포는 번역할 그 메시지와 그 앞 대화를 실리태번 스캔 깊이만큼 훑어, 그 장면에서 걸린 항목만 넣어요(옛 메시지도 그 시점까지만 봐요). 인물이 월드인포 항목으로 들어 있는 카드에 켜 두면 좋아요. 켜거나 끈 뒤 「다시 번역」하면 새로 번역돼요. 답을 만드는 동안(그룹 채팅에서 다음 멤버가 쓰는 중)에는 월드인포를 건너뛰고, 그룹 채팅에서 캐릭터에 묶인 로어북은 말한 멤버 것과 다를 수 있어요.</small>
                         <div class="llmt-field">
                             <label for="llm_reply_ctx_wi_limit" class="llmt-label">월드인포 길이 상한 (글자)</label>
-                            <input id="llm_reply_ctx_wi_limit" type="number" class="text_pole" min="500" max="40000" step="500" value="4000">
-                            <small class="llmt-desc">걸린 항목이 이보다 길면 뒤를 잘라요. 기본 4000자 — 늘리면 그만큼 토큰이 더 들어요.</small>
+                            <input id="llm_reply_ctx_wi_limit" type="number" class="text_pole" min="500" step="500" value="4000">
+                            <small class="llmt-desc">걸린 항목이 이보다 길면 뒤를 잘라요. 기본 4000자 · 최소 500자 · 위쪽 제한 없음 — 늘리면 그만큼 토큰이 더 들고, 실제로 들어가는 길이는 실리태번 월드인포 예산이 먼저 정해요.</small>
                         </div>
                     </div>
                 </section>

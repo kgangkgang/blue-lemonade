@@ -145,6 +145,17 @@ const REAL_META = {
     'src/scripts/runtime.js': ['new URL(`./plain/${item.file}.js${bust?`?r=${Date.now().toString(36)}`:\'\'}`,import.meta.url)', 'new URL(`./titles/${item.file}.gen.js${bust?`?r=${Date.now().toString(36)}`:\'\'}`,import.meta.url)'],
 };
 
+// 실리태번 사이트 절대 주소(/script.js · /scripts/extensions.js …)인가 — 묶지 않고 그대로 둬요.
+//   리눅스(GitHub Actions)에서는 저장소 자신의 파일 경로도 / 로 시작해요(/home/runner/work/…/index.js).
+//   「/ 로 시작 = 사이트 주소」로만 보면 입구 index.js 까지 바깥으로 빠져 rollup 이
+//   「Entry module cannot be external」로 멈춰요 — Actions 「생성물이 소스와 같은지」가 1.2.2 까지 늘 실패한 까닭.
+//   그래서 저장소 안 파일 경로면 사이트 주소가 아니에요(윈도 경로는 C:\… 라 원래 안 걸렸어요).
+export function isSiteUrl(source, root = ROOT, P = path) {
+    if (typeof source !== 'string' || !source.startsWith('/')) return false;
+    const inside = P.relative(root, source);
+    return inside === '' ? false : inside.startsWith('..') || P.isAbsolute(inside);
+}
+
 function plugin(bootModules = new Set()) {
     const refs = new Map();   // 원본 경로 → 참조 id
     const external = id => /[\\/]vendor[\\/]/.test(id) || /[\\/]src[\\/]build-info\.js$/.test(id);
@@ -159,7 +170,7 @@ function plugin(bootModules = new Set()) {
             for (const dir of ['plain', 'titles']) for (const f of fs.readdirSync(path.join(ROOT, 'src/scripts', dir))) if (f.endsWith('.js')) emit(`src/scripts/${dir}/${f}`, `${dir}/${f}`);
         },
         resolveId(source, importer) {
-            if (source.startsWith('/')) return { id: source, external: true };
+            if (isSiteUrl(source)) return { id: source, external: true };
             if (!importer || !source.startsWith('.')) return null;
             const abs = path.resolve(path.dirname(importer), source.split('?')[0]);
             if (path.relative(ROOT, abs).startsWith('..') || external(abs)) return { id: fromDist(abs), external: true };

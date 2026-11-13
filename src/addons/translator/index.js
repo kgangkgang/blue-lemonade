@@ -6476,7 +6476,7 @@ function initializeEventHandlers() {
     }
     $('#llm_reply_ctx_wi_limit').off('change').on('change', function () {
         const n = Math.floor(Number(this.value));
-        extensionSettings.reply_ctx_wi_limit = Number.isFinite(n) && n > 0 ? Math.max(500, Math.min(40000, n)) : defaultSettings.reply_ctx_wi_limit;
+        extensionSettings.reply_ctx_wi_limit = Number.isFinite(n) && n > 0 ? Math.max(500, n) : defaultSettings.reply_ctx_wi_limit;   // 위쪽 상한 없음(1.2.5) · 아래 500 은 0 · 음수로 꺼지지 않게
         this.value = extensionSettings.reply_ctx_wi_limit;
         saveSettingsDebounced();
     });

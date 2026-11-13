@@ -11,6 +11,7 @@
 //   7) 켰을 때 요청 글의 순서: 지시문 → 참고 글(고정 부분 먼저) → 용어집 → … → [Text to translate] → 본문, 캐시 앞부분 = 지시문 + 고정 부분
 //   8) 보내기 번역도 같은 수집 함수: 스캔 범위 = 실리태번 스캔 깊이 · globalScanData · 깊이 지정 항목 포함 · 실패 알림
 //   9) 생각 세기 설정: 기본(낮음)은 요청 · 연결 서명이 전과 같고, 보통 · 모델 기본 · 용어집/TTS 는 늘 낮게
+//  10) 1.2.5 월드인포 글자 수 위쪽 상한 없음: 설정 칸 · 수집 · 참고 글 · 캐시 열쇠가 고른 값(50,000 · 200,000)을 그대로 · 아래쪽 500 · 옛 설정 그대로
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,7 +106,11 @@ await test('길이 상한에서 자르고, 잘렸다고 알려요', async () => 
     assert.equal(wide.clipped, false);
     assert.equal(info.wiLimit('abc'), 4000);
     assert.equal(info.wiLimit(1), info.WI_LIMIT_MIN);
-    assert.equal(info.wiLimit(9e9), info.WI_LIMIT_MAX);
+    // 1.2.5 위쪽 상한 없음(사용자 「이런 거에 상한 좀 걸지 마」) — 고른 값 그대로 · 옛 설정(40,000 이하)도 그대로 · 아래쪽 500 만
+    for (const n of [4000, 12000, 40000, 50000, 200000, 9e9]) assert.equal(info.wiLimit(n), n, String(n));
+    assert.equal(info.wiLimit('50000'), 50000);
+    for (const bad of [0, -5, Infinity, NaN, '']) assert.equal(info.wiLimit(bad), info.WI_LIMIT_DEFAULT, String(bad));
+    assert.equal('WI_LIMIT_MAX' in info, false, '위쪽 상한 상수가 남지 않아요');
     assert.equal(info.wiSummary(byDefault), '월드인포');   // 이름표는 고정 글자 — 글자 수를 넣으면 요청 로그 용도 표가 메시지 수만큼 늘어요
 });
 
@@ -786,6 +791,46 @@ await test('생각 세기 설정 화면: 고르는 칸 하나 · 세 값', () =>
     const html = read('src/addons/translator/index.html');
     assert.equal(html.split('id="llm_think_effort"').length, 2);
     for (const value of ['low', 'medium', 'model']) assert.ok(html.includes(`<option value="${value}">`), value);
+});
+
+await test('1.2.5 월드인포 글자 수 위쪽 상한 없음: 50,000 · 200,000 을 설정 칸이 그대로 저장하고, 참고 글 · 캐시 열쇠에 그대로 써요', async () => {
+    // 설정 칸 — 고른 값 그대로(아래쪽 500 · 0 · 빈칸 · 글자는 기본값)
+    const handler = section("$('#llm_reply_ctx_wi_limit').off('change')", '\n    // 월드인포 참고를 켜 둔 사람만');
+    const bound = {}, store = { reply_ctx_wi_limit: 4000 };
+    let saved = 0;
+    const $ = sel => ({ off: () => ({ on: (event, fn) => { bound[`${sel} ${event}`] = fn; } }) });
+    vm.runInNewContext(handler, { $, extensionSettings: store, defaultSettings: { reply_ctx_wi_limit: 4000 }, saveSettingsDebounced: () => saved++ });
+    const change = bound['#llm_reply_ctx_wi_limit change'];
+    assert.equal(typeof change, 'function');
+    for (const [typed, want] of [['50000', 50000], ['200000', 200000], ['40000', 40000], ['12000', 12000], ['4000', 4000], ['100', 500], ['0', 4000], ['', 4000], ['abc', 4000]]) {
+        const field = { value: typed };
+        change.call(field);
+        assert.equal(store.reply_ctx_wi_limit, want, `입력 ${typed}`);
+        assert.equal(field.value, want, `칸에 다시 쓰는 값 ${typed}`);
+    }
+    assert.equal(saved, 9);
+    assert.ok(!source.includes('Math.min(40000'), 'index.js 에 위쪽 자르기가 남지 않아요');
+    const input = /<input id="llm_reply_ctx_wi_limit"[^>]*>/.exec(read('src/addons/translator/index.html'))?.[0] || '';
+    assert.match(input, /min="500"/);
+    assert.ok(!/\smax=/.test(input), `입력 칸에 max 가 없어요: ${input}`);
+    // 수집 — 150,000자 월드인포: 50,000 이면 거기서 자르고, 200,000 이면 통째로
+    const big = 'y'.repeat(150000);
+    const base = { chat: chat(), at: 2, getWorldInfoPrompt: async () => wiResult({ worldInfoBefore: big }) };
+    const at50 = await info.collectWorldInfo({ ...base, limit: 50000 });
+    assert.equal(at50.text.length, 50001); assert.equal(at50.clipped, true); assert.equal(at50.chars, 150000);
+    const at200 = await info.collectWorldInfo({ ...base, limit: 200000 });
+    assert.equal(at200.text, big); assert.equal(at200.clipped, false);
+    // index.js 의 참고 글 · 캐시 열쇠 — 저장된 값이 그대로 가요(옛 40,000 도)
+    const h = helpers({ settings: { reply_ctx_wi: true, reply_ctx_wi_limit: 200000 }, wi: async () => wiResult({ worldInfoBefore: big }) });
+    const whole = await h.api.buildReplyReference(2);
+    assert.ok(whole.text.includes(`<world_info>\n${big}\n</world_info>`), '200,000 이면 150,000자를 자르지 않고 넣어요');
+    for (const [limit, length] of [[50000, 50000], [40000, 40000]]) {
+        h.env.extensionSettings.reply_ctx_wi_limit = limit;
+        const cut = await h.api.buildReplyReference(2);
+        assert.ok(cut.text.includes(`<world_info>\n${big.slice(0, length)}…\n</world_info>`), `${limit} 에서 잘라요`);
+        assert.notEqual(cut.hash, whole.hash, `${limit} 와 200,000 은 캐시 열쇠가 달라요`);
+    }
+    assert.equal(h.scans[0][1], 64000, '스캔에 넘기는 최대 문맥은 그대로(실리태번 월드인포 예산이 먼저 정해요)');
 });
 
 console.log(`translator-reply-reference: ${passed} passed, ${failed} failed`);

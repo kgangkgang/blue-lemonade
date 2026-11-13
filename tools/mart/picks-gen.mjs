@@ -77,7 +77,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const dir = 'mart/data/geulkku/';
     const index = show(`${dir}index.json`);
     const chunks = {};
-    for (const file of git('ls-tree', '--name-only', REF, dir).split('\n').filter(f => /\/sp-[^/]+\.json$/.test(f))) Object.assign(chunks, show(file).items);
+    // 목록(index.json)이 가리키는 조각만 읽어요 — 다시 뜬 뒤 안 쓰는 옛 조각이 폴더에 남아 있어도 섞이지 않게(파일 이름 차례로 덮어써 옛 판이 이길 수 있었어요)
+    const listed = Object.values(index.chunks || {}).map(c => `${dir}${c.file}`);
+    for (const file of listed.length ? listed : git('ls-tree', '--name-only', REF, dir).split('\n').filter(f => /\/sp-[^/]+\.json$/.test(f))) Object.assign(chunks, show(file).items);
     const items = {};
     for (const [, , list] of PICKS) for (const [key] of list) {
         const it = index.items.find(x => x.id === `simple-${key}`);

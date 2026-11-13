@@ -1,4 +1,4 @@
-/* src/gate-outline.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 3개(글자 외곽선 · 데우스 대사 외곽선) — 고치지 말 것. src/lite.js 가 body 에 salty-demink-outline · salty-outline 가 붙기 전에 테마 시트 뒤에 붙여요 (build 7540d8a1d941) */
+/* src/gate-outline.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 3개(글자 외곽선 · 데우스 대사 외곽선) — 고치지 말 것. src/lite.js 가 body 에 salty-demink-outline · salty-outline 가 붙기 전에 테마 시트 뒤에 붙여요 (build e704aa48fe06) */
 body.salty.salty-demink-outline :is(:is(#chat,.bl-chat-like), .cg-root, #salty-nochat, .salty-preview) .mes .mes_text font[color],
 body.salty.salty-demink-outline :is(:is(#chat,.bl-chat-like), .cg-root, #salty-nochat, .salty-preview) .mes .mes_text [style*="color"]:is(bl-s, *) {
   -webkit-text-stroke: var(--salty-demink-outline-w, 0) var(--salty-demink-outline-c, transparent);
