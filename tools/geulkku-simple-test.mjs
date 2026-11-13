@@ -2071,7 +2071,7 @@ await test('AI 점검 판 꼬리: 이번에 고친 모듈(mart · cart · tune-u
     const files = ['mart.js', 'genie.js', 'geulkku/index.html', 'frames/index.html', 'genie/index.html'].map(f => [f, srcOf(f)]);
     for (const mod of ['mart', 'cart', 'tune-ui', 'frame-room', 'genie']) {
         const tails = new Set(files.flatMap(([, s]) => [...s.matchAll(new RegExp(`[./]${mod}\\.js\\?v=(\\w+)`, 'g'))].map(m => m[1])));
-        assert.deepEqual([...tails], ['20261113p'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로
+        assert.deepEqual([...tails], [['mart', 'genie', 'tune-ui'].includes(mod) ? '20261113q' : '20261113p'], `${mod}.js 꼬리 ${[...tails]}`);   // 11-13 간격 고침 3 · 해 · 달 파랑 · 깡통 문구 · 내 글꾸 판정을 올리며 다섯 다 p 로   // 11-12 점검 2 에서 mart · genie 를 c 로 · 스타일 고침에서 mart · genie · cart · tune-ui 를 d 로   // 11-13 줄바꿈 선택 — mart · tune-ui 를 고쳐 그 둘과 부르는 곳(genie)을 q 로
     }
 });
 await test('점검 2-③ 마트 모듈은 어디서 부르든 주소 하나(꼬리가 다르면 브라우저가 같은 모듈을 두 벌 받아요 — char-tone · spoiler · bare · presets 가 그랬어요 · 꼬리 없는 쪽은 옛 캐시가 남아요)', () => {
@@ -2154,5 +2154,32 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
         for (const f of ['geulkku', 'frames', 'genie', 'kara']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.css\?v=20261113p/, f);
     });
 }
+// ── 11-13 본문 줄바꿈 「글자 단위」(기본) · 「단어 단위」 — 사용자 「단어 단위 할 건지 글자 단위 할 건지 선택 가능하게 … 난 글자 단위가 좋아서」 ──
+await test('줄바꿈: 공용 함수는 테마 src/log-copy-wrap.js 와 같은 글 · 417틀 모두 글자 단위면 본문 줄만 normal(제목 · 이름표 그대로) · 단어 단위면 그대로 · 카드 · 크게 보기 · 복사 글이 한 길 · 테마로 담기에는 안 실어요', async () => {
+    const ww = await imp(path.join(MART, 'word-wrap.js'));
+    const copy = fs.readFileSync(path.join(MART, 'word-wrap.js'));
+    assert.equal(crypto.createHash('sha256').update(copy).digest('hex'), 'a826332a33fe25865251ef1589556eb9fad7749a59185747b96a811b4891a43c', '마트 사본(mart/word-wrap.js)이 바뀌었어요 — 테마 src/log-copy-wrap.js 와 같이 고치고 두 시험의 값을 맞춰요');
+    const styles = h => [...h.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]).join('\n');
+    const last = (css, sel) => [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].trim() === sel).map(m => (m[2].match(/word-break:\s*([\w-]+)/) || [])[1]).filter(Boolean).pop();
+    const all = {}; for (const c of Object.values(sixAll.chunks)) Object.assign(all, JSON.parse(fs.readFileSync(path.join(DIR, c.file), 'utf8')).items);
+    let covered = 0;
+    for (const it of sixAll.items) {
+        const html = all[it.id].preview, key = sf.simpleFrameInfo(html).key, K = `.gk-${key}`, out = ww.wrapHtml(html, 'char'), before = styles(html), after = styles(out);
+        assert.equal(ww.wrapHtml(html, 'word'), html, `${key} 단어 단위는 그대로`);
+        if (last(before, `${K} .gk-tt`)) assert.equal(last(after, `${K} .gk-tt`), last(before, `${K} .gk-tt`), `${key} 제목`);
+        if (/class="gk-nm\b/.test(html)) assert.notEqual(last(after, `${K} .gk-nm`), 'normal', `${key} 이름표`);
+        const rows = ['gk-nr', 'gk-dl'].filter(c => new RegExp(`class="(?:[^"]*\\s)?${c}(?=[\\s"])`).test(html));
+        if (last(before, `${K} p`) === 'keep-all' && rows.length) { assert.equal(last(after, rows.map(c => `${K} .${c}`).join(',')), 'normal', `${key} 본문 줄 덮개`); covered++; }
+        for (const sel of [`${K} .gk-bb-o`]) if (last(before, sel) === 'keep-all') assert.equal(last(after, sel), 'normal', `${key} 말풍선`);
+    }
+    assert.ok(covered >= 400, `덮개가 달린 틀 ${covered}`);
+    const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8'), ws = fs.readFileSync(path.join(MART, 'wrap-state.js'), 'utf8');
+    assert.ok(martSrc.includes('if (!raw || !toned(state.item)) return wrapOf(state, raw);') && martSrc.includes('return wrapOf(state, state.toneHtml);'), 'previewOf 한 길(카드 · 크게 보기 · 복사 글 · 붙일 곳 흉내)');
+    assert.ok(/html: item\.preview \|\| '', set \}\] \};/.test(martSrc), '테마로 담기 값은 틀 원래 판 그대로(테마는 제 설정으로)');
+    assert.equal((ui.match(/wrapChips\(\)/g) || []).length, 2, '간편 · 세밀(문단) 두 자리');
+    assert.ok(ws.includes("wrapMode(globalThis.localStorage?.getItem(KEY))") && ws.includes("next === 'word' ? 'word' : ''"), '기본 글자 단위 · 단어 단위만 기억');
+    for (const f of ['geulkku', 'frames']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.js\?v=20261113q/, `${f} 꼬리`);
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);

@@ -29,8 +29,10 @@ import { motionNow } from './motion-state.js?v=20261112a';
 import { texNow } from './texture.js?v=20261112a';
 import { shapeNow } from './shape.js?v=20261112a';   // 11-12 모양 · 색 더하기 — 테마로 담기 설정에
 import { tuneOf } from './tune.js?v=20261112f';
-import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml, setFlipInfo } from './tune-ui.js?v=20261113p';
+import { tuneHtml, mineBoxHtml, syncTune, syncMine, wireTune, armEdit, stopEdit, viewSegHtml, setFlipInfo } from './tune-ui.js?v=20261113q';
 setFlipInfo(item => flipInfo(item));
+import { wrapHtml } from './word-wrap.js?v=20261113q';   // 11-13 본문 줄바꿈 글자 단위(기본) · 단어 단위 — 테마 src/log-copy-wrap.js 와 글자까지 같은 사본
+import { wrapState } from './wrap-state.js?v=20261113q';
 import { wireSelectHide } from './select-hide.js?v=20261112e';   // 11-12 미리보기에서 글을 고르면 옆에 뜨는 막대(눌러야 보이게 · 숨김 풀기 · 굵게 · 기울임)
 import { themeTakeable } from './theme-take.js?v=20261113p';   // 11-12 테마가 이 틀을 받는지(테마 받기 검사를 옮긴 것 · 목록 틀은 index.json nt · 내 글꾸는 여기서)
 import { ownList, ownItem, addOwn, forgetOwn, setOwnPath, cleanOwn, kkLint, scopePreview, fillSlot, OWN_CAT, OWN_MAX, OWN_BYTES } from './own.js?v=20261112a';   // 11-12 「내 글꾸」 — 남이 만든 글꾸 HTML 붙여 넣기
@@ -787,10 +789,16 @@ const mylog = { on: false, mod: null };
 /** 그 카드에 보일 미리보기 HTML — 대사색을 골랐으면 그 색으로 다시 칠해요(tone-state.js · 고른 게 없으면 지금 모양 그대로) */
 function previewOf(state) {
     const raw = rawPreviewOf(state);
-    if (!raw || !toned(state.item)) return raw;
+    if (!raw || !toned(state.item)) return wrapOf(state, raw);
     const key = `${toneKey()}|${raw.length}|${raw.slice(-40)}`;
     if (state.toneKey !== key) { state.toneKey = key; state.toneHtml = toneOut(state.item, raw); }
-    return state.toneHtml;
+    return wrapOf(state, state.toneHtml);
+}
+/** 11-13 본문 줄바꿈(wrap-state.js) — 카드 · 크게 보기 · 복사 글이 모두 이 길이라 셋이 같아요(한 문서에 같은 틀 규칙이 섞여도 어긋나지 않게) · 같은 글이면 지난번 것 그대로 */
+function wrapOf(state, html) {
+    if (!html || wrapState.mode !== 'char') return html;
+    if (state.wrapIn !== html) { state.wrapIn = html; state.wrapOut = wrapHtml(html, 'char'); }
+    return state.wrapOut;
 }
 /** 11-12 화면에 보일 미리보기 — 내 글꾸(own)는 붙인 글의 <style> 을 그 칸 안에만(마트 화면을 덮지 않게) · 복사 글(previewOf)은 그대로 */
 const viewOf = state => (state.item.own ? scopePreview(previewOf(state), state.item.ownId) : previewOf(state));

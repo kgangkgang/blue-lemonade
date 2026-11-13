@@ -19,6 +19,8 @@ import { createEditBlocks } from './edit-blocks.js?v=20261112e';   // 11-12 글 
 import { wordsNow, setWords, hiddenNames, MASKS, MAX_NAMES, MAX_RULES } from './words.js?v=20261112a';
 import { mineOn, mineInfo, applyMine, storyOf } from './mine-text.js?v=20261112f';
 import { LOOK_FIELDS, LOOK_TABS, FONT_STACKS, lookNow, lookValue, setLook, setLookValue, presetList, presetLast, markPreset, savePreset, renamePreset, forgetPreset, exportPreset, importPreset, codeBytes } from './look.js?v=20261112a';
+import { WRAP_MODES } from './word-wrap.js?v=20261113q';   // 11-13 본문 줄바꿈(글자 단위 기본 · 단어 단위)
+import { wrapState, setWrap } from './wrap-state.js?v=20261113q';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -185,6 +187,7 @@ function tabBody(item) {
     }
     // 대사 줄 늘리기 · 줄이기(이 틀 하나 · 견본 글일 때만 — 내 글은 글이 정해요)
     if (false) html.push(`<div class="mart-look-row is-wrap"><span class="mart-look-label">대사 줄</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="대사 줄">${[[-1, '하나 줄이기'], [0, '견본 그대로'], [1, '하나 더'], [2, '둘 더']].filter(([n]) => n >= LINES_RANGE[0] && n <= LINES_RANGE[1]).map(([n, l]) => `<button type="button" class="chip" data-tune-lines="${n}" aria-pressed="${(tuneOf(item.id)?.lines || 0) === n}">${l}</button>`).join('')}</span></div>`);
+    if (tab === 'para') html.push(`<div class="mart-look-row is-wrap"><span class="mart-look-label">줄바꿈</span><span class="mart-seg mart-look-seg mart-hscroll" role="group" aria-label="줄바꿈">${wrapChips()}</span></div>`);   // 11-13 모든 틀에 같이(바꾼 것 수에는 안 세요 · 밤낮처럼)
     const tWhy = fields.find(f => f.dim)?.dim;
     return `<div class="mart-look">${html.join('')}${tWhy ? `<p class="mart-tune-hint">흐린 칸 — ${esc(tWhy)}</p>` : ''}</div>`;
 }
@@ -235,6 +238,9 @@ const kb = n => `${(n / 1024).toFixed(1)}KB`;
 const flipNote = (item) => { const f = flipInfoOf(item); return !f ? '' : f.fail ? '이 틀에는 전환을 달 수 없어요' : f.over ? `전환을 달면 ${kb(f.total)} — 깡통 한 글(약 240KB)에 안 들어가요` : `복사 글 +${kb(f.add)}(모두 ${kb(f.total)})`; };
 const flipChip = (item) => { const f = flipInfoOf(item), no = !!(f && (f.fail || f.over)); return `<button type="button" class="chip mart-flip" data-tune-flip aria-pressed="${toneState.flip && !no}" aria-label="낮 · 밤 전환 넣기"${no ? ' disabled' : ''} title="${esc(no ? flipNote(item) : `복사 글에 해 · 달 전환 단추를 넣어요 — 읽는 사람이 깡통에서 밝은 판 · 어두운 판을 바꿔 볼 수 있어요 · ${flipNote(item)}`)}">전환 넣기</button>`; };
 const flipNoteHtml = (item) => { const f = flipInfoOf(item), no = !!(f && (f.fail || f.over)); return `<small class="mart-flip-note"${toneState.flip || no ? '' : ' hidden'}>${esc(flipNote(item))}</small>`; };
+/** 11-13 「줄바꿈」 칩 둘 — 모든 틀 · 이 기기에 기억(wrap-state.js) · 간편은 글 크기 줄 아래 · 세밀은 「글 › 문단」. 바뀌는 곳은 본문(지문 · 대사)만 */
+const WRAP_TITLE = { char: '낱말 가운데서도 줄이 바뀌어 오른쪽 끝이 고르게 맞아요(기본) · 제목 · 이름표는 그대로', word: '낱말을 통째로 다음 줄로 넘겨요 · 줄 끝이 들쭉날쭉할 수 있어요' };
+const wrapChips = () => WRAP_MODES.map(([v, l]) => `<button type="button" class="chip" data-tune-wrap="${v}" aria-pressed="${wrapState.mode === v}" title="${esc(WRAP_TITLE[v])}">${l}</button>`).join('');
 const segRow = (label, inner, extra = '') => `<div class="mart-simple-row"><p class="mart-simple-h">${label}${extra ? ` <small>${esc(extra)}</small>` : ''}</p><div class="mart-seg mart-simple-seg" role="group" aria-label="${label}">${inner}</div></div>`;
 /** 11-12 스타일 카드 그림 — 이름표 · 대사 띠 · 지문 한 줄을 그 스타일 값으로 작게 그려요(전엔 빈 회색 칸이라 무엇이 바뀌는지 안 보였어요) · x 가 null 이면 「직접 조절」 */
 const PIC_FONT = { serif: '"AppleMyungjo","Batang","Noto Serif KR",serif', gothic: '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif' };
@@ -266,7 +272,7 @@ function simpleInner(item) {
     return `<div class="mart-simple-row"><p class="mart-simple-h">스타일 <small>한 번에 입혀요</small></p><div class="mart-style-cards mart-hscroll" role="group" aria-label="스타일">${cards}</div></div>
         <div class="mart-simple-row"><p class="mart-simple-h">색</p><div class="mart-simple-cast mart-hscroll">${colorChip('k', '깡통')}<button type="button" class="ibtn mart-cast-swap" data-simple-swap aria-label="깡통 · 깡캐 바꾸기" title="깡통 · 깡캐 바꾸기"></button>${colorChip('k2', '깡캐')}${thirdOn() ? colorChip('k3', '셋째') : ''}</div>${cover}</div>
         <div class="mart-simple-row"><p class="mart-simple-h">밝기 ${flipNoteHtml(item)}</p><div class="mart-seg mart-simple-seg" role="group" aria-label="밝기">${dayNightHtml('data-tune-mode', '')}<button type="button" class="chip" data-tune-mode="auto" aria-pressed="false" title="이 기기 밝기를 따라요(나가는 글은 그때 판 하나)">자동</button>${flipChip(item)}</div></div>
-        ${motionRow}${sizeRow}
+        ${motionRow}${sizeRow}${segRow('줄바꿈', wrapChips(), '본문만')}
         ${changes.length ? `<div class="mart-simple-diff"><p><b>세밀에서 바꾼 것 ${changes.length}</b> · ${esc(changes.slice(0, 5).join(' · '))}${changes.length > 5 ? ' · …' : ''}</p><div class="mart-tune-line mart-hscroll"><button type="button" class="chip" data-view="detail">세밀에서 보기</button><button type="button" class="chip" data-simple-reset title="세밀에서 바꾼 것만 처음으로(캐릭터 · 밤낮 · 고친 글은 그대로)">세밀 것만 처음으로</button></div></div>` : ''}
         <button type="button" class="btn mart-simple-more" data-view="detail" title="색 · 글 · 움직임 · 이 틀 · 도구 · 저장">더 조절하기</button>`;
 }
@@ -505,6 +511,7 @@ export function syncTune(sheet, item) {
     }
     for (const b of box.querySelectorAll('[data-tune-mode]')) b.setAttribute('aria-pressed', String(b.dataset.tuneMode === (toneState.auto ? 'auto' : toneState.mode)));
     for (const b of box.querySelectorAll('[data-tune-flip]')) b.setAttribute('aria-pressed', String(toneState.flip && !b.disabled));
+    for (const b of box.querySelectorAll('[data-tune-wrap]')) b.setAttribute('aria-pressed', String(b.dataset.tuneWrap === wrapState.mode));   // 11-13 줄바꿈
     for (const n of box.querySelectorAll('.mart-flip-note')) { n.hidden = !(toneState.flip || !!box.querySelector('[data-tune-flip]:disabled')); n.textContent = flipNote(item); }
     { const mo = motionNow(); for (const b of box.querySelectorAll('[data-motion-speed]')) b.setAttribute('aria-pressed', String(b.dataset.motionSpeed === mo.speed)); for (const b of box.querySelectorAll('[data-motion-open]')) b.setAttribute('aria-pressed', String((b.dataset.motionOpen === '1') === mo.open)); }
     for (const f of SHAPE_FIELDS) {
@@ -789,6 +796,7 @@ export function wireTune(sheet, { current, openItem, say = () => {}, clip = null
         if ((b = q('[data-group-reset]'))) { groupReset(item, b.dataset.groupReset); redraw(item); say('그 갈래를 처음으로 돌렸어요', 1800); return; }
         if (q('[data-detail-reset]')) { detailReset(item); redraw(item); say('세밀에서 바꾼 것을 처음으로 돌렸어요(캐릭터 · 밤낮 · 고친 글은 그대로)', 2400); return; }
         if ((b = q('[data-tune-flip]'))) { setTone({ flip: !toneState.flip }); redraw(item); return; }   // 11-13 낮 · 밤 전환 넣기
+        if ((b = q('[data-tune-wrap]'))) { setWrap(b.dataset.tuneWrap); redraw(item); return; }   // 11-13 줄바꿈 글자 단위 · 단어 단위(카드 · 미리보기 · 복사 글은 'bl-tone-change' 로 다시 그려져요)
         if ((b = q('[data-tune-mode]'))) { setTone({ mode: b.dataset.tuneMode }); return; }   // 'auto' 면 기기 밝기를 따라요(tone-state.js)
         if ((b = q('[data-words-hide]'))) { setWords({ hide: b.dataset.wordsHide === '1' }); redraw(item); return; }
         if ((b = q('[data-words-name]'))) { const n = b.dataset.wordsName, off = wordsNow().off; setWords({ off: off.includes(n) ? off.filter(x => x !== n) : [...off, n] }); redraw(item); return; }
