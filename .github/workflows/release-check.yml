@@ -75,6 +75,9 @@ jobs:
           # 1.1.6 로그 복사 창 폰 화면(미리보기 위 붙박이 · 접는 갈래 · 크기 단추 · 짧은 바닥 줄) · 이름 가림 상자
           node tools/tests/log-copy-phone-sheet.mjs .
           node tools/tests/log-copy-select-bar.mjs .
+          # 11-13 글꾸 본문 줄바꿈 글자 단위(기본) · 단어 단위 — 공용 함수(마트 사본과 sha 잠금) · 로그 복사 창
+          node tools/tests/log-copy-wrap.mjs .
+          node tools/tests/log-copy-wrap-sheet.mjs .
           node tools/tests/master-switch-reload.mjs .
           node tools/tests/perf-log-keep-blank.mjs .
           node tools/tests/perf-log-no-body.mjs .

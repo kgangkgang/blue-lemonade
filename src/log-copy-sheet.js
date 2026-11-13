@@ -40,6 +40,7 @@ import { mineOrder, removeMine, restoreMine, countLine, infoLabel, MINE_MAX } fr
 import { attachUndo } from './ask.js';
 import { isBasicShape, BASIC_INFO, BASIC_HEIGHT, BASIC_INFO_LABEL, BASIC_HEIGHT_LABEL } from './log-copy-basic.js';   // 1.1.3 「기본 글꾸」 새 틀 18 — 밝기만 · 정보 칸(끔 · 칩 · 탭) · 높이(자동 · 작게 · 중간 · 크게)   // 1.1.3 붙일 곳 흉내(바탕 · 코멘트 자리) · 복사 직전 점검
 import { createSelectBar } from './log-copy-select-bar.js';   // 11-12 고른 글 옆 막대(눌러야 보이게 · 숨김 풀기)
+import { wrapHtml, wrapModel, wrapMode } from './log-copy-wrap.js';   // 11-13 본문 줄바꿈 글자 단위(기본) · 단어 단위 — 마트 mart/word-wrap.js 와 같은 사본
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 const HOLD_MS = 520;
@@ -182,13 +183,14 @@ export async function openLogSheet(model) {
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode salty-mode-switch" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
             <div class="bl-lc-easy" role="group" aria-label="조절 — 간편 · 세밀" data-lc-easy hidden></div>
             <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
-            <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
+            <div class="bl-lc-tools bl-chip-row" role="group" aria-label="글 도구"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button><button type="button" class="bl-lc-chip" data-lc="wrap" aria-pressed="false" title="본문 줄바꿈 — 켜면 단어 단위 · 끄면 글자 단위(기본)"><i class="fa-solid fa-text-width" aria-hidden="true"></i><span>단어 단위 줄바꿈</span></button></div>
             <div class="bl-lc-sep" aria-hidden="true">로그 꾸밈</div>
             <div class="bl-lc-folds" data-lc-folds>
                 <section class="bl-lc-fd" data-lc-fd="shows"><button type="button" class="bl-lc-fd-h" data-lc-fold="shows" aria-expanded="false"><b>보일 것</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><div class="bl-lc-shows bl-chip-row" role="group" aria-label="보일 것 — 끄면 빼요" data-lc-shows>${SHOWS.map(([key, icon, label, title]) => `<button type="button" class="bl-lc-chip" data-lc-show="${key}" aria-pressed="true" title="${esc(title)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${esc(label)}</span></button>`).join('')}<button type="button" class="bl-lc-chip" data-lc-lemon aria-pressed="false" title="켜면 틀의 빈 모서리에 작은 레몬을 넣어요 — 누르면 블루레몬에이드 소개 글이 새 창으로 열려요"><i class="fa-solid fa-lemon" aria-hidden="true"></i><span>레몬 바로가기</span></button><button type="button" class="bl-lc-chip" data-lc-lemon-at hidden title="레몬 자리 — 누를 때마다 자동 · 왼쪽 위 · 오른쪽 위 · 왼쪽 아래 · 오른쪽 아래"><i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i><span>자동</span></button><button type="button" class="bl-lc-chip" data-lc-height hidden title="틀 높이 — 누를 때마다 자동(글 길이만큼) · 작게 · 중간 · 크게(틀 안에서 넘겨요)"><i class="fa-solid fa-up-down" aria-hidden="true"></i><span>높이 · 자동</span></button></div></section>
                 <section class="bl-lc-fd" data-lc-fd="fields"><button type="button" class="bl-lc-fd-h" data-lc-fold="fields" aria-expanded="false"><b>머리 칸</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><div class="bl-lc-fields" data-lc-fields hidden>${FIELD_INPUTS.map(([key, label, hint]) => `<label class="bl-lc-field"><span>${esc(label)}</span><input type="text" maxlength="${key === 'title' ? 80 : 60}" placeholder="${esc(hint)}" data-lc-field="${key}"></label>`).join('')}</div></section>
                 <section class="bl-lc-fd" data-lc-fd="names"><button type="button" class="bl-lc-fd-h" data-lc-fold="names" aria-expanded="false"><b>이름 가리기</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><button type="button" class="bl-lc-sw" role="switch" data-lc-sw="hide" aria-checked="false"><span>이름 숨김<small>채팅 캡처의 이름 가림과 같은 목록이에요</small></span><i aria-hidden="true"></i></button><div class="bl-lc-names" data-lc-names hidden><div class="bl-lc-np-r" role="group" aria-label="가릴 이름"><span class="bl-lc-np-h">가릴 이름</span><div class="bl-lc-np-list"><div class="bl-lc-name-list" data-lc-name-list></div><span class="bl-lc-np-add"><input type="text" maxlength="40" placeholder="이름 더하기" aria-label="더 가릴 이름" data-lc-name-input><button type="button" class="salty-btn bl-lc-icon" data-lc="name-add" aria-label="가릴 이름 더하기"><i class="fa-solid fa-plus" aria-hidden="true"></i></button></span></div></div><div class="bl-lc-np-r" role="group" aria-label="대신 보일 말" data-lc-mask-row></div></div></section>
                 <section class="bl-lc-fd" data-lc-fd="words"><button type="button" class="bl-lc-fd-h" data-lc-fold="words" aria-expanded="false"><b>글자 바꾸기</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><button type="button" class="bl-lc-sw" role="switch" data-lc-sw="words" aria-checked="false"><span>바꾸기<small>본문의 말을 다른 말로 바꿔 복사해요</small></span><i aria-hidden="true"></i></button><div class="bl-lc-words" data-lc-words hidden><div data-lc-rules></div><button type="button" class="salty-btn bl-lc-add-rule" data-lc="rule-add"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>줄 더하기</span></button></div></section>
+                <section class="bl-lc-fd" data-lc-fd="wrap"><button type="button" class="bl-lc-fd-h" data-lc-fold="wrap" aria-expanded="false"><b>줄바꿈</b><span data-lc-fd-sum></span><mark data-lc-fd-mark hidden></mark><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button><button type="button" class="bl-lc-sw" role="switch" data-lc-sw="wrap" aria-checked="false"><span>단어 단위로 줄바꿈<small>끄면 글자 단위(기본)</small></span><i aria-hidden="true"></i></button></section>
             </div>
             <div class="bl-lc-hint" data-lc-hint><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>눌러야 보이는 글: 미리보기에서 글을 끌어 고르면 바로 옆에 <b>눌러야 보이게</b>가 떠요</span><button type="button" class="bl-lc-chip" data-lc-sw="spoiler" aria-pressed="false" disabled title="미리보기에서 글을 고르면 눌러요"><span>숨기기</span></button></div>
             <div class="bl-lc-more"><button type="button" class="bl-lc-chip" data-lc="more" aria-expanded="false"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span>더 보기</span></button></div>
@@ -487,6 +489,8 @@ export async function openLogSheet(model) {
         const out = transformLog(state.edited ?? model, { rules: ct.replace ? ct.replaceRules : [], hide: ct.redact ? { names: hideList(), mask: ct.mask, style: ct.maskStyles?.[ct.mask], word: ct.maskWord } : null });
         const target = custom() || toneOn() || basicOn() ? null : paletteFor(state.shape, state.palette);   // 1.1.3 기본 글꾸 새 틀도 대사색을 그대로 읽어요   // 1.1.3 깡통 로그 틀 묶음은 로그의 대사색을 그대로 읽어요(에이드 색으로 다시 칠하지 않아요)
         if (target && target !== nowPalette()) out.model = recolorLog(out.model, tokensOf(nowPalette()), tokensOf(target));
+        out.model = wrapModel(out.model, store().wrap);
+        if (wrapMode(store().wrap) === 'char') out.model = { ...out.model, messages: out.model.messages.map(m => (m.name ? { ...m, nameStyle: { ...m.nameStyle, 'word-break': 'keep-all' } } : m)) };   // 글자 단위여도 이름 줄은 낱말째(「틀 없이」 이름 줄은 바탕을 물려받아요)   // 11-13 메시지 글(인라인 글자 모양)의 줄바꿈 — 채팅 화면은 keep-all 이라 그대로 뜨면 단어 단위였어요
         return out;
     };
     // 1.0.7 「보일 것」 칩 · 머리 칸 글칸 — 틀을 그릴 때마다(직접 붙인 글꾸는 틀 칸이 없어 이름 줄만)
@@ -528,6 +532,7 @@ export async function openLogSheet(model) {
         const rules = ct.replaceRules.filter(r => r.from.trim());
         put('words', ct.replace ? (rules.map(r => `${r.from} → ${r.to}`).join(' · ') || '줄 없음') : '꺼짐', ct.replace ? '켬' : '', true);
         put('fields', ['title', 'date', 'char'].map(fieldOf).map(v => String(v).trim()).filter(Boolean).join(' · ') || '비어 있어요');
+        put('wrap', wrapMode(store().wrap) === 'word' ? '단어 단위' : '글자 단위 (기본)');   // 11-13 접힌 머리에 지금 줄바꿈
         for (const fd of dialog.querySelectorAll('[data-lc-fd]')) { const on = !!state.folds[fd.dataset.lcFd]; fd.classList.toggle('is-open', on); fd.querySelector('[data-lc-fold]').setAttribute('aria-expanded', String(on)); }
     };
     const drawTools = keepFocus(() => {
@@ -536,6 +541,7 @@ export async function openLogSheet(model) {
         $('[data-lc="words"]').setAttribute('aria-pressed', String(ct.replace));
         $('[data-lc-sw="hide"]').setAttribute('aria-checked', String(ct.redact));
         $('[data-lc-sw="words"]').setAttribute('aria-checked', String(ct.replace));
+        { const word = wrapMode(store().wrap) === 'word'; $('[data-lc="wrap"]').setAttribute('aria-pressed', String(word)); $('[data-lc-sw="wrap"]').setAttribute('aria-checked', String(word)); }   // 11-13 줄바꿈(PC 칩 · 폰 알약 스위치)
         const rules = ct.replaceRules.filter(r => r.from.trim()).length;
         $('[data-lc-words-count]').textContent = rules ? String(rules) : '';
         $('[data-lc-names]').hidden = !ct.redact;
@@ -743,6 +749,7 @@ export async function openLogSheet(model) {
         if ((!mine || mine.template) && !toneNow && !basicOn()) { const full = html; html = fitBare(full, bareLog(full, { top: s3.topOff, bottom: s3.bottomOff, drop })); }   // 1.0.7 위 글 · 아래 글 · 칸 빼기 → 글을 덮게 된 장식 걷기
         // 1.1.3 깡통 로그 틀 묶음: 붙인 뒤 덮일 글자색(바탕 대비 4.6 아래)은 그릴 때 밝기만 맞춰요 — 미리보기와 복사 글이 같게
         if (toneNow) html = siteCheck(html, { mode: toneMode }).html;
+        html = wrapHtml(html, store().wrap);   // 11-13 틀 <style> 의 본문 줄바꿈을 고른 값으로(미리보기 = 복사 글) — 제목 · 이름표 · 소품 글자는 틀 그대로
         $('[data-lc-pick]').hidden = !(rawOf(mine) && (state.picking || !mine.slot));
         // 1.2.0 눌러야 글이 나오는 소품(닫힌 채 시작하는 details): 미리보기에서 눌러 연 것은 「미리보기로만 연 것」(data-bl-peek)이라 복사 글에서는 닫힌 채로 가고,
         //   조절 · 밝기로 다시 그려도 같은 틀이면 연 채로 둬요(전엔 칩을 누를 때마다 글이 도로 접혀 소품을 또 눌러야 했고, 연 채 복사하면 붙인 글이 열린 채 시작했어요)
@@ -1144,6 +1151,7 @@ export async function openLogSheet(model) {
                 break;
             }
             case 'hide': { const ct = tools(); ct.redact = !ct.redact; saveSettings(); drawTools(); draw(); break; }
+            case 'wrap': { const s2 = store(); if (wrapMode(s2.wrap) === 'word') delete s2.wrap; else s2.wrap = 'word'; saveSettings(); drawTools(); draw(); break; }   // 11-13 줄바꿈 글자 단위 ↔ 단어 단위(단어 단위만 설정에 남아요 · 없으면 글자 단위)
             case 'fields': { const box = $('[data-lc-fields]'); box.hidden = !box.hidden; state.folds.fields = !box.hidden; drawShows(); if (!box.hidden) box.querySelector('input:not(:disabled)')?.focus(); break; }
             case 'undo': travel(-1); drawHist(); break;   // 글 고치기 중에도 같은 한 줄(고친 차례 거꾸로 하나씩)
             case 'redo': travel(1); drawHist(); break;
@@ -1528,7 +1536,7 @@ const STYLE = `
   .bl-lc-fd { display:grid; gap:10px; min-width:0; border:1px solid var(--salty-line); border-radius:12px; background:var(--salty-surface); }
   .bl-lc-fd.is-open { padding-bottom:14px; }
   .bl-lc-fd:not(.is-open) > :not(.bl-lc-fd-h) { display:none; }
-  .bl-lc-fd[data-lc-fd="shows"] { order:1; } .bl-lc-fd[data-lc-fd="names"] { order:2; } .bl-lc-fd[data-lc-fd="words"] { order:3; } .bl-lc-fd[data-lc-fd="fields"] { order:4; }
+  .bl-lc-fd[data-lc-fd="shows"] { order:1; } .bl-lc-fd[data-lc-fd="names"] { order:2; } .bl-lc-fd[data-lc-fd="words"] { order:3; } .bl-lc-fd[data-lc-fd="fields"] { order:4; } .bl-lc-fd[data-lc-fd="wrap"] { order:5; }   /* 11-13 줄바꿈 갈래는 머리 칸 뒤 */
   .bl-lc-fd-h { box-sizing:border-box; display:flex; align-items:center; gap:8px; width:100%; min-width:0; min-height:47px; margin:0; padding:0 12px; border:0; border-radius:8px; background:transparent; color:var(--salty-text); font:inherit; font-size:var(--bl-ts-ctl, 14px); text-align:left; cursor:pointer; }   /* 1.2.2 접는 줄 단추 = 공용 글자 단추 꼴(글자 한 단계 · 여백 12 · 모서리 8 · 상자 없음 — 빠른 QR 찾기의 접는 줄과 같아요) · 갈래 이름 · 요약 글자는 아래에서 따로 */
   .bl-lc-fd.is-open > .bl-lc-fd-h { margin-bottom:-6px; }
   .bl-lc-fd-h > b { flex:none; font-size:15px; font-weight:650; }
