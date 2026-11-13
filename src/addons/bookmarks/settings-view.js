@@ -16,10 +16,12 @@ function segmented(name, options, value) {
     </div>`;
 }
 
+// max 를 비우면(null) 위쪽 상한 없음 — data-max · max 속성을 안 적어요
 function stepper(name, min, max, value) {
-    return `<div class="cg-stepper" data-setting="${name}" data-min="${min}" data-max="${max}">
+    const top = max == null ? '' : ` data-max="${max}"`;
+    return `<div class="cg-stepper" data-setting="${name}" data-min="${min}"${top}>
         <button type="button" data-step="-1" aria-label="줄이기"><i class="fa-solid fa-minus"></i></button>
-        <input type="number" inputmode="numeric" min="${min}" max="${max}" value="${value}" aria-label="값">
+        <input type="number" inputmode="numeric" min="${min}"${max == null ? '' : ` max="${max}"`} value="${value}" aria-label="값">
         <button type="button" data-step="1" aria-label="늘리기"><i class="fa-solid fa-plus"></i></button>
     </div>`;
 }
@@ -143,12 +145,12 @@ export function renderSettingsPage(page, viewingChat, onBack) {
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-list"></i>목록</h3>
                 <div class="cg-setting">
-                    <div class="cg-setting-text"><b>한 페이지에 보여 줄 북마크</b><small>1~50개. 그림만 보기는 이 값의 2배(최소 24장)씩 보여요. 너무 많으면 여는 속도가 느려져요.</small></div>
-                    ${stepper('itemsPerPage', 1, 50, store.itemsPerPage)}
+                    <div class="cg-setting-text"><b>한 페이지에 보여 줄 북마크</b><small>1개부터. 그림만 보기는 이 값의 2배(최소 24장)씩 보여요. 너무 많으면 여는 속도가 느려져요.</small></div>
+                    ${stepper('itemsPerPage', 1, null, store.itemsPerPage)}
                 </div>
                 <div class="cg-setting">
                     <div class="cg-setting-text"><b>앞뒤 문맥 범위</b><small>앞뒤 문맥 창에서 앞뒤로 몇 개씩 보여 줄지 (0이면 그 메시지만)</small></div>
-                    ${stepper('contextRange', 0, 10, store.contextRange)}
+                    ${stepper('contextRange', 0, null, store.contextRange)}
                 </div>
             </section>
 
@@ -300,7 +302,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
     page.querySelectorAll('.cg-stepper[data-setting] input').forEach((input) => {
         const box = input.closest('.cg-stepper');
         const min = Number(box.dataset.min);
-        const max = Number(box.dataset.max);
+        const max = box.dataset.max === undefined ? Infinity : Number(box.dataset.max);   // 위쪽 상한 없는 칸은 data-max 가 없어요
         input.addEventListener('change', () => {
             const parsed = Number.parseInt(input.value, 10);
             const value = Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : store[box.dataset.setting];

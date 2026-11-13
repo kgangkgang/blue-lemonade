@@ -83,7 +83,7 @@ export const PICK_DEFAULTS = Object.freeze({
     models: {},              // 공급자마다 고른 모델 ('custom' = customModels 에 쓴 이름)
     customModels: {},
     customUrl: '',           // '' = 실리태번 본체의 Custom 주소 (그 추가 헤더 · 본문과 함께)
-    count: 2,                // 한 답에 최대 N장 (1~12 — 1.1.2 전에는 1~4)
+    count: 2,                // 한 답에 최대 N장 (1 이상 · 위쪽 상한 없음 — 1.1.2 전에는 1~4 · 그 뒤 1~12)
     maxTokens: 1024,
     timeoutSec: 90,
 });
@@ -98,7 +98,7 @@ export function normalizePick(store = settings()) {
     for (const key of ['models', 'customModels']) if (!pick[key] || typeof pick[key] !== 'object' || Array.isArray(pick[key])) pick[key] = {};
     pick.profileId = String(pick.profileId ?? '');
     pick.customUrl = String(pick.customUrl ?? '');
-    { const n = Math.round(Number(pick.count)); pick.count = pick.count == null || pick.count === '' || !Number.isFinite(n) ? 2 : Math.max(1, Math.min(12, n)); }   // 1.1.2 감사 3차 R3: 0 은 1 로   // 상한은 slots.js PICK_COUNT_MAX 와 같게
+    { const n = Math.round(Number(pick.count)); pick.count = pick.count == null || pick.count === '' || !Number.isFinite(n) ? 2 : Math.max(1, n); }   // 1.1.2 감사 3차 R3: 0 은 1 로 · 위쪽 상한 없음(사용자 「이런 거에 상한 좀 걸지 마」)
     pick.maxTokens = Math.max(64, Math.min(65536, Math.round(Number(pick.maxTokens)) || PICK_DEFAULTS.maxTokens));
     pick.timeoutSec = Math.max(10, Math.min(600, Math.round(Number(pick.timeoutSec)) || PICK_DEFAULTS.timeoutSec));
     store.pick = pick;

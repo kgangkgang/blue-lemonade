@@ -3691,11 +3691,13 @@ async function writeCharacterUpdate(idx, char, update) {
 //  - Parsing is strict: a batch whose reply doesn't line up 1:1 is discarded
 //    wholesale rather than risk assigning titles to the wrong toggles.
 // Batch size and inter-request delay are user-configurable (extension drawer).
-const titleBatchSize  = () => Math.max(1, Math.min(50, cfg().titleBatchSize || 15));
-const requestDelayMs  = () => Math.max(0, cfg().requestDelayMs ?? 60);
-const concurrency     = () => Math.max(1, Math.min(8, cfg().concurrency || 1));
-const maxRetries      = () => Math.max(0, Math.min(5, cfg().maxRetries ?? 2));
-const requestTimeoutMs= () => Math.max(5000, cfg().requestTimeoutMs || 120000);
+// 위쪽 상한 없음(사용자 「이런 거에 상한 좀 걸지 마」) — 아래쪽만 지켜요. 타이머에 넣는 두 값만 브라우저 타이머 끝(약 24.8일)에서 멈춰요(넘으면 타이머가 바로 터져서)
+const TIMER_MAX_MS    = 2147483647;
+const titleBatchSize  = () => Math.max(1, cfg().titleBatchSize || 15);
+const requestDelayMs  = () => Math.min(TIMER_MAX_MS, Math.max(0, cfg().requestDelayMs ?? 60));
+const concurrency     = () => Math.max(1, cfg().concurrency || 1);
+const maxRetries      = () => Math.max(0, cfg().maxRetries ?? 2);
+const requestTimeoutMs= () => Math.min(TIMER_MAX_MS, Math.max(5000, cfg().requestTimeoutMs || 120000));
 
 function parseNumberedTitles(raw, expectedCount) {
     if (typeof raw !== 'string') return null;
@@ -5223,35 +5225,31 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     $('#pt-title-batch').on('change',function(){
         let v = parseInt(this.value,10);
         if (isNaN(v) || v < 1) v = 1;
-        if (v > 50) v = 50;
         this.value = v;
         cfg().titleBatchSize = v; saveSettingsDebounced();
     });
     $('#pt-req-delay').on('change',function(){
         let v = parseInt(this.value,10);
         if (isNaN(v) || v < 0) v = 0;
-        if (v > 60000) v = 60000;
         this.value = v;
         cfg().requestDelayMs = v; saveSettingsDebounced();
     });
     $('#pt-concurrency').on('change',function(){
         let v = parseInt(this.value,10);
         if (isNaN(v) || v < 1) v = 1;
-        if (v > 8) v = 8;
         this.value = v;
+        $('#pt-concurrency-warn').toggle(v > 8);   // 8 을 넘겨도 막지 않고 안내만
         cfg().concurrency = v; saveSettingsDebounced();
     });
     $('#pt-max-retries').on('change',function(){
         let v = parseInt(this.value,10);
         if (isNaN(v) || v < 0) v = 0;
-        if (v > 5) v = 5;
         this.value = v;
         cfg().maxRetries = v; saveSettingsDebounced();
     });
     $('#pt-req-timeout').on('change',function(){
         let v = parseInt(this.value,10);
         if (isNaN(v) || v < 5) v = 5;
-        if (v > 600) v = 600;
         this.value = v;
         cfg().requestTimeoutMs = v * 1000; saveSettingsDebounced();
     });

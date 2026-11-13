@@ -249,7 +249,7 @@ export async function withTimeout(task, seconds, parent) {
     const abort = () => child.abort();
     if (parent.aborted) abort();
     parent.addEventListener('abort', abort, { once: true });
-    const timer = setTimeout(abort, seconds * 1000);
+    const timer = setTimeout(abort, Math.min(2147483647, seconds * 1000));   // 시간 칸은 위쪽 상한 없음 — 타이머 끝(약 24.8일)을 넘기면 바로 터지니 거기서 멈춰요
     try {
         return await task(child.signal);
     } finally {

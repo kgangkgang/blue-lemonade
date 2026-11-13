@@ -135,16 +135,16 @@ export function isDialogueStart(paragraph) {
     return colored || QUOTE_START.test(rest) || HEX_QUOTE.test(rest) || NAME_COLON.test(rest) || NAME_BRACKET.test(rest);
 }
 
-/** 한 답에 고를 그림 수의 상한 (1.1.2: 4 → 12 — 설정 칸에 숫자로 적어요. 4 이하는 자리 · 요청이 예전과 같아요) */
-export const PICK_COUNT_MAX = 12;
+/** 한 답에 고를 그림 수는 위쪽 상한이 없어요(1.1.2: 4 → 12 · 그 뒤 없음). 실제 자리는 답의 대사 문단(없으면 문단 경계) 수만큼만 생겨요. 4 이하는 자리 · 요청이 예전과 같아요 */
 
 /** 자리 n 개 — 대사 문단 바로 앞 경계 가운데 고르게 (대사가 없으면 모든 경계 가운데). 오름차순 위치 목록, 모자라면 적게 */
 export function slotSpots(text, count) {
-    const n = Math.max(1, Math.min(PICK_COUNT_MAX, Math.round(Number(count)) || 1));
     const all = paragraphBoundaries(text);
     const dialogue = all.filter(boundary => isDialogueStart(boundary.next));
     const pool = dialogue.length ? dialogue : all;
     const m = pool.length, picks = [];
+    // 경계 수(m)보다 많이 골라도 결과는 경계 전부라서 m 에서 멈춰요 — 큰 값(1e9)에서 헛도는 반복을 막는 것뿐, 사용자 값을 줄이는 상한이 아니에요
+    const n = Math.min(m, Math.max(1, Math.round(Number(count)) || 1));
     for (let j = 0; j < n; j++) {
         const index = Math.floor((j + 1) * (m + 1) / (n + 1)) - 1;
         if (index >= 0 && index < m && !picks.includes(pool[index].at)) picks.push(pool[index].at);
@@ -251,7 +251,7 @@ export function parsePicks(raw, count, known) {
     const strict = n > 4;
     const text = String(raw ?? '').replace(/<(think|thinking|reasoning)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
     for (const line of text.split(/\r?\n/)) {
-        const m = /^\s*[-*]?\s*\[?(?:ASSET\s*)?(\d{1,2})\]?\s*[:：.)-]\s*(.*?)\s*$/i.exec(line);
+        const m = /^\s*[-*]?\s*\[?(?:ASSET\s*)?(\d{1,5})\]?\s*[:：.)-]\s*(.*?)\s*$/i.exec(line);
         if (!m) continue;
         const i = Number(m[1]) - 1;
         if (i < 0 || i >= n) continue;

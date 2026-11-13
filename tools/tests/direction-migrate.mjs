@@ -63,14 +63,15 @@ await test('예전 단독 확장에서 처음 옮김: 켜짐 · 적은 지시 ·
     assert.deepEqual(ext[OLD_MODULE], before, '예전 확장 설정은 지우지도 고치지도 않음 (되돌아가도 그대로)');
 });
 
-await test('예전 값이 이상하면 그 칸만 기본값 · 큰 깊이는 100 · 음수는 0 · 빈 지시 글은 빈 칸', () => {
+await test('예전 값이 이상하면 그 칸만 기본값 · 큰 깊이는 그대로(실리태번 끝 10000 까지) · 음수는 0 · 빈 지시 글은 빈 칸', () => {
     let s = load({ old: { extensionEnabled: 'yes', direction: 'not an object', directionPrompt: '   ', promptDepth: 2.5 } });
     assert.equal(s.extensionEnabled, true, '불리언이 아니면 기본(켜짐)');
     assert.deepEqual(bare(s.direction), { enabled: false, content: '' }, '객체가 아닌 지시는 기본');
     assert.equal(s.directionPrompt, DEFAULT_PROMPT, '빈 프롬프트는 기본 프롬프트');
     assert.equal(s.promptDepth, 1, '정수가 아닌 깊이는 기본');
     assert.equal(s.migratedFrom, OLD_MODULE);
-    assert.equal(load({ old: { promptDepth: 500 } }).promptDepth, 100);
+    assert.equal(load({ old: { promptDepth: 500 } }).promptDepth, 500, '예전 상한 100 을 넘는 옛 값도 그대로');
+    assert.equal(load({ old: { promptDepth: 50000 } }).promptDepth, 10000, '실리태번 끝(10000)만');
     assert.equal(load({ old: { promptDepth: -3 } }).promptDepth, 0);
     assert.equal(load({ old: { promptDepth: 0 } }).promptDepth, 0, '0(맨 끝)도 옮김');
     s = load({ old: { direction: { enabled: false, content: null } } });
@@ -111,7 +112,7 @@ await test('새 설정이 망가졌으면(객체가 아님) 예전 설정에서 
 
 await test('저장된 값 고르기: 깊이 · 켜짐 색 · 켜짐 스위치 · 프롬프트(비운 것은 그대로) · 지시 칸 · 모르는 칸은 그대로', () => {
     const base = () => ({ extensionEnabled: true, direction: { enabled: false, content: '' }, directionPrompt: 'D {{direction}}', promptDepth: 1, onColor: '', ...structuredClone(EMPTY_LISTS) });
-    for (const [raw, want] of [['7', 7], [-5, 0], [1000, 100], ['abc', 1], [3.9, 3], [null, 1], [undefined, 1], [100, 100]]) {
+    for (const [raw, want] of [['7', 7], [-5, 0], [1000, 1000], [20000, 10000], ['abc', 1], [3.9, 3], [null, 1], [undefined, 1], [100, 100]]) {
         assert.equal(load({ store: { ...base(), promptDepth: raw } }).promptDepth, want, `깊이 ${JSON.stringify(raw)}`);
     }
     for (const [raw, want] of [['FAC679', '#fac679'], ['#ABC', '#aabbcc'], ['rgb(250, 198, 121)', '#fac679'], ['250,198,121', '#fac679'], ['rgba(1, 2, 3, 0.5)', '#010203'],
@@ -142,7 +143,7 @@ await test('1.4.0 넣는 곳: 예전 설정은 셋 다 그 깊이 · 시스템 �
         always: { enabled: false, content: '', place: { at: 'nowhere', role: 'narrator', depth: '300' } },
         promptList: [{ id: 'a', title: 't', content: 'c', enabled: true, at: 1 }, { id: 'b', title: 'u', content: 'd', enabled: false, at: 2, place: { at: 'before-main', role: 'user' } }] } });
     assert.deepEqual(s.direction.place, { at: 'end', role: 'assistant', depth: 7 }, '고른 값은 그대로');
-    assert.deepEqual(s.always.place, { at: 'depth', role: 'system', depth: 100 }, '모르는 자리 · 역할은 기본, 큰 깊이는 100');
+    assert.deepEqual(s.always.place, { at: 'depth', role: 'system', depth: 300 }, '모르는 자리 · 역할은 기본, 깊이 300 은 그대로(위쪽은 실리태번 끝 10000 만)');
     assert.deepEqual(s.promptList.map(item => item.place), [{ at: 'depth', role: 'system', depth: 2 }, { at: 'before-main', role: 'user', depth: 2 }], '프롬프트 줄마다');
     assert.equal(P.saves, 0, '불러오기만으로는 저장 안 함');
 });

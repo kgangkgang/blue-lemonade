@@ -320,8 +320,8 @@ function showHelp() {
 }
 function askCount() {
     return new Promise(resolve=>{
-        const dialog=popup(`<form method="dialog"><h3>얼마나 채팅을 불러올까요?</h3><p>현재 목록에 입력한 개수만큼 이전 메시지를 더해요.</p><label>추가할 메시지 수<input type="number" name="count" min="1" max="1000" step="1" value="10" required></label><div class="bl-word-actions"><button type="submit" class="salty-btn">불러오기</button><button type="button" class="salty-btn" data-cancel>취소</button></div></form>`);
-        let count=null;dialog.querySelector('form').onsubmit=event=>{event.preventDefault();count=Number(dialog.querySelector('input').value);if(Number.isInteger(count)&&count>=1&&count<=1000)dialog.close();};
+        const dialog=popup(`<form method="dialog"><h3>얼마나 채팅을 불러올까요?</h3><p>현재 목록에 입력한 개수만큼 이전 메시지를 더해요.</p><label>추가할 메시지 수<input type="number" name="count" min="1" step="1" value="10" required></label><div class="bl-word-actions"><button type="submit" class="salty-btn">불러오기</button><button type="button" class="salty-btn" data-cancel>취소</button></div></form>`);
+        let count=null;dialog.querySelector('form').onsubmit=event=>{event.preventDefault();count=Number(dialog.querySelector('input').value);if(Number.isInteger(count)&&count>=1)dialog.close();}; // 위쪽 상한 없음 — 채팅보다 많으면 있는 만큼만 더해요
         dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();dialog.addEventListener('close',()=>resolve(count),{once:true});
     });
 }

@@ -78,7 +78,7 @@ await test('ledgerSettings: 빈 설정을 채우고, 틀린 결제 수단 · 환
     assert.equal(t.enabled, true, '참거짓이 아니면 켬');
     assert.deepEqual(t.krw, { ...C.DEFAULT_KRW });
     assert.deepEqual(Object.keys(t.payMethods), ['openai']);
-    assert.deepEqual(Object.keys(t.relayRates).sort(), ['https://d.example.test', RELAY]);
+    assert.deepEqual(Object.keys(t.relayRates).sort(), ['https://c.example.test', 'https://d.example.test', RELAY], '중계 환율은 위쪽 상한 없음(1e6 도 그대로) — 0 · 주소가 아닌 열쇠만 버려요');
     ext.bl_usage_ledger = { enabled: false, krw: { rate: '1300', date: 'd' }, payMethods: ['x'], relayRates: ['x'] };
     const u = H.ledgerSettings();
     assert.deepEqual([u.enabled, u.krw.rate, u.payMethods, u.relayRates], [false, '1300', {}, {}]);
@@ -163,14 +163,16 @@ await test('setPayMethod · payMethods: 지우기 · 위험한 열쇠 · 길이 
 });
 
 await test('setKrwRate · setRelayRate: 범위 · 반올림 · 지우기, 중계 환율을 정한 origin 은 중계로 본다', () => {
-    for (const bad of [0, -1, 100000, 'x', NaN]) assert.equal(H.setKrwRate(bad), false, String(bad));
+    for (const bad of [0, -1, 'x', NaN, Infinity]) assert.equal(H.setKrwRate(bad), false, String(bad));
+    assert.equal(H.setKrwRate(999990), true, '위쪽 상한 없음 — 예전 끝(99,999)의 10배'); assert.equal(ext.bl_usage_ledger.krw.rate, 999990);
     assert.equal(H.setKrwRate('99999.5', '2026-10-21T09:00', 'x'.repeat(100)), true);
     assert.deepEqual(ext.bl_usage_ledger.krw, { rate: 99999.5, date: '2026-10-21', source: 'x'.repeat(80) });
     assert.equal(H.setKrwRate(1300), true);
     assert.equal(ext.bl_usage_ledger.krw.date, C.dayKey(Date.now()));
     assert.equal(ext.bl_usage_ledger.krw.source, '사용자 입력');
     assert.equal(H.setRelayRate('nope', 1), false);
-    for (const bad of [0, -1, 1e6, 'x']) assert.equal(H.setRelayRate(RELAY, bad), false, String(bad));
+    for (const bad of [0, -1, 'x', Infinity]) assert.equal(H.setRelayRate(RELAY, bad), false, String(bad));
+    assert.equal(H.setRelayRate(RELAY, 1e7), true, '위쪽 상한 없음 — 예전 끝(1e6)의 10배'); assert.equal(ext.bl_usage_ledger.relayRates[RELAY].rate, 1e7);
     const other = { origin: 'https://b.example.test', model: 'm', input: 1 };
     assert.equal(H.payKeyFor(other), 'other:b.example.test');
     assert.equal(H.setRelayRate('https://b.example.test/v1/x', 1400.456, 's'.repeat(90), '2026-10-22T00'), true);

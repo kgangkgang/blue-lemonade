@@ -342,7 +342,7 @@ function template() {
                         </div>
                         <label class="eh-pick-row eh-pick-profile" hidden><span>연결 프로필</span><select data-pick-field="profileId" aria-label="고르는 모델 연결 프로필"></select></label>
                         <div class="eh-pick-fallback" hidden></div>
-                        <label class="eh-pick-row"><span>한 답에 최대 (1~12장 · 대사 문단 사이에 고르게)</span><input type="number" data-pick-field="count" min="1" max="12" step="1" inputmode="numeric" aria-label="한 답에 고를 그림 수 (1~12)"></label>
+                        <label class="eh-pick-row"><span>한 답에 최대 (1장부터 · 대사 문단 사이에 고르게)</span><input type="number" data-pick-field="count" min="1" step="1" inputmode="numeric" aria-label="한 답에 고를 그림 수 (1장부터)"></label>
                         <p class="eh-pick-problem" role="status"></p>
                     </div>
                 </div>
@@ -366,7 +366,7 @@ function template() {
                         </li>
                         <li>
                             <b>다른 모델이 고르기 (선택)</b>
-                            <p>본문 모델이 비싸면 위 카드의 <b>다른 모델이 고르기</b>를 켜고 싼 모델을 골라요. 본문 모델에는 그림 규칙 · 목록을 보내지 않고, 답을 받은 뒤 그 모델이 대사 문단 앞 자리마다 그림을 골라요(한 답에 최대 1~12장). 고르는 동안에도 글은 바뀌지 않아 번역 · TTS · 다시 쓰기와 함께 써도 돼요. 고르지 못한 자리는 <b>그림 다시 고르기</b>를 눌러요. <b>지금 연결</b>은 예전처럼 본문 모델이 직접 태그를 써요.</p>
+                            <p>본문 모델이 비싸면 위 카드의 <b>다른 모델이 고르기</b>를 켜고 싼 모델을 골라요. 본문 모델에는 그림 규칙 · 목록을 보내지 않고, 답을 받은 뒤 그 모델이 대사 문단 앞 자리마다 그림을 골라요(한 답에 최대 장수는 1장부터 직접 정해요). 고르는 동안에도 글은 바뀌지 않아 번역 · TTS · 다시 쓰기와 함께 써도 돼요. 고르지 못한 자리는 <b>그림 다시 고르기</b>를 눌러요. <b>지금 연결</b>은 예전처럼 본문 모델이 직접 태그를 써요.</p>
                         </li>
                         <li>
                             <b>채팅에 그림</b>
@@ -705,8 +705,8 @@ function bindPick() {
         if (field === 'customModel') { pick.customModels[pick.provider] = value.trim(); pickChanged(); return; }
         if (field === 'customUrl') { pick.customUrl = value.trim(); pickChanged(); return; }
         if (field === 'profileId') { pick.profileId = value; pickChanged(); return; }
-        if (field === 'count') { const n = Math.round(Number(value)); pick.count = String(value).trim() === '' || !Number.isFinite(n) ? 2 : Math.max(1, Math.min(12, n));   // 1.1.2 감사 3차 R3: 0 은 1 로(전엔 2)
-            event.target.value = String(pick.count); pickChanged(); }   // 1.1.2 숫자 칸(1~12) — 범위 밖 · 빈 값은 맞춰서 다시 보여 줘요
+        if (field === 'count') { const n = Math.round(Number(value)); pick.count = String(value).trim() === '' || !Number.isFinite(n) ? 2 : Math.max(1, n);   // 1.1.2 감사 3차 R3: 0 은 1 로(전엔 2) · 위쪽 상한 없음(자리는 답의 대사 문단 수만큼만 생겨요)
+            event.target.value = String(pick.count); pickChanged(); }   // 1.1.2 숫자 칸(1 이상) — 범위 밖 · 빈 값은 맞춰서 다시 보여 줘요
     });
     root.addEventListener('input', (event) => {
         const field = event.target.closest?.('[data-pick-field]')?.dataset.pickField;

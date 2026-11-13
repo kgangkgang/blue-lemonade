@@ -417,7 +417,7 @@ async function retryWithFallback(mesId, mes) {
     return false;
 }
 const waitMode = (s) => (s.wait_translation === 'on' || s.wait_translation === 'off' ? s.wait_translation : 'auto');
-const waitTimeoutMs = (s) => Math.max(1, Number(s.translation_timeout) || 90) * 1000;
+const waitTimeoutMs = (s) => Math.min(2147483647, Math.max(1, Number(s.translation_timeout) || 90) * 1000);   // 위쪽 상한 없음 — 브라우저 타이머 끝(약 24.8일)에서만 멈춰요
 /** 지금 글의 번역문이 붙어 있나 (translation.displayReady: 이어쓰기 뒤 남은 옛 번역문은 아직 없는 것) */
 function hasDisplay(mes) {
     if (typeof translation.displayReady === 'function') { try { return !!translation.displayReady(mes); } catch { /* 아래 */ } }

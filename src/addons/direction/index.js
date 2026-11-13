@@ -79,9 +79,11 @@ function save() {
     try { getContext().saveMetadataDebounced?.(); } catch (error) { console.warn('[전개 지시] 채팅방 기록을 저장하지 못했어요:', error); }
 }
 
+// 깊이는 테마가 따로 막지 않아요(예전 100) — 실리태번 본체가 정한 끝(MAX_INJECTION_DEPTH 10000)만 지켜요. 본체도 그 위는 잘라요
+const ST_MAX_DEPTH = 10000;
 function clampDepth(value) {
     const number = Number.parseInt(value, 10);
-    return Number.isFinite(number) ? Math.min(100, Math.max(0, number)) : 1;
+    return Number.isFinite(number) ? Math.min(ST_MAX_DEPTH, Math.max(0, number)) : 1;
 }
 
 // 1.4.0 넣는 곳 · 역할 (지시마다 따로). 메인 프롬프트 앞 · 뒤는 실리태번 확장 프롬프트로, 나머지는 보내기 직전 메시지 목록에 넣는다
@@ -762,7 +764,7 @@ function placeBox(place) {
     for (const value of PLACE_ROLES) role.append(placeOption(value, ROLE_LABEL[value]));
     const stepper = makeEl('div', 'jj-stepper jj-place-depth');
     stepper.innerHTML = '<button type="button" data-pact="depth" data-step="-1" aria-label="깊이 줄이기"><i class="fa-solid fa-minus"></i></button>'
-        + '<input type="number" data-field="depth" min="0" max="100" inputmode="numeric" aria-label="깊이">'
+        + '<input type="number" data-field="depth" min="0" max="10000" inputmode="numeric" aria-label="깊이">'
         + '<button type="button" data-pact="depth" data-step="1" aria-label="깊이 늘리기"><i class="fa-solid fa-plus"></i></button>';
     box.append(at, role, stepper);
     fillPlaceBox(box, place);

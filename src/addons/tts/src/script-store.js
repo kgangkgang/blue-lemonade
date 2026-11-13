@@ -45,7 +45,7 @@ export function normalizeRows(rows) {
             durationMs: r.kind === 'sfx' ? Math.round(number(r.durationMs, 0, 0, 8000)) : 0,
             stopBefore: r.kind === 'sfx' && Number.isSafeInteger(r.stopBefore) && r.stopBefore >= 0 ? r.stopBefore : null,   // 1.5.9 반복이 멈추는 대사(원문 조각 번호)
             volume: number(r.volume, 1, 0, 1),
-            gapMs: Math.round(number(r.gapMs, r.kind === 'pause' ? 500 : 0, 0, 10000)),
+            gapMs: Math.round(number(r.gapMs, r.kind === 'pause' ? 500 : 0, 0, Infinity)),   // 위쪽 상한 없음 — 길면 편집 창이 안내만 해요
             enabled: r.enabled !== false,
         };
     });

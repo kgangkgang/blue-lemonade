@@ -614,6 +614,8 @@ jobs:
           node tools/tests/translator-style-profiles.mjs
           node tools/tests/translator-style-aliases.mjs
           node tools/tests/translator-reply-reference.mjs .
+          # 사용자 숫자 설정의 위쪽 상한 풀기 — 10배 값 저장 · 사용 · 옛 설정 이어짐 · 넘으면 안내
+          node tools/tests/no-upper-caps.mjs .
           node --test tools/tests/translator-book-transfer.mjs
           node --test tools/tests/translator-book-list.mjs
           node tools/tests/translator-access-tools.mjs

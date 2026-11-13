@@ -1091,8 +1091,15 @@ function loadParameterValues(provider) {
             }
         }
     });
+    updateMaxLengthWarn(provider);
 
+}
 
+/** Max Response Length 는 위쪽 상한이 없어요 — 예전 끝(160000)을 넘기면 막지 않고 안내 한 줄만 보여요 */
+const MAX_LENGTH_WARN_AT = 160000;
+function updateMaxLengthWarn(provider = $('#llm_provider').val()) {
+    const suffix = ['openrouter', 'deepseek', 'custom'].includes(provider) ? 'openai' : provider;
+    $('#llm_max_length_warn').toggle(Number($(`#max_length_${suffix}`).val()) > MAX_LENGTH_WARN_AT);
 }
 
 /** 7.0.7 저장된 파라미터 값이 쓸 수 있는 숫자인가 (null · 빈 글 · NaN 은 아님) */
@@ -1123,7 +1130,7 @@ function saveParameterValues(provider) {
         if (Number.isFinite(value)) {
             const lo = parseFloat(this.min), hi = parseFloat(this.max);
             if (Number.isFinite(lo) && value < lo) value = lo;
-            if (Number.isFinite(hi) && value > hi) value = hi;
+            if (Number.isFinite(hi) && value > hi) value = hi;   // Max Response Length 숫자 칸은 max="Infinity"(위쪽 상한 없음)라 여기서 자르지 않아요
         }
         params[paramName] = Number.isFinite(value) ? value : isParamNumber(params[paramName]) ? Number(params[paramName]) : defaultSettings.parameters[provider]?.[paramName] ?? params[paramName];
     });
@@ -6308,7 +6315,7 @@ function initializeEventHandlers() {
         saveSettingsDebounced();
     });
     $('#llm_profile_max_tokens').on('change', function () {
-        extensionSettings.profile_max_tokens = Math.max(0, Math.min(160000, Math.floor(Number(this.value) || 0)));
+        extensionSettings.profile_max_tokens = Math.max(0, Math.floor(Number(this.value) || 0));   // 위쪽 상한 없음 — 모델 한도는 공급자가 정해요
         this.value = extensionSettings.profile_max_tokens;
         saveSettingsDebounced();
     });
@@ -6340,7 +6347,7 @@ function initializeEventHandlers() {
     });
 
     $('#llm_context_message_count_value').on('change', function () {
-        const value = Math.min(20, Math.max(1, parseInt($(this).val()) || 5));
+        const value = Math.max(1, parseInt($(this).val()) || 5);   // 위쪽 상한 없음 — 슬라이더는 20 끝에 붙어 있고 숫자 칸 값을 그대로 써요
         $(this).val(value);
         $('#llm_context_message_count').val(value);
         extensionSettings.context_message_count = value;
@@ -6429,6 +6436,7 @@ function initializeEventHandlers() {
         }
 
         saveParameterValues(provider);
+        updateMaxLengthWarn(provider);
     });
 
     // 체크박스 이벤트 핸들러들 (단순화)

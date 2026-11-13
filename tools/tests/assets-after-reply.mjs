@@ -91,25 +91,28 @@ await test('slotSpots: evenly among dialogue boundaries, 1–4, all boundaries w
 });
 
 // ---------- 넣기 · 고르는 글
-// 1.1.2 한 답에 넣는 그림 수를 숫자로(1~12): 4 이하는 예전 식과 같은 자리 · 5 이상은 대사 문단 사이에 고르게 · 자리가 모자라면 있는 만큼만
-await test('slotSpots 1.1.2: up to 12, same spots as before for 1–4, spread evenly over a long reply, never more than the boundaries', () => {
+// 1.1.2 한 답에 넣는 그림 수를 숫자로(1 이상 · 위쪽 상한 없음): 4 이하는 예전 식과 같은 자리 · 5 이상은 대사 문단 사이에 고르게 · 자리가 모자라면 있는 만큼만
+await test('slotSpots: no upper cap, same spots as before for 1–4, spread evenly over a long reply, never more than the boundaries', () => {
     const long = Array.from({ length: 30 }, (_, i) => i % 2 ? `「대사 ${i}」` : `지문 ${i}.`).join('\n\n');
     const dialogue = S.paragraphBoundaries(long).filter(b => S.isDialogueStart(b.next)).map(b => b.at);
     assert.equal(dialogue.length, 15);
     const old = n => { const m = dialogue.length, out = []; for (let j = 0; j < n; j++) { const i = Math.floor((j + 1) * (m + 1) / (n + 1)) - 1; if (i >= 0 && i < m && !out.includes(dialogue[i])) out.push(dialogue[i]); } return out.sort((a, b) => a - b); };
     for (const n of [1, 2, 3, 4]) assert.deepEqual(S.slotSpots(long, n), old(n), `count ${n} is unchanged`);
-    assert.equal(S.PICK_COUNT_MAX, 12);
+    assert.equal(S.PICK_COUNT_MAX, undefined, '위쪽 상한 상수가 없어요');
     const five = S.slotSpots(long, 5), where = five.map(at => dialogue.indexOf(at));
     assert.equal(five.length, 5, 'five slots (was capped at four)');
     const gaps = where.slice(1).map((v, i) => v - where[i]);
     assert.ok(where[0] <= 2 && where[4] >= 12, 'spread over the whole reply, not bunched at the top');
     assert.ok(Math.max(...gaps) - Math.min(...gaps) <= 1, 'gaps differ by at most one dialogue paragraph');
     assert.equal(S.slotSpots(long, 12).length, 12);
-    assert.equal(S.slotSpots(long, 99).length, 12, 'never more than the cap');
+    assert.equal(S.slotSpots(long, 15).length, 15, '12 를 넘겨도 대사 문단 수(15)까지 골라요');
+    assert.deepEqual(S.slotSpots(long, 120), dialogue, '예전 상한의 10배(120)는 대사 문단 전부 — 대사 문단보다 많이 생기지 않아요');
+    assert.equal(S.slotSpots(long, 1e9).length, 15, '아주 큰 값도 헛돌지 않고 바로 끝나요');
     assert.equal(S.slotSpots('A.\n\n「b」\n\nC.\n\n「d」', 8).length, 2, 'a short reply gets only as many as it has dialogue paragraphs');
     const [system] = S.pickPrompt({ reply: 'x', count: 7 });
     assert.match(system.content, /7 markers, \[ASSET 1\] to \[ASSET 7\],/);
     assert.deepEqual(S.parsePicks('10: a.png\n12: b.png', 12).filter(Boolean), ['a.png', 'b.png'], 'two-digit markers are read');
+    assert.deepEqual(S.parsePicks('[ASSET 100]: a.png\n[ASSET 120]: b.png', 120).filter(Boolean), ['a.png', 'b.png'], '세 자리 표식도 읽어요(상한을 푼 뒤)');
 });
 await test('insertSlots puts each slot as its own paragraph, ids in text order; every reader sees the same markup', () => {
     seq = 0;
@@ -211,7 +214,8 @@ await test('pickActive: off by default; needs the image prompt, the add-on, the 
     store.pick.profileId = 'p1'; T.profiles.push({ id: 'p1', name: 'Cheap' });
     assert.equal(P.pickActive(store), true); assert.equal(P.connectionLabel(store.pick), 'Cheap');
     store.pick.count = 9; ST.normalizePick(store); assert.equal(store.pick.count, 9);   // 1.1.2 상한 4 → 12
-    store.pick.count = 99; ST.normalizePick(store); assert.equal(store.pick.count, 12);
+    store.pick.count = 120; ST.normalizePick(store); assert.equal(store.pick.count, 120, '예전 상한(12)의 10배도 그대로 저장돼요');
+    store.pick.count = 12; ST.normalizePick(store); assert.equal(store.pick.count, 12, '옛 설정(12)은 그대로 이어져요');
     store.pick.count = 0; ST.normalizePick(store); assert.equal(store.pick.count, 1);   // 1.1.2 감사 3차 R3: 0 은 1(범위 밖은 맞춰요) · 빈 값만 기본 2
     store.pick.count = ''; ST.normalizePick(store); assert.equal(store.pick.count, 2);
     store.pick = 'broken'; ST.normalizePick(store); assert.equal(store.pick.enabled, false, 'a broken value becomes the defaults');

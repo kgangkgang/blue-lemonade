@@ -230,7 +230,7 @@ export async function openContextViewer(record, index) {
     sheet.extra.addEventListener('click', (event) => {
         const button = event.target.closest('[data-step]');
         if (!button) return;
-        const next = Math.min(10, Math.max(0, settings().contextRange + Number(button.dataset.step)));
+        const next = Math.max(0, settings().contextRange + Number(button.dataset.step));   // 위쪽 상한 없음
         if (next === settings().contextRange) return;
         settings().contextRange = next;
         saveSettings();

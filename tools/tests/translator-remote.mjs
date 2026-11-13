@@ -219,8 +219,10 @@ await test('설정 고치기: 잘못된 값은 기본값 · 숨김은 아는 기
     assert.equal(R.normalizeSettings({}).enabled, false, '처음엔 꺼짐 (기존 사용자 화면이 갑자기 바뀌지 않게)');
     assert.equal(R.SETTINGS_DEFAULTS.enabled, false);
 });
-await test('자리 고치기: 원작 cfg 와 같은 이름 · 범위 밖은 잘라요', () => {
-    assert.deepEqual(R.sanitizeLayout({ place: 'float', size: 999, x: -1, y: 2 }), { place: 'float', size: R.SIZE_MAX, x: 0, y: 1 });
+await test('자리 고치기: 원작 cfg 와 같은 이름 · 자리는 0~1 로 · 크기는 위쪽 상한 없음', () => {
+    assert.deepEqual(R.sanitizeLayout({ place: 'float', size: 1200, x: -1, y: 2 }), { place: 'float', size: 1200, x: 0, y: 1 }, '막대 끝(120)의 10배도 그대로');
+    assert.equal(R.sanitizeLayout({ place: 'float', size: 60 }).size, 60, '옛 값은 그대로 이어져요');
+    assert.equal(R.sanitizeLayout({ place: 'float', size: 4 }).size, R.SIZE_MIN, '아래쪽 20 은 그대로');
     assert.deepEqual(R.sanitizeLayout(null), { ...R.LAYOUT_DEFAULTS });
     assert.equal(R.sanitizeLayout({ place: 'top' }).place, 'left');
 });
@@ -417,6 +419,20 @@ await test('대표 기능 바꾸기: 메뉴 › 설정의 고르기 → 아이�
     range.value = '80';
     env.doc.fire('input', range);
     assert.equal(btn.style.getPropertyValue('--llmt-remote-size'), '80px');
+    // 숫자 칸: 막대 끝(120)을 넘겨도 막지 않고 안내 한 줄만 — 막대는 끝에 붙어 있어요
+    const box = menu.querySelector('.llmt-remote-num'), warn = menu.querySelector('.llmt-remote-size-warn');
+    assert.equal(box.value, '80', '막대를 움직이면 숫자 칸도');
+    assert.equal(box.getAttribute('max'), null, '숫자 칸은 max 가 없어요');
+    assert.equal(warn.hidden, true, '120 이하면 안내 없음');
+    box.value = '1200';
+    env.doc.fire('change', box);
+    assert.equal(env.remote.layout().size, 1200, '10배 값이 그대로 저장돼요');
+    assert.equal(btn.style.getPropertyValue('--llmt-remote-size'), '1200px', '그대로 쓰여요');
+    assert.equal(range.value, String(R.SIZE_MAX), '막대는 끝에 붙어요');
+    assert.equal(warn.hidden, false, '넘으면 안내 한 줄');
+    box.value = '5';
+    env.doc.fire('change', box);
+    assert.equal(env.remote.layout().size, R.SIZE_MIN, '아래쪽 20 은 그대로');
     env.doc.fire('click', menu.querySelector('[data-reset]'));
     assert.equal(env.remote.layout().size, 44);
 });

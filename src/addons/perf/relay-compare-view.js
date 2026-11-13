@@ -20,10 +20,11 @@ function compareSettings() {
     const c = s.compare && typeof s.compare === 'object' && !Array.isArray(s.compare) ? s.compare : (s.compare = {});
     c.origin = relayOrigin(c.origin);
     if (typeof c.group !== 'string') c.group = 'default';
-    if (!(Number(c.cnyPerUsd) > 0 && Number(c.cnyPerUsd) < 1000)) c.cnyPerUsd = DEFAULT_CNY.rate;
-    if (!(Number(c.quotaPrice) > 0 && Number(c.quotaPrice) < 10000)) c.quotaPrice = null;
+    const open = v => Number(v) > 0 && Number.isFinite(Number(v));   // 충전 · 환율 · 출력 비는 위쪽 상한 없음(아래쪽만)
+    if (!open(c.cnyPerUsd)) c.cnyPerUsd = DEFAULT_CNY.rate;
+    if (!open(c.quotaPrice)) c.quotaPrice = null;
     if (!(Number(c.cacheShare) >= 0 && Number(c.cacheShare) <= 100)) c.cacheShare = 0;
-    if (!(Number(c.outPerIn) > 0 && Number(c.outPerIn) <= 100)) c.outPerIn = 4;
+    if (!open(c.outPerIn)) c.outPerIn = 4;
     return c;
 }
 const save = () => { try { ctx()?.saveSettingsDebounced?.(); } catch { /* 다음 저장에 */ } };
@@ -93,12 +94,12 @@ export function compareMarkup() {
         <datalist id="rl-cmp-origins"></datalist>
         <label><span>그룹</span><select class="text_pole rl-cmp-group"></select></label>
         <div class="rl-budget-nums">
-            <label><span>충전</span><span class="rl-cmp-unit">쿼터 $1 =</span><input type="number" class="text_pole rl-cmp-quota" min="0.01" max="9999" step="0.01" inputmode="decimal"><span>¥</span></label>
-            <label><span>환율</span><span class="rl-cmp-unit">$1 =</span><input type="number" class="text_pole rl-cmp-cny" min="0.1" max="999" step="0.01" inputmode="decimal"><span>¥</span></label>
+            <label><span>충전</span><span class="rl-cmp-unit">쿼터 $1 =</span><input type="number" class="text_pole rl-cmp-quota" min="0.01" step="0.01" inputmode="decimal"><span>¥</span></label>
+            <label><span>환율</span><span class="rl-cmp-unit">$1 =</span><input type="number" class="text_pole rl-cmp-cny" min="0.1" step="0.01" inputmode="decimal"><span>¥</span></label>
         </div>
         <div class="rl-budget-nums">
             <label><span>캐시</span><span class="rl-cmp-unit">입력의</span><input type="number" class="text_pole rl-cmp-cache" min="0" max="100" step="1" inputmode="numeric"><span>%</span></label>
-            <label><span>출력</span><span class="rl-cmp-unit">입력 ÷</span><input type="number" class="text_pole rl-cmp-out" min="1" max="100" step="1" inputmode="numeric"></label>
+            <label><span>출력</span><span class="rl-cmp-unit">입력 ÷</span><input type="number" class="text_pole rl-cmp-out" min="1" step="1" inputmode="numeric"></label>
         </div>
         <small class="rl-hint">캐시 · 출력은 장부에 기록이 없는 모델에 쓰는 가정이에요. 기록이 있으면 지난 30일 실제 사용량(입력 · 캐시 · 출력)으로 셈해요.</small>
         <div class="rl-row"><div class="menu_button menu_button_icon rl-cmp-load" role="button" tabindex="0"><i class="fa-solid fa-scale-balanced"></i><span>불러오기</span></div><small class="rl-hint rl-cmp-state"></small></div>
@@ -214,10 +215,10 @@ export function bindCompare(box) {
     $('.rl-cmp-load').addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); load(); } });
     $('.rl-cmp-origin').addEventListener('change', event => { const o = relayOrigin(event.target.value); if (o) { s.origin = o; save(); const cached = cacheGet(o); parsed = cached?.pricing || null; groups(); render(); state(cached ? `${new Date(cached.at).toLocaleString('ko-KR')}에 불러온 가격표` : ''); } });
     $('.rl-cmp-group').addEventListener('change', event => { s.group = event.target.value; save(); groups(); render(); });
-    const numberField = (selector, key, min, max) => $(selector).addEventListener('change', event => {
+    const numberField = (selector, key, min, max = Infinity) => $(selector).addEventListener('change', event => {
         const n = Number(event.target.value);
-        if (n >= min && n <= max) { s[key] = n; save(); if (key === 'cnyPerUsd' || key === 'quotaPrice') remember(); render(); } else event.target.value = s[key] ?? '';
+        if (Number.isFinite(n) && n >= min && n <= max) { s[key] = n; save(); if (key === 'cnyPerUsd' || key === 'quotaPrice') remember(); render(); } else event.target.value = s[key] ?? '';
     });
-    numberField('.rl-cmp-cny', 'cnyPerUsd', 0.1, 999); numberField('.rl-cmp-quota', 'quotaPrice', 0.01, 9999);
-    numberField('.rl-cmp-cache', 'cacheShare', 0, 100); numberField('.rl-cmp-out', 'outPerIn', 1, 100);
+    numberField('.rl-cmp-cny', 'cnyPerUsd', 0.1); numberField('.rl-cmp-quota', 'quotaPrice', 0.01);
+    numberField('.rl-cmp-cache', 'cacheShare', 0, 100); numberField('.rl-cmp-out', 'outPerIn', 1);
 }

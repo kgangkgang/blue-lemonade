@@ -42,7 +42,7 @@ export function reflowCaptureText(clone){
 /** Fixed pages: prefer paragraph gaps, then line gaps; never cut through a glyph. */
 export function capturePagePlan(root,width,maxParagraphs=4){
     const height=Math.ceil(root.getBoundingClientRect().height),origin=root.getBoundingClientRect().top;
-    const limit=width*16/9,count=Math.min(20,Math.max(1,Math.floor(Number(maxParagraphs)||4)));
+    const limit=width*16/9,count=Math.max(1,Math.floor(Number(maxParagraphs)||4)); // 위쪽 상한 없음
     const occupied=[];
     const add=rect=>{if(rect.width&&rect.height)occupied.push([Math.max(0,rect.top-origin),Math.min(height,rect.bottom-origin)]);};
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);

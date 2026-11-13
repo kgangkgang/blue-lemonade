@@ -145,7 +145,7 @@ const READ_CARDS = {
     text: ['fa-font', '본문과 제외할 내용', [
         { key: 'text_source', label: '읽을 글', type: 'select', options: [{ value: 'display', label: '번역문 (있으면)' }, { value: 'original', label: '원문' }] },
         { key: 'listen_lang', label: '듣는 언어', type: 'select', options: LISTEN_OPTS, desc: listenDesc, help: LISTEN_HELP },   // 1.4.4
-        { key: 'max_chars', label: '한 번에 최대 글자', type: 'number', min: 0, max: 50000, step: 100, default: 3000, desc: '0 = 제한 없음' },
+        { key: 'max_chars', label: '한 번에 최대 글자', type: 'number', min: 0, step: 100, default: 3000, desc: '0 = 제한 없음' },
         { key: 'emotion_from_tags', label: '대사 태그로 감정', type: 'toggle', desc: '감정 힌트를 살려 읽어요' },
         { key: 'skip_codeblocks', label: '코드 블록 건너뜀', type: 'toggle' },
         { key: 'skip_tags', label: '건너뛸 태그 (내용 포함)', type: 'text', wide: true, desc: '예: status → <status> 안의 글까지 제외해요. 쉼표로 구분해요. 속마음은 읽을 부분 → 직접 설정에서 골라요.' },
@@ -164,7 +164,7 @@ const READ_CARDS = {
         { key: 'sfx.auto', label: '서술에서 자동으로 찾기', type: 'toggle', show: s => !!s.sfx?.enabled, help: '대사 분석을 켜면 같은 분석 요청에서 문소리·발소리처럼 실제로 발생한 소리를 찾아요. 맞는 내장·사용자 음원이 없으면 생략해요. 분석 서비스 요금은 기존과 같이 적용돼요.' },
         { key: 'sfx.tap', label: '누른 대사 앞 지문의 효과음도', type: 'toggle', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, help: '대사를 눌러 읽을 때 그 대사 바로 앞 지문에서 찾은 효과음을 먼저 들려줘요. 지문을 읽지 않는 설정에서도 효과음이 나요. 분석이 아직 없으면 먼저 분석해요.' },
         { key: 'sfx.level', label: '효과음 넓이', type: 'select', show: s => !!s.sfx?.enabled && s.sfx?.auto !== false, options: [{ value: 'few', label: '적음' }, { value: 'normal', label: '보통' }, { value: 'many', label: '많이' }], help: '서술을 얼마나 넓게 소리로 해석할지 — 개수가 아니라 해석의 확실함으로 골라요. 적음은 분명히 난 소리만, 보통은 소리 나는 동작까지, 많이는 비슷하거나 불확실한 소리까지(과해석일 수 있어요). 개수로 자르지 않아 긴 지문이면 그만큼 많이 나요. 바꿔도 분석을 다시 하거나 음성을 다시 만들지 않아요. WAV 저장은 적어도 보통으로 넣어요.' },
-        { key: 'sfx.scene_chars', label: '효과음 찾을 지문 글자', type: 'number', min: 1000, max: 40000, step: 500, default: 4000, show: s => !!s.sfx?.enabled && s.sfx?.auto !== false,
+        { key: 'sfx.scene_chars', label: '효과음 찾을 지문 글자', type: 'number', min: 1000, step: 500, default: 4000, show: s => !!s.sfx?.enabled && s.sfx?.auto !== false,
             help: '대사 분석에 보내는 지문(서술 · 행동)의 최대 글자예요 (기본 4,000). 긴 답장에서 효과음을 놓치면 늘리고, 분석 요청의 토큰을 아끼려면 줄여요. 모델이 읽는 토큰은 한국어 · 일본어가 글자 수와 비슷하고 영어는 그 1/4 쯤이에요. 이미 저장된 분석은 그대로 써요. 새 값으로 받으려면 요술봉 › 재생성을 눌러요.' },   // 1.5.8
         { key: 'sfx.mode', label: '자동 효과음 재생', type: 'select', options: [{ value: 'overlay', label: '대사와 겹치기' }, { value: 'sequence', label: '차례로 재생' }], help: '겹치기는 효과음 위로 다음 대사가 이어져요. 차례로는 효과음이 끝나고 다음 대사를 읽어요. 각 줄은 소리 대본에서 따로 바꿀 수 있어요.' },
         { key: 'sfx.volume', label: '효과음 음량', type: 'range', min: 0, max: 1, step: 0.05, default: 0.45, fmt: v => `${Math.round(Number(v) * 100)}%`, help: '전체 재생 볼륨 안에서 효과음만 조절해요. 반복 소리는 대사를 가리지 않도록 더 작게 재생돼요.' },
@@ -199,7 +199,7 @@ const READ_CARDS = {
         { key: 'pregen', label: '미리 만들기', type: 'select', options: [{ value: 'off', label: '끔' }, { value: 'next', label: '다음 한 줄' }, { value: 'chain', label: '다음 한 줄 · 이어 듣기' }, { value: 'dialogue', label: '대사' }, { value: 'all', label: '대사+속마음' }], desc: pregenDesc, warn: pregenWarn },   // 6.2.5 다음 한 줄 = 누른 대사의 다음 줄만 (pregen.js pregenNext)
         { key: 'pregen_paid', label: '유료 엔진도 미리 만들기', type: 'toggle', show: showPregenPaid },   // 5.6.4
         { key: 'wait_translation', label: '번역 기다리기', type: 'select', options: [{ value: 'auto', label: '자동' }, { value: 'on', label: '켬' }, { value: 'off', label: '끔' }], desc: () => translatorLabel() },
-        { key: 'translation_timeout', label: '최대 대기 초', type: 'number', min: 5, max: 600, step: 5, default: 90, show: (s) => s.wait_translation !== 'off' },
+        { key: 'translation_timeout', label: '최대 대기 초', type: 'number', min: 5, step: 5, default: 90, show: (s) => s.wait_translation !== 'off' },
         { key: 'stream_read', label: '답장이 오는 동안 읽기', type: 'toggle', disabled: (s) => waitEffective(s) || listenOn(s) || (s.sfx?.enabled && s.sfx?.auto), desc: (s) => (waitEffective(s) ? '번역을 기다리는 동안엔 꺼져요' : listenOn(s) ? '듣는 언어를 고르면 꺼져요' : s.sfx?.enabled && s.sfx?.auto ? '효과음을 자동으로 고를 때는 답장이 끝난 뒤 읽어요' : '') },
         { key: 'swipe_read', label: '스와이프하면 읽기', type: 'toggle' },
         { key: 'on_new', label: '읽는 중 새 답장', type: 'select', options: [{ value: 'interrupt', label: '끊고 읽기' }, { value: 'queue', label: '이어서 읽기' }] },
@@ -218,9 +218,10 @@ const READ_CARDS = {
         { key: 'mini_player', label: '재생 막대', type: 'toggle' },
     ]],
 };
+// 글자 수 · 시간 · 개수 · 용량 칸(max_chars · sfx.scene_chars · translation_timeout · cache_limit · cache_mb)은 위쪽 상한이 없어요(max 를 안 적음 → coerce 도 안 자름)
 const CACHE_FIELDS = [
-    { key: 'cache_limit', label: '최대 개수', type: 'number', min: 10, max: 5000, step: 10, default: 1000, help: '작으면 오래된 소리부터 지워져서, 다시 들을 때 또 사요' },   // 6.4.2
-    { key: 'cache_mb', label: '최대 MB', type: 'number', min: 10, max: 2000, step: 10, default: 200 },
+    { key: 'cache_limit', label: '최대 개수', type: 'number', min: 10, step: 10, default: 1000, help: '작으면 오래된 소리부터 지워져서, 다시 들을 때 또 사요' },   // 6.4.2
+    { key: 'cache_mb', label: '최대 MB', type: 'number', min: 10, step: 10, default: 200 },
 ];
 
 // ---------- 상태

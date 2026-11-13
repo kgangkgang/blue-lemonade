@@ -38,7 +38,7 @@ function store() {
     if (typeof s.keepRecent !== 'boolean') s.keepRecent = true;          // 최근 메시지에 그 모듈이 있으면 켜 둔다
     if (!s.manual || typeof s.manual !== 'object' || Array.isArray(s.manual)) s.manual = {};   // 1.1.2 정규식 id → true: 사용자가 직접 바꿈 · 자동 안 함
     if (typeof s.performanceOn !== 'boolean') s.performanceOn = false;
-    s.recent = Math.min(200, Math.max(1, Number(s.recent) || 30));
+    s.recent = Math.max(1, Math.floor(Number(s.recent)) || 30);   // 위쪽 상한 없음(예전 200) — 채팅보다 크면 채팅 전부를 봐요
     return s;
 }
 
@@ -301,7 +301,7 @@ function mount() {
 <div class="inline-drawer-content">
   <p class="rl-summary" role="status"></p>
   <p class="salty-note">프롬프트 모듈을 끄면 연결된 정규식도 쉬어요. 다음 답변부터 반영되며, 직접 바꾼 설정은 유지해요.</p>
-  <label class="rlk-keep"><input type="checkbox" data-keep><span><b>최근 메시지에 그 모듈이 있으면 켜 둠</b><small>이전 답에 남은 상태창 · 선택지가 날것으로 보이지 않게</small></span><input type="number" class="text_pole" data-recent min="1" max="200" aria-label="최근 메시지 수"></label>
+  <label class="rlk-keep"><input type="checkbox" data-keep><span><b>최근 메시지에 그 모듈이 있으면 켜 둠</b><small>이전 답에 남은 상태창 · 선택지가 날것으로 보이지 않게</small></span><input type="number" class="text_pole" data-recent min="1" aria-label="최근 메시지 수"></label>
   <details class="rlk-performance" data-performance-details>
     <summary>실행 시간 · 최적화</summary>
     <label class="checkbox_label"><input type="checkbox" data-performance><span>정규식 성능 보조</span></label>
@@ -315,7 +315,7 @@ function mount() {
     root.addEventListener('change', event => {
         const el = event.target;
         if ('keep' in el.dataset) { store().keepRecent = el.checked; saveSettingsDebounced(); sync(); }
-        else if ('recent' in el.dataset) { store().recent = Number(el.value) || 30; saveSettingsDebounced(); sync(); }
+        else if ('recent' in el.dataset) { store().recent = Math.max(1, Math.floor(Number(el.value)) || 30); el.value = store().recent; saveSettingsDebounced(); sync(); }
         else if ('performance' in el.dataset) { store().performanceOn = el.checked; saveSettingsDebounced(); void syncPerformance(true); }
         else if (el.dataset.module) { const s = store(); if (el.value === 'auto') delete s.modules[el.dataset.module]; else s.modules[el.dataset.module] = el.value; saveSettingsDebounced(); sync(); }
     });

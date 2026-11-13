@@ -68,9 +68,10 @@ function requestMoney(entry) {
 
 
 const PAGE = 100;
+const KEEP_WARN_AT = 500, MAX_WARN_AT = 5000;   // 예전 위쪽 끝 — 이제 막지 않고 넘으면 안내만 해요
 
 // 숫자 칸: 비우거나 글자면 전 값을 지켜요 (비우면 최솟값이 돼 기록이 바로 지워졌어요)
-const keptNumber = (raw, previous, min, max) => { const n = Number.parseInt(raw, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : previous; };
+const keptNumber = (raw, previous, min, max = Infinity) => { const n = Number.parseInt(raw, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : previous; };
 function esc(text) {
     return String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[ch]));
 }
@@ -133,9 +134,10 @@ export function buildDrawer() {
                         <div class="menu_button menu_button_icon rl-open"><i class="fa-solid fa-receipt"></i><span>열기</span></div>
                     </div>
                     <div class="rl-row rl-numbers">
-                        <label><span>본문 보관</span><input type="number" class="text_pole rl-keep" min="0" max="500" step="1"><span>개</span></label>
-                        <label><span>기록 보관</span><input type="number" class="text_pole rl-max" min="20" max="5000" step="10"><span>개</span></label>
+                        <label><span>본문 보관</span><input type="number" class="text_pole rl-keep" min="0" step="1"><span>개</span></label>
+                        <label><span>기록 보관</span><input type="number" class="text_pole rl-max" min="20" step="10"><span>개</span></label>
                     </div>
+                    <small class="rl-hint rl-keep-warn" hidden></small>
                     <small class="rl-hint">본문 보관 수를 넘긴 요청은 프롬프트·응답 글은 지워지고 토큰 수만 남아요. 날짜별 집계는 지워지지 않아요.</small>
                     <div class="rl-price-head">
                         <b>직접 지정 가격표</b><small>공식 API 외 연결용 · 100만 토큰당</small>
@@ -189,6 +191,14 @@ export function buildDrawer() {
     $('#rl_enabled').checked = store.enabled;
     $('.rl-keep').value = store.keepBodies;
     $('.rl-max').value = store.maxEntries;
+    // 위쪽 상한은 없어요 — 본문 500개 · 기록 5,000개를 넘기면 이 기기 저장 공간을 그만큼 더 쓴다는 안내만 한 줄
+    const keepWarn = () => {
+        const big = [store.keepBodies > KEEP_WARN_AT ? `본문 ${KEEP_WARN_AT}개` : '', store.maxEntries > MAX_WARN_AT ? `기록 ${MAX_WARN_AT.toLocaleString('ko-KR')}개` : ''].filter(Boolean);
+        const box = $('.rl-keep-warn');
+        box.hidden = !big.length;
+        box.textContent = big.length ? `${big.join(' · ')}를 넘겨 남기면 이 기기 저장 공간을 그만큼 더 써요(막지는 않아요).` : '';
+    };
+    keepWarn();
     $('.rl-unit-input').value = store.unit;
 
     $('#rl_enabled').addEventListener('change', (event) => {
@@ -196,14 +206,16 @@ export function buildDrawer() {
         saveSettings();
     });
     $('.rl-keep').addEventListener('change', (event) => {
-        store.keepBodies = keptNumber(event.target.value, store.keepBodies, 0, 500);
+        store.keepBodies = keptNumber(event.target.value, store.keepBodies, 0);
         event.target.value = store.keepBodies;
+        keepWarn();
         saveSettings();
         trimEntries().catch(() => {});
     });
     $('.rl-max').addEventListener('change', (event) => {
-        store.maxEntries = keptNumber(event.target.value, store.maxEntries, 20, 5000);
+        store.maxEntries = keptNumber(event.target.value, store.maxEntries, 20);
         event.target.value = store.maxEntries;
+        keepWarn();
         saveSettings();
         trimEntries().catch(() => {});
     });

@@ -282,12 +282,12 @@ try {
     });
 
     // ── 7) 설정 정리 · 설정 칸 ──────────────────────────────────
-    const nine = await boot({ enabled: [], ext: { regex_link: { origin: 'broken', modules: null, recent: 999, keepRecent: 'yes' } },
+    const nine = await boot({ enabled: [], ext: { regex_link: { origin: 'broken', modules: null, recent: 2000, keepRecent: 'yes' } },
         chat: [{ is_user: false, mes: 'old @Weather Engine line' }, { is_user: true, mes: 'I wrote @CYOA myself' }, { is_user: false, mes: 'plain reply' }] });
-    await test('설정 정리: 망가진 origin · modules 는 새 객체, 최근 메시지 수는 1~200, 켜 둠은 기본 true', () => {
+    await test('설정 정리: 망가진 origin · modules 는 새 객체, 최근 메시지 수는 1 이상(위쪽 상한 없음), 켜 둠은 기본 true', () => {
         const s = nine.RL.store();
         assert.equal(typeof s.origin, 'object'); assert.deepEqual(s.modules, {});
-        assert.equal(s.recent, 200); assert.equal(s.keepRecent, true);
+        assert.equal(s.recent, 2000, '예전 상한(200)의 10배도 그대로'); assert.equal(s.keepRecent, true);
     });
     await test('최근 메시지: 봇 답에 남은 모듈 정규식은 켜 두고, 사용자 메시지에 쓴 태그는 세지 않는다', () => {
         assert.equal(nine.script('w1').disabled, false, '@Weather Engine 이 최근 봇 답에 있음');

@@ -7,7 +7,7 @@ export function motionLayout(still, options = {}) {
     const contentHeight = Math.ceil(still.height * ratio);
     const height = Math.max(2, Math.ceil(contentHeight / 2) * 2);
     const travel = 0;
-    const duration = Math.min(30, Math.max(3, Number(options.duration) || 6));
+    const duration = Math.max(3, Number(options.duration) || 6);   // 위쪽 상한 없음 — 길면 설정 칸이 안내해요
     return { width, height, ratio, contentHeight, travel, duration,
         offsetAt() { return 0; } };
 }

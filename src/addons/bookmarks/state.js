@@ -61,8 +61,9 @@ export function initSettings() {
     store.colors ??= {};
     store.colors.default ??= {};
     store.colors.chats ??= {};
-    store.itemsPerPage = clampInt(store.itemsPerPage, 1, 50, DEFAULTS.itemsPerPage);
-    store.contextRange = clampInt(store.contextRange, 0, 10, DEFAULTS.contextRange);
+    // 개수는 위쪽 상한 없음(사용자 「이런 거에 상한 좀 걸지 마」) — 아래쪽만
+    store.itemsPerPage = clampInt(store.itemsPerPage, 1, Infinity, DEFAULTS.itemsPerPage);
+    store.contextRange = clampInt(store.contextRange, 0, Infinity, DEFAULTS.contextRange);
     if (!['text', 'all', 'images'].includes(store.viewMode)) store.viewMode = DEFAULTS.viewMode;
     // 1.2.0: 이름을 '북마크'로 바꾸면서 아이콘도 별로 바꿨다. 예전에 저장된 모양도 한 번만 별로 바꾸고,
     // 그 뒤로는 설정에서 고른 대로 둔다.

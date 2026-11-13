@@ -162,7 +162,7 @@ async function openEditor(mesId, { soundId } = {}) {
                 card.append(button('보관함에서 찾기', () => setTab('library')));
             }
             if (row.kind !== 'pause') { const volume = input(row, 'volume', 'number', 0, 1); volume.step = '.05'; grid.append(field('이 줄 음량 (0~1)', volume, '1은 원래 크기, 0.5는 절반 크기예요. 이 줄에만 적용해요.')); }
-            const gap = input(row, 'gapMs', 'number', 0, 10000); gap.step = '50'; grid.append(field(row.kind === 'pause' ? '쉬는 시간 (ms)' : '줄 뒤에 쉬기 (ms)', gap, '1000 ms가 1초예요. 500을 넣으면 반 초 쉬어요. 최대 10초까지 정할 수 있어요.'));
+            const gap = input(row, 'gapMs', 'number', 0); gap.step = '50'; grid.append(field(row.kind === 'pause' ? '쉬는 시간 (ms)' : '줄 뒤에 쉬기 (ms)', gap, '1000 ms가 1초예요. 500을 넣으면 반 초 쉬어요. 위쪽 제한은 없지만, 10초가 넘게 쉬면 소리 파일로 내려받을 때 그만큼 메모리를 더 써요.'));
             card.append(grid);
             const rowActions = element('div', 'lvs-actions'); rowActions.append(button('이 줄 듣기', () => listen(row.id)));
             if (row.kind === 'voice') rowActions.append(button('다시 생성', () => listen(row.id, true))); card.append(rowActions); list.append(card);

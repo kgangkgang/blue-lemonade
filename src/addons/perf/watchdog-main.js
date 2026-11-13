@@ -100,9 +100,9 @@ function buildDrawer() {
                 <div class="sw-body">
                     <p class="sw-hint"><b>스트리밍 응답에만 적용됩니다.</b> 비스트리밍 응답의 대기 시간은 감시하지 않습니다.</p>
                     <label class="checkbox_label sw-check" for="sw_enabled"><input type="checkbox" id="sw_enabled"><span>답이 멈추면 끊고 풀기</span></label>
-                    <label class="sw-row" for="sw_idle"><span>기다릴 시간</span><span class="sw-num"><input type="number" id="sw_idle" class="text_pole" min="10" max="300" step="1" inputmode="numeric"><i>초</i></span></label>
+                    <label class="sw-row" for="sw_idle"><span>기다릴 시간</span><span class="sw-num"><input type="number" id="sw_idle" class="text_pole" min="10" step="1" inputmode="numeric"><i>초</i></span></label>
                     <small class="sw-hint">답이 시작된 뒤 이 시간 동안 글자가 하나도 안 오면 끊어요. 받은 글은 남아요.</small>
-                    <label class="sw-row" for="sw_first"><span>첫 글자 최대 대기</span><span class="sw-num"><input type="number" id="sw_first" class="text_pole" min="0" max="1800" step="1" inputmode="numeric"><i>초</i></span></label>
+                    <label class="sw-row" for="sw_first"><span>첫 글자 최대 대기</span><span class="sw-num"><input type="number" id="sw_first" class="text_pole" min="0" step="1" inputmode="numeric"><i>초</i></span></label>
                     <small class="sw-hint">0 = 끔. 보낸 뒤 이 시간이 지나도 답이 시작되지 않으면 끊어요. 긴 프롬프트는 첫 글자까지 1분 가까이 걸리기도 해요.</small>
                     <small class="sw-hint sw-stats" hidden></small>
                 </div>

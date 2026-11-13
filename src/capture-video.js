@@ -16,7 +16,7 @@ export async function captureVideo(ids,progress=()=>{},options={},signal){
    const finish=(error)=>{if(settled)return;settled=true;cancelAnimationFrame(raf);clearTimeout(timeout);signal?.removeEventListener('abort',cancel);document.removeEventListener('visibilitychange',visibility);if(recorder.state!=='inactive')recorder.stop();if(error)reject(error);else resolve(new Blob(chunks,{type:recorder.mimeType}));};
    const cancel=()=>finish(abortError());
    const visibility=()=>{if(document.hidden)finish(Error('영상 저장 중에는 이 탭을 열어 두세요. 다시 미리보기를 만들어 주세요.'));};
-   const timeout=setTimeout(()=>finish(Error('영상 저장 시간이 초과됐어요. 다시 시도해 주세요.')),duration+10000);
+   const timeout=setTimeout(()=>finish(Error('영상 저장 시간이 초과됐어요. 다시 시도해 주세요.')),Math.min(2147483647,duration+10000)); // 재생 시간은 위쪽 상한 없음 — 타이머 끝(약 24.8일)에서만 멈춰요
    signal?.addEventListener('abort',cancel,{once:true});document.addEventListener('visibilitychange',visibility);
    recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data);};recorder.onerror=()=>finish(Error('영상 인코딩에 실패했어요.'));recorder.onstop=()=>finish();
    const tick=now=>{if(settled)return;if(!start)start=last=now;try{motion.draw(Math.min(.05,(now-last)/1000),now,(now-start)/1000);last=now;progress(`영상 만드는 중… ${Math.min(Math.ceil((now-start)/1000),duration/1000)} / ${duration/1000}초`);if(now-start>=duration){recorder.stop();return;}raf=requestAnimationFrame(tick);}catch(error){finish(error);}};

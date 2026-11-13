@@ -11,7 +11,7 @@ export function ledgerMarkup() {
         <div class="rl-price-head rl-ledger-head"><b>사용량 장부</b><small>확장 · 기능마다 오늘 얼마 썼나 (이 기기에만 90일)</small></div>
         <label class="checkbox_label rl-check" for="rl_ledger_enabled"><input type="checkbox" id="rl_ledger_enabled"><span>사용량 장부 적기</span></label>
         <div class="rl-row rl-numbers">
-            <label><span>환율</span><input type="number" class="text_pole rl-ledger-krw" min="1" max="99999" step="0.1" inputmode="decimal"><span>원 / $</span></label>
+            <label><span>환율</span><input type="number" class="text_pole rl-ledger-krw" min="1" step="0.1" inputmode="decimal"><span>원 / $</span></label>
             <small class="rl-hint rl-ledger-krw-date"></small>
         </div>
         <div class="rl-ledger-pay"></div>

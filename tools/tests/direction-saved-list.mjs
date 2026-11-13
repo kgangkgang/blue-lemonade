@@ -235,7 +235,7 @@ await test('설정 카드: 깊이 0~100 · 켜짐 색은 맞는 코드만 · 프
     const depth = box.querySelector('[data-field="depth"]');
     assert.equal(depth.value, String(S.direction.place.depth));
     const always = structuredClone(S.always.place);
-    for (const [typed, want] of [['250', 100], ['-4', 0], ['x', 1], ['3', 3]]) {
+    for (const [typed, want] of [['250', 250], ['1000', 1000], ['20000', 10000], ['-4', 0], ['x', 1], ['3', 3]]) {   // 위쪽은 실리태번 끝(10000)만 — 예전 상한 100 의 10배도 그대로
         depth.value = typed; await box.fire('change', { target: depth });
         assert.equal(S.direction.place.depth, want, `깊이 ${typed}`); assert.equal(depth.value, String(want), '칸에도 고른 값');
     }
@@ -243,7 +243,9 @@ await test('설정 카드: 깊이 0~100 · 켜짐 색은 맞는 코드만 · 프
     depth.value = '0'; await box.fire('change', { target: depth });
     await box.fire('click', { target: step(-1) }); assert.equal(S.direction.place.depth, 0, '0 아래로 안 내려감');
     await box.fire('click', { target: step(1) }); assert.equal(S.direction.place.depth, 1);
-    depth.value = '100'; await box.fire('change', { target: depth }); await box.fire('click', { target: step(1) }); assert.equal(S.direction.place.depth, 100, '100 위로 안 올라감');
+    depth.value = '100'; await box.fire('change', { target: depth }); await box.fire('click', { target: step(1) }); assert.equal(S.direction.place.depth, 101, '100 위로도 올라감(상한을 풂)');
+    depth.value = '10000'; await box.fire('change', { target: depth }); await box.fire('click', { target: step(1) }); assert.equal(S.direction.place.depth, 10000, '실리태번 끝 10000 위로는 안 올라감');
+    depth.value = '100'; await box.fire('change', { target: depth });
     assert.equal(row.querySelector('.jj-place-meaning').textContent, '끝에서 100번째 메시지 앞 · 시스템');
     assert.equal(box.querySelector('.jj-place-depth').hidden, false, '채팅 안이면 깊이 칸이 보임');
     const at = box.querySelector('[data-field="at"]'), role = box.querySelector('[data-field="role"]');

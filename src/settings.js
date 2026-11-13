@@ -789,10 +789,11 @@ export function getSettings() {
     s.captureTools.resolution=Number(s.captureTools.resolution)===1440?1440:1080;
     s.captureTools.maskWord=(typeof s.captureTools.maskWord==='string'&&s.captureTools.maskWord.trim())?s.captureTools.maskWord.trim().slice(0,12):'○○';   // 로그 복사 이름 숨김의 가림 글자(11-03 사용자 요청: 직접 정함)
     s.captureTools.backgroundTint=Math.min(100,Math.max(0,Number(s.captureTools.backgroundTint??60)||0));
-    s.captureTools.maxParagraphs=Math.min(20,Math.max(1,Math.floor(Number(s.captureTools.maxParagraphs)||4)));
-    s.captureTools.duration=Math.min(30,Math.max(3,Number(s.captureTools.duration)||6));
+    // 재생 시간 · 문단 수 · 최대 용량은 위쪽 상한 없음(사용자 「이런 거에 상한 좀 걸지 마」) — 아래쪽만. 결과 전체 200MB · GIF 64MB 안전 한계는 그대로(넘으면 알림)
+    s.captureTools.maxParagraphs=Math.max(1,Math.floor(Number(s.captureTools.maxParagraphs)||4));
+    s.captureTools.duration=Math.max(3,Number(s.captureTools.duration)||6);
     s.captureTools.capturePresets=(Array.isArray(s.captureTools.capturePresets)?s.captureTools.capturePresets:[]).filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&isObj(p.values)).slice(0,12); // 채팅 캡처 › 내 프리셋
-    s.captureTools.maxMB=Math.min(200,Math.max(0,Number(s.captureTools.maxMB??8)||0)); // APNG · WebP 움짤의 최대 용량 (0 = 제한 없음)
+    s.captureTools.maxMB=Math.max(0,Number(s.captureTools.maxMB??8)||0); // APNG · WebP 움짤의 최대 용량 (0 = 제한 없음 · 위쪽 상한 없음)
     s.captureTools.filterPreset=FILTER_PRESET_IDS.includes(s.captureTools.filterPreset)?s.captureTools.filterPreset:'none'; // 5.5.3 캡처 필터: 프리셋은 아는 것만, 값은 범위 안의 정수 (예전 저장값은 문자열일 수 있다)
     for(const [key,[min,max]] of Object.entries(FILTER_RANGES))s.captureTools[key]=Math.min(max,Math.max(min,Math.round(Number(s.captureTools[key])||0)));
     if(s.captureTools.filterPreset!=='custom')Object.assign(s.captureTools,FILTER_PRESETS[s.captureTools.filterPreset]); // 이름 있는 프리셋이면 여섯 값을 표에 맞춘다 (가져온 설정 · 표가 바뀐 판에서도 화면과 결과가 같게)

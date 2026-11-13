@@ -431,7 +431,7 @@ async function generate(messages, signal) {
         timer = setTimeout(() => {
             controller.abort();
             reject(new Error(`${settings.timeoutSec}초 안에 응답이 없어요`));
-        }, settings.timeoutSec * 1000);
+        }, Math.min(2147483647, settings.timeoutSec * 1000));   // 위쪽 상한이 없어서 — 브라우저 타이머 끝(약 24.8일)을 넘기면 바로 터지니 거기서 멈춰요
         // 멈추면 응답을 기다리지 않는다 (현재 연결의 generateRaw는 GENERATION_STOPPED를 직접 듣고 요청을 끊는다).
         onStop = () => {
             controller.abort();
@@ -1672,14 +1672,15 @@ function bindScene() {
         renderSceneStatus();
         saveSettingsDebounced();
     });
-    const bindNumber = (selector, key, min, max) => $(selector).on('change', function () {
+    const bindNumber = (selector, key, min, max = Infinity) => $(selector).on('change', function () {
         const value = Math.min(max, Math.max(min, integerInput(this.value, DEFAULT_SETTINGS.scenePlan[key])));
         scene()[key] = value;
         this.value = value;
         saveSettingsDebounced();
     });
-    bindNumber('#bwr_scene_attempts', 'maxAttempts', 1, 5);
-    bindNumber('#bwr_scene_timeout', 'timeoutSec', 30, 900);
+    // 횟수 · 시간은 위쪽 상한 없음(사용자 「이런 거에 상한 좀 걸지 마」) — 아래쪽만
+    bindNumber('#bwr_scene_attempts', 'maxAttempts', 1);
+    bindNumber('#bwr_scene_timeout', 'timeoutSec', 30);
 }
 
 // ── Test tab ──────────────────────────────────────────
@@ -1822,7 +1823,7 @@ function bindSettings() {
         settings[key] = this.checked;
         saveSettingsDebounced();
     });
-    const bindNumber = (selector, key, min, max) => $(selector).on('change', function () {
+    const bindNumber = (selector, key, min, max = Infinity) => $(selector).on('change', function () {
         const value = Math.min(max, Math.max(min, integerInput(this.value, DEFAULT_SETTINGS[key])));
         settings[key] = value;
         this.value = value;
@@ -1837,24 +1838,25 @@ function bindSettings() {
         saveSettingsDebounced();
     });
     bindCheckbox('#bwr_skip_exempt', 'skipExemptOnly');
-    bindNumber('#bwr_timeout', 'timeoutSec', 10, 600);
-    bindNumber('#bwr_attempts', 'maxAttempts', 1, 5);
-    bindNumber('#bwr_lookback', 'lookback', 0, 50);
-    bindNumber('#bwr_max_tokens', 'maxTokens', 256, 65536);
+    // 시간 · 횟수 · 개수 · 토큰은 위쪽 상한 없음(사용자 「이런 거에 상한 좀 걸지 마」) — 아래쪽만
+    bindNumber('#bwr_timeout', 'timeoutSec', 10);
+    bindNumber('#bwr_attempts', 'maxAttempts', 1);
+    bindNumber('#bwr_lookback', 'lookback', 0);
+    bindNumber('#bwr_max_tokens', 'maxTokens', 256);
     // 1.9.2 반복 감지
     $('#bwr_repeat_on').on('change', function () {
         settings.repeat.on = this.checked;
         saveSettingsDebounced();
     });
-    const bindRepeatNumber = (selector, key, min, max) => $(selector).on('change', function () {
+    const bindRepeatNumber = (selector, key, min, max = Infinity) => $(selector).on('change', function () {
         const value = Math.min(max, Math.max(min, integerInput(this.value, DEFAULT_SETTINGS.repeat[key])));
         settings.repeat[key] = value;
         this.value = value;
         saveSettingsDebounced();
     });
-    bindRepeatNumber('#bwr_repeat_lookback', 'lookback', 1, 30);
-    bindRepeatNumber('#bwr_repeat_threshold', 'threshold', 30, 95);
-    bindRepeatNumber('#bwr_repeat_min', 'minLength', 6, 60);
+    bindRepeatNumber('#bwr_repeat_lookback', 'lookback', 1);
+    bindRepeatNumber('#bwr_repeat_threshold', 'threshold', 30, 95);   // 백분율 — 범위 그대로
+    bindRepeatNumber('#bwr_repeat_min', 'minLength', 6);
     bindConnection();
     bindScene();
 

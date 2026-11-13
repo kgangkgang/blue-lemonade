@@ -1101,14 +1101,15 @@ await test('1.5.8 효과음 찾을 지문 글자 — 효과음 · 자동 찾기�
     assert.doesNotMatch(DOM.cards.sfx || '', /sfx\.scene_chars/, '효과음이 꺼져 있으면 칸이 없다');
     await change({ dataset: { lvPath: 'sfx.enabled' }, type: 'checkbox', tagName: 'INPUT', checked: true });
     assert.equal(s.sfx.enabled, true);
-    assert.match(DOM.cards.sfx || '', /data-lv-path="sfx\.scene_chars"[^>]*min="1000"[^>]*max="40000"[^>]*value="4000"/, '기본 4,000 · 1,000~40,000');
+    assert.match(DOM.cards.sfx || '', /data-lv-path="sfx\.scene_chars"[^>]*min="1000"[^>]*value="4000"/, '기본 4,000 · 1,000 이상');
+    assert.doesNotMatch(DOM.cards.sfx || '', /data-lv-path="sfx\.scene_chars"[^>]*max=/, '위쪽 상한 없음(max 속성 없음)');
     assert.match(DOM.cards.sfx || '', /효과음 찾을 지문 글자/);
     await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '6000' });
     assert.equal(s.sfx.scene_chars, 6000);
     await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '12' });
     assert.equal(s.sfx.scene_chars, 1000, '최소 1,000');
-    await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '99999' });
-    assert.equal(s.sfx.scene_chars, 40000, '최대 40,000');
+    await change({ dataset: { lvPath: 'sfx.scene_chars' }, type: 'number', tagName: 'INPUT', value: '400000' });
+    assert.equal(s.sfx.scene_chars, 400000, '예전 상한(40,000)의 10배도 그대로 저장');
     await change({ dataset: { lvPath: 'sfx.auto' }, type: 'checkbox', tagName: 'INPUT', checked: false });
     assert.doesNotMatch(DOM.cards.sfx || '', /sfx\.scene_chars/, '자동 찾기를 끄면 칸이 숨는다');
     await change({ dataset: { lvPath: 'sfx.auto' }, type: 'checkbox', tagName: 'INPUT', checked: true });

@@ -2188,8 +2188,8 @@ const settingsHtml = () => `
 </div>`;
 
 const TOGGLES = { rpk_profiler: 'profiler', rpk_profilerSampling: 'profilerSampling', rpk_timeReplacer: 'timeReplacer', rpk_prefilter: 'prefilter', rpk_memo: 'memo', rpk_memoStatic: 'memoStatic', rpk_memoPostHoc: 'memoPostHoc', rpk_fastPath: 'fastPath', rpk_streaming: 'streamingSkip', rpk_stream_throttle: 'streamingThrottle', rpk_persist: 'persist', rpk_fuse: 'fuse', rpk_breaker: 'breaker', rpk_memoHashKeys: 'memoHashKeys', rpk_autoMeasure: 'autoMeasure', rpk_lint: 'lint', rpk_listBadges: 'listBadges' };
-// editable limits: setting -> [min, max]
-const LIMITS = { memoMaxEntries: [0, 1e6], memoMaxLen: [0, 1e7], memoMaxMB: [0, 4096], persistMaxLen: [0, 1e8], persistMaxMB: [1, 4096], streamingThrottleMs: [50, 60000], fuseLen: [1000, 1e7], breakerMs: [50, 60000], breakerCount: [1, 100], loadHintMs: [100, 600000] };
+// editable limits: setting -> [min, max] — 개수 · 길이 · 용량 · 시간 · 횟수라서 위쪽 상한은 없어요(Infinity · 사용자 「이런 거에 상한 좀 걸지 마」). 시간 값은 타이머가 아니라 견주기에만 써서 커도 깨지지 않아요
+const LIMITS = { memoMaxEntries: [0, Infinity], memoMaxLen: [0, Infinity], memoMaxMB: [0, Infinity], persistMaxLen: [0, Infinity], persistMaxMB: [1, Infinity], streamingThrottleMs: [50, Infinity], fuseLen: [1000, Infinity], breakerMs: [50, Infinity], breakerCount: [1, Infinity], loadHintMs: [100, Infinity] };
 
 const RENDER_MIN_MS = 500; // the panel is re-rendered at most this often while stats keep changing
 let ui = null; // panel elements, cached by bindUi()
@@ -2333,7 +2333,7 @@ function bindUi() {
 
     for (const [key, [min, max]] of Object.entries(LIMITS)) {
         const el = find('#rpk_' + key);
-        Object.assign(el, { min, max });
+        el.min = String(min); if (Number.isFinite(max)) el.max = String(max);
         el.addEventListener('change', () => {
             const v = Number(el.value);
             if (el.value.trim() !== '' && Number.isFinite(v)) settings[key] = Math.min(max, Math.max(min, Math.round(v)));

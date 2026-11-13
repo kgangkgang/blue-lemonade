@@ -28,7 +28,7 @@ export const LAYOUT_KEY = 'llmt.remote.layout.v1';
 export const SCRIPT_KEY = 'tcb.translate-combo.v1';   // 원작 스크립트가 기기마다 남긴 설정 (위치 · 크기 · 대표 기능)
 export const LAYOUT_DEFAULTS = Object.freeze({ place: 'left', size: 44, x: 0.96, y: 0.62 });
 export const PLACES = Object.freeze(['float', 'left', 'right']);
-export const SIZE_MIN = 20, SIZE_MAX = 120;
+export const SIZE_MIN = 20, SIZE_MAX = 120;   // SIZE_MAX 는 막대 끝이에요 — 숫자 칸 · 저장값은 위쪽 상한이 없고, 넘으면 안내 한 줄만(사용자 「이런 거에 상한 좀 걸지 마」)
 export const LONG_PRESS_MS = 450, DRAG_PX = 8, BOOT_GRACE_MS = 20000;
 export const BUTTON_ID = 'llmt_remote_button', MENU_ID = 'llmt_remote_menu';
 // 원작 스크립트: 태번 헬퍼 스크립트 id · 이름, 돌 때 만드는 요소 id
@@ -53,7 +53,7 @@ export function sanitizeLayout(raw) {
     const c = raw && typeof raw === 'object' ? raw : {};
     return {
         place: PLACES.includes(c.place) ? c.place : LAYOUT_DEFAULTS.place,
-        size: clamp(num(c.size, LAYOUT_DEFAULTS.size) || LAYOUT_DEFAULTS.size, SIZE_MIN, SIZE_MAX),
+        size: Math.max(SIZE_MIN, num(c.size, LAYOUT_DEFAULTS.size) || LAYOUT_DEFAULTS.size),
         x: clamp(num(c.x, LAYOUT_DEFAULTS.x), 0, 1),
         y: clamp(num(c.y, LAYOUT_DEFAULTS.y), 0, 1),
     };
@@ -513,23 +513,40 @@ export function createRemote(host) {
         }
         set.append(seg);
         if (floating) {
-            const head = el('label', 'llmt-remote-size');
-            const out = el('output', '', `${layout.size}px`);
-            head.append(el('span', 'llmt-remote-lab', '크기'), out);
+            const head = el('div', 'llmt-remote-size');
+            head.append(el('span', 'llmt-remote-lab', '크기'));
             const range = el('input');
             range.type = 'range';
             range.min = String(SIZE_MIN);
             range.max = String(SIZE_MAX);
             range.step = '2';
-            range.value = String(layout.size);
+            range.value = String(Math.min(SIZE_MAX, layout.size));
             range.setAttribute('aria-label', '단추 크기');
+            // 숫자 칸은 위쪽 상한이 없어요(막대는 120 끝에 붙어 있어요) — 120px 을 넘기면 안내 한 줄만
+            const box = el('input', 'text_pole llmt-remote-num');
+            box.type = 'number';
+            box.min = String(SIZE_MIN);
+            box.step = '2';
+            box.inputMode = 'numeric';
+            box.value = String(layout.size);
+            box.setAttribute('aria-label', '단추 크기(px)');
+            const warn = el('small', 'llmt-remote-hint llmt-remote-size-warn', `${SIZE_MAX}px 보다 커요 — 막지는 않지만 단추가 화면을 가릴 수 있어요. 「위치 · 크기 처음대로」로 되돌려요.`);
+            const sized = () => { warn.hidden = !(layout.size > SIZE_MAX); saveLayout(); applyFloatPos(); placeMenu(); };
             range.addEventListener('input', () => {
                 layout.size = clamp(Number(range.value) || LAYOUT_DEFAULTS.size, SIZE_MIN, SIZE_MAX);
-                out.textContent = `${layout.size}px`;
-                saveLayout(); applyFloatPos(); placeMenu();
+                box.value = String(layout.size);
+                sized();
             });
-            head.append(range);
-            set.append(head, el('small', 'llmt-remote-hint', '단추를 끌어서 옮길 수 있어요.'));
+            box.addEventListener('change', () => {
+                const n = Math.round(Number(box.value));
+                if (box.value !== '' && Number.isFinite(n)) layout.size = Math.max(SIZE_MIN, n);
+                box.value = String(layout.size);
+                range.value = String(Math.min(SIZE_MAX, layout.size));
+                sized();
+            });
+            head.append(range, box, el('span', 'llmt-remote-unit', 'px'));
+            warn.hidden = !(layout.size > SIZE_MAX);
+            set.append(head, warn, el('small', 'llmt-remote-hint', '단추를 끌어서 옮길 수 있어요.'));
         }
         const reset = el('button', 'llmt-remote-chip llmt-remote-reset', '위치 · 크기 처음대로');
         reset.type = 'button';
@@ -558,6 +575,7 @@ export function createRemote(host) {
         if (t.dataset.reset) { Object.assign(layout, { size: LAYOUT_DEFAULTS.size, x: LAYOUT_DEFAULTS.x, y: LAYOUT_DEFAULTS.y }); saveLayout(); applyFloatPos(); fillMenu(); placeMenu(); }
     }
     function onMenuKey(e) {
+        if (e.target?.type === 'number' && e.key !== 'Escape') return;   // 크기 숫자 칸의 화살표 · 글자는 칸에 맡겨요
         const items = [...menu.querySelectorAll('button')];
         const i = items.indexOf(doc.activeElement);
         if (e.key === 'Escape') { e.preventDefault(); closeMenu({ focus: true }); }

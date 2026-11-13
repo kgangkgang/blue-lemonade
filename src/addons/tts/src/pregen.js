@@ -111,7 +111,7 @@ function displayReady(mes) {
 function expectsDisplay(mes) {
     try { return !!translation.translationExpected(mes, { ignoreSetting: true }); } catch { return false; }
 }
-const waitMs = (s) => Math.max(1, Number(s.translation_timeout) || 90) * 1000;
+const waitMs = (s) => Math.min(2147483647, Math.max(1, Number(s.translation_timeout) || 90) * 1000);   // 위쪽 상한 없음 — 타이머 끝에서만 멈춰요
 /** 엔진 설정의 지문 (키가 바뀌면 달라짐 — 값은 남기지 않고 해시만) */
 function cfgSig(pid) {
     try { return hash(JSON.stringify(providerConfig(pid) || {})); } catch { return ''; }

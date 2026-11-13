@@ -49,7 +49,7 @@ export function ledgerSettings() {
     for (const [key, value] of Object.entries(s.payMethods)) if (!PAY_METHODS.includes(value) || ['__proto__', 'constructor', 'prototype'].includes(key)) delete s.payMethods[key];
     // 7.7.2 중계마다 「쿼터 1달러 = 몇 원」 (가격 비교에서 충전 단가 · 환율로 정한 것) { [origin]: { rate, source, date } }
     if (!s.relayRates || typeof s.relayRates !== 'object' || Array.isArray(s.relayRates)) s.relayRates = {};
-    for (const [key, value] of Object.entries(s.relayRates)) if (!originOf(key) || originOf(key) !== key || !(Number(value?.rate) > 0 && Number(value.rate) < 1e6)) delete s.relayRates[key];
+    for (const [key, value] of Object.entries(s.relayRates)) if (!originOf(key) || originOf(key) !== key || !(Number(value?.rate) > 0 && Number.isFinite(Number(value.rate)))) delete s.relayRates[key];
     return s;
 }
 export const ledgerEnabled = () => ledgerSettings().enabled !== false;
@@ -78,7 +78,7 @@ export function setPayMethod(key, method) {
 }
 export function setKrwRate(rate, date = dayKey(Date.now()), source = '사용자 입력') {
     const n = Number(rate);
-    if (!(n > 0 && n < 100000)) return false;
+    if (!(Number.isFinite(n) && n > 0)) return false;   // 위쪽 상한 없음 — 곱하기에만 쓰여요
     ledgerSettings().krw = { rate: n, date: String(date).slice(0, 10), source: String(source).slice(0, 80) };
     saveLedgerSettings(); emit();
     return true;
@@ -88,7 +88,7 @@ export function setRelayRate(origin, rate, source = '', date = dayKey(Date.now()
     const o = originOf(origin), s = ledgerSettings();
     if (!o) return false;
     if (rate === null) delete s.relayRates[o];
-    else if (Number(rate) > 0 && Number(rate) < 1e6) s.relayRates[o] = { rate: Math.round(Number(rate) * 100) / 100, source: String(source).slice(0, 80), date: String(date).slice(0, 10) };
+    else if (Number(rate) > 0 && Number.isFinite(Number(rate))) s.relayRates[o] = { rate: Math.round(Number(rate) * 100) / 100, source: String(source).slice(0, 80), date: String(date).slice(0, 10) };
     else return false;
     relayOrigins.add(o); saveLedgerSettings(); emit();
     return true;

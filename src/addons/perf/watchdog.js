@@ -18,8 +18,8 @@ export const GENERATE_PATHS = [
 ];
 
 export const STALL_NAME = 'StreamStalled';
-export const IDLE_RANGE = [3, 300];   // 초. 설정 창은 10초부터 — 3초는 시험용
-export const FIRST_RANGE = [3, 1800]; // 초. 0 = 끔. 설정 창은 30초부터
+export const IDLE_RANGE = [3, Infinity];   // 초. 설정 창은 10초부터 — 3초는 시험용 · 위쪽 상한 없음(사용자가 정한 만큼 기다려요)
+export const FIRST_RANGE = [3, Infinity]; // 초. 0 = 끔. 설정 창은 30초부터 · 위쪽 상한 없음 — 시간은 1초 이하 틱으로 세서 타이머 넘침이 없어요
 
 // [1.1.1] 받은 글이 있으면 오류가 아니라 "끝"으로 닫는다 (원래 요청은 끊는다).
 // 오류로 끝내면 실리태번은 onErrorStreaming 으로 간다: 마지막으로 그린 뒤에 온 글(초당 streaming_fps 번만 그림)을 버리고,

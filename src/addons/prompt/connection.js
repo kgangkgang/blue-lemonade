@@ -130,7 +130,7 @@ export function bindConnection({doc,cfg,save,host,extensions,refresh}) {
   by('pt-provider').value=c.provider;save();refresh();
   autoListModels(c,host);
  };
- by('pt-active-max').onchange=event=>{cfg().activeMaxTokens=Math.min(160000,Math.max(0,parseInt(event.target.value,10)||0));event.target.value=cfg().activeMaxTokens;save();};
+ by('pt-active-max').onchange=event=>{cfg().activeMaxTokens=Math.max(0,parseInt(event.target.value,10)||0);event.target.value=cfg().activeMaxTokens;save();};
  by('pt-custom-url').oninput=event=>{cfg().customUrl=cleanUrl(event.target.value);save();refresh();};
  // ↻: 지금 공급자의 목록을 바로 받는다 (실리태번 서버 /status — 키는 서버가 붙임). 받은 목록은 이 브라우저에만 하루 둔다 (settings.json 에는 안 씀)
  by('pt-fetch-models').onclick=async()=>{

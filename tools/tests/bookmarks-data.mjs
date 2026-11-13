@@ -221,12 +221,12 @@ await test('설정: 처음 설치는 이전 확장(star) 설정을 옮기고 범
     const first = S.initSettings();
     assert.equal(first.migratedFrom, 'star');
     assert.deepEqual(first.colors, { default: { accent: '#112233' }, chats: { c1: { user: '#445566' } } });
-    assert.equal(first.contextRange, 10, '0~10 으로 자른다'); assert.equal(first.itemsPerPage, 7);
+    assert.equal(first.contextRange, 99, '위쪽 상한 없음 — 옛 값 99 그대로'); assert.equal(first.itemsPerPage, 7);
     assert.equal(first.iconStyle, 'star'); assert.equal(first.starIconApplied, true);
     delete T.ext.star;
     T.ext.chaekgalpi = { iconStyle: 'bookmark', itemsPerPage: 500 };
     const old = S.initSettings();
-    assert.equal(old.iconStyle, 'star', '옛 설정은 한 번 별로'); assert.equal(old.itemsPerPage, 50);
+    assert.equal(old.iconStyle, 'star', '옛 설정은 한 번 별로'); assert.equal(old.itemsPerPage, 500, '위쪽 상한 없음 — 옛 설정 500 그대로(예전 상한 50 의 10배)');
     old.iconStyle = 'bookmark';
     assert.equal(S.initSettings().iconStyle, 'bookmark', '그 뒤로는 고른 대로');
     assert.equal(S.chatKey('some chat.jsonl'), 'some chat');

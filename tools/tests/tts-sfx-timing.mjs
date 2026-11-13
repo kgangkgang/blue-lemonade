@@ -130,7 +130,7 @@ await test('1.5.6 long narration keeps the sound sentences for the model instead
     assert.ok(p.sfxAfters.includes(24)&&p.sfxAfters.includes(25),p.sfxAfters.join(','));
     assert.equal(timing(text,'punch',{repeats:2},24).repeats,2);   // 남긴 문장으로 횟수도 읽는다
 });
-await test('1.5.8 sfx.scene_chars sets the narration budget and is clamped to 1,000~40,000',()=>{
+await test('1.5.8 sfx.scene_chars sets the narration budget — at least 1,000, no upper cap',()=>{
     const filler='Lorem ipsum dolor amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.';
     const parts=[];for(let i=0;i<24;i++)parts.push(`${filler} "Line ${i}."`);
     parts.push(`${filler} He slapped the table twice. ${filler}`,'"Last line."',`${filler} The door creaked open.`);
@@ -146,7 +146,7 @@ await test('1.5.8 sfx.scene_chars sets the narration budget and is clamped to 1,
     S.settings().sfx.scene_chars=12000; const big=sceneOf();
     assert.ok(big.length>base.length&&big.length>=narration*0.95,`budget above the message keeps everything ${big.length}/${narration}`);
     assert.ok(/"Line 3\."|Line 3/.test(text)&&!/Line 3\./.test(big),'dialogue is still not part of the narration excerpt');
-    for(const [v,want] of [[undefined,4000],['abc',4000],[12,1000],[99999,40000],[6000.7,6000],['2500',2500]]) assert.equal(S.sceneCharsOf(v),want,String(v));
+    for(const [v,want] of [[undefined,4000],['abc',4000],[12,1000],[99999,99999],[400000,400000],[40000,40000],[6000.7,6000],['2500',2500]]) assert.equal(S.sceneCharsOf(v),want,String(v));
     S.settings().sfx.scene_chars='oops'; assert.equal(sceneOf().length,base.length,'bad stored value falls back to the default budget');
     S.settings().sfx.scene_chars=4000;
 });

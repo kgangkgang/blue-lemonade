@@ -116,8 +116,8 @@ export function initSettings() {
     const existing = extension_settings[MODULE];
     const store = existing && typeof existing === 'object' ? { ...DEFAULTS, ...existing } : { ...DEFAULTS };
     store.enabled = store.enabled !== false;
-    store.maxEntries = clampInt(store.maxEntries, 20, 5000, DEFAULTS.maxEntries);
-    store.keepBodies = clampInt(store.keepBodies, 0, 500, DEFAULTS.keepBodies);
+    store.maxEntries = clampInt(store.maxEntries, 20, Infinity, DEFAULTS.maxEntries);   // 위쪽 상한 없음 — 넘으면 설정 창이 안내만
+    store.keepBodies = clampInt(store.keepBodies, 0, Infinity, DEFAULTS.keepBodies);
     store.prices = cleanPrices(store.prices);
     store.unit = typeof store.unit === 'string' && store.unit.trim() ? store.unit.trim().slice(0, 4) : DEFAULTS.unit;
     store.ignoreCallers = Array.isArray(store.ignoreCallers) ? store.ignoreCallers.map(String) : [];

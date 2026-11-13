@@ -299,8 +299,8 @@
                             <p class="llmt-desc">실리태번에서 지금 선택한 API·모델·접속 설정을 그대로 사용해요. 모델을 바꾸면 다음 번역부터 따라가요.</p>
                             <div class="llmt-field">
                                 <label for="llm_profile_max_tokens" class="llmt-label">최대 응답 토큰</label>
-                                <input id="llm_profile_max_tokens" type="number" class="text_pole" min="0" max="160000" step="1" value="0">
-                                <small class="llmt-desc">0이면 현재 연결의 응답 길이 설정을 따라가요.</small>
+                                <input id="llm_profile_max_tokens" type="number" class="text_pole" min="0" step="1" value="0">
+                                <small class="llmt-desc">0이면 현재 연결의 응답 길이 설정을 따라가요. 위쪽 제한은 없어요 — 모델 한도보다 크면 공급자가 거절할 수 있어요.</small>
                             </div>
                         </div>
                         <small id="llm_direct_hint" class="llmt-desc" style="display:none">아래 공급자 · 모델로 번역해요.</small>
@@ -395,7 +395,7 @@
                                         <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
                                         <input type="range" id="max_length_openai_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
-                                        <input type="number" id="max_length_openai" class="neo-range-input" min="0" max="160000"
+                                        <input type="number" id="max_length_openai" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
@@ -439,7 +439,7 @@
                                         <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
                                         <input type="range" id="max_length_claude_slider" class="neo-range-slider" min="1"
                                             max="160000" step="1">
-                                        <input type="number" id="max_length_claude" class="neo-range-input" min="1" max="160000"
+                                        <input type="number" id="max_length_claude" class="neo-range-input" min="1" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
@@ -473,7 +473,7 @@
                                         <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
                                         <input type="range" id="max_length_cohere_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
-                                        <input type="number" id="max_length_cohere" class="neo-range-input" min="0" max="160000"
+                                        <input type="number" id="max_length_cohere" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
@@ -523,7 +523,7 @@
                                         <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
                                         <input type="range" id="max_length_google_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
-                                        <input type="number" id="max_length_google" class="neo-range-input" min="0" max="160000"
+                                        <input type="number" id="max_length_google" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
@@ -557,7 +557,7 @@
                                         <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
                                         <input type="range" id="max_length_vertexai_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
-                                        <input type="number" id="max_length_vertexai" class="neo-range-input" min="0" max="160000"
+                                        <input type="number" id="max_length_vertexai" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
@@ -585,6 +585,7 @@
                                 </div>
                             </div>
                         </div>
+                        <small id="llm_max_length_warn" class="llmt-desc" style="display:none">Max Response Length 가 160000 을 넘었어요. 막지는 않지만, 모델 한도보다 크면 공급자가 요청을 거절할 수 있어요.</small>
                     </div>
                 </section>
 
@@ -723,7 +724,7 @@
                         <small id="llm_context_auto_summary" class="llmt-desc" style="display:none">본채팅의 현재 컨텍스트에 맞춰 요청마다 계산해요.</small>
                         <div id="llm_context_manual_range" class="range-block">
                             <input type="range" id="llm_context_message_count" aria-label="참고할 최근 대화 개수" class="neo-range-slider" min="1" max="20" value="5">
-                            <input type="number" id="llm_context_message_count_value" aria-label="참고할 최근 대화 개수" class="neo-range-input" min="1" max="20"
+                            <input type="number" id="llm_context_message_count_value" aria-label="참고할 최근 대화 개수" class="neo-range-input" min="1" max="Infinity"
                                 value="5">
                         </div>
                         <label class="checkbox_label llmt-check" for="llm_context_include_user">
