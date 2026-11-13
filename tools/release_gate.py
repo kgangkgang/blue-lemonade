@@ -472,6 +472,406 @@ def validate_scene_music(files):
     require(seen == set(SCENE_MUSIC), 'Scene music catalog is incomplete')
 
 
+# ---------------------------------------------------------------------------
+# 1.4.1 실행 때 받는 자원 — ZIP 목록 · 무결성 표(tools/build-integrity.mjs) · 빠진 파일 검사가 함께 쓰는 하나의 목록.
+# 확장자 화이트리스트 대신 「코드가 실행 중에 받는 파일은 모두 들어간다」를 기준으로 해요.
+# 코드(src 의 .js · .mjs · .css · .html, 맨 위 index.js · style.css · style-ext.css)를 읽어 주소를 찾아요:
+#   import … from './x' · import('./x') · new URL(…, import.meta.url) · fetch('./x') · new Worker(…) · importScripts(…)
+#   · CSS url(…) · @import · HTML <link href> · <script src> · <img src>
+# 글자 그대로인 주소는 바로 풀고, 이어 붙인 주소(`./a/${x}.json`)는 「패턴」으로 풀어요 — 마지막 칸에 글자가 있어야 하고
+# (`./a/${x}` 처럼 아무 파일이나 되는 꼴은 안 돼요) 하나 이상 맞아야 해요. 풀 수 없는 주소(변수 · 폴더 기준 주소 · 넓은 패턴)는
+# 아래 RUNTIME_REFS 에 「무엇을 받는지」를 적어야 통과해요 — 적지 않으면 관문이 「확인 필요」로 멈춰요.
+# 확장 폴더 밖(../../../../ 처럼 실리태번 쪽)을 가리키는 주소는 실리태번 몫이라 보지 않아요.
+RUNTIME_ROOT_CODE = ('index.js', 'style.css', 'style-ext.css')
+RUNTIME_CODE_SUFFIXES = ('.js', '.mjs', '.css', '.html')
+
+# (파일, 주소 식) → 받는 것. 식은 소스 글자 그대로(공백은 하나로 줄여 비교). 값:
+#   ('names', (루트 기준 경로, …))   — 이 이름들을 받아요(모두 있어야 해요 · ZIP 에 실려요)
+#   ('glob', '루트 기준 패턴')       — 패턴에 맞는 파일을 받아요(* 는 한 칸 · 하나 이상 · 맞는 것이 ZIP 에 실려요)
+#   ('strings', '읽을 파일', 정규식, '기준 폴더') — 그 파일의 표에서 이름을 뽑아(정규식 첫 묶음) 기준 폴더에 붙여요
+#   ('helper', '함수 이름', 인자 차례, '틀')   — 같은 파일에서 그 함수를 부를 때 넘기는 글자를 틀의 {} 에 넣어 이 파일 자리 기준으로 풀어요
+#                                              (글자가 아닌 인자를 넘기면 「확인 필요」)
+#   ('none', '까닭')                 — 테마 파일을 받지 않아요(폴더 이름 · 주소 앞부분만 씀 · 실리태번 쪽) 또는 다른 줄에서 이미 셈
+# 새 주소를 쓰면 관문이 그 줄을 알려 줘요 — 무엇을 받는지 확인하고 여기 한 줄 더해요.
+RUNTIME_REFS = {
+    # 애드온 판 표: ADDON_VERSION_FILES 의 'translator/manifest.json' 같은 파일 앞부분만 읽어요
+    ('src/addon-versions.js', "'./addons/'"): ('strings', 'src/addon-versions.js', r"\[\s*'[^'\n]*',\s*'([\w-]+/[\w.-]+)'\s*\]", 'src/addons'),
+    # 애드온 시트: <id>/style.css · <id>/*.boot.gen.css · style-addons*.gen.css (addon-style-bundle.js 표) — src 의 .css 는 모두 실려요
+    ('src/addons.js', '`./addons/${rel}`'): ('glob', ('src/addons/*.css', 'src/addons/*/*.css')),
+    ('src/addons.js', "id==='order'?'./addons/order/panel.js':'./addons/perf/hub.js'"): ('names', ('src/addons/order/panel.js', 'src/addons/perf/hub.js')),
+    # 다른 확장(LLM 번역 단독판) 폴더의 모듈 — 실리태번 쪽
+    ('src/addons/bookmarks/translate.js', 'url'): ('none', '확장 폴더 밖(다른 확장)의 index.js — 주소는 ../../../../ 템플릿'),
+    # Mermaid: 기준 주소 + 'index.js' · 묶음이 같은 폴더 조각을 __blMermaidBase 로 받아요
+    ('src/addons/mermaid/index.js', "'./vendor/'"): ('glob', ('src/addons/mermaid/vendor/index.js', 'src/addons/mermaid/vendor/*.js')),
+    # 모델 전환: 메모리 확장(다른 확장 폴더)의 패널 모듈 — 실리태번 쪽
+    ('src/addons/modelswitch/targets.js', "lm('panel-loader.js')"): ('none', '다른 확장 폴더(../../../../<폴더>/) 모듈'),
+    ('src/addons/modelswitch/targets.js', "lm('panel.js')"): ('none', '다른 확장 폴더(../../../../<폴더>/) 모듈'),
+    ('src/addons/modelswitch/targets.js', "at('panel-loader.js')"): ('none', '다른 확장 폴더(../../../../<폴더>/) 모듈'),
+    ('src/addons/modelswitch/targets.js', "at('panel.js')"): ('none', '다른 확장 폴더(../../../../<폴더>/) 모듈'),
+    # 한글화 패널: 제 폴더 주소 + 'style.css' · 실리태번 본체 모듈(script.js · openai.js …)
+    ('src/addons/prompt/index.js', "'./'"): ('names', ('src/addons/prompt/style.css',)),
+    ('src/addons/prompt/index.js', "base + 'script.js'"): ('none', '실리태번 본체 모듈'),
+    ('src/addons/prompt/index.js', "base2 + 'openai.js'"): ('none', '실리태번 본체 모듈'),
+    ('src/addons/prompt/index.js', "base2 + 'extensions.js'"): ('none', '실리태번 본체 모듈'),
+    ('src/addons/prompt/index.js', "base2 + 'world-info.js'"): ('none', '실리태번 본체 모듈'),
+    ('src/addons/prompt/index.js', "base+'script.js'"): ('none', '실리태번 본체 모듈'),
+    ('src/addons/prompt/index.js', "base2+'openai.js'"): ('none', '실리태번 본체 모듈'),
+    ('src/addons/prompt/index.js', "base2+'textgen-settings.js'"): ('none', '실리태번 본체 모듈'),
+    # 다시 쓰기: 폴더 이름 · 내장 여부만 봐요
+    ('src/addons/rewrite/index.js', "'.'"): ('none', '폴더 이름만 씀(EXTENSION_PATH · FOLDER · EMBEDDED)'),
+    # LLM 번역: 제 폴더 + sendform.html · index.html · buttons.html · style.css / 껍데기: buttons.html · 첫 장 시트
+    ('src/addons/translator/index.js', "'./'"): ('names', tuple('src/addons/translator/' + n for n in ('sendform.html', 'index.html', 'buttons.html', 'style.css'))),
+    ('src/addons/translator/shell.js', "'./'"): ('names', ('src/addons/translator/buttons.html', 'src/addons/translator/style.boot.gen.css')),
+    # TTS: 출처 창 링크 local('./LICENSE-MultiCast.txt') 등 · 설정 틀 PATH + '/settings.html' · 효과음
+    ('src/addons/tts/credits.js', 'file'): ('helper', 'local', 0, '{}'),
+    ('src/addons/tts/src/settings.js', "'../'"): ('names', ('src/addons/tts/settings.html',)),
+    ('src/addons/tts/src/sfx-library.js', 'meta.assetPath || `../sfx/${id}.mp3`'): ('names', tuple(
+        ['src/addons/tts/sfx/' + n for n in TTS_SFX_FILES] + [f'src/addons/tts/sfx-extra/{i}.mp3' for i in TTS_EXTRA_IDS])),
+    # 로컬 글꼴: fonts-local.gen.js 의 조각 — 검토한 고정 목록(FONT_FILES)만
+    ('src/catalog.js', '`../fonts/${f.file}`'): ('names', tuple('fonts/' + n for n in FONT_FILES)),
+    # 출처 창 링크 local('LICENSE') · local('src/addons/…/NOTICE.md') …
+    ('src/credits.js', '`../${rel}`'): ('helper', 'local', 0, '../{}'),
+    # 켤 때만 받는 모듈 load('이름', './x.js')
+    ('src/features.js', 'url'): ('helper', 'load', 1, '{}'),
+    # 뗀 규칙 시트: css-gates.gen.js 표의 file · PANEL_SHEET
+    ('src/gate-css.js', 'file'): ('strings', 'src/css-gates.gen.js', r'"(?:file"\s*:\s*"|PANEL_SHEET\s*=\s*")?(\./[\w.-]+\.css)"', 'src'),
+    # 글꾸 마트 사본의 loadCaps 기본 주소 — 테마는 부르지 않고 caps-table.js 를 setCapsTable 로 넣어요
+    ('src/geulkku-mart/caps.js', '"./data/geulkku/caps.json"'): ('none', '마트 사본 · 테마에서 loadCaps 를 부르지 않음(caps-table.js 사용)'),
+    # 그림 해독 워커는 Blob 주소
+    ('src/imagedecode.js', 'url'): ('none', 'URL.createObjectURL(Blob) 워커'),
+    # 실리태번 본체 모듈과 ./addons/models/state.js
+    ('src/live-models.js', 'path'): ('helper', 'tryImport', 0, '{}'),
+    # 알림 서비스 워커 범위(pathname)만
+    ('src/reply-notify.js', "'./'"): ('none', '서비스 워커 범위(scope) — 파일을 받지 않음'),
+    # 장면 음악: 검토한 곡(SCENE_MUSIC)만
+    ('src/scene-music.js', '`./${track.url}`'): ('names', tuple(f'src/scene-music/{i}.mp3' for i in SCENE_MUSIC)),
+    # 데우스 QR: 실리태번 창 안 Function('url','return import(url)') 글자 — 실리태번 본체 모듈
+    ('src/scripts/plain/deus-qr.js', 'url'): ('none', '실리태번 본체 모듈(host Function)'),
+    # 내장 스크립트: 위 new URL(`./plain/${…}.js`) · new URL(`./titles/${…}.gen.js`) 패턴이 셈
+    ('src/scripts/runtime.js', 'startUrl(item,attempt>0)'): ('none', 'moduleUrl · startUrl 의 new URL 패턴으로 셈'),
+    ('src/scripts/runtime.js', 'moduleUrl({file},false)'): ('none', 'moduleUrl 의 new URL 패턴으로 셈'),
+    # 날씨: 부르는 곳이 new URL('./weather-engine.js', import.meta.url) 같은 글자 주소를 넘겨요
+    ('src/weather-load.js', 'specifier'): ('none', '부르는 곳의 new URL 글자 주소로 셈'),
+}
+
+
+def _norm_expr(text):
+    return re.sub(r'\s+', ' ', text.strip())
+
+
+def _read_arg(text, start):
+    """text[start:] 에서 함수 인자 하나(최상위 , 나 ) 까지)를 읽어 (글자, 끝 자리)를 돌려줘요."""
+    depth, i, n = 0, start, len(text)
+    while i < n:
+        c = text[i]
+        if c in '\'"':
+            j = i + 1
+            while j < n and text[j] != c:
+                if text[j] == '\\': j += 1
+                elif text[j] == '\n': break
+                j += 1
+            i = j + 1
+            continue
+        if c == '`':
+            i = _skip_template(text, i) + 1
+            continue
+        if c in '([{':
+            depth += 1
+        elif c in ')]}':
+            if depth == 0:
+                return text[start:i], i
+            depth -= 1
+        elif c == ',' and depth == 0:
+            return text[start:i], i
+        i += 1
+    return text[start:], n
+
+
+def _skip_template(text, i):
+    """i 의 ` 부터 짝 ` 자리를 돌려줘요(${…} 안의 글 · 겹친 ` 도 건너요)."""
+    n, j = len(text), i + 1
+    while j < n:
+        c = text[j]
+        if c == '\\':
+            j += 2
+            continue
+        if c == '`':
+            return j
+        if c == '$' and j + 1 < n and text[j + 1] == '{':
+            j, depth = j + 2, 1
+            while j < n and depth:
+                d = text[j]
+                if d == '`':
+                    j = _skip_template(text, j)
+                elif d in '\'"':
+                    k = j + 1
+                    while k < n and text[k] != d:
+                        k += 2 if text[k] == '\\' else 1
+                    j = k
+                elif d == '{':
+                    depth += 1
+                elif d == '}':
+                    depth -= 1
+                    if not depth:
+                        break
+                j += 1
+            j += 1
+            continue
+        j += 1
+    return n - 1
+
+
+def _literal(arg):
+    """인자가 문자열 하나면 ('lit', 글자), 템플릿이면 ('tpl', [조각…], [식…]), 아니면 None."""
+    arg = arg.strip()
+    if len(arg) >= 2 and arg[0] in '\'"' and arg[-1] == arg[0] and arg[0] not in arg[1:-1].replace('\\' + arg[0], ''):
+        return ('lit', arg[1:-1])
+    if len(arg) >= 2 and arg[0] == '`' and _skip_template(arg, 0) == len(arg) - 1:
+        parts, exprs, body, j, last = [], [], arg, 1, 1
+        while j < len(body) - 1:
+            if body[j] == '\\':
+                j += 2
+                continue
+            if body[j] == '$' and body[j + 1:j + 2] == '{':
+                parts.append(body[last:j])
+                k, depth = j + 2, 1
+                while k < len(body) and depth:
+                    if body[k] == '`':
+                        k = _skip_template(body, k)
+                    elif body[k] == '{':
+                        depth += 1
+                    elif body[k] == '}':
+                        depth -= 1
+                        if not depth:
+                            break
+                    k += 1
+                exprs.append(body[j + 2:k])
+                j = last = k + 1
+                continue
+            j += 1
+        parts.append(body[last:len(body) - 1])
+        return ('tpl', parts, exprs)
+    return None
+
+
+def _strip_comments(text):
+    # 줄 전체가 // 주석인 줄 · 줄 머리에서 여는 /* … */ 덩어리만 지워요(글자 안의 // · /* 는 그대로 — 주소 http:// · 패턴 src/*.js)
+    text = re.sub(r'(?m)^[ \t]*//.*$', '', text)
+    return re.sub(r'(?ms)^[ \t]*/\*.*?\*/', '', text)
+
+
+def _clean_path(spec):
+    return spec.split('#')[0].split('?')[0]
+
+
+def code_references(name, text):
+    """한 파일에서 실행 때 받는 주소를 찾아요. [(종류, 식 글자, 해석)] — 해석은 ('lit', 경로) · ('tpl', 조각, 식) · None(못 풂)."""
+    refs = []
+    if name.endswith('.css'):
+        body = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+        for m in re.finditer(r'@import\s+([\'"])([^\'"]+)\1', body):
+            refs.append(('css-import', m[2], ('lit', m[2])))
+        for m in re.finditer(r'url\(\s*([\'"]?)([^\'")]*)\1\s*\)', body):
+            refs.append(('css-url', m[2], ('lit', m[2])))
+        return refs
+    if name.endswith('.html'):
+        body = re.sub(r'<!--.*?-->', '', text, flags=re.S)
+        for m in re.finditer(r'<(?:link|script|img|source|audio|video)\b[^>]*?\s(?:href|src)\s*=\s*([\'"])([^\'"]*)\1', body, flags=re.I):
+            refs.append(('html', m[2], ('lit', m[2])))
+        return refs
+    body = _strip_comments(text)
+    for m in re.finditer(r'(?:\bfrom\s*|(?<![\w.$])import\s*)([\'"])(\.[^\'"\n]*)\1', body):
+        refs.append(('import', m[2], ('lit', m[2])))
+    for m in re.finditer(r'new\s+(?:globalThis\.)?URL\s*\(', body):
+        first, end = _read_arg(body, m.end())
+        if end >= len(body) or body[end] != ',':
+            continue
+        second, _ = _read_arg(body, end + 1)
+        if second.strip() != 'import.meta.url':
+            continue
+        refs.append(('url', first.strip(), _literal(first)))
+    for m in re.finditer(r'(?<![\w.$])(?:import|fetch|importScripts|new\s+(?:Shared)?Worker)\s*\(', body):
+        first, _ = _read_arg(body, m.end())
+        arg = first.strip()
+        if not arg or re.match(r'new\s+(?:globalThis\.)?URL\s*\(', arg):
+            continue   # new URL(…, import.meta.url) 은 위에서 봐요
+        kind = m[0].split('(')[0].strip().split()[-1]
+        parsed = _literal(arg)
+        if parsed is None:
+            if kind in ('import', 'Worker', 'SharedWorker', 'importScripts'):
+                refs.append((kind, arg, None))   # 변수로 받는 모듈 · 워커 — 무엇인지 RUNTIME_REFS 에 적어야 해요
+            continue   # fetch(변수) 는 거의 실리태번 API 라 보지 않아요(한계 · 보고서 미확인)
+        head = parsed[1] if parsed[0] == 'lit' else parsed[1][0]
+        if kind == 'import' and parsed[0] == 'lit':
+            continue   # 위 import 글자 규칙이 봐요
+        if head.startswith('.') or kind in ('Worker', 'SharedWorker', 'importScripts', 'import'):
+            refs.append((kind, arg, parsed))
+    return refs
+
+
+def _glob_regex(pattern):
+    return re.compile('^' + ''.join('[^/]*' if c == '*' else re.escape(c) for c in pattern) + '$')
+
+
+def _resolve(base_dir, spec):
+    """모듈 자리 기준으로 푼 루트 기준 경로. 확장 폴더 밖이면 None."""
+    import posixpath
+    joined = posixpath.normpath(posixpath.join(base_dir, spec)) if base_dir else posixpath.normpath(spec)
+    if joined == '.' or joined.startswith('../') or joined == '..':
+        return None
+    return joined
+
+
+def _is_runtime_code(name):
+    if name in RUNTIME_ROOT_CODE:
+        return True
+    return (name.startswith('src/') and name.endswith(RUNTIME_CODE_SUFFIXES)
+            and not name.endswith(('.test.mjs', '.test.js')) and '/vendor/' not in name)
+
+
+def _hits(pattern, names):
+    rx = _glob_regex(pattern)
+    return {n for n in names if rx.match(n) and not n.endswith(('.test.mjs', '.test.js'))}
+
+
+def _entry_targets(name, entry, files, names, problems):
+    """RUNTIME_REFS 값 하나를 루트 기준 경로 집합으로 풀어요."""
+    import posixpath
+    tag = entry[0]
+    if tag == 'none':
+        return set()
+    if tag == 'names':
+        return set(entry[1])
+    if tag == 'glob':
+        out = set()
+        for pattern in ((entry[1],) if isinstance(entry[1], str) else entry[1]):
+            hit = _hits(pattern, names)
+            if not hit:
+                problems.append(f'{name}: 받는 파일 {pattern} 가 하나도 없어요')
+            out |= hit
+        return out
+    if tag == 'strings':
+        _, source, pattern, base = entry
+        found = re.findall(pattern, files.get(source, b'').decode('utf-8', 'replace'))
+        if not found:
+            problems.append(f'{name}: 받는 파일 이름표({source} · {pattern})를 못 찾았어요(확인 필요)')
+        return {posixpath.normpath(posixpath.join(base, item)) for item in found}
+    if tag == 'helper':
+        _, fn, index, template = entry
+        body, here, out = _strip_comments(files[name].decode('utf-8')), posixpath.dirname(name), set()
+        calls = 0
+        for m in re.finditer(r'(?<![\w.$])' + re.escape(fn) + r'\s*\(', body):
+            args, pos = [], m.end()
+            while len(args) <= index:
+                arg, pos = _read_arg(body, pos)
+                args.append(arg)
+                if pos >= len(body) or body[pos] != ',':
+                    break
+                pos += 1
+            if len(args) <= index:
+                continue
+            arg = args[index].strip()
+            if re.search(r'(?:^|[^\w$])function\s*\*?\s*$', body[max(0, m.start() - 20):m.start()]):
+                continue   # 함수를 만드는 자리(function 이름(…))
+            calls += 1
+            value = _literal(arg)
+            if value is None or value[0] != 'lit':
+                problems.append(f'{name}: {fn}({arg[:60]}) 로 받는 파일을 못 풀어요(확인 필요 — RUNTIME_REFS)')
+                continue
+            target = _resolve(here, _clean_path(template.replace('{}', value[1])))
+            if target:
+                out.add(target)
+        if not calls:
+            problems.append(f'{name}: {fn}(…) 부르는 곳을 못 찾았어요(확인 필요 — RUNTIME_REFS)')
+        return out
+    raise GateError(f'Unknown RUNTIME_REFS kind: {tag}')
+
+
+def runtime_requirements(files, candidates=None):
+    """files: {경로: bytes} 에서 실행 때 받는 파일을 모아요.
+    돌려줌: (필요한 루트 기준 경로 집합, 문제 목록). candidates 는 패턴을 맞춰 볼 파일 이름들(없으면 files)."""
+    import posixpath
+    names = set(candidates if candidates is not None else files)
+    needed, problems = set(), []
+    for name in sorted(n for n in files if _is_runtime_code(n)):
+        try:
+            text = files[name].decode('utf-8')
+        except UnicodeDecodeError:
+            problems.append(f'{name}: UTF-8 이 아니라 주소를 못 읽어요(확인 필요)')
+            continue
+        here = posixpath.dirname(name)
+        for kind, expr, parsed in code_references(name, text):
+            entry = RUNTIME_REFS.get((name, _norm_expr(expr)))
+            if entry:
+                needed |= _entry_targets(name, entry, files, names, problems)
+                continue
+            if parsed is None:
+                # 생성된 자료 모듈(*.gen.js)은 글 안의 낱말이 import( 로 보일 뿐이라 변수 주소는 따지지 않아요(글자 주소는 그대로 봐요)
+                if not name.endswith('.gen.js'):
+                    problems.append(f'{name}: {kind}({expr[:80]}) — 무엇을 받는지 못 풀어요(확인 필요 — RUNTIME_REFS 에 적어요)')
+                continue
+            spec = parsed[1] if parsed[0] == 'lit' else '*'.join(parsed[1])
+            if spec == '' or re.match(r'^(?:[a-z][a-z0-9+.-]*:|//|/|#|\*)', spec, flags=re.I):
+                continue   # 바깥 주소 · 사이트 절대 경로 · 같은 문서 조각 · 데이터 주소 · 앞이 변수(아래 넓은 패턴과 같이 셈)
+            if kind == 'html':
+                continue   # 꽂아 넣는 HTML 의 상대 주소는 실리태번 페이지 기준이라 테마 파일이 아니에요
+            if kind == 'fetch':
+                problems.append(f'{name}: fetch({expr[:80]}) 의 상대 주소는 페이지 기준이에요 — new URL(…, import.meta.url) 로 써요(확인 필요)')
+                continue
+            clean = _clean_path(spec)
+            target = _resolve(here, clean or '.')
+            if target is None:
+                continue   # 확장 폴더 밖(실리태번 · 다른 확장) — 실리태번 몫
+            if parsed[0] == 'lit':
+                if clean.endswith('/') or posixpath.basename(clean) in ('', '.', '..'):
+                    problems.append(f'{name}: {expr} 는 폴더 기준 주소예요 — 이어 붙여 받는 파일을 RUNTIME_REFS 에 적어요(확인 필요)')
+                else:
+                    needed.add(target)
+                continue
+            if not posixpath.basename(target).replace('*', ''):
+                problems.append(f'{name}: {expr} 는 너무 넓은 패턴({target}) — 받는 파일을 RUNTIME_REFS 에 적어요(확인 필요)')
+                continue
+            hit = _hits(target, names)
+            if not hit:
+                problems.append(f'{name}: {expr} 가 받는 {target} 가 하나도 없어요')
+            needed |= hit
+    return needed, problems
+
+
+def _disk_names(root):
+    skip = {'.git', 'node_modules', '.github'}
+    out = []
+    for p in root.rglob('*'):
+        rel = p.relative_to(root)
+        if rel.parts and rel.parts[0] in skip or 'node_modules' in rel.parts:
+            continue
+        if p.is_file():
+            out.append(rel.as_posix())
+    return out
+
+
+def runtime_files(root, base_names):
+    """소스 나무에서 실행 때 받는 파일 전부(코드 + 코드가 받는 자원). 새로 들어온 코드(.css 등)도 다시 읽어요."""
+    root = Path(root).resolve()
+    candidates = _disk_names(root)
+    files = {}
+    # 시작점: 코드 + 브라우저가 받는 묶음 조각(dist/*.js — bundle-stamp.json 같은 빌드 기록은 받지 않아요)
+    pending = {n for n in base_names if _is_runtime_code(n) or (n.startswith('dist/') and n.endswith('.js'))}
+    result = set(pending)
+    while pending:
+        for name in pending:
+            path = root / name
+            if path.is_file():
+                files[name] = path.read_bytes()
+        needed, problems = runtime_requirements(files, candidates)
+        require(not problems, 'Runtime asset check (확인 필요): ' + ' | '.join(sorted(set(problems))[:20]))
+        missing = sorted(n for n in needed if not (root / n).is_file())
+        require(not missing, f'Code fetches files that do not exist: {missing[:20]}')
+        pending = needed - result
+        result |= needed
+    return result
+
+
 def inventory(root, kind):
     root = Path(root).resolve()
     names = ['manifest.json', 'index.js', 'style.css', 'README.md']
@@ -560,6 +960,12 @@ def inventory(root, kind):
                 item = root / 'fonts' / name
                 require(item.is_file(), f'Missing local font resource: {name}')
                 names.append('fonts/' + name)
+        # 1.4.1 내장 애드온 폴더의 라이선스 전문 · 고지는 코드가 링크하지 않아도 함께 실어요(퀵 리플라이 줄 접기 MIT 전문이 빠졌어요)
+        for notice in sorted((root / 'src' / 'addons').glob('*/*')) if (root / 'src' / 'addons').is_dir() else []:
+            if notice.is_file() and notice.name in ('LICENSE', 'NOTICE.md'):
+                names.append(notice.relative_to(root).as_posix())
+        # 1.4.1 실행 때 받는 파일은 모두 실어요(코드가 받는 주소에서 찾음 — runtime_files · 무결성 표와 같은 목록)
+        names += sorted(runtime_files(root, names))
     else:
         names += [p.name for p in root.glob('*.js') if p.name != 'index.js']
     require(len(names) > 4, 'No runtime modules found')
@@ -626,7 +1032,18 @@ def validate(files, kind):
             target = posixpath.normpath(posixpath.join(posixpath.dirname(name), spec.split('?')[0]))
             if not target.startswith('../'):
                 require(target in files, f'{name} imports missing file {target}')
+    if kind == 'theme':
+        check_runtime_assets(files)
     return version
+
+
+def check_runtime_assets(files):
+    """1.4.1 꾸러미(ZIP · 목록) 안의 코드가 실행 중에 받는 파일이 모두 그 꾸러미에 있나 — 이어 붙인 주소 · .json · 그림 · 글꼴까지."""
+    needed, problems = runtime_requirements(files)
+    require(not problems, 'Runtime asset check (확인 필요): ' + ' | '.join(sorted(set(problems))[:20]))
+    missing = sorted(needed - files.keys())
+    require(not missing, f'Runtime files missing from package ({len(missing)}): {missing[:20]}')
+    return needed
 
 
 def compare(expected, actual, label):
@@ -683,8 +1100,15 @@ def main():
     parser.add_argument('--mirror', type=Path, action='append', default=[])
     parser.add_argument('--zip', type=Path, action='append', default=[])
     parser.add_argument('--build', type=Path)
+    parser.add_argument('--runtime-list', action='store_true',
+                        help='실행 때 받는 파일 목록(JSON)만 찍어요 — tools/build-integrity.mjs 가 무결성 표에 같은 목록을 써요')
     args = parser.parse_args()
     try:
+        if args.runtime_list:
+            require(args.kind == 'theme', '--runtime-list 는 kind=theme 만')
+            files = inventory(args.source, args.kind)
+            print(json.dumps({'ok': True, 'files': sorted(runtime_files(args.source, list(files)))}, ensure_ascii=False))
+            return
         files = inventory(args.source, args.kind)
         version = validate(files, args.kind)
         prefix = 'blue-lemonade' if args.kind == 'theme' else args.prefix

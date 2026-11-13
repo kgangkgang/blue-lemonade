@@ -28,6 +28,8 @@ jobs:
           node tools/tests/module-syntax-links.mjs .
           node tools/tests/module-undeclared.mjs .
           python -m unittest discover -s tools/tests -p 'test_release_gate.py'
+          # 1.4.1 실행 때 받는 자원(이어 붙인 주소 · .json · 글꼴 · 그림)이 ZIP 목록 · 무결성 표에 다 있는지 · 빠지면 관문이 멈추는지(되돌림: 사전 JSON 이 ZIP 에서 빠짐)
+          python -m unittest discover -s tools/tests -p 'test_runtime_assets.py'
           node tools/tests/version-series.mjs .
           # 1.0.0 전수조사 고침 (필수 14 · 먼저 3 · 작은 권장)
           node tools/tests/bookmarks-per-page-words.mjs .
@@ -885,6 +887,8 @@ jobs:
           out="$RUNNER_TEMP/bl-built/blue-lemonade-$v.zip"
           python tools/release_gate.py --kind theme --source . --build "$out" > "$RUNNER_TEMP/bl-gate.json"
           sha256sum "$out"
+          # 1.4.1 만든 ZIP 을 다시 열어 코드가 실행 중에 받는 파일이 모두 들었는지 봐요(new URL(…, import.meta.url) · fetch · 워커 · CSS url() · 이어 붙인 주소)
+          python tools/release_gate.py --kind theme --source . --zip "$out" > /dev/null
           # 8.3.0 내장 개인 확장 파일이 ZIP 에 다 들어갔는지 (설치 뒤 404 를 막는 마지막 확인)
           node tools/tests/private-addons.mjs . --zip "$out"
           echo "BL_VERSION=$v" >> "$GITHUB_ENV"
