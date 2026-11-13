@@ -1542,7 +1542,7 @@ const STYLE = `
 .bl-lc .bl-lc-hd-mode, .bl-lc .bl-lc-tl-all, .bl-lc-cr-more, .bl-lc-fd-h, .bl-lc-sw, .bl-lc-hint, .bl-lc-sep, .bl-lc .bl-lc-ph, .bl-lc-chip.bl-lc-ghost { display:none; }
 @media (max-width: 600px) {
   /* 머리 줄: 제목 · 밝기(작은 둘 칸) · 닫기 */
-  .bl-lc-head { gap:8px; padding:4px 6px 4px 16px; }   /* 1.2.2 머리줄 간격 8(철칙 §7) · 밝기 스위치(38 높이)가 들어가도 줄 높이는 그대로 46 */
+  .bl-lc-head { padding:4px 6px 4px 16px; z-index:4; background:inherit; pointer-events:none; } .bl-lc-head > * { pointer-events:auto; }   /* 1.2.2 머리줄 간격 8(철칙 §7 · 넓은 창 규칙 그대로) · 밝기 스위치(38 높이)가 들어가도 줄 높이는 그대로 46. 11-14 아래 스크롤 칸이 5px 올라와도 머리줄이 위에 그대로 보이고(창의 flex 칸이라 z-index 가 먹어요 · 내린 글이 비치지 않게 창 바탕을 물려받아요) · 빈 여백을 누르면 아래 탭이 받아요 */
   .bl-lc-head h3 { flex:1; }
   .bl-lc .bl-lc-mode.bl-lc-hd-mode { display:flex; gap:2px; padding:2px; border-radius:10px; }
   .bl-lc .bl-lc-mode.bl-lc-hd-mode[hidden], .bl-lc-colors > .bl-lc-mode, .bl-lc-colors.bl-lc-pal-off.bl-lc-flip-idle, .bl-lc-flip-idle > .bl-lc-flip { display:none; }
@@ -1551,8 +1551,7 @@ const STYLE = `
   .bl-lc-colors > .bl-lc-flip { margin-left:16px; }
   .bl-lc-colors:not(.bl-lc-flip-idle) .bl-lc-pals { padding-left:8px; }
   /* 차례: 분류 → 틀 → 미리보기(붙박이) → 색 · 조절 → 「로그 꾸밈」 갈래 → 숨기기 안내 */
-  .bl-lc-scroll { gap:8px; margin-top:-5px; padding:5px 0 14px; }   /* 11-14 위로 5 올리고 안쪽 여백 5(내용 자리 그대로): 맨 윗줄 분류 탭의 누르는 상자 44 가 위 5px 를 이 칸 위 끝에서 잘려 아래로만 늘던 것 — 올린 5px 는 머리줄 아래 여백 4 + 선 1 자리예요 */
-  .bl-lc-head { position:relative; z-index:4; background:var(--salty-bg); pointer-events:none; } .bl-lc-head > * { pointer-events:auto; }   /* 머리줄이 그 5px 위에 그대로 보이고(내린 글이 비치지 않게 창 바탕) · 빈 여백을 누르면 아래 탭이 받아요 */
+  .bl-lc-scroll { margin-top:-5px; padding:5px 0 14px; }   /* 간격 8 은 넓은 창 규칙 그대로. 11-14 위로 5 올리고 안쪽 여백 5(내용 자리 그대로): 맨 윗줄 분류 탭의 누르는 상자 44 가 위 5px 를 이 칸 위 끝에서 잘려 아래로만 늘던 것 — 올린 5px 는 머리줄 아래 여백 4 + 선 1 자리예요 */
   .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-mine { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
   .bl-lc-band.bl-lc-empty { order:2; } .bl-lc-band[data-lc-retired] { margin-top:8px; }   /* 1.1.8 빈 안내는 틀 줄 바로 아래 · 옛 글꾸 띠는 맨 위 */
   .bl-lc-colors { order:6; } .bl-lc-flip-note { order:6; } .bl-lc-easy { order:7; } .bl-lc-inks { order:8; } .bl-lc-sep { order:9; } .bl-lc-folds { order:10; } .bl-lc-hint { order:11; } .bl-lc-scroll > .bl-lc-more { order:12; }
