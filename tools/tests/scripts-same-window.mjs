@@ -194,9 +194,16 @@ await test('사전 지연: 한글화 모듈은 사전 없이 시작하고(감시
     const walk = dir => { for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) { const rel = `${dir}/${e.name}`; if (e.isDirectory()) walk(rel); else if (/\.(m?js)$/.test(e.name) && rel !== 'src/build-info.js' && !rel.startsWith('src/ko-ui-text.') && read(rel).includes('ko-ui-text.')) importers.push(rel); } };
     walk('src'); importers.push(...(read('index.js').includes('ko-ui-text.') ? ['index.js'] : []));
     assert.deepEqual(importers.sort(), ['src/ko-ui.js', 'src/scripts/plain/korean.js'].sort());
-    // 1.0.0 극한 최적화: 색인(index) 한 장 + 조각 여섯 — 전부 동적 import
-    assert.match(read('src/ko-ui.js'), /textDictionary \?\?= import\('\.\/ko-ui-text\.index\.gen\.js'\)/);
-    for (const name of ['boot', 'drawers', 'templates', 'js', 'html', 'rest']) assert.ok(read('src/ko-ui.js').includes(`import('./ko-ui-text.${name}.gen.js')`), name);
+    // 1.0.0 극한 최적화: 색인(index) 한 장 + 조각 여섯 — 1.3.x(최적화 C): 전부 처음 쓸 때 JSON 파일로 받아요(모듈 import 아님 · 태그 템플릿 두 벌이 힙에 남던 것)
+    const koUi = read('src/ko-ui.js');
+    assert.match(koUi, /textDictionary \?\?= readText\('index'\)/);
+    assert.ok(koUi.includes("fetch(new URL(`./ko-ui-text.${name}.gen.json`, import.meta.url)"), 'JSON 파일을 받아요');
+    assert.ok(koUi.includes("new Set(['boot', 'drawers', 'templates', 'js', 'html', 'rest'])"), '조각 여섯');
+    assert.ok(!/import\(['"`]\.\/ko-ui-text/.test(koUi), '사전은 모듈로 부르지 않아요');
+    for (const name of ['index', 'boot', 'drawers', 'templates', 'js', 'html', 'rest']) {
+        assert.ok(fs.existsSync(path.join(root, `src/ko-ui-text.${name}.gen.json`)), name);
+        assert.ok(!fs.existsSync(path.join(root, `src/ko-ui-text.${name}.gen.js`)), `${name} 옛 모듈 꼴은 없어요`);
+    }
     assert.ok(!/^import .*ko-ui-text/m.test(read('src/ko-ui.js')));
     const { doc, scopes } = fakePage({ bodyChildren: 30 }); const fake = fakeWindow(doc);
     let asked = 0; const dictionary = { exact: [['Hello there', '안녕하세요']], htmlExact: [], PATTERNS: [] };

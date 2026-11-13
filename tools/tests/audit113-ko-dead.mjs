@@ -35,9 +35,11 @@ test('글자 사전 원본(tools/scripts-src/korean.js)에도 없어요', () => 
     const { translations } = readSource(fs.readFileSync(path.join(root, 'tools/scripts-src/korean.js'), 'utf8'));
     assert.deepEqual(DEAD.filter(k => Object.hasOwn(translations, k)), []);
 });
-test('글자 사전 생성물(src/ko-ui-text.*.gen.js)에도 없어요', () => {
+test('글자 사전 생성물(src/ko-ui-text.*.gen.json)에도 없어요', () => {
     const left = [];
-    for (const name of fs.readdirSync(path.join(root, 'src')).filter(n => /^ko-ui-text\..+\.gen\.js$/.test(n))) {
+    const files = fs.readdirSync(path.join(root, 'src')).filter(n => /^ko-ui-text\..+\.gen\.json$/.test(n));
+    assert.equal(files.length, 7, '색인 + 조각 여섯');
+    for (const name of files) {
         const text = fs.readFileSync(path.join(root, 'src', name), 'utf8');
         for (const k of DEAD) if (text.includes(JSON.stringify(k))) left.push(`${name}: ${k}`);
     }

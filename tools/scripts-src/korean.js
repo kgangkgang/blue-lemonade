@@ -135,9 +135,9 @@
     }
   }
   indexPatterns();
-  // BL 9.0.7: 내장본(src/scripts/plain/korean.js)은 사전을 싣지 않고 빈 표로 시작해요. 사전(src/ko-ui-text.index.gen.js 색인 + 조각 — 빌드가 위 정리를 미리 돌린 결과)은
+  // BL 9.0.7: 내장본(src/scripts/plain/korean.js)은 사전을 싣지 않고 빈 표로 시작해요. 사전(src/ko-ui-text.index.gen.json 색인 + 조각 — 빌드가 위 정리를 미리 돌린 결과)은
   //   처음 필요할 때 받아 여기서 끼워요 (아래 startWhenNeeded).
-  // BL 1.0.0 (극한 최적화): 사전은 색인 + 조각(boot · drawers · templates · js · html · rest)으로 나뉘어 처음 필요할 때 조각만 받아요(src/ko-ui-text.*.gen.js).
+  // BL 1.0.0 (극한 최적화): 사전은 색인 + 조각(boot · drawers · templates · js · html · rest)으로 나뉘어 처음 필요할 때 조각만 받아요(src/ko-ui-text.*.gen.json).
   //   색인(열쇠 지문 fnv32 → 조각 · 패턴 머리 낱말 → 조각)으로 「아직 안 받은 조각에 있는 글」을 알아보고 그 조각을 받은 뒤 미뤄 둔 글을 다시 봐요.
   //   통째 사전(옛 꼴 · 시험 · 사전을 품은 이 원본)도 그대로 끼워요 — 조각은 합쳐 쌓여요
   function useDictionary(data) {

@@ -41,8 +41,8 @@ await test('p1: the module and its dictionary are exactly what the build makes f
         : l.startsWith('  let PATTERNS = [') ? `  let PATTERNS = ${l.slice(17, -1)}.filter(p => !__drop.has(__hash(p.re)));` : l).join('\n');
     const want = new Function('__drop', '__hash', piece + '\nreturn JSON.stringify({ exact: [...exact], htmlExact: [...htmlExact], PATTERNS });')(dropped, hash);
     const merged = { exact: [], htmlExact: [], PATTERNS: [] };
-    const index = (await import(pathToFileURL(path.join(root, INDEX_FILE)).href)).default;
-    for (const name of PART_NAMES) { const part = (await import(pathToFileURL(path.join(root, partFile(name))).href)).default; merged.exact.push(...part.exact); merged.htmlExact.push(...part.htmlExact); merged.PATTERNS.push(...part.PATTERNS); }
+    const index = JSON.parse(read(INDEX_FILE));   // 1.3.x: 색인 · 조각은 JSON 파일
+    for (const name of PART_NAMES) { const part = JSON.parse(read(partFile(name))); merged.exact.push(...part.exact); merged.htmlExact.push(...part.htmlExact); merged.PATTERNS.push(...part.PATTERNS); }
     merged.PATTERNS.push(...index.headless);
     const wantObj = JSON.parse(want);
     const sortPairs = list => [...list].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));

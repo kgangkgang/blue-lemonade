@@ -2,7 +2,7 @@
 //   실리태번 폴더를 **읽기만** 해서 사전 열쇠가 어디에 나오는지 봐요 — index.html 의 위 막대 서랍(#top-settings-holder) 안이면 drawers,
 //   index.html 의 그 밖(첫 화면 · 입력줄 · 메뉴 · 떠 있는 창)이면 boot, scripts/templates/*.html 이면 templates, js 문자열이면 js. 어디에도 없으면 목록에 없음(= rest).
 //   이김 차례: boot > drawers > templates > js. 부팅 첫 화면에서 바로 찾은 열쇠(tools/scripts-src/korean-boot-census.json · 리그에서 모음)는 자리와 상관없이 boot. 결과는 열쇠 글 대신 지문(정리한 열쇠의 SHA-1 앞 12자리 — korean-prune.json 과 같은 규칙)만 적어요.
-//   tools/build-korean-dict.mjs 가 읽어 색인(ko-ui-text.index.gen.js)과 조각(ko-ui-text.<조각>.gen.js)을 만들어요. 잘못 나뉘어도 번역은 같아요 —
+//   tools/build-korean-dict.mjs 가 읽어 색인(ko-ui-text.index.gen.json)과 조각(ko-ui-text.<조각>.gen.json)을 만들어요. 잘못 나뉘어도 번역은 같아요 —
 //   색인이 모든 열쇠를 알아 그 조각을 받으니, 나누기는 「처음에 얼마나 받나」만 바꿔요. 실리태번을 올리면(지금 1.19.0) 다시 돌려요.
 // node tools/ko-dict-parts.mjs --st <실리태번 폴더> [--check]
 import fs from 'node:fs';

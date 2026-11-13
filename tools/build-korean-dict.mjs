@@ -18,9 +18,11 @@ const PRUNE = path.join(root, 'tools/scripts-src/korean-prune.json');
 export const DICT_FILE = 'src/ko-ui-text.gen.js';   // 1.0.0 전 한 장짜리 — 이제는 만들지 않고 있으면 지워요
 // 1.0.0 극한 최적화: 색인 + 조각 여섯(ko-dict-parts.mjs 의 목록으로 나눔). 색인은 열쇠 지문(fnv32) → 조각, 패턴 머리 낱말 → 조각, 머리 없는 패턴 그대로
 export const PARTS_FILE = 'tools/scripts-src/korean-parts.json';
-export const INDEX_FILE = 'src/ko-ui-text.index.gen.js';
+export const INDEX_FILE = 'src/ko-ui-text.index.gen.json';
 export const PART_NAMES = ['boot', 'drawers', 'templates', 'js', 'html', 'rest'];
-export const partFile = name => `src/ko-ui-text.${name}.gen.js`;
+export const partFile = name => `src/ko-ui-text.${name}.gen.json`;
+// 1.3.x 전 모듈 꼴(.gen.js) — 이제는 만들지 않고 있으면 지워요
+export const OLD_MODULE_FILES = ['index', ...PART_NAMES].map(name => `src/ko-ui-text.${name}.gen.js`);
 export function readParts(file = path.join(root, PARTS_FILE)) {
     if (!fs.existsSync(file)) return {};
     return JSON.parse(fs.readFileSync(file, 'utf8')).parts || {};
@@ -45,23 +47,17 @@ export function splitDictionary(dictionary, partsMap = {}) {
     index.html.html = pack(index.html.html);
     return { index, parts };
 }
-// 1.3.x 메모리(최적화 C): 예전에는 JSON 을 String.raw`…` 태그 템플릿에 넣었어요. 태그 템플릿은 V8 이 호출 자리마다 「템플릿 객체」(가공 · 원문 두 벌)를
-//   스크립트가 살아 있는 동안 붙잡아(NativeContext template_weakmap) 사전 글이 힙에 두 벌씩 계속 남았어요(폰 부팅 뒤 조각 넷 약 1.9MB — 힙 기록 11-14).
-//   보통 문자열 리터럴은 그런 캐시가 없어요. 역빗금 · 작은따옴표만 이스케이프하면 JSON 글자 그대로라 뜻이 같아요(U+2028 · U+2029 는 ES2019 부터 문자열 안에 그대로 둬도 돼요).
-export const jsonLiteral = value => `'${JSON.stringify(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+// 1.3.x 메모리(최적화 C · 11-14): 색인 · 조각은 JSON 파일이에요(ko-ui.js 가 fetch 로 받아 JSON.parse). 예전 모듈 꼴은 JSON 을
+//   String.raw`…` 태그 템플릿에 넣었는데, V8 은 태그 템플릿마다 템플릿 객체(가공 · 원문 두 벌)를 그 스크립트가 살아 있는 동안 붙잡아
+//   사전 글이 힙에 두 벌씩 계속 남았어요(힙 기록: PC 장면 뒤 약 2.3MB · NativeContext template_weakmap). 보통 문자열로 바꾸면 이스케이프로
+//   dist 가 3.4KB 늘어 상한을 넘었어요. JSON 파일은 읽고 나면 받은 글을 놓아주고, 묶음(dist)에 사전 조각이 들지 않아요.
+//   JSON 에는 주석을 둘 수 없어 「만든 파일 · 손으로 고치지 않아요」 설명은 여기와 ko-ui.js 에 둬요.
 /** 만들 파일 전부: { 상대 경로: 글 } */
 export function dictionaryModules(dictionary, stats, partsMap = {}) {
     const { index, parts } = splitDictionary(dictionary, partsMap);
-    const head = (what) => `// 만든 파일 — tools/build-korean-dict.mjs 가 tools/scripts-src/korean.js 사전에서 만들어요(손으로 고치지 않아요). ${what}\n`
-        + '// 실리태번이 번역하지 않고 남긴 영어 글자 → 한국어. ko-ui.js 의 loadTextDictionary(색인) · loadTextPart(조각)로 처음 필요할 때 받아요(내장 스크립트 korean).\n';
-    const mod = json => `export default JSON.parse(${jsonLiteral(json)});\n`;
     const out = {};
-    const counts = Object.entries(index.keys).map(([name, list]) => `${name} ${list.length}`).join(' · ');
-    out[INDEX_FILE] = head(`색인: 열쇠 ${stats.exact}(${counts}) · HTML 열쇠 ${stats.htmlExact} · 패턴 머리 ${index.heads.js.length} · 머리 없는 패턴 ${index.headless.length}.`) + mod(index);
-    for (const name of PART_NAMES) {
-        const part = parts[name];
-        out[partFile(name)] = head(`조각 ${name}: 열쇠 ${part.exact.length} · HTML 열쇠 ${part.htmlExact.length} · 패턴 ${part.PATTERNS.length}.`) + mod(part);
-    }
+    out[INDEX_FILE] = JSON.stringify(index) + '\n';
+    for (const name of PART_NAMES) out[partFile(name)] = JSON.stringify(parts[name]) + '\n';
     return out;
 }
 const check = process.argv.includes('--check');
@@ -120,12 +116,6 @@ export function buildKorean(source, dropped = new Set()) {
     const dictionary = { exact: built.exact, htmlExact: built.htmlExact, PATTERNS: built.PATTERNS };
     return { code, dictionary, stats: { exact: built.exact.length, htmlExact: built.htmlExact.length, patterns: built.PATTERNS.length, dropped: dropped.size } };
 }
-/** 사전 모듈 글: JSON 을 작은따옴표 문자열 하나로(jsonLiteral) */
-export function dictionaryModule(dictionary, stats) {
-    return `// 만든 파일 — tools/build-korean-dict.mjs 가 tools/scripts-src/korean.js 사전에서 만들어요(손으로 고치지 않아요). 열쇠 ${stats.exact} · HTML 열쇠 ${stats.htmlExact} · 패턴 ${stats.patterns}.\n`
-        + '// 실리태번이 번역하지 않고 남긴 영어 글자 → 한국어. ko-ui.js 의 loadTextDictionary 로 처음 필요할 때 받아요(내장 스크립트 korean).\n'
-        + `export default JSON.parse(${jsonLiteral(dictionary)});\n`;
-}
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
     const { code, dictionary, stats } = buildKorean(fs.readFileSync(SRC, 'utf8'), readPrune());
@@ -133,12 +123,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const stale = Object.entries(modules).filter(([rel, text]) => (fs.existsSync(path.join(root, rel)) ? fs.readFileSync(path.join(root, rel), 'utf8') : '') !== text).map(([rel]) => rel);
     const oldFile = path.join(root, DICT_FILE);
     const scriptStale = writeScript(root, 'korean', code, { check });
-    const dictStale = stale.length > 0 || fs.existsSync(oldFile);
+    const oldModules = OLD_MODULE_FILES.filter(rel => fs.existsSync(path.join(root, rel)));
+    const dictStale = stale.length > 0 || fs.existsSync(oldFile) || oldModules.length > 0;
     if (check) {
         let same = !scriptStale && !dictStale;
         if (same) {   // 색인 · 조각 모듈을 실제로 읽어 합치면 같은 표가 나오는지
             const { index, parts } = splitDictionary(dictionary, readParts());
-            const read = async rel => (await import(pathToFileURL(path.join(root, rel)).href + '?t=' + Date.now())).default;
+            const read = async rel => JSON.parse(fs.readFileSync(path.join(root, rel), 'utf8'));
             same = JSON.stringify(await read(INDEX_FILE)) === JSON.stringify(index) && readScript(root, 'korean') === code;
             for (const name of PART_NAMES) if (same) same = JSON.stringify(await read(partFile(name))) === JSON.stringify(parts[name]);
         }
@@ -147,6 +138,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     } else {
         for (const rel of stale) fs.writeFileSync(path.join(root, rel), modules[rel]);
         if (fs.existsSync(oldFile)) fs.rmSync(oldFile);
+        for (const rel of oldModules) fs.rmSync(path.join(root, rel));   // 모듈 꼴(.gen.js) → JSON 으로 옮긴 뒤 남은 옛 생성물(git 이 기억해요)
         console.log(`한글화 모듈 · 사전을 만들었어요 (열쇠 ${stats.exact} · HTML 열쇠 ${stats.htmlExact} · 패턴 ${stats.patterns}, 다듬기 지문 ${stats.dropped}, ${scriptStale || dictStale ? '바뀜' : '그대로'})`);
     }
 }
