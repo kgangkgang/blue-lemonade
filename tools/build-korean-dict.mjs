@@ -45,12 +45,16 @@ export function splitDictionary(dictionary, partsMap = {}) {
     index.html.html = pack(index.html.html);
     return { index, parts };
 }
+// 1.3.x 메모리(최적화 C): 예전에는 JSON 을 String.raw`…` 태그 템플릿에 넣었어요. 태그 템플릿은 V8 이 호출 자리마다 「템플릿 객체」(가공 · 원문 두 벌)를
+//   스크립트가 살아 있는 동안 붙잡아(NativeContext template_weakmap) 사전 글이 힙에 두 벌씩 계속 남았어요(폰 부팅 뒤 조각 넷 약 1.9MB — 힙 기록 11-14).
+//   보통 문자열 리터럴은 그런 캐시가 없어요. 역빗금 · 작은따옴표만 이스케이프하면 JSON 글자 그대로라 뜻이 같아요(U+2028 · U+2029 는 ES2019 부터 문자열 안에 그대로 둬도 돼요).
+export const jsonLiteral = value => `'${JSON.stringify(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 /** 만들 파일 전부: { 상대 경로: 글 } */
 export function dictionaryModules(dictionary, stats, partsMap = {}) {
     const { index, parts } = splitDictionary(dictionary, partsMap);
     const head = (what) => `// 만든 파일 — tools/build-korean-dict.mjs 가 tools/scripts-src/korean.js 사전에서 만들어요(손으로 고치지 않아요). ${what}\n`
         + '// 실리태번이 번역하지 않고 남긴 영어 글자 → 한국어. ko-ui.js 의 loadTextDictionary(색인) · loadTextPart(조각)로 처음 필요할 때 받아요(내장 스크립트 korean).\n';
-    const mod = json => `export default JSON.parse(String.raw\`${JSON.stringify(json).replace(/\`/g, '\\u0060').replace(/\$\{/g, '$\\u007b')}\`);\n`;
+    const mod = json => `export default JSON.parse(${jsonLiteral(json)});\n`;
     const out = {};
     const counts = Object.entries(index.keys).map(([name, list]) => `${name} ${list.length}`).join(' · ');
     out[INDEX_FILE] = head(`색인: 열쇠 ${stats.exact}(${counts}) · HTML 열쇠 ${stats.htmlExact} · 패턴 머리 ${index.heads.js.length} · 머리 없는 패턴 ${index.headless.length}.`) + mod(index);
@@ -116,12 +120,11 @@ export function buildKorean(source, dropped = new Set()) {
     const dictionary = { exact: built.exact, htmlExact: built.htmlExact, PATTERNS: built.PATTERNS };
     return { code, dictionary, stats: { exact: built.exact.length, htmlExact: built.htmlExact.length, patterns: built.PATTERNS.length, dropped: dropped.size } };
 }
-/** 사전 모듈 글: JSON 그대로 String.raw 안에 — 역따옴표 · ${ 만 JSON 의 \u 꼴로 바꿔 넣어요(뜻은 같음) */
+/** 사전 모듈 글: JSON 을 작은따옴표 문자열 하나로(jsonLiteral) */
 export function dictionaryModule(dictionary, stats) {
-    const json = JSON.stringify(dictionary).replace(/`/g, '\\u0060').replace(/\$\{/g, '$\\u007b');
     return `// 만든 파일 — tools/build-korean-dict.mjs 가 tools/scripts-src/korean.js 사전에서 만들어요(손으로 고치지 않아요). 열쇠 ${stats.exact} · HTML 열쇠 ${stats.htmlExact} · 패턴 ${stats.patterns}.\n`
         + '// 실리태번이 번역하지 않고 남긴 영어 글자 → 한국어. ko-ui.js 의 loadTextDictionary 로 처음 필요할 때 받아요(내장 스크립트 korean).\n'
-        + `export default JSON.parse(String.raw\`${json}\`);\n`;
+        + `export default JSON.parse(${jsonLiteral(dictionary)});\n`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
