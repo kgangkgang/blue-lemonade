@@ -2231,5 +2231,57 @@ await test('줄바꿈: 공용 함수는 테마 src/log-copy-wrap.js 와 같은 �
     for (const f of ['geulkku', 'frames']) assert.match(fs.readFileSync(path.join(MART, f, 'index.html'), 'utf8'), /mart\.js\?v=20261113r/, `${f} 꼬리`);
 });
 
+// ── 11-13 공개되는 주석 · 자료에 「만든 이 표시」가 다시 들어오지 않게(테마 tools/tests/no-maker-names.mjs 와 같은 꼴 셋) ──
+//   잡는 꼴: 괄호 안 「이름 [판]」에 날짜 · 지시 번호가 같이 있거나 「이름 + 소수점 판」 하나뿐 · 「이름 + 가/이 + 만든 · 쓴 · 그린 · 설계 · 디자인 · 검토」 · 「만든 이 / … by + 이름」 · 작업 분기 이름
+//   보는 곳: 마트 · 도구 · 홈의 js · css · html 주석 글자 + 지금 목록(index.json)이 가리키는 글꾸 조각 전체. 공지(release-notes.json) · 화면 글은 기능이라 안 봐요.
+await test('만든 이 표시 없음: 주석(js · mjs · cjs · css · html)과 지금 쓰는 글꾸 조각에 모델 이름 + 날짜 · 작업 분기 이름이 없어요 · 기능 글(모델 목록 · 가격 · 칸 값)은 지나가요', () => {
+    const NAME = '(?:fable|opus|sonnet|haiku|claude|codex|gpt|gemini|페이블|오푸스|소넷|하이쿠|클로드|코덱스|제미나이)';
+    const ONE = new RegExp('^' + NAME + '(?:[ -]?\\d+(?:\\.\\d+)*)?$', 'i'), ONE_VER = new RegExp('^' + NAME + '[ -]?\\d+\\.\\d+$', 'i'), STAMP = /^(?:\d{4}-)?\d{1,2}-\d{1,2}$|^지시-\d+/;
+    const MADE = new RegExp(NAME + '[ \\d.]*(?:가|이) ?(?:만든|만들|쓴|썼|그린|그렸|설계|디자인|검토)', 'i');
+    const BY = new RegExp('(?:만든 ?이|작성자?|지은이|\\b(?:authored|written|designed|reviewed|made|created|modified|generated|drawn) (?:by|with)|co-authored-by)\\s*[:：]?\\s*' + NAME + '\\b', 'i');
+    const BRANCH = new RegExp('(?<![\\w./-])codex' + '/[a-z0-9][\\w.-]*', 'i');
+    const mark = text => {
+        for (const m of text.matchAll(/\(([^()\n]{1,80})\)/g)) {
+            const cells = m[1].split(/\s*[·,]\s*/).map(s => s.trim());
+            if (cells.some(c => ONE.test(c)) && (cells.length === 1 ? ONE_VER.test(cells[0]) : cells.some(c => STAMP.test(c)))) return m[0];
+        }
+        return (text.match(MADE) || text.match(BY) || text.match(BRANCH) || [''])[0];
+    };
+    const OPEN = ['/', '*'].join(''), SHUT = ['*', '/'].join(''), LINE = ['/', '/'].join(''), HTML = ['<!', '--'].join(''), HTML_SHUT = ['--', '>'].join('');
+    const comments = text => {
+        const out = []; let block = '';
+        text.split('\n').forEach((line, i) => {
+            let rest = line, got = '';
+            while (rest) {
+                if (block) { const e = rest.indexOf(block); if (e < 0) { got += ' ' + rest; rest = ''; } else { got += ' ' + rest.slice(0, e); rest = rest.slice(e + block.length); block = ''; } continue; }
+                const at = [rest.search(new RegExp('(?<!:)' + LINE)), rest.indexOf(OPEN), rest.indexOf(HTML)].filter(n => n >= 0).sort((a, b) => a - b)[0];
+                if (at === undefined) break;
+                if (rest.startsWith(LINE, at)) { got += ' ' + rest.slice(at); break; }
+                const css = rest.startsWith(OPEN, at); block = css ? SHUT : HTML_SHUT; rest = rest.slice(at + (css ? 2 : 4));
+            }
+            if (got) out.push([i + 1, got]);
+        });
+        return out;
+    };
+    const bad = ['(Fa〇ble 5.2 · 11-12)', '(11-11 · Op〇us 5.5)', '(지시-1111 커스텀 · Op〇us 5.5)', '무테 이음매 3(Op〇us 5.5): 자루 끝', '페이〇블이 만든 시안', '만든 이: Son〇net', 'written by Cla〇ude', ['원본 co〇dex', 'release-112 의 src'].join('/')].map(s => s.split('〇').join(''));   // 〇: 이 줄이 스스로 걸리지 않게 끼운 글자
+    const good = ['Claude 5 · Fable · Gemini 3 이후는 생각을 짧게', '현재 연결(Gemini)의 내용 차단', '예전 기본(OpenRouter Claude Haiku 5.5 · Google Gemini 3.8 Flash)', '모델 목록에 Fable 5.2 · GPT-6.1 Terra 를 넣었어요', '원본 블루레몬에이드 1.1.2 의 src', '목소리 fable · 파일 .opus'];
+    for (const s of bad) assert.ok(mark(s), '잡아야 해요: ' + s);
+    for (const s of good) assert.equal(mark(s), '', '잡으면 안 돼요: ' + s);
+    assert.deepEqual(comments('a ' + OPEN + ' 하나\n둘 ' + SHUT + ' b ' + LINE + ' 셋').map(c => c[0]), [1, 2]);
+    const hits = [], SKIP = new Set(['.git', 'node_modules', 'data', 'media', 'fonts']);
+    const walk = rel => {
+        for (const ent of fs.readdirSync(path.join(ROOT, rel), { withFileTypes: true })) {
+            const r = rel ? rel + '/' + ent.name : ent.name;
+            if (ent.isDirectory()) { if (!SKIP.has(ent.name)) walk(r); continue; }
+            if (!/\.(?:js|mjs|cjs|css|html)$/.test(ent.name)) continue;
+            for (const [n, c] of comments(fs.readFileSync(path.join(ROOT, r), 'utf8'))) { const why = mark(c); if (why) hits.push(r + ':' + n + ' ' + why); }
+        }
+    };
+    walk('');
+    const dir = path.join(MART, 'data/geulkku'), idx = JSON.parse(fs.readFileSync(path.join(dir, 'index.json'), 'utf8'));
+    for (const c of Object.values(idx.chunks)) for (const it of Object.entries(JSON.parse(fs.readFileSync(path.join(dir, c.file), 'utf8')).items)) { const why = mark(it[1].preview || ''); if (why) hits.push(c.file + ' ' + it[0] + ' ' + why); }
+    assert.deepEqual(hits, [], '만든 이 표시가 남았어요 — 이름을 빼고 무엇을 하는지만 적어요:\n' + hits.join('\n'));
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
