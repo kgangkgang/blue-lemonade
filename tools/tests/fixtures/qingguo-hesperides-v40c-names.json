@@ -1,0 +1,1410 @@
+{
+ "about": "이름 검사용이에요. 원작 본문이나 개인 프리셋 자료는 담지 않아요. 청과 헤스페리데스 V4.0C(11-14) 프롬프트 326개 · 정규식 24개의 id 와 이름만이에요.",
+ "prompts": [
+  {
+   "id": "d842c110-e21e-4a22-990b-a3168db642d2",
+   "name": "🛠️ 出杯引导（工具必开）"
+  },
+  {
+   "id": "fruit-v61-display-section-01",
+   "name": "━━ 📖 说明勿开 ━━"
+  },
+  {
+   "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+   "name": "🍏 青果·赫斯帕里得斯 V4.0C 说明｜别开"
+  },
+  {
+   "id": "fruit-v61-display-section-02",
+   "name": "━━ 🍎 基础 ━━"
+  },
+  {
+   "id": "419e0b0c-c3f0-4ae8-91cd-97d4d71455a1",
+   "name": "📌 获取变量｜必开·别动"
+  },
+  {
+   "id": "f4ef9910-d6c2-4604-9fe3-2c5a25b179de",
+   "name": "小说头部（需使用moli老师的小说插件）"
+  },
+  {
+   "id": "bd0dcfab-ad79-4fde-9915-6876b08221bb",
+   "name": "🌙 加强破甲｜改编自日月西 @电波系 #GEMINI FLASH"
+  },
+  {
+   "id": "prompt_1792063236592_alrk9mw",
+   "name": "🧊加强破甲@NIAN"
+  },
+  {
+   "id": "fruit-v21-jb-kunlun-ide",
+   "name": "🏔️ 加强破甲｜改编自昆仑IDE @从前跟你一样 #GEMINI #CLAUDE"
+  },
+  {
+   "id": "main",
+   "name": "📌 乐园载入｜头部单选"
+  },
+  {
+   "id": "fruit-v65-head-oneiric-director",
+   "name": "📌 乐园载入·潜梦深耕｜头部单选"
+  },
+  {
+   "id": "chaoxi_13b33702-9b6f-4a68-b62e-60f84dcb92bd",
+   "name": "📌 乐园载入·温和｜头部单选"
+  },
+  {
+   "id": "chaoxi_f20630c2-01fd-4564-8388-70d951767b95",
+   "name": "📌 乐园载入·冷冽｜头部单选"
+  },
+  {
+   "id": "57c4caf1-6734-4f0d-83c2-fc80c8cba54b",
+   "name": "📌 超现实梦境 #GEMINI"
+  },
+  {
+   "id": "fruit-heart-c-e0f9fd3c50fb98bc0d2c",
+   "name": "📌 输入分层"
+  },
+  {
+   "id": "fruit-v5-tone-divider",
+   "name": "--- 🎲 世界基调与美学法则（可单选或混搭·全关为自然态） ---"
+  },
+  {
+   "id": "fruit-v5-tone-malicious",
+   "name": "🌑 恶意·泥沼深渊｜地狱模式｜基调单选"
+  },
+  {
+   "id": "fruit-v5-tone-hardcore",
+   "name": "❄️ 冷峻·寒铁法则｜困难模式｜基调单选"
+  },
+  {
+   "id": "fruit-v5-tone-balanced",
+   "name": "🎲 现实·因果无常｜普通模式｜基调单选"
+  },
+  {
+   "id": "fruit-v5-tone-gentle",
+   "name": "🌤️ 温柔·春风拾遗｜简单模式｜基调单选"
+  },
+  {
+   "id": "fruit-v5-tone-darling",
+   "name": "👑 爽文·命运王座｜爽感模式｜基调单选"
+  },
+  {
+   "id": "fruit-v5-tone-surreal",
+   "name": "🪐 超现实幻想·绮梦奇境｜天马行空｜基调单选"
+  },
+  {
+   "id": "fruit-v5-tone-comedy",
+   "name": "🎪 喜剧与戏剧·荒诞剧场｜欢脱抓马｜基调单选"
+  },
+  {
+   "id": "c60a3d98-af56-4725-9aa8-3123486f346e",
+   "name": "📌 果农上线"
+  },
+  {
+   "id": "26efab8b-1b47-4da2-8b9b-bf7e7a07b833",
+   "name": "━━ 🤖 AI模式 ━━"
+  },
+  {
+   "id": "fruit-v5-vol1-anchor",
+   "name": "--- 📘 【卷一总领】🎬 接球校准与叙事步调 ---"
+  },
+  {
+   "id": "fruit-20260917-balanced-narrative",
+   "name": "🤖 特调版推剧情｜含扩写｜抢话单选"
+  },
+  {
+   "id": "84704f6a-ef5e-4d2c-9d03-97ec3d9457d3",
+   "name": "🤖 纯复述扩写｜不推进｜抢话单选"
+  },
+  {
+   "id": "87c8a41d-e219-4d35-acc2-dc6b5972cc6f",
+   "name": "🤖 防抢话｜只演其他角色｜抢话单选 @yuki"
+  },
+  {
+   "id": "a1f2196e-3410-49d4-83ed-536163a7aee9",
+   "name": "🤖 AI 对话模式｜工作模式单选 @YUKI @蔚空koko"
+  },
+  {
+   "id": "ff5be97f-43ac-4ec1-80b3-ad9370996dbc",
+   "name": "🤖 AI 大纲模式｜工作模式单选｜需 0927+ QR"
+  },
+  {
+   "id": "0a82f03f-a302-4923-b3c5-982b56d4389a",
+   "name": "🤖 AI 自检模式｜工作模式单选｜测试"
+  },
+  {
+   "id": "fruit-v61-display-section-06",
+   "name": "━━ 🎬 剧情指导 ━━"
+  },
+  {
+   "id": "fruit-v65-plot-anti-coincidence",
+   "name": "🎬 防强行巧合｜巧合合理性校验"
+  },
+  {
+   "id": "9e49021e-950c-4524-a077-09e22cb8606a",
+   "name": "🎬 好结局｜反阴谋 @电波系 #GEMINI"
+  },
+  {
+   "id": "fruit-heart-ds-c4c05ad873452259a078",
+   "name": "🎬 好结局｜允许局部负面 #DS #CLAUDE"
+  },
+  {
+   "id": "0efff044-1d91-4cfd-96b8-9613cb57b385",
+   "name": "🎬 少阴谋｜走向单选"
+  },
+  {
+   "id": "e343daad-bcf5-4318-a929-563e2fd064c1",
+   "name": "🎬 搞事业｜走向单选"
+  },
+  {
+   "id": "b5ac2252-03da-43e4-8667-0444f7648539",
+   "name": "🎬 搞拉扯｜走向单选"
+  },
+  {
+   "id": "fruit-v66-plot-undertone-bittersweet",
+   "name": "🎬 余韵·青柠酸涩｜落差与克制｜余韵选开"
+  },
+  {
+   "id": "fruit-v66-plot-undertone-lovehate",
+   "name": "🎬 余韵·恨海情天｜宿怨与骨血纠缠｜余韵选开"
+  },
+  {
+   "id": "fruit-qg-pace-micro",
+   "name": "🎬 推进超慢·微距切片｜节奏单选"
+  },
+  {
+   "id": "c931d28a-56c3-4ff6-ac3d-eb866f3efd10",
+   "name": "🎬 推进慢速·半步沉浸｜节奏单选"
+  },
+  {
+   "id": "fruit-qg-pace-medium",
+   "name": "🎬 推进中速·完整单幕｜节奏单选"
+  },
+  {
+   "id": "f6962045-1a79-4420-bea7-aaeec20312c5",
+   "name": "🎬 推进快速·快剪跨幕｜节奏单选"
+  },
+  {
+   "id": "5ee69d26-3b16-46a6-b30f-1537251fc8d3",
+   "name": "🎬 推故事"
+  },
+  {
+   "id": "e456843a-e23e-4f6a-8fa1-c39f1c7a1e87",
+   "name": "━━ 🎬 剧情指导 end━━"
+  },
+  {
+   "id": "fruit-v61-display-section-04",
+   "name": "━━ 🍎 梦境舞台 ━━ "
+  },
+  {
+   "id": "fruit-v5-vol2-anchor",
+   "name": "--- 📘 【卷二总领】🌍 舞台勘景与认知边界 ---"
+  },
+  {
+   "id": "2136a81c-ccaa-4fa7-be7b-1d87266e24c0",
+   "name": "😴 入梦"
+  },
+  {
+   "id": "4536f4df-ef49-4925-9ea1-f3e91b0c6ae1",
+   "name": "🎬 时间流速"
+  },
+  {
+   "id": "c8cf081c-feec-43cb-8f16-acd75f4b02b2",
+   "name": "✨ 广阔世界｜去 user 中心"
+  },
+  {
+   "id": "36db009e-e880-4dc7-ba9a-be09c43d8d5e",
+   "name": "🦋 NPC 美化 @蛾摩拉"
+  },
+  {
+   "id": "a1f51d01-9539-4fc4-b6da-9757615bac6e",
+   "name": "☁️ 加强版角色迷雾"
+  },
+  {
+   "id": "e5a86ccf-f921-4e2d-b696-1ca3b053fe38",
+   "name": "🎲 事件判定 @NUE弥月生"
+  },
+  {
+   "id": "fruit-v61-worldbuilding-end",
+   "name": "——💃🏻梦境舞台 end——"
+  },
+  {
+   "id": "fruit-v61-display-section-05",
+   "name": "━━ 👤 行为指导 ━━ "
+  },
+  {
+   "id": "fruit-v5-vol3-anchor",
+   "name": "--- 📘 【卷三总领】🎭 角色走位与感官编排 ---"
+  },
+  {
+   "id": "21255ae4-1893-444a-949e-43f8ec9b1a89",
+   "name": "🍓 优先人设｜调色盘与活人心理"
+  },
+  {
+   "id": "prompt_1792479869697_67tdywd",
+   "name": "🕵️‍♀️千人千面｜灵魂声口与隔轮消重"
+  },
+  {
+   "id": "mrghawn649ehw2mykht",
+   "name": "🍇 对白指导（精炼本）｜对白单选"
+  },
+  {
+   "id": "chaoxi_2110cf10-08ce-474e-883e-17889b62b221",
+   "name": "🍇 对白指导（繁杂本）｜对白单选"
+  },
+  {
+   "id": "chaoxi_e6b7a2bd-4f72-4a5b-9b39-f3aa001bcf7d",
+   "name": "🍇 对白量·随境自适应（默认推荐）｜对白量单选"
+  },
+  {
+   "id": "fruit-qg-dial-sparse",
+   "name": "🍇 对白量·惜字如金（1～3句）｜对白量单选"
+  },
+  {
+   "id": "fruit-qg-dial-balanced",
+   "name": "🍇 对白量·均衡流转（4～6句）｜对白量单选"
+  },
+  {
+   "id": "fruit-qg-dial-dense",
+   "name": "🍇 对白量·密集交锋（6～10句）｜对白量单选"
+  },
+  {
+   "id": "fruit-qg-vivid-demeanor",
+   "name": "🎭 鲜活神态与气口补丁｜选开"
+  },
+  {
+   "id": "fruit-heart-c-3aaa051c8b9fdc131891",
+   "name": "👤 爱U加强情感 #CLAUDE"
+  },
+  {
+   "id": "fruit-v67-dark-nature-anti-simp",
+   "name": "👤 阴暗人性与防恋爱脑｜利益本位与反无脑倒贴｜选开"
+  },
+  {
+   "id": "fruit-v30-dark-suspicion-tension",
+   "name": "🕷️ 恶女恶男·猜忌防备与暗黑张力｜疯批/宿敌/背德选开"
+  },
+  {
+   "id": "fruit-v67-shuraba-competition",
+   "name": "👤 修罗场·雄竞雌竞｜独占交锋与暗流角力｜多人单选"
+  },
+  {
+   "id": "c966ae89-6110-4f28-a55d-e870533fdc69",
+   "name": "👤 和谐后宫｜反修罗场｜多人单选"
+  },
+  {
+   "id": "5f175205-9a09-4d19-9c92-3fa1f9aff069",
+   "name": "👤 自由恋爱"
+  },
+  {
+   "id": "f2779ed5-728e-4366-925c-84e455158cf6",
+   "name": "━━ 🧩 角色塑造 ━━"
+  },
+  {
+   "id": "fruit-heart-c-054358694af095888da6",
+   "name": "🧩 浓烈情感 #CLAUDE #DS"
+  },
+  {
+   "id": "mrgh95f72twlqmre5sm",
+   "name": "🧩 真实气场与能力边界｜抗超雄与反低级霸总 #GEMINI"
+  },
+  {
+   "id": "25407894-d779-4fcb-a3d1-0b532b983f0d",
+   "name": "🧩 美人光环 2.0"
+  },
+  {
+   "id": "c57a2a53-346c-4971-afaa-d41959bdf4d3",
+   "name": "🧩 平等化｜做命运的主人 #GEMINI"
+  },
+  {
+   "id": "fruit-v30-anti-anatomy-clinical",
+   "name": "🧩 防解剖与去临床腔 #GEMINI"
+  },
+  {
+   "id": "6778ba40-c964-4eea-aaa8-e3be2a9e0789",
+   "name": "👥end"
+  },
+  {
+   "id": "a75087cf-5707-4ce1-87fa-8bba69d7c132",
+   "name": "━━ 🔞 NSFW区 ━━"
+  },
+  {
+   "id": "8f04eeb8-161b-4bab-ae5a-1fbbd5cd992f",
+   "name": "🔞 温柔｜风格单选"
+  },
+  {
+   "id": "fcff6cca-f177-4c0b-a37d-c7f3aa797be5",
+   "name": "🔞 粗俗｜风格单选"
+  },
+  {
+   "id": "a6b68a17-2d4d-4890-be25-df0bba808239",
+   "name": "🔞 平等｜关系单选"
+  },
+  {
+   "id": "25cb080c-bf51-48d4-920b-02c839f0944c",
+   "name": "🔞 背德与不平等｜关系单选"
+  },
+  {
+   "id": "4d4c20f4-50fc-46ae-af9b-0e4556a4611b",
+   "name": "🔞 媚 user｜关系单选"
+  },
+  {
+   "id": "6d585e8e-0df5-439b-bf5b-4103ab6617b1",
+   "name": "🔞 改）体型差补丁｜通用版"
+  },
+  {
+   "id": "5383262f-7024-40f6-94f5-9d819471c34a",
+   "name": "🔞 丁丁美化"
+  },
+  {
+   "id": "e5fdc6cc-4171-490d-aad9-c01d37e587dd",
+   "name": "🔞 射精描写"
+  },
+  {
+   "id": "9d760b48-1911-4876-b8e6-819dc147d7b9",
+   "name": "🔞 ASMR 对白"
+  },
+  {
+   "id": "ac26a9fe-8d6a-4c12-802b-13b85271b653",
+   "name": "🔞 DirtyTalk调教蜜语｜淫语单选"
+  },
+  {
+   "id": "962e06ff-039f-4a69-9b56-75d3a9da5e5c",
+   "name": "🔞 DirtyTalk粗俗淫语｜淫语单选"
+  },
+  {
+   "id": "1484d2f7-aff6-496b-ad3a-0f5b8db60f17",
+   "name": "🔞 DirtyTalk淫语特化｜淫语单选"
+  },
+  {
+   "id": "d5d02521-c0f9-40f4-af6c-ee4e946528f4",
+   "name": "🔞 BG 柔和｜描写单选"
+  },
+  {
+   "id": "cfdf95f9-6960-43b0-a921-cc5108c48ab8",
+   "name": "🔞 BG 粗俗｜描写单选"
+  },
+  {
+   "id": "102d2ee7-f8bf-451e-b66b-6ee630142209",
+   "name": "🔞 BL｜描写单选"
+  },
+  {
+   "id": "e6cdb449-02f9-4626-82b4-fcf558b4a408",
+   "name": "🔞 GL｜描写单选"
+  },
+  {
+   "id": "18d29e66-59c2-40b9-af2a-f5297d82fb91",
+   "name": "🔞 素股 BG+BL｜描写单选"
+  },
+  {
+   "id": "be5514a2-55b7-4e02-89d1-fc81259d8a1f",
+   "name": "🥵NSFW风格纠正"
+  },
+  {
+   "id": "d35afafc-2c07-4b31-9f16-155f7a7a2002",
+   "name": "🥵快速恢复"
+  },
+  {
+   "id": "c5e30b32-c260-4cbe-83a5-404a560d8ae7",
+   "name": "🥵AV视角"
+  },
+  {
+   "id": "928c8fa0-79e7-481f-bac9-1410d5c42fda",
+   "name": "🥵强节奏控制"
+  },
+  {
+   "id": "275bbf75-c005-4d72-b2a9-35978cc2e041",
+   "name": "🥵乳控特化"
+  },
+  {
+   "id": "cc4b3ba4-c92d-4737-b74f-2f9732efd987",
+   "name": "🥵臀穴特化"
+  },
+  {
+   "id": "b9544c26-76fc-4403-8216-3df8d0c0eba1",
+   "name": "🥵足控特化"
+  },
+  {
+   "id": "57d655d3-198f-4389-b4ef-7783aede06e6",
+   "name": "🥵唇舌特化"
+  },
+  {
+   "id": "6c2830f9-fdea-472c-8011-ed21cc577797",
+   "name": "🥵迫奸特化"
+  },
+  {
+   "id": "78d764be-cf2c-4c24-97e6-21de2e6b9803",
+   "name": "🥵隐奸特化"
+  },
+  {
+   "id": "77596b2b-19bc-48a4-8c36-c5f734c4278d",
+   "name": "🥵睡奸特化"
+  },
+  {
+   "id": "17d64db0-5997-4fdd-8b9d-5edafa901bb4",
+   "name": "🥵ntl特化"
+  },
+  {
+   "id": "4dc6543c-cc4f-41a6-8baf-50ed6d5c2dc7",
+   "name": "🥵制服控特化"
+  },
+  {
+   "id": "7177170d-d3e8-4bbc-8d66-60733bb38509",
+   "name": "🥵特化瑟瑟"
+  },
+  {
+   "id": "fruit-v30-nsfw-inner-sensation",
+   "name": "🥵 角色内感特化｜动作与内部体会交融｜选开"
+  },
+  {
+   "id": "fruit-v38-nsfw-eros-appetite",
+   "name": "🥵 爱欲与食欲｜欲望动因与依恋身体化｜选开"
+  },
+  {
+   "id": "fruit-v65-nsfw-manga-lens",
+   "name": "🥵 漫画分镜与肉感张力｜缝合增强"
+  },
+  {
+   "id": "fruit-v65-nsfw-play-menu",
+   "name": "🥵 把玩与侍奉微动作库｜缝合增强"
+  },
+  {
+   "id": "5ea6c151-30de-4cc2-80e0-53b07a20c93e",
+   "name": "🥵 NP一女多男｜NP单选"
+  },
+  {
+   "id": "7e3c11d7-4db7-4452-b26d-99d928e9b1ea",
+   "name": "🥵 NP一男多女｜NP单选"
+  },
+  {
+   "id": "c152abdc-54ef-4a09-9943-b87df98fb345",
+   "name": "🥵 NP多对多｜NP单选"
+  },
+  {
+   "id": "fruit-v64-nsfw-contraception",
+   "name": "🥵注意避孕"
+  },
+  {
+   "id": "fruit-v64-nsfw-pregnancy-risk",
+   "name": "🔞 怀孕风险｜选开·联动seeds"
+  },
+  {
+   "id": "fruit-heart-ds-8376672a4e9842f6f9a5",
+   "name": "🔞 性爱主动 #DS #CLAUDE"
+  },
+  {
+   "id": "050f2d3c-ee6d-4bb3-b65a-8a1acf9e65be",
+   "name": "🥵 NSFW总开关｜按需·固定位置"
+  },
+  {
+   "id": "ece65140-2541-4647-82a8-baf3a852c316",
+   "name": "📌 🥵NSFW输出｜必开·固定位置"
+  },
+  {
+   "id": "8f61e78c-cb5f-4261-b84a-2cc9ca58fcb1",
+   "name": "━━ 👁️ 视角区 ━━ "
+  },
+  {
+   "id": "fruit-v5-vol4-anchor",
+   "name": "--- 📘 【卷四总领】✒️ 落笔校对与成稿封装 ---"
+  },
+  {
+   "id": "78b513a2-346d-4e5d-a209-db3c36222093",
+   "name": "🗣️ 双语对白｜自动识别 @NUE"
+  },
+  {
+   "id": "fruit-heart-ds-ec57a31f2ab6b6d5b0ad",
+   "name": "👁️ 防出戏 #DS #CLAUDE"
+  },
+  {
+   "id": "d69c6ff3-19d3-451d-8ca2-d8cc89091022",
+   "name": "👁️ 角色第一人称｜人称单选"
+  },
+  {
+   "id": "29150ea9-4b9d-4600-afc4-a98e3b33c2e7",
+   "name": "👁️ 用户第一人称｜人称单选"
+  },
+  {
+   "id": "7b8c5602-ec9a-4469-9fbc-9df4eb0668f8",
+   "name": "👁️ 用户第二人称｜人称单选"
+  },
+  {
+   "id": "59a054d3-7276-47a5-b0cc-30e6d5183e90",
+   "name": "👁️ 第三人称｜人称单选"
+  },
+  {
+   "id": "355ecf22-0ea5-4f00-96f6-df6f15d9fc3e",
+   "name": "👁️ 他者之眼｜人称单选"
+  },
+  {
+   "id": "9dd126c4-34fe-47aa-80cc-bf67e2664bba",
+   "name": "👁️ 随机漂浮人称｜人称单选"
+  },
+  {
+   "id": "fruit-v61-display-section-08",
+   "name": "━━ ✍️ 写作区 ━━ "
+  },
+  {
+   "id": "1480cbf5-ca0b-480a-8605-c58fa9c0d78e",
+   "name": "✍️ 摄像机原则｜写作指导单选 "
+  },
+  {
+   "id": "4c522812-6528-4d62-8ff7-18e0561c050b",
+   "name": "✍️ 极光写作指导｜写作指导单选 @电波系 @眠雨"
+  },
+  {
+   "id": "66fa7145-d59e-46c7-b1be-346c5e8b3c45",
+   "name": "✍️ 抽象写作指导｜写作指导单选 @巴比伦"
+  },
+  {
+   "id": "fruit-v7-write-patch",
+   "name": "---🩹 写作补丁---"
+  },
+  {
+   "id": "fruit-v66-write-setting-integration",
+   "name": "📖 设定入文｜剥离九大说明书腔"
+  },
+  {
+   "id": "chaoxi_03a9e0cd-24b6-4746-99ae-4d0d0f203057",
+   "name": "🚫 禁群体对比衬托"
+  },
+  {
+   "id": "2091c33e-1dac-4573-898d-35ad3797edbd",
+   "name": "🈲 NSFW禁词（随NSFW）"
+  },
+  {
+   "id": "00b5f3c0-d40a-4221-8117-2ceb32d86aa9",
+   "name": "🈲 禁词与烂梗黑名单"
+  },
+  {
+   "id": "fruit-heart-ds-190126c69bb53b458dc2",
+   "name": "🚫 缄默准则4.0｜实态白描与句法提纯总纲"
+  },
+  {
+   "id": "fruit-v38-write-literary-voice",
+   "name": "🖋️ 我有文青病｜陌生化意象与声音质地特化｜选开"
+  },
+  {
+   "id": "548e2eee-5858-4580-b42c-c4ed8356cd77",
+   "name": "🥵 官能分寸与隐秘癖好潜流｜选开"
+  },
+  {
+   "id": "fruit-v7-write-end",
+   "name": "━━ ✍️ 写作区 end ━━"
+  },
+  {
+   "id": "af6e651f-f3c4-450c-9399-8fe19342b807",
+   "name": "━━ ⌨️ 文风区 ━━ "
+  },
+  {
+   "id": "bb30677f-528a-426b-8f03-fc4dc9428137",
+   "name": "⌨️轻小说官能特调"
+  },
+  {
+   "id": "b4a06f05-f6d2-45ba-b6f3-e300ad743bab",
+   "name": "⌨️ 恋爱轻喜剧｜1028 升级版 @电波系1028升级版"
+  },
+  {
+   "id": "84ba5cdd-0786-45ee-8329-de992f6e7dcd",
+   "name": "⌨️ 大白话 @小白狗"
+  },
+  {
+   "id": "mr4r41p4lyc09z407sf",
+   "name": "⌨️ 繁花-市井与旧时代话本"
+  },
+  {
+   "id": "10979c03-1a22-48d8-ad6f-c2762d587858",
+   "name": "⌨️ 女性向黄油 @小白狗"
+  },
+  {
+   "id": "45990406-5104-4e03-91dc-10275a0602a1",
+   "name": "⌨️ 通俗文学毛姆"
+  },
+  {
+   "id": "ec31dfff-eae7-401d-9704-5315bfa78319",
+   "name": "⌨️ 民国江南白描"
+  },
+  {
+   "id": "63ac9277-258d-42e0-8658-8f910c7054d6",
+   "name": "⌨️ 民国白话世情笔法@natami"
+  },
+  {
+   "id": "9d5f6f08-2643-4023-99d2-9f2d04699676",
+   "name": "⌨️ 阴郁纪实 @NATAMI"
+  },
+  {
+   "id": "decb3208-3b13-49a5-9eed-3fc107e2558f",
+   "name": "⌨️ 至亲至疏 @小白狗"
+  },
+  {
+   "id": "5f841a47-d996-4891-a371-57aac4d68a4a",
+   "name": "⌨️ 克制白描 @电波系"
+  },
+  {
+   "id": "41ecaeeb-29fb-44e4-8e0c-0fe8af746bd3",
+   "name": "⌨️ 现代日常 @村妹"
+  },
+  {
+   "id": "2a8f73e6-dc4d-485f-bd59-d911471ed53a",
+   "name": "⌨️ 古代日常 @村妹"
+  },
+  {
+   "id": "ac9a783c-66da-4ffc-9d41-afa04f973dde",
+   "name": "⌨️ 意识流 @电波系"
+  },
+  {
+   "id": "1a32c768-282d-4a32-baff-6f4366412598",
+   "name": "⌨️ Galgame 青春恋爱 @贝露"
+  },
+  {
+   "id": "d4380d7d-2129-4d93-a92a-d1286480eb95",
+   "name": "⌨️ 浪漫｜新版 @小白狗"
+  },
+  {
+   "id": "9f465341-d880-4b60-ba8e-ca6cc278664b",
+   "name": "⌨️ 现实 @小白狗"
+  },
+  {
+   "id": "5d77beb2-50c0-45f9-b35a-aa05e4d465d4",
+   "name": "⌨️ 港风 @小白狗"
+  },
+  {
+   "id": "a98741d0-cbeb-4827-8c77-962c17fa513a",
+   "name": "⌨️ 翻译腔 @小白狗"
+  },
+  {
+   "id": "20c45761-e926-43a0-873c-2ed57a6802f0",
+   "name": "⌨️ 吐槽小白爽文 @酸砂糖"
+  },
+  {
+   "id": "8cd2d0b8-e179-4733-ba0c-59e23e9908eb",
+   "name": "⌨️ 成人童话 @natami @yuki"
+  },
+  {
+   "id": "0aa6b943-3e1c-4d18-899f-40dc1e3efe4b",
+   "name": "⌨️ 左翼现代情色 @natami"
+  },
+  {
+   "id": "481b867e-1d5a-4396-b81a-09868dc227ee",
+   "name": "⌨️ 拉美禁忌爱情 @natami"
+  },
+  {
+   "id": "f89f78ca-0e88-47bf-a82b-3177678c0133",
+   "name": "⌨️ 古风 @Asuthia"
+  },
+  {
+   "id": "df1725c6-0f43-4208-80ca-91bfb10a95aa",
+   "name": "⌨️ 虐恋 @Aqiao"
+  },
+  {
+   "id": "7c11f7fb-6e2e-47db-b619-f4c873638490",
+   "name": "⌨️ 色欲张力 @电波系"
+  },
+  {
+   "id": "28a9b463-c1cd-4a9d-8957-7e4303d7ecf4",
+   "name": "⌨️ P18 @村妹儿"
+  },
+  {
+   "id": "9b0a91f0-3234-415f-97ae-345edec2917e",
+   "name": "⌨️ 后 311 日本青年存在主义 @natami"
+  },
+  {
+   "id": "420c8a68-51ce-4a61-b099-0139cf54d6fe",
+   "name": "⌨️ 俄国文学｜陀氏特化 @小白狗"
+  },
+  {
+   "id": "317535a9-9314-4b3a-9714-b609c464e267",
+   "name": "⌨️ 武侠仙侠 @小白狗"
+  },
+  {
+   "id": "7374963f-111e-4ac4-8d34-fbbd5560abe2",
+   "name": "⌨️ 古龙武侠 @natami"
+  },
+  {
+   "id": "fccafa01-f766-49bc-913a-6d4c34a88423",
+   "name": "⌨️ 模拟恐怖 V2 @YUKI"
+  },
+  {
+   "id": "928fb0dc-46b0-4330-972d-3ae285570c99",
+   "name": "⌨️ 群像 @小白狗"
+  },
+  {
+   "id": "6a25f0b3-67dd-4eef-8b36-2d7e07b78ebc",
+   "name": "⌨️ 自由文风 @蛾摩拉"
+  },
+  {
+   "id": "087de388-084c-4ed1-aef2-2d4d7bbe0095",
+   "name": "⌨️市井生肉"
+  },
+  {
+   "id": "41eb5c96-53bb-47fa-8136-0fca97043300",
+   "name": "⌨️ 自定义"
+  },
+  {
+   "id": "fruit-v7-style-end",
+   "name": "━━ ⌨️ 文风区 end ━━"
+  },
+  {
+   "id": "47fbea03-6414-4a79-80bb-d21cca50d77c",
+   "name": "━━ 🎭 剧场 ━━ 主剧场只开一个，其余可叠加"
+  },
+  {
+   "id": "86e756fb-5bf7-48f8-8267-c4c310bda586",
+   "name": "🎭 汐见剧场｜主剧场单选 @YUKI @电波系"
+  },
+  {
+   "id": "49af65fe-7f5e-4d00-9db3-afcde904aae9",
+   "name": "🎭 小回剧场｜主剧场单选 @小回"
+  },
+  {
+   "id": "61e59d5f-3479-4fd4-90a3-d996050298c4",
+   "name": "🎭 极光剧场｜主剧场单选 @电波系"
+  },
+  {
+   "id": "3bebef2f-ad65-4f62-aeb6-37ec0d0bedb9",
+   "name": "🎭 纯文字剧场｜主剧场单选 @电波系"
+  },
+  {
+   "id": "594de0bd-7885-4ad2-8d1e-e00901106d47",
+   "name": "💡 完全随机剧场"
+  },
+  {
+   "id": "d00bc4a5-eea6-48ee-aa0b-674d8ee0d98d",
+   "name": "💡 盲盒剧场 @电波系"
+  },
+  {
+   "id": "7a63b3f1-afdd-4e56-9642-162d5896b607",
+   "name": "💡 日常剧场 @电波系"
+  },
+  {
+   "id": "e1120b3c-08f3-4d2e-993c-d30c4e29b24a",
+   "name": "💡 论坛剧场 @Capybara~"
+  },
+  {
+   "id": "fruit-heart-ds-7ee1941e536e98081d55",
+   "name": "💡 网黄剧场"
+  },
+  {
+   "id": "4772a305-655d-40bc-9cb7-384337bd6dc4",
+   "name": "💡 文艺盲盒剧场 @Capybara~"
+  },
+  {
+   "id": "dace3edc-59c0-4724-8dd9-fe65c2a5d6d8",
+   "name": "💡 后台人生 @无名氏"
+  },
+  {
+   "id": "8132534a-965d-4108-9b5c-19cb0c1a9cb8",
+   "name": "💡 OOXX 状态栏 @小回"
+  },
+  {
+   "id": "249655f9-9564-4b65-9d2a-5d01ceca62e0",
+   "name": "💡 自慰剧场 @valiant_unicorn_98379"
+  },
+  {
+   "id": "3ff8ce3c-b381-424c-992e-ef0b2bf67e0f",
+   "name": "💡 育种吐槽剧场 @labra4798"
+  },
+  {
+   "id": "bbd36fc6-dac9-462d-9cab-f1340d253f47",
+   "name": "💡 自定义剧场"
+  },
+  {
+   "id": "980ae290-49d4-41da-b8f2-0c2536c90186",
+   "name": "💡 SCP 剧场 @yuki"
+  },
+  {
+   "id": "4964a43b-ce8a-4842-b63a-bea0bbe6ab5c",
+   "name": "💡 恋爱游戏剧场 @capybara046"
+  },
+  {
+   "id": "d25cf7f2-58d8-479a-9bf6-996ef7546d8b",
+   "name": "💡 变成瑟猫猫 @NUE"
+  },
+  {
+   "id": "49c39b68-b43a-4fd6-afcc-073e9605f64f",
+   "name": "💡 黄油剧场 @Capybara~"
+  },
+  {
+   "id": "1f7dc406-7b21-4300-a446-b803ddad848d",
+   "name": "💡 换装剧场 @右手一只鸦"
+  },
+  {
+   "id": "8f7a9856-9aea-4af4-b25c-fc3667047a85",
+   "name": "💡 What if @Capybara~"
+  },
+  {
+   "id": "c2797fb6-c9c3-437d-b1d6-e4680c54b3c4",
+   "name": "💡 弹幕 @小回创意"
+  },
+  {
+   "id": "80bb3e14-caf9-4166-824c-37beaa084d1e",
+   "name": "💡 多人格剧场 @QAQ"
+  },
+  {
+   "id": "2704ffaa-b860-4d45-8a3c-3716cfc6ebfa",
+   "name": "💡 内裤剧场 @电波系"
+  },
+  {
+   "id": "c8a89e6c-5b37-42b7-b9e3-2b9076ec8d92",
+   "name": "💡 桌游剧场 @Clame Cyrus"
+  },
+  {
+   "id": "da7fbdcd-8753-4f54-a96e-0b30fa32e73e",
+   "name": "💡 恐怖 @右手一只鸦"
+  },
+  {
+   "id": "99789e30-b37a-4719-9e7d-a0a6626cb09e",
+   "name": "💡 其他视角"
+  },
+  {
+   "id": "ef3a08bc-10f2-4ca0-9033-bec6ae86ae03",
+   "name": "💡 搞笑剧场 @鸦"
+  },
+  {
+   "id": "1a962feb-0485-459b-9458-e6dd6dd03a44",
+   "name": "💡 同人粮 @右手一只鸦"
+  },
+  {
+   "id": "390d6887-9a69-43dc-8c88-c6ea73288ed6",
+   "name": "💡 碎碎念"
+  },
+  {
+   "id": "f3d5cbb8-bebb-4b00-9a5c-7ef5d2d040d2",
+   "name": "💡 电子设备模拟 @电波系"
+  },
+  {
+   "id": "fed78d89-a0ba-4e9f-a226-63ba30cd600d",
+   "name": "💡 废墟盲盒"
+  },
+  {
+   "id": "1a51716c-48b6-4944-b8c8-e8c50b2bb66a",
+   "name": "💡 性幻想 @natami"
+  },
+  {
+   "id": "30d17472-43af-49a0-9444-6859ff792c87",
+   "name": "💡 随机手机"
+  },
+  {
+   "id": "fruit-v61-display-section-03",
+   "name": "━━ 💤 梦境载入 ━━ "
+  },
+  {
+   "id": "personaDescription",
+   "name": "📌 Persona Description"
+  },
+  {
+   "id": "nsfw",
+   "name": "📌 梦境"
+  },
+  {
+   "id": "worldInfoBefore",
+   "name": "📌 World Info (before)"
+  },
+  {
+   "id": "charDescription",
+   "name": "📌 Char Description"
+  },
+  {
+   "id": "charPersonality",
+   "name": "📌 Char Personality"
+  },
+  {
+   "id": "scenario",
+   "name": "📌 Scenario"
+  },
+  {
+   "id": "worldInfoAfter",
+   "name": "📌 World Info (after)"
+  },
+  {
+   "id": "fruit-v38-history-divider",
+   "name": "📌 梦境·设定与前文分隔"
+  },
+  {
+   "id": "dialogueExamples",
+   "name": "📚 Chat Examples"
+  },
+  {
+   "id": "chatHistory",
+   "name": "📚 Chat History"
+  },
+  {
+   "id": "enhanceDefinitions",
+   "name": "📌 —— 💤 梦境载入 end——"
+  },
+  {
+   "id": "e750a7ec-af2c-4b32-af0b-24b749491237",
+   "name": "📚 果农誓约 #GEMINI"
+  },
+  {
+   "id": "1be1e101-3470-4969-aa90-cd9a491f393a",
+   "name": "👨‍🌾 果农来了｜必开"
+  },
+  {
+   "id": "5a22bf88-bd80-46a7-b73d-75dbf723ecc8",
+   "name": "━━ 🍏 输出 ━━ 按角色卡实际功能开"
+  },
+  {
+   "id": "550434ef-2ec0-4907-8b01-49ca1ecaa42d",
+   "name": "🎶 中文cot｜思考语言单选"
+  },
+  {
+   "id": "a3c34381-3c67-49af-aa67-6069f95bf2c8",
+   "name": "🎶 英语cot｜思考语言单选"
+  },
+  {
+   "id": "6820564b-e2ce-4505-9f26-993cdba1a2bd",
+   "name": "🎶 葡语cot｜思考语言单选"
+  },
+  {
+   "id": "35d47314-73b1-4531-993b-6f0fd980aa4a",
+   "name": "🎶 意语cot｜思考语言单选"
+  },
+  {
+   "id": "5b66efa2-b698-4102-8d02-80b9923d3e80",
+   "name": "🎶 日语cot｜思考语言单选"
+  },
+  {
+   "id": "1e64d748-fe97-4d7b-b5b2-b8b8471bba70",
+   "name": "🎶 法语cot｜思考语言单选"
+  },
+  {
+   "id": "1825a890-8710-4e30-a93c-eac752f46924",
+   "name": "🎶 德语cot｜思考语言单选"
+  },
+  {
+   "id": "a8571e41-7604-4a15-9481-a42f838e34d5",
+   "name": "👄 语言设置"
+  },
+  {
+   "id": "bf363ab4-f5ed-424a-afaf-0692c4b09fb7",
+   "name": "🍏 表情包｜COT 与小剧场内生效"
+  },
+  {
+   "id": "cdbc3eb5-1c06-4ff1-8a49-ce118913d8f4",
+   "name": "📌 字数·随境三档（800-2400字·默认推荐）｜正文格式单选｜必开"
+  },
+  {
+   "id": "prompt_1792821576575_44uqg5y",
+   "name": "📌 字数·面板弹性定制（兼容果实之心改字数）｜正文格式单选｜必开"
+  },
+  {
+   "id": "fruit-qg-word-short",
+   "name": "📌 字数·轻快短篇（600-1000字）｜正文格式单选"
+  },
+  {
+   "id": "fruit-qg-word-medium",
+   "name": "📌 字数·黄金中篇（1100-1600字）｜正文格式单选"
+  },
+  {
+   "id": "fruit-qg-word-long",
+   "name": "📌 字数·沉浸长篇（1600-2400字）｜正文格式单选"
+  },
+  {
+   "id": "8eab8a28-e6d1-44fc-bb66-8724eed57ead",
+   "name": "📌 前端卡｜正文格式单选｜必开"
+  },
+  {
+   "id": "36c59dd3-b3c7-463c-8a77-ed15d1b849f4",
+   "name": "🍏 角色内心"
+  },
+  {
+   "id": "6361844b-db4f-4fb1-a3d0-5e2d16a8facd",
+   "name": "🍏 灵动正文｜选开"
+  },
+  {
+   "id": "4f1d51a7-1fbe-4271-8c60-14e006ac5c68",
+   "name": "🍏 果农吐槽｜选开"
+  },
+  {
+   "id": "31661ca8-421c-4385-b98c-f517ac4e9ede",
+   "name": "🍏 正文与字数检测 @电波系 #GEMINI"
+  },
+  {
+   "id": "5bcde6d0-ba71-4e4c-baf8-978366628333",
+   "name": "🍏 性爱柔和自检 #GEMINI"
+  },
+  {
+   "id": "87f4ee7c-f737-47fd-a7c8-37609fd01096",
+   "name": "🍏 正文防转折"
+  },
+  {
+   "id": "1a60fad7-59e3-420d-95f4-1eed9368d10d",
+   "name": "🍏 正文段落规范"
+  },
+  {
+   "id": "a55d3f95-519e-4637-b066-2a1e424ff505",
+   "name": "📌 正文尾"
+  },
+  {
+   "id": "1790a858-e195-4847-8151-d280ee1e95b5",
+   "name": "🍏 手机线上格式｜选开"
+  },
+  {
+   "id": "5472f208-b696-4f5b-a32e-025d0ef8da82",
+   "name": "🍏 Top-题记｜正文前状态栏单选 @鸦"
+  },
+  {
+   "id": "67dbe0dc-f188-444d-a812-379088c1a7ee",
+   "name": "🍏 Top-简约｜正文前状态栏单选 @小鱼 @yuki"
+  },
+  {
+   "id": "94863b1a-5f51-4483-bb6c-f05aca62743a",
+   "name": "🍏 小说标题 @蛾摩拉"
+  },
+  {
+   "id": "d1eeda8f-9e49-4d32-8d4a-5854410e4d8a",
+   "name": "🍏 开篇序言｜序言单选 @NUE @yuki"
+  },
+  {
+   "id": "ec3733d2-b785-478d-a848-58758413e9ce",
+   "name": "🍏 超级序言｜序言单选 @电波系"
+  },
+  {
+   "id": "7be20e56-40e9-478c-8363-872318e96c77",
+   "name": "🍏 单人状态栏 @小夜"
+  },
+  {
+   "id": "fb873456-bbe4-4809-a15d-4ed2e1a68ef4",
+   "name": "🍏 底部状态栏｜卡里有状态栏再开"
+  },
+  {
+   "id": "9898c614-fd87-40c8-a1ac-bb4f75e179a5",
+   "name": "🍏 强调填表｜有表再开"
+  },
+  {
+   "id": "18b30ae2-61ec-4d18-966d-366cf3b4cffd",
+   "name": "🍏 变量更新｜有变量再开"
+  },
+  {
+   "id": "dbc302fb-74ae-4ed0-8276-0ab86e8fe2f5",
+   "name": "🍏 小剧场一键开关｜可搭配世界书"
+  },
+  {
+   "id": "d2866c72-44f7-49f5-a7f0-6fca506d00e2",
+   "name": "🍏 seeds 伏笔｜seeds单选 @yuki @电波系"
+  },
+  {
+   "id": "d672f185-6502-4f68-bad3-51855c11c399",
+   "name": "🍏 seeds 待办计划｜seeds单选"
+  },
+  {
+   "id": "09526289-84b1-4414-ad43-5270b4e40862",
+   "name": "📌 摘要｜必开 @喵喵电波"
+  },
+  {
+   "id": "d00d9ae7-ec72-4d34-92d0-ce6edaa5e5c2",
+   "name": "🍏 角色表｜角色表单选 @YUKI"
+  },
+  {
+   "id": "b6dfe7de-2a93-4d7f-a193-447099acc579",
+   "name": "🍏 色色角色表｜角色表单选"
+  },
+  {
+   "id": "0045cda0-132d-40a7-9a83-1c597ae417e5",
+   "name": "🍏 文生图｜没有别开"
+  },
+  {
+   "id": "fruit-heart-c-c17722ef57fdc4b4786e",
+   "name": "🍏 喵喵选择器6选项｜喵喵选择器单选｜需配选项正则"
+  },
+  {
+   "id": "1b49d2d0-f130-4a91-a48d-90155c63cc6d",
+   "name": "🍏 喵喵选择器｜瑟瑟｜喵喵选择器单选｜需配选项正则"
+  },
+  {
+   "id": "32e14959-2f33-403c-9ac7-e47a3653f03d",
+   "name": "🥵瑟瑟直播状态栏@louxi"
+  },
+  {
+   "id": "95badcf5-e6f5-41ab-8ed9-df7d90e18cf0",
+   "name": "🥵瑟瑟偷拍状态栏@louxi"
+  },
+  {
+   "id": "3ad7662a-006b-4a87-b4be-099215ffd122",
+   "name": "🥵骚扰信箱状态栏@louxi"
+  },
+  {
+   "id": "fb86f139-05c5-4915-814c-f3696c0056c6",
+   "name": "📌 格式强调 @yuki"
+  },
+  {
+   "id": "84bc80b8-ecc7-4497-a399-a7ee14bff400",
+   "name": "📌 RULE"
+  },
+  {
+   "id": "c579184c-2871-4c35-a941-848cf31a3451",
+   "name": "🌙 加强破甲｜来自日月西 #GEMINI FLASH"
+  },
+  {
+   "id": "0b8b7352-880a-4add-8d81-97d23acb0c08",
+   "name": "━━ 🧠 思考 ━━ 四个 COT 只开一个"
+  },
+  {
+   "id": "c3048bfc-d7f9-46be-824d-6978ae49bc9c",
+   "name": "🧠 仅在常规 COT 生效"
+  },
+  {
+   "id": "31b029db-6fa1-4c43-bd81-f62ee510dcfa",
+   "name": "🧠 确认 user 输入"
+  },
+  {
+   "id": "af6b676f-0271-4479-a99e-b3055b59ff4a",
+   "name": "🧠 IF 线｜选开"
+  },
+  {
+   "id": "42999dbc-093e-4209-8acd-90e32caf2068",
+   "name": "🧠 主线剧情｜卡有主线再开"
+  },
+  {
+   "id": "bd638843-dbcb-478f-a113-e48653809279",
+   "name": "🧠 防抢话"
+  },
+  {
+   "id": "3368763c-683e-4b4b-b7ef-1997a59d3f51",
+   "name": "🧠 同人卡｜选开"
+  },
+  {
+   "id": "c19d88f7-dcca-4fc3-8814-4aeeac037bbe",
+   "name": "🧠 演绎"
+  },
+  {
+   "id": "chaoxi_55656eeb-18be-4ea8-9116-8d2f68ffd243",
+   "name": "🧠 防二选一结尾"
+  },
+  {
+   "id": "fruit-v66-cot-inline-tasting",
+   "name": "🧠 正文穿插校准｜三节点防偏自检｜选开"
+  },
+  {
+   "id": "d28ef2fc-a820-4dcd-913a-c39da5b6e69a",
+   "name": "🧠 角色卡自带 COT｜卡自带 COT 时开"
+  },
+  {
+   "id": "2fb071d9-a583-41c7-9eda-dcfdf1bc3a73",
+   "name": "🧠 小剧场数量"
+  },
+  {
+   "id": "36c103bb-2189-4017-a669-376712b06fad",
+   "name": "🧠 思考约束｜精要创作流"
+  },
+  {
+   "id": "bcd4c9eb-813b-45ca-ae33-39004c2278dd",
+   "name": "📌 以下 COT 只开一个｜必开"
+  },
+  {
+   "id": "0b6b1245-f29a-41c4-8696-ea3a6d1daf3a",
+   "name": "🧠 常规 COT改｜COT单选｜必开·别动位置"
+  },
+  {
+   "id": "cd069b86-0dc3-4ec8-8474-18a4e521eed9",
+   "name": "🧠 极简｜COT单选｜大总结等任务不听话时开"
+  },
+  {
+   "id": "f6e9d5ec-5378-4d92-9f3c-51163dc10386",
+   "name": "🧠 自思考｜COT单选"
+  },
+  {
+   "id": "56576e09-8cfc-44f3-89ec-9e9d4851758f",
+   "name": "🧠 自定义覆盖｜COT单选"
+  },
+  {
+   "id": "2cf820d9-1b19-4982-b5c9-67762c7b5b6b",
+   "name": "📌 COT 接收｜必开·别动位置 #GEMINI"
+  },
+  {
+   "id": "fruit-heart-ds-b8eca150ef07fb73997a",
+   "name": "📌 COT 接收｜必开·别动位置 #DS #CLAUDE"
+  },
+  {
+   "id": "af40530f-e1f8-4a4d-8782-97338e4a116c",
+   "name": "━━ 🌱 果农 ━━ 果农人格只开一个"
+  },
+  {
+   "id": "38442f41-7a0e-43f2-81bf-e326b2138548",
+   "name": "🌱 小弟果农｜果农单选 @Manekin"
+  },
+  {
+   "id": "c6b7fe31-79bf-4bbb-bf06-57582e38b34d",
+   "name": "🌱 纯良果农｜果农单选"
+  },
+  {
+   "id": "743125e9-5d16-4850-af5d-2244fef3a820",
+   "name": "🌱 天才美少女果农｜果农单选"
+  },
+  {
+   "id": "2aa95693-fd63-4b9b-989b-2a593ae5e07a",
+   "name": "🌱 傲娇luma果农｜果农单选"
+  },
+  {
+   "id": "dc2c728f-da48-4c63-b131-4ce1321fbbe5",
+   "name": "🌱 淡人果农｜果农单选"
+  },
+  {
+   "id": "1f4eda10-3206-4c50-8e09-c76a90422f31",
+   "name": "🌱 社交恐怖甜心果农｜果农单选 @顶呱呱"
+  },
+  {
+   "id": "0089189b-042a-429a-b801-6f0b61430ac8",
+   "name": "🌱 老版果农｜果农单选"
+  },
+  {
+   "id": "7bb59cce-ef80-44b9-9611-083423159169",
+   "name": "🌱 疯果农｜果农单选"
+  },
+  {
+   "id": "855ff551-b56b-4af5-a4e4-e7f4d8a5a768",
+   "name": "🌱 社畜果农｜果农单选"
+  },
+  {
+   "id": "96e01e36-9638-4add-85f0-41b6c3e13063",
+   "name": "🌱 女王果农｜果农单选"
+  },
+  {
+   "id": "ec3bb06f-4f94-467d-b77c-4caff446952d",
+   "name": "🌱 腹黑哥哥果农｜果农单选"
+  },
+  {
+   "id": "e71bdaff-f597-4b8c-9cb4-94929fc6d175",
+   "name": "🌱 半醉果农｜果农单选"
+  },
+  {
+   "id": "90556b7a-3611-4ad3-a26b-c330199cd599",
+   "name": "🌱 白切黑果农｜果农单选"
+  },
+  {
+   "id": "b1ea422a-2bd2-4384-bf04-568e896d9d36",
+   "name": "(*^▽^*) COT 颜文字"
+  },
+  {
+   "id": "fruit-v61-display-section-14",
+   "name": "━━ 🔌 尾部（按模型开） ━━"
+  },
+  {
+   "id": "fruit-heart-ds-3132f48ca06a9f86169e",
+   "name": "🔌 DS 尾 @NUE #DS"
+  },
+  {
+   "id": "jailbreak",
+   "name": "🔌尾2 #GEMINI 3.7F #GEMINI 3.8F #CLAUDE #GEMINI 4A #GEMINI 4C #GEMINI 4H"
+  },
+  {
+   "id": "4bcb2e4c-1502-40f6-b3f6-ce33fe530159",
+   "name": "🔌 Gemini Pro 尾｜卡掉原生 COT @YUKI 卡掉原生cot #GEMINI 3.1PRO"
+  },
+  {
+   "id": "fruit-v61-display-section-15",
+   "name": "━━ 🔧 配置 ━━ 别动别开"
+  },
+  {
+   "id": "fruit-heart-c-cd11caa48d000bbd3325",
+   "name": "🔧 别用带 thinking 的模型 #CLAUDE"
+  },
+  {
+   "id": "fruit-heart-control-config-v2",
+   "name": "🔧 果实之心控制配置｜别动别开"
+  },
+  {
+   "id": "2dcd43c5-52e2-4dcd-b220-dd889d8e5145",
+   "name": "🤖 大力推剧情｜20%扩写＋80%推进｜抢话单选"
+  }
+ ],
+ "regex": [
+  {
+   "id": "70715a59-8b8a-43e8-baf9-e33c257c9e58",
+   "name": "祛除八股词"
+  },
+  {
+   "id": "b594f606-ca8e-4e47-9a63-4cadeadf3095",
+   "name": "MoM必选-[1]清除多余内容(0927)"
+  },
+  {
+   "id": "4364fef0-f4aa-4967-bf1c-5cc60658bfce",
+   "name": "MoM必选-[2]5楼外只发送摘要和角色表(0927)"
+  },
+  {
+   "id": "d3cd84d7-a2bd-4634-bb91-1c1e3548222c",
+   "name": "MoM必选-[3]3楼外伏笔不发送给AI(20261001)"
+  },
+  {
+   "id": "51c252c1-866e-4803-8113-db0560a49d0d",
+   "name": "MoM必选-[4]不发送一堆给AI(260826)"
+  },
+  {
+   "id": "18a308f3-b215-45bf-becd-e5b1b4281a5d",
+   "name": "MoM美化-[7]📱COT美化@yuki（0913）"
+  },
+  {
+   "id": "54db7003-243b-4ec0-a7dd-5ddf86f2c8b5",
+   "name": "MoM美化-[8]😊表情包美化-需要配合表情包词条(新)"
+  },
+  {
+   "id": "5b63399c-1fa5-4706-b4d2-7c8d8db3a423",
+   "name": "MoM美化-[9]开篇序言透明版@YUKI（1116）"
+  },
+  {
+   "id": "ecc79e53-8efc-4279-9778-7ede63db84d2",
+   "name": "MoM美化-[9]超级序言（1123） @电波系"
+  },
+  {
+   "id": "62f9bc87-a89a-4f54-a98a-f4f40e6c6256",
+   "name": "MoM美化-[9]开篇序言双色版（1124）@YUKI@KKM"
+  },
+  {
+   "id": "abc46bd8-1881-4147-9897-d89327480a34",
+   "name": "MoM美化-[10]顶部状态栏夜间版@电波系@maru"
+  },
+  {
+   "id": "5706a16b-5f5a-41c6-ade6-ad020360394c",
+   "name": "MoM美化-[11]摘要幽灵模式@fawn(1010)"
+  },
+  {
+   "id": "6eb69576-f5e6-47eb-a486-2594286abbe1",
+   "name": "MoM美化-[12]喵喵选择器-悬浮窗@宵迦"
+  },
+  {
+   "id": "978196dc-c927-45bb-a347-614703209708",
+   "name": "MoM美化-[12]透明日夜超级喵喵选择器@YUKI@KKM"
+  },
+  {
+   "id": "52f97de2-9c63-4304-bc5f-e53f361a7421",
+   "name": "MoM美化-[13]角色表美化@YUKI（1116）"
+  },
+  {
+   "id": "d1dbeff5-e18e-49a1-a1bd-0f04eb1690ac",
+   "name": "MoM美化-[13.5]围栏守卫（别动位置｜必须排在 [14] 之前）"
+  },
+  {
+   "id": "847a3b40-d938-4ae9-bbf9-d7c9e41e5e33",
+   "name": "MoM美化-[14]纯文字剧场美化（玻璃温室）@电波系"
+  },
+  {
+   "id": "d0e9f9b2-7a98-4c04-8c83-cd0e89b42e18",
+   "name": "MoM美化-[15]单人通用状态栏@saya（0201）"
+  },
+  {
+   "id": "9b074fa7-a22c-457c-8a1a-52f5fc373860",
+   "name": "MoM美化-[16]小说标题美化日夜版@蛾摩拉"
+  },
+  {
+   "id": "e3a276e6-af6d-4d4d-8b7f-603727f1017c",
+   "name": "MoM可选-[5]小剧场修复（1012）@电波系@yuki"
+  },
+  {
+   "id": "d3aab2ca-6dd1-4570-85ff-332781e7dff0",
+   "name": "状态栏-日夜切换"
+  },
+  {
+   "id": "a458214c-4f9d-48dc-bde1-28ee4a42370c",
+   "name": "万界直播论坛_美化"
+  },
+  {
+   "id": "bd985f8b-a781-4ace-829f-125b56566547",
+   "name": "黄谣公告板_漫画"
+  },
+  {
+   "id": "71b47dbb-dc8c-4277-945d-d20483ee3569",
+   "name": "骚扰信箱"
+  }
+ ],
+ "scripts": [
+  "拉刻西斯-出杯·工具调用1.4（青果无缝移植版）"
+ ]
+}

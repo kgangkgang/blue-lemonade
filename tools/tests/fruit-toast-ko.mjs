@@ -83,6 +83,13 @@ const lach = [
     ['已开「语义伪装」', '「의미 위장」을(를) 켰어요'],
     ['诊断日志已复制', '진단 기록을 복사했어요'],
     ['没有工具调用 · HTTP 500（点「出杯」查看详情）', '도구 호출이 없어요 · HTTP 500 (「도구 호출」 단추를 누르면 자세히 볼 수 있어요)'],
+    // 11-14 청과 V4.0C 의 출잔 1.4
+    ['已开抗外审', '외부 검열 대응을 켰어요'],
+    ['已切到工具模式。抗截断开着，非流式。', '도구 모드로 바꿨어요. 끊김 방지가 켜져 있어 비스트리밍이에요.'],
+    ['连续 3 次正文直接返回、没走工具出酒口。这条渠道可能已自带防截断，本层是多余的，可切回普通模式。', '3번 잇달아 본문이 바로 오고 본문 도구를 거치지 않았어요. 이 연결은 이미 끊김 방지가 있어 이 단계가 필요 없을 수 있어요. 보통 모드로 돌아가도 돼요.'],
+    ['渠道/模型名带「防截断/反截断」关键词，日志里已有 2 次没走工具：这条渠道可能不支持工具调用，建议切普通模式。', '연결 · 모델 이름에 「防截断/反截断」이 있고, 기록에 도구를 거치지 않은 일이 2번 있어요. 이 연결은 도구 호출을 못 할 수 있어요. 보통 모드로 바꾸길 권해요.'],
+    ['ggchan 124 秒断流 · HTTP 524：error code: 524 · 抗截断非流式撞上 gg 约 124 秒断流。gg 目前只适合 3.8f。关掉抗截断（点「出杯」查看详情）', 'ggchan 124초 끊김 · HTTP 524：error code: 524 · 끊김 방지의 비스트리밍이 gg 의 약 124초 끊김에 걸렸어요. gg 는 지금 3.8f 에만 맞아요. 끊김 방지를 꺼 주세요 (「도구 호출」 단추를 누르면 자세히 볼 수 있어요)'],
+    ['网关超时 · HTTP 504：Gateway Timeout（点「出杯」查看详情）', '게이트웨이 시간 초과 · HTTP 504：Gateway Timeout (「도구 호출」 단추를 누르면 자세히 볼 수 있어요)'],
 ].map(([zh, ko]) => ({ ko, ...toast(zh, '出杯·工具调用') }));
 const otherTitle = toast('超时', '别的插件');
 e.mutate();
@@ -138,9 +145,14 @@ if (originals) {
     const seen = new Map();
     for (const s of scripts) {
         const lach = /拉刻西斯/.test(s.name);
-        for (const line of s.content.split('\n')) {
-            const call = /\b(toast|toastInfo|toastr\??\.\w+|confirm|prompt|Error)\s*\(/.exec(line);
-            if (!call || /^\s*\/\//.test(line) || /console\./.test(line)) continue;
+        const lines = s.content.split('\n');
+        for (const [at, first] of lines.entries()) {
+            const call = /\b(toast|toastInfo|toastr\??\.\w+|confirm|prompt|Error)\s*\(/.exec(first);
+            if (!call || /^\s*\/\//.test(first) || /console\./.test(first)) continue;
+            // 11-14 출잔 1.4: 여러 줄에 걸친 호출(「toastInfo(」 다음 줄들의 글)도 보고, 「'앞 ' + 숫자 + ' 뒤'」 로 이은 글은 한 문장으로 붙여 봐요
+            //   (과일의 마음 쪽 여러 줄 확인 창은 「'…\n' + '…'」 로 이은 한 문장이라 조각으로 보면 틀려서 출잔 스크립트만)
+            let line = first; if (lach) for (let k = 1; k <= 6 && !/\)\s*;\s*$/.test(line) && at + k < lines.length; k++) line += ' ' + lines[at + k].trim();
+            if (lach) line = line.replace(/'\s*\+\s*[A-Za-z_$][\w.$]*\s*\+\s*'/g, '12');
             for (const m of line.matchAll(/'((?:[^'\\\n]|\\.)*)'|`((?:[^`\\]|\\.)*)`/g)) {
                 let text = (m[1] ?? m[2]).replace(/\\n/g, '\n');
                 // 한자 1~4자 낱말(값 비교용) · 이어 붙이는 조각(「 · 」 짝이 안 맞음)은 빼요
@@ -157,7 +169,8 @@ if (originals) {
         if (info.native) { env.host.confirm(text); shown = env.calls.at(-1)[1]; }
         else { const b = add(box, 'div', { class: 'toast' }); if (info.lach) add(b, 'div', { class: 'toast-title' }, '出杯·工具调用'); const m = add(b, 'div', { class: 'toast-message' }, text); env.mutate(); shown = m.text; }
         // 남겨도 되는 한자: 모델 표식 [语言检定] · 프롬프트 제목 안 원문(Han 이 표에 없는 사용자 이름) — 여기서는 표식만 빼고 봐요.
-        if (HAN.test(String(shown).replace(/\[语言检定\]/g, ''))) left.push(`${info.native ? '창' : '알림'} · ${info.script} · ${text.slice(0, 40)} → ${String(shown).slice(0, 40)}`);
+        //   출잔 알림의 모델 이름 낱말(「假流式」 · 「防截断」 …)은 모델 목록에서 찾아야 해서 원문으로 둬요.
+        if (HAN.test(String(shown).replace(/\[语言检定\]/g, '').replace(info.lach ? /假流式|反假流|防截断|反截断/g : /$^/g, ''))) left.push(`${info.native ? '창' : '알림'} · ${info.script} · ${text.slice(0, 40)} → ${String(shown).slice(0, 40)}`);
     }
     console.log(`원본 문구 ${seen.size}개 중 한자가 남은 것 ${left.length}개`);
     for (const x of left) console.log('  남음:', x);

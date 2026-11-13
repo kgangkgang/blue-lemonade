@@ -1,4 +1,4 @@
-// 청과 「출잔 · 도구 호출」 창 한글화 (tools/scripts-src/fruit-family/qingguo-ui.js · qingguo-ui.json 의 serve)
+// 청과 「도구 호출」 창 한글화 (tools/scripts-src/fruit-family/qingguo-ui.js · qingguo-ui.json 의 serve)
 //   창(#serve-anti-host) 안 고정 문구 · 「지금 모델」 줄 · 상태 기록 제목만 바꾸고, 창 밖 글 · 모델 이름 · 서버 원문은 그대로 두는지 봐요.
 //   node tools/tests/qingguo-serve-localization.mjs .
 import fs from 'node:fs';
@@ -111,7 +111,7 @@ await test('상태 기록: 제목만 바꾸고 시각 · HTTP · 모델 · 서�
     const panel = panelIn(boot());
     const status = panel.append(new El('div', { class: 'serve-status' }, '오후 3:01:02 · 渠道拒绝工具参数 · HTTP 400 · gemini-pro\nRequests ending with a model turn 上游\n오후 3:00:00 · 已还原出酒口正文 · gemini-pro'));
     install();
-    assert.equal(status.shown, '오후 3:01:02 · 연결이 도구 인수를 거부했어요 · HTTP 400 · gemini-pro\nRequests ending with a model turn 上游\n오후 3:00:00 · 출잔 도구 본문을 되살렸어요 · gemini-pro');
+    assert.equal(status.shown, '오후 3:01:02 · 연결이 도구 인수를 거부했어요 · HTTP 400 · gemini-pro\nRequests ending with a model turn 上游\n오후 3:00:00 · 본문 도구 내용을 되살렸어요 · gemini-pro');
 });
 
 await test('창이 글을 다시 넣으면 다시 한글로 바꿔요', () => {
@@ -140,7 +140,7 @@ await test('끄면 원문으로 되돌려요', () => {
     const title = panel.append(new El('strong', {}, '出杯·工具调用'));
     const close = panel.append(new El('button', { 'aria-label': '关闭' }, '×'));
     install();
-    assert.equal(title.shown, '출잔 · 도구 호출');
+    assert.equal(title.shown, '도구 호출');
     cleanups.forEach(fn => fn());
     assert.equal(title.shown, '出杯·工具调用');
     assert.equal(close.getAttribute('aria-label'), '关闭');
@@ -171,7 +171,7 @@ await test('출잔 알림: 제목과 고정 문구를 한글로 바꿔요', () =
     const body = boot(), shown = Object.keys(data.serve.toast.ui).map(zh => toastIn(body, '出杯·工具调用', zh));
     install();
     for (const [i, zh] of Object.keys(data.serve.toast.ui).entries()) {
-        assert.equal(shown[i].title.shown, '출잔 · 도구 호출');
+        assert.equal(shown[i].title.shown, '도구 호출');
         assert.equal(shown[i].message.shown, data.serve.toast.ui[zh], zh);
     }
 });
@@ -187,8 +187,8 @@ await test('출잔 알림: 스위치 이름 · 오류 제목이 낀 문구도 �
     assert.equal(on.message.shown, '「의미 위장」을(를) 켰어요');
     assert.equal(off.message.shown, '「무작위 잡음」을(를) 껐어요');
     assert.equal(need.message.shown, '「경로 숨김」을(를) 켰어요. 도구 모드에서는 「맥락을 도구에 넣기」를 먼저 켜야 이번 생성에 적용돼요');
-    assert.equal(warn.message.shown, '요청이 너무 잦아요 · HTTP 429：Too Many Requests (「출잔」 단추를 누르면 자세히 볼 수 있어요)');
-    assert.equal(odd.message.shown, '출잔 이상 (「출잔」 단추를 누르면 자세히 볼 수 있어요)');
+    assert.equal(warn.message.shown, '요청이 너무 잦아요 · HTTP 429：Too Many Requests (「도구 호출」 단추를 누르면 자세히 볼 수 있어요)');
+    assert.equal(odd.message.shown, '도구 호출 이상 (「도구 호출」 단추를 누르면 자세히 볼 수 있어요)');
 });
 
 await test('출잔 알림: 나중에 뜬 알림도 바꾸고, 두 번 돌아도 그대로예요', () => {
@@ -198,7 +198,7 @@ await test('출잔 알림: 나중에 뜬 알림도 바꾸고, 두 번 돌아도 
     changed(late.box);
     assert.equal(late.message.shown, '진단 기록을 복사했어요');
     changed(late.box);
-    assert.equal(late.title.shown, '출잔 · 도구 호출');
+    assert.equal(late.title.shown, '도구 호출');
     assert.equal(late.message.shown, '진단 기록을 복사했어요');
 });
 
@@ -210,6 +210,83 @@ await test('다른 알림은 같은 글이어도 건드리지 않아요', () => 
     assert.equal(other.title.shown, '다른 확장');
     assert.equal(other.message.shown, '诊断日志已复制');
     assert.equal(bare.shown, '诊断日志已复制');
+});
+
+// ── 11-14 청과 V4.0C 의 도구 호출 1.4 ──
+// 1.4 창이 그리는 고정 문구(빌드 패널 · 새로 그리기 · 오류 풀이) — 옛 1.2 문구도 사전에 그대로 남아요
+const SERVE_14 = [
+    '出杯·工具调用', '当前：工具模式', '当前：普通模式', '防截断、反截断用这个。拿不准也用这个。', '切到普通模式', '切到工具模式（工具调用）',
+    '渠道策略', '自动', 'Google 原生', 'OpenAI 兼容',
+    '自动：当前渠道判定为「Google 原生」。', '自动：当前渠道判定为「OpenAI 兼容」。', '自动：当前渠道判定为「Google 原生」。原生可单开抗外审，流式保持。伪装不可用。',
+    '已强制「Google 原生」：可单开抗外审，流式保持。伪装不可用。', '已强制「OpenAI 兼容」：全部开关可用。',
+    '抗外审', '最新一条输入放进工具结果。流式、非流式都可以。', '抗截断', '打开后改为非流式。',
+    '反路由（可选）', '防路由', '在保缓存工具模式下直接生效。默认全关。', '往请求里随机塞噪声，稀释特征', '语义伪装', '随机噪音',
+    '工具名随机后缀，并换掉消息里硬编码的「果农 / 赫斯帕里得斯 / 拉刻西斯」特征词', '工具名带随机后缀，并换掉消息里硬编码的「果农 / 赫斯帕里得斯 / 拉刻西斯」特征词',
+    '往请求消息里随机穿插无关题解，稀释提示词特征', '往消息里随机穿插无关题解（注意：开启噪音会影响上游缓存命中）',
+    '当前状态', '当前模型：未读到', '尚无记录。', '复制诊断日志', '报错说明', '状态码',
+    ...['工具', '普通'].flatMap(mode => ['非流式（抗截断）', '流式', '非流式'].map(stream => `${mode} + ${stream} √`)),
+    ...['没有工具调用', '正文直接返回', '调用了别的工具', '出酒口正文为空', '缺出酒口参数', '参数不是合法 JSON', '响应不是 JSON', 'ggchan 124 秒断流', '上游返回错误'].map(title => title + '：'),
+    '抗截断把这轮改成了非流式。gg 目前只适合 3.8f，4a、4c 很容易在约 124 秒断流。关掉抗截断。',
+    ...['200 正常返回', '400 渠道拒绝工具参数', '429 请求过频', '500 上游报错', '502 / 503 网关或上游不可用', '504 / 524 超时'].map(title => title + '：'),
+];
+await test('1.4 창 고정 문구가 모두 사전에 있고 한글로 보여요', () => {
+    const panel = panelIn(boot());
+    const nodes = SERVE_14.map(zh => panel.append(new El('div', {}, zh)));
+    install();
+    for (const [i, zh] of SERVE_14.entries()) { assert.notEqual(nodes[i].shown, zh, `사전에 없어요: ${zh}`); assert.ok(!HAN.test(nodes[i].shown.replace(KEPT, '')), nodes[i].shown); }
+});
+
+await test('1.4 안내(여러 줄)는 줄바꿈을 지키고 모두 한글이에요', () => {
+    const panel = panelIn(boot());
+    const guide = panel.append(new El('div', {}, ['工具模式: ', '优先猫站 / 其他反代', 'gg 不稳定，待研究，不建议使用（gg 目前只适合 3.8f，4a、4c 触发 124 秒断流的机会很高）', '', 'OpenAI 兼容：', '1. 单【抗外审】= 抗截断模型 + 流式/非流都行', '2. 抗外审 + 抗截断 = 无前缀模型 + 非流（和以前的工具模式）', '', 'Vertex：', '1. 抗输入 + 流式', '2. 抗输入 + 抗截断 + 非流'].join('\n')));
+    install();
+    assert.equal(guide.shown.split('\n').length, 11);
+    assert.ok(guide.shown.startsWith('도구 모드:'));
+    assert.ok(!HAN.test(guide.shown), guide.shown);
+});
+
+await test('1.4 상태 기록: 새 제목 · 스크립트가 지은 기록 글도 바꾸고 숫자 · 모델은 그대로', () => {
+    const panel = panelIn(boot());
+    const status = panel.append(new El('div', { class: 'serve-status' }, [
+        '오후 3:01:02 · ggchan 124 秒断流 · HTTP 524 · gemini-pro',
+        'error code: 524 · 抗截断非流式撞上 gg 约 124 秒断流。gg 目前只适合 3.8f。关掉抗截断',
+        '오후 3:00:30 · 网关或上游不可用 · HTTP 503 · gemini-pro',
+        '오후 3:00:10 · 已包装本轮输入 · gemini-pro',
+        '오후 3:00:00 · 已原样送出 · gemini-pro',
+    ].join('\n')));
+    const detail = panel.append(new El('div', { class: 'serve-status' }, '오후 3:02:00 · 上游超时 · HTTP 524 · gemini-pro\n上游超时/中断，已还原 1532 字（可能不完整）\n오후 3:01:00 · 上游返回错误 · gemini-pro'));
+    install();
+    assert.ok(!HAN.test(status.shown), status.shown);
+    assert.ok(status.shown.includes('ggchan 124초 끊김 · HTTP 524 · gemini-pro'));
+    assert.ok(status.shown.includes('error code: 524 · '));
+    assert.equal(status.shown.split('\n').length, 5);
+    assert.equal(detail.shown, '오후 3:02:00 · 서버 시간 초과 · HTTP 524 · gemini-pro\n서버 시간 초과 · 끊김, 되살린 글 1532자 (덜 왔을 수 있어요)\n오후 3:01:00 · 서버가 오류를 돌려줬어요 · gemini-pro');
+});
+
+await test('1.4 알림: 스위치 · 모드 바꾸기 · 잇단 실패 안내가 모두 한글이에요', () => {
+    const body = boot();
+    const zh = ['已开抗外审', '已关抗外审', '已开抗截断。非流式。', '已关抗截断。', '已切到工具模式。抗截断开着，非流式。', '已切到工具模式。', '已切到普通模式。已恢复流式。带前缀的模型（假流式、防截断等）用这个。', '找不到酒馆设置', '找不到酒馆设置，无法切换模式', '诊断日志已复制', '复制失败，请从面板里手动选择',
+        '已开「语义伪装」', '已关「随机噪音」', '已开「防路由」',
+        '渠道/模型名带「防截断/反截断」关键词，日志里已有 2 次正文直接返回：这条渠道可能已自带防截断，本层多余，建议切普通模式。',
+        '渠道/模型名带「防截断/反截断」关键词，日志里已有 3 次没走工具：这条渠道可能不支持工具调用，建议切普通模式。',
+        '连续 3 次正文直接返回、没走工具出酒口。这条渠道可能已自带防截断，本层是多余的，可切回普通模式。',
+        '连续 3 次没从出酒口拿到正文，这条渠道可能不支持工具调用。开关没被动过，可自行切回普通模式。',
+        'ggchan 124 秒断流 · HTTP 524：error code: 524 · 抗截断非流式撞上 gg 约 124 秒断流。gg 目前只适合 3.8f。关掉抗截断（点「出杯」查看详情）',
+        '上游不可用 · HTTP 503：Service Unavailable（点「出杯」查看详情）'];
+    const shown = zh.map(text => toastIn(body, '出杯·工具调用', text));
+    install();
+    for (const [i, text] of zh.entries()) {
+        assert.equal(shown[i].title.shown, '도구 호출');
+        assert.ok(!HAN.test(shown[i].message.shown.replace(KEPT, '')), `${text} → ${shown[i].message.shown}`);
+    }
+    assert.ok(shown[14].message.shown.includes('2번'));
+    assert.ok(shown[18].message.shown.startsWith('ggchan 124초 끊김 · HTTP 524：error code: 524 · '));
+    assert.ok(shown[19].message.shown.includes('Service Unavailable'));
+});
+
+await test('1.4 스크립트 이름도 헬퍼 목록에서 한글로 보여요', () => {
+    assert.deepEqual(data.helpers.find(([zh]) => zh === '拉刻西斯-出杯·工具调用1.4（青果无缝移植版）'), ['拉刻西斯-出杯·工具调用1.4（青果无缝移植版）', '라케시스 · 도구 호출 1.4 (청과 이식판)']);
+    assert.ok(data.helpers.some(([zh]) => zh === '拉刻西斯-出杯·工具调用1.2（青果无缝移植版）'), '옛 1.2 이름도 그대로');
 });
 
 done();

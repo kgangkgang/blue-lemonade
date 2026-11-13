@@ -67,6 +67,27 @@ check('청과 V3.5X · V3.5C 새 이름과 이전 이름의 사전 항목을 함
     if(row.legacyName)assert.equal(dictionary.prompts.find(p=>(!p.id||p.id===row.id)&&same(p.name)===same(row.legacyName))?.title,row.legacyTitle,'이전 판 이름도 지원해요');
   }
 });
+// 11-14 청과 헤스페리데스 V4.0C: 프롬프트 326개 · 정규식 24개가 모두 정확히(부분 일치 아님) 한글 제목에 걸려요.
+//   프롬프트 목록과 같은 규칙으로 찾아요(id + 이름이 맞는 항목 → 없으면 이름만 맞는 항목 · 띄어쓰기 · 이모지 꼬리 무시). 모델 표시(#)와 프롬프트의 「｜」 칸 수(과일의 마음 창 꼬리표)는 원문 그대로예요.
+const qingguoV40C=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/fixtures/qingguo-hesperides-v40c-names.json'),'utf8'));
+check('청과 V4.0C 프롬프트 · 정규식 이름이 모두 한글 제목에 걸려요 (남은 중국어 0)',()=>{
+  assert.equal(qingguoV40C.prompts.length,326);assert.equal(qingguoV40C.regex.length,24);
+  const same=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
+  const marks=s=>[...String(s).matchAll(/#[^#｜]+/gu)].map(m=>m[0].trim());
+  const bare=s=>String(s).replace(/@[^\s@｜#]+/gu,'').replace(/#[^#｜]*/gu,'');
+  const missing=[];
+  for(const kind of ['prompts','regex'])for(const row of qingguoV40C[kind]){
+    const list=dictionary[kind],key=same(row.name);
+    const entry=list.find(p=>p.id===row.id&&same(p.name)===key)||list.find(p=>same(p.name)===key);
+    if(!entry){missing.push(`${kind}: ${row.name}`);continue;}
+    if(/\p{Script=Han}/u.test(bare(entry.title)))missing.push(`${kind}: ${row.name} → ${entry.title} (중국어가 남았어요)`);
+    for(const m of marks(row.name))if(!entry.title.includes(m))missing.push(`${kind}: ${row.name} → ${entry.title} (${m} 표시가 빠졌어요)`);
+    if(kind==='prompts'&&entry.title.split('｜').length!==row.name.split('｜').length)missing.push(`${kind}: ${row.name} → ${entry.title} (｜ 칸 수)`);
+  }
+  assert.deepEqual(missing,[],`한글 제목이 없는 V4.0C 이름 ${missing.length}개`);
+  // 이름이 바뀐 V3.5 안내 · 마무리 2 는 옛 이름도 그대로 지원해요
+  for(const old of ['🍏 青果·赫斯帕里得斯 V3.5 说明｜别开','🔌尾2 #GEMINI 3.7F #GEMINI 3.8F #CLAUDE #GEMINI 4A'])assert.ok(dictionary.prompts.some(p=>p.name===old),old);
+});
 {const src=path.join(root,'tools/scripts-src/fruit-family'),read=n=>JSON.parse(fs.readFileSync(path.join(src,n),'utf8'));
  const parts=['common','fruit','qingguo','sese'].map(n=>read(`prompts-${n}.json`)),norm=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
  check('family dictionary: priority 20, partial, at least 460 prompt and 48 regex titles',()=>{assert.equal(dictionary.priority,20);assert.equal(dictionary.partial,true);assert.ok(dictionary.prompts.length>=460);assert.ok(dictionary.regex.length>=48)});
