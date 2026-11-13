@@ -440,8 +440,9 @@ await test('그림 액자 1824: 콘셉트 152 × 12 · 파일 넷이 다 있음 
     for (const f of ['index.html', 'mart/home.css', 'mart/top-mart.css', 'mart/mart.css', 'mart/frame-room.css', 'mart/top-mart.js', 'mart/mart.js', 'mart/frame-room.js', 'mart/genie.js', 'mart/frames/index.html', 'mart/genie/index.html'])
         for (const m of fs.readFileSync(path.join(ROOT, f), 'utf8').matchAll(/data\/frames\/([a-z0-9-]+\.(?:webp|png))/g)) direct.push([f, m[1]]);
     assert.ok(direct.length >= 2, '직접 부르는 곳을 찾았어요');
-    // 머리줄 「마트」 창의 액자 마트 썸네일은 따로 구운 그림 한 장(cover-frames.webp — 실린 액자 두 점에 표본 사진을 넣은 진짜 합성 · 바탕 투명)
-    assert.ok(fs.existsSync(path.join(MART, 'cover-frames.webp')) && fs.readFileSync(path.join(MART, 'top-mart.css'), 'utf8').includes('.mart-menu-cover.is-frames{background:url(cover-frames.webp) 50% 50%/contain no-repeat,'), '액자 마트 메뉴 썸네일');
+    // 머리줄 「마트」 창의 액자 마트 썸네일은 따로 구운 그림 한 장(cover-frames.webp · 368×256 · 바탕 #ECF3FB — 실린 액자 두 점에 표본 사진을 넣은 진짜 합성).
+    //   규격은 메뉴 썸네일을 고치는 갈래와 같아요(그 갈래가 얹히면 CSS 줄은 그쪽 것을 살리고 그림 파일은 이것을 써요)
+    assert.ok(fs.existsSync(path.join(MART, 'cover-frames.webp')) && /\.mart-menu-cover\.is-frames\{[^}]*cover-frames\.webp/.test(fs.readFileSync(path.join(MART, 'top-mart.css'), 'utf8')), '액자 마트 메뉴 썸네일');
     for (const [f, name] of direct) assert.ok(used.has(name), `${f} 가 부르는 ${name} 이 있어요`);
     const hunter = [...by].filter(([, xs]) => xs[0].category === 'hunter-char');
     assert.equal(hunter.length, 8); for (const [c, xs] of hunter) { assert.match(c, /^hunter-[a-z]+$/); assert.match(xs[0].conceptLabel, / · D&H$/); }
