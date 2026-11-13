@@ -2173,6 +2173,15 @@ await test('줄바꿈: 공용 함수는 테마 src/log-copy-wrap.js 와 같은 �
         for (const sel of [`${K} .gk-bb-o`]) if (last(before, sel) === 'keep-all') assert.equal(last(after, sel), 'normal', `${key} 말풍선`);
     }
     assert.ok(covered >= 400, `덮개가 달린 틀 ${covered}`);
+    // 복사 길(simpleReady 뒤) · 「낮 · 밤 전환 넣기」(addToggle)를 지나도 덮개가 문단 규칙 뒤에 그대로 — 열 틀에 하나씩
+    const dn = await imp(path.join(MART, 'day-night.js'));
+    for (const it of sixAll.items.filter((_, i) => i % 10 === 0)) {
+        const html = all[it.id].preview, K = `.gk-${sf.simpleFrameInfo(html).key}`, rows = ['gk-nr', 'gk-dl'].filter(c => new RegExp(`class="(?:[^"]*\\s)?${c}(?=[\\s"])`).test(html));
+        if (!rows.length) continue;
+        const flipped = styles(dn.addToggle(sf.simpleReady(ww.wrapHtml(html, 'char'))).html), cover = rows.map(c => `${K} .${c}`).join(',');
+        assert.equal(last(flipped, cover), 'normal', `${it.id} 전환 뒤 덮개`);
+        assert.ok(flipped.indexOf(`${cover}{`) > flipped.indexOf(`${K} p{`), `${it.id} 덮개는 문단 규칙 뒤`);
+    }
     const martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8'), ui = fs.readFileSync(path.join(MART, 'tune-ui.js'), 'utf8'), ws = fs.readFileSync(path.join(MART, 'wrap-state.js'), 'utf8');
     assert.ok(martSrc.includes('if (!raw || !toned(state.item)) return wrapOf(state, raw);') && martSrc.includes('return wrapOf(state, state.toneHtml);'), 'previewOf 한 길(카드 · 크게 보기 · 복사 글 · 붙일 곳 흉내)');
     assert.ok(/html: item\.preview \|\| '', set \}\] \};/.test(martSrc), '테마로 담기 값은 틀 원래 판 그대로(테마는 제 설정으로)');
