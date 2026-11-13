@@ -77,7 +77,7 @@ await test('펼친 환경이 아니면(메뉴가 닫혀 숨음) 아무것도 쓰
     assert.equal(body.classList.records, 0);
     assert.deepEqual(body.classList.values(), ['salty']);
 });
-await test('1.4.1 서랍 전용 칸이 꺼진 채면 옛 팝업 검사(getClientRects)를 감시 콜백에서 바로 하지 않고 다음 프레임 맨 앞에서 해요', () => {
+await test('서랍 전용 칸이 꺼진 채면 옛 팝업 검사(getClientRects)를 감시 콜백에서 바로 하지 않고 다음 프레임 맨 앞에서 해요', () => {
     const src = fs.readFileSync(path.join(root, 'src/lite.js'), 'utf8');
     const body = src.slice(src.indexOf('function syncPanelCss('), src.indexOf('export function deferPanelHasRules'));
     const frameGate = body.indexOf("if (!quick && !panelOn && inFrame !== true && !document.hidden) {");

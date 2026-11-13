@@ -192,7 +192,7 @@ await test('③ 덮개 동안 붙는 시트 여덟 자리가 모두 holdSheet �
 });
 await test('③ 변수 시트 · 글꼴 선언은 꺼 두지 않아요(새로고침 첫 화면이 팔레트 색을 쓰고, 꺼 둔 @font-face 는 글꼴을 안 받아요)', () => {
     const apply = src('src/apply.js');
-    // 1.4.1 꺼 두는 것은 액자 · 프로필 변수 한 장(#salty-vars-look)뿐 — #salty-vars · 글꼴 · 그라데이션 · 아이콘은 그대로 바로 켜요
+    // 꺼 두는 것은 액자 · 프로필 변수 한 장(#salty-vars-look)뿐 — #salty-vars · 글꼴 · 그라데이션 · 아이콘은 그대로 바로 켜요
     assert.equal((apply.match(/holdSheet[(]/g) || []).length, 1);
     assert.match(apply, /if \(!lookSheet && lookCss\) \{ lookSheet = styleTag\('salty-vars-look'\); holdSheet\(lookSheet\); \}/);
     const vars = apply.slice(apply.indexOf("const vars = markdownVariables"), apply.indexOf("const variables = styleTag('salty-vars');"));

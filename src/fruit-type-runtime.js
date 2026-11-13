@@ -67,7 +67,7 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
         // 8.2.6 글꼴 설정이 하나도 켜져 있지 않으면(css 없음) 채팅 문서 안의 상태창 뿌리는 아무것도 바꾸지 않아요(아래 hasRoot 가 늘 거짓) — 그때 채팅 감시는 iframe 이 붙고 빠질 때만 다시 봐요.
         //   메시지가 붙을 때마다 과일 · 데우스 뿌리 선택자 목록(수십 갈래)으로 그 메시지 아래를 훑던 것. iframe 문서 안은 감싸기(WRAP) 때문에 그대로 뿌리까지 봐요
         mainWatch=css?rootSelector+',iframe':'iframe';paintDecor(config);
-        // 1.4.1 팔레트 읽기(body 계산 스타일 — 그 자리에서 문서 스타일 계산을 강제해요)는 과일 iframe 에 장식을 칠할 때만 · 한 번에 한 번이에요.
+        // 팔레트 읽기(body 계산 스타일 — 그 자리에서 문서 스타일 계산을 강제해요)는 과일 iframe 에 장식을 칠할 때만 · 한 번에 한 번이에요.
         //   예전엔 flush 마다 먼저 읽어서, 상태창 iframe 이 없는 채팅 · 시작 덮개 동안에도 문서 전체(폰 리그 추적: 요소 218)를 다시 계산했어요
         let frameDecor=null;const frameDecorText=()=>{if(frameDecor===null){paletteSig=readPalette();frameDecor=fruitDecorCss(config,{owners:['fruit'],resolve:tokenValue});}return frameDecor;};
         const fonts=new Set();for(const t of Object.values(config.types))for(const r of Object.values(t.regions))if(r.on&&r.font!=='original'){const f=findFont(r.font);if(f&&!f.unusable)fonts.add(String(f.family).replace(/^['"]|['"]$/g,''));}

@@ -51,7 +51,7 @@
   user-select: none;
 }
 /* 1.0.1 QR 줄 접기 · 펴기 단추(#bl-qr-fold · layout.js syncQrFold): 돋보기와 같은 모양으로 앞에 붙어요.
-   접힌 줄(body[data-salty-qr-folded] — 1.4.1 class 에서 속성으로: 누를 때마다 실리태번 keyboard.js 가 문서 전체를 다시 훑던 것 · 무게는 class 하나와 같아요)은 단추만 남기고 나머지(세트 묶음 · 창 띄우기 · 돋보기)를 숨겨요 — 줄은 단추 폭만큼만 */
+   접힌 줄(body[data-salty-qr-folded] — class 에서 속성으로: 누를 때마다 실리태번 keyboard.js 가 문서 전체를 다시 훑던 것 · 무게는 class 하나와 같아요)은 단추만 남기고 나머지(세트 묶음 · 창 띄우기 · 돋보기)를 숨겨요 — 줄은 단추 폭만큼만 */
 body.salty #send_form #qr--bar #bl-qr-fold { position: sticky; left: 0; z-index: 1; flex-shrink: 0; order: -1; display: grid; place-items: center; min-width: 34px; min-height: 34px; margin: 0; padding: 0 8px; border: 0; border-radius: 8px; background: var(--bl-fill-card, var(--bl-card)); color: var(--salty-muted, var(--salty-text)); box-shadow: none; font-size: 12px; }
 body.salty #send_form #qr--bar #bl-qr-fold:hover { color: var(--salty-text); }
 body.salty[data-salty-qr-folded] #send_form #qr--bar > :not(#bl-qr-fold, #bl-qr-shelf) { display: none !important; }

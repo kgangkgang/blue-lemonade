@@ -9,7 +9,7 @@ const realSet = globalThis.setTimeout, realClear = globalThis.clearTimeout;
 globalThis.setTimeout = fn => { const id=++nextTimer;timers.set(id,fn);return id; };
 globalThis.clearTimeout = id => timers.delete(id);
 const sheetOf=text=>{const cssRules=text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>({selectorText:l.slice(0,l.indexOf('{')).trim(),cssText:l}));return {disabled:false,cssRules,deleteRule(i){cssRules.splice(i,1);}};};
-// 1.4.1 전체 시트는 <link> — 붙으면 「받기」(globalThis.fetch 흉내)를 거쳐 load · error 를 쏴요(꺼진 media 여도 받아요)
+// 전체 시트는 <link> — 붙으면 「받기」(globalThis.fetch 흉내)를 거쳐 load · error 를 쏴요(꺼진 media 여도 받아요)
 // 미리 받기(rel=preload)로 붙으면 받은 글만 쥐고 load → 코드가 rel 을 stylesheet 로 바꾸면 그 글로 시트를 만들고 load 를 한 번 더(실제 브라우저처럼)
 const linkLoad=node=>Promise.resolve().then(()=>globalThis.fetch(node.href)).then(async r=>{if(!r.ok)throw Error('HTTP');return r.text();}).then(text=>{node.fetched=text;if(node.rel==='stylesheet')node.sheet=sheetOf(text);node.fire('load');},()=>node.fire('error'));
 let preloads=0;
@@ -59,7 +59,7 @@ try {
         const job=loadFullCss(main.sheet,prepared,()=>true);await settle();
         assert.equal(main.sheet.disabled,false);assert.equal(full().rel,'preload','받는 동안은 미리 받기 — 시트가 아니에요');assert.equal(full().dataset.blFullTheme,'loading');
         resolve(response(fullText));assert.equal(await job,true);
-        // 1.4.1 <link> 로 받아요(글을 담지 않아요) · 꼬리(경계 포함)는 떼고 서랍 전용 칸은 따로 써 둔 꼬리 파일 원문
+        // <link> 로 받아요(글을 담지 않아요) · 꼬리(경계 포함)는 떼고 서랍 전용 칸은 따로 써 둔 꼬리 파일 원문
         assert.equal(full().tagName,'LINK');assert.equal(full().rel,'stylesheet');assert.ok(preloads>=1,'미리 받기로 붙여요(실리태번 dynamic-styles 가 붙는 시트만 훑어요)');assert.match(full().href,/style-lazy\.gen\.css$/);assert.equal(full().text,'');
         assert.deepEqual(full().sheet.cssRules.map(r=>r.selectorText),[':root','.card','.card']);
         assert.equal(tail().textContent,TAIL);assert.equal(readyCount,1);
