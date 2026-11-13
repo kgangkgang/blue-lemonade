@@ -32,14 +32,14 @@ html body .salty-panel .bl-inline-preview.bl-view-float > .bl-view-toggle:is(#bl
 
 /* ---------- 1.1.5 퀵 리플라이 미리보기(panel.js qrSample)를 실제 줄에 맞춤 ----------
    미리보기에 1.0.1 접기 « · 1.0.3 책장 단추가 없고, 세트 색 · 테두리만 · 아이콘 QR 이 글자 알약으로만 보였어요.
-   보이기 · 숨기기는 실제 줄(css/35-qr-bar.css)과 같은 body 클래스(apply.js: salty-qr-fold-off · salty-qr-shelf · salty-qr-folded)를 따라요 — 스위치를 바꾸면 다시 그리지 않아도 같이 바뀌어요.
+   보이기 · 숨기기는 실제 줄(css/35-qr-bar.css)과 같은 body 표식(apply.js: 클래스 salty-qr-fold-off · salty-qr-shelf · 속성 data-salty-qr-folded)을 따라요 — 스위치를 바꾸면 다시 그리지 않아도 같이 바뀌어요.
    다른 점 하나: 실제 «는 돋보기가 없을 때 왼쪽에 붙어 있는데(sticky · layout.js 가 앞 단추로 셈), 미리보기 «는 줄과 같이 넘어가요(시작 묶음의 layout.js 를 늘리지 않으려고).
    선택자가 모두 .bl-inline-preview 안이라 빌드(tools/css-park.cjs)가 설정 창을 열 때만 받는 src/preview.gen.css 로 떼어 둬요(첫 장 · 둘째 장 바이트 그대로) */
 .bl-inline-preview .bl-qr-sample > :is(.bl-qr-fold-sample, .bl-qr-shelf-sample) { position:relative; flex-shrink:0; order:-1; display:grid; place-items:center; min-width:34px; min-height:34px; padding:0 8px; border-radius:8px; background:transparent; color:var(--salty-muted, var(--salty-text)); font-size:12px; scroll-snap-align:start; }   /* 바탕 없음: 실제 줄의 « · 책장은 아이콘뿐인 단추라 투명해요 — 밤에서 견본에만 알약 바탕이 보이던 것(1.1.4 화면 확인) */
 body.salty-qr-fold-off .bl-inline-preview .bl-qr-sample > .bl-qr-fold-sample,
 body:not(.salty-qr-shelf) .bl-inline-preview .bl-qr-sample > .bl-qr-shelf-sample { display:none; }
-body.salty.salty-qr-folded .salty-panel .bl-inline-preview .bl-qr-sample > :not(.bl-qr-fold-sample, .bl-qr-shelf-sample) { display:none !important; }
-body.salty.salty-qr-folded .salty-panel .bl-inline-preview .bl-qr-sample::after { display:none; }
+body.salty[data-salty-qr-folded] .salty-panel .bl-inline-preview .bl-qr-sample > :not(.bl-qr-fold-sample, .bl-qr-shelf-sample) { display:none !important; }
+body.salty[data-salty-qr-folded] .salty-panel .bl-inline-preview .bl-qr-sample::after { display:none; }
 body.salty .bl-inline-preview .bl-qr-sample > .qr--buttons.qr--color { background-color:color-mix(in srgb, var(--qr--color) 16%, transparent); }
 body.salty .bl-inline-preview .bl-qr-sample > .qr--buttons.qr--color.bl-qr-color-none { background-color:transparent; }
 .bl-inline-preview .bl-qr-sample > .qr--buttons.qr--borderColor { border-left:5px solid var(--qr--color); border-right:5px solid var(--qr--color); }

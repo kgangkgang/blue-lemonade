@@ -132,13 +132,13 @@ test('줄 안 미리보기 규칙은 설정 창을 열 때만 받는 시트로 �
         assert.ok(!read('style.css').includes(name), `첫 장에 ${name} 이 남았어요`);
     }
 });
-test('퀵 리플라이: 접기 « · 책장 견본이 실제 줄과 같은 body 클래스를 따라요', () => {
+test('퀵 리플라이: 접기 « · 책장 견본이 실제 줄과 같은 body 표식을 따라요', () => {
     assert.match(panel, /bl-qr-fold-sample[^\n]*bl-qr-shelf-sample/, 'qrSample 이 « · 책 견본을 그려요');
     for (const cls of ['salty-qr-fold-off', 'salty-qr-folded', 'salty-qr-shelf']) assert.ok(apply.includes(`'${cls}'`), `apply.js 가 ${cls} 를 붙여요`);
     assert.ok(css45.includes('body.salty-qr-fold-off .bl-inline-preview .bl-qr-sample > .bl-qr-fold-sample'));
     assert.ok(css45.includes('body:not(.salty-qr-shelf) .bl-inline-preview .bl-qr-sample > .bl-qr-shelf-sample'));
-    assert.ok(css45.includes('body.salty.salty-qr-folded .salty-panel .bl-inline-preview .bl-qr-sample > :not(.bl-qr-fold-sample, .bl-qr-shelf-sample)'));
-    assert.match(read('css/35-qr-bar.css'), /body\.salty\.salty-qr-folded #send_form #qr--bar > :not\(#bl-qr-fold, #bl-qr-shelf\)/, '실제 줄의 접힘 규칙');
+    assert.ok(css45.includes('body.salty[data-salty-qr-folded] .salty-panel .bl-inline-preview .bl-qr-sample > :not(.bl-qr-fold-sample, .bl-qr-shelf-sample)'));
+    assert.match(read('css/35-qr-bar.css'), /body\.salty\[data-salty-qr-folded\] #send_form #qr--bar > :not\(#bl-qr-fold, #bl-qr-shelf\)/, '실제 줄의 접힘 규칙');
     assert.match(panel, /qrSample\([^)]*, s\)\}<\/div>/, '설정을 넘겨 접힘 방향을 그려요');
     assert.match(panel, /q\.label \|\| q\.icon/, '아이콘만 있는 QR 도 그려요');
 });

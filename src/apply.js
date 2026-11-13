@@ -771,6 +771,7 @@ export function applyAll() {
     appearance?.syncDecor(s);
     appearance?.syncFrameShadows(s);
     syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image), edgeTheme); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
+    const qrFolded = want.delete('salty-qr-folded');   // 1.4.0 class 로는 안 달아요(아래 data-salty-qr-folded) — 옛 판이 단 class 는 아래 stale 이 떼요
     // 1.1.1 가볍게 → 1.1.6: 켠 설정(고른 마크다운 모양 · 글자 외곽선 · 들여쓰기 · 정보 정렬)의 규칙 시트를 클래스보다 먼저 붙여요(첫 장 · 전체 장에는 없어요 · lite.js syncGateCss).
     //   시트가 아직 안 왔으면 그 클래스(held)는 지금 달지 않고, 시트가 오면 lite.js 가 달아요 — 켜는 순간 꾸밈 없는 한 프레임이 없게
     //   그때는 applyAll 밖이라 아래 restyleAhead 가 못 닿아요 — 식히는 함수를 넘겨 달기 직전에 부르게 해요(긴 채팅을 식히지 않고 다시 계산하던 것)
@@ -788,6 +789,9 @@ export function applyAll() {
     const missing = [...want].filter(c => !cls.contains(c) && !held.has(c));
     if (missing.length) { restyleAhead(); cls.add(...missing); }
     const fold = want.has('salty-dem-skin') && s.chat.demFold !== false;
+    // 1.4.0 QR 줄 접힘은 class 가 아니라 body 속성(data-salty-qr-folded)이에요 — 위 want 계산은 그대로 두고 syncGateCss 앞에서 꺼내 속성으로 옮겨요(layout.js « 단추가 속성만 바꿔
+    //   누를 때마다 body class 기록이 나지 않게 — 실리태번 keyboard.js 가 class 기록마다 문서 전체를 다시 훑어요). 무게(특이도)는 class 하나와 같아요
+    if (document.body.hasAttribute('data-salty-qr-folded') !== qrFolded) { restyleAhead(); document.body.toggleAttribute('data-salty-qr-folded', qrFolded); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
     // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)
