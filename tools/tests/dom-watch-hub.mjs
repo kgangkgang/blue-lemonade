@@ -233,5 +233,26 @@ await test('⑨ (1.1.4) 비용 통계: 구독마다 이름 · 횟수 · 기록 �
     await tick();
 });
 
+await test('⑩ (1.4.x) 미뤄 둔 가지 떼기 중에 구독이 바뀌어도 떨어진 가지가 남지 않고, body → html 로 옮겨 붙은 가지는 바로 다시 걸어요', async () => {
+    const off = watchDom(body, { childList: true, subtree: true, exclude: '#chat', name: '떼기 A' }, () => {});
+    const a = document.createElement('dialog'); body.append(a); await tick();
+    const b = document.createElement('dialog');
+    a.remove(); body.append(b); await tick();   // A 빠짐(떼기 예약) · B 붙음 — 걸 노드 수는 같아요
+    const off2 = watchDom(body, { childList: true, subtree: true, exclude: '#chat', name: '떼기 B' }, () => {});   // 구독 변화 → rewire
+    await tick();
+    assert.equal(dom.observerCounts().moDetached, 0, '예약을 취소한 rewire 가 통째로 다시 걸어 떨어진 A 가 남지 않아요');
+    off2();
+    const h = [];
+    const offH = watchDom(html, { childList: true, subtree: true, attributes: ['data-x'], exclude: ['#chat', 'head'], name: 'html 속성' }, r => h.push(...r));
+    const c = document.createElement('section'); body.append(c); await tick();
+    observed.length = 0;
+    html.append(c); await tick();   // body → html 바로 아래로 옮김(같은 묶음에 빠짐 · 붙음)
+    assert.ok(observed.length > 0, '한가할 때까지 기다리지 않고 바로 다시 걸어요');
+    h.length = 0; c.setAttribute('data-x', '1'); await tick();
+    assert.ok(h.some(r => r.attributeName === 'data-x'), '옮긴 뒤 html 구독이 원한 속성 기록을 받아요');
+    c.remove(); b.remove(); offH(); off();
+    await dom.clock.advance(50); await tick();
+});
+
 console.log(`감시 허브 계약: ${pass}개 통과했어요.`);
 process.exit(0);

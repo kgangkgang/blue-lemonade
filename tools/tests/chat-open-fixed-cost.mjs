@@ -44,4 +44,10 @@ check('ㄷ. 네모 단추: rAF 뒤 한가할 때(최대 0.3초) · 겹쳐 걸지
     assert.ok(src.includes('if (idle) host.cancelIdleCallback?.(idle);'));
 });
 
+check('ㄹ. 감시 허브: 미뤄 둔 떼기를 취소하는 rewire 는 통째로 다시 걸어요(가짜 DOM 에서는 차이가 안 드러나 글로 잠가요 · 검토 A ①)', () => {
+    const src = read('src/dom-watch.js');
+    assert.ok(src.includes("if (z.pruneSoon) { z.pruneSoon.cancel(); z.pruneSoon = null; z.wiredKey = ''; }"));
+    assert.ok(src.includes('if (n.isConnected) again = true; else pruned = true;'), '옮겨 붙은 가지는 바로(③)');
+});
+
 console.log(`chat-open-fixed-cost: ${passed} passed`);

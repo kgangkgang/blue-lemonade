@@ -401,7 +401,8 @@ function whenIdle(win, fn) {
     const id = win.setTimeout(fn, 200); return { cancel: () => win.clearTimeout(id) };
 }
 function rewire(z) {
-    if (z.pruneSoon) { z.pruneSoon.cancel(); z.pruneSoon = null; }   // 통째로 다시 걸면 빠진 가지도 같이 떼져요
+    // 미뤄 둔 가지 떼기가 있으면 이번에 통째로 다시 걸어요(취소만 하고 「그대로면 안 함」으로 빠지면 떨어진 가지가 등록 · wired 에 남았어요 — 검토 A ①)
+    if (z.pruneSoon) { z.pruneSoon.cancel(); z.pruneSoon = null; z.wiredKey = ''; }
     const p = plan(z);
     const key = JSON.stringify(p.opts) + '|' + (p.chat ? 'c' : '') + '|' + p.regs.length;
     // 옵션 · 걸 노드가 그대로면 아무것도 안 해요(구독이 늘어도 옵션이 같으면 감시는 그대로)
@@ -453,7 +454,8 @@ function zoneHandle(win, z, records, except) {
                     const zone = r.target === z.doc.documentElement ? 'html' : 'body';
                     if (z.opts && !emptyOpts(z.opts[zone]) && !z.wired?.has(n)) { z.mo.observe(n, asTree(z.opts[zone])); z.wired?.add(n); }
                 }
-                for (const n of r.removedNodes || []) if (n.nodeType === 1 && z.wired?.has(n)) { pruned = true; break; }
+                // 빠진 가지가 같은 묶음에서 다른 자리(html 바로 아래 등)로 옮겨 붙었으면 옵션이 다를 수 있어 예전처럼 바로 다시 걸어요(검토 A ③). 정말 빠지기만 했으면 한가할 때
+                for (const n of r.removedNodes || []) if (n.nodeType === 1 && z.wired?.has(n)) { if (n.isConnected) again = true; else pruned = true; }
             }
         }
         const memo = new Map();
