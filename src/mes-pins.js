@@ -101,12 +101,15 @@ export function pinLabel(key) {
 function restore(el) {
     const slot = slots.get(el);
     const bar = el.parentElement;
+    // 1.4.x opt-chat-open(고침안 7): 표식은 떼어 낸 동안(문서 밖) 바꿔요 — 붙은 채 class 를 바꾸면 실리태번 keyboard.js · a11y.js 가 그 단추를 한 번 더 훑었어요.
+    //   옮기기는 예전에도 빠짐 · 붙음 기록이라 기록 수가 하나씩 줄어요. 없는 class 를 빼는 것도 같은 값 기록을 남겨서 붙어 있을 때만 빼요. 끝 모습은 같아요
+    el.remove();
+    el.classList.remove('bl-pinned');
+    delete el.dataset.blPin;
     if (slot?.isConnected) slot.replaceWith(el);
     else bar?.querySelector(':scope > .extraMesButtons')?.append(el);
     slots.delete(el);
-    el.classList.remove('bl-pinned');
-    delete el.dataset.blPin;
-    bar?.classList.remove('bl-menu-empty');
+    if (bar?.classList.contains('bl-menu-empty')) bar.classList.remove('bl-menu-empty');
 }
 
 function pin(el) {
@@ -120,6 +123,7 @@ function pin(el) {
     const slot = document.createComment('bl-pin');
     menu.insertBefore(slot, el);
     slots.set(el, slot);
+    el.remove();   // 떼어 낸 동안 표식을 달아요(위 restore 와 같은 까닭)
     el.classList.add('bl-pinned');
     el.dataset.blPin = String(rank);
     const after = [...bar.querySelectorAll(':scope > .bl-pinned')].find(x => Number(x.dataset.blPin) > rank);
