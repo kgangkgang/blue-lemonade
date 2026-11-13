@@ -4,6 +4,7 @@
 // ② 카드 글자색(cardink.js) · 이전 메시지 저절로(show-more-auto.js): 덮개 동안은 읽지 · 누르지 않고 걷힌 뒤 한 번
 // ③ 계약: 덮개 동안 붙는 시트마다 holdSheet · 꺼 둔 시트의 값을 읽던 곳은 booting → afterBoot · 실리태번 시트 고치기 · 서랍 규칙 옮기기는 걷힌 뒤
 //    · 새 감시자 · 타이머 없음(boot-gate.js 의 MutationObserver 는 예전 하나 그대로)
+// ④ 미트볼 맞춤(ext-compat.js): 맞춤 시트는 여덟째로 꺼 둔 채 · 고른 탭 굴리기(scrollIntoView)는 걷힌 뒤
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -134,6 +135,42 @@ await test('② 이전 메시지 저절로: 덮개 동안 단추가 보인다고
     sm.syncShowMoreAuto(false);
 });
 
+await test('④ 미트볼 맞춤(1.2.3 ext-compat.js): 덮개 동안 붙는 맞춤 시트는 꺼 둔 채(여덟째) · 고른 탭 굴리기는 걷힌 뒤 한 번 — 걷히면 둘 다', async () => {
+    addCover(); gate.coverOpaque(true);
+    const ec = await import(url('src/ext-compat.js'));
+    const before = gate.heldSheets();
+    assert.equal(ec.attachSheet(globalThis.document, ec.SETS[0], 'http://x/scripts/extensions/third-party/t/src/ext-compat.js'), true);
+    const link = appended.at(-1);
+    assert.equal(link.id, 'bl-ext-css-ss-settings');
+    assert.equal(link.getAttribute('media'), 'not all', '덮개 동안은 꺼진 채');
+    assert.equal(gate.heldSheets(), before + 1, '모으기 표에 들어가요');
+    // 고른 탭: 덮개 동안은 굴리지 않아요(scrollIntoView 는 스타일 · 배치를 그 자리에서 강제해요)
+    let scrolls = 0;
+    const tab = to => {
+        const cls = new Set(); const attrs = {};
+        return { dataset: { blTabTo: to }, ownerDocument: globalThis.document, isConnected: true, attrs,
+            classList: { toggle: (c, on) => (on ? cls.add(c) : cls.delete(c)), contains: c => cls.has(c) },
+            setAttribute: (n, v) => { attrs[n] = v; }, scrollIntoView: () => { scrolls++; } };
+    };
+    const tabs = [tab('0'), tab('1'), tab('2')];
+    const nav = { children: tabs, parentElement: { children: [] } };
+    const box = { querySelector: () => nav, dataset: {} };
+    ec.showGroup(box, 2);
+    ec.showGroup(box, 1);
+    assert.equal(scrolls, 0, '덮개 동안은 안 굴려요');
+    assert.equal(tabs[1].attrs['aria-selected'], 'true', '고르기 · 보이기는 바로(속성만)');
+    removeCover();
+    assert.equal(link.getAttribute('media'), null, '걷히는 순간 켜져요(원래 media 없음)');
+    assert.equal(scrolls, 1, '걷힌 뒤 지금 고른 탭 하나만 한 번');
+    ec.showGroup(box, 2);
+    assert.equal(scrolls, 2, '걷힌 뒤에는 예전처럼 바로');
+    // 덮개가 없으면(이미 걷힘) 예전처럼 바로 켜진 채 붙어요
+    els['bl-ext-css-ss-settings'] = null;
+    const d2 = { getElementById: () => null, createElement: tag => new Sheet(tag), head: globalThis.document.head };
+    assert.equal(ec.attachSheet(d2, ec.SETS[0], 'http://x/a/src/ext-compat.js'), true);
+    assert.equal(appended.at(-1).getAttribute('media'), null, '덮개가 없으면 꺼 두지 않아요');
+});
+
 // ── ③ 계약(소스): 덮개 동안 붙는 시트마다 holdSheet
 const holds = [
     ['src/gate-css.js', /holdSheet\(own\)/],
@@ -143,9 +180,15 @@ const holds = [
     ['src/chat-appearance.js', /document\.head\.appendChild\(sheet\);\s*holdSheet\(sheet\);/],
     ['src/decor.js', /style\.id = 'bl-decor-data'; document\.head\.append\(style\); holdSheet\(style\);/],
     ['src/dem-expressive.js', /document\.head\.append\(style\);\s*holdSheet\(style\);/],
+    ['src/ext-compat.js', /\.append\(link\);\s*holdSheet\(link\);/],   // 1.2.3 미트볼 맞춤 시트 — 그 확장이 있을 때만 받는 모듈
 ];
-await test('③ 덮개 동안 붙는 시트 일곱 자리가 모두 holdSheet 를 불러요(대사 아이콘은 「아무것도 미리 불러오지 않는」 단추 모듈이라 빼요 — 대사만 보기를 켠 사람만 · 한 줄)', () => {
+await test('③ 덮개 동안 붙는 시트 여덟 자리가 모두 holdSheet 를 불러요(대사 아이콘은 「아무것도 미리 불러오지 않는」 단추 모듈이라 빼요 — 대사만 보기를 켠 사람만 · 한 줄)', () => {
+    assert.equal(holds.length, 8);
     for (const [file, re] of holds) assert.match(src(file), re, file);
+    const ec = src('src/ext-compat.js').replace(/^\s*\/\/.*$/gm, '');
+    assert.equal((ec.match(/scrollIntoView/g) || []).length, 2, '고른 탭 굴리기는 revealTab(바로) · revealLater(걷힌 뒤) 두 곳뿐');
+    assert.match(ec, /export function showGroup\(root, index\) \{[^]*?if \(on\) revealTab\(tab\);/, 'showGroup 은 revealTab 으로');
+    assert.match(ec, /function revealTab\(tab\) \{\n\s*if \(booting\(tab\.ownerDocument\)\) \{ revealWaiting\.add\(tab\); afterBoot\(revealLater\); return; \}/);
 });
 await test('③ 변수 시트 · 글꼴 선언은 꺼 두지 않아요(새로고침 첫 화면이 팔레트 색을 쓰고, 꺼 둔 @font-face 는 글꼴을 안 받아요)', () => {
     const apply = src('src/apply.js');
