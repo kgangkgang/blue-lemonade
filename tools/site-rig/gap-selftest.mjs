@@ -24,7 +24,7 @@ const CASES = [
 // 11-13 다듬기 뒤 통과해야 하는 견본(헛짚음 고침) — 그리고 같은 견본에서 표가 없거나 값이 틀리면 다시 걸리는지
 const PASS = [
     { name: '겹친 여백 통과: 작은 단끼리(위 안쪽 8 + 아래 안쪽 8 = 16)', html: `<div style="padding-bottom:8px">${card('하나')}</div><div style="padding-top:8px">${card('둘')}</div>` },
-    { name: '겹친 여백 통과: 누르는 칸 44(min-height) 안 빈칸은 여백이 아니에요(목록 아래 12 + 칸 안 빈칸 12 = 24)', html: `<ul style="margin:0 0 12px;padding-left:20px"><li>목록 한 줄</li></ul><a href="#" style="display:flex;align-items:center;min-height:44px">바로가기 →</a>` },
+    { name: '겹친 여백 통과: 누르는 칸 44(min-height) 안 빈칸은 여백이 아니에요(목록 아래 12 + 칸 안 빈칸 12 = 24)', html: `<ul style="margin:0 0 12px;padding-left:20px"><li>목록 한 줄</li></ul><a href="#" style="display:flex;align-items:center;min-height:44px;line-height:20px">바로가기 →</a>` },
     { name: '늘어나는 빈칸: 바닥에 붙인 발(margin-top:auto) 위 빈자리는 안 재요', html: `<div style="display:flex;flex-direction:column;min-height:300px"><p style="margin:0">위 글</p><p style="margin:auto 0 0">바닥 발</p></div>` },
     { name: '늘어나는 빈칸: 오른쪽 끝에 민 단추(margin-left:auto) 앞 빈자리는 안 재요', html: `<div style="display:flex;gap:8px">${btn('하나')}${btn('끝', 'margin-left:auto')}</div>` },
     { name: '자리 허용 값: 머리줄 ↔ 본문 70(사다리 밖이어도 그 자리에 허용)', allowed: { 마트: { '자리|div.hd → div.bd': [70] } }, html: `<div class="hd"><p style="margin:0">머리줄</p></div><div class="bd" style="margin-top:70px"><p style="margin:0">본문</p></div>` },

@@ -92,6 +92,8 @@ let OUT = null;
 const enforced = where => ENFORCE.some(s => where.includes(s));
 export async function perScreen({ ev, screen, rootSel, cond, out }) {
     OUT = out;
+    // 붙박이 띠(거르기 띠)는 굴렸다 맨 위로 돌아온 직후 접힘 · 펼침이 움직이는 중이라 자리가 튀어요(390 목록 캐릭터 칸 ↔ 띠 76 · 94) — 맨 위에서 잠시 쉬었다 재요
+    await ev(`(async () => { if (!${JSON.stringify(rootSel)}) window.scrollTo(0, 0); await new Promise(r => setTimeout(r, 900)); return true })()`, 5000);
     await ev(COLLECT);
     const m = JSON.parse(await ev(`JSON.stringify(window.__gapMeasure(${JSON.stringify(rootSel)}))`, 60000));
     if (m.error) return [{ key: `error|${screen.where}`, msg: `간격 재기 오류 ${screen.where} · ${m.error}` }];
