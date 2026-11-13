@@ -46,7 +46,9 @@ const stateById = new Map();
 let allItems = [], cards = null;   // 글꾸 목록 전부 · 카드 늦게 만들기(lazyGrid)
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const asset = p => new URL(p, import.meta.url).href;   // data/… 는 mart/ 기준
+// 11-13 그림 액자를 다시 그리며 파일 이름은 그대로 뒀어요(깡통 글 · 남의 글이 걸어 둔 옛 주소가 새 그림을 보여 주게) — 이름이 같으니 마트 안에서는 꼬리로 캐시만 갈아요. 그림을 또 바꾸면 이 꼬리를 올려요.
+const FRAMES_V = '20261113a';
+const asset = p => new URL(p, import.meta.url).href + (/^data\/frames\//.test(p) ? `?v=${FRAMES_V}` : '');   // data/… 는 mart/ 기준
 const where = kind === 'frames' ? '장식 액자 › 보관함' : '로그 복사 › 내 글꾸';
 const KIND_LABEL = { frame: '그림 액자', 'frame-preset': '심플 액자', geulkku: '글꾸' };
 // ── 공용 부품: 거르기 세그(액자 마트 방향 · 그림체 · 글꾸 마트 그림체 — 같은 모양 mart.css .mart-seg · 같은 동작) ──

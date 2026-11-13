@@ -444,6 +444,12 @@ await test('그림 액자 1824: 콘셉트 152 × 12 · 파일 넷이 다 있음 
     //   규격은 메뉴 썸네일을 고치는 갈래와 같아요(그 갈래가 얹히면 CSS 줄은 그쪽 것을 살리고 그림 파일은 이것을 써요)
     assert.ok(fs.existsSync(path.join(MART, 'cover-frames.webp')) && /\.mart-menu-cover\.is-frames\{[^}]*cover-frames\.webp/.test(fs.readFileSync(path.join(MART, 'top-mart.css'), 'utf8')), '액자 마트 메뉴 썸네일');
     for (const [f, name] of direct) assert.ok(used.has(name), `${f} 가 부르는 ${name} 이 있어요`);
+    // 옛 액자는 다시 그려도 파일 이름이 그대로예요(옛 주소가 새 그림을 보여 줘요) — 공개판(11-05 ~ 11-13)의 이름 여섯을 표본으로 잠가요 · 마트 안에서는 asset() 이 ?v= 꼬리로 캐시만 갈아요
+    for (const [id, k, name] of [['mart-watercolor-two-d-portrait', 'full', 'watercolor-two-d-portrait-d9f0b57e.webp'], ['mart-watercolor-two-d-portrait', 'mask', 'watercolor-two-d-portrait-m-f89766ac.png'],
+        ['mart-watercolor-two-d-portrait', 'thumb', 'watercolor-two-d-portrait-t-f478d54f.webp'], ['mart-watercolor-two-d-portrait', 'maskThumb', 'watercolor-two-d-portrait-tm-b768a52f.png'],
+        ['mart-picnic-clay-portrait', 'thumb', 'picnic-clay-portrait-t-10fc6aa8.webp'], ['mart-adrian-clay-landscape', 'full', 'adrian-clay-landscape-0f96bb96.webp']])
+        assert.equal(pics.find(x => x.id === id)[k], `data/frames/${name}`, `${id} ${k} 파일 이름 그대로`);
+    assert.ok(fs.readFileSync(path.join(MART, 'mart.js'), 'utf8').includes("const asset = p => new URL(p, import.meta.url).href + (/^data\\/frames\\//.test(p) ? `?v=${FRAMES_V}` : '');"), '액자 그림 주소에 캐시 꼬리');
     const hunter = [...by].filter(([, xs]) => xs[0].category === 'hunter-char');
     assert.equal(hunter.length, 8); for (const [c, xs] of hunter) { assert.match(c, /^hunter-[a-z]+$/); assert.match(xs[0].conceptLabel, / · D&H$/); }
     assert.equal(data.categories.findIndex(c => c.id === 'hunter-char'), data.categories.findIndex(c => c.id === 'halo-char') + 1, 'D&H 인물 칩은 천지합동청 인물 바로 뒤');

@@ -4,7 +4,7 @@
 .mart-cards a{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:var(--surface);color:var(--text);text-decoration:none;box-shadow:var(--card-shadow);transition:translate .15s}
 .mart-cards a:hover{translate:0 -2px}
 .mart-cards .mart-art{position:relative;height:150px;border-radius:8px;overflow:hidden;background:var(--tint)}
-.mart-cards .mart-art.frames{background:url(data/frames/picnic-clay-portrait-t-ee8b0db0.webp) 36% 55%/auto 88% no-repeat,url(data/frames/rainbow-illustrated-portrait-t-c05fb545.webp) 64% 55%/auto 88% no-repeat,linear-gradient(165deg,#e3eefa,#f6e9f2)}
+.mart-cards .mart-art.frames{background:url(data/frames/picnic-clay-portrait-t-10fc6aa8.webp) 36% 55%/auto 88% no-repeat,url(data/frames/rainbow-illustrated-portrait-t-70408717.webp) 64% 55%/auto 88% no-repeat,linear-gradient(165deg,#e3eefa,#f6e9f2)}
 /* 글꾸 마트 표지: 실제 글꾸 틀(비 · 호박 · 메신저 말풍선) 미리보기를 겹친 몽타주(cover-geulkku.webp · 1120×300 · 마트-모바일/gen-cover.mjs 로 만들어요) */
 .mart-cards .mart-art.geulkku{background:url(cover-geulkku.webp) 50% 0/cover no-repeat,linear-gradient(165deg,#f6efe2,#efe9f6)}
 .mart-cards b{font-size:16px;font-weight:650;line-height:1.4}
