@@ -336,7 +336,7 @@ function zoneRootOf(doc, root) {
 function zoneHub(win, hubs, doc) {
     let z = hubs.zones.get(doc);
     if (z) return z;
-    z = { doc, subs: [], mo: null, carry: [], dispatching: false, opts: null, chain: new Set(), chat: null, wiredKey: '', rewireSoon: false };
+    z = { doc, subs: [], mo: null, carry: [], dispatching: false, opts: null, chain: new Set(), chat: null, wiredKey: '', rewireSoon: false, pruneSoon: null };
     z.handle = (records, except = null) => zoneHandle(win, z, records, except);
     z.mo = new win.MutationObserver(records => z.handle(records));
     hubs.zones.set(doc, z);
@@ -395,7 +395,13 @@ function plan(z) {
     if (chat && !emptyOpts(opts.chat)) regs.push([chat, asTree(opts.chat)]);
     return { opts, regs, chain, chat };
 }
+// 한가할 때 한 번(없으면 0.2초 뒤) — 돌려주는 값으로 취소해요
+function whenIdle(win, fn) {
+    if (typeof win.requestIdleCallback === 'function') { const id = win.requestIdleCallback(fn, { timeout: 1000 }); return { cancel: () => win.cancelIdleCallback?.(id) }; }
+    const id = win.setTimeout(fn, 200); return { cancel: () => win.clearTimeout(id) };
+}
 function rewire(z) {
+    if (z.pruneSoon) { z.pruneSoon.cancel(); z.pruneSoon = null; }   // 통째로 다시 걸면 빠진 가지도 같이 떼져요
     const p = plan(z);
     const key = JSON.stringify(p.opts) + '|' + (p.chat ? 'c' : '') + '|' + p.regs.length;
     // 옵션 · 걸 노드가 그대로면 아무것도 안 해요(구독이 늘어도 옵션이 같으면 감시는 그대로)
@@ -427,7 +433,7 @@ function zoneFinder(z) {
 }
 function zoneHandle(win, z, records, except) {
     z.dispatching = true;
-    let again = false;
+    let again = false, pruned = false;
     const t0 = now();
     try {
         const zoneOf = zoneFinder(z), zones = new Array(records.length);
@@ -447,7 +453,7 @@ function zoneHandle(win, z, records, except) {
                     const zone = r.target === z.doc.documentElement ? 'html' : 'body';
                     if (z.opts && !emptyOpts(z.opts[zone]) && !z.wired?.has(n)) { z.mo.observe(n, asTree(z.opts[zone])); z.wired?.add(n); }
                 }
-                for (const n of r.removedNodes || []) if (n.nodeType === 1 && z.wired?.has(n)) { again = true; break; }
+                for (const n of r.removedNodes || []) if (n.nodeType === 1 && z.wired?.has(n)) { pruned = true; break; }
             }
         }
         const memo = new Map();
@@ -475,6 +481,10 @@ function zoneHandle(win, z, records, except) {
         z.rewireSoon = true;
         queueMicrotask(() => { z.rewireSoon = false; if (z.subs.length) { z.wiredKey = ''; rewire(z); } });
     }
+    // 1.4.x opt-chat-open(고침안 6): 빠지기만 한 가지(알림 상자 · 팝업 · 확장 창이 body 에서 빠짐)는 한가할 때 한 번에 떼요.
+    //   예전에는 그 마이크로태스크에 감시를 통째로 끊고 다시 걸어(observe 수십 번) 채팅을 여는 도중(알림이 뜨고 사라짐)에 폰 4배 22ms 가 들었어요.
+    //   그동안 떨어진 가지의 기록은 구역을 못 찾아 버려요(②) — 받는 기록은 같고, 등록만 조금 늦게 떼요. 구조가 바뀐(again) 다시 걸기는 예전처럼 바로예요
+    if (pruned && !again && !z.pruneSoon) z.pruneSoon = whenIdle(win || globalThis, () => { z.pruneSoon = null; if (z.subs.length) { z.wiredKey = ''; rewire(z); } });
     runCarried(win, z);
 }
 
