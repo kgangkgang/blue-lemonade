@@ -1,0 +1,54 @@
+/* 기억 서고 확장 맞춤 시트 — Memoria 2.0.4 화면에서 확인(2026-11-13).
+   그 확장이 깔려 있을 때만 src/ext-compat.js 가 이 시트를 붙여요(없는 사람은 한 바이트도 받지 않아요 · style.css 에 싣지 않아요).
+   · 원작의 뿌리(#memoria_settings.memoria · 맞춤 모듈이 원작 설정 칸에 붙인 data-bl-ext) · 원작의 검토 창(.memoria-review) · 안내 줄(.bl-ext-compat)에만, body.salty 아래에서만 걸려요.
+   · 원작이 실리태번 색 변수를 따라가서 색은 이미 팔레트로 나와요 — 테마가 투명으로 두는 선 변수를 직접 쓰는 곳만 팔레트 선으로 이어요.
+   · 시험: tools/tests/ext-memory-css.mjs */
+
+/* ---------- 선: 그 확장이 --SmartThemeBorderColor 를 직접 쓰는 곳(검토 창 줄 · 편집 기록 상자) — 테마는 그 값을 투명으로 둬요 ---------- */
+body.salty :is(#memoria_settings.memoria[data-bl-ext], .memoria-review) { --SmartThemeBorderColor: var(--bl-ui-line, var(--salty-line)); }
+
+/* ---------- 맞춘 판 안내 한 줄(src/ext-compat.js) — 제 스타일로 숨겨 두고 테마가 켜져 있을 때만 보여요 ---------- */
+body.salty #memoria_settings.memoria[data-bl-ext] .inline-drawer-content > small.bl-ext-compat { display: block !important; margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s3, 12px); border-top: 1px solid var(--salty-line); font-size: var(--bl-ts-micro, 11.5px); line-height: 1.5; color: var(--salty-muted); }
+
+/* ---------- 찾기 칸: 찾기 틀 안에 테마 입력칸이 한 겹 더 보였어요 — 안쪽 칸은 틀 면 그대로 ---------- */
+html:not(#bl-i2-off) body.salty #memoria_settings.memoria[data-bl-ext] .memoria__search input { border: 0 !important; background: transparent !important; box-shadow: none !important; outline: 0 !important; }
+
+/* ---------- 좁은 칸(넓은 화면의 확장 열): 기억 카드 머리의 아이콘 줄이 카드 밖으로 잘렸어요 — 자리가 모자라면 아랫줄로 ---------- */
+body.salty #memoria_settings.memoria[data-bl-ext] .memoria__mem-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); }
+
+/* ---------- 머리줄의 판 알약: 다른 확장 줄의 알약(css/75-version-pill)과 같은 값 — 테마가 머리줄 글을 간격 8 인 가로 줄로 놓아서 알약 여백은 0. 좁은 칸에서 알약만 아랫줄로 떨어지지 않게 한 줄로 ---------- */
+html:not(#bl-pill-off) body.salty #rm_extensions_block #memoria_settings.memoria[data-bl-ext] .inline-drawer-header > b { flex-wrap: nowrap; min-width: 0; overflow: hidden; white-space: nowrap; }
+html:not(#bl-pill-off) body.salty #rm_extensions_block #memoria_settings.memoria[data-bl-ext] .inline-drawer-header .memoria__version {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: calc(var(--mainFontSize, 15px) * 20 / 15) !important;
+  flex: none !important;
+  margin: 0 !important;
+  padding: var(--bl-pill-nudge, 0.5px) calc(var(--mainFontSize, 15px) * 8 / 15) 0 !important;
+  border: 1px solid var(--bl-ui-pill-line, var(--salty-line)) !important;
+  border-radius: calc(var(--mainFontSize, 15px) * 10 / 15) !important;
+  background: var(--bl-fill-hover, var(--bl-hover)) !important;
+  color: var(--salty-muted) !important;
+  font-size: calc(var(--mainFontSize, 15px) * 12 / 15) !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  vertical-align: middle !important;
+  opacity: 1 !important;
+}
+
+/* ---------- 손가락 화면: 탭 · 보기 고르기 · 접는 줄 · 원문 단추의 누르는 넓이 44 — 보이는 크기는 그대로, 가운데 맞춘 투명 상자(86-touch-targets 와 같은 방식) ---------- */
+@media (pointer: coarse) {
+  body.salty #memoria_settings.memoria[data-bl-ext] :is(.memoria__tab, .mmv-views button, .memoria__source-button, details > summary) { position: relative; }
+  body.salty #memoria_settings.memoria[data-bl-ext] :is(.memoria__tab, .mmv-views button, .memoria__source-button, details > summary)::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, var(--bl-ui-touch, 44px));
+    height: max(100%, var(--bl-ui-touch, 44px));
+    transform: translate(-50%, -50%);
+  }
+}

@@ -60,8 +60,8 @@ check('⑤ 그 확장이 없는 사람에게는 싣지 않아요', () => {
     const index = read('index.js');
     const line = index.split('\n').find(l => l.includes("import('./src/ext-compat.js')")) || '';
     assert.ok(line.trim().startsWith("if (!ZERO) { const KEY = 'bl-ext-compat';"), '제로 모드에서는 받지 않아요');
-    assert.ok(line.includes("if (localStorage.getItem(KEY) === '1') go();"), '지난번에 화면에 있었을 때만 바로 받아요');
-    assert.ok(line.includes("const here = !!document.getElementById('ss-settings');") && line.includes("if (here) localStorage.setItem(KEY, '1'); else localStorage.removeItem(KEY);") && line.includes('if (here) go();'), '설정 칸이 실제로 있을 때만 받고, 없으면 표시를 지워 다음 시작부터 안 받아요');
+    assert.ok(line.includes("if (localStorage.getItem(KEY)) go();"), '지난번에 화면에 있었을 때만 바로 받아요');
+    assert.ok(line.includes("const here = ['ss-settings', 'lm_settings', 'memoria_settings'].filter(id => document.getElementById(id)).join(' ');") && line.includes("if (here) localStorage.setItem(KEY, here); else localStorage.removeItem(KEY);") && line.includes('if (here) go();'), '확인한 확장의 설정 칸이 실제로 있을 때만 받고(있었던 칸 id 를 표시) · 없으면 표시를 지워 다음 시작부터 안 받아요 — 가짜 문서에도 있는 getElementById 로');
     assert.ok(!/extensionSettings/.test(line), '남의 확장 설정 열쇠로 판단하지 않아요(지워도 열쇠는 남아요)');
     assert.ok(line.includes('later(() => { look(true);') && line.includes('setTimeout(() => look(false), 2500)'), '앱 준비 뒤 한 번 · 못 봤으면 한 번 더(되풀이 없음)');
     assert.ok(line.includes("(got ||= import('./src/ext-compat.js')).then(m => m.startExtCompat())"), '모듈은 한 번만 받고, 설정 칸을 볼 때마다 한 번 더 불러 탭 · 표식을 그때 달아요');
