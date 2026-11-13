@@ -121,3 +121,7 @@
 @media (max-width:639px){.gn-result .mart-preview.geulkku{height:220px}}
 @media (prefers-reduced-motion:reduce){.gn *{animation:none!important}}
 body.gn-shot .gn-bubble,body.gn-shot .gn-choices button,body.gn-shot .gn-result{animation:none}   /* 캡처 장면: 등장 효과만 꺼요(지니는 계속 움직여요) */
+
+/* 11-13 간격 고침 3: 진행 점 줄 ↔ 무대 10 → 8(점 줄 높이 14 → 12) · 말풍선 작은 머리 줄 높이를 토큰(13 → 1.5)에 */
+.gn-dots{height:12px}
+.gn-bubble small{line-height:var(--lh-h13,1.5)}

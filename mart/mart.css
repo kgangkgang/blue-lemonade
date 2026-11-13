@@ -913,12 +913,25 @@ html.mart-cart-on{overflow:hidden}
   .mart-sheet:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-side{grid-column:2;grid-row:1/span 2}
 }
 @media (min-width:900px){.mart-sheet.is-pv-folded:not(.mart-taste) .mart-sheet-body:has(.mart-tune):has(>.mart-sheet-pvbar)>.mart-sheet-side{grid-column:1;grid-row:auto}}
-/* 11-13 줄 높이 구실(사용자 결정 · 간격 리그 rules/gap.mjs 가 잠가요): 본문 글 1.7 · 도움 글과 카드 설명 1.5 · 머리는 글자 크기마다 한 값(16 → 1.375(22px — 반 화소가 안 남게) · 14 → 1.75 · 13 → 1.5).
+/* 11-13 줄 높이 구실(사용자 결정 · 간격 리그 rules/gap.mjs 가 잠가요): 본문 글 1.7 · 도움 글과 카드 설명 1.5 · 머리는 글자 크기마다 한 값(16 → 1.375(22px — 반 화소가 안 남게) · 14 → 24px · 13 → 1.5).
    새 글을 넣을 때는 값을 직접 쓰지 말고 이 토큰을 써요 */
-:root{--lh-body:1.7;--lh-help:1.5;--lh-h16:1.375;--lh-h14:1.75;--lh-h13:1.5}
+:root{--lh-body:1.7;--lh-help:1.5;--lh-h16:1.375;--lh-h14:calc(24 / 14);--lh-h13:1.5}   /* 11-13 고침 3: 14 → 24px(1.75 의 24.5 는 반 화소가 아래 줄 단추 글자 자리를 흔들어요 — 16 → 22 와 같은 까닭) */
 .mart-head-help>p,.mart-head-help>ol,.mart-howto p,.mart-howto li{line-height:var(--lh-body)}
 .mart-head-help>.mart-help-more,.mart-param-name,.mart-cart-empty small,.mart-cart-note{line-height:var(--lh-help)}
 .mart-credits h2,.mart-howto h2,.mart-cart-empty b,.mart-tune-h,.mart-title b,.mart-band-h h2,.mart-cart-sum>b{line-height:var(--lh-h16)}
 .mart-cast-wh>b{line-height:var(--lh-h14)}
 .mart-credits-list b,.mart-look>.mart-sub{line-height:var(--lh-h13)}
 @media (min-width:640px){.mart-head-help>p,.mart-head-help>ol{line-height:var(--lh-body)}}
+/* 11-13 간격 고침 3(간격 리그 rules/gap.mjs · 허용 값 tools/site-rig/gap-allowed.json): 세밀 접힘 머리 ↔ 몸통 0 → 8 · 첫 소제목 위 4 빼기(12 + 4 → 12) · 크게 보기 「스타일」 ↔ 「가져가기」 12 + 12 + 12 → 12(옆 칸 gap 하나) · 간편 줄 사이 16 → 12 · 직접 고르기 → 도움 글 6 → 4 · 원작 목록 줄 사이 8 → 12 */
+.mart-group-body{padding-top:8px}
+.mart-look>.mart-sub:first-child{margin-top:0}
+.mart-sheet-side>.mart-sheet-tune:not(:empty),.mart-sheet-side>.mart-sheet-mine:not(:empty){margin:0}
+.mart-simple{gap:12px}
+.mart-cast-hint{margin-top:4px}
+.mart-credits-list{gap:12px}
+/* 간격 고침 3(이어서): 색 칸 글자 · 「깡통 색」 이름 줄 높이를 구실 토큰에 · 빈 장바구니 도움 글 → 단추 16 → 8 · 단추 → 되살리기 20 → 12 */
+.mart-cast-hex{line-height:var(--lh-help)}
+.mart-cast-who b{line-height:var(--lh-h14)}
+.mart-cart-empty nav{margin-top:0}
+.mart-cart-undo{margin-top:4px}
+.mart-cast-credit{padding-top:4px}   /* 캐릭터 칸 머리(단추 줄) ↔ 원작 줄 8 → 12 */

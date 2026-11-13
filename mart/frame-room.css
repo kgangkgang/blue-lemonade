@@ -159,3 +159,6 @@ body.mart-dropping::after{content:"여기에 놓으면 모든 액자에 내 사�
 .room-range.is-idle input{cursor:not-allowed}
 .room-idle{margin:-4px 0 8px;padding:8px 12px;border-radius:var(--r-ctl);background:var(--tint);color:var(--muted);font-size:12px;font-weight:500;line-height:1.5;text-align:left}
 .room-idle[hidden]{display:none}
+/* 11-13 간격 고침 3: 묶음 머리 ↔ 고르기 8 + 4 + 4 → 4 + 4(액자 방의 나머지 간격은 리뉴얼 때 — 목록만) */
+.room-group h3{margin-bottom:4px}
+.room-group>.room-seg{margin-top:0}

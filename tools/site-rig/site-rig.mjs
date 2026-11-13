@@ -18,6 +18,9 @@ const WANT_W = String(arg('--w', 'all'));
 const ONLY = arg('--only', '') ? String(arg('--only')).split(',').map(s => s.trim()).filter(Boolean) : null;
 const ONLY_RULES = arg('--rules', '') ? String(arg('--rules')).split(',').map(s => s.trim()).filter(Boolean) : null;   // 11-13 간격 리그처럼 한 규칙만 다른 폭(375 · 320 · 1280)에서 돌릴 때
 const PIXEL = !argv.includes('--no-pixel') && !ONLY_RULES;
+const SHOTS = arg('--shots', '') ? path.resolve(arg('--shots')) : null;   // --shots <폴더>: 화면마다 연 그대로 한 장(전후 견줌용 · <폭>-<화면>.png) — 간격 고침 전 · 후를 같은 여는 코드로 찍어요
+/** 사진 찍기 전에 보이게 굴릴 곳(화면 이름 → 선택자) — 고친 자리가 첫 화면 밖에 있는 화면만 */
+const SHOT_AT = { '글꾸 · 상세': '.mart-sheet-mine', '장바구니 · 담김': '.mart-cart-foot' };
 const PORT = Number(arg('--port', 8771)), CDP = Number(arg('--cdp', 9351));
 const stamp = new Date(); const pad2 = n => String(n).padStart(2, '0');
 const OUT = path.resolve(arg('--out', path.join(HERE, 'out', `${stamp.getFullYear()}${pad2(stamp.getMonth() + 1)}${pad2(stamp.getDate())}-${pad2(stamp.getHours())}${pad2(stamp.getMinutes())}${pad2(stamp.getSeconds())}`)));
@@ -176,6 +179,12 @@ try {
                 else {
                     if (screen.root) { const ok = await b.eval(`!!document.querySelector(${JSON.stringify(screen.root)})?.getClientRects().length`); if (!ok) row.why = `${screen.root} 가 보이지 않아요`; }
                     if (!row.why) { const s = await scan(b, cond, screen); if (s.error) row.why = s.error; else { row.opened = true; row.recs = s.recs; } }
+                    if (row.opened && SHOTS) {
+                        const at = SHOT_AT[screen.where];
+                        await b.eval(at ? `(()=>{const e=document.querySelector(${JSON.stringify(at)});if(e)e.scrollIntoView({block:'center'});return true})()` : (screen.root ? `(()=>{const e=document.querySelector(${JSON.stringify(screen.root)});if(e&&getComputedStyle(e).position!=='fixed'&&!e.closest('dialog,[open].mart-sheet'))e.scrollIntoView({block:'start'});return true})()` : 'window.scrollTo(0,0),true')).catch(() => { });
+                        await b.sleep(400);
+                        await b.shot(path.join(SHOTS, `${cond.key}-${screen.where.replace(/[\s·/()]+/g, '-').replace(/-+$/, '')}.png`)).catch(e => log(`사진 못 찍음 ${screen.where} · ${e.message}`));
+                    }
                 }
             } catch (e) { row.why = String(e.message || e).slice(0, 160); }
             const errs = b.errors.slice(errAt).filter(e => !/jsdelivr|favicon/.test(e));
