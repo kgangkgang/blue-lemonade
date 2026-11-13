@@ -42,6 +42,14 @@ test('머리가 없으면 인자 안의 결합자 · body 도 그대로 펼쳐�
     for (const o of out) assert.equal(spec(o), spec(src));
     assert.ok(out[0].startsWith('body.salty .a .b p'));
 });
+test('검토 D-5: 인자에 :has 가 있으면 안 펼쳐요(옛 브라우저에서 목록 전체가 버려지지 않게)', () => {
+    assert.equal(F.fanOne('body.salty :is(#pt-panel #pt-panel-close, dialog.bl-notes-dialog .bl-note-btn:has(> i.fa-xmark)) > i', st()), null);
+});
+test('검토 D-6: 머리가 있으면 결합자가 든 인자는 첫 칸이 아이디일 때만 펼쳐요', () => {
+    assert.equal(F.fanOne('body.salty :is(.bl-chat-like .autopic-media-owner, #chat .x) > i', st()), null);
+    const out = F.fanOne('html body.salty :is(#lv_settings .lv-card-head, #bwr .bwr_card_title) > span', st());
+    assert.equal(out?.length, 2);
+});
 test('맨 오른쪽 칸 · 칸 일부만 :is 인 곳은 그대로', () => {
     assert.equal(F.fanOne('body.salty .a :is(.b, .c)', st()), null);
     assert.equal(F.fanOne('body.salty div:is(.b, .c) p', st()), null);

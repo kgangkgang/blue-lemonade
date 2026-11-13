@@ -68,6 +68,29 @@ test('북마크가 쥐고 있으면 끄지 않고, 놓으면 보이는 표본을
     w.api.releasePreviewRules();
     assert.equal(w.link.media, 'not all');
 });
+test('검토 D-1: 확장 서랍을 닫았다 다시 열면(테마 서랍은 펼친 채 — restore 를 다시 안 불러요) 보이는 표본을 보고 다시 켜요', () => {
+    const w = world();
+    w.visible.add('.salty-panel');
+    w.api.restorePreviewRules();
+    const drawer = { target: { closest: s => (/drawer-toggle/.test(s) ? {} : null) } };
+    w.visible.clear(); w.fire('click', drawer);       // 확장 서랍 닫음
+    assert.equal(w.link.media, 'not all');
+    w.visible.add('.salty-panel'); w.fire('click', drawer);   // 다시 엶 — 누가 restore 를 안 불러도
+    assert.equal(w.link.media, 'all');
+    assert.equal(w.api.restored, true);
+});
+test('검토 D-2: 메모 창은 그릴 때마다 켜요(한 번만 켜는 표식 없음) — 닫았다 다시 열어도 서식이 있어요', () => {
+    const notes = fs.readFileSync(path.join(root, 'src/addons/notes/index.js'), 'utf8');
+    assert.doesNotMatch(notes, /previewRulesOn/);
+    const body = notes.slice(notes.indexOf('function renderView('), notes.indexOf('function renderView(') + 400);
+    assert.match(body, /restorePreviewRules\(\)/);
+    const w = world();
+    w.visible.add('.salty-preview'); w.api.restorePreviewRules();   // 메모 열고 그림
+    w.visible.clear(); w.fire('close');                               // 닫음 → 꺼짐
+    assert.equal(w.link.media, 'not all');
+    w.visible.add('.salty-preview'); w.api.restorePreviewRules();   // 다시 열면 renderView 가 다시 켬
+    assert.equal(w.link.media, 'all');
+});
 test('듣기는 한 번만 걸어요', () => {
     const w = world();
     w.api.restorePreviewRules(); w.api.restorePreviewRules();

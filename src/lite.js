@@ -174,13 +174,19 @@ export function restorePreviewRules() {
     turnOn();
     if (offWatch || typeof document === 'undefined') return;
     offWatch = true;
-    const later = () => { setTimeout(maybePreviewOff, 700); setTimeout(maybePreviewOff, 2000); };
+    // 검토 D-1: 확장 서랍을 닫았다 다시 열면(테마 서랍은 펼친 채) 아무도 restorePreviewRules 를 다시 안 불러요 — 그래서 끄기와 똑같이 「보이는 표본이 있으면 켜기」도 봐요.
+    //   다음 프레임(실리태번의 서랍 단추 처리 뒤) · 0.7초 · 2초(서랍이 미끄러지는 동안)
+    const later = () => { (globalThis.requestAnimationFrame || setTimeout)(syncPreviewByView); setTimeout(syncPreviewByView, 700); setTimeout(syncPreviewByView, 2000); };
     document.addEventListener('click', e => { if (e.target?.closest?.('.inline-drawer-toggle, .drawer-toggle')) later(); }, true);
     document.addEventListener('close', later, true);   // dialog 닫힘(거품이 없어 잡기 단계로)
 }
+const sampleShown = () => { for (const el of document.querySelectorAll(SAMPLES)) if (el.getClientRects().length) return true; return false; };
+function syncPreviewByView() {
+    if (sampleShown()) { if (!restored) turnOn(); }
+    else maybePreviewOff();
+}
 function maybePreviewOff() {
-    if (holders || !restored) return;
-    for (const el of document.querySelectorAll(SAMPLES)) if (el.getClientRects().length) return;
+    if (holders || !restored || sampleShown()) return;
     restored = false;
     if (previewLink) previewLink.media = 'not all';
 }

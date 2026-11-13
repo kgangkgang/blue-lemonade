@@ -25,7 +25,7 @@ const key = require('./css-key.cjs');
 
 const MAX_OUT = 8;
 const MAX_ARGS = 6;
-const RISKY = /::|:(before|after|first-line|first-letter)\b|&|:host|::slotted|::part|:-(webkit|moz|ms)-|:(matches|any)\(|:has\([^()]*:has\(/i;
+const RISKY = /::|:(before|after|first-line|first-letter)\b|&|:host|::slotted|::part|:-(webkit|moz|ms)-|:(matches|any)\(|:has\(/i;   // 검토 D-5: :has 를 모르는 옛 브라우저에서 목록 전체가 버려지지 않게 :has 가 든 인자는 안 펼쳐요
 const PAD = ['#bl-s', '.bl-s', 'bl-s'];
 
 /** compound 가 통째로 `:is( … )` 하나이면 인자 목록, 아니면 null */
@@ -88,6 +88,8 @@ function fanStep(sel, stats) {
         if (args.some(x => RISKY.test(x) || !x.trim())) { stats.risky++; continue; }
         const head = sel.slice(0, a);
         if (k > 0 && args.some(x => /(^|[\s>+~(,])(html|body)(?![\w-])/i.test(x))) { stats.rootArg++; continue; }
+        // 검토 D-6: 머리가 있으면 결합자가 든 인자의 첫 칸이 머리 위에 있어도 맞던 뜻이 좁아져요 — 첫 칸이 아이디(문서에 하나 · body 안)일 때만 펼쳐요
+        if (k > 0 && args.some(x => key.segments(x.trim()).length > 1 && !/^#[\w-]/.test(x.trim()))) { stats.headCombinator++; continue; }
         const tail = sel.slice(b);
         const S = lib.spec(sel);
         const out = [];
@@ -112,7 +114,7 @@ function allRules(nodes, out = []) { for (const n of nodes) { if (n.type === 'ru
 
 /** @returns {{ text: string, stats: object }} */
 function fanout(css) {
-    const stats = { alreadyFiltered: 0, rules: 0, rulesChanged: 0, branchesIn: 0, branchesOut: 0, fanned: 0, wrapped: 0, risky: 0, rootArg: 0, tooMany: 0 };
+    const stats = { headCombinator: 0, alreadyFiltered: 0, rules: 0, rulesChanged: 0, branchesIn: 0, branchesOut: 0, fanned: 0, wrapped: 0, risky: 0, rootArg: 0, tooMany: 0 };
     const tree = lib.parse(css);
     if (tree.problems.length) throw new Error(`[css-fanout] 읽기 문제: ${tree.problems.slice(0, 3).join(' / ')}`);
     const edits = [];
