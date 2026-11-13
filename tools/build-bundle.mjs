@@ -156,37 +156,109 @@ export function isSiteUrl(source, root = ROOT, P = path) {
     return inside === '' ? false : inside.startsWith('..') || P.isAbsolute(inside);
 }
 
-function plugin(bootModules = new Set()) {
+// ── 워커 그래프(날씨 워커 고침): 워커 전역(창 · 문서 없음)에서 도는 모듈은 시작 묶음과 따로 묶어요
+//   1.2.1 에서 시작 그래프를 수동 조각 하나(dist/index.js)로 묶은 뒤로, 날씨 엔진 · 장면 조각이 weather-options 를 받으려고 ./index.js 를 import 했어요.
+//   워커는 index.js(시작 그래프 전체)를 평가하다 document 가 없어 멈추고(src/lite.js), weather.js 는 날씨를 메인 스레드 2D 캔버스(폰 1152×2271)로 바꿔 그렸어요
+//   — 1.2.1 ~ 1.2.4 폰 프레임마다 Commit 이 는 유력한 원인이에요. 1.2.0 까지는 rollup 이 weather-options 를 우연히 DOM 없는 작은 조각에 두어 돌았을 뿐이에요.
+//   그래서 워커 그래프는 rollup 을 따로 돌려 자기 조각만 갖게 해요(시작 묶음 · 다른 늦은 조각과 모듈을 나누지 않아요 — weather-options · weather-load 는 두 벌).
+//   메인 묶음은 그 조각을 그대로 dist 에 쓰고 src/weather.js 의 엔진 · 워커 주소(CHUNK_URL)만 그 파일로 이어요. 메인 스레드 대체 길도 같은 엔진 조각을 받아요(두 길이 같은 코드).
+//   entries: 메인 그래프가 주소로 받는 그 그래프의 입구. 다른 워커(번역 span · 움짤 · 저장 · 알림)는 dist 조각이 아니라 src 원본이나 blob 을 읽어서 여기 없어요.
+export const WORKER_GRAPHS = [
+    { name: '날씨 워커', entries: ['src/weather-worker.js', 'src/weather-engine.js'] },
+];
+// 워커 전역(DedicatedWorkerGlobalScope)에는 없는 창 · 문서 전역 — 워커 그래프 모듈이 쓰면 워커 안에서 ReferenceError 로 멈추거나 오류를 내요.
+//   typeof 로 먼저 확인하는 이름(weather-art.js 의 typeof Image === 'function')은 「없으면 다른 길」을 둔 것이라 봐 줘요.
+export const WINDOW_ONLY = new Set(['window', 'document', 'localStorage', 'sessionStorage', 'getComputedStyle', 'matchMedia', 'MutationObserver', 'IntersectionObserver', 'ResizeObserver',
+    'requestIdleCallback', 'customElements', 'HTMLElement', 'Element', 'Node', 'Image', 'Audio', 'DOMParser', 'devicePixelRatio', 'innerWidth', 'innerHeight', 'visualViewport',
+    'getSelection', 'alert', 'confirm', 'jQuery', '$', 'toastr', 'SillyTavern']);
+/** 모듈 AST(ESTree)에서 창 · 문서 전역을 풀린 이름으로 쓰는 것 — 모듈 안에서 선언한 이름 · 속성 이름 · typeof 로 확인한 이름은 빼요 */
+export function windowGlobalsIn(ast, names = WINDOW_ONLY) {
+    const declared = new Set(), guarded = new Set(), used = new Set();
+    const bind = p => {
+        if (!p) return;
+        if (p.type === 'Identifier') declared.add(p.name);
+        else if (p.type === 'ObjectPattern') for (const q of p.properties) bind(q.type === 'RestElement' ? q.argument : q.value);
+        else if (p.type === 'ArrayPattern') for (const q of p.elements) bind(q);
+        else if (p.type === 'RestElement') bind(p.argument);
+        else if (p.type === 'AssignmentPattern') bind(p.left);
+    };
+    const NAME_ONLY = { MemberExpression: 'property', Property: 'key', MethodDefinition: 'key', PropertyDefinition: 'key', LabeledStatement: 'label', BreakStatement: 'label', ContinueStatement: 'label', ExportSpecifier: 'exported', ImportSpecifier: 'imported' };
+    const walk = (node, parent, key) => {
+        if (Array.isArray(node)) { for (const n of node) walk(n, parent, key); return; }
+        if (!node || typeof node.type !== 'string') return;
+        if (node.type === 'Identifier') {
+            if (!(parent && NAME_ONLY[parent.type] === key && !parent.computed) && names.has(node.name)) used.add(node.name);
+            return;
+        }
+        if (node.type === 'UnaryExpression' && node.operator === 'typeof' && node.argument?.type === 'Identifier') { guarded.add(node.argument.name); return; }
+        if (node.type === 'VariableDeclarator') bind(node.id);
+        else if (/^(?:Function(?:Declaration|Expression)|ArrowFunctionExpression)$/.test(node.type)) { bind(node.id); node.params.forEach(bind); }
+        else if (/^Class(?:Declaration|Expression)$/.test(node.type)) bind(node.id);
+        else if (node.type === 'CatchClause') bind(node.param);
+        else if (/^Import(?:Default|Namespace)?Specifier$/.test(node.type)) bind(node.local);
+        for (const k of Object.keys(node)) if (node[k] && typeof node[k] === 'object') walk(node[k], node, k);
+    };
+    walk(ast, null, null);
+    return [...used].filter(n => !declared.has(n) && !guarded.has(n)).sort();
+}
+/** 워커 그래프 검사(빌드를 멈출 까닭 목록) — 시작 그래프 입구 index.js · 바깥 모듈(실리태번 주소 · vendor · 무결성 표) · 창 · 문서 전역을 쓰는 모듈 */
+function workerGraphProblems(ctx, root) {
+    const relOf = id => posix(path.relative(root, id));
+    const ids = [...ctx.getModuleIds()];
+    const from = new Map(ids.filter(id => ctx.getModuleInfo(id)?.isEntry).map(id => [id, null]));
+    for (const id of from.keys()) for (const next of [...(ctx.getModuleInfo(id)?.importedIds || []), ...(ctx.getModuleInfo(id)?.dynamicallyImportedIds || [])]) if (!from.has(next)) from.set(next, id);
+    const way = id => { const out = []; for (let at = id; at; at = from.get(at)) out.unshift(ctx.getModuleInfo(at)?.isExternal ? at : relOf(at)); return out.join(' → '); };
+    const problems = [], dom = [];
+    for (const id of ids) {
+        const info = ctx.getModuleInfo(id);
+        if (!info) continue;
+        if (info.isExternal) problems.push(`바깥 모듈을 불러요(워커가 받을 수 있는지 못 봐요): ${way(id)}`);
+        else if (relOf(id) === 'index.js') problems.unshift(`시작 그래프 입구 index.js 를 불러요: ${way(id)}`);
+        else { const names = windowGlobalsIn(info.ast); if (names.length) dom.push(`${relOf(id)} 가 창 · 문서 전역(${names.join(' · ')})을 써요: ${way(id)}`); }
+    }
+    return [...problems, ...dom.slice(0, 8), ...(dom.length > 8 ? [`그 밖에 창 · 문서 전역을 쓰는 모듈 ${dom.length - 8}개`] : [])];
+}
+
+function plugin(bootModules = new Set(), { root = ROOT, workers = [], worker = null } = {}) {
     const refs = new Map();   // 원본 경로 → 참조 id
+    const relOf = abs => posix(path.relative(root, abs));
+    const workerModules = new Set(workers.flatMap(w => w.chunks.flatMap(c => Object.keys(c.modules).map(relOf))));
     const external = id => /[\\/]vendor[\\/]/.test(id) || /[\\/]src[\\/]build-info\.js$/.test(id);
     const fromDist = abs => {
-        const r = posix(path.relative(DIST, abs));
+        const r = posix(path.relative(path.join(root, 'dist'), abs));
         return r.startsWith('.') ? r : `./${r}`;
     };
     return {
         name: 'blue-lemonade',
         buildStart() {
-            const emit = (file, fileName) => this.emitFile({ type: 'chunk', id: path.join(ROOT, file), fileName, preserveSignature: 'strict' });
-            for (const dir of ['plain', 'titles']) for (const f of fs.readdirSync(path.join(ROOT, 'src/scripts', dir))) if (f.endsWith('.js')) emit(`src/scripts/${dir}/${f}`, `${dir}/${f}`);
+            if (worker) return;   // 워커 그래프 묶음은 자기 입구만 — 내장 스크립트 · 워커 조각은 메인 묶음이 dist 에 써요
+            const emit = (file, fileName) => this.emitFile({ type: 'chunk', id: path.join(root, file), fileName, preserveSignature: 'strict' });
+            for (const dir of ['plain', 'titles']) for (const f of fs.readdirSync(path.join(root, 'src/scripts', dir))) if (f.endsWith('.js')) emit(`src/scripts/${dir}/${f}`, `${dir}/${f}`);
+            // 따로 묶은 워커 그래프 조각은 다시 묶지 않고 그대로 써요 — 입구(엔진 · 워커) 주소는 아래 transform 의 CHUNK_URL 이 그 파일로 이어요
+            for (const w of workers) {
+                const asset = new Map(w.chunks.map(c => [c.fileName, this.emitFile({ type: 'asset', fileName: c.fileName, source: c.code })]));
+                for (const [entry, file] of w.entryFiles) refs.set(entry, asset.get(file));
+            }
         },
         resolveId(source, importer) {
-            if (isSiteUrl(source)) return { id: source, external: true };
+            if (isSiteUrl(source, root)) return { id: source, external: true };
             if (!importer || !source.startsWith('.')) return null;
             const abs = path.resolve(path.dirname(importer), source.split('?')[0]);
-            if (path.relative(ROOT, abs).startsWith('..') || external(abs)) return { id: fromDist(abs), external: true };
+            if (path.relative(root, abs).startsWith('..') || external(abs)) return { id: fromDist(abs), external: true };
             return null;
         },
         transform(code, id) {
-            const name = rel(id);
+            const name = relOf(id);
             if (ADAPT[name]) code = ADAPT[name](code);
             if (HTML_GAP_FILES.includes(name)) code = minHtmlGaps(code, name);
             for (const [find, target] of CHUNK_URL[name] || []) {
-                if (!refs.has(target)) refs.set(target, this.emitFile({ type: 'chunk', id: path.join(ROOT, target), preserveSignature: 'strict' }));
+                if (!refs.has(target) && workerModules.has(target)) throw new Error(`메인 묶음이 워커 그래프 모듈 ${target} 를 주소로 받아요 — WORKER_GRAPHS 입구에 넣어 따로 묶은 조각을 가리키게 해요`);
+                if (!refs.has(target)) refs.set(target, this.emitFile({ type: 'chunk', id: path.join(root, target), preserveSignature: 'strict' }));
                 code = must(code, find, `new URL(import.meta.ROLLUP_FILE_URL_${refs.get(target)})`);
             }
             if (name === 'src/addons/tts/shell.js') {
                 const target = 'src/addons/tts/index.js';
-                if (!refs.has(target)) refs.set(target, this.emitFile({ type: 'chunk', id: path.join(ROOT, target), preserveSignature: 'strict' }));
+                if (!refs.has(target)) refs.set(target, this.emitFile({ type: 'chunk', id: path.join(root, target), preserveSignature: 'strict' }));
                 code = must(code, "(attempt ? import(`./index.js?retry=${attempt}`) : import('./index.js'))", `import(import.meta.ROLLUP_FILE_URL_${refs.get(target)}+(attempt?\`?retry=\${attempt}\`:''))`);
             }
             const keep = REAL_META[name] || [];
@@ -197,7 +269,9 @@ function plugin(bootModules = new Set()) {
             return { code, map: null };
         },
         // 시작 그래프(index.js 에서 정적 import 로만 닿는 모듈) — 아래 「작은 조각 합치기」가 늦게 받는 모듈을 시작 조각에 끼우지 못하게 쓰는 표
-        buildEnd() {
+        //   워커 그래프 묶음에서는 대신 워커 그래프 검사를 해요(index.js · 바깥 모듈 · 창 · 문서 전역)
+        buildEnd(error) {
+            if (worker) { if (!error) worker.problems = workerGraphProblems(this, root); return; }
             const walkStatic = id => {
                 if (bootModules.has(id)) return;
                 const info = this.getModuleInfo(id);
@@ -205,7 +279,7 @@ function plugin(bootModules = new Set()) {
                 bootModules.add(id);
                 for (const next of info.importedIds) walkStatic(next);
             };
-            walkStatic(path.join(ROOT, 'index.js'));
+            walkStatic(path.join(root, 'index.js'));
         },
         async renderChunk(code) {
             const esbuild = need('esbuild');
@@ -224,12 +298,38 @@ function need(name) {
     return load();
 }
 
+/** 워커 그래프 하나를 따로 묶어요(위 WORKER_GRAPHS) — 검사에 걸리면 멈춰요. 쓰지는 않고 조각만 돌려줘요(메인 묶음이 dist 에 써요).
+ *  돌려주는 것: { graph, chunks, entryFiles: Map(입구 원본 → dist 파일 이름), warnings }. root 를 바꿔 견본 저장소로도 돌려요(tools/tests/weather-worker-graph.mjs) */
+export async function buildWorkerGraph(graph, { root = ROOT } = {}) {
+    const { rollup } = need('rollup');
+    const warnings = [], scan = { problems: [] };
+    const bundle = await rollup({
+        input: graph.entries.map(f => path.join(root, f)), plugins: [plugin(undefined, { root, worker: scan })], treeshake: 'safest', preserveEntrySignatures: 'strict', makeAbsoluteExternalsRelative: false,
+        onwarn: w => warnings.push(w),
+    });
+    try {
+        if (scan.problems.length) throw new Error(`${graph.name} 그래프가 워커 전역(창 · 문서 없음)에서 못 돌아요 — 빌드를 멈춰요\n  - ${scan.problems.join('\n  - ')}`);
+        const { output } = await bundle.generate({ format: 'es', entryFileNames: 'c-[hash].js', chunkFileNames: 'c-[hash].js', generatedCode: 'es2015', hoistTransitiveImports: false });
+        const chunks = output.filter(o => o.type === 'chunk');
+        const files = new Set(chunks.map(c => c.fileName));
+        const stray = chunks.flatMap(c => [...c.imports, ...c.dynamicImports].filter(f => !files.has(f)).map(f => `${c.fileName} → ${f}`));
+        if (stray.length) throw new Error(`${graph.name} 조각이 자기 그래프 밖 파일을 불러요 — 빌드를 멈춰요: ${stray.join(' · ')}`);
+        const entryFiles = new Map(graph.entries.map(f => [f, chunks.find(c => c.isEntry && c.facadeModuleId && posix(path.relative(root, c.facadeModuleId)) === f)?.fileName]));
+        const lost = [...entryFiles].filter(([, file]) => !file).map(([f]) => f);
+        if (lost.length) throw new Error(`${graph.name} 입구 조각을 못 찾았어요: ${lost.join(' · ')}`);
+        return { graph, chunks, entryFiles, warnings };
+    } finally { await bundle.close(); }
+}
+
 export async function buildBundle() {
     const { rollup } = need('rollup');
-    const warnings = [];
+    // 워커 그래프부터 따로 묶어요(검사에 걸리면 여기서 멈춰요)
+    const workers = [];
+    for (const graph of WORKER_GRAPHS) workers.push(await buildWorkerGraph(graph));
+    const warnings = workers.flatMap(w => w.warnings);
     const bootModules = new Set();
     const bundle = await rollup({
-        input: { index: path.join(ROOT, 'index.js') }, plugins: [plugin(bootModules)], treeshake: 'safest', preserveEntrySignatures: false, makeAbsoluteExternalsRelative: false,
+        input: { index: path.join(ROOT, 'index.js') }, plugins: [plugin(bootModules, { workers })], treeshake: 'safest', preserveEntrySignatures: false, makeAbsoluteExternalsRelative: false,
         onwarn: w => warnings.push(w),
     });
     // 1.1.5 시작 묶음 다이어트: experimentalMinChunkSize 는 작은 조각을 「늘 받아 둔 조각」에 합쳐요 — 시작 조각은 모든 길이 받아 두니
@@ -240,7 +340,10 @@ export async function buildBundle() {
     const { output } = await bundle.write({ dir: DIST, format: 'es', entryFileNames: '[name].js', chunkFileNames: 'c-[hash].js', generatedCode: 'es2015', hoistTransitiveImports: false, experimentalMinChunkSize: 2500,
         manualChunks: id => (bootModules.has(id) ? 'boot' : undefined), onlyExplicitManualChunks: true });
     await bundle.close();
-    const chunks = output.filter(o => o.type === 'chunk');
+    // 워커 그래프 입구가 메인 묶음 조각에 들면(정적 import) 워커와 메인 대체 길이 다른 코드를 받게 돼요 — 주소(new URL)로만 받아요
+    const inMain = output.filter(o => o.type === 'chunk').flatMap(c => Object.keys(c.modules).map(rel).filter(m => workers.some(w => w.graph.entries.includes(m))).map(m => `${m} → dist/${c.fileName}`));
+    if (inMain.length) throw new Error(`워커 그래프 입구가 메인 묶음 조각에 들었어요: ${inMain.join(' · ')}`);
+    const chunks = [...output.filter(o => o.type === 'chunk'), ...workers.flatMap(w => w.chunks)];
     const bad = warnings.filter(w => !['EMPTY_BUNDLE'].includes(w.code));
     for (const w of bad.slice(0, 20)) console.log(`[경고] ${w.code}: ${String(w.message).slice(0, 200)}`);
     // 맨 위 await 모듈이 다른 모듈과 한 조각에 들면 그 모듈들까지 기다려요 — 혼자 있어야 해요
@@ -257,7 +360,8 @@ export async function buildBundle() {
     fs.writeFileSync(path.join(ROOT, STAMP), `${JSON.stringify(stamp)}\n`);
     const bytes = chunks.reduce((s, c) => s + Buffer.byteLength(c.code), 0);
     console.log(`[씀] dist/ 조각 ${chunks.length}개 · ${(bytes / 1024).toFixed(0)}KB`);
-    return { chunks, warnings: bad };
+    for (const w of workers) console.log(`[씀] ${w.graph.name} 그래프(따로 묶음): ${w.chunks.length}조각 · ${w.chunks.reduce((s, c) => s + Buffer.byteLength(c.code), 0).toLocaleString('en-US')}B — 시작 묶음 · 다른 조각을 부르지 않아요`);
+    return { chunks, warnings: bad, workers };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

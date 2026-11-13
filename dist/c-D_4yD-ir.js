@@ -1,0 +1,1 @@
+function s(r,n,t=0){const o=n+t*2;return o<=0||r>=-t&&r<=n+t?r:((r+t)%o+o)%o-t}function e(r,n=2){const t=r==null||r===""?NaN:Number(r);return Number.isFinite(t)?Math.max(0,Math.min(200,t)):{1:55,2:100,3:170}[n]??100}export{e as a,s as w};

@@ -30,6 +30,7 @@ test('윈도: 예전과 같아요', () => {
 test('묶음 도구가 / 로 시작하는 것을 바로 바깥으로 보내지 않아요', () => {
     const text = fs.readFileSync(path.join(root, 'tools/build-bundle.mjs'), 'utf8');
     assert.ok(!/if \(source\.startsWith\('\/'\)\) return \{ id: source, external: true \}/.test(text));
-    assert.match(text, /if \(isSiteUrl\(source\)\) return \{ id: source, external: true \}/);
+    // 날씨 워커 고침부터 묶음 도구가 견본 저장소(root)로도 돌아서 둘째 인자로 그 뿌리를 넘겨요 — 「/ 로 시작하면 isSiteUrl 을 거친다」는 계약은 그대로예요
+    assert.match(text, /if \(isSiteUrl\(source(?:, root)?\)\) return \{ id: source, external: true \}/);
 });
 console.log(`bundle-site-url: ${n}개 통과`);

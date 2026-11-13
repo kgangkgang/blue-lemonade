@@ -465,6 +465,8 @@ jobs:
           node tools/tests/bundle-html-indent.mjs .
           # 묶음 도구가 리눅스에서 저장소 자신의 절대 경로(/home/runner/…)를 실리태번 사이트 주소로 보지 않는지(1.1.9 ~ 1.2.2 의 6단계 실패)
           node tools/tests/bundle-site-url.mjs .
+          # 날씨 워커 그래프가 시작 묶음(dist/index.js) · 창 · 문서 전역 없이 워커 전역 흉내에서 끝까지 도는지(1.2.1 ~ 1.2.4 는 워커가 index.js 를 불러 멈추고 날씨를 메인에서 그렸어요)
+          node tools/tests/weather-worker-graph.mjs .
           node tools/tests/settings-ext-memo.mjs .
           node tools/tests/tone-hex.mjs .
           node tools/tests/card-ink-memo.mjs .
