@@ -1079,6 +1079,11 @@ await test('11-13 깡통 빈 줄 막기 옛 규칙: 마트 자료 전부(원래 
     for (const keep of ['.gk-k1 details>summary~:not([class]):has(>br:only-child){display:none}', '.gk-k1 details:not([open])>summary~:not([class]){display:none}', '.gk-k1 details>summary~div{display:none}', '.gk-k1 details>summary~:not([class]){display:none;margin:0}', '.gk-k1 .x:not([class]){display:none}'])
         assert.equal(pol.fixKkGuard(keep), keep, `다른 뜻의 규칙은 그대로: ${keep}`);
     assert.ok(/^\/\/ 원본 블루레몬에이드/.test(fs.readFileSync(path.join(MART, 'lib/log-copy/log-copy-polish.js'), 'utf8')), '테마 사본 머리 그대로');
+    // 이미 붙여 넣을 꼴인 내 글꾸(옛 복사 글을 다시 넣은 것 — pasteReady 가 그대로 돌려줘요)도 깡통에 붙일 꼴(kkangtongReady)에서 고쳐요
+    const tgm = await imp(path.join(MART, 'tone-geulkku.js'));
+    const ready = '<div class="gk gk-k8 gk-td blq-log"><style>.content>p,.blq-cm{box-sizing:border-box}.gk-k8 details>summary~:not([class]){display:none}</style><details class="gk-bl"><summary class="gk-sm">제목</summary><p class="gk-nr">글</p></details></div>';
+    const got = tgm.kkangtongReady(ready);
+    assert.ok(!OLD_RULE.test(got) && got.includes('.gk-k8 details>summary~:not([class]):not(:has([class])){display:none}'), got.slice(0, 200));
 });
 await test('액자 마트 고침(11-12 밤 전수조사 고침 안 3 · 4 · 5): 보이는 이름 하나(라파엘 · 무협시뮬 · D&H · 옛 이름으로도 찾아짐) · 장바구니는 받은 뒤에도 그대로 · 비우기 되살리기 · 작은 고장 다섯', async () => {
     const room = fs.readFileSync(path.join(MART, 'frame-room.js'), 'utf8'), cartSrc = fs.readFileSync(path.join(MART, 'cart.js'), 'utf8'), martSrc = fs.readFileSync(path.join(MART, 'mart.js'), 'utf8');

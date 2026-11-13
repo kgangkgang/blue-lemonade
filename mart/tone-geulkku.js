@@ -11,6 +11,7 @@
 import { tone, fitInk, bandColor, oklchOf, oklchHex, over, speakerColor, INK_TARGET } from './lib/log-copy/shared/char-tone.js?v=20261111a';
 import { parseColor, contrast } from './lib/log-copy/shared/ink-paint.js';
 import { pasteReady } from './lib/log-copy/log-copy-lift.js';
+import { fixKkGuardHtml } from './lib/log-copy/log-copy-polish.js';   // 11-13 깡통 빈 줄 막기 옛 규칙 → 고친 꼴(이미 붙여 넣을 꼴인 내 글꾸는 pasteReady 가 그대로 돌려줘서 여기서 한 번 더)
 
 export { tone, speakerColor };
 export const FRAME_WIDTH = 640;   // 확정 규칙: 640 고정(메모리 log-post-layout-rules)
@@ -486,7 +487,7 @@ export function fillInks(html) {
 export function kkangtongReady(html) {
     const text = String(html ?? '');
     if (!text.trim()) return text;
-    return pasteReady(fillInks(text));
+    return fixKkGuardHtml(pasteReady(fillInks(text)));
 }
 
 /**
