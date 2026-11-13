@@ -2,6 +2,7 @@
 //   다시 쓰면 HTML 풀기에 더해, 그 창을 보는 단추 글자 맞춤(control-ink)이 새 단추를 보고 창이 보이는지 물으며 배치를 강제했어요(진단 diag-1 · 폰 4배 짧은 채팅 열기).
 //   ㄱ. 프롬프트 연동 정규식(regexlink): 요약 · 모듈 표는 넣은 글이 같으면 손대지 않아요(누가 칸을 비웠으면 다시 넣어요)
 //   ㄴ. 단추 글자 세로 맞춤(control-ink): 프레임 뒤 읽기를 한가할 때로(최대 0.3초) — 채팅을 여는 도중에 읽어 남의 배치를 대신 치르지 않게
+//   ㄷ. 네모 단추(squared-buttons): 처음 보는 단추 재기도 같은 때로(아는 생김새는 예전처럼 바로)
 //   node tools/tests/chat-open-fixed-cost.mjs [테마 루트]
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -35,6 +36,12 @@ check('ㄴ. 단추 글자 맞춤: rAF 뒤 한가할 때(최대 0.3초) · 기다
     assert.ok(src.includes("if (!enabled) { pending.clear(); return; }"), '꺼졌으면 재지 않아요');
     const q = src.indexOf('frame = requestAnimationFrame(() => afterLayout(() => {'), a = src.indexOf('alignRoots([...pending]', q);
     assert.ok(q > 0 && a > q, '맞추기는 그 뒤에 한 번');
+});
+
+check('ㄷ. 네모 단추: rAF 뒤 한가할 때(최대 0.3초) · 겹쳐 걸지 않고 · 끌 때 취소해요', () => {
+    const src = read('src/squared-buttons.js');
+    assert.ok(src.includes("if (!frame && !idle) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.requestIdleCallback === 'function') { idle = host.requestIdleCallback(() => { idle = 0; flush(); }, { timeout: 300 }); }"));
+    assert.ok(src.includes('if (idle) host.cancelIdleCallback?.(idle);'));
 });
 
 console.log(`chat-open-fixed-cost: ${passed} passed`);
