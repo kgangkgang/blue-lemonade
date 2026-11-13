@@ -631,6 +631,8 @@ jobs:
           node tools/tests/squared-record-kind.mjs .
           node tools/tests/squared-text-last.mjs .
           node tools/tests/squared-fast-select.mjs .
+          # 1.2.2 네모 단추가 빈 생김새 열쇠(클래스 없는 · bl- 단추)로 테마 창 단추 모서리를 8 로 바꾸던 것 · 테마 자기 부품은 후보 밖
+          node tools/tests/squared-own-parts.mjs .
           node tools/tests/same-value-hidden.mjs .
           node tools/tests/longpress-fab-drag.mjs .
           node tools/tests/perf-copy-http.mjs .

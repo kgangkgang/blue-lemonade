@@ -171,15 +171,15 @@ export async function openLogSheet(model) {
     const dialog = document.createElement('dialog');
     dialog.className = 'bl-tool-dialog bl-lc';
     dialog.setAttribute('aria-labelledby', 'bl-lc-title');
-    dialog.innerHTML = `<header class="bl-lc-head"><h3 id="bl-lc-title"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>로그 복사</span><small>메시지 ${model.messages.length}개</small></h3><div class="bl-lc-mode bl-lc-hd-mode" role="group" aria-label="밝기" data-lc-hd-mode>${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><button type="button" class="salty-btn bl-lc-icon" data-lc="close" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
+    dialog.innerHTML = `<header class="bl-lc-head"><h3 id="bl-lc-title"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>로그 복사</span><small>메시지 ${model.messages.length}개</small></h3><div class="bl-lc-mode salty-mode-switch bl-lc-hd-mode" role="group" aria-label="밝기" data-lc-hd-mode>${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><button type="button" class="salty-btn bl-lc-icon" data-lc="close" aria-label="닫기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
         <div class="bl-lc-scroll">
             <div class="bl-lc-band" role="status" data-lc-retired hidden></div>
             <div class="bl-lc-tl" data-lc-tl><div class="salty-seg bl-screen-chips bl-lc-cats" role="group" aria-label="분류" data-lc-cats></div><button type="button" class="salty-btn bl-lc-icon bl-lc-tl-all" data-lc="cats-all" aria-expanded="false" aria-label="분류 전부 보기"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button></div>
-            <div class="bl-lc-cr" data-lc-cr><div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div><button type="button" class="bl-lc-cr-more" data-lc="shapes-all" aria-expanded="false" aria-label="틀 전부 보기" hidden></button></div>
+            <div class="bl-lc-cr" data-lc-cr><div class="bl-lc-chips bl-chip-row" role="radiogroup" aria-label="모양" data-lc-shapes></div><button type="button" class="bl-lc-chip bl-lc-cr-more" data-lc="shapes-all" aria-label="틀 전부 보기" hidden></button></div>
             <div class="bl-lc-band bl-lc-empty" data-lc-empty hidden><span>아직 받은 글꾸가 없어요. <b>글꾸 마트</b>에서 마음에 드는 틀을 크게 보고 <b>테마용 복사</b>를 누른 뒤, 여기에 붙여 넣어 받아요.</span><span class="bl-lc-band-go"><a class="salty-btn" href="${esc(MART_GEULKKU)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트 열기</span></a><button type="button" class="salty-btn" data-lc="paste"><i class="fa-solid fa-paste" aria-hidden="true"></i><span>붙여 넣기</span></button></span></div>
             <div class="bl-lc-mine" data-lc-mine hidden></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
-            <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
+            <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode salty-mode-switch" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
             <div class="bl-lc-easy" role="group" aria-label="조절 — 간편 · 세밀" data-lc-easy hidden></div>
             <div class="bl-lc-inks bl-chip-row" role="group" aria-label="글자색 — 눌러서 바꿔요" data-lc-inks hidden></div>
             <div class="bl-lc-tools bl-chip-row" role="group" aria-label="이름 숨김 · 바꾸기"><button type="button" class="bl-lc-chip" data-lc="hide" aria-pressed="false"><i class="fa-solid fa-user-secret" aria-hidden="true"></i><span>이름 숨김</span></button><button type="button" class="bl-lc-chip" data-lc="words" aria-pressed="false"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>바꾸기</span><small data-lc-words-count></small></button><button type="button" class="bl-lc-chip" data-lc="fields" aria-pressed="false" title="제목 · 날짜 · 깡통 · 모델 · 프롬프트 칸을 글칸으로 고쳐요"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>머리 칸</span></button><button type="button" class="bl-lc-chip" data-lc="spoiler" disabled title="미리보기에서 글을 고르면 눌러요"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>숨기기</span></button></div>
@@ -1367,8 +1367,8 @@ const STYLE = `
 .bl-lc-colors[hidden], .bl-lc-pals[hidden], .bl-lc-pick[hidden], .bl-lc-paste[hidden], .bl-lc-stage[hidden], .bl-lc-foot[hidden] { display:none; }
 .bl-lc-colors .bl-lc-pals { flex:1; min-width:0; padding-left:8px; }
 .bl-lc-mode { display:flex; flex:none; gap:4px; padding:4px; border-radius:12px; background:var(--salty-fill-shade, var(--salty-shade)); }
-.bl-lc-mode button { display:grid; place-items:center; width:34px; height:34px; margin:0; padding:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font-size:14px; cursor:pointer; }
-.bl-lc-mode button[aria-pressed="true"] { background:var(--salty-fill-surface, var(--salty-surface)); color:var(--salty-accent); }
+.bl-lc-mode button { display:grid; place-items:center; width:38px; height:34px; margin:0; padding:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font-size:var(--bl-deco-glyph-17, 17px); cursor:pointer; }
+.bl-lc-mode button[aria-pressed="true"] { background:var(--bl-ui-pick-face, var(--salty-tint-18)); color:var(--bl-ui-pick-ink, var(--salty-accent)); }   /* 1.2.2 공용 밝기 스위치(.salty-mode-switch — 설정 › 색의 해 · 달)와 같은 꼴: 38×34 · 그림 17 · 고른 칸 = 옅은 고른 면 + 색 그림 */
 .bl-lc .bl-lc-pals .salty-pal { flex:none; width:96px; gap:4px; padding:4px 4px 6px; margin:4px 0; cursor:pointer; }
 .bl-lc .bl-lc-pals .salty-pal.on { box-shadow:0 0 0 2px var(--salty-bg), 0 0 0 4px var(--salty-accent); }
 .bl-lc .bl-lc-pals .salty-pal-page { padding:6px 8px; font-size:12px; }
@@ -1426,9 +1426,8 @@ const STYLE = `
 .bl-lc-np-r:first-child > .bl-lc-np-h { padding-top:8px; }
 .bl-lc-np-list { flex:1; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
 .bl-lc-np-list > .bl-lc-name-list { display:contents; }
-.bl-lc-tag { box-sizing:border-box; display:inline-flex; align-items:center; gap:4px; min-height:30px; padding:0 10px; border:1px solid var(--salty-line); border-radius:999px; background:var(--salty-surface); color:var(--salty-text); font-size:13px; line-height:1.2; white-space:nowrap; }
+.bl-lc-tag { box-sizing:border-box; display:inline-flex; align-items:center; gap:4px; min-height:21px; padding:0 8px; border:1px solid var(--salty-line); border-radius:999px; background:var(--salty-shade); color:var(--salty-muted); font-size:12.5px; font-weight:400; line-height:1.2; white-space:nowrap; }   /* 1.2.2 알아서 찾은 이름 = 공용 알약(설정 · 확장 서랍의 작은 알약과 같은 꼴: 21 · 12.5 · 옅은 면 · 보조 글자) — 지울 수 있는 이름은 칩 */
 .bl-lc-tag > small { color:var(--salty-muted); font-size:11px; }
-.bl-lc-names .bl-lc-chip.bl-lc-name { min-height:30px; border-radius:999px; }
 .bl-lc-np-add { flex:1 1 120px; display:flex; align-items:center; gap:2px; min-width:120px; }
 .bl-lc-names .bl-lc-np-add input { min-height:32px; font-size:13px; }
 .bl-lc-np-ex { min-width:0; color:var(--salty-muted); font-size:12px; overflow-wrap:anywhere; }
@@ -1461,13 +1460,10 @@ const STYLE = `
 .bl-lc .bl-lc-hd-mode, .bl-lc .bl-lc-tl-all, .bl-lc-cr-more, .bl-lc-fd-h, .bl-lc-sw, .bl-lc-hint, .bl-lc-sep, .bl-lc .bl-lc-ph, .bl-lc-chip.bl-lc-ghost { display:none; }
 @media (max-width: 600px) {
   /* 머리 줄: 제목 · 밝기(작은 둘 칸) · 닫기 */
-  .bl-lc-head { gap:4px; padding:6px 6px 6px 16px; }
+  .bl-lc-head { gap:8px; padding:4px 6px 4px 16px; }   /* 1.2.2 머리줄 간격 8(철칙 §7) · 밝기 스위치(38 높이)가 들어가도 줄 높이는 그대로 46 */
   .bl-lc-head h3 { flex:1; }
-  .bl-lc .bl-lc-mode.bl-lc-hd-mode { display:flex; gap:2px; padding:3px; border-radius:10px; }
+  .bl-lc .bl-lc-mode.bl-lc-hd-mode { display:flex; gap:2px; padding:2px; border-radius:10px; }
   .bl-lc .bl-lc-mode.bl-lc-hd-mode[hidden], .bl-lc-colors > .bl-lc-mode, .bl-lc-colors.bl-lc-pal-off { display:none; }
-  .bl-lc-hd-mode button { width:30px; height:28px; border-radius:7px; font-size:13px; }
-  .bl-lc-hd-mode button[aria-pressed="true"] { box-shadow:0 1px 2px rgba(0, 0, 0, .14); }
-  .bl-lc-hd-mode button[aria-pressed="true"] > .fa-sun { color:var(--salty-lemon, #E9BE00); }
   .bl-lc-colors { padding-left:0; }
   .bl-lc-colors .bl-lc-pals { padding-left:16px; }
   /* 차례: 분류 → 틀 → 미리보기(붙박이) → 색 · 조절 → 「로그 꾸밈」 갈래 → 숨기기 안내 */
@@ -1480,17 +1476,15 @@ const STYLE = `
   .bl-lc.bl-lc-less :is(.bl-lc-tl, .bl-lc-cr-more, .bl-lc-sep, .bl-lc-folds, .bl-lc-hint) { display:none; }
   .bl-lc.bl-lc-less .bl-lc-cr { padding-top:8px; }
   /* 분류: 밑줄 글 탭 + 오른쪽 끝 「전부」 */
-  .bl-lc-tl { display:block; position:relative; min-width:0; border-bottom:1px solid var(--salty-line); }
-  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats { gap:2px; margin:0; padding:0 48px 0 10px; border:0; border-radius:0; background:transparent; box-shadow:none; --bl-tab-reveal-inset:96px !important; }
-  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button { position:relative; flex:none; min-width:0; min-height:42px; padding:0 9px; border:0; border-radius:0; background:transparent; box-shadow:none; color:var(--salty-muted); font-size:14px; font-weight:400; }
+  .bl-lc-tl { display:flex; align-items:flex-start; gap:2px; min-width:0; padding-right:6px; border-bottom:1px solid var(--salty-line); }   /* 1.2.2 「전부」 꺾쇠는 탭 줄 옆 제자리(탭 위에 겹쳐 띄우지 않아요) — 넘치면 공용 탭 줄 흐림(98-tab-strips · 28px)이 꺾쇠 앞에서 끝나요 */
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats { flex:1 1 auto; min-width:0; gap:2px; margin:0; padding:0 0 0 10px; border:0; border-radius:0; background:transparent; box-shadow:none; --bl-tab-reveal-inset:28px !important; }
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button { position:relative; flex:none; min-width:0; min-height:var(--bl-ui-chip, 34px); padding:0 8px; border:0; border-radius:8px; background:transparent; box-shadow:none; color:var(--salty-muted); font-size:13px; font-weight:400; }   /* 1.2.2 공용 고르기 묶음 칸(34 · 13 · 여백 8 · 모서리 8 — PC 의 같은 줄과 같아요) 위에 밑줄만 */
   .bl-lc:not(#bl-lc-a) .salty-seg.bl-lc-cats > button.on { isolation:isolate; color:var(--salty-text) !important; font-weight:700 !important; }
   .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button.on::before { content:''; position:absolute; inset:0; width:auto; height:auto; transform:none; z-index:-1; background:var(--salty-bg); }   /* 테마 칩 「고름」 면(층 안 !important 라 덮어쓰지 못해요)을 창 바탕으로 가려 밑줄 탭만 보여요 */
-  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button.on::after { content:''; position:absolute; left:9px; right:9px; bottom:0; height:2.5px; border-radius:2px 2px 0 0; background:var(--salty-accent); }
-  .bl-lc-tl:not(.is-all) > .bl-lc-cats[data-bl-fade="right"] { -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; mask-image:linear-gradient(to right, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; }
-  .bl-lc-tl:not(.is-all) > .bl-lc-cats[data-bl-fade="both"] { -webkit-mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 92px), transparent calc(100% - 48px)) !important; }
+  .bl-tool-dialog.bl-lc .salty-seg.bl-lc-cats > button.on::after { content:''; position:absolute; left:8px; right:8px; bottom:0; height:2.5px; border-radius:2px 2px 0 0; background:var(--salty-accent); }
   .bl-tool-dialog.bl-lc .bl-lc-tl.is-all > .salty-seg.bl-lc-cats { flex-wrap:wrap; overflow:visible; -webkit-mask-image:none !important; mask-image:none !important; }
-  .bl-lc .bl-lc-tl-all { display:grid; place-items:center; position:absolute; right:6px; top:4px; color:var(--salty-text); }
-  .bl-lc:not(#bl-lc-a):not(#bl-lc-b) :is(.bl-lc-tl-all, .bl-lc-bar .bl-lc-icon, .bl-lc-foot .salty-btn:not(.bl-tool-primary)) { border-color:transparent !important; }   /* 테마 단추 테두리(밀도 규칙 !important)를 이 둘에서만 걷어요 — 시안처럼 맨 아이콘 */
+  .bl-lc .bl-lc-tl-all { display:grid; place-items:center; flex:none; color:var(--salty-text); }
+  .bl-lc:not(#bl-lc-a):not(#bl-lc-b) :is(.bl-lc-tl-all, .bl-lc-bar .bl-lc-icon) { border-color:transparent !important; border-width:0 !important; }   /* 테마 단추 테두리(밀도 규칙 !important)를 이 둘에서만 걷어요 — 공용 아이콘만 단추(34 · 상자 없음 · 선 없음) */
   /* 틀 줄: 넘치면 오른쪽이 흐려지고 「+n」 알약(누르면 감싸 펼침 · 끝에 「접기」) */
   .bl-lc-cr { display:block; position:relative; min-width:0; }
   .bl-lc-cr > .bl-lc-chips { gap:6px; padding:4px 16px; --bl-tab-reveal-inset:112px !important; }
@@ -1498,9 +1492,8 @@ const STYLE = `
   .bl-lc-cr.is-over > .bl-lc-chips[data-bl-fade="right"] { -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; mask-image:linear-gradient(to right, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; }
   .bl-lc-cr.is-over > .bl-lc-chips[data-bl-fade="both"] { -webkit-mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; mask-image:linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 112px), transparent calc(100% - 64px)) !important; }
   .bl-lc-cr.is-all > .bl-lc-chips { flex-wrap:wrap; overflow:visible; -webkit-mask-image:none !important; mask-image:none !important; }
-  .bl-lc-cr-more { display:inline-flex; align-items:center; position:absolute; right:10px; top:50%; min-height:28px; margin:0; padding:0 9px; translate:0 -50%; border:1px solid var(--salty-line); border-radius:999px; background:var(--salty-bg); color:var(--salty-accent-ink, var(--salty-accent)); font:inherit; font-size:12px; font-weight:650; box-shadow:0 1px 2px rgba(0, 0, 0, .08), 0 4px 14px -6px rgba(0, 0, 0, .22); cursor:pointer; }
-  .bl-lc-cr-more::before { content:''; position:absolute; inset:-8px; }
-  .bl-lc-cr-more[hidden] { display:none; }
+  .bl-lc-cr > .bl-lc-cr-more { display:inline-flex; position:absolute; right:10px; top:50%; margin:0; translate:0 -50%; color:var(--salty-accent-ink, var(--salty-accent)); }   /* 1.2.2 「+n」 = 줄의 다른 틀 칩과 같은 공용 칩(34 · 13 · 여백 10 · 모서리 8 · 면 · 선) — 글자만 포인트색 */
+  .bl-lc-cr > .bl-lc-cr-more[hidden] { display:none; }
   .bl-lc-chip.bl-lc-ghost { display:inline-flex; border-style:dashed; background:transparent; color:var(--salty-accent-ink, var(--salty-accent)); }
   .bl-lc-chip.bl-lc-ghost > i { color:inherit; }
   /* 미리보기: 틀 줄 바로 아래 · 내려도 맨 위에 붙어 있어요 · 작게(약 30%) / 크게(52%) / 접기 */
@@ -1510,9 +1503,9 @@ const STYLE = `
   .bl-lc-bar > .bl-lc-note { display:none; }
   .bl-lc .bl-lc-bar > b.bl-lc-ph { display:block; flex:none; color:var(--salty-text); font-size:13px; font-weight:650; }
   .bl-lc .bl-lc-bar > .bl-lc-bar-name { display:block; flex:1; min-width:0; margin-left:6px; overflow:hidden; color:var(--salty-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
-  .bl-lc .bl-lc-bar .bl-lc-icon { display:grid; place-items:center; background:transparent; width:32px; min-width:32px; height:32px; min-height:32px; color:var(--salty-muted); font-size:13px; }
+  .bl-lc .bl-lc-bar .bl-lc-icon { display:grid; place-items:center; background:transparent; width:34px; min-width:34px; height:34px; min-height:34px; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); }   /* 1.2.2 공용 아이콘만 단추(34 · 잉크 12.5 · 글자색) */
   .bl-lc .bl-lc-bar .bl-lc-icon:disabled { opacity:.35; }
-  .bl-lc .bl-lc-bar .bl-lc-edit { width:32px; padding:0; }
+  .bl-lc .bl-lc-bar .bl-lc-edit { width:34px; padding:0; }
   .bl-lc .bl-lc-bar .bl-lc-edit > span { display:none; }
   .bl-lc-stage { margin:0; border-top:0; border-radius:0 0 12px 12px; }
   .bl-lc-stage iframe { height:clamp(150px, 30dvh, 270px); }
@@ -1536,17 +1529,17 @@ const STYLE = `
   .bl-lc-fd.is-open { padding-bottom:14px; }
   .bl-lc-fd:not(.is-open) > :not(.bl-lc-fd-h) { display:none; }
   .bl-lc-fd[data-lc-fd="shows"] { order:1; } .bl-lc-fd[data-lc-fd="names"] { order:2; } .bl-lc-fd[data-lc-fd="words"] { order:3; } .bl-lc-fd[data-lc-fd="fields"] { order:4; }
-  .bl-lc-fd-h { box-sizing:border-box; display:flex; align-items:center; gap:8px; width:100%; min-width:0; min-height:48px; margin:0; padding:0 12px 0 14px; border:0; border-radius:12px; background:transparent; color:var(--salty-text); font:inherit; text-align:left; cursor:pointer; }
+  .bl-lc-fd-h { box-sizing:border-box; display:flex; align-items:center; gap:8px; width:100%; min-width:0; min-height:47px; margin:0; padding:0 12px; border:0; border-radius:8px; background:transparent; color:var(--salty-text); font:inherit; font-size:var(--bl-ts-ctl, 14px); text-align:left; cursor:pointer; }   /* 1.2.2 접는 줄 단추 = 공용 글자 단추 꼴(글자 한 단계 · 여백 12 · 모서리 8 · 상자 없음 — 빠른 QR 찾기의 접는 줄과 같아요) · 갈래 이름 · 요약 글자는 아래에서 따로 */
   .bl-lc-fd.is-open > .bl-lc-fd-h { margin-bottom:-6px; }
   .bl-lc-fd-h > b { flex:none; font-size:15px; font-weight:650; }
   .bl-lc-fd-h > span { flex:1; min-width:0; overflow:hidden; color:var(--salty-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
   .bl-lc-fd-h > mark { flex:none; padding:1px 8px; border-radius:999px; background:var(--salty-accent-10, var(--salty-raised)); color:var(--salty-accent-ink, var(--salty-accent)); font-size:12px; font-weight:650; }
-  .bl-lc-fd-h > mark.is-on { background:color-mix(in srgb, #FFE23C 24%, var(--salty-surface)); color:color-mix(in srgb, #FFD60A 42%, var(--salty-text)); }
+  .bl-lc-fd-h > mark.is-on { background:var(--salty-accent); color:var(--salty-on-accent, var(--salty-bg)); }   /* 1.2.2 「켬」 = 스위치 켬과 같은 팔레트 강조색(테마 규칙: 켜짐에는 두 번째 포인트 · 팔레트 밖 노랑을 안 써요) */
   .bl-lc-fd-h > mark[hidden] { display:none; }
-  .bl-lc-fd-h > i { flex:none; color:var(--salty-muted); font-size:12px; transition:transform .15s; }
+  .bl-lc-fd-h > i { flex:none; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); transition:transform .15s; }   /* 1.2.2 테마의 다른 꺾쇠와 같은 꼴(12.5 · 글자색) */
   .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); }
   .bl-lc-fd-h:focus-visible, .bl-lc-sw:focus-visible, .bl-lc-cr-more:focus-visible { outline:1px solid var(--salty-accent); outline-offset:-1px; }
-  .bl-lc-fd > :is(.bl-lc-shows, .bl-lc-names, .bl-lc-words, .bl-lc-fields, .bl-lc-sw) { margin:0 14px; }
+  .bl-lc-fd > :is(.bl-lc-shows, .bl-lc-names, .bl-lc-words, .bl-lc-fields, .bl-lc-sw) { margin:0 12px; }
   .bl-lc-fd > .bl-lc-names { margin-top:-4px; }
   /* 「보일 것」: 감싸는 칩 · 켬 = 채운 동그라미 + 체크 · 끔 = 빈 동그라미(글자를 긋지 않아요) */
   .bl-lc-fd > .bl-lc-shows { flex-wrap:wrap; gap:6px; padding:0; overflow:visible; }
@@ -1579,13 +1572,14 @@ const STYLE = `
   .bl-lc-hint > .bl-lc-chip:disabled { opacity:.6; }
   /* 바닥 줄: 「글만 · 파일로 · HTML 복사」(320 에서도 안 잘려요) */
   .bl-lc-foot { grid-template-columns:auto auto minmax(0, 1fr); gap:6px; padding:10px 12px 12px; }
-  .bl-lc-foot .salty-btn { min-width:0; min-height:44px; }
-  .bl-lc-foot .salty-btn:not(.bl-tool-primary) { display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:0 11px; border-color:transparent; background:var(--salty-shade-2, var(--salty-raised)); font-size:13px; }
+  .bl-lc-foot .salty-btn { min-width:0; }   /* 1.2.2 단추 꼴은 넓은 폭과 같은 공용 창 단추(40 · 글자 그대로 · 옅은 면 + 선) · 주요 단추(여백 16 · 모서리 12) — 폰은 짧은 이름만 */
+  .bl-lc-foot .salty-btn:not(.bl-tool-primary) { display:inline-flex; align-items:center; justify-content:center; gap:5px; }
   .bl-lc-foot .salty-btn:not(.bl-tool-primary) > i { font-size:13px; color:var(--salty-muted); }
   .bl-lc-foot .bl-lc-long { display:none; }
   .bl-lc .bl-lc-foot .bl-lc-ph { display:inline; }
   .bl-lc .bl-lc-foot i.bl-lc-ph { display:inline-block; }
-  .bl-lc-foot .bl-tool-primary { font-size:15px; white-space:nowrap; }
+  .bl-lc-foot .bl-tool-primary { white-space:nowrap; }
+  @media (max-width: 359px) { .bl-lc-foot .salty-btn { font-size:13px; } .bl-lc-foot .salty-btn:not(.bl-tool-primary) { padding:0 8px; } .bl-lc-foot .bl-tool-primary { font-size:14px; padding:0 12px; } }   /* 폭 320: 「글만 · 코드 · HTML 복사」 가 한 줄에 들어가게 글자만 한 단계 작게 */
 }
 `;
 function ensureStyle() {

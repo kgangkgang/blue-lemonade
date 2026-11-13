@@ -235,7 +235,7 @@ export const SELF_ROWS = [
 ["id","bl-fruit-help-title-v1","src/scripts/plain/fruit-style.js",70,"","",0],
 ["id","bl-fx-offscreen","src/dem-expressive.js",134,"","guarded",0],
 ["id","bl-lc-ed-css","src/log-copy-sheet.js",451,"","guarded",0],
-["id","bl-lc-style","src/log-copy-sheet.js",1594,"","guarded",0],
+["id","bl-lc-style","src/log-copy-sheet.js",1588,"","guarded",0],
 ["id","bl-lc-title","src/log-copy-sheet.js",174,"","",0],
 ["id","bl-lt-style","src/log-copy-sheet.js",245,"","guarded",0],
 ["id","bl-mart-style","src/mart-import-ui.js",143,"","guarded",0],

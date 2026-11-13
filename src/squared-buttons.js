@@ -23,6 +23,19 @@ export function shapeKey(el) {
     const tokens = cls.split(/\s+/).filter(t => t && !STATE_CLASS.test(t)).sort();
     return `${el.tagName}|${tokens.join(' ')}`;
 }
+/** 1.2.2 바로 붙이기에 쓰는 열쇠 — 상태 아닌 클래스가 하나도 없는 빈 열쇠(「BUTTON|」)는 '' 예요.
+ *  빈 열쇠는 클래스 없는 단추 · bl- 클래스만 있는 단추를 전부 한 생김새로 묶어서, 둥근 단추 하나를 배우면 그 뒤 여는 창의
+ *  상관없는 단추까지 재지 않고 모서리 8 이 붙었어요(1.1.7 ~ 1.2.1 · 로그 복사 알약 → 번역 · 캡처 · 색 고르기 · 출처 · 처음 켰을 때). 그런 단추는 늘 하나씩 재요 */
+export function stampKey(el) {
+    const key = shapeKey(el);
+    return key.endsWith('|') ? '' : key;
+}
+// 1.2.2 테마 자기 부품: 클래스가 bl- · salty- (와 상태 클래스)뿐인 요소는 「다른 확장 단추 네모로」의 후보가 아니에요 — 디자인으로 정한 테마 알약(로그 복사 「+n」 · 이름 칩)이 네모가 됐어요
+const OWN_CLASS = /^(?:bl-|salty-)/;
+export function ownPart(cls) {
+    const tokens = String(cls || '').split(/\s+/).filter(Boolean);
+    return tokens.some(t => OWN_CLASS.test(t)) && tokens.every(t => OWN_CLASS.test(t) || STATE_CLASS.test(t));
+}
 let stop = null;
 
 /** Keep connected roots whose ancestors are not already in this batch.
@@ -67,7 +80,7 @@ function cheapSkip(el, view, areas = null) {
     if (!(el instanceof view.HTMLElement) || el.hasAttribute(ATTR)) return true;
     if (el.matches('input,select,textarea,img,svg') || inArea(el, areas)) return true;
     const cls = typeof el.className === 'string' ? el.className : '';
-    return SKIP_CLASS.test(cls) || SKIP_CLASS.test(el.id);
+    return SKIP_CLASS.test(cls) || SKIP_CLASS.test(el.id) || ownPart(cls);
 }
 
 /** True when the element is a painted, clickable text control whose corners make a pill or circle. */
@@ -210,7 +223,7 @@ export function watchSquaredButtons(doc, host) {
     const roots = new Set(), waiting = new Set(), skippedMes = new Set(), lockState = new WeakMap();   // lockState: 메시지마다 크롬이 마지막으로 알린 건너뜀 여부
     // 7.5.4 한 번 표시한 생김새 — 목록을 innerHTML 로 다시 그리는 확장(탭 · 칩이 새 요소가 됨)에서 새 요소가 0.3초 동안 둥글게 보였다가 네모가 되던 것을 막는다
     const seen = new Map();
-    const remember = el => { if (seen.size >= SEEN_MAX) seen.clear(); seen.set(shapeKey(el), true); };
+    const remember = el => { const key = stampKey(el); if (!key) return; if (seen.size >= SEEN_MAX) seen.clear(); seen.set(key, true); };
     // 뿌리 아래 건너뛸 구역 — 뿌리 자신(또는 조상)이 구역이면 null(뿌리째 건너뜀)
     const areasOf = root => (root.closest?.(SKIP_AREA) ? null : new Set(root.querySelectorAll?.(SKIP_AREA) || []));
     // 뿌리 아래 후보와 그 판정에 쓸 구역 — 진짜 문서(contains 가 있음)는 FAST_CANDIDATES 로 미리 거른 목록(구역은 이미 빠짐), 흉내 문서는 예전 길
@@ -227,7 +240,7 @@ export function watchSquaredButtons(doc, host) {
     const restamp = el => {
         if (!seen.size) return;
         const got = candidates(el); if (!got) return;
-        for (const c of got.list) if (seen.has(shapeKey(c)) && !cheapSkip(c, host, got.areas)) c.setAttribute(ATTR, '');
+        for (const c of got.list) { const key = stampKey(c); if (key && seen.has(key) && !cheapSkip(c, host, got.areas)) c.setAttribute(ATTR, ''); }
     };
     let timer = 0, frame = 0, stopped = false;
     // 1.0.4 닫힌 <details>(데우스 접힌 모듈) 안 후보는 재면 그 묶음만 따로 강제 배치돼요(데우스 상태창 30개 · 폰 4배 15번 · 0.9초) —
