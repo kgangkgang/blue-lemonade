@@ -57,6 +57,9 @@ const bundleTool=await import(pathToFileURL(path.join(root,'tools/build-bundle.m
 if(process.argv.includes('--check')){const fresh=bundleTool.bundleFresh(root);if(!fresh.ok)throw Error('Stale dist bundle: '+fresh.why);}
 else if(!bundleTool.bundleFresh(root).ok)await bundleTool.buildBundle();
 const distFiles=fs.existsSync(path.join(root,'dist'))?walk(path.join(root,'dist')).map(file=>path.relative(root,file).split(path.sep).join('/')).filter(file=>file.endsWith('.js')):[];
+// 1.4.x 최적화 C(검토 C 2번): 한국어 글자 사전 JSON 일곱 장도 표에 — 출시 관문(tools/release_gate.py KO_TEXT_PARTS)과 같은 목록(생성기의 INDEX_FILE · partFile)
+const koDict=await import(pathToFileURL(path.join(root,'tools/build-korean-dict.mjs')));
+const koTextFiles=[koDict.INDEX_FILE,...koDict.PART_NAMES.map(koDict.partFile)].filter(rel=>fs.existsSync(path.join(root,rel)));
 // 1.4.1 실행 때 받는 파일(.json · 글꼴 · 그림까지)은 설치 ZIP 목록 · 빠진 파일 검사와 같은 목록을 써요 — tools/release_gate.py --integrity-list(링크 · 64KB 넘는 자원 제외)
 //   (확장자 화이트리스트만 쓰던 때 src/ext-status-icons.woff2 같은 자원이 표에서 빠져 설치 점검이 못 잡았어요)
 const runtimeList=()=>{
@@ -72,7 +75,7 @@ const runtimeList=()=>{
   }
   throw Error('파이썬을 못 찾았어요(BL_PYTHON 으로 정할 수 있어요): '+last);
 };
-const files=[...new Set(['manifest.json','index.js','style.css',...distFiles,...(fs.existsSync(path.join(root,'style-ext.css'))?['style-ext.css']:[]),...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|mjs|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/')),...runtimeList()])].filter(p=>p!=='src/build-info.js').sort();
+const files=[...new Set(['manifest.json','index.js','style.css',...distFiles,...koTextFiles,...(fs.existsSync(path.join(root,'style-ext.css'))?['style-ext.css']:[]),...ttsAssets,...ttsExtraAssets,...musicAssets,...walk(path.join(root,'src')).filter(p=>/\.(js|mjs|css|html)$/.test(p)).map(p=>path.relative(root,p).replaceAll('\\','/')),...runtimeList()])].filter(p=>p!=='src/build-info.js').sort();
 const hashes=Object.fromEntries(files.map(file=>[file,fileFingerprint(fs.readFileSync(path.join(root,file)))]));
 const version=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8')).version;
 const data=`// Generated: installed runtime integrity, excluding this manifest itself.\nexport const BUILD_VERSION = ${JSON.stringify(version)};\nexport const FILE_HASHES = ${JSON.stringify(hashes,null,2)};\n`;

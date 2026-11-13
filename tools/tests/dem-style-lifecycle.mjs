@@ -19,7 +19,8 @@ function cssSheet(text, ownerNode) {
         rule.deleteRule = at => rule.cssRules.splice(at, 1);
         return rule;
     };
-    return { ownerNode, disabled: false, cssRules: lib.parse(text).children.filter(n => n.type !== 'comment').map(convert) };
+    const cssRules = lib.parse(text).children.filter(n => n.type !== 'comment').map(convert);
+    return { ownerNode, disabled: false, cssRules, deleteRule: at => cssRules.splice(at, 1) };
 }
 function fixture() {
     const input = `body.salty.salty-dem-skin .card{--fixture:${++serial};padding:var(--gap)}`;
@@ -30,9 +31,11 @@ function fixture() {
     const nodes = [], requests = [], classes = new Set(); classes.contains = value => classes.has(value);
     let on = true, prepared = 0;
     class Element {
-        constructor(tag = 'style') { this.tagName = tag.toUpperCase(); this.dataset = {}; this.media = 'all'; this.id = ''; this.events = new Map(); }
+        constructor(tag = 'style') { this.tagName = tag.toUpperCase(); this.dataset = {}; this.media = 'all'; this.id = ''; this.events = new Map(); this.relValue = ''; this.relList = { supports: v => v === 'preload' }; }
+        get rel() { return this.relValue; }
+        set rel(v) { const was = this.relValue; this.relValue = v; if (was === 'preload' && v === 'stylesheet' && this.isConnected && this.fetched != null) Promise.resolve().then(() => { this.sheet = cssSheet(this.fetched, this); this.fire('load'); }); }
         get isConnected() { return nodes.includes(this); }
-        after(node) { node.remove(); nodes.splice(nodes.indexOf(this) + 1, 0, node); }
+        after(node) { node.remove(); nodes.splice(nodes.indexOf(this) + 1, 0, node); if (node.tagName === 'LINK' && node.id === 'salty-lazy-css') linkLoad(node); }
         remove() { const at = nodes.indexOf(this); if (at >= 0) nodes.splice(at, 1); }
         addEventListener(name, fn) { this.events.set(name, fn); }
         fire(name) { this.events.get(name)?.(); }
@@ -44,7 +47,10 @@ function fixture() {
         querySelectorAll: () => nodes.filter(n => n.tagName === 'LINK'), createElement: tag => new Element(tag) };
     const setOn = value => { on = value; classes.clear(); if (value) { classes.add('salty'); classes.add('salty-dem-skin'); } };
     setOn(true);
+    // 전체 장은 <link> — 붙으면 받아서(받기 흉내) 해석한 뒤 load 를 쏴요. 서랍 꼬리 파일(lazy-panel.gen.css)은 따로 받아요
+    const linkLoad = node => Promise.resolve().then(() => globalThis.fetch(node.href)).then(r => r.text()).then(text => { node.fetched = text; if (node.rel === 'stylesheet') node.sheet = cssSheet(text, node); node.fire('load'); }, () => node.fire('error'));
     const defaultFetch = async url => {
+        if (String(url).includes('lazy-panel.gen.css')) return { ok: true, text: async () => '\n.tail{color:red}' };
         requests.push(String(url));
         if (String(url).includes('style-lazy.gen.css')) return { ok: true, text: async () => fullText };
         return { ok: true, text: async () => String(url).includes('fallback') ? payload.fallback : payload.data };
@@ -81,7 +87,7 @@ try {
     });
     await test('전체 장을 받았어도 데우스 내용 전에는 첫 시트를 끄지 않아요', async () => {
         const f = fixture(); let release;
-        globalThis.fetch = url => String(url).includes('style-lazy') ? f.defaultFetch(url) : new Promise(resolve => { release = resolve; });
+        globalThis.fetch = url => /style-lazy|lazy-panel/.test(String(url)) ? f.defaultFetch(url) : new Promise(resolve => { release = resolve; });
         const task = f.run(); await until(() => release);
         assert.equal(f.main.sheet.disabled, false); assert.equal(f.full().media, 'not all'); assert.equal(f.prepared(), 0);
         release({ ok: true, text: async () => f.payload.data }); assert.equal(await task, true);
@@ -93,7 +99,7 @@ try {
     });
     await test('전체 장을 기다리다 테마를 끄면 분리 규칙이 다시 켜지지 않아요', async () => {
         const f = fixture(); let release;
-        globalThis.fetch = url => String(url).includes('style-lazy') ? f.defaultFetch(url) : new Promise(resolve => { release = resolve; });
+        globalThis.fetch = url => /style-lazy|lazy-panel/.test(String(url)) ? f.defaultFetch(url) : new Promise(resolve => { release = resolve; });
         const task = f.run(); await until(() => release); f.setOn(false);
         release({ ok: true, text: async () => f.payload.data }); assert.equal(await task, true);
         assert.equal(slots(f.full().sheet)[0].media.mediaText, 'not all');
@@ -104,7 +110,7 @@ try {
         const oldSheet = f.main.sheet, newer = fixture();
         // 같은 문서의 첫 시트는 앞 판의 준비된 시트이고 전체 파일만 새 판인 상황이에요.
         newer.main.sheet = oldSheet; oldSheet.ownerNode = newer.main;
-        globalThis.fetch = url => String(url).includes('style-lazy') ? newer.defaultFetch(url) : Promise.reject(Error('시험 받기 실패'));
+        globalThis.fetch = url => /style-lazy|lazy-panel/.test(String(url)) ? newer.defaultFetch(url) : Promise.reject(Error('시험 받기 실패'));
         assert.equal(await newer.run(), false); assert.equal(newer.full(), null);
         assert.equal(oldSheet.disabled, false); assert.equal(slots(oldSheet)[0].media.mediaText, 'all');
     });

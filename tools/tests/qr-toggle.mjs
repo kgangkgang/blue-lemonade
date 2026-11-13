@@ -1,6 +1,6 @@
 // 퀵 리플라이 줄 접기 (src/addons/qrtoggle — 기본 꺼짐)
 //   · 순수: 저장값 다듬기(호환판 상태 이어받기) · 단추 글 · 누름 키
-//   · 가짜 브라우저: 켜면 요술봉 뒤에 단추 · 누르면 접힘(body class) · 기억 · Enter/Space · 입력판이 다시 그려지면 단추 복구
+//   · 가짜 브라우저: 켜면 요술봉 뒤에 단추 · 누르면 접힘(body data 속성 — class 는 안 바꿔요) · 기억 · Enter/Space · 입력판이 다시 그려지면 단추 복구
 //     · 다른 확장의 단추가 있으면 물러남 · 끄면 단추 · 스타일 · 감시를 걷음
 //   · 연결: 켤 때만 받음 · 설정 창 · 찾기 · 이름표 · 설정 키 · 출처 표기 세 곳 · MIT 전문
 //   node tools/tests/qr-toggle.mjs .
@@ -33,6 +33,7 @@ class El {
         return { contains: c => list().includes(c), add(c) { if (!list().includes(c)) el.className = [...list(), c].join(' '); }, remove(c) { el.className = list().filter(x => x !== c).join(' '); }, toggle(c, force) { const want = force === undefined ? !list().includes(c) : !!force; want ? this.add(c) : this.remove(c); return want; } };
     }
     setAttribute(k, v) { this.attrs[k] = String(v); }
+    removeAttribute(k) { delete this.attrs[k]; }
     getAttribute(k) { return this.attrs[k] ?? null; }
     addEventListener(name, fn) { (this.listeners[name] ||= []).push(fn); }
     dispatchEvent(event) { for (const fn of this.listeners[event.type] || []) fn(event); return true; }
@@ -58,7 +59,8 @@ const chat = []; let saves = 0;
 const extensionSettings = {};
 globalThis.SillyTavern = { getContext: () => ({ extensionSettings, saveSettingsDebounced: () => saves++, eventSource: { on: (name, fn) => chat.push(fn) }, event_types: { CHAT_CHANGED: 'chat' } }) };
 const mod = await load('src/addons/qrtoggle/index.js');
-const { BUTTON_ID, BODY_CLASS, STYLE_ID } = mod._forTest;
+const { BUTTON_ID, BODY_ATTR, STYLE_ID } = mod._forTest;
+const folded = () => body.getAttribute(BODY_ATTR) !== null;   // 접힘 표식(<body> 의 data 속성)
 const button = () => document.getElementById(BUTTON_ID);
 const press = () => { button().dispatchEvent({ type: 'click' }); flush(); };
 
@@ -72,15 +74,15 @@ await test('켜면 요술봉 바로 뒤에 단추 · 스타일 하나 · 펼친 
     assert.equal(button().getAttribute('role'), 'button'); assert.equal(button().tabIndex, 0);
     assert.equal(button().title, '퀵 리플라이 접기'); assert.equal(button().getAttribute('aria-expanded'), 'true');
     assert.ok(button().classList.contains('fa-chevron-down') && !button().classList.contains('fa-chevron-up'));
-    assert.equal(body.classList.contains(BODY_CLASS), false);
-    assert.match(document.getElementById(STYLE_ID).textContent, /body\.bl-qr-folded #qr--bar\{display:none!important\}/);
+    assert.equal(folded(), false);
+    assert.match(document.getElementById(STYLE_ID).textContent, /body\[data-bl-qr-folded\] #qr--bar\{display:none!important\}/);
     mod.syncQrToggle(true); flush();
     assert.equal(head.children.length, 1); assert.equal(form.children.filter(x => x.id === BUTTON_ID).length, 1); assert.equal(chat.length, 1, '다시 불러도 하나씩');
 });
 
 await test('누르면 접히고 기억해요 · 줄의 class 는 건드리지 않아요', () => {
     press();
-    assert.equal(body.classList.contains(BODY_CLASS), true);
+    assert.equal(folded(), true);
     assert.equal(extensionSettings.blue_lemonade_qrfold.open, false); assert.equal(saves, 1);
     assert.equal(button().title, '퀵 리플라이 펼치기'); assert.equal(button().getAttribute('aria-expanded'), 'false');
     assert.ok(button().classList.contains('fa-chevron-up') && !button().classList.contains('fa-chevron-down'));
@@ -90,17 +92,30 @@ await test('누르면 접히고 기억해요 · 줄의 class 는 건드리지 �
 await test('펼치면 줄에 scroll 사건을 보내 테마가 양끝 흐림을 다시 재요 · Enter · Space', () => {
     let scrolls = 0, prevented = 0; bar.addEventListener('scroll', () => scrolls++);
     button().dispatchEvent({ type: 'keydown', key: 'Enter', preventDefault: () => prevented++ }); flush();
-    assert.equal(body.classList.contains(BODY_CLASS), false); assert.equal(scrolls, 1);
+    assert.equal(folded(), false); assert.equal(scrolls, 1);
     button().dispatchEvent({ type: 'keydown', key: ' ', preventDefault: () => prevented++ }); flush();
-    assert.equal(body.classList.contains(BODY_CLASS), true); assert.equal(scrolls, 1, '접을 때는 안 보내요');
+    assert.equal(folded(), true); assert.equal(scrolls, 1, '접을 때는 안 보내요');
     button().dispatchEvent({ type: 'keydown', key: 'a', preventDefault: () => prevented++ });
-    assert.equal(prevented, 2); assert.equal(body.classList.contains(BODY_CLASS), true);
+    assert.equal(prevented, 2); assert.equal(folded(), true);
+});
+
+await test('접고 펴는 동안 <body> 의 class 는 한 번도 안 바뀌어요 — 실리태번 keyboard.js 가 누를 때마다 문서 전체를 다시 훑지 않게', () => {
+    const before = body.className, writes = [];
+    Object.defineProperty(body, 'className', { configurable: true, get: () => before, set: value => { writes.push(value); } });
+    try {
+        press(); assert.equal(folded(), false, '펼침');
+        press(); assert.equal(folded(), true, '접힘');
+        mod._forTest.ensure(); flush();
+    } finally { delete body.className; body.className = before; }
+    assert.deepEqual(writes, [], '<body> 의 class 를 쓴 적이 없어요');
+    assert.equal(body.attrs[BODY_ATTR], '', '표식은 값 없는 data 속성');
+    assert.doesNotMatch(read('src/addons/qrtoggle/index.js'), /body\.classList\.(add|remove|toggle)/, '소스에 body class 쓰기가 없어요');
 });
 
 await test('입력판이 다시 그려져 단추가 사라지면 되살려요(접힘 그대로) · 채팅이 바뀌어도', () => {
     button().remove(); flush();
     assert.ok(button(), '감시가 되살려요');
-    assert.equal(button().title, '퀵 리플라이 펼치기'); assert.equal(body.classList.contains(BODY_CLASS), true);
+    assert.equal(button().title, '퀵 리플라이 펼치기'); assert.equal(folded(), true);
     form.children = form.children.filter(x => x.id !== BUTTON_ID);   // 감시가 못 본 채 사라진 경우
     chat[0](); flush();
     assert.ok(button(), 'CHAT_CHANGED 에서도 되살려요');
@@ -110,21 +125,21 @@ await test('다른 확장의 단추가 있으면 내장 쪽이 물러나고 한 
     for (const id of core.OTHER_BUTTONS) {
         const other = Object.assign(new El('div'), { id }); wand.insertAdjacentElement('afterend', other); flush();
         assert.equal(button(), null, id);
-        assert.equal(body.classList.contains(BODY_CLASS), false, '우리 class 로 줄을 숨긴 채 남기지 않아요');
+        assert.equal(folded(), false, '우리 표식으로 줄을 숨긴 채 남기지 않아요');
         other.remove(); flush();
         assert.ok(button(), '그 단추가 사라지면 다시 넣어요');
-        assert.equal(body.classList.contains(BODY_CLASS), true);
+        assert.equal(folded(), true);
     }
     assert.equal(toasts.length, 1);
 });
 
 await test('끄면 단추 · 스타일 · 접힘 · 감시를 모두 걷어요 · 다시 켜면 기억한 상태로', () => {
     mod.syncQrToggle(false); flush();
-    assert.equal(button(), null); assert.equal(document.getElementById(STYLE_ID), null); assert.equal(body.classList.contains(BODY_CLASS), false); assert.equal(observers.size, 0);
+    assert.equal(button(), null); assert.equal(document.getElementById(STYLE_ID), null); assert.equal(folded(), false); assert.equal(observers.size, 0);
     chat[0](); flush();
     assert.equal(button(), null, '꺼져 있으면 채팅이 바뀌어도 넣지 않아요');
     mod.syncQrToggle(true); flush();
-    assert.equal(body.classList.contains(BODY_CLASS), true);
+    assert.equal(folded(), true);
     mod.syncQrToggle(false);
 });
 

@@ -1,7 +1,7 @@
 // Theme look: text buttons that SillyTavern or other extensions draw as thick pills or circles become
 // slim rounded rectangles. Only a marker attribute is added; removing it restores the original shape.
 // Switches, dots, badges, progress bars, avatars and icon-only round buttons keep their shape.
-import { booting, afterBoot } from './boot-gate.js';
+import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { watchWith } from './dom-watch.js';
 import { hiddenQueue, mayHide } from './hidden-details.js';
 
@@ -124,12 +124,13 @@ export function paddingOnly(record) {
     return changed;
 }
 
-// (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light(8.2.7 부터 html) · bl-chat-covered)만 바뀐 class 기록은 단추의 모양 · 보임을 바꾸지 않는다.
+// (10-29 perf-persona) 테마 자신의 성능 표식(#chat 의 bl-chat-light(8.2.7 부터 html) · 서랍 덮개(1.2.2 부터 data-bl-chat-covered 속성))만 바뀐 기록은 단추의 모양 · 보임을 바꾸지 않는다.
 //   예전에는 그 기록도 #chat 을 뿌리로 넣어 메시지 300개의 후보(.mes_button 등 수천 개)를 offsetParent 로 다시 쟀다 — 서랍 덮개(chat-light.js)가
 //   #chat 을 content-visibility:hidden 으로 둔 동안에는 그 읽기가 하나하나 건너뛴 내용을 그 자리에서 계산하게 해, 폰 리그에서 서랍 열기가 0.25 → 3.5초(재계산 284번)가 됐다.
 // 8.2.7 폰: 몰입 읽기(reader.js)는 채팅을 내리고 올릴 때마다 body 에 bl-bars-hidden 을 붙였다 뗀다 — 위 바 · 입력판을 top · transform 으로 밀기만 해서
 //   (css/29-reader-onehand.css) 단추 보임 · 크기 · 모서리는 같다. 예전에는 그때마다 body 를 뿌리로 문서 전체를 다시 쟀다(스크롤 중 0.3초대 끊김)
-const PERF_MARKS = new Set(['bl-chat-light', 'bl-chat-covered', 'bl-bars-hidden']);
+const PERF_MARKS = new Set(['bl-chat-light', 'bl-bars-hidden']);
+const COVER_ATTR = 'data-bl-chat-covered';   // chat-light.js 와 같은 이름(1.2.2 class → 속성 · 그 모듈을 여기서 끌어오지 않아요)
 export function perfMarkOnly(record) {
     if (record.type !== 'attributes' || record.attributeName !== 'class' || typeof record.target?.getAttribute !== 'function') return false;
     const words = v => new Set(String(v || '').split(/\s+/).filter(Boolean));
@@ -142,7 +143,7 @@ export function perfMarkOnly(record) {
     }
     return changed;
 }
-const COVERED = '#chat.bl-chat-covered';
+const COVERED = `#chat[${COVER_ATTR}]`;
 // 10-30 perf-icon: 속성을 같은 값으로 다시 쓴 기록(oldValue 가 지금 값과 같음)은 모양 · 보임을 바꾸지 않아요.
 //   실리태번 refreshSwipeButtons 는 메시지가 하나 붙을 때마다 넘길 수 없는 메시지 전부에 classList.remove('swipes_visible', 'last_swipe') 를 불러
 //   (없는 클래스를 빼도 class 기록이 나요) 메시지마다 기록이 하나씩 났고, 이 감시는 그때마다 메시지 하나하나를 다시 쟀어요(긴 채팅에서 메시지 1개 그리기마다 150번 남짓).
@@ -176,6 +177,7 @@ export function recordKind(r, htmlEl) {
     if (r.target === htmlEl) return 'html';
     if (r.type === 'attributes') {
         if (r.attributeName === 'data-generating') return 'gen';
+        if (r.attributeName === COVER_ATTR) return 'perf';   // 덮개가 붙고 떨어짐 — 단추 모양 · 보임은 그대로(떨어질 때 미뤄 둔 것만 다시 재요)
         if (unchangedAttr(r)) return 'skip';
         if (r.attributeName === 'class') {
             if (perfMarkOnly(r)) return 'perf';
@@ -192,7 +194,7 @@ export function recordKind(r, htmlEl) {
 //   checkVisibility({ contentVisibilityAuto: true }) 는 풀지 않고 「건너뛴 채인지」만 알려 줘요(300개 1ms). 건너뛴 메시지 안 후보는 재지 않고
 //   그 메시지를 적어 두었다가, 화면 가까이 와서 크롬이 계산을 시작할 때(contentvisibilityautostatechange · skipped=false — 보이기 전 여유 거리에서 와요)
 //   다음 프레임 맨 앞에서 그 메시지만 재요. 판정 · 표시는 같아요(알려진 생김새는 예전처럼 변화 때 바로 붙음 · restamp).
-//   서랍 덮개(bl-chat-covered · content-visibility:hidden)일 때는 예전 길 그대로예요.
+//   서랍 덮개(data-bl-chat-covered · content-visibility:hidden)일 때는 예전 길 그대로예요.
 export const LIGHT_MES = '#chat > .mes';
 /** 후보가 「건너뛴 content-visibility:auto 메시지」 안이면 그 메시지, 아니면 null — 계산을 풀지 않는 읽기만
  *  10-30 perf-icon: 예전에는 후보마다 checkVisibility 를 물었어요(부팅 · 긴 채팅에서 메시지 수백 개 × 후보 수십 개 — 폰 4배 부팅 0.23초).
@@ -220,6 +222,7 @@ export function watchSquaredButtons(doc, host) {
     style.dataset.blSquaredStyle = '';
     style.textContent = `[${ATTR}]{border-radius:var(--bl-r-btn,8px)!important}`;
     (doc.head || doc.documentElement).append(style);
+    holdSheet(style);   // 1.2.2 덮개 동안이면 꺼 둔 채로(다른 문서면 아무 일 없음)
     const roots = new Set(), waiting = new Set(), skippedMes = new Set(), lockState = new WeakMap();   // lockState: 메시지마다 크롬이 마지막으로 알린 건너뜀 여부
     // 7.5.4 한 번 표시한 생김새 — 목록을 innerHTML 로 다시 그리는 확장(탭 · 칩이 새 요소가 됨)에서 새 요소가 0.3초 동안 둥글게 보였다가 네모가 되던 것을 막는다
     const seen = new Map();
@@ -242,7 +245,7 @@ export function watchSquaredButtons(doc, host) {
         const got = candidates(el); if (!got) return;
         for (const c of got.list) { const key = stampKey(c); if (key && seen.has(key) && !cheapSkip(c, host, got.areas)) c.setAttribute(ATTR, ''); }
     };
-    let timer = 0, frame = 0, stopped = false;
+    let timer = 0, frame = 0, idle = 0, stopped = false;
     // 1.0.4 닫힌 <details>(데우스 접힌 모듈) 안 후보는 재면 그 묶음만 따로 강제 배치돼요(데우스 상태창 30개 · 폰 4배 15번 · 0.9초) —
     //   쉴 때 · 열리는 순간(열리기 전)에 같은 판정으로 재서 붙여요(hidden-details.js). 판정 · 표시는 같아요.
     const hidden = hiddenQueue(els => {
@@ -255,7 +258,7 @@ export function watchSquaredButtons(doc, host) {
         if (!root?.isConnected) return;
         const got = candidates(root); if (!got) return;
         const { areas, list } = got;
-        const light = !doc.getElementById?.('chat')?.classList?.contains('bl-chat-covered'), cache = new Map();
+        const light = !doc.getElementById?.('chat')?.hasAttribute?.(COVER_ATTR), cache = new Map();
         const rootMes = light ? root.closest?.(LIGHT_MES) || null : null;
         const check = mayHide(root);   // 1.0.4 닫힌 details 가 없으면 후보마다 조상을 오르지 않아요   // 메시지 하나를 훑을 때는 후보마다 그 메시지를 다시 찾지 않아요
         for (const el of list) {
@@ -272,7 +275,9 @@ export function watchSquaredButtons(doc, host) {
         timer = 0; if (stopped) return;
         if (typeof host.requestAnimationFrame !== 'function') { flush(); return; }
         // 1.0.0 극한 최적화: rAF 안(배치 전) 읽기(offsetParent · getBoundingClientRect 후보 1,000~1,800개)가 문서 전체 배치를 강제했어요 — 그 프레임 배치가 끝난 뒤(setTimeout 0)에 읽어요
-        if (!frame) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.setTimeout === 'function') frame = host.setTimeout(flush, 0); else flush(); });
+        // 1.4.x opt-chat-open(고침안 6): 그 뒤에도 페이지가 바쁘면(채팅을 여는 도중) 한가할 때까지(최대 0.1초 — 앞의 0.3초 타이머에 더해지는 몫이라 짧게 · 검토 A ②) — 바쁜 틈의 읽기가 남의 배치를 대신 치렀어요(진단 dc-140 checkVisibility 15 ~ 23ms)
+        //   아는 생김새는 예전처럼 감시 콜백에서 바로 붙어요(restamp) — 기다리는 것은 처음 보는 단추를 재는 일뿐이에요
+        if (!frame && !idle) frame = host.requestAnimationFrame(() => { frame = 0; if (stopped) return; if (typeof host.requestIdleCallback === 'function') { idle = host.requestIdleCallback(() => { idle = 0; flush(); }, { timeout: 100 }); } else if (typeof host.setTimeout === 'function') frame = host.setTimeout(flush, 0); else flush(); });
     }
     function flush() {
         frame = 0; timer = 0; if (stopped) return;
@@ -320,7 +325,7 @@ export function watchSquaredButtons(doc, host) {
             // 긴 채팅 가볍게가 꺼지면(메시지가 줄어 bl-chat-light 가 빠짐) 건너뛰던 메시지는 사건 없이 그려져요 — 적어 둔 것을 다시 재요
             //   8.2.7 lean-perf: 그 표식은 이제 #chat 이 아니라 html 에 달려요(perf-fade) — html 자기 class 기록만 따로 받아 보고, 다른 html 기록은 훑지 않아요
             if (kind === 'html') { if (skippedMes.size && String(r.oldValue || '').split(' ').includes('bl-chat-light') && !htmlEl.classList?.contains('bl-chat-light')) { for (const mes of skippedMes) pending.add(mes); skippedMes.clear(); } continue; }
-            if (kind === 'perf') { if (!r.target.classList?.contains('bl-chat-covered') && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
+            if (kind === 'perf') { if (!r.target.hasAttribute?.(COVER_ATTR) && !doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); } continue; }
             if (!doc.body.dataset.generating) { for (const node of waiting) pending.add(node); waiting.clear(); }   // 'gen'
         }
         queueMany(pending);
@@ -328,7 +333,7 @@ export function watchSquaredButtons(doc, host) {
     // 9.0.4: 공용 감시 허브 구독 — body 구역(채팅 안 단추도 봐요: 메시지마다 붙는 다른 확장 단추) + html 자기 class(subtree 없음 — 긴 채팅 가볍게 꺼짐).
     //   콜백은 예전처럼 그리기 전에(when 'now') — 아는 생김새는 콜백에서 바로 붙여요. 시험이 넘긴 가짜 창(host)은 그 창 감시자 하나(watchWith)
     const unwatch = watchWith(host, [
-        [doc.body, { childList: true, subtree: true, attributes: ['class', 'style', 'hidden', 'open', 'data-generating'], attributeOldValue: true, name: '네모 단추' }],
+        [doc.body, { childList: true, subtree: true, attributes: ['class', 'style', 'hidden', 'open', 'data-generating', COVER_ATTR], attributeOldValue: true, name: '네모 단추' }],
         [htmlEl, { attributes: ['class'], attributeOldValue: true, name: '네모 단추 (html class)' }],
     ], onRecords);
     const resize = () => queue(doc.body);
@@ -344,7 +349,7 @@ export function watchSquaredButtons(doc, host) {
     doc.addEventListener?.('contentvisibilityautostatechange', onLightState, true);
     queue(doc.body);
     return () => {
-        stopped = true; hidden.dispose(); unwatch(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); host.removeEventListener('resize', resize);
+        stopped = true; hidden.dispose(); unwatch(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); if (idle) host.cancelIdleCallback?.(idle); host.removeEventListener('resize', resize);
         doc.removeEventListener?.('contentvisibilityautostatechange', onLightState, true); skippedMes.clear();
         for (const el of doc.querySelectorAll(`[${ATTR}]`)) el.removeAttribute(ATTR);
         style.remove();

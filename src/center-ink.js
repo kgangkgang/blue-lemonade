@@ -7,6 +7,7 @@
 import { addMessageDecorator } from './message-decor.js';
 import { inkOf } from './control-ink.js';
 import { hiddenQueue, mayHide } from './hidden-details.js';
+import { booting, afterBoot } from './boot-gate.js';   // 1.2.2 덮개 동안은 재지 않아요 — 꺼 둔 시트(채팅 모양 · 들여쓰기)의 여백 · 접힘 모양이 빠진 채 재면 틀린 --bl-ink-dy 가 남아요
 
 // 가운데 줄 제목(장식이 같은 줄에 있는 것만): 데우스 카드 제목. 새 가운데 줄을 만들면 여기 한 줄 + CSS 에 var(--bl-ink-dy)
 export const CENTER_INK = [
@@ -63,6 +64,7 @@ function measure(els) {
 //   보이는 제목은 바로, 닫힌 묶음 안 제목은 쉴 때 · 열리는 순간(열리기 전에) 같은 계산을 해요(hidden-details.js). 잰 값은 그대로예요.
 const hidden = hiddenQueue(els => measure(els), { enabled: () => active });
 function apply(list) {
+    if (booting()) { afterBoot(all); return; }   // 1.2.2 걷힐 때 문서 전체를 한 번
     const els = [];
     for (const root of list) {
         if (root.matches?.(SEL)) els.push(root);

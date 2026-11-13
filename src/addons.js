@@ -9,7 +9,10 @@ import { legacyFolders } from './extension-folder.js';
 import { perfErrorText } from './addons/perf/start-error.js';
 import { ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
 import { onGate } from './boot-layers.js';
-import { afterBoot } from './boot-gate.js';
+import { afterBoot, booting } from './boot-gate.js';
+import { spreadBegin, spreadEnd, markLateDone } from './addon-start-state.js';
+// 1.4.1 키보드 초점 사본 길(focus-copies.js)은 애드온 시트를 처음 붙일 때(덮개가 걷힌 뒤) 받아요 — 시작 묶음에 넣지 않아요
+const loadSheet=(link,place)=>import('./focus-copies.js').then(m=>m.loadSheet(link,place));
 const running=new Set(),failed=new Map(),loading=new Set(),waiting=new Set();
 // 1.0.0: 실행 중인 애드온 모듈 표 — dist 묶음이라 src 를 따로 import 하면 두 번째 인스턴스가 돼요. 검사 도구는 window.Salty.addon(id) 로 받아요
 const modules=new Map();
@@ -25,6 +28,16 @@ export const LATE_ADDONS=new Set(['rewrite','prompt','modelswitch']);
 let lateIds=[],lateStarted=null,lateLayers=null,lateStyling=null;
 /** 처음 쓸 때 시작하는 애드온(LATE_ADDONS)을 지금 시작해요 — 한 번만. 1층 애드온(3층 유휴) 시작이 끝난 뒤에 차례로 */
 export let lateReason='';
+// 1.4.1 덮개가 걷힌 뒤(3층 · 처음 쓸 때)에는 애드온을 하나씩 시작하고 사이사이 한 박자 쉬어요 — 예전엔 한 작업에서 모두의 import 를 걸어, 이미 받은 모듈이면
+//   같은 작업 안에서 줄줄이 시작해 「조용해짐」 구간에 긴 작업 하나로 화면을 잡았어요. 시작 차례 · 시작 함수 · 기다리는 것은 그대로(앞 것이 끝나길 기다리지 않아 받기는 겹쳐요).
+//   덮개 아래(처음 쓸 때로 당겨 덮개 중에 돈 경우)는 예전처럼 한 번에 — 덮개 없는 앞 층까지 나누면 표식이 늦게 붙어요(1.4.1 B 독립 검토)
+const beat=()=>new Promise(resolve=>setTimeout(resolve,0));
+async function startEach(ids){
+    if(ids.length<2||booting())return Promise.allSettled(ids.map(startOne));
+    const jobs=[];spreadBegin();   // 나눠 시작하는 동안은 머리 스위치가 새 열쇠 번호를 매기지 않아요(addon-start-state.js)
+    try{for(const [i,id] of ids.entries()){if(i)await beat();jobs.push(startOne(id));}return await Promise.allSettled(jobs);}
+    finally{spreadEnd();}
+}
 let lateFired=false;const lateHooks=new Set();
 /** 처음 쓸 때를 같이 듣는 껍데기 */
 export function onLateAddons(fn){if(lateFired)fn(lateReason);else lateHooks.add(fn);}
@@ -32,8 +45,9 @@ export function startLateAddons(reason='?'){
     if(lateStarted)return lateStarted;
     lateReason=reason;
     if(!lateFired){lateFired=true;for(const fn of lateHooks){try{fn(reason);}catch(error){console.warn('[Blue Lemonade] 훅',error);}}lateHooks.clear();}
-    if(!started||!lateIds.length)return Promise.resolve();
-    lateStarted=(async()=>{try{if(lateStyling)await lateStyling();const run=async()=>{await Promise.allSettled(lateIds.map(startOne));await lateLayers?.lateSettled?.();};await(lateLayers?lateLayers.withReplay('늦은 애드온',run):run());try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}finally{changed();}})();
+    if(!started)return Promise.resolve();
+    if(!lateIds.length){markLateDone();return Promise.resolve();}   // 늦은 애드온이 없으면 바로 「끝」(머리 스위치 열쇠 옮기기 · addon-start-state.js)
+    lateStarted=(async()=>{try{if(lateStyling)await lateStyling();const run=async()=>{await startEach(lateIds);await lateLayers?.lateSettled?.();};await(lateLayers?lateLayers.withReplay('늦은 애드온',run,{spread:true}):run());try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}finally{changed();markLateDone();}})();
     return lateStarted;
 }   // waiting: 옛 단독 폴더가 켜져 있어 내장본이 대기 중인 개인 확장 (카드에 「옛 단독 확장 끄기」)
 let started=false,saving=0,saveError='';
@@ -63,10 +77,11 @@ export async function disableLegacy(ids=EMBEDDED_PRIVATE){
     changed();
     return targets;
 }
+// 1.4.1 애드온 시트는 loadSheet(focus-copies.js)로 붙여요 — 실리태번이 시트마다 :focus-visible 사본을 훑어 넣던 일을 테마가 같은 결과로 맡고(첫 장 · 전체 장 겹침 한 벌), 훑기는 쉴 때
 function attachStyle(link){
     return new Promise((resolve,reject)=>{
         const timer=setTimeout(()=>{link.remove();reject(Error('스타일 로딩 시간 초과'));},15000);
-        link.onload=()=>{clearTimeout(timer);resolve();};link.onerror=()=>{clearTimeout(timer);link.remove();reject(Error('스타일을 읽지 못했어요.'));};document.head.append(link);
+        loadSheet(link,el=>document.head.append(el)).then(()=>{clearTimeout(timer);resolve();},()=>{clearTimeout(timer);link.remove();reject(Error('스타일을 읽지 못했어요.'));});
     });
 }
 const addonUrl=rel=>new URL(`./addons/${rel}`,import.meta.url).href;
@@ -77,11 +92,11 @@ let bundledStyleIds=[];
 let upgrading=Promise.resolve();
 function swapSheet(link,href){
     return new Promise(resolve=>{
-        const full=document.createElement('link');full.rel='stylesheet';if(link.dataset.blAddonsAll)full.dataset.blAddons=link.dataset.blAddonsAll;
-        const finish=ok=>{clearTimeout(timer);if(ok)link.remove();else{full.remove();pendingSheets.set(link,href);}resolve(ok);};   // 못 받으면 첫 장 그대로 · 다음에 다시
+        const full=document.createElement('link');if(link.dataset.blAddonsAll)full.dataset.blAddons=link.dataset.blAddonsAll;
+        let done=false;const finish=ok=>{if(done)return;done=true;clearTimeout(timer);if(ok)link.remove();else{full.remove();pendingSheets.set(link,href);}resolve(ok);};   // 못 받으면 첫 장 그대로 · 다음에 다시
         const timer=setTimeout(()=>finish(false),15000);
-        full.onload=()=>finish(true);full.onerror=()=>finish(false);full.href=href;
-        if(link.isConnected)link.after(full);else document.head.append(full);
+        full.href=href;
+        loadSheet(full,()=>{if(link.isConnected)link.after(full);else document.head.append(full);}).then(()=>finish(true),()=>finish(false));
     });
 }
 /** 첫 장을 전체 시트로 — 처음 누를 때 · 서랍이나 창이 열릴 때 · 창 뿌리가 나타날 때(표지 규칙의 animationstart) */
@@ -187,7 +202,7 @@ export async function startAddons(layers=null){
 async function startAddonsOnce(layers){
     const restored=await restorePendingAddons();
     if(restored)whenAppReady(()=>persist().catch(()=>{}));
-    const s=getSettings();if(!addonsEnabled(s))return;
+    const s=getSettings();if(!addonsEnabled(s)){markLateDone();return;}
     // 8.3.0 한 번(설계 §3.2): 옛 단독 폴더가 켜져 있던 개인 확장은 내장본 플래그도 켠다 → 「대기」로 시작하고, 옛 것을 끄고 새로고침하면 설정 · 자료 그대로 이어진다
     if((s.addonCarry|0)<ADDON_CARRY){
         try{for(const id of EMBEDDED_PRIVATE)if(!s.addons[id]&&await conflict(id))s.addons[id]=true;}catch(error){console.warn('[Blue Lemonade] 개인 확장 플래그 이어받기',error);}
@@ -220,12 +235,12 @@ async function startAddonsOnce(layers){
     // 1.0.0: 바로 보이지 않는 큰 애드온은 처음 쓸 때만
     const late=ids.filter(id=>LATE_ADDONS.has(id));
     const rest=ids.filter(id=>id!=='perf'&&!LATE_ADDONS.has(id));
-    lateIds=late;
+    lateIds=late;if(!late.length)markLateDone();
     const startRest=async()=>{
         await ensureStyling();
         // 늦게 붙은 애드온이 놓친 채팅 바뀜은 지금 채팅으로 한 번 (boot-layers.js withReplay — APP_READY 는 실리태번이 늦은 리스너에도 바로 불러 줘요)
-        const run=async()=>{await Promise.allSettled(rest.map(startOne));await layers?.lateSettled?.();};   // 모듈이 jQuery 준비 · 다음 작업에 거는 리스너까지 덮어요
-        await(layers?layers.withReplay('애드온',run):run());
+        const run=async()=>{await startEach(rest);await layers?.lateSettled?.();};   // 모듈이 jQuery 준비 · 다음 작업에 거는 리스너까지 덮어요
+        await(layers?layers.withReplay('애드온',run,{spread:true}):run());
         try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}
     };
     lateLayers=layers;

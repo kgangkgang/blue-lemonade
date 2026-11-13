@@ -43,25 +43,31 @@ await test('apply.js: 단추 끔 → salty-qr-fold-off · 접힘 → salty-qr-fo
     assert.deepEqual([...run({ chat: { qrFold: true, qrFolded: false } })], ['salty']);
     assert.ok(run({ chat: { qrFold: false, qrFolded: false } }).has('salty-qr-fold-off'));
     assert.ok(run({ chat: { qrFold: true, qrFolded: true } }).has('salty-qr-folded'));
+    // want 의 표식은 class 가 아니라 body 속성으로 옮겨 달아요(syncGateCss 앞에서 꺼냄 · 바뀐 때만)
+    assert.match(apply, /const qrFolded = want\.delete\('salty-qr-folded'\);[^]*?const held = syncGateCss\(/);
+    assert.match(apply, /if \(document\.body\.hasAttribute\('data-salty-qr-folded'\) !== qrFolded\) \{ restyleAhead\(\); document\.body\.toggleAttribute\('data-salty-qr-folded', qrFolded\); \}/);
 });
 
-await test('layout.js: 접기 단추를 돋보기 옆에 붙이고, 누르면 설정에 기억 · body 클래스 토글', () => {
+await test('layout.js: 접기 단추를 돋보기 옆에 붙이고, 누르면 설정에 기억 · body 속성 토글', () => {
     const layout = read('src/layout.js');
     assert.match(layout, /import \{ getSettings, saveSettings \} from '\.\/settings\.js'/);
     assert.match(layout, /function syncQrFold\(bar, enabled\)/);
     assert.match(layout, /syncQrFind\(bar, enabled\);\s*syncQrFold\(bar, enabled\);/, 'placeQuickReplies 가 돋보기 다음에 부름');
     assert.match(layout, /fold\.id = 'bl-qr-fold'/);
-    assert.match(layout, /s\.chat\.qrFolded = !document\.body\.classList\.contains\('salty-qr-folded'\);\s*document\.body\.classList\.toggle\('salty-qr-folded', s\.chat\.qrFolded\);\s*saveSettings\(\);/);
+    assert.match(layout, /s\.chat\.qrFolded = !document\.body\.hasAttribute\('data-salty-qr-folded'\);\s*document\.body\.toggleAttribute\('data-salty-qr-folded', s\.chat\.qrFolded\);\s*saveSettings\(\);/);
+    assert.ok(!/classList\.(?:add|remove|toggle|contains)\('salty-qr-folded'/.test(layout), '« 는 body class 를 안 바꿔요(속성만 — 실리태번 keyboard.js 가 class 기록마다 문서 전체를 다시 훑어요)');
     assert.match(layout, /classList\.contains\('salty-qr-fold-off'\)\) \{ fold\?\.remove\(\); return; \}/, '단추 끔 · QR 꺼짐 · 버튼 없음이면 뗌');
     assert.match(layout, /'퀵 리플라이 펴기' : '퀵 리플라이 접기'/, '한국어 라벨');
 });
 
 await test('CSS: 접힌 줄은 단추만 남김 · 단추 모양 · 빌드된 style.css 에도 들어감', () => {
     const css = read('css/35-qr-bar.css');
-    assert.match(css, /body\.salty\.salty-qr-folded #send_form #qr--bar > :not\(#bl-qr-fold, #bl-qr-shelf\) \{ display: none !important; \}/);   // 1.0.3 QR 책장 단추도 남아요
+    assert.match(css, /body\.salty\[data-salty-qr-folded\] #send_form #qr--bar > :not\(#bl-qr-fold, #bl-qr-shelf\) \{ display: none !important; \}/);
+    assert.ok(!/\.salty-qr-folded/.test(css), '접힘은 class 가 아니라 속성 선택자');   // 1.0.3 QR 책장 단추도 남아요
     assert.match(css, /body\.salty #send_form #qr--bar #bl-qr-fold \{[^}]*position: sticky;[^}]*order: -1;/);
     const built = read('style.css') + read('src/style-lazy.gen.css');
-    assert.match(built, /body\.salty\.salty-qr-folded #send_form #qr--bar > :not\(#bl-qr-fold, ?#bl-qr-shelf\)/, 'build-css 로 다시 만들어야 함');
+    assert.match(built, /body\.salty\[data-salty-qr-folded\] #send_form #qr--bar > :not\(#bl-qr-fold, ?#bl-qr-shelf\)/, 'build-css 로 다시 만들어야 함');
+    assert.ok(!built.includes('.salty-qr-folded'), '생성 CSS 에 옛 class 선택자가 남지 않아요');
 });
 
 await test('설정 창 스위치 · 되돌리기 라벨 · 검색 목록', () => {

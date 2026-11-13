@@ -230,7 +230,7 @@ export function updateNote(id, patch) {
 
 // ── 내용 그리기 (채팅 본문과 같은 길) ──────────────────────
 /** host(.bl-notes-view) 안에 채팅처럼 그린다: 표시 정규식 · 마크다운 · 대사 q · 감정 대사 */
-let previewRulesOn = false;
+// 검토 D-2: 미리보기 사본 시트는 이제 창을 닫으면 꺼져요(lite.js) — 그릴 때마다 켜요(이미 켜져 있으면 값만 다시 넣어 싸요)
 // 인용(>) 안 목록도 체크 줄 · 코드 칸(``` · ~~~) 안은 글자 그대로 — 그린 보기(drawTasks)와 같은 규칙으로 센다
 const TASK_RE = /^(\s*(?:>\s*)*(?:[-*+]|\d+\.)\s+)\[([ xX])\](?=\s|$)/;
 // 코드 칸 여닫이: 그린 보기(showdown)처럼 펜스 뒤에는 언어 이름만(띄어쓰기 · ` · ~ 없음) 올 수 있다 — 한 줄 안에서 닫히는 ```글``` · ~~~글~~~ 은 코드 칸이 아니다
@@ -313,8 +313,8 @@ function decorate(body, selfId = '', depth = 0) {
     }
 }
 function renderView(host, text, onToggle, selfId = '') {
-    // 채팅 서식의 사본 규칙(.salty-preview …)은 시작 속도 때문에 꺼져 있다 — 처음 그릴 때 한 번 켠다 (북마크 창과 같음)
-    if (!previewRulesOn) { previewRulesOn = true; try { restorePreviewRules(); } catch { /* 표시용 */ } }
+    // 채팅 서식의 사본 규칙(.salty-preview …)은 시작 속도 때문에 꺼져 있다 — 그릴 때마다 켠다(창을 닫으면 lite.js 가 다시 끔 · 1.4.x 검토 D-2)
+    try { restorePreviewRules(); } catch { /* 표시용 */ }
     if (!host.firstChild) host.innerHTML = '<div class="mes"><div class="mes_block"><div class="mes_text"></div></div></div>';
     const body = host.querySelector('.mes_text');
     if (selfId) host.firstElementChild.dataset.ehSeed = 'note:' + selfId; // 에셋 번호 묶음을 고를 때의 씨앗 (채팅 밖 자리 규칙 — 북마크와 같은 data-eh-seed)

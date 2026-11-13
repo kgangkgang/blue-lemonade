@@ -283,7 +283,7 @@ body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes.bl
   content-visibility: visible !important;
 }
 @supports (position-try-fallbacks: flip-block) and (position-anchor: --a) {
-  body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview).bl-mes-menu-open {
+  body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview)[data-bl-mes-menu-open] {
     anchor-name: --salty-chat;
   }
   body.salty:not(.expandMessageActions) :is(#salty-nochat, .salty-preview) .mes.bl-menu-open .mes_buttons:is(.bl-s, *) {

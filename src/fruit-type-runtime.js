@@ -3,7 +3,8 @@ import {FRUIT_TYPES,tidyFruitType,fruitTypeCss,fruitDecorCss,decorFilterMarkup,t
 import {findFont,fontStack,loadFont} from './fonts.js';
 import {loadFullCatalog,catalogReady} from './catalog.js';   // 1.0.0 상태창 글자에 고른 글꼴 — 전체 목록(1,016개)은 시작 목록 밖 글꼴을 골랐을 때만 받아요(극한 최적화: 부팅 때 152KB 를 늘 받던 것)
 import {watchWith} from './dom-watch.js';   // 9.0.4 공용 감시 허브(시험의 가짜 창은 그 창 감시자 하나)
-import {framePoll} from './frame-poll.js';   // 1.1.4 1.5초 폴링 · 서명 계산을 과일 계열 세 모듈이 하나로
+import {framePoll} from './frame-poll.js';
+import {holdSheet} from './boot-gate.js';   // 1.2.2 꾸미기 시트(83KB)가 덮개 동안 붙으면 꺼 둔 채로 — 걷힐 때 한 번에 켜요   // 1.1.4 1.5초 폴링 · 서명 계산을 과일 계열 세 모듈이 하나로
 let stop=null, latest={on:false};
 function family(id){const f=id==='original'?null:findFont(id);if(!f||f.unusable)return '';loadFont(f);return fontStack(f);}
 // 7.0.4 글꼴 설정을 안 켜도(anyTypeEnabled 아님) 테마가 켜져 있으면 감시한다 — 채팅 iframe 상태창의 한국어 낱말 꺾임 막기(wrapCss)는 늘 넣는다.
@@ -57,7 +58,7 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
     const readPalette=()=>['accent','text','muted','line'].map(tokenValue).join('|');
     function paintFrameDecor(d,text){let s=frameDecors.get(d);if(!text){s?.remove();frameDecors.delete(d);return;}if(!s?.isConnected){s=d.createElement('style');s.dataset.blFruitDecor='';(d.head||d.documentElement).append(s);frameDecors.set(d,s);}if(s.textContent!==text)s.textContent=text;}
     let filters=null;
-    function paintDecor(config){const text=fruitDecorCss(config);if(!text){decor?.remove();decor=null;filters?.remove();filters=null;return;}if(!decor?.isConnected){decor=doc.createElement('style');decor.dataset.blFruitDecor='';(doc.head||doc.documentElement).append(decor);}if(decor.textContent!==text)decor.textContent=text;
+    function paintDecor(config){const text=fruitDecorCss(config);if(!text){decor?.remove();decor=null;filters?.remove();filters=null;return;}if(!decor?.isConnected){decor=doc.createElement('style');decor.dataset.blFruitDecor='';(doc.head||doc.documentElement).append(decor);holdSheet(decor);}if(decor.textContent!==text)decor.textContent=text;
         // 그림 장식 필터(팔레트 색 · 밝기는 불투명도로) — body 끝에 숨은 svg 한 벌
         if(!filters?.isConnected&&doc.body){const box=doc.createElement('div');box.innerHTML=decorFilterMarkup();const el=box.firstElementChild;if(el){filters=el;doc.body.append(el);}}}
     function flush(){
@@ -65,13 +66,16 @@ export function watchFruitTypography(doc,host,getConfig,fontFamily=()=> ''){
         const config=tidyFruitType(getConfig()),css=fruitTypeCss(config,fontFamily),docs=new Set(),liveFrames=new Set();
         // 8.2.6 글꼴 설정이 하나도 켜져 있지 않으면(css 없음) 채팅 문서 안의 상태창 뿌리는 아무것도 바꾸지 않아요(아래 hasRoot 가 늘 거짓) — 그때 채팅 감시는 iframe 이 붙고 빠질 때만 다시 봐요.
         //   메시지가 붙을 때마다 과일 · 데우스 뿌리 선택자 목록(수십 갈래)으로 그 메시지 아래를 훑던 것. iframe 문서 안은 감싸기(WRAP) 때문에 그대로 뿌리까지 봐요
-        mainWatch=css?rootSelector+',iframe':'iframe';paintDecor(config);paletteSig=readPalette();const frameDecor=fruitDecorCss(config,{owners:['fruit'],resolve:tokenValue});
+        mainWatch=css?rootSelector+',iframe':'iframe';paintDecor(config);
+        // 팔레트 읽기(body 계산 스타일 — 그 자리에서 문서 스타일 계산을 강제해요)는 과일 iframe 에 장식을 칠할 때만 · 한 번에 한 번이에요.
+        //   예전엔 flush 마다 먼저 읽어서, 상태창 iframe 이 없는 채팅 · 시작 덮개 동안에도 문서 전체(폰 리그 추적: 요소 218)를 다시 계산했어요
+        let frameDecor=null;const frameDecorText=()=>{if(frameDecor===null){paletteSig=readPalette();frameDecor=fruitDecorCss(config,{owners:['fruit'],resolve:tokenValue});}return frameDecor;};
         const fonts=new Set();for(const t of Object.values(config.types))for(const r of Object.values(t.regions))if(r.on&&r.font!=='original'){const f=findFont(r.font);if(f&&!f.unusable)fonts.add(String(f.family).replace(/^['"]|['"]$/g,''));}
         function visit(d,scope){
             if(!scope||docs.has(d))return;docs.add(d);
             const old=scopes.get(d);if(old?.root!==scope){old?.observer();const observer=watchWith(host,[[scope,{childList:true,subtree:true,name:'과일 글자 (상태창)'}]],d===doc?mainRecords:records=>{if(fruitStructureChanged(records,rootSelector+',iframe'))schedule();});scopes.set(d,{root:scope,observer});}
             const hasRoot=(css||d!==doc)&&!!scope.querySelector(rootSelector);
-            if(d!==doc)paintFrameDecor(d,hasRoot?frameDecor:'');
+            if(d!==doc)paintFrameDecor(d,hasRoot?frameDecorText():'');
             if(d!==doc&&hasRoot){let wrap=wraps.get(d);if(!wrap?.isConnected){wrap=d.createElement('style');wrap.dataset.blFruitWrap='';wrap.textContent=WRAP;(d.head||d.documentElement).append(wrap);wraps.set(d,wrap);}}else unwrap(d);
             if(css&&hasRoot){
                 let style=styles.get(d);if(!style){style=d.createElement('style');style.dataset.blFruitTypography='';(d.head||d.documentElement).append(style);styles.set(d,style);}if(style.textContent!==css)style.textContent=css;

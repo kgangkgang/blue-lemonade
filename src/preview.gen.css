@@ -1,4 +1,4 @@
-/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 711개(덩어리 51개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build 7d6a9caf0963) */
+/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 711개(덩어리 51개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build 3fe4bf5dfdd8) */
 .salty-sample q::before,
 .salty-sample q::after {
   content: none;
@@ -477,8 +477,8 @@ body.salty:not(.expandMessageActions) :where(.salty-preview):is(#salty-nochat, *
   content-visibility: visible !important;
 }
 @supports (position-try-fallbacks: flip-block) and (position-anchor: --a) {
-body.salty:not(.expandMessageActions) #salty-nochat.bl-mes-menu-open,
-body.salty:not(.expandMessageActions) :where(.salty-preview):is(#bl-s, *).bl-mes-menu-open {
+body.salty:not(.expandMessageActions) #salty-nochat[data-bl-mes-menu-open],
+body.salty:not(.expandMessageActions) :where(.salty-preview):is(#bl-s, *)[data-bl-mes-menu-open] {
     anchor-name: --salty-chat;
   }
   body.salty:not(.expandMessageActions) :where(.salty-preview):is(#salty-nochat, *) .mes.bl-menu-open .mes_buttons:is(.bl-s, *) {
@@ -4144,8 +4144,8 @@ html body .salty-panel .bl-inline-preview.bl-view-float > .bl-view-toggle:is(#bl
 .bl-inline-preview .bl-qr-sample > .bl-qr-shelf-sample { position:relative; flex-shrink:0; order:-1; display:grid; place-items:center; min-width:34px; min-height:34px; padding:0 8px; border-radius:8px; background:transparent; color:var(--salty-muted, var(--salty-text)); font-size:12px; scroll-snap-align:start; }
 body.salty-qr-fold-off .bl-inline-preview .bl-qr-sample > .bl-qr-fold-sample,
 body:not(.salty-qr-shelf) .bl-inline-preview .bl-qr-sample > .bl-qr-shelf-sample { display:none; }
-body.salty.salty-qr-folded .salty-panel .bl-inline-preview .bl-qr-sample > :not(.bl-qr-fold-sample, .bl-qr-shelf-sample) { display:none !important; }
-body.salty.salty-qr-folded .salty-panel .bl-inline-preview .bl-qr-sample::after { display:none; }
+body.salty[data-salty-qr-folded] .salty-panel .bl-inline-preview .bl-qr-sample > :not(.bl-qr-fold-sample, .bl-qr-shelf-sample) { display:none !important; }
+body.salty[data-salty-qr-folded] .salty-panel .bl-inline-preview .bl-qr-sample::after { display:none; }
 body.salty .bl-inline-preview .bl-qr-sample > .qr--buttons.qr--color { background-color:color-mix(in srgb, var(--qr--color) 16%, transparent); }
 body.salty .bl-inline-preview .bl-qr-sample > .qr--buttons.qr--color.bl-qr-color-none { background-color:transparent; }
 .bl-inline-preview .bl-qr-sample > .qr--buttons.qr--borderColor { border-left:5px solid var(--qr--color); border-right:5px solid var(--qr--color); }

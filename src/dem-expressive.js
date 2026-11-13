@@ -1,5 +1,6 @@
 import { syncDemSelection } from './dem-selection.js';
 import { addMessageDecorator } from './message-decor.js';
+import { holdSheet } from './boot-gate.js';   // 1.2.2 덮개 동안 붙으면 꺼 둔 채로 — 걷힐 때 한 번에 켜요
 // 데우스 감정 대사: 「…」『…』 대사 살리기 (프롬프트 › 데우스 엑스 마키나 › 감정 대사 효과).
 //
 // 프리셋의 'DEM - Render Expressive Dialogue' 정규식은 "…" · “…” 대사만 알아본다. 「…」 대사에 붙은 <excited> 같은 태그는
@@ -134,6 +135,7 @@ function watchFx(root) {
             style.id = 'bl-fx-offscreen';
             style.textContent = FX_OFF_CSS;
             document.head.append(style);
+            holdSheet(style);
         }
     }
     for (const el of watched) if (!el.isConnected) forgetFx(el); // 다시 그려져 떨어진 칸 (화면 밖이던 칸은 감시자가 알려 주지 않는다)

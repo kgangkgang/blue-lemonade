@@ -18,22 +18,22 @@ export const isKoreanLocale = locale => /^ko(?:[-_]|$)/i.test(String(locale ?? '
 //   부팅 길에는 싣지 않고 처음 부를 때 한 번 받아요.
 // 1.0.0 극한 최적화: 글자 사전(808KB 한 장)은 색인(ko-ui-text.index.gen.js ≈ 75KB: 열쇠 지문 · 패턴 전부) + 조각 여섯(boot · drawers · templates · js · html · rest)으로 —
 //   한글화 스크립트가 색인으로 「아직 안 받은 조각에 있는 글」만 알아보고 그 조각을 받아요(처음 필요할 때 · 처음 누를 때). 파일은 tools/build-korean-dict.mjs 가 만들어요
-const TEXT_PARTS = {
-    boot: () => import('./ko-ui-text.boot.gen.js'), drawers: () => import('./ko-ui-text.drawers.gen.js'), templates: () => import('./ko-ui-text.templates.gen.js'),
-    js: () => import('./ko-ui-text.js.gen.js'), html: () => import('./ko-ui-text.html.gen.js'), rest: () => import('./ko-ui-text.rest.gen.js'),
-};
+// 1.3.x 메모리(최적화 C · 11-14): 색인 · 조각은 JSON 파일(src/ko-ui-text.<이름>.gen.json · 만든 파일 — tools/build-korean-dict.mjs · 손으로 고치지 않아요)을 받아 읽어요.
+//   예전 모듈 꼴(JSON.parse(String.raw`…`))은 V8 이 태그 템플릿의 가공 · 원문 두 벌을 페이지가 살아 있는 동안 붙잡아 사전 글이 힙에 계속 남았어요.
+const TEXT_PARTS = new Set(['boot', 'drawers', 'templates', 'js', 'html', 'rest']);
+const readText = name => fetch(new URL(`./ko-ui-text.${name}.gen.json`, import.meta.url), { credentials: 'same-origin' })
+    .then(response => { if (!response.ok) throw new Error(`사전 ${name} 을(를) 받지 못했어요 (${response.status})`); return response.json(); });
 const textParts = new Map();
 export function loadTextPart(name) {
-    const load = TEXT_PARTS[name];
-    if (!load) return Promise.reject(new Error(`사전 조각이 없어요: ${name}`));
+    if (!TEXT_PARTS.has(name)) return Promise.reject(new Error(`사전 조각이 없어요: ${name}`));
     let part = textParts.get(name);
-    if (!part) { part = load().then(module => module.default).catch(error => { textParts.delete(name); throw error; }); textParts.set(name, part); }
+    if (!part) { part = readText(name).catch(error => { textParts.delete(name); throw error; }); textParts.set(name, part); }
     return part;
 }
 let textDictionary = null;
 /** 색인과 조각 받기 — { index, load(part) } (한글화 스크립트 startWhenNeeded 가 받아요) */
 export function loadTextDictionary() {
-    textDictionary ??= import('./ko-ui-text.index.gen.js').then(module => ({ index: module.default, load: loadTextPart })).catch(error => { textDictionary = null; throw error; });
+    textDictionary ??= readText('index').then(index => ({ index, load: loadTextPart })).catch(error => { textDictionary = null; throw error; });
     return textDictionary;
 }
 const PROBE = '\u0000bl-ko-ui-probe';

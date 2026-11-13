@@ -312,7 +312,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     for (const node of texts.keys()) if (!node.isConnected) texts.delete(node);
     for (const node of attrs.keys()) if (!node.isConnected) attrs.delete(node);
     for (const node of popupRoots) if (!node.isConnected) popupRoots.delete(node);
-    const found = [...doc.querySelectorAll(FLUSH_ALL)];
+    const found = scanOutsideChat();
     const roots = found.filter(el => el.matches(rootsSelector));
     for (const root of roots) if (!closedPanel(root)) paint(root);
     const helperRoots = found.filter(el => el.matches(helperRootsSelector));
@@ -326,6 +326,15 @@ function installFruitHeartKorean(BlueLemonade, data) {
     roots.forEach(watch); helperRoots.forEach(watch); found.filter(el => el.matches(watchSelector)).forEach(watch); popupRoots.forEach(watch);
   }
   function schedule() { if (!stopped && !frame) frame = host.requestAnimationFrame(flush); }
+  // BL 1.4.x (폰 4배 · 채팅 열기): flush 의 문서 훑기를 #chat 밖 가지에서만 — 고르는 것(과일 창 · 입구 · Helper 목록 · 팝업 · 알림 · QR 자리)은 모두 #chat 밖에 있어요.
+  //   예전에는 알림 하나가 뜰 때마다 메시지 요소까지 다 훑어 짧은 채팅 열기 42ms · 300개 열기 101ms(진단 diag-1)가 들었어요. 차례는 문서 차례 그대로로 맞춰요
+  function scanOutsideChat() {
+    if (!branchable() || !doc.getElementById('chat')) return [...doc.querySelectorAll(FLUSH_ALL)];
+    const out = [];
+    for (const branch of outsideChat()) { if (branch.matches(FLUSH_ALL)) out.push(branch); for (const el of branch.querySelectorAll(FLUSH_ALL)) out.push(el); }
+    if (out.length > 1 && typeof out[0].compareDocumentPosition === 'function') out.sort((a, b) => (a === b ? 0 : a.compareDocumentPosition(b) & 4 ? -1 : 1));
+    return out;
+  }
   // 창이 열리는 class 변화는 rAF 를 기다리지 않고 그 작업 끝(microtask)에서 바로 칠해요 — 닫힌 동안 안 칠한 글이 한 frame 도 보이지 않게.
   const opened = records => Array.isArray(records) && records.some(r => r.type === 'attributes' && r.attributeName === 'class' && r.target?.id === 'fruit-heart-v6' && r.target.matches?.('.open'));
   const observer = new host.MutationObserver(records => {

@@ -1,3 +1,4 @@
+import { holdSheet } from './boot-gate.js';   // 1.2.2 액자 그림 변수 시트도 덮개 동안이면 꺼 둔 채로
 import { drawPreset, FRAME_PRESETS, FRAME_PRESET_VERSION, LIFTED, tidyPresetLabel, retirePreset, freshenPresetColors } from './frame-presets.js';
 export const DECOR_DEFAULTS = { on: false, art: '', mask: '', ratio: 1, opacity: 100, zoom: 100, x: 50, y: 50, fit: 'cover', radius: null, frameWidth: 100, frameHeight: 100, presetTilt: 0, frameHue: 0, frameSat: 100, frameBright: 100, motion: false };   // motion: 액자 움직임(기본 끔 — 켠 액자만 src/frame-motion.js 를 받아요)
 const validated = new WeakMap();
@@ -70,7 +71,7 @@ export function syncDecor(settings) {
     const sources = owners.flatMap(owner => enabled[owner] ? [settings[owner].decor.art, settings[owner].decor.mask] : ['', '']);
     if (sources.length !== previousSources.length || sources.some((value, i) => value !== previousSources[i])) {
         let style = document.getElementById('bl-decor-data');
-        if (!style) { style = document.createElement('style'); style.id = 'bl-decor-data'; document.head.append(style); }
+        if (!style) { style = document.createElement('style'); style.id = 'bl-decor-data'; document.head.append(style); holdSheet(style); }
         style.textContent = ':root{' + ['image-art', 'image-mask', 'profile-art', 'profile-mask', 'userProfile-art', 'userProfile-mask'].map((key, i) => {
             const [owner, kind] = key.split('-');
             return `--bl-${owner === 'userProfile' ? 'user-profile' : owner}-decor-${kind}:${sources[i] ? `url("${sources[i]}")` : 'none'};`;

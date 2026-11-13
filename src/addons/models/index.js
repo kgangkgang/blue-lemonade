@@ -1,11 +1,10 @@
 // 모델 등록 — 공급자마다 원하는 모델 이름을 직접 넣어 두고 고르는 확장
 // 이전 확장 Custom-Vertex-Model(버텍스 전용)을 대신한다. 설정은 처음 켤 때 한 번 옮겨 온다.
-import { verifyAddonCss } from '../../addon-files-check.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
 import { extension_settings } from '../../../../../../extensions.js';
 import { OLD_MODULE, TITLE, VERSION, initSettings, saveSettings, settings } from './state.js';
 import { applyAll, scheduleAll, watchPicks } from './inject.js';
-import { buildPanel, render } from './panel.js';
+import { render } from './panel.js';
 import { offerNewModels, pruneNative } from './offer.js';
 
 initSettings();
@@ -37,10 +36,7 @@ function checkOldExtension() {
     toast('warning', '이전 “버텍스 모델 등록” 확장이 켜져 있어요. 버텍스 목록이 두 번 나오니 확장 관리에서 꺼 주세요. 등록해 둔 모델은 이미 옮겨 왔어요.', { timeOut: 15000 });
 }
 
-function checkFilesMatch() {
-    // 기다려 보고 · 스타일을 한 번 다시 받아 보고 · 그래도 다를 때만 한 번 알린다 (src/addon-files-check.js)
-    verifyAddonCss({ folder: 'models', name: '--mr-css-version', version: VERSION, title: TITLE, selector: '.mr-settings' });
-}
+// 애드온 CSS 판 확인은 등록 창을 처음 만들 때(panel.js buildPanel) 해요 — 1.4.x 최적화 C 로 창을 늦게 만들어 부팅 때는 볼 칸이 없어요(검토 C 3번)
 
 /** 1.1.6 업데이트로 테마가 새 모델을 알게 되면 한 번 묻는다 (offer.js) — 실리태번 로딩이 끝나고 조금 뒤, 못 들으면 1분 뒤 */
 function offerWhenReady() {
@@ -60,7 +56,7 @@ function offerWhenReady() {
 }
 
 jQuery(async () => {
-    buildPanel();
+    // 최적화 C(11-14): 등록 창은 처음 열 때(openPanel · mountInline) 만들어요 — 부팅 때 숨은 보관함에 요소 · 리스너를 두지 않아요(render 는 root 가 없으면 쉬어요)
     applyAll();
     watchPicks();
     render();
@@ -74,7 +70,6 @@ jQuery(async () => {
     }
 
     setTimeout(() => {
-        checkFilesMatch();
         checkOldExtension();
     }, 3000);
     offerWhenReady();

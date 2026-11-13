@@ -162,7 +162,7 @@ check('과일 장식 색: iframe 안은 지금 팔레트 값으로 풀어 넣고
     assert.equal(schema.fruitDecorCss({},{owners:['fruit'],resolve:()=>'red;}x{'}),'','값 검사');
     assert.ok(schema.fruitDecorCss({}).includes(':is(.meow-fm-ghost,.custom-meow-fm-ghost) > div:last-child{color:var(--salty-accent)!important'),'채팅 본문 요약 꼬리 표정');
     const orig=tidyFruitType({ownerOn:{fruit:true},types:{'fruit-choices':{decor:'original'}}});assert.ok(!schema.fruitDecorCss(orig,{owners:['fruit'],resolve:()=>'#000'}).includes('cat-kaomoji'));
-    const rt=read('src/fruit-type-runtime.js');assert.ok(rt.includes("fruitDecorCss(config,{owners:['fruit'],resolve:tokenValue})")&&rt.includes('readPalette()!==paletteSig'),'팔레트가 바뀌면 다시 풀어요');
+    const rt=read('src/fruit-type-runtime.js');assert.ok(rt.includes("fruitDecorCss(config,{owners:['fruit'],resolve:tokenValue})")&&rt.includes('readPalette()!==paletteSig')&&rt.includes('if(frameDecor===null){paletteSig=readPalette();')&&!/paintDecor\(config\);paletteSig=readPalette\(\)/.test(rt),'팔레트가 바뀌면 다시 풀어요');
 });
 const SOLA=FRUIT_TYPES.filter(x=>x.owner==='sola');
 check('솔라 4: 서랍 카드 20종 + 생각 캡슐 · 본문 속 쪽지 — 같은 꼴(제목 · 꼬리표 · 본문 · 항목 이름 · 연출 메모), 설정 › 프롬프트 › 솔라',()=>{

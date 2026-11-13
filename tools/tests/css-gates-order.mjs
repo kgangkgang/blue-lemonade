@@ -46,6 +46,17 @@ test('① 기준 파일: gates 마다 기본값 꺼짐 · 그 설정일 때만 �
     }
 });
 
+// 1.4.x 검토 D-4: 켜짐 클래스는 시트가 올 때까지 body 에 늦게 달려요. 남은 시트에 그 클래스를 :not() 으로 보는 짝 규칙이 있으면
+//   그 사이 「꺼진 모습」(예: 배경 그림 사용자의 시작 때 #bg1 투명)이 보였다가 바뀌어요 — 그런 클래스는 gates 에 넣지 않아요
+test('① 켜짐 클래스를 :not() 으로 보는 규칙이 첫 장 · 전체 장에 없어요(배경 그림 사용자의 시작 깜빡임 막기)', () => {
+    const text = read('style.css') + read('src/style-lazy.gen.css');
+    for (const g of cfg.gates) {
+        const n = (g.class || g.prefix).replace(/-/g, '\\-');
+        const re = new RegExp(':not\\([^)]*\\.' + n + (g.class ? '(?![\\w-])' : ''));
+        assert.doesNotMatch(text, re, `${g.class || g.prefix}: 제자리 :not 짝 규칙이 있어요`);
+    }
+    assert.ok(!cfg.gates.some(g => g.class === 'salty-bgimg'), '채팅 배경 그림(salty-bgimg)은 켜짐 시트에 넣지 않아요');
+});
 test('② 생성물: 시트 · 표가 지금 빌드와 같아요', () => {
     for (const [file, want] of Object.entries(out.gateFiles)) assert.equal(readOr(file), want, `${file} — node tools/build-css.cjs 로 다시 만들 것`);
     assert.equal(read('style.css'), out.text);

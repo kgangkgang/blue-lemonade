@@ -6,6 +6,7 @@
 // 설정: headSwitches { <창 열쇠>: true } — 열쇠는 창의 id, 없으면 class (확장 순서 애드온 keyOf 와 같은 규칙, data-po-key 가 있으면 그것).
 import { getSettings, saveSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브
+import { spreadPending, whenSpreadSettled, lateAddonsDone, whenLateDone } from './addon-start-state.js';
 
 const COLUMNS = ['extensions_settings', 'extensions_settings2'];
 const STRIP = '.ext-version, [class*="-version"], [class*="_version"], .inline-drawer-icon, i, svg, button, input, select, textarea';
@@ -14,7 +15,7 @@ const HINT_ID = /enable|enabled|activ|master|toggle|switch|^(on|use)([_-]|$)|(^|
 const HINT_TEXT = /enable|enabled|activ|사용|켜|활성|작동/i;
 export const ROW = 'bl-hs-row', SWITCH = 'bl-hs-switch', HEAD = 'bl-hs-head';
 export const ROW_LABEL = '확장 탭에 보이기';   // 6.1.8 모든 창에서 같은 이름 (확장 이름 · 켜기 이름 없이)
-let running = false, observer = null, timer = 0, ticker = 0, drawerWatch = null;
+let running = false, observer = null, timer = 0, ticker = 0, drawerWatch = null, deferredAt = 0, deferTimer = 0;
 const masters = new WeakMap();   // 창 → { el, label } (창이 다시 그려져 떨어지면 다시 찾는다)
 
 /** 창의 열쇠: 확장 순서 애드온이 붙인 data-po-key → id → class → 태그 */
@@ -23,6 +24,28 @@ export function keyOf(el) {
     if (el.id) return `id:${el.id}`;
     const cls = [...(el.classList || [])].filter(Boolean).sort().join('.');
     return cls ? `cls:${cls}` : `tag:${String(el.tagName || '').toLowerCase()}`;
+}
+
+// 1.4.x 통합(덧 3 · 조정자 결정 (라)): id 도 이름 있는 class 도 없는 창(cls:inline-drawer · #n)은 「처음 본 차례」 번호라
+//   부팅마다 다른 창을 가리켰어요. 그런 창만 안정된 이름 열쇠로 — 제목의 data-i18n(언어와 상관없음) → 창을 감싼 가장 가까운 id → 제목 글자.
+//   이름이 같은 창이 둘이면 #2 · #3 을 덧붙여요(문서 차례). id · data-po-key · 이름 있는 class 열쇠는 원래 안정돼 그대로예요.
+export const LEGACY_KEY = /^cls:inline-drawer(#\d+)?$/;
+export const MOVED_MARK = '@moved:stable-keys';   // headSwitches 안의 「옛 번호 열쇠를 한 번 옮겼음」 표시(값 true · 설정 정리를 그대로 지나요)
+export function stableKeyOf(drawer, head = headOf(drawer)) {
+    const k = keyOf(drawer);
+    if (!LEGACY_KEY.test(k)) return k;
+    const i18n = head?.querySelector?.('[data-i18n]')?.getAttribute('data-i18n')?.trim();
+    if (i18n) return `t:${i18n}`;
+    const col = drawer.closest?.(COLUMNS.map(id => `#${id}`).join(', '));
+    for (let n = drawer.parentElement; n && n !== col; n = n.parentElement) if (n.id) return `in:${n.id}`;
+    const text = head ? textOf(head).slice(0, 40) : '';
+    return text ? `x:${text}` : k;
+}
+/** 옛 번호 열쇠(cls:inline-drawer#n)를 지금 붙은 창의 이름 열쇠로 옮길 짝(순수 · 시험용): pairs = [{ legacy, stable, master }] → 켤 이름 열쇠 */
+export function movedKeys(switches, pairs) {
+    const out = [];
+    for (const { legacy, stable, master } of pairs) if (master && switches?.[legacy] === true && LEGACY_KEY.test(legacy) && stable !== legacy) out.push(stable);
+    return out;
 }
 
 /** 후보 점수: data-bl-master 100 · id/name 힌트 3 · 라벨 힌트 2 · 그 밖 1 */
@@ -100,6 +123,35 @@ export function setShown(key, on) {
     saveSettings();
 }
 
+const moved = () => getSettings().headSwitches?.[MOVED_MARK] === true;
+/** 옮기기 전에는 옛 번호 열쇠도 봐요(v1.4.4 와 같은 모습) · 옮긴 뒤에는 이름 열쇠만 */
+const shownFor = drawer => isShown(drawer.dataset.blHsStable) || (!moved() && isShown(drawer.dataset.blHsKey));
+function setShownFor(drawer, on) {
+    if (!on && !moved()) { const s = getSettings(); if (s.headSwitches) delete s.headSwitches[drawer.dataset.blHsKey]; }   // 옮기기 전 끄기는 옛 열쇠도 같이
+    setShown(drawer.dataset.blHsStable, on);
+}
+/** 늦은 애드온까지 다 붙은 뒤 한 번: 옛 번호 열쇠로 켜 둔 창을 이름 열쇠로 옮겨 적고 표시를 남겨요(옛 열쇠는 되돌리기용으로 남김) */
+function moveLegacyOnce(list) {
+    const s = getSettings(), hs = s.headSwitches;
+    if (!hs || hs[MOVED_MARK] === true) return;
+    const legacyOn = Object.keys(hs).filter(k => LEGACY_KEY.test(k) && hs[k] === true);
+    const pairs = list.map(d => ({ legacy: d.dataset.blHsKey, stable: d.dataset.blHsStable, master: !!masterFor(d) }));
+    const add = legacyOn.length ? movedKeys(hs, pairs) : [];
+    for (const k of add) hs[k] = true;
+    hs[MOVED_MARK] = true;   // 옮기기 · 알림 모두 이 한 번뿐이에요
+    saveSettings();
+    if (add.length) console.info('[Blue Lemonade] 확장 위 스위치 열쇠를 창 이름으로 옮겼어요:', add.join(' · '));
+    const missed = unmovedCount(legacyOn, pairs);
+    if (missed) globalThis.toastr?.info(unmovedText(missed), 'Blue Lemonade', { timeOut: 12000, extendedTimeOut: 4000 });
+}
+/** 옮기지 못한 옛 열쇠 수(순수): 켜 둔 옛 열쇠 중 켜기 스위치가 있는 창에 짝지어지지 않은 것 */
+export function unmovedCount(legacyOn, pairs) {
+    const done = new Set(pairs.filter(p => p.master && p.stable !== p.legacy).map(p => p.legacy));
+    return legacyOn.filter(k => !done.has(k)).length;
+}
+// 덧 4 · 조정자 결정 (아): 문구는 조정자가 정한 그대로
+export const unmovedText = n => `확장 위로 꺼내 둔 스위치 ${n}개를 새 판으로 옮기지 못했어요. 확장 서랍에서 한 번만 다시 켜 주세요.`;
+
 const setAttr = (el, name, value) => { if (el.getAttribute(name) !== value) el.setAttribute(name, value); };
 const setText = (el, value) => { if (el.textContent !== value) el.textContent = value; };
 function makeSwitch(cls) {
@@ -115,7 +167,7 @@ function makeRow(drawer) {
     opt.setAttribute('aria-label', ROW_LABEL);
     opt.addEventListener('click', (event) => {
         event.preventDefault(); event.stopPropagation();
-        setShown(drawer.dataset.blHsKey, opt.getAttribute('aria-checked') !== 'true');
+        setShownFor(drawer, opt.getAttribute('aria-checked') !== 'true');
         refresh();
     });
     row.append(text, opt);
@@ -137,22 +189,36 @@ function makeHead(drawer) {
 /** 창마다: 안의 줄을 붙이고, 켜 둔 창은 제목 줄에 스위치를 붙인다 (여러 번 불러도 같다) */
 export function refresh() {
     if (!running) return;
-    const used = new Set();
+    // 1.4.x 통합: 애드온을 나눠 시작하는 동안은 기다렸다가 한 번에 — 그 사이 붙는 창 때문에 열쇠 번호(cls:…#n)가 밀리지 않게(addon-start-state.js)
+    //   애드온 하나가 오래 안 끝나도 스위치가 영영 안 붙지 않게 6초까지만 기다려요
+    if (spreadPending() && Date.now() - (deferredAt ||= Date.now()) < 6000) { whenSpreadSettled(schedule); clearTimeout(deferTimer); deferTimer = setTimeout(schedule, 6100); return; }
+    deferredAt = 0; clearTimeout(deferTimer);
+    const used = new Set(), usedStable = new Set();
     const rowsOn = getSettings().headSwitchRows !== false;   // 6.8.8 설정에서 줄을 끌 수 있다 (꺼내 둔 제목 줄 스위치는 그대로)
-    for (const drawer of drawers()) {
-        let key = drawer.dataset.blHsKey;
+    const list = drawers();
+    for (const drawer of list) {
+        let key = drawer.dataset.blHsKey;   // 옛 번호 열쇠 — 옮기기 전 모습 · 옮길 짝을 찾는 데만 써요
         if (!key || used.has(key)) {
             const base = keyOf(drawer); key = base; let n = 1;
             while (used.has(key)) key = `${base}#${++n}`;
             drawer.dataset.blHsKey = key;
         }
         used.add(key);
+        // 이름 열쇠는 그릴 때마다 새로 구해요 — 창이 감싸는 칸에 막 옮겨지는 중이면(캐릭터 에셋 등) 처음엔 제목 글자, 뒤엔 감싼 id 라 붙잡아 두면 부팅마다 달라져요
+        const base = stableKeyOf(drawer); let stable = base, n = 1;
+        while (usedStable.has(stable)) stable = `${base}#${++n}`;
+        if (drawer.dataset.blHsStable !== stable) drawer.dataset.blHsStable = stable;
+        usedStable.add(stable);
+    }
+    // 옮기기는 늦은 애드온까지 다 시작한 뒤(위 기다림도 끝난 뒤) 한 번 — 그 전엔 옛 열쇠로 보여요
+    if (!moved()) { if (lateAddonsDone()) moveLegacyOnce(list); else whenLateDone(schedule); }
+    for (const drawer of list) {
         const content = contentOf(drawer), head = headOf(drawer);
         let row = content.querySelector(`:scope > .${ROW}`);
         let sw = head.querySelector(`:scope > .${HEAD}`);
         const m = masterFor(drawer);
         if (!m) { row?.remove(); sw?.remove(); continue; }
-        const want = isShown(key);
+        const want = shownFor(drawer);
         if (!rowsOn) row?.remove();
         else {
             if (!row) { row = makeRow(drawer); content.prepend(row); }
@@ -211,7 +277,7 @@ function armTicker(drawer) {
 }
 function stop() {
     observer?.(); observer = null; drawerWatch?.(); drawerWatch = null;
-    clearTimeout(timer); clearInterval(ticker); timer = 0; ticker = 0;
+    clearTimeout(timer); clearInterval(ticker); clearTimeout(deferTimer); timer = 0; ticker = 0; deferTimer = 0; deferredAt = 0;
     const block = document.getElementById('rm_extensions_block') || document.body;
     block.removeEventListener('change', onChange, true);
     block.removeEventListener('click', onChange, true);

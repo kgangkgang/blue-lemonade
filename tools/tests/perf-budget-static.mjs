@@ -31,9 +31,14 @@ const BUDGET = {
     intervalsScripts: 5,            // 내장 스크립트(src/scripts/) — 진짜 타이머는 scheduler.js 하나로 모여요. 1.1.3 은 6(과일 상태창 한글 폴링이 frame-poll.js 로)
     intervalsAddons: 16,            // 애드온(src/addons/ · 묶어 온 vendor 3 포함)
     hubChatSubs: 11,                // #chat 안쪽을 보는 허브 구독
-    hubDocumentSubs: 14,            // body · html 을 subtree 로 보는 허브 구독
-    hubSubs: 65,                    // 허브 구독 자리 전체(세는 도구 tools/audit/observers.mjs 기준) — 1.1.6 문서 뿌리를 따로 보던 감시자 14개를 허브 구독 12자리로 옮겨 53 → 65(아래 합계는 줄었어요)
-    observeSites: 122,              // 1.1.6 따로 감시자 자리(new MutationObserver · 내장 스크립트 빼고) + 허브 구독 자리 — 옮기기만 해서 늘지 않게(1.1.5: 71 + 53 = 124)
+    hubDocumentSubs: 18,            // body · html 을 subtree 로 보는 허브 구독
+    hubSubs: 74,                    // 허브 구독 자리 전체(세는 도구 tools/audit/observers.mjs 기준) — 1.1.6 문서 뿌리를 따로 보던 감시자 14개를 허브 구독 12자리로 옮겨 53 → 65(아래 합계는 줄었어요)
+    observeSites: 131,              // 1.1.6 따로 감시자 자리(new MutationObserver · 내장 스크립트 빼고) + 허브 구독 자리 — 옮기기만 해서 늘지 않게(1.1.5: 71 + 53 = 124)
+    // 1.4.x 최적화 통합(11-14 · 조정자 결정 「검사가 watchWith 도 세게 · 합친 판의 실제 수로」): 세는 도구가 watchDom 만 세고 watchWith(창, [[대상, 옵션], …]) 짝은 안 셌어요.
+    //   새 셈으로 v1.4.2 는 허브 73 · 문서 17 · 채팅 11(그동안 안 보이던 watchWith 짝 8 — 과일 글자 둘 · 당겨 새로고침 · 네모 단추 둘 · 가로 탭 줄 · 날씨 쉬기 · 과일 글자 바로가기 답 끝 —
+    //   중 문서 구독 3: 과일 글자 바로가기 · 네모 단추 · 가로 탭 줄)이고, 통합 판은 최적화 A 가 과일 입구의 따로 감시자(내장 스크립트 · body 전체 + 채팅 포함)를
+    //   허브 body 구역 구독(exclude '#chat')으로 옮겨 허브 74 · 문서 18 · 채팅 11 이에요. 늘어난 것이 아니라 그동안 못 세던 것을 세게 된 몫 + 옮긴 감시 하나라 그 값으로 맞춰요
+    //   (65 → 74 · 14 → 18 · 122 → 131 = 따로 감시자 57 + 허브 74). 더 늘리면 다시 까닭을 적어요.
     staticChunks: 14,               // 지금 13
     staticBytes: 300 * 1024,        // 지금 297KB(304,145B) — bundle-fresh.mjs 의 330KB 보다 조여요
     largestChunkBytes: 700 * 1024,  // 지금 678,904B

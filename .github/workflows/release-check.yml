@@ -98,6 +98,8 @@ jobs:
           node tools/tests/send-stop-slot.mjs .
           node tools/tests/addon-gated-bundle.mjs .
           node tools/tests/addon-gated-loading.mjs .
+          node tools/tests/focus-copies.mjs .
+          node tools/tests/late-start-spread.mjs .
           node tools/tests/settings-light-defaults.mjs .
           node tools/tests/dem-selector-classes.mjs .
           node tools/tests/dem-style-slots.mjs .
@@ -174,6 +176,7 @@ jobs:
           node tools/tests/boot-graph.mjs .
           node tools/tests/markdown-css-split.mjs .
           node tools/tests/css-gates-order.mjs .
+          node tools/tests/css-fanout.mjs .
           # 뗀 규칙 시트 실행 길을 실제로 돌려요: 받는 동안 미룸 · 달기 전 식히기 · 못 받으면 다음에 새 주소로 다시(공개판 감사 결함 둘 + 시험 공백)
           node tools/tests/gate-css-run.mjs .
           node tools/tests/gradients-core.mjs .
@@ -261,6 +264,7 @@ jobs:
           node tools/tests/direction-migrate.mjs .
           node tools/tests/direction-saved-list.mjs .
           node tools/tests/direction-typing.mjs .
+          node tools/tests/direction-read-before-write.mjs .
           node tools/tests/chat-light.mjs .
           node tools/tests/review-825-fixes.mjs .
           node tools/tests/persona-defer.mjs .
@@ -374,6 +378,7 @@ jobs:
           node tools/tests/ko-locale-bridge.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
+          node tools/tests/preview-rules-off.mjs .
           node tools/tests/css-split.mjs .
           node tools/tests/css-compat.mjs .
           node tools/tests/preview-measure-batch.mjs .
@@ -451,6 +456,7 @@ jobs:
           node tools/tests/startup-730.mjs .
           node tools/tests/numcomma-fit.mjs .
           node tools/tests/ink-contrast.mjs .
+          node tools/tests/tag-ink-read-once.mjs .
           node tools/tests/style-break.mjs .
           node tools/tests/param-two-columns.mjs .
           node tools/tests/addon-unify.mjs .
@@ -747,6 +753,8 @@ jobs:
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .
+          node tools/tests/script-watch-outside-chat.mjs .
+          node tools/tests/chat-open-fixed-cost.mjs .
           # 공용 스케줄러가 늦게 온 박자 다음의 제때 온 박자를 건너뛰지 않는지(과일 입구 1.5초 안전망이 약 3초로 늘던 것)
           node tools/tests/scheduler-late-tick.mjs .
           node tools/tests/fruit-watch-scope.mjs .
@@ -754,6 +762,8 @@ jobs:
           node tools/tests/fruit-type-catalog-wait.mjs .
           node tools/tests/script-watch-records.mjs .
           node tools/tests/scripts-same-window.mjs .
+          node tools/tests/ko-text-package-list.mjs
+          node tools/tests/lazy-panels-c.mjs
           node tools/tests/fruit-option-help.mjs .
           node tools/tests/fruit-option-coverage.mjs .
           node tools/tests/option-help-standing.mjs .
@@ -784,6 +794,7 @@ jobs:
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/manifest-reuse.mjs .
           node tools/tests/boot-gate.mjs .
+          node tools/tests/boot-sheet-hold.mjs .
           node tools/tests/usage-ledger-core-edges.mjs .
           node tools/tests/usage-ledger-store.mjs .
           node tools/tests/pricing-quote-edges.mjs .
@@ -863,7 +874,7 @@ jobs:
       - name: Check that generated files match their sources
         # Regenerate in the throwaway checkout, then fail if anything changed:
         # css/23-preview.gen.css (check mode fails on new root declarations),
-        # src/scripts/plain/korean.js + src/ko-ui-text.index.gen.js · ko-ui-text.<조각>.gen.js (9.0.7 · 1.0.0 조각: from tools/scripts-src/korean.js minus tools/scripts-src/korean-prune.json, precomputed dictionary checked against the source),
+        # src/scripts/plain/korean.js + src/ko-ui-text.index.gen.json · ko-ui-text.<조각>.gen.json (9.0.7 · 1.0.0 조각 · 1.3.x JSON: from tools/scripts-src/korean.js minus tools/scripts-src/korean-prune.json, precomputed dictionary checked against the source),
         # src/scripts/plain/{fruit,qingguo,fruit-heart}.js (from tools/scripts-src/fruit-family/, the fruit-family dictionary),
         # src/scripts/plain/fruit-style.js keeps its rule-bucket keys (tools/key-bundled-css.mjs --check; the keys were missing from 8.2.5 and earlier),
         # src/scripts/plain/* module headers (9.0.7: one copy, run in the page without iframes), style.css, src/lazy-panel.gen.css and src/preview.gen.css (9.0.1: settings-preview rules, loaded only when the settings window opens).

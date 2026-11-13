@@ -13,7 +13,10 @@
 //   받는 조건(index.js): 확인한 확장의 설정 칸이 화면에 있을 때만. 있었던 칸 id 를 이 기기에 표시(localStorage 'bl-ext-compat')해 두고 다음 시작에는 바로 받아 첫 화면부터 시트가 붙어요 —
 //     그 확장을 지우면 그다음 시작에 표시가 지워지고, 그 뒤로는 모듈도 시트도 받지 않아요. 일찍 붙이는 시트는 원작 표식을 안 보는 갈래(mark 없음)이면서 지난번에 그 칸이 있었던 것만이에요.
 //   켬 조건 · 확인한 판은 아래 SETS 한 곳(index.js 의 선택자와 같은 값) · 시험: tools/tests/ext-settings-tabs.mjs · tools/tests/status-ext-css.mjs · tools/tests/ext-memory-css.mjs
+//   시작 덮개 동안(이 기기 표시가 있으면 index.js 가 jQuery 준비 때 바로 불러요): 맞춤 시트는 덮개가 걷힐 때 다른 시트와 한 번에 켜고(boot-gate.js holdSheet — 여덟째 자리),
+//     고른 탭을 탭 줄 안으로 굴리기(scrollIntoView — 스타일 · 배치를 그 자리에서 강제해요)는 걷힌 뒤로 미뤄요. 확장이 없으면 이 모듈을 안 받아 예전과 같아요.
 
+import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
@@ -53,6 +56,19 @@ const keyOf = root => `bl-ext-tab:${root.id || 'x'}`;
 function remember(root, label) { try { localStorage.setItem(keyOf(root), label); } catch { /* 저장소가 막혀 있으면 첫 탭 */ } }
 function recall(root) { try { return localStorage.getItem(keyOf(root)) || ''; } catch { return ''; } }
 
+/** 고른 탭을 탭 줄 안으로 — 시작 덮개 동안이면 걷힌 뒤 한 번(그때도 고른 탭이면) */
+const revealWaiting = new Set();
+const SCROLL = { block: 'nearest', inline: 'nearest' };
+function revealLater() {
+    const list = [...revealWaiting];
+    revealWaiting.clear();
+    for (const tab of list) if (tab.isConnected !== false && tab.classList.contains('active')) tab.scrollIntoView?.(SCROLL);
+}
+function revealTab(tab) {
+    if (booting(tab.ownerDocument)) { revealWaiting.add(tab); afterBoot(revealLater); return; }
+    tab.scrollIntoView?.(SCROLL);
+}
+
 /** 고른 묶음만 보이게 (index: 0 = 머리 없는 앞머리) */
 export function showGroup(root, index) {
     const nav = root.querySelector(`.${NAV}`);
@@ -62,7 +78,7 @@ export function showGroup(root, index) {
         const on = tab.dataset.blTabTo === want;
         tab.classList.toggle('active', on);
         tab.setAttribute('aria-selected', String(on));
-        if (on) tab.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+        if (on) revealTab(tab);
     }
     for (const child of nav.parentElement.children) {
         if (!('blTabG' in child.dataset)) continue;
@@ -142,6 +158,7 @@ export function attachSheet(doc, set, base = import.meta.url) {
     const link = doc.createElement('link');
     link.id = id; link.rel = 'stylesheet'; link.href = new URL(set.css, base).href;
     (doc.head || doc.documentElement).append(link);
+    holdSheet(link);   // 시작 덮개(불투명) 동안이면 꺼 둔 채로 — 걷힐 때 다른 시트와 한 번에 켜요(덮개가 없거나 비치거나 다른 문서면 아무 일도 없어요)
     return true;
 }
 

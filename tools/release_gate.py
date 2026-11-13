@@ -889,6 +889,10 @@ def integrity_files(root, base_names):
     return {n for n in fetched if _is_runtime_code(n) or n.startswith('dist/')
             or (not n.startswith('fonts/') and (root / n).stat().st_size <= INTEGRITY_MAX_ASSET_BYTES)}
 
+# 1.4.x 최적화 C: 한국어 글자 사전 일곱 장(src/ko-ui-text.<이름>.gen.json) — 실행 때 받는 주소 검사(runtime_files)가 ZIP 에 싣고,
+#   이 이름표는 사전 꼴 확인(inventory 의 일곱 장 require · tools/tests/ko-text-package-list.mjs)이 같이 써요
+KO_TEXT_PARTS = ('index', 'boot', 'drawers', 'templates', 'js', 'html', 'rest')
+
 
 def inventory(root, kind):
     root = Path(root).resolve()
@@ -899,6 +903,15 @@ def inventory(root, kind):
             names += ['server-plugin/' + n for n in ('setup.mjs', 'setup-windows.cmd', 'README.md', 'blue-lemonade-zip/index.mjs', 'blue-lemonade-zip/archive.mjs', 'blue-lemonade-zip/install.mjs')]
         # 9.0.6 노드 시험(*.test.mjs · *.test.js)은 저장소 전용 — 설치 ZIP 에 싣지 않아요
         names += [p.relative_to(root).as_posix() for p in (root / 'src').rglob('*') if p.is_file() and p.suffix in {'.js', '.mjs', '.css'} and not p.name.endswith(('.test.mjs', '.test.js'))]   # 8.3.0 .mjs
+        # 1.4.x 최적화 C: 한국어 글자 사전(색인 + 조각 여섯)은 JSON 파일 — src/ko-ui.js 가 fetch 로 받아요(tools/build-korean-dict.mjs 의 INDEX_FILE · partFile 이름 그대로)
+        ko_ui = root / 'src' / 'ko-ui.js'
+        #   통합(11-14): 한 장이라도 빠지면 막는 것은 1.4.2 의 「실행 때 받는 주소」 검사(runtime_files)가 「하나 이상」만 보기 때문에 남겨요 —
+        #   다만 그 검사의 시험 틀(색인 · a · b 같은 이름)과 부딪치지 않게, 생성기 조각 이름(boot · drawers …)이 하나라도 있는 나무에서만 일곱 장을 다 요구해요
+        ko_named = [p for p in KO_TEXT_PARTS if p != 'index' and (root / f'src/ko-ui-text.{p}.gen.json').is_file()]
+        for part in (KO_TEXT_PARTS if ko_named and ko_ui.is_file() and '.gen.json' in ko_ui.read_text(encoding='utf-8') else ()):   # 사전을 JSON 으로 받는 판만(옛 판 · 시험 틀은 없음)
+            rel = f'src/ko-ui-text.{part}.gen.json'
+            require((root / rel).is_file(), f'Missing Korean text dictionary: {rel}')
+            names.append(rel)
         # Corresponding editable source, build tools and bundled license/template files.
         for name in ['LICENSE', 'THIRD-PARTY-NOTICES.md']:
             if (root / name).is_file(): names.append(name)

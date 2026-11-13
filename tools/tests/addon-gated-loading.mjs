@@ -18,7 +18,9 @@ function harness() {
             remove() { const at = links.indexOf(this); if (at >= 0) links.splice(at, 1); },
             after(next) { links.splice(links.indexOf(this) + 1, 0, next); loaded(next); } }; },
     };
-    const box = { document, setTimeout, clearTimeout, syncAddonStyleFlags, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, addonUrl: rel => rel };
+    // 1.4.1 loadSheet(focus-copies.js)의 예전 길(실리태번 사본 자리가 없을 때)과 같은 흉내 — 미리 받기 길은 focus-copies.mjs 가 봐요
+    const loadSheet = (link, place) => new Promise((resolve, reject) => { link.rel = 'stylesheet'; link.onload = () => resolve(); link.onerror = () => reject(Error('스타일을 읽지 못했어요.')); place(link); });
+    const box = { document, setTimeout, clearTimeout, syncAddonStyleFlags, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, addonUrl: rel => rel, loadSheet };
     vm.runInNewContext('const pendingSheets=new Map();let bundledStyleIds=[];let upgrading=Promise.resolve();\n' +
         part('function attachStyle(', '\nconst addonUrl=') +
         part('function swapSheet(', '\n/** 첫 장을') +

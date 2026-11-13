@@ -15,6 +15,7 @@ import { syncFeatures, coolChatForRestyle } from './features.js';
 import { restingFor } from './ext-presence.js';
 import { markdownClasses, markdownVariables } from './markdown.js';
 import { frameReady, trackLate } from './boot-layers.js';
+import { coverOpaque, holdSheet } from './boot-gate.js';   // 1.2.2 덮개 동안 붙는 시트 모으기 — 덮개가 불투명할 때만(boot-gate.js holdSheet)
 import { syncGateCss } from './lite.js';   // 1.1.1 마크다운 모양 시트 → 1.1.6 뗀 규칙 시트 전부(켠 설정이 있을 때만)
 // 그리기 모듈은 첫 프레임 뒤에 받고, 도착하면 가장 최근 설정을 적용해요.
 const late = new Map();
@@ -630,7 +631,7 @@ export function applyAll() {
         '--salty-side-left': s.image.edgeSideLeft ? '1' : '0',
         '--salty-side-all': edgeSidesAll ? '1' : '0',
         '--salty-side-part': edgeSidesAll ? '0' : '1',
-    }, imageHeight(s.image), imageShape(s.image), cutEdgeVars(s.image.cutEdge, edgeTheme), frameVars(s.image, 'img', pal.accent), decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
+    }, imageHeight(s.image), imageShape(s.image), cutEdgeVars(s.image.cutEdge, edgeTheme), frameVars(s.image, 'img', pal.accent));
     Object.assign(vars,gradientFills(s,vars));
     // 테마를 끄면 토큰은 설정 창에만 — :root 에 두면 안 쓰는 변수가 문서 전체에 깔림 (설정 창은 꺼도 자기 색으로 보임)
     // 5.5.6: 설정 창 밖에 뜨는 테마 자체 창(캡처 미리보기 · 단어 치환/성능 도움말 · 출처)도 같이 — 확장만 모드에서 이 창들의 버튼 · 입력칸이
@@ -673,6 +674,15 @@ export function applyAll() {
     }
     const variables = styleTag('salty-vars');
     if (variables.textContent !== css) { restyleAhead(); variables.textContent = css; }
+    // 액자 · 프로필 변수(채팅 모양 모듈 몫 · 약 3KB)는 따로 한 장(#salty-vars-look) — 그 모듈은 첫 적용 뒤에 와서, 예전엔 그때 #salty-vars 를 통째로
+    //   다시 써 시작 덮개 동안 문서 전체를 한 번 더 계산했어요. 이 장은 덮개 동안 꺼 둔 채로 붙여 걷힐 때 다른 시트와 한 번에 켜요(boot-gate.js holdSheet).
+    //   변수 이름(--bl-image-decor-* · --bl-name-* · --bl-profile-* · --bl-user-*)이 #salty-vars 와 겹치지 않아 시트 차례와 상관없이 같은 값이에요.
+    //   새로고침 첫 화면(splash.js)은 팔레트 변수만 써서 #salty-vars 는 그대로 바로 켜 둬요. 그라데이션 채움(--salty-fill-*)은 #salty-vars 에 남겨요(글자색 맞춤 · 북마크가 그 글을 읽어요)
+    const look = Object.assign({}, decorVars(s.image.decor, 'image', s.image.radius), profileVars(s.profile, pal), profileVars(s.userProfile, pal, true));
+    const lookCss = Object.keys(look).length ? `${s.enabled ? ':root' : '.salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog'} {\n${declarations(look)}\n}` : '';
+    let lookSheet = document.getElementById('salty-vars-look');
+    if (!lookSheet && lookCss) { lookSheet = styleTag('salty-vars-look'); holdSheet(lookSheet); }
+    if (lookSheet && lookSheet.textContent !== lookCss) { restyleAhead(); lookSheet.textContent = lookCss; }
     syncDemGlow(s.chat.demGlow);   // 상태창 묶음 · 트래커에만 — 값이 그대로면 시트를 건드리지 않는다
     // Keep selector rules stable while sliders change only the variable sheet.
     const gradients = styleTag('salty-gradients');
@@ -770,9 +780,13 @@ export function applyAll() {
     appearance?.syncDecor(s);
     appearance?.syncFrameShadows(s);
     syncCutEdge(s.image.cutEdge, !!s.enabled && !imageFrameOn(s.image), edgeTheme); // 외곽선 SVG 필터 정의 (값이 그대로면 손대지 않음)
+    const qrFolded = want.delete('salty-qr-folded');   // class 로는 안 달아요(아래 data-salty-qr-folded) — 옛 판이 단 class 는 아래 stale 이 떼요
     // 1.1.1 가볍게 → 1.1.6: 켠 설정(고른 마크다운 모양 · 글자 외곽선 · 들여쓰기 · 정보 정렬)의 규칙 시트를 클래스보다 먼저 붙여요(첫 장 · 전체 장에는 없어요 · lite.js syncGateCss).
     //   시트가 아직 안 왔으면 그 클래스(held)는 지금 달지 않고, 시트가 오면 lite.js 가 달아요 — 켜는 순간 꾸밈 없는 한 프레임이 없게
     //   그때는 applyAll 밖이라 아래 restyleAhead 가 못 닿아요 — 식히는 함수를 넘겨 달기 직전에 부르게 해요(긴 채팅을 식히지 않고 다시 계산하던 것)
+    // 1.2.2 시작 덮개가 불투명한가 — 테마를 칠하면 css/09 가 #preloader 를 팔레트 바탕(--salty-bg)으로 덮어요. 바탕이 반투명이거나 테마가 꺼져 있으면(실리태번 기본 덮개 = 반투명 + 흐림)
+    //   덮개 동안 붙는 시트를 꺼 두지 않아요(boot-gate.js holdSheet — 뒤가 비쳐 「시트 없는 모습」이 보일 수 있어서)
+    coverOpaque(want.has('salty') && (parseColor(pal.bg)?.[3] ?? 0) >= 1);
     const held = syncGateCss(want, coolChatForRestyle);
     // 바뀐 클래스만 만지기 (전부 뗐다 붙이면 매번 화면 전체를 다시 그림)
     const cls = document.body.classList;
@@ -784,6 +798,9 @@ export function applyAll() {
     const missing = [...want].filter(c => !cls.contains(c) && !held.has(c));
     if (missing.length) { restyleAhead(); cls.add(...missing); }
     const fold = want.has('salty-dem-skin') && s.chat.demFold !== false;
+    // QR 줄 접힘은 class 가 아니라 body 속성(data-salty-qr-folded)이에요 — 위 want 계산은 그대로 두고 syncGateCss 앞에서 꺼내 속성으로 옮겨요(layout.js « 단추가 속성만 바꿔
+    //   누를 때마다 body class 기록이 나지 않게 — 실리태번 keyboard.js 가 class 기록마다 문서 전체를 다시 훑어요). 무게(특이도)는 class 하나와 같아요
+    if (document.body.hasAttribute('data-salty-qr-folded') !== qrFolded) { restyleAhead(); document.body.toggleAttribute('data-salty-qr-folded', qrFolded); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
     // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)

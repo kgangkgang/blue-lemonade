@@ -425,14 +425,15 @@ function isDarkTheme(style = null) {
 // 읽은 값으로 syncOnColor 의 서명도 맞춰 둔다 — 부팅 1.5초 뒤의 첫 syncOnColor 가 같은 색이면 다시 칠하지 않게.
 function applyOnColor() {
     const style = getComputedStyle(document.documentElement);
-    const onInk = contrastInk(effectiveOnColor(style)), base = isDarkTheme(style) ? '#141318' : '#fbf9f6';
+    const dark = isDarkTheme(style);   // 1.2.2 아래 쓰기 뒤에 다시 읽으면(예전 --jj-stroke 줄) 방금 쓴 :root 변수 때문에 문서 스타일 계산을 한 번 더 강제한다 — 읽기는 쓰기 앞에서 끝낸다
+    const onInk = contrastInk(effectiveOnColor(style)), base = dark ? '#141318' : '#fbf9f6';
     onColorSignature = colorSignature(style);
     const rootStyle = document.documentElement.style;
     if (settings().onColor) rootStyle.setProperty('--jj-on-color', settings().onColor);
     else rootStyle.removeProperty('--jj-on-color');
     rootStyle.setProperty('--jj-on-ink', onInk);
     rootStyle.setProperty('--jj-base', base);
-    rootStyle.setProperty('--jj-stroke', isDarkTheme(style) ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
+    rootStyle.setProperty('--jj-stroke', dark ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
     rootStyle.removeProperty('--jj-grad-a');   // 1.3.1 그라데이션은 없앴다 (예전 판이 남긴 값 치우기)
     rootStyle.removeProperty('--jj-grad-b');
     // 1.1.5 설정 카드가 열려 있으면(팔레트 · 에이드를 바꾼 때) 색 견본도 다시 — 닫혀 있으면(부팅 포함) 계산 스타일을 더 읽지 않아요
@@ -1940,15 +1941,18 @@ function refreshSettingsStatus() {
         setAttr(toggle, 'aria-checked', String(slotOf(kind).enabled));
         if (toggle.disabled !== !store.extensionEnabled) toggle.disabled = !store.extensionEnabled;
     }
+    if (!settingsFilled) return;   // 아래 둘은 처음 펼 때 만드는 설정 카드 안이에요
     setAttr(settingsRoot.querySelector('#jj_extension_switch'), 'aria-checked', String(store.extensionEnabled));
     setAttr(settingsRoot.querySelector('#jj_per_chat_switch'), 'aria-checked', String(store.perChat));
 }
 
 // 캐릭터 에셋 확장과 같은 카드 모양으로, 세로로 짧게: 상태 카드 → 설정 세 줄 → 접어 둔 프롬프트
+// 1.4.x 최적화 C: 카드 머리(제목 · 판 단추)와 켜기 스위치가 든 상태 카드 셋만 부팅 때 확장 서랍에 붙이고, 속(설정 · 프롬프트 — 요소 약 90)은
+//   처음 펼 때(머리 누름 — 실리태번이 펼치기 전 · capture) · 설정 창을 열 때(openPanel) 만들어요. 닫힌 서랍 속이라 화면은 같아요.
+let settingsFilled = false;
 function buildSettings() {
     const container = document.getElementById('extensions_settings');
     if (!container || document.getElementById('jj-settings')) return;
-    const store = settings();
     const wrapper = document.createElement('div');
     wrapper.id = 'jj-settings';
     wrapper.className = 'jj-settings';
@@ -1958,8 +1962,7 @@ function buildSettings() {
                 <b><i class="fa-solid fa-feather-pointed"></i> 전개 지시 <button type="button" class="jj-version ext-version" aria-label="전개 지시 사용방법">v${VERSION}</button></b>
                 <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
             </div>
-            <div class="inline-drawer-content">
-              <div class="jj-settings-body">
+            <div class="inline-drawer-content"><div class="jj-settings-body">
                 <div class="jj-status" data-kind="direction">
                     <span class="jj-status-dot" aria-hidden="true"></span>
                     <div class="jj-status-main">
@@ -1984,7 +1987,30 @@ function buildSettings() {
                     </div>
                     <button type="button" class="jj-switch" id="jj_prompts_switch" role="switch" aria-label="프롬프트 켜기/끄기"><span></span></button>
                 </div>
-
+            </div></div>
+        </div>`;
+    container.append(wrapper);
+    settingsRoot = wrapper;
+    wrapper.querySelector(".jj-version").onclick = event => {if (!badgeTextHit(event)) return; event.preventDefault();event.stopPropagation();showHelp();};
+    wrapper.querySelector('.inline-drawer-toggle').addEventListener('click', fillSettings, { capture: true, once: true });
+    // 통합(덧 4 · 조정자 결정): 켜기 스위치가 든 상태 카드 셋은 부팅 때부터 — 확장 위 스위치 · 「확장 탭에 보이기」 줄이 이 스위치를 찾아요(headswitch.js).
+    //   무거운 속(설정 카드 · 프롬프트)만 처음 펼 때 만들어요.
+    for (const kind of KINDS) {
+        wrapper.querySelector(`.jj-status[data-kind="${kind}"] .jj-switch`).addEventListener('click', () => {
+            setEnabled(kind, !slotOf(kind).enabled);
+            save();
+            refreshButton();
+        });
+    }
+    refreshSettingsStatus();
+}
+function fillSettings() {
+    if (settingsFilled || !settingsRoot) return;
+    settingsFilled = true;
+    const store = settings();
+    const wrapper = settingsRoot;
+    const rest = document.createElement('template');   // 상태 카드(부팅 때 붙음 · 리스너 있음) 뒤에 이어 붙여요 — innerHTML 로 통째 바꾸면 그 리스너가 사라져요
+    rest.innerHTML = `
                 <div class="jj-card">
                     <div class="jj-card-title"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span>설정</span></div><!-- ui-density-620c -->
                     <div class="jj-row">
@@ -2030,12 +2056,8 @@ function buildSettings() {
                         </div>
                     </div>
                 </details>
-              </div>
-            </div>
-        </div>`;
-    container.append(wrapper);
-    settingsRoot = wrapper;
-    wrapper.querySelector(".jj-version").onclick = event => {if (!badgeTextHit(event)) return; event.preventDefault();event.stopPropagation();showHelp();};
+`;
+    wrapper.querySelector('.jj-settings-body').append(rest.content);
 
     const colorCode = wrapper.querySelector('#jj_on_color');
     const swatch = wrapper.querySelector('#jj_on_color_swatch');
@@ -2068,13 +2090,6 @@ function buildSettings() {
         refreshSettingsStatus();
     };
 
-    for (const kind of KINDS) {
-        wrapper.querySelector(`.jj-status[data-kind="${kind}"] .jj-switch`).addEventListener('click', () => {
-            setEnabled(kind, !slotOf(kind).enabled);
-            save();
-            refreshButton();
-        });
-    }
     wrapper.querySelector('#jj_per_chat_switch').addEventListener('click', () => {   // 1.4.4
         setPerChat(!store.perChat);
         closePopup();   // 열린 창의 글은 바뀌기 전 칸 것
@@ -2227,6 +2242,7 @@ let settingsDialog = null;
 export async function openPanel() {
     await ready;
     if (!settingsRoot || settingsDialog?.open) return;
+    fillSettings();
     refreshSettingsStatus();   // 1.3.0 다른 기기에서 합쳐진 목록 등 — 창을 열 때 상태 카드를 지금 값으로
     const previous = document.activeElement, anchor = document.createComment('direction settings');
     settingsRoot.before(anchor);

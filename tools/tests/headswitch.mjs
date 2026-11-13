@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 const ctx = { extensionSettings: {}, powerUserSettings: {}, saveSettingsDebounced() { ctx.saves = (ctx.saves || 0) + 1; }, characters: [], groups: [], characterId: undefined, groupId: null,
     eventSource: { on() {} }, event_types: {} };
@@ -93,5 +94,59 @@ await test('6.8.9 테마를 끈 서랍 제목 줄: 한 줄(ⓒ 는 버전 옆) �
     const chat = fs.readFileSync(path.join(root, 'css/05-chat.css'), 'utf8');
     assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.alignItemsBaseline \{\s*flex-wrap: nowrap;/, '숨긴 메시지 머리줄은 한 줄');
     assert.match(chat, /body\.salty #chat \.mes\[is_system="true"\] \.ch_name \.timestamp \{\s*flex: 0 1 auto;/, '날짜가 모자라면 줄어듦');
+});
+await test('1.4.x 통합: 애드온을 나눠 시작하는 동안은 열쇠 번호를 안 매기고, 끝나면 한 번 다시 그려요(addon-start-state.js)', async () => {
+    const S = await import(pathToFileURL(path.join(root, 'src/addon-start-state.js')));
+    let calls = 0; const fn = () => calls++;
+    S.whenSpreadSettled(fn); assert.equal(calls, 1, '나눠 시작이 없으면 바로');
+    S.spreadBegin(); S.spreadBegin();
+    assert.equal(S.spreadPending(), true);
+    S.whenSpreadSettled(fn); S.whenSpreadSettled(fn);
+    S.spreadEnd(); assert.equal(calls, 1, '하나 남았으면 아직');
+    S.spreadEnd(); assert.equal(calls, 2, '다 끝나면 한 번만'); assert.equal(S.spreadPending(), false);
+    const src = fs.readFileSync(path.join(root, 'src/headswitch.js'), 'utf8');
+    const body = src.slice(src.indexOf('export function refresh()'));
+    assert.ok(body.indexOf('spreadPending()') >= 0 && body.indexOf('spreadPending()') < body.indexOf('dataset.blHsKey'), 'refresh 가 열쇠를 매기기 전에 나눠 시작을 봐요');
+    assert.match(body, /< 6000/, '6초까지만 기다려요');
+});
+await test('1.4.x 통합(덧 3): 이름 없는 창은 이름 열쇠로 — data-i18n → 감싼 id → 제목 글자 · 이미 안정된 열쇠는 그대로', () => {
+    const el = ({ id = '', cls = ['inline-drawer'], parent = null, closest = null } = {}) => ({ id, dataset: {}, classList: cls, parentElement: parent, closest: () => closest, tagName: 'DIV' });
+    const col = { id: 'extensions_settings', parentElement: null };
+    const head = i18n => ({ querySelector: sel => sel === '[data-i18n]' && i18n ? { getAttribute: () => i18n } : null });
+    assert.equal(H.stableKeyOf(el({ id: 'salty-drawer' }), head('')), 'id:salty-drawer', 'id 는 그대로');
+    assert.equal(H.stableKeyOf(el({ cls: ['inline-drawer', 'ap-root'] }), head('')), 'cls:ap-root.inline-drawer', '이름 있는 class 는 그대로');
+    const wrap = { id: 'qr--settings', parentElement: { id: 'qr_container', parentElement: col } };
+    assert.equal(H.stableKeyOf(el({ parent: wrap, closest: col }), head('Quick Reply')), 't:Quick Reply', '제목 data-i18n 먼저');
+    assert.equal(H.stableKeyOf(el({ parent: wrap, closest: col }), head('')), 'in:qr--settings', '없으면 가장 가까운 감싼 id');
+    assert.ok(H.LEGACY_KEY.test('cls:inline-drawer') && H.LEGACY_KEY.test('cls:inline-drawer#8') && !H.LEGACY_KEY.test('cls:ap-root.inline-drawer'));
+});
+await test('1.4.x 통합(덧 3): 옛 번호 열쇠 옮기기 — 켜 둔 옛 열쇠 · 켜기 스위치가 있는 창만 · 옛 열쇠는 그대로(되돌리기)', () => {
+    const hs = { 'cls:inline-drawer#8': true, 'cls:ap-root.inline-drawer': true };
+    const add = H.movedKeys(hs, [
+        { legacy: 'cls:inline-drawer#8', stable: 't:Quick Reply', master: true },
+        { legacy: 'cls:inline-drawer#9', stable: 't:Image Captioning', master: true },
+        { legacy: 'cls:ap-root.inline-drawer', stable: 'cls:ap-root.inline-drawer', master: true },
+    ]);
+    assert.deepEqual(add, ['t:Quick Reply']);
+    assert.deepEqual(H.movedKeys(hs, [{ legacy: 'cls:inline-drawer#8', stable: 't:Summarize', master: false }]), [], '켜기 스위치가 없는 창으로는 안 옮겨요');
+    assert.equal(hs['cls:inline-drawer#8'], true, '옛 열쇠는 남겨요');
+    assert.equal(H.MOVED_MARK.startsWith('@'), true);
+    const src = fs.readFileSync(path.join(root, 'src/headswitch.js'), 'utf8');
+    assert.match(src, /if \(!moved\(\)\) \{ if \(lateAddonsDone\(\)\) moveLegacyOnce\(list\); else whenLateDone\(schedule\); \}/, '늦은 애드온까지 다 시작한 뒤 한 번');
+});
+await test('1.4.x 통합(덧 4): 옮기지 못한 옛 열쇠는 한 번만 알림 — 조정자가 정한 문구 · 수만 셈', () => {
+    assert.equal(H.unmovedCount(['cls:inline-drawer#8'], [{ legacy: 'cls:inline-drawer#8', stable: 't:Summarize', master: false }]), 1);
+    assert.equal(H.unmovedCount(['cls:inline-drawer#8', 'cls:inline-drawer#9'], [{ legacy: 'cls:inline-drawer#8', stable: 't:Quick Reply', master: true }]), 1);
+    assert.equal(H.unmovedCount([], []), 0);
+    assert.equal(H.unmovedText(2), '확장 위로 꺼내 둔 스위치 2개를 새 판으로 옮기지 못했어요. 확장 서랍에서 한 번만 다시 켜 주세요.');
+    const src = fs.readFileSync(path.join(root, 'src/headswitch.js'), 'utf8');
+    const once = src.slice(src.indexOf('function moveLegacyOnce'), src.indexOf('export function unmovedCount'));
+    assert.ok(once.indexOf('hs[MOVED_MARK] = true') < once.indexOf('toastr'), '표시를 먼저 남기고 알림(다시 안 뜸)');
+    assert.ok(!/delete hs\[/.test(once), '옛 열쇠는 지우지 않아요');
+});
+await test('1.4.x 통합(덧 4): 전개 지시 켜기 스위치는 부팅 때부터(늦게 만드는 속 밖) — 확장 위 스위치가 찾아요', () => {
+    const src = fs.readFileSync(path.join(root, 'src/addons/direction/index.js'), 'utf8');
+    const build = src.slice(src.indexOf('function buildSettings()'), src.indexOf('function fillSettings()'));
+    for (const id of ['jj_direction_switch', 'jj_always_switch', 'jj_prompts_switch']) assert.ok(build.includes(`id="${id}"`), id);
 });
 console.log(`${passed} tests passed`);

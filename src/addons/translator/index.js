@@ -1,4 +1,5 @@
 import { maskTranslatorNotes } from './translation-notes.js';
+import { loadSheet } from '../../focus-copies.js';
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows, presetEndpointFields, withoutEndpoints } from './preset-data.js';
 import { createGuards, watchGuard } from './translation-guard.js';
@@ -4884,7 +4885,7 @@ jQuery(async () => {
             type: 'text/css',
             href: `${extensionFolderPath}/style.css`
         });
-        if (!document.querySelector('link[href$="/addons/translator/style.css"]')) $('head').append(cssLink);   // 껍데기가 먼저 붙였으면 그대로
+        if (!document.querySelector('link[href$="/addons/translator/style.css"]')) loadSheet(cssLink[0]).catch(() => {});   // 껍데기가 먼저 붙였으면 그대로 · 1.4.1 키보드 초점 사본은 테마가(focus-copies.js — 첫 장과 겹치는 사본은 한 벌)
 
         // html 완전 로드 후 설정 불러오기
         await new Promise(resolve => setTimeout(resolve, 100));

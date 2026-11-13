@@ -148,8 +148,9 @@ await test('문서: 실리태번 style.css 만 바꿔요(테마 style.css · 다
 await test('index.js 가 시작할 때(테마 켜짐과 따로) 불러요', () => {
     const index = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
     // 9.0.2 부팅 2층 표(BOOT_FRAME — 테마 켜짐과 따로 · 첫 프레임 뒤)에서 동적 import 로 불러요
-    assert.match(index, /\['rebaseBodyHasRules', \(\) => import\('\.\/src\/st-has-anchor\.js'\), m => \{ m\.rebaseBodyHasRules\(\); \}\]/);
-    const table = index.indexOf('const BOOT_FRAME'), call = index.indexOf('m.rebaseBodyHasRules();'), next = index.indexOf('const BOOT_IDLE');
+    // 1.2.2 시작 덮개 동안이면 걷힐 때(afterBoot) — 걷힐 때 꺼 둔 시트 켜기와 같은 계산에 묶여요(boot-gate.js · tools/tests/boot-sheet-hold.mjs)
+    assert.match(index, /\['rebaseBodyHasRules', \(\) => import\('\.\/src\/st-has-anchor\.js'\), m => \{ afterBoot\(\(\) => m\.rebaseBodyHasRules\(\)\); \}\]/);
+    const table = index.indexOf('const BOOT_FRAME'), call = index.indexOf('m.rebaseBodyHasRules()'), next = index.indexOf('const BOOT_IDLE');
     assert.ok(table > 0 && call > table && call < next, 'BOOT_FRAME 표 안에 있어야 해요');
     const ready = index.indexOf('jQuery(() => {'), start = index.indexOf("afterFirstFrame(() => withReplay('2층', () => startLayer(2, BOOT_FRAME)))"), theme = index.indexOf('const startThemeRuntime');
     assert.ok(ready > 0 && start > ready && start < theme, 'jQuery 준비 블록 안 · 테마 실행부 앞에서 시작해요');

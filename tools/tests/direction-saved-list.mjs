@@ -83,7 +83,7 @@ const prelude = 'const addonRunning=()=>true;const placeInstructions=globalThis.
     + 'const POPUP_TYPE = { TEXT: 1, CONFIRM: 2 }; const callGenericPopup = async (...args) => { P.popups.push(args); return P.confirm; };'
     + 'const oai_settings = {}; const getChatCompletionModel = () => ""; const verifyAddonCss = () => {}; const badgeTextHit = () => true; const showThemeModal = () => {};';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source
-    + '\nexport { initSettings, settings, ensureButton, buildSettings, DEFAULT_PROMPT, PRESET_MAX };').toString('base64'));
+    + '\nexport { initSettings, settings, ensureButton, buildSettings, fillSettings, DEFAULT_PROMPT, PRESET_MAX };').toString('base64'));
 
 ext.jeongaejisi = {
     extensionEnabled: true,
@@ -225,7 +225,7 @@ await test('지우개: 확인을 받아야 지움 · 지운 글은 최근에 남
 });
 
 await test('설정 카드: 깊이 0~100 · 켜짐 색은 맞는 코드만 · 프롬프트 직접 고침 · 기본값으로는 확인 뒤에만 · 상태 스위치 · 입력창 버튼 끄면 창도 닫힘', async () => {
-    m.buildSettings();
+    m.buildSettings(); m.fillSettings();   // 1.4.x 최적화 C: 속은 처음 펼 때(머리 누름 · 설정 창) 만들어요
     const card = byId.extensions_settings.children[0];
     assert.equal(card?.id, 'jj-settings');
     // 1.4.0 넣는 곳: 전개 지시 · 항상 지시 줄마다 위치 · 역할 · (채팅 안일 때만) 깊이

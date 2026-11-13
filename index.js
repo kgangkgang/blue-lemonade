@@ -42,7 +42,7 @@ import { watchDom } from './src/dom-watch.js';   // 9.0.4 공용 감시 허브(l
 import { startMainChatRules } from './src/main-chat-rules.js';   // 1층: 본채팅 fetch 감싸기 — 성능 보조의 fetch 감싸기보다 먼저(예전 차례 그대로)
 import { installedTouchMode } from './src/device-layouts.js';
 import { afterFirstFrame, whenIdle, scheduleIdle, kickIdle, withReplay, idleReady, layerLog, lateSettled, onGate, fireGate, gateFired } from './src/boot-layers.js';
-import { booting } from './src/boot-gate.js';
+import { booting, afterBoot } from './src/boot-gate.js';
 
 // 2 · 3층 모듈: 받은 것은 lazy[이름] 에 (설정 창 · 채팅 바뀜 리스너 · 콘솔이 아직 안 받은 모듈을 부르면 아무 일도 하지 않아요 — 받으면 지금 상태로 한 번 시작)
 const lazy = {};
@@ -170,11 +170,16 @@ async function startLayer(layer, table) {
     }
     const loaded = await Promise.allSettled(table.map(([, load]) => load()));
     const running = [];
-    table.forEach(([name, , start], i) => {
+    // 3층(덮개가 걷힌 뒤 쉴 때 · 처음 쓸 때 · 3층 표의 문)은 모듈을 하나씩 시작하고 사이사이 한 박자 쉬어요 — 예전엔 받은 모듈 전부를 한 작업에서 시작해
+    //   첫 화면 뒤 「조용해짐」 구간에 긴 작업 하나로 화면을 잡았어요(누름 · 입력이 그 사이에 끼어들 수 있게). 차례 · 시작 함수는 그대로예요.
+    //   2층은 덮개가 있든 없든(테마를 나중에 켬 · 덮개 없는 옛 실리태번 · 2층 표의 문) 예전처럼 한 작업에서 — 첫 화면 표식이 한 프레임에 모두 맞게
+    const spread = layer === 3;
+    for (const [i, [name, , start]] of table.entries()) {
         const result = loaded[i];
-        if (result.status === 'rejected') { console.warn(`[Blue Lemonade] 시작하지 못했어요(${name})`, result.reason); return; }
+        if (result.status === 'rejected') { console.warn(`[Blue Lemonade] 시작하지 못했어요(${name})`, result.reason); continue; }
+        if (spread && i) await new Promise(resolve => setTimeout(resolve, 0));
         startSafe(name, () => { const ran = start(result.value); if (ran && typeof ran.then === 'function') running.push(Promise.resolve(ran).catch(error => console.warn(`[Blue Lemonade] 시작하지 못했어요(${name})`, error))); });
-    });
+    }
     if (running.length) await Promise.race([Promise.allSettled(running), new Promise(resolve => setTimeout(resolve, 3000))]);
     layerLog.push([layer, 'started', table.length]);
 }
@@ -231,7 +236,8 @@ const BOOT_FRAME = [
     // 8.0.7 작가 노트 「페르소나 위치」 · 「캐릭터 설명 위치」 — 테마 화면 켜짐과 따로(확장만 모드에서도), 테마를 끄면 본체 위치로 (an-anchor.js)
     ['startNoteAnchor', () => import('./src/an-anchor.js'), m => { m.startNoteAnchor(); }],
     // 8.2.4 가운데 서랍을 한 번 열면 body 가 :has() 기준이 되어 프롬프트 토글 · 채팅 변화마다 메시지 요소 전부를 다시 계산했다 (st-has-anchor.js)
-    ['rebaseBodyHasRules', () => import('./src/st-has-anchor.js'), m => { m.rebaseBodyHasRules(); }],
+    // 1.2.2 시작 덮개 동안이면 걷힐 때 — 실리태번 style.css 규칙을 고치는 일이라 media 로 못 모아요. 걷힐 때 꺼 둔 시트 켜기와 같은 마이크로태스크에서 하면 다시 계산이 한 번이에요(boot-gate.js)
+    ['rebaseBodyHasRules', () => import('./src/st-has-anchor.js'), m => { afterBoot(() => m.rebaseBodyHasRules()); }],
 ];
 const BOOT_IDLE = [
     ['registerExtcheckCommand', () => import('./src/natural-slash.js'), m => { m.registerExtcheckCommand(); }, 'input'],   // 1.0.3 /extconflict

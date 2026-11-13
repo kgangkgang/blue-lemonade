@@ -65,7 +65,7 @@ export function census(root = ROOT) {
     const sites = [], events = new Map(), errors = [];
     for (const f of files) {
         let text, ast;
-        try { text = fs.readFileSync(path.join(root, f), 'utf8'); if (!/MutationObserver|watchDom|eventSource|eventOn|tavern_events/.test(text)) continue; ast = parseJs(text, f); }
+        try { text = fs.readFileSync(path.join(root, f), 'utf8'); if (!/MutationObserver|watchDom|watchWith|eventSource|eventOn|tavern_events/.test(text)) continue; ast = parseJs(text, f); }
         catch (error) { errors.push(`${f}: ${error.message}`); continue; }
         // 옵션을 이름으로 넘긴 곳(const WATCH = {…}) — 같은 파일의 선언을 찾아요
         const consts = new Map();
@@ -92,6 +92,16 @@ export function census(root = ROOT) {
                 const opts = objectOpts(n.arguments[1], text) || {};
                 const target = src(n.arguments[0]), where = classifyTarget(target);
                 sites.push({ file: f, line: line(n), group: groupOf(f), kind: 'hub', target, where, opts, weight: weight('hub', where, opts), name: typeof opts.name === 'string' ? opts.name : '' });
+            }
+            // 1.4.x 통합(조정자 결정): watchWith(창, [[대상, 옵션], …], fn) 도 허브 구독이에요 — 짝마다 한 자리로 세요.
+            //   예전엔 watchDom 만 세서, 따로 감시자를 watchWith 구독으로 옮기면(과일 입구 · 1.4.x 최적화 A) 감시자 자리는 줄고 허브 구독은 안 늘어 보였어요.
+            if (c.type === 'Identifier' && c.name === 'watchWith' && n.arguments[1]?.type === 'ArrayExpression') {
+                for (const pair of n.arguments[1].elements) {
+                    if (pair?.type !== 'ArrayExpression' || pair.elements.length < 2 || !pair.elements[0]) continue;
+                    const opts = objectOpts(pair.elements[1], text) || {};
+                    const target = src(pair.elements[0]), where = classifyTarget(target);
+                    sites.push({ file: f, line: line(pair), group: groupOf(f), kind: 'hub', via: 'watchWith', target, where, opts, weight: weight('hub', where, opts), name: typeof opts.name === 'string' ? opts.name : '' });
+                }
             }
             // eventSource.on(event_types.X, …) · eventSource.on(t.X, …) · eventOn(tavern_events.X, …)
             const isOn = (c.type === 'MemberExpression' && !c.computed && ['on', 'once', 'makeFirst', 'makeLast'].includes(c.property.name) && /eventSource|\bes\b|\bsource\b/.test(src(c.object)))

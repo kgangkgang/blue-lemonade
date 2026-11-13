@@ -4905,6 +4905,7 @@ export async function translateFolderLabels(names) {
     if (!names.length) return [];
     if (duplicate) throw new Error('따로 설치한 한글화 패널이 켜져 있어 여기서는 번역할 수 없어요');
     if (isBusy) throw new Error('한글화 패널의 번역이 끝난 뒤 다시 눌러 주세요');
+    ensureUi();   // 번역 길(연결 · 모델 칸)이 패널을 읽어요 — 아직 안 만들었으면 지금
     isBusy = true; stopReq = false;
     try {
         const result = await translateText('', text, null, { includeTitle: false, ns: 'pt-ext::folder-labels', language: 'Korean' });
@@ -4924,6 +4925,7 @@ export async function translatePlainText(text) {
     const hit = cachedTextTranslation(source);
     if (hit) return hit;
     if (isBusy) throw Object.assign(new Error('한글화 패널에서 다른 번역이 진행 중이에요. 끝난 뒤 다시 눌러 주세요.'), { userMessage: true });
+    ensureUi();   // 번역 길(연결 · 모델 칸)이 패널을 읽어요 — 아직 안 만들었으면 지금
     isBusy = true; stopReq = false;
     try {
         const result = await translateText('', source, null, { includeTitle: false, ns: SHARED_TEXT_NS });
@@ -4934,6 +4936,7 @@ export async function translatePlainText(text) {
 }
 
 export function openPanel() {
+    ensureUi();
     const panel = PDOC.getElementById('pt-panel');
     if (!panel) return;
     PDOC.body.append(panel);
@@ -5185,8 +5188,13 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     try { await initImports(); } catch(e) { console.error(`[${EXT}] initImports failed`, e); throw e; }
     console.log(`[${EXT}] imports OK`);
 
+    // 1.4.x 최적화 C: 부팅 때는 확장 서랍 카드(머리 · 빈 패널 자리)만 붙이고, 설정 칸 · 패널 쪽(요소 약 300 · 리스너 약 200)은
+    //   카드 머리를 처음 누를 때(실리태번이 펼치기 전 · capture) · 패널을 열 때(openPanel) · 밖에서 번역을 부를 때 만들어요(ensureUi → mountUi).
+    //   만드는 차례 · 묶는 내용은 예전 부팅 때와 같아요 — 만드는 때만 늦어요.
     try {
-        $('#extensions_settings').append(buildSettingsHTML());
+        const html = buildSettingsHTML(), cut = html.indexOf(SETTINGS_FORM_MARK);
+        $('#extensions_settings').append(cut > 0 ? html.slice(0, cut) : html);
+        if (cut < 0) lazyUi = false;   // 모양이 다르면 예전처럼 한 번에
     } catch(e) {
         console.error(`[${EXT}] buildSettingsHTML failed`, e);
         throw e;
@@ -5202,6 +5210,34 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
     if (cfg()._fabDiag !== undefined) { delete cfg()._fabDiag; _needsSave = true; }
     if (cfg().useMainApi !== undefined) { delete cfg().useMainApi; _needsSave = true; }
     if (_needsSave) saveSettingsDebounced();
+    bootDone = true;
+    cfg().fabVisible=false; PDOC.getElementById('pt-fab')?.remove();   // 예전 떠 있는 단추 치우기는 부팅 때 그대로
+    if (!lazyUi) { uiBuilt = true; mountUi(false); }
+    else PDOC.querySelector('.pt-extension-settings .inline-drawer-toggle')?.addEventListener('click', () => {
+        if (uiBuilt) return;
+        ensureUi();
+        // mountUi 가 같은 머리에 거는 보통(bubble) 리스너는 이 누름의 bubble 단계에서 불려요(리스너 목록은 단계마다 그때 복사) —
+        //   그 리스너가 패널을 서랍에 붙이고 pt:opened 를 한 번 내요. 여기서 또 하면 두 번이 돼요(검토 C 5번)
+    }, { capture: true });
+    console.log(`[${EXT}] loaded`);
+    resolve();
+    } catch(error) {reject(error);}
+});});
+
+const SETTINGS_FORM_MARK = '<div id="pt-settings-form">';
+let lazyUi = true, uiBuilt = false, bootDone = false;
+/** 설정 칸 · 패널을 아직 안 만들었으면 지금 만들어요(부팅이 끝난 뒤 · 따로 설치한 패널이 돌면 쉬어요) */
+function ensureUi() {
+    if (uiBuilt || !bootDone || duplicate) return;
+    uiBuilt = true;
+    try { mountUi(true); } catch (e) { console.error(`[${EXT}] 패널을 만들지 못했어요`, e); }
+}
+function mountUi(addForm) {
+    if (addForm) {
+        const html = buildSettingsHTML(), cut = html.indexOf(SETTINGS_FORM_MARK);
+        const card = PDOC.querySelector('#extensions_settings > .pt-extension-settings');
+        if (card) $(card).after(html.slice(cut)); else $('#extensions_settings').append(html.slice(cut));
+    }
     updateCacheStatsUI();
 
     const c=cfg();
@@ -5387,10 +5423,7 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         }, 0);
     });
     cfg().fabVisible=false; PDOC.getElementById('pt-fab')?.remove();
-    console.log(`[${EXT}] loaded`);
-    resolve();
-    } catch(error) {reject(error);}
-});});
+}
 
 export function mountInline(host){
  const text=document.createElement('p');text.className='salty-note';text.textContent='프리셋·월드인포·봇카드를 한 화면에서 읽고 번역해요. 버전 버튼에서 사용방법을 볼 수 있어요.';

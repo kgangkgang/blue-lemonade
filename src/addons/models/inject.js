@@ -17,7 +17,25 @@ import { SOURCES, sourceById } from './sources.js';
 import { modelsOf, pickOf, rememberPick } from './state.js';
 
 const GROUP_LABEL = '직접 등록한 모델';
+// 지켜보는 목록 칸 → 공급자. 감시자는 하나(최적화 C 11-14: 칸마다 하나씩이던 27개를 하나로 — 칸이 바뀐 기록을 그 칸의 공급자에게 나눠요)
 const observers = new Map();
+let watcher = null;
+/** 기록이 난 노드에서 위로 올라가 지켜보는 칸(select · datalist)을 찾아요 */
+function rootOf(node) {
+    for (let n = node; n; n = n.parentNode) if (observers.has(n)) return n;
+    return null;
+}
+function deliver(records, except = null) {
+    let hit = false; const due = new Set();
+    for (const record of records) {
+        const root = rootOf(record.target);
+        if (!root) continue;
+        if (root === except) hit = true;
+        else due.add(observers.get(root));
+    }
+    for (const source of due) schedule(source);
+    return hit;
+}
 const timers = new Map();
 /** 공급자별로 실리태번에 밀어 넣어 본 값. 안 받아 주는 공급자에 같은 값을 끝없이 다시 밀지 않으려고 둔다. */
 const pushed = new Map();
@@ -336,10 +354,10 @@ export function scheduleAll() {
 
 function watch(source, element) {
     if (observers.has(element)) return;
-    const observer = new MutationObserver(() => schedule(source));
+    watcher ??= new MutationObserver(records => deliver(records));
     // subtree: OpenAI · Google은 select 안의 묶음(#openai_external_category · #google_other_models)만 갈아 끼운다.
-    observer.observe(element, { childList: true, subtree: true });
-    observers.set(element, observer);
+    watcher.observe(element, { childList: true, subtree: true });
+    observers.set(element, source);
 }
 
 /**
@@ -348,7 +366,9 @@ function watch(source, element) {
  * 기록을 꺼내 가면 감시 콜백이 울리지 않으니 호출하는 쪽에서 schedule을 불러 둔다.
  */
 function isRefill(control) {
-    return (observers.get(control)?.takeRecords().length ?? 0) > 0;
+    if (!watcher || !observers.has(control)) return false;
+    // 꺼낸 기록 가운데 다른 칸 몫은 감시 콜백이 했을 일(그 공급자 다시 넣기 예약)을 여기서 대신 해요
+    return deliver(watcher.takeRecords(), control);
 }
 
 /**
@@ -391,7 +411,7 @@ export function watchPicks() {
 
 /** 애드온을 끌 때: 감시를 멈추고, 옮겨 온 실리태번 option은 제자리로 돌려놓고 우리가 넣은 것은 뺀다. */
 export function stopAll() {
-    for (const observer of observers.values()) observer.disconnect();
+    watcher?.disconnect(); watcher = null;
     for (const element of observers.keys()) {
         try {
             if (element.tagName === 'SELECT') fillControl(element, []);

@@ -209,13 +209,13 @@ export function startCompactLayout() {
             updateQrEdges(sendForm?.querySelector('#qr--bar'));
         });
     }
-    // 1.0.1 QR 줄 앞 접기 · 펴기 단추 — body.salty-qr-folded 토글 + chat.qrFolded 에 기억 (css/35-qr-bar.css)
+    // 1.0.1 QR 줄 앞 접기 · 펴기 단추 — body[data-salty-qr-folded] 토글(class → 속성) + chat.qrFolded 에 기억 (css/35-qr-bar.css)
     function syncQrFold(bar, enabled) {
         let fold = bar.querySelector(':scope > #bl-qr-fold');
         const hasButtons = !!bar.querySelector('.qr--button:not([data-bl-fruit-native-entry])');
         const qrEnabled = globalThis.quickReplyApi?.settings?.isEnabled === true;
         if (!enabled || !qrEnabled || !hasButtons || document.body.classList.contains('salty-qr-fold-off')) { fold?.remove(); return; }
-        const folded = document.body.classList.contains('salty-qr-folded');
+        const folded = document.body.hasAttribute('data-salty-qr-folded');
         if (!fold) {
             fold = document.createElement('button');
             fold.type = 'button';
@@ -224,8 +224,8 @@ export function startCompactLayout() {
             fold.addEventListener('click', (event) => {
                 event.stopPropagation();
                 const s = getSettings();
-                s.chat.qrFolded = !document.body.classList.contains('salty-qr-folded');
-                document.body.classList.toggle('salty-qr-folded', s.chat.qrFolded);
+                s.chat.qrFolded = !document.body.hasAttribute('data-salty-qr-folded');
+                document.body.toggleAttribute('data-salty-qr-folded', s.chat.qrFolded);
                 saveSettings();
                 paintQrFold(fold, s.chat.qrFolded);
                 scheduleQrEdges();

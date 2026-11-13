@@ -4,7 +4,7 @@
 // [1.1.1] 받은 글이 있으면 스트림을 끝으로 닫아 멈춤 단추와 같은 끝 처리를 탄다 — 받은 글이 다 남고, 스와이프 · 이어쓰기도
 // 다시 쓰기 · 번역 · 기억 요약 확장 · 저장을 거치고, 다시 쓰기는 사용자 멈춤이 아니니 끊긴 씬 플랜을 리롤한다.
 import { verifyAddonCss } from '../../addon-files-check.js';
-import { pane } from './hub.js';
+import { pane, onFirstShow } from './hub.js';
 import * as extensions from '../../../../../../extensions.js';
 import * as script from '../../../../../../../script.js';
 import { isStreamRequest, watchRequest, clampIdle, clampFirst, STALL_NAME } from './watchdog.js';
@@ -149,7 +149,8 @@ install();
 window.StreamWatchdog = { stats, settings, STALL_NAME };
 
 jQuery(() => {
-    buildDrawer();
+    // 최적화 C(11-14): 설정 칸은 허브가 처음 보일 때(톱니바퀴 창 · 설정 창 안) 만들어요 — 열지 않으면 숨은 자리에 요소를 두지 않아요
+    onFirstShow('watchdog', buildDrawer);
     // 4.2.2: 계산된 스타일은 화면이 한 번 그려진 직후에 읽는다 (그때는 이미 계산돼 있어 공짜) — 시작 도중에 읽으면 문서 전체를 그 자리에서 계산했다. 화면이 꺼져 있으면 5초 뒤 그냥 읽음
     setTimeout(() => { let done = false; const go = () => { if (!done) { done = true; checkFilesMatch(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 5000); }, 3000);
 });

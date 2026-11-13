@@ -41,8 +41,8 @@ await test('p1: the module and its dictionary are exactly what the build makes f
         : l.startsWith('  let PATTERNS = [') ? `  let PATTERNS = ${l.slice(17, -1)}.filter(p => !__drop.has(__hash(p.re)));` : l).join('\n');
     const want = new Function('__drop', '__hash', piece + '\nreturn JSON.stringify({ exact: [...exact], htmlExact: [...htmlExact], PATTERNS });')(dropped, hash);
     const merged = { exact: [], htmlExact: [], PATTERNS: [] };
-    const index = (await import(pathToFileURL(path.join(root, INDEX_FILE)).href)).default;
-    for (const name of PART_NAMES) { const part = (await import(pathToFileURL(path.join(root, partFile(name))).href)).default; merged.exact.push(...part.exact); merged.htmlExact.push(...part.htmlExact); merged.PATTERNS.push(...part.PATTERNS); }
+    const index = JSON.parse(read(INDEX_FILE));   // 1.3.x: 색인 · 조각은 JSON 파일
+    for (const name of PART_NAMES) { const part = JSON.parse(read(partFile(name))); merged.exact.push(...part.exact); merged.htmlExact.push(...part.htmlExact); merged.PATTERNS.push(...part.PATTERNS); }
     merged.PATTERNS.push(...index.headless);
     const wantObj = JSON.parse(want);
     const sortPairs = list => [...list].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
@@ -79,7 +79,9 @@ await test('p5: 과일 창은 한 번에 훑고 유휴 발견은 좁은 범위�
     const fh = await bundled('fruit-heart.js');
     assert.ok(fh.includes("const FLUSH_ALL = [rootsSelector, helperRootsSelector, POPUPS, TOASTS, watchSelector].join(',');"));
     assert.ok(fh.includes('function rootAppeared() {'));
-    assert.ok(fh.includes('const found = [...doc.querySelectorAll(FLUSH_ALL)];'));
+    // 1.4.x opt-chat-open: 한 번에 훑는 것은 그대로 · #chat 밖 가지에서만(채팅 메시지까지 훑지 않게)
+    assert.ok(fh.includes('const found = scanOutsideChat();'));
+    assert.ok(fh.includes('for (const branch of outsideChat()) { if (branch.matches(FLUSH_ALL)) out.push(branch); for (const el of branch.querySelectorAll(FLUSH_ALL)) out.push(el); }'));
     assert.ok(fh.includes('if (rootAppeared()) return schedule();'));
     assert.ok(!fh.includes('doc.querySelectorAll(DISCOVER_ALL)'));
     assert.ok(!fh.includes('[...doc.querySelectorAll(rootsSelector)]') && !fh.includes("doc.querySelectorAll('#toast-container .toast-message')"), 'old per-selector walks are gone');

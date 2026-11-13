@@ -9,6 +9,7 @@
 import { setTypesetHook } from './typography.js';
 import { parseColor, sourceColor, sameRgb, stack, bandOf, BAND_MIN, makeInkCache } from './ink-contrast-core.js';
 import { hiddenQueue, mayHide } from './hidden-details.js';
+import { booting, afterBoot } from './boot-gate.js';   // 1.2.2 덮개 동안은 재지 않아요 — 그때 꺼 둔 시트(채팅 모양 · 마크다운 모양)의 바탕 · 글자색이 빠진 채 재면 틀린 표시가 남아요
 
 const SEL = 'font[color], [style*="color" i]';
 const BOX = '.mes_text, .salty-sample';
@@ -114,8 +115,10 @@ function bgAt(el, box, memo, styleOf) {
 //   미룬 요소는 「본 것」으로 적지 않아서 그때 그대로 재요. 결과는 같아요.
 const hidden = hiddenQueue(els => run(els.map(el => el.closest(BOX)).filter(Boolean), { force: true }), { enabled: () => active });
 /** 상자들 안의 색 글자를 재고(읽기) 클래스를 붙인다(쓰기). 이번 세대에 이미 본 요소는 건너뛴다 */
+const runAfterBoot = () => run([document]);
 function run(roots, { force = false } = {}) {
     if (!active) return;
+    if (booting()) { afterBoot(runAfterBoot); return; }   // 1.2.2 걷힐 때 문서 전체를 한 번(시트를 켠 뒤)
     const t0 = performance.now();
     const boxes = new Set();
     for (const root of roots) {

@@ -438,7 +438,8 @@ export function syncMenu() {
 
 // 창이 보일 때만 다시 그린다 — 숨은 보관함(holder) 안이면 열 때 openPanel · mountInline 이 먼저 그린다
 const shown = () => !!root?.isConnected && !root.closest('[hidden]');
-jQuery(() => { mount(); syncMenu(); syncLocks(); });
+// 최적화 C(11-14): 창은 처음 열 때(openPanel · mountInline) 만들어요 — 부팅 때 숨은 보관함에 요소 · 리스너를 두지 않아요(render 는 root 가 없으면 쉬어요)
+jQuery(() => { syncMenu(); syncLocks(); });
 eventSource.on(event_types.SETTINGS_UPDATED, () => { if (shown()) render(); });
 // 5.8.4: 대상이 바뀌었다는 알림(다른 확장의 등록 — TTS 가 부팅 때 함 · 자동 찾기 끝)도 보일 때만 그린다. 전엔 숨은 창을 그리다가 render 가
 // 자동 찾기(켜진 확장의 소스 읽기 — 폰 리그 4배 부팅 꼬리 settingsRefs 85~100 ms)를 부팅 때 시작했다. 찾기는 원래 뜻대로 창을 처음 그릴 때

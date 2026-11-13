@@ -35,7 +35,7 @@ test('본체: 껍데기가 쌓아 둔 사건을 제 리스너에만 넘겨요(li
     assert.ok(index.includes('renderCapture = (type, messageId) => {') && index.includes('observeEventCompletion(eventSource, renderCapture,'));
     assert.ok(index.includes('export async function replayEvent(type, args = [])') && index.includes('export function clickButton(kind, messageId)'));
     assert.ok(index.includes("if (!document.getElementById('llm_translate_chat')) $('#translate_wand_container').append(buttonHtml);"));
-    assert.ok(index.includes('if (!document.querySelector(\'link[href$="/addons/translator/style.css"]\')) $(\'head\').append(cssLink);'));
+    assert.ok(index.includes('if (!document.querySelector(\'link[href$="/addons/translator/style.css"]\')) loadSheet(cssLink[0]).catch(() => {});'));
 });
 test('껍데기: 본체를 받기 전에 다리 자리(archive.v1)와 명령 자리를 지워요(본체의 단독 확장 판단) · press 문 · 부팅 때 본체가 필요한 조건', () => {
     assert.ok(shell.includes("if (globalThis[ARCHIVE]?.blShell) delete globalThis[ARCHIVE];"));
