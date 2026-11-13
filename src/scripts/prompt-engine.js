@@ -1,5 +1,4 @@
 // One reversible renderer for both dictionaries. No prompt values or chat text are written.
-import { watchWith } from '../dom-watch.js';
 export function createPromptEngine(doc = document) {
     const sources = new Map(), changed = new Map(), hints = new Map(), titles = new Map();
     const DETAILS = Symbol('prompt-details'), detailsInputs = new Set();
@@ -156,12 +155,11 @@ export function createPromptEngine(doc = document) {
         observer.observe(doc.body,{childList:true});
         for(const child of doc.body.children)watch(child);
     }
-    // 1.4.x 최적화 C: 진짜 창이면 공용 감시 허브의 body 구역(#chat 밖 · 글자 · title) 구독으로 — 예전에는 허브 body 구역과 같은 꼴의 감시자를
-    //   따로 걸어(body 의 #chat 밖 가지를 하나씩) 같은 변화의 기록이 두 벌 만들어지고 콜백도 따로 돌았어요. 고르는 기록 · 그리는 결과는 같아요.
-    //   시험의 가짜 문서(창 없음)는 예전 감시자 그대로예요.
-    let unwatch=null;
-    function onRecords(records){
+    function start() {
+        observer=new MutationObserver(records=>{
             const containsTarget=node=>node.nodeType===1&&(node.matches(watched)||!!node.querySelector(watched));
+            // body · #chat 조상에 새로 붙은 가지(팝업 등)도 보기 시작한다
+            for(const record of records)if(record.type==='childList'&&(record.target===doc.body||chain.has(record.target)))record.addedNodes.forEach(watch);
             if(timer)return; // render re-reads all targets; another pending record cannot add work.
             if(records.some(record=>{
                 const el=record.target.nodeType===1?record.target:record.target.parentElement;
@@ -170,23 +168,12 @@ export function createPromptEngine(doc = document) {
                 if(record.type!=='attributes'&&changed.has(el)&&el.textContent===changed.get(el).after)return false;
                 return !!el.closest(watched+',#saved_preset_scripts,#saved_regex_scripts,#saved_scoped_scripts')||[...record.addedNodes,...record.removedNodes].some(containsTarget);
             }))schedule();
-    }
-    function start() {
-        const win=doc.defaultView;
-        if(win&&win.document===doc&&doc.body&&typeof win.MutationObserver==='function'){
-            unwatch=watchWith(win,[[doc.body,{childList:true,subtree:true,characterData:true,attributes:['title'],exclude:'#chat',name:'프롬프트 이름 번역'}]],onRecords);
-        }else{
-            observer=new MutationObserver(records=>{
-                // body · #chat 조상에 새로 붙은 가지(팝업 등)도 보기 시작한다
-                for(const record of records)if(record.type==='childList'&&(record.target===doc.body||chain.has(record.target)))record.addedNodes.forEach(watch);
-                onRecords(records);
-            });
-            watchAll();
-        }
+        });
+        watchAll();
         doc.addEventListener('click',click); doc.addEventListener('input',input);
     }
     function stop() {
-        observer?.disconnect(); observer=null; unwatch?.(); unwatch=null; clearTimeout(timer);timer=null;
+        observer?.disconnect(); observer=null; clearTimeout(timer);timer=null;
         detailsObserver?.disconnect(); detailsObserver=null; detailsInputs.clear();
         doc.removeEventListener('click',click); doc.removeEventListener('input',input);
         for(const [el,state] of changed) if(el.textContent===state.after)el.textContent=state.before;
