@@ -38,7 +38,7 @@ try {
         row(vp, '「무협시뮬」 84장 · 옛 이름 「강호유람록」으로도 84장 · 카드 이름 · 꼬리표에 강호유람록 0', n3 === 84 && n4 === 84 && a3.every(t => !/강호유람록/.test(t)) && tags3.every(t => !/강호유람록/.test(t)), `무협시뮬 ${n3} · 강호유람록 ${n4} · ${a3[0]} · ${tags3.join('/')}`);
         await find('D&H'); const n5 = await count(), a5 = await names();
         await find('헌시뮬'); const n6 = await count();
-        row(vp, '「D&H」 12장 · 옛 이름 「헌시뮬」로도 12장 · 원작 제목은 sources.js 그대로', n5 === 12 && n6 === 12 && a5.every(t => /^D&H/.test(t)) && (await b.eval(`[...document.querySelectorAll('.mart-grid .mart-card a.mart-source')].every(a=>/Dungeons & Hunters」/.test(a.textContent))`)), `D&H ${n5} · 헌시뮬 ${n6} · ${a5[0]}`);
+        row(vp, '「D&H」 108장(세계관 12 + 인물 96) · 옛 이름 「헌시뮬」로도 108장 · 원작 제목은 sources.js 그대로', n5 === 108 && n6 === 108 && a5.every(t => /^D&H| · D&H · /.test(t)) && (await b.eval(`[...document.querySelectorAll('.mart-grid .mart-card a.mart-source')].every(a=>/Dungeons & Hunters」/.test(a.textContent))`)), `D&H ${n5} · 헌시뮬 ${n6} · ${a5[0]}`);
         // 빈 결과 → 거르기 풀기
         await find('없는말zzz');
         const empty = await b.eval(`document.querySelector('.mart-empty')?.textContent.replace(/\\s+/g,' ').trim()`);

@@ -435,6 +435,12 @@ await test('그림 액자 1824: 콘셉트 152 × 12 · 파일 넷이 다 있음 
         assert.ok(!/[<>]/.test(x.name + x.desc), `${x.id} 글`);
     }
     assert.deepEqual(fs.readdirSync(path.join(MART, 'data/frames')).sort(), [...used].sort(), '안 쓰는 그림 파일 없음');
+    // 홈 카드 · 마트 메뉴 그림처럼 파일 이름(내용 해시)을 직접 부르는 곳 — 그림을 다시 만들면 이름이 바뀌니 같이 고쳐야 해요(11-13 홈 · 메뉴 그림 404)
+    const direct = [];
+    for (const f of ['index.html', 'mart/home.css', 'mart/top-mart.css', 'mart/mart.css', 'mart/frame-room.css', 'mart/top-mart.js', 'mart/mart.js', 'mart/frame-room.js', 'mart/genie.js', 'mart/frames/index.html', 'mart/genie/index.html'])
+        for (const m of fs.readFileSync(path.join(ROOT, f), 'utf8').matchAll(/data\/frames\/([a-z0-9-]+\.(?:webp|png))/g)) direct.push([f, m[1]]);
+    assert.ok(direct.length >= 4, '직접 부르는 곳을 찾았어요');
+    for (const [f, name] of direct) assert.ok(used.has(name), `${f} 가 부르는 ${name} 이 있어요`);
     const hunter = [...by].filter(([, xs]) => xs[0].category === 'hunter-char');
     assert.equal(hunter.length, 8); for (const [c, xs] of hunter) { assert.match(c, /^hunter-[a-z]+$/); assert.match(xs[0].conceptLabel, / · D&H$/); }
     assert.equal(data.categories.findIndex(c => c.id === 'hunter-char'), data.categories.findIndex(c => c.id === 'halo-char') + 1, 'D&H 인물 칩은 천지합동청 인물 바로 뒤');
