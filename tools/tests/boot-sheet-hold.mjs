@@ -137,7 +137,6 @@ await test('② 이전 메시지 저절로: 덮개 동안 단추가 보인다고
 // ── ③ 계약(소스): 덮개 동안 붙는 시트마다 holdSheet
 const holds = [
     ['src/gate-css.js', /holdSheet\(own\)/],
-    ['src/dialogue-only.js', /document\.head\.append\(style\);\s*holdSheet\(style\);/],
     ['src/tag-ink.js', /document\.head\.appendChild\(style\); holdSheet\(style\);/],
     ['src/squared-buttons.js', /\.append\(style\);\s*holdSheet\(style\);/],
     ['src/fruit-type-runtime.js', /\.append\(decor\);holdSheet\(decor\);/],
@@ -145,7 +144,7 @@ const holds = [
     ['src/decor.js', /style\.id = 'bl-decor-data'; document\.head\.append\(style\); holdSheet\(style\);/],
     ['src/dem-expressive.js', /document\.head\.append\(style\);\s*holdSheet\(style\);/],
 ];
-await test('③ 덮개 동안 붙는 시트 여덟 자리가 모두 holdSheet 를 불러요', () => {
+await test('③ 덮개 동안 붙는 시트 일곱 자리가 모두 holdSheet 를 불러요(대사 아이콘은 「아무것도 미리 불러오지 않는」 단추 모듈이라 빼요 — 대사만 보기를 켠 사람만 · 한 줄)', () => {
     for (const [file, re] of holds) assert.match(src(file), re, file);
 });
 await test('③ 변수 시트 · 글꼴 선언은 꺼 두지 않아요(새로고침 첫 화면이 팔레트 색을 쓰고, 꺼 둔 @font-face 는 글꼴을 안 받아요)', () => {
