@@ -10,7 +10,7 @@
 //   · 덮개가 불투명할 때만 꺼 둬요(coverOpaque — apply.js 가 「테마 켬 + 팔레트 바탕이 불투명」일 때 알려요). 확장만 · 테마 끔이면
 //     실리태번 기본 덮개(반투명 + 흐림)라 뒤가 비쳐서 꺼 두지 않아요 — 예전과 똑같이 붙어요.
 //   · 덮개가 일찍 걷혀도(실리태번 오류 · 다른 확장이 로더를 닫음) 걷히는 순간이 곧 켜는 순간이에요(같은 감시자).
-//     덮개가 끝내 안 걷히는 판이 오면 APP_READY 에서 시트만은 켜요(안전망 — 한 번만 듣고 끝나요).
+//     덮개가 끝내 안 걷히는 판이 오면 APP_READY 에서 시트만은 켜요(안전망 — 한 번만 듣고 끝나요 · 이 모듈을 처음 읽을 때 걸어요 — hookReady).
 //   · 꺼 둔 시트의 media 를 코드가 바꿔야 하면 setSheetMedia 로 — 켤 때 쓸 값만 바꿔요(지금 바로 켜지지 않아요).
 //   · 변수 시트(#salty-vars — 새로고침 첫 화면이 팔레트 색을 써요) · 글꼴 선언(#salty-fontfaces — 꺼 두면 글꼴을 안 받아요)은 꺼 두지 않아요.
 let waiting = null;
@@ -58,16 +58,22 @@ function watchCover() {
     observer.observe(preloader.parentNode || document.documentElement, { childList: true });
 }
 
-/** 안전망: 덮개가 걷히지 않은 채 APP_READY 가 오면 시트만은 켜요 (실리태번 판이 덮개를 다르게 다룰 때) */
+/**
+ * 안전망: 덮개가 걷히지 않은 채 APP_READY 가 오면 시트만은 켜요 (실리태번 판이 덮개를 다르게 다룰 때)
+ * 이 모듈을 처음 읽을 때 걸어요(맨 아래) — 실리태번은 확장 모듈을 다 읽은 뒤(activateExtensions 를 기다린 뒤) APP_READY 를 보내요.
+ *   예전처럼 첫 holdSheet 때 걸면, 그게 APP_READY 를 보내는 도중(앞 듣는 쪽을 기다리는 사이)일 때 이 듣기는 이번 보내기에 안 끼고(듣는 쪽 목록을 복사해 돌아요)
+ *   늦은 듣기 자동 발사 값도 보내기가 끝나야 적혀서(lib/eventemitter.js emit) 영영 안 불렸어요 — 그 뒤 꺼 둔 시트가 안 켜질 수 있었어요.
+ * 맥락이 아직 없으면(노드 시험 · 맥락 없는 판) 건 것으로 치지 않고 첫 holdSheet 때 다시 걸어 봐요.
+ */
 function hookReady() {
     if (readyHooked) return;
-    readyHooked = true;
     try {
         const { eventSource, event_types } = globalThis.SillyTavern?.getContext?.() || {};
         const name = event_types?.APP_READY;
-        if (!eventSource || !name) return;
+        if (typeof eventSource?.on !== 'function' || !name) return;
+        readyHooked = true;
         const once = () => { eventSource.removeListener?.(name, once); appReady = true; releaseSheets(); };
-        eventSource.on(name, once);
+        eventSource.on(name, once);   // 이미 보낸 뒤면 실리태번이 바로 불러 줘요(늦은 듣기 자동 발사)
     } catch { /* 맥락이 없으면 덮개 감시만 */ }
 }
 
@@ -114,3 +120,5 @@ export function afterBoot(fn) {
     (waiting ??= new Set()).add(fn);
     watchCover();
 }
+
+hookReady();   // 안전망은 모듈을 처음 읽을 때 — APP_READY 를 보내기 전이에요(위 hookReady 설명)

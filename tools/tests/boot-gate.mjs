@@ -210,6 +210,51 @@ await test('안전망: 덮개가 안 걷힌 채 APP_READY 가 오면 시트만�
     assert.equal(ran, 1);
 });
 
+await test('안전망은 모듈을 처음 읽을 때 걸어요 — 첫 holdSheet 가 APP_READY 를 보내는 도중(앞 듣는 쪽을 기다리는 사이)에 와도 그 시트를 켜요', async () => {
+    // 실리태번 lib/eventemitter.js 와 같은 꼴: emit 은 듣는 쪽 목록을 복사해 하나씩 await 하고, 늦은 듣기 자동 발사 값은 다 돈 뒤에 적어요
+    const real = { events: {}, last: new Map() };
+    real.on = (n, fn) => { (real.events[n] ||= []).push(fn); if (real.last.has(n)) fn(); };
+    real.removeListener = (n, fn) => { const l = real.events[n] || []; const i = l.indexOf(fn); if (i > -1) l.splice(i, 1); };
+    real.emit = async n => { for (const fn of (real.events[n] || []).slice()) await fn(); real.last.set(n, true); };
+    const saved = globalThis.SillyTavern;
+    globalThis.SillyTavern = { getContext: () => ({ event_types: { APP_READY: 'app_ready' }, eventSource: real }) };
+    try {
+        let release;
+        real.on('app_ready', () => new Promise(r => { release = r; }));   // 실리태번 자신의 APP_READY 듣기(확장보다 먼저 걸려 있어요)
+        addCover();
+        const gate = await load();                                      // 확장 모듈을 읽음 = APP_READY 를 보내기 전
+        assert.equal((real.events.app_ready || []).length, 2, '읽을 때 안전망을 걸었어요');
+        const sending = real.emit('app_ready');                          // 덮개가 안 걷힌 채 APP_READY 를 보내기 시작
+        await Promise.resolve();
+        gate.coverOpaque(true);
+        const el = sheetEl();
+        assert.equal(gate.holdSheet(el), true, '보내는 도중이라 아직 꺼 둬요');
+        assert.equal(el.getAttribute('media'), 'not all');
+        release(); await sending;
+        assert.equal(el.getAttribute('media'), null, '보내기가 끝나기 전에 안전망이 불려 켜요');
+        assert.equal(gate.holdSheet(sheetEl()), false, '그 뒤로는 꺼 두지 않아요');
+        removeCover();
+    } finally { globalThis.SillyTavern = saved; }
+});
+
+await test('맥락 없이 읽혔으면(노드 시험 · 맥락 없는 판) 첫 holdSheet 때 다시 걸어요 · 한 번만', async () => {
+    const saved = globalThis.SillyTavern;
+    globalThis.SillyTavern = undefined;
+    addCover(); listeners.clear();
+    const gate = await load();
+    globalThis.SillyTavern = saved;
+    try {
+        assert.equal((listeners.get('app_ready') || []).length, 0);
+        gate.coverOpaque(true);
+        const el = sheetEl();
+        gate.holdSheet(el); gate.holdSheet(sheetEl());
+        assert.equal((listeners.get('app_ready') || []).length, 1, '첫 holdSheet 때 한 번');
+        emit('app_ready');
+        assert.equal(el.getAttribute('media'), null);
+        removeCover();
+    } finally { globalThis.SillyTavern = saved; }
+});
+
 await test('시트 하나가 켜다 오류여도 나머지는 켜고 대기자도 돌아요', async () => {
     addCover();
     const gate = await load();
