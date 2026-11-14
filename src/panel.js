@@ -1737,6 +1737,7 @@ function tabChat(s, sub) {
         </div>
         ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
             ${mesPinPicker(s)}
+            ${row('미트볼 추억 앨범 단추', toggle('chat.mbAlbumBtn', s.chat.mbAlbumBtn === true), '미트볼 상태창이 답마다 이름 줄에 붙이는 「추억 앨범에 담기」 단추를 보여요 · 끄면(기본) 숨겨서 폰 이름 줄이 한 줄에 들어가요 · 앨범 기능 · 상태창의 앨범 탭은 그대로예요')}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true, s)}</div>

@@ -10,6 +10,7 @@
 //   ⑨ 머리줄 그림 글자: 다른 자리와 같은 선 아이콘 글꼴이 그려요(설정 칸 뿌리에 글꼴) — 표식 · 가림 그림 · 0 크기 글자 없음 · 첫 글자 여백만
 //   ⑪ 상태창 큰 탭(홈 · 나 · 세계 · 사람 · 관리): 아이콘은 글 왼쪽에 · 테마 선 아이콘 꼴 · 글과 같은 크기
 //   ⑩ 채팅방 고양이: 그 확장의 계기판 아이콘 네 곳(띠 카드 머리 · 뜬 단추 · 설정의 「상태창 열기」 · 가장자리 손잡이)만 선 고양이로 — 「원작 그대로 보기」면 원래 아이콘 · 손잡이는 칸 안 빼꼼
+//   ⑬ 2.7.21 타일 판과 겹치는 이름(.ss-t-x · .ss-t-tip)은 알림 것만 · 설정 줄의 글 단추 · 체크 격자는 네모 아이콘 단추 규칙에서 비켜요
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -47,6 +48,8 @@ check('③ 색 글자를 박지 않아요(팔레트 · 부품 토큰만)', () =>
     assert.ok(palette, '색 변수 잇는 규칙이 없어요');
     for (const r of rules) {
         let body = r.body.replace(/var\(--bl-knob-face, #fff\)/g, '').replace(/var\(--bl-lemon-bright, #FFE23C\)/g, '').replace(/content:\s*'[^']*'/g, '');   // 둘째: 알림 숫자의 낮 판 맑은 레몬(테마에 토큰이 없어 대체값 — ⑫)
+        // 2.7.21 타일 보드 — 밤 팔레트에서 밝은 무늬 보드면 뜻 색을 그 판의 짙은 잉크(--t-ink)와 섞는 다섯 줄만 — 팔레트 규칙과 같은 꼴
+        if (r.selectors.includes('body.salty.salty-dark .ss-tbhost.has-img .ss-tb')) body = body.replace(/--ss-(hi|pos|neg|love|trust):\s*color-mix\(in srgb, (var\(--salty-(accent|danger)\)|#[0-9a-f]{6}) \d+%, var\(--t-ink\)\);/g, '');
         if (r === palette) body = body.replace(/--ss-(neg|love|trust|dim):\s*color-mix\(in srgb, (var\(--salty-(danger|muted)\)|#[0-9a-f]{6}) \d+%, var\(--salty-text\)\);/g, '');
         assert.ok(!/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|color-mix\(/i.test(body), `${r.selectors[0]} → ${body.match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|color-mix\(/i)?.[0]}`);
     }
@@ -196,5 +199,15 @@ check('⑩ 감사 고침: 띠가 「입력창 위」일 때는 알림의 기준�
     assert.match(css, /body\.salty \.ss-toasts:not\(\.bottom\) \{ top: calc\(anchor\(--bl-ss-hud bottom, calc\(var\(--topBarBlockSize, 40px\) \+ 2px\)\) \+ 6px\); \}/, '기준이 없으면 위 막대 아래(대체값)');
     const face = css.indexOf('body.salty .ss-scope :is(.ss-seg, .ss-seg.wrap, .ss-groups) {'), fixed = css.indexOf('body.salty .ss-scope.navbottom .ss-groups { background: var(--salty-surface-shade, var(--ss-bg)); }');
     assert.ok(face >= 0 && fixed > face, '같은 세기라 뒤에 와야 이겨요(반투명 면 → 불투명 면)');
+});
+check('⑬ 2.7.21 타일 판과 이름이 겹치는 알림 단추는 좁혀 걸어요 · 설정 줄의 글 단추 · 체크 격자는 네모 아이콘 단추 규칙에서 비켜요', () => {
+    // 그 확장 2.7.21 이 타일 판 모서리 동그라미에 <i class="ss-t-x"> · .ss-t-tools > .ss-t-tip 을 써요 — 알림 닫기(<button class="ss-t-x">) · 알림 팁만 골라야 해요
+    for (const r of rules) for (const sel of r.selectors) {
+        assert.ok(!/\.ss-t-x\b/.test(sel.replace(/button\.ss-t-x/g, '')), `넓은 .ss-t-x: ${sel}`);
+        assert.ok(!/\.ss-t-tip/.test(sel) || /\.ss-toast \.ss-t-tip/.test(sel), `넓은 .ss-t-tip: ${sel}`);
+    }
+    assert.ok(rules.some(r => r.selectors.includes('body.salty #ss-settings .ss-set-inline > .menu_button:not(.ss-set-btn)') && /width: var\(--bl-ui-ctl, 36px\)/.test(r.body)), '네모 아이콘 단추(새로고침)만 36 칸');
+    assert.ok(rules.some(r => r.selectors.includes('body.salty #ss-settings .ss-set-inline > .ss-set-btn') && /padding: 0 10px/.test(r.body)), '글 단추는 단추 줄과 같은 꼴');
+    assert.ok(rules.some(r => r.selectors.some(s => /#ss-hud \.ss-t\.ic\.open/.test(s))), '2.7.21 띠의 여는 아이콘도 같은 고양이');
 });
 console.log(`status-ext-css: ${passed}개 통과`);

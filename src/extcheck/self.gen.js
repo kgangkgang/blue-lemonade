@@ -231,8 +231,8 @@ export const SELF_ROWS = [
 ["id","bl-deus-popover","src/scripts/plain/deus-qr.js",614,"","",0],
 ["id","bl-deus-quick","src/scripts/plain/deus-qr.js",313,"","",0],
 ["id","bl-eb-css","src/geulkku-mart/edit-blocks.js",71,"","guarded",0],
-["id","bl-enabled-drawer","src/panel.js",2246,"","",0],
-["id","bl-enabled-popup","src/panel.js",2244,"","",0],
+["id","bl-enabled-drawer","src/panel.js",2247,"","",0],
+["id","bl-enabled-popup","src/panel.js",2245,"","",0],
 ["id","bl-flow","src/capture-resources.js",15,"","svg",0],
 ["id","bl-fr-title","src/first-run.js",174,"","",0],
 ["id","bl-frame-motion","src/frame-motion.js",128,"","",0],
@@ -726,5 +726,5 @@ export const SELF_ROWS = [
 ["settingsKey","regex_link","src/addons/regexlink/index.js",35,"regexlink","??=",0],
 ["settingsKey","regex_perf_kit","src/addons/regexlink/regexperf.js",62,"regexlink","||=",0],
 ["settingsKey","request_log","src/addons/perf/state.js",125,"perf","=",0],
-["settingsKey","salty","src/panel.js",3062,"","=",0]
+["settingsKey","salty","src/panel.js",3063,"","=",0]
 ];

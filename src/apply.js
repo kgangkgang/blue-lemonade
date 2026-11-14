@@ -806,6 +806,9 @@ export function applyAll() {
     // QR 줄 접힘은 class 가 아니라 body 속성(data-salty-qr-folded)이에요 — 위 want 계산은 그대로 두고 syncGateCss 앞에서 꺼내 속성으로 옮겨요(layout.js « 단추가 속성만 바꿔
     //   누를 때마다 body class 기록이 나지 않게 — 실리태번 keyboard.js 가 class 기록마다 문서 전체를 다시 훑어요). 무게(특이도)는 class 하나와 같아요
     if (document.body.hasAttribute('data-salty-qr-folded') !== qrFolded) { restyleAhead(); document.body.toggleAttribute('data-salty-qr-folded', qrFolded); }
+    // 미트볼 「추억 앨범」 메시지 단추: 보이기로 둔 때만 속성 — 숨김(기본)은 맞춤 시트(ext-status.css)가 그 확장이 있을 때만 걸어요
+    const mbAlbum = want.has('salty') && s.chat.mbAlbumBtn === true;
+    if (document.body.hasAttribute('data-bl-mb-album') !== mbAlbum) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-album', mbAlbum); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
     // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)

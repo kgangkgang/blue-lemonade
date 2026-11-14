@@ -32,20 +32,20 @@ export const PLANS = {
             ['장면에 맞춰 줄이기 · 변동 칩', ['sceneFilter:장면 필터', 'sceneTurns:최근 메시지', 'pinCap:고정 메모', 'msgCard:변동 칩', 'chipOutside:칩 밖에']],
             ['퀘스트 · 흥정 판정', ['questJudge:완료 판정', 'questExpire:기한', 'extraJudge:흥정 · 일하기', 'questJudgeAI:AI 완료']],   // 2.7.3 ~ 2.7.6
             ['번역 모델 · 언어', ['trProfile:모델', 'trLang:언어', 'trCode:코드']],
-            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trsheet', 'trprune', 'toenglish']],
+            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trLlmFallback:못 바꾼 글은 모델로', 'trsheet', 'trprune', 'toenglish']],
             ['먼저 연락 오게', ['autoPing:자동 선톡', 'autoPingEvery:간격', 'rushChance:급행 %']],
             ['실패했을 때 · 묶어 만들기', ['aiFallbackMain:메인으로 다시', 'genBatch:묶어서 생성']],
             ['한 번에 보내는 양', ['genParallel:동시 요청', 'aiMaxTokens:출력 토큰', 'recentForGen:최근 채팅', 'loreChars:로어북 글자', 'injectDepth:주입 깊이']],
-            ['주입 · 긴 채팅 정리 · 정규식', ['injWorld:세계관 매 턴', 'injScan:로어북 켜기', 'autoBake:자동 정리', 'bakeAfter:정리 시작', 'autoRegex:정규식']],   // injWorld 는 2.7.1 부터(앞 판에는 없어 조용히 건너뛰어요)
+            ['주입 · 긴 채팅 정리 · 정규식', ['injWorld:세계관 매 턴', 'injScan:로어북 켜기', 'autoBake:자동 정리', 'rewindKeep:되감기 범위', 'bakeAfter:정리 시작', 'autoRegex:정규식']],   // injWorld 는 2.7.1 부터 · rewindKeep 은 2.7.21 부터(앞 판에는 없어 조용히 건너뛰어요)
             ['변화만 보내기 · 다시 받기', ['deltaMode:변화 위주', 'deltaEvery:전체 간격', 'retryJSON:다시 받기']],
             ['알림 시간 · 종류', ['toastSec:시간', 'daySummary:하루 정리', 'featureTips:팁', 'actionTips:칸 팁', 'tipreset']],
             ['마스코트 · 소리', ['showMascot:마스코트', 'mascotBuddy:제목 옆', 'mascotSound:소리', 'mascotVolume:크기', 'mascotsound']],
-            ['진단 · 백업', ['diag', 'report', 'backup']],
+            ['진단 · 백업', ['diag', 'report', 'copydump', 'backup']],
             ['정규식 · 기본값 · 옛 태그 보관', ['stashall', 'defmods', 'regex', 'unregex']],
         ],
         // 비용 표시 — 그 확장이 줄마다 적어 둔 말(「토큰 0」 · 「확장 AI 1회」 · 「주입 조금」 …)을 같은 꼴로 모은 것
         cost: {
-            autoPing: 'ai', retryJSON: 'ai', peekOn: 'ai', goneInject: 'tok', romSpark: 'tok', storyPush: 'tok',
+            autoPing: 'ai', retryJSON: 'ai', peekOn: 'ai', trLlmFallback: 'ai', goneInject: 'tok', romSpark: 'tok', storyPush: 'tok',
             injWorld: 'tok', injScan: 'tok', offscreen: 'tok', romFacts: 'tok', romDrive: 'tok', romIntent: 'tok', romInit: 'tok',
             sceneFilter: 'save', deltaMode: 'save', genBatch: 'save', autoBake: 'save',
             romBond: 'free', romCap: 'free', romFatigue: 'free', featureTips: 'free', pipCheck: 'free', extraJudge: 'free', questJudgeAI: 'free', actionTips: 'free',

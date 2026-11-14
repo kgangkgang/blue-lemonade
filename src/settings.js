@@ -475,6 +475,7 @@ function tidyFlags(s) {
         s.chat.showMoreAuto = flag(s.chat.showMoreAuto, true); // 6.9.8 「이전 메시지 더 보기」 저절로 (show-more-auto.js) — 예전 설정에는 없으니 켬
         s.chat.lazyAvatars = flag(s.chat.lazyAvatars, true); // 아바타는 가까워질 때 받기 (lazy-avatars.js) — 예전 설정에는 없으니 켬
         s.chat.searchIme = flag(s.chat.searchIme, true); // 검색은 글자 조합이 끝난 뒤 (search-ime.js) — 예전 설정에는 없으니 켬
+        s.chat.mbAlbumBtn = flag(s.chat.mbAlbumBtn, false); // 미트볼 「추억 앨범」 메시지 단추 보이기 — 기본 숨김(2.7.21 · 폰 이름 줄이 두 줄로 넘어갔어요)
         s.chat.codePlain = flag(s.chat.codePlain, false); // 코드 색 입히기 끄기 (code-plain.js) — 켤 때만
         s.chat.worldInfoLight = flag(s.chat.worldInfoLight, true); // 월드인포 긴 목록 가볍게 (worldinfo-light.js) — 예전 설정에는 없으니 켬
         s.chat.replyTop = flag(s.chat.replyTop, false); // 6.9.8 새 답 첫 줄로 가는 ↑ (reply-top.js) — 켤 때만
@@ -870,7 +871,7 @@ export function resetSettings(groups = { look: true }) {
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'mbAlbumBtn', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }

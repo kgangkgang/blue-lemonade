@@ -1,8 +1,8 @@
 {
  "_": "미트볼 상태창 화면의 그림 글자(이모지)를 테마 선 아이콘으로 보이게 하는 글꼴의 표 — src/ext-status.css 의 @font-face(unicode-range)와 같아야 해요. 글꼴은 허브 대본(build-icons.py)으로 만들어요. 테마 선 아이콘과 같은 꼴(24 칸 · 선 1.8 · 둥근 끝)로 직접 그렸고, 뜻이 겹치는 것은 테마 아이콘을 그대로 썼어요.",
  "font": "ext-status-icons.woff2",
- "bytes": 30900,
- "sha256": "a0088417e75879ad966f1659251b9f5703c0258084727dbb33cb0d0ff9d0b6a7",
+ "bytes": 31372,
+ "sha256": "89ce7f3271a4b670196a1ad5b131f0297deed1a9d747d1f5ce7467730e561bc2",
  "family": "bl-mb-icons",
  "zeroWidth": [
   "FE0F",
@@ -10,7 +10,7 @@
  ],
  "uvs": {
   "selector": "FE0F",
-  "count": 183
+  "count": 190
  },
  "metrics": {
   "upm": 1000,
@@ -35,6 +35,7 @@
   "2194": "swap",
   "21A9": "undo",
   "231B": "hourglass",
+  "23EA": "rewind",
   "23F3": "hourglass",
   "23F8": "pause",
   "2600": "sun",
@@ -90,6 +91,7 @@
   "1F332": "pine",
   "1F333": "tree",
   "1F338": "flower",
+  "1F33C": "flower",
   "1F33E": "wheat",
   "1F342": "leaf",
   "1F35D": "bowl",
@@ -112,6 +114,7 @@
   "1F3E0": "house",
   "1F3E2": "building",
   "1F3E5": "hospital",
+  "1F3E6": "bank",
   "1F3EA": "shop",
   "1F3EB": "school",
   "1F3F0": "castle",
@@ -130,6 +133,7 @@
   "1F48C": "loveletter",
   "1F48D": "ring",
   "1F494": "heartbreak",
+  "1F495": "hearts2",
   "1F497": "heart",
   "1F49E": "hearts2",
   "1F4A1": "bulb",
@@ -165,6 +169,7 @@
   "1F50D": "search",
   "1F50E": "search",
   "1F512": "lock",
+  "1F513": "unlock",
   "1F514": "bell",
   "1F524": "abc",
   "1F525": "flame",
@@ -199,6 +204,7 @@
   "1F6CF": "bed",
   "1F6D2": "cart",
   "1F6DF": "lifebuoy",
+  "1F6E0": "wrench",
   "1F6E1": "shield",
   "1F6E3": "road",
   "1F6F0": "antenna",
@@ -212,6 +218,7 @@
   "1F9F1": "bricks",
   "1F9F8": "teddy",
   "1F9F9": "broom",
+  "1FA91": "chair",
   "1FAB4": "sprout",
   "1FAB6": "feather",
   "1FAE7": "bubbles"
