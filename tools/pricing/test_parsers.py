@@ -97,6 +97,33 @@ class ParserFixtureTests(unittest.TestCase):
         self.assertNotIn('gpt-5.5',rates);self.assertNotIn('gpt-5.4-mini',rates)
         self.assertNotIn('batch',rates['gpt-6-sol'])
 
+    def test_openai_sections_stop_at_headings_skip_media_rows_and_warn_on_duplicates(self):
+        import collect,tempfile
+        raw=(FIXTURES/'openai.raw').read_text(encoding='utf8')
+        base=read_models('openai',FIXTURES,{})
+        head='| Model | Input | Output | Cached input |\n| --- | --- | --- | --- |\n'
+        with tempfile.TemporaryDirectory() as d:
+            f=Path(d,'openai.raw')
+            f.write_text(raw+'\n\n## Image generation\n\n'+head+'| gpt-6-sol-late | $9.00 | $9.00 | $9.00 |\n',encoding='utf8')
+            self.assertNotIn('gpt-6-sol-late',read_models('openai',d,{}))
+            f.write_text(raw.replace('### Standard pricing data\n','### Standard pricing data\n\n'+head+'| gpt-image-2 | $9.00 | $9.00 | $9.00 |\n| gpt-realtime-2 | $9.00 | $9.00 | $9.00 |\n',1),encoding='utf8')
+            self.assertEqual(read_models('openai',d,{}),base)
+            self.assertIn('| gpt-6-sol | $2.00',raw)
+            i=raw.index('| gpt-6-sol | $2.00');j=raw.index('\n',i)
+            f.write_text(raw[:j]+'\n| gpt-6-sol (>272K context length) | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 |'+raw[j:],encoding='utf8')
+            collect.OPENAI_WARNINGS.clear()
+            self.assertEqual(read_models('openai',d,{})['gpt-6-sol']['standard'],base['gpt-6-sol']['standard'])
+            self.assertTrue(collect.OPENAI_WARNINGS)
+
+    def test_openai_12h_write_survives_when_the_30m_cell_is_a_dash(self):
+        import collect,tempfile
+        raw='### Standard pricing data\n| '+' | '.join(collect.OPENAI_WIDE)+' |\n| --- |\n| gpt-9 | $1 | $5 | $0.1 | - | $2.5 | $2 | $7.5 | $0.2 | - | $2.5 |\n'
+        raw+='### Batch pricing data\n#### Flex\n### Fast pricing data\n### Ultrafast pricing data\n'
+        with tempfile.TemporaryDirectory() as d:
+            Path(d,'openai.raw').write_text(raw,encoding='utf8')
+            self.assertEqual(collect.openai_write_rates(d),{'gpt-9':{'standard':[None,2.5,None,2.5]}})
+            self.assertIsNone(read_models('openai',d,{})['gpt-9']['standard'][2])
+
     def test_kimi_reads_compiled_table_rows_by_column_title(self):
         models=parse_generic('moonshot',FIXTURES)
         self.assertEqual(models['kimi-k3'],{'rates':{'input':3.0,'output':15.0,'cacheRead':0.3},'cacheWrite5m':3.0,'cacheWrite1h':6.0})

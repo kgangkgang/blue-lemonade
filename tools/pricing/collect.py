@@ -93,20 +93,29 @@ def text_contract(provider, name, raw):
 
 OPENAI_WIDE=['Model','Short context input','Short context output','Short context cached input','Short context 30m write','Short context 12h write','Long context input','Long context output','Long context cached input','Long context 30m write','Long context 12h write']
 
+OPENAI_NON_TEXT=re.compile(r'image|audio|realtime|transcribe|tts|whisper|dall-e|sora|search-preview|computer-use',re.I)
+OPENAI_WARNINGS=[]
+
 def openai_rows(raw):
-    """Yield (tier, model, table head, amounts) for every OpenAI price row; '-' is None. Flex sits under the Batch section."""
+    """Yield (tier, model, table head, amounts) for every OpenAI text price row; '-' is None. Flex sits under the Batch section.
+    A section ends at the next '## ' or '### ' heading (same range as the contract text); image/audio rows are skipped;
+    a model that appears twice in one tier keeps its first row and is reported in OPENAI_WARNINGS."""
     money=lambda x:None if x=='-' else float(x.replace('$','').replace(',',''))
-    sections={'standard':raw.split('### Standard pricing data',1)[1].split('\n### ',1)[0],
-              'flex':raw.split('### Batch pricing data',1)[1].split('\n### ',1)[0].split('#### Flex',1)[1].split('\n#### ',1)[0],
-              'fast':raw.split('### Fast pricing data',1)[1].split('\n### ',1)[0],
-              'ultrafast':raw.split('### Ultrafast pricing data',1)[1].split('\n### ',1)[0]}
+    end=lambda text:re.split(r'\n#{2,3} ',text,1)[0]
+    sections={'standard':end(raw.split('### Standard pricing data',1)[1]),
+              'flex':end(raw.split('### Batch pricing data',1)[1]).split('#### Flex',1)[1].split('\n#### ',1)[0],
+              'fast':end(raw.split('### Fast pricing data',1)[1]),
+              'ultrafast':end(raw.split('### Ultrafast pricing data',1)[1])}
     for tier,section in sections.items():
-        heads=[]
+        heads=[];seen=set()
         for line in section.splitlines():
             cols=[x.strip() for x in line.split('|')[1:-1]]
             if cols and cols[0]=='Model':heads=cols;continue
-            if not cols or not cols[0].startswith(('gpt-','o1','o3','o4')):continue
-            yield tier,cols[0].split(' (')[0],heads,[money(x) for x in cols[1:]]
+            if not cols or not cols[0].startswith(('gpt-','o1','o3','o4')) or OPENAI_NON_TEXT.search(cols[0]):continue
+            model=cols[0].split(' (')[0]
+            if model in seen:OPENAI_WARNINGS.append(f'OpenAI {tier}: {model} 행이 둘 — 앞 행만 씀');continue
+            seen.add(model)
+            yield tier,model,heads,[money(x) for x in cols[1:]]
 
 def openai_write_rates(directory):
     """Cache-write amounts per model and tier as [short 30m, short 12h, long 30m, long 12h], only where the two lifetimes
@@ -116,7 +125,7 @@ def openai_write_rates(directory):
     for tier,model,heads,v in openai_rows((Path(directory)/'openai.raw').read_text(encoding='utf8')):
         if heads!=OPENAI_WIDE or len(v)!=10:continue
         pair=[v[3],v[4],v[8],v[9]]
-        if (pair[0] is not None and pair[0]!=pair[1]) or (pair[2] is not None and pair[2]!=pair[3]):out.setdefault(model,{})[tier]=pair
+        if (pair[0]!=pair[1] and (pair[0] is not None or pair[1] is not None)) or (pair[2]!=pair[3] and (pair[2] is not None or pair[3] is not None)):out.setdefault(model,{})[tier]=pair
     return out
 
 def read_models(provider, directory, old):
@@ -269,12 +278,13 @@ def collect(previous, contracts, directory, fetch=True):
                 if not set(shapes)<=set(spec.get('apiShapes',[])):raise ValueError('API price unit or fields changed')
             if provider not in API_PROVIDERS:
                 if any(text_contract(provider,name,raws[name])!=spec['contracts'][name] for name in spec['sources']):raise ValueError('Billing page changed; parser review required')
+            OPENAI_WARNINGS.clear()
             models=read_models(provider,directory,old['models'])
             write_rates=openai_write_rates(directory) if provider=='openai' else None
             outcome=validate_models(models,old['models'],entry['format'],provider in CATALOG_PROVIDERS,spec.get('reviewed'))
             entry.update(models=models,checkedAt=now,status='ok',revision=digest(models if write_rates is None else [models,write_rates]),sourceDigest=digest({n:digest(raws[n]) for n in spec['sources']}))
             if write_rates is not None:entry['cacheWriteTtl']=write_rates
-            report[provider]={'status':'ok','models':len(models),'changed':models!=old['models'],'added':sorted(set(models)-set(old['models'])),'removed':outcome['removed'],'held':outcome['held']}
+            report[provider]={'status':'ok','models':len(models),'changed':models!=old['models'],'added':sorted(set(models)-set(old['models'])),'removed':outcome['removed'],'held':outcome['held'],**({'warnings':sorted(set(OPENAI_WARNINGS))} if provider=='openai' and OPENAI_WARNINGS else {})}
         except (OSError,requests.RequestException) as e:
             entry['status']='error';report[provider]={'status':'error','reason':str(e)}
         except Exception as e:
