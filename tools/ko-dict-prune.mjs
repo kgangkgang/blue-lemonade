@@ -35,8 +35,12 @@ export function readSource(text) {
     return { translations: literal('  const TRANSLATIONS = '), patterns: literal('  let PATTERNS = ') };
 }
 
-const decode = s => s.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/\\[nrt]/g, ' ').replace(/\\(["'`\\])/g, '$1')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&');
+export const decode = s => s.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/\\[nrt]/g, ' ').replace(/\\(["'`\\])/g, '$1')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+    // 11-14: 중괄호 엔티티(&lcub; · &rcub;)도 풀어요 — 「Use {{labels}} special macro.」 같은 placeholder 가 「없음」으로 빠졌어요
+    // 11-12 한글화 채우기: 실리태번 title · placeholder 의 줄바꿈 글자(&NewLine; · &#10;)를 못 풀어 「없음」으로 빠지던 열쇠가 있었어요(새 매크로 엔진 도움말 등)
+    .replace(/&NewLine;/g, '\n').replace(/&Tab;/g, '\t').replace(/&lcub;/g, '{').replace(/&rcub;/g, '}').replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d))).replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&amp;/g, '&');
 function listFiles(dir, skip, out = []) {
     if (!fs.existsSync(dir)) return out;
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -100,7 +104,8 @@ export function prune({ translations, patterns }, corpus, koUi) {
         counts.kept++;
     }
     for (const item of patterns) {
-        const parts = item.re.replace(/^\^|\$$/g, '').split(/\(\?:[^)]*\)|\([^)]*\)/).map(part => normalize(part.replace(/\\(.)/g, '$1'))).filter(part => part.length > 2);
+        // 11-12: 이스케이프한 괄호(\( \))는 묶음이 아니라 글자예요 — 「character\(s\)」를 묶음으로 잘라 「없음」으로 빼던 것을 고쳐요
+        const parts = item.re.replace(/^\^|\$$/g, '').split(/(?<!\\)\((?:\\.|[^\\)])*\)[?*+]?/).map(part => normalize(part.replace(/\\(.)/g, '$1'))).filter(part => part.length > 2);
         if (!parts.length || parts.every(part => corpus.text.includes(part))) continue;
         if (CJK.test(item.re) || SERVER_TEXT.test(item.re)) continue;
         dropped[keyHash(item.re)] = 'pattern'; counts.patternsDropped++;

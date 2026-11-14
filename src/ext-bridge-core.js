@@ -24,7 +24,7 @@ export const SLOTS = Object.freeze([
     ['contact', '연락', '메신저 · 편지 · 선톡 · 연락 요약 · 속마음', 'profContact'],
     ['gen', '만들기', '만들기 · 추가 지시 · 물가 · 플레이 방식 · 인물 욕구', 'profGen'],
     ['feeds', '소식', '뉴스 · 가십 · 게시판 · 의뢰 · SNS · 추천 음악', 'profFeeds'],
-    ['analyze', '별도 분석', '자동 반영이 B · A+B 일 때 답마다 스스로 불려요', 'profAnalyze'],
+    ['analyze', '별도 분석', '자동 반영이 B · A+B 일 때 답마다 스스로 불려요 · 칩 점검의 「AI로 다시 분석」', 'profAnalyze'],
     ['help', '도우미', '', 'profHelp'],
     ['translate', '번역', '번역 담당이 「번역 모델 (LLM)」일 때 · 상태창 칸 · 편지 · 메시지 번역', 'trProfile'],
 ]);
@@ -45,7 +45,11 @@ export const promptKey = prompt => { const text = String(prompt ?? ''); return `
 /** 다시 보내면 두 번 청구될 수 있는 실패(기다리다 끊음 · 중계 서버 524) — 메인 연결로 다시 보내지 않아요(번역기 현재 연결과 같은 규칙) */
 export const billedMaybe = reason => /(?<![\d.,])\b524\b(?![.,]\d)/.test(String(reason ?? ''));
 
-/** 스택에 남는 그 확장의 함수 이름 → 칸 (2.6.1 · 2.7.0 에서 같아요 · 판이 바뀌어 이름이 달라지면 못 알아보고 「확장 AI 전체」로) */
+/** 스택에 남는 그 확장의 함수 이름 → 칸 (2.6.1 · 2.7.0 · 2.7.2 · 2.7.9 · 2.7.11 · 2.7.15 에서 같아요 · 판이 바뀌어 이름이 달라지면 못 알아보고 「확장 AI 전체」로)
+ *  2.7.9 전수(원작 사본을 구문 분석해 aiGenerate · aiJSON · 번역 함수를 부르는 곳을 모두 뽑음): 새 길은 칩 점검(pipFix → analyzeMessage) 하나 — 안쪽 함수가 같아 그대로 걸려요.
+ *  2.7.15: 새 길 「남은 글 번역하기」(translateMissing → trJSON) 하나 — 안쪽 함수가 trJSON 이라 번역 칸으로 걸려요. 채팅이 바뀌면 번역 결과도 버려요(원작).
+ *  2.7.11 전수도 같은 길(부르는 곳 · 기능 묶음 그대로 — aiGenerate 가 채팅이 바뀌면 결과를 버리는 것과 「본편 쓰는 중」 판단을 실리 표시(#mes_stop · data-generating)로 바꾼 것뿐).
+ *  2.7.7 부터 메인 연결 요청은 「본편이 다 쓸 때까지 기다리기」 await 뒤에 나가요 → 기능 함수는 비동기 프레임으로만 남아요(남지 않는 엔진은 ext-bridge.js 가 받은 때의 스택으로 봐요). */
 export const FN_SLOT = Object.freeze({
     analyzeMessage: 'analyze',
     phoneReply: 'contact', letterReply: 'contact', pingMessage: 'contact', summarizeThread: 'contact', peekMind: 'contact',

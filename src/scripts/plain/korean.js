@@ -35,7 +35,41 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     '.cg-root',
     // v1.3.1: LLM 번역기 설정의 용어집 목록은 사용자가 적은 원문 낱말이다 (실제 데이터의 'Scale' 이 '스케일' 로 보였다).
     '.llmt-gl-list',
+    // 1.4.6: 미트볼 상태창은 칸 값 · 메신저 말풍선에 사용자 · AI 가 쓴 글이 그대로 들어가요(「Empty」 · 「Ready」 같은 한 낱말이 바뀌면 안 돼요). 그 창 UI 는 원래 한국어예요.
+    '.ss-scope', '.ss-root', '.ss-panel', '.ss-phone', '.ss-dlg', '.ss-mbubble',
   ].join(',');
+  // 1.4.6: 흔한 한 낱말 열쇠 · 넓은 패턴은 실리태번이 그 글을 그리는 칸 안에서만 바꿔요 — 남의 확장이 그린 같은 낱말 · 사용자 글은 그대로 둬요.
+  //   [칸 선택자(쉼표로 이은 단순 선택자), 열쇠(|로 이음)] — 열쇠는 정리한(normalize) 꼴이에요.
+  const NARROW = new Map();
+  for (const [where, keys] of [
+    ['[data-token-counter]', 'counting...'],
+    ['#azure_deployment_name', 'your-deployment-name'],
+    ['.popup', 'Password|Library|ERROR:'],
+    ['.popup-controls', 'Keep'],
+    ['.openrouter_credits_display,.slashHelp,.popup', 'Loading...'],
+    ['#bulk_tag_popup_remove_mutual', 'Mutual'],
+    ['.responsiveTable', 'Value'],
+    ['.characterAsset', 'Installed'],
+    ['.macroBrowser,.slashCommandBrowser,.autoComplete-wrap,.autoComplete-detailsWrap,.popup', '(alias:|Usage:|Search:|Arguments|Returns|Aliases|(deprecated)|OPTIONAL'],
+    ['#qr--modalEditor', 'Icon|Label|Show|Resume|Maximize'],
+    ['#qr--modalEditor,.streaming-display', 'Minimize'],
+    ['.regex_editor,.expanded-regex-nav', 'Steps|Affects|Empty|Unlimited'],
+    ['.sd_comfy_workflow_editor', 'Placeholders|find|replace'],
+    ['#tts_settings', 'Models:|Model:|Speed:|Speed|Volume:|Temperature:|Language|Device:|Exaggeration:|Documentation|Offline|Ready|Website|(Unofficial).|Noise:|Stability:|Labels|Speaker:|Chunking'],
+    ['.select2-results__option,.select2-selection', 'Popular'],
+  ]) for (const key of keys.split('|')) NARROW.set(key, where);
+  const NARROW_RE = [
+    [/^\d+ characters selected$/, '#bulkSelectedCount'],
+    [/ Click to edit$/, '.world_entry,.select2-results__option'],
+    [/^Line: \d+ Column: \d+$/, '#toast-container,.popup'],
+  ];
+  /** 그 칸 밖이라 이 글은 건드리지 않아요(좁힌 열쇠 · 패턴) */
+  function narrowed(text, element) {
+    const key = normalize(text);
+    let where = NARROW.get(key);
+    if (where === undefined) for (const [re, sel] of NARROW_RE) if (re.test(key)) { where = sel; break; }
+    return where !== undefined && !element.closest(where);
+  }
   const ATTRIBUTE_NAMES = ['title', 'placeholder', 'aria-label'];
   const textChanges = new Map();
   const attributeChanges = new Map();
@@ -319,6 +353,7 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     if (!value || !MAYBE_FOREIGN.test(value)) return; // 빈 칸 · 한글뿐인 노드 (번역할 것 없음)
     // SillyTavern reads some <option> texts back (preset names), so only its own i18n-tagged options are touched.
     if (element.tagName === 'OPTION' && !element.hasAttribute('data-i18n')) return;
+    if (narrowed(value, element)) return;
     swapText(node, translate);
   }
 
@@ -342,6 +377,7 @@ export default function blueLemonadeScript(BlueLemonade, window) {
       if (!element.hasAttribute(attribute)) continue;
       const before = element.getAttribute(attribute);
       if (!before || !MAYBE_FOREIGN.test(before)) continue;
+      if (narrowed(before, element)) continue;
       wanted = false;
       const translated = translate(before);
       if (translated === null) { if (wanted) pendingAttr.add(element); wanted = false; continue; }

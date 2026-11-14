@@ -27,6 +27,19 @@ function captureStack() {
     try { if (typeof keep === 'number' && keep < 40) Error.stackTraceLimit = 40; return String(new Error().stack || ''); }
     finally { try { if (typeof keep === 'number') Error.stackTraceLimit = keep; } catch { /* 그대로 */ } }
 }
+/**
+ * 이 엔진의 스택에 await 너머 부른 쪽(비동기 프레임)이 남나 — 크롬은 남고, 사파리는 안 남고, 파이어폭스는 개발자 도구를 닫으면 안 남겨요.
+ * 그 확장 2.7.7 부터는 메인 연결로 보내기 전에 「본편이 다 쓸 때까지 기다리기」(await)를 해서, 남지 않는 엔진에서는 generateRaw 때 스택에 기능 함수가 없어요.
+ * 재는 법은 src/async-frames.js(따로 받는 작은 조각) — 함수 이름이 아니라 그 파일 주소 줄 수로 재요(배포본은 이름이 줄어요 · 11-14 검토 M1).
+ */
+const probeAsyncFrames = () => import('./async-frames.js').then(module => module.probeAsyncFrames(), () => true);
+/** 문맥 객체를 받은 그때의 스택(받은 함수 안 · await 앞이라 기능 함수가 남아요) — 비동기 프레임이 안 남는 엔진에서만 만들어요.
+ *  { err, tail }: tail = 처음 쓴 요청의 본문 끝 — 그 확장은 같은 동기 실행 안에서 문맥 객체 하나를 같이 써서(core.js ctx() 의 마이크로태스크 캐시),
+ *  다른 본문의 요청이 같은 객체로 오면 받은 때의 스택을 쓰지 않아요(「확장 AI 전체」로 · 11-14 검토 M2). generateRaw 길은 한 번 쓰면 지워요. */
+const BIRTH = Symbol('blue-lemonade.ext-bridge.birth');
+const captureBirth = () => new Error();
+/** 요청 단위 열쇠 — 본문(연결 프로필 길은 마지막 메시지) 끝 120자 · 한쪽이 다른 쪽으로 끝나면 같은 요청(「메시지 배열 → 한 줄 글」 다시 보내기는 시스템 글이 앞에 붙어요) */
+const tailOf = text => String(text ?? '').slice(-120);
 
 /** 고른 회사 · 모델로 보내요 → 답 글. 멈춤 단추(GENERATION_STOPPED)와 응답 길이에 맞춘 기다림을 걸어요. 기다리다 끊은 요청은 billed 표시(서버가 아직 처리 중일 수 있어요) */
 async function sendDirect({ ctx, pick, system, prompt, maxTokens }) {
@@ -64,8 +77,10 @@ async function sendDirect({ ctx, pick, system, prompt, maxTokens }) {
  * 다리 하나를 만들어요. 시험은 host(가짜 SillyTavern) · stack(가짜 스택) · direct(가짜 보내기) · theme(가짜 테마 설정)을 넣어요.
  * 돌려주는 것: sync(설정에 맞춰 걸기) · config · update · status · clearMain — 화면(src/ext-bridge-ui.js)이 써요.
  */
-export function createBridge({ host = () => globalThis.SillyTavern, stack = captureStack, own = OWN, theme = getSettings, direct = sendDirect, toast = null, now = Date.now, textarea = () => globalThis.document?.getElementById?.('send_textarea')?.value } = {}) {
-    const state = { on: false, inner: null, outer: null, mainBound: false, mainSet: false, toastAt: -Infinity, folders: new Map(), seen: new Map(), raws: new WeakMap(), services: new WeakMap(), last: { ext: null, main: null, model: null } };
+export function createBridge({ host = () => globalThis.SillyTavern, stack = captureStack, own = OWN, theme = getSettings, direct = sendDirect, toast = null, now = Date.now, textarea = () => globalThis.document?.getElementById?.('send_textarea')?.value, asyncFrames = probeAsyncFrames, birth = captureBirth } = {}) {
+    const state = { on: false, inner: null, outer: null, mainBound: false, mainSet: false, needBirth: false, toastAt: -Infinity, folders: new Map(), seen: new Map(), raws: new WeakMap(), services: new WeakMap(), last: { ext: null, main: null, model: null } };
+    // 비동기 프레임이 안 남는 엔진이면 문맥 객체마다 받은 때의 스택을 달아 둬요(남는 엔진은 아무것도 더 하지 않아요) — 한 번만 재요
+    try { Promise.resolve(typeof asyncFrames === 'function' ? asyncFrames() : asyncFrames).then(ok => { state.needBirth = ok === false; }, () => {}); } catch { state.needBirth = false; }
     const ctx = () => host()?.getContext?.();
     const themeSettings = () => { try { return theme() || {}; } catch { return {}; } };
     const featuresOn = () => addonsEnabled(themeSettings());
@@ -95,7 +110,7 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
      * 지금 부른 쪽이 그 확장이면 { folder, slot, fn }, 아니면 null.
      * prompt 를 주면 알아본 기능을 그 본문에 잠깐(10분 · 32개) 적어 두고, 스택으로 못 알아본 같은 본문의 요청(await 뒤 「다시 받기」)에 그 기능을 써요.
      */
-    function inspect(prompt) {
+    function inspect(prompt, held = null, text = prompt) {
         const frames = Core.parseFrames(stack());
         const folder = Core.findTarget(frames, own, isTarget);
         if (!folder) return null;
@@ -108,6 +123,12 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
                 state.seen.set(key, { ...found, at: now() });
                 if (state.seen.size > 32) state.seen.delete(state.seen.keys().next().value);
             } else if (seen && now() - seen.at < SEEN_MS) found = { slot: seen.slot, fn: seen.fn };
+        }
+        // 그래도 모르면(await 너머 · 비동기 프레임이 안 남는 엔진) 그 문맥 객체를 받은 때의 스택 — 이 요청 본문에 묶인 것만, 같은 본문 기억에는 안 적어요
+        if (!found.slot && held?.err) {
+            const tail = tailOf(text);
+            if (!held.tail) held.tail = tail;
+            if (held.tail === tail || held.tail.endsWith(tail) || tail.endsWith(held.tail)) { try { found = Core.slotOf(Core.parseFrames(held.err.stack), folder); } catch { /* 못 읽으면 그대로 */ } }
         }
         return { folder, ...found };
     }
@@ -164,7 +185,9 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
         if (proxy) return proxy;
         proxy = function blBridgeGenerateRaw(...args) {
             let call = null;
-            try { if (live() && isObj(args[0]) && typeof args[0].prompt === 'string') call = inspect(args[0].prompt); } catch { call = null; }
+            let held = null;
+            try { held = this?.[BIRTH] || null; if (held) delete this[BIRTH]; } catch { held = null; }   // 받은 때의 스택은 이 요청 한 번만
+            try { if (live() && isObj(args[0]) && typeof args[0].prompt === 'string') call = inspect(args[0].prompt, held); } catch { call = null; }
             return call ? run(original, this, args, call) : original.apply(this, args);
         };
         proxy[MARK] = true;
@@ -180,7 +203,7 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
             let next = args;
             try {
                 const cfg = live() ? config() : null;
-                const call = cfg?.glossary ? inspect() : null;
+                const call = cfg?.glossary ? inspect(undefined, this?.[BIRTH] || null, Array.isArray(args[1]) ? Core.promptText(args[1].slice(-1)) : Core.promptText(args[1])) : null;   // 이 길은 「배열 → 한 줄 글」로 한 번 더 보낼 수 있어 지우지 않고 본문 끝으로 묶어요
                 if (call) {
                     const block = extGlossary(ctx(), cfg, call, Core.promptText(args[1]));
                     if (block) { next = [...args]; next[1] = Core.blockIntoPrompt(args[1], block); }
@@ -197,6 +220,13 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
         if (typeof raw === 'function' && !raw[MARK]) c.generateRaw = wrapRaw(raw);
         const service = c.ConnectionManagerRequestService;
         if (service && typeof service.sendRequest === 'function' && !service[MARK]) c.ConnectionManagerRequestService = wrapService(service);
+        if (!state.needBirth) return;
+        // 비동기 프레임이 안 남는 엔진: 이 문맥 객체(getContext 가 부를 때마다 새로 만들어요)에 받은 때의 스택을 달아요 — 감싸개가 this 로 읽어요
+        //   두 길(generateRaw · 연결 프로필)이 같은 묶음 하나를 봐요 — 처음 쓴 요청의 본문 끝에 묶여요
+        const held = { err: birth(), tail: '' };
+        Object.defineProperty(c, BIRTH, { value: held, configurable: true });
+        const facade = c.ConnectionManagerRequestService;
+        if (facade?.[MARK] && Object.hasOwn(facade, 'sendRequest')) c.ConnectionManagerRequestService = Object.create(facade, { [BIRTH]: { value: held } });
     }
     /** getContext 를 한 번만 감싸요 — 성능 보조 애드온의 감싸개와 겹쳐도 되게 이름은 안쪽 함수 것을 그대로 둬요(그쪽이 이름으로 「이미 감쌌나」를 봐요) */
     function installHook() {

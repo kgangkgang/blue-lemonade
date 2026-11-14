@@ -146,6 +146,7 @@ export const DEFAULTS = {
     roleIcons: {},   // 7.9.3 단추 아이콘 바꾸기 { <역할 id>: 'fa:s:이름:번호' | 'tx:글자' | 'im:data:…' } — 바꾼 역할만 (role-icons-core.js)
     pickedIcons: {},   // 화면에서 고른 단추 { <열쇠 해시>: { key, label, icon?, value? } } — 확장이 더한 단추(role-icons-pick.js)
     headSwitches: {},   // 6.0.4 확장 위 스위치 { <창 열쇠 id:…|cls:…>: true } — 창 안 「확장 탭에 보이기」로 고른 확장 창 (headswitch.js)
+    headSwitchMove: { done: {}, noticed: false, from145: false, names145: [] },   // 1.4.6 옛 열쇠 옮기기 기록(headSwitches 밖): done { <옛 열쇠>: <옮긴 이름 열쇠> | '' (못 옮김 · 끝) } · noticed 「옮기지 못했어요」 알림을 띄웠음 · from145 1.4.5 가 이미 옮긴 설정(첫 정리 전) · names145 그때 있던 1.4.5 이름 열쇠(t: · x:)
     activeStyle: null,
     baseStyle: null,
     profile: { decor: { ...DECOR_DEFAULTS }, nameSize: 24, nameWeight: 650, nameSpacing: 0, nameHeight: 1.3, nameColor: '#91a5ba', nameAuto: true, nameAlign: 'center', nameRowAlign: 'left', nameItalic: false, nameUnderline: false, headerLayout: 'below-two', headerGap: 8, metaSize: 12, metaOpacity: 70, buttonGap: 8, nameOutline: 0, nameOutlineColor: '#000000', nameShadow: false, nameShadowBlur: 4, nameShadowY: 1, nameShadowAlpha: 25, ...FRAME_DEFAULTS, mode: 'small', layout: 'column', sizing: 'pixels', screenHeight: 45, maxHeight: 70, visibleHeight: 100, width: 100, height: 320, fit: 'cover', positionX: 50, positionY: 35, radius: 18, gap: 20, blur: 0, opacity: 100, fadeY: 0, fadeX: 0, original: true },
@@ -391,6 +392,21 @@ function tidyStyles(s) {
     delete s.promptLink.name;
     // 6.0.4 확장 위 스위치: true 인 글자 열쇠만, 100개까지
     if (!isObj(s.headSwitches)) s.headSwitches = {};
+    // 1.4.6 옮기기 기록은 headSwitches 밖에(검토 3 — 표시 하나로 모듈이 늘 켜져 있었어요). 1.4.5 의 표시는 여기로 옮겨요: 알림은 이미 띄웠으니 noticed,
+    //   옛 열쇠는 그대로라 아직 짝을 못 찾은 것은 다시 짝지어요(headswitch.js)
+    if (!isObj(s.headSwitchMove)) s.headSwitchMove = { done: {}, noticed: false };
+    if (!isObj(s.headSwitchMove.done)) s.headSwitchMove.done = {};
+    for (const [k, v] of Object.entries(s.headSwitchMove.done)) if (!k || typeof v !== 'string') delete s.headSwitchMove.done[k];
+    for (const k of Object.keys(s.headSwitchMove.done).slice(200)) delete s.headSwitchMove.done[k];
+    s.headSwitchMove.noticed = s.headSwitchMove.noticed === true;
+    s.headSwitchMove.from145 = s.headSwitchMove.from145 === true;
+    s.headSwitchMove.names145 = Array.isArray(s.headSwitchMove.names145) ? [...new Set(s.headSwitchMove.names145.filter(k => typeof k === 'string' && /^[tx]:/.test(k)))].slice(0, 200) : [];
+    for (const k of Object.keys(s.headSwitchMove)) if (!['done', 'noticed', 'from145', 'names145'].includes(k)) delete s.headSwitchMove[k];
+    // 1.4.6 검토 H1 · H2: 1.4.5 가 이미 옮긴 설정 — 옮긴 옛 열쇠는 다시 짝짓지 않고(끈 스위치가 되살아나지 않게) 그때 있던 1.4.5 이름 열쇠만 옮길 대상으로 적어요
+    if (Object.hasOwn(s.headSwitches, '@moved:stable-keys')) {
+        delete s.headSwitches['@moved:stable-keys'];
+        Object.assign(s.headSwitchMove, { noticed: true, from145: true, names145: Object.keys(s.headSwitches).filter(k => /^[tx]:/.test(k) && s.headSwitches[k] === true).slice(0, 200) });
+    }
     for (const [k, v] of Object.entries(s.headSwitches)) if (!k || v !== true) delete s.headSwitches[k];
     for (const k of Object.keys(s.headSwitches).slice(100)) delete s.headSwitches[k];
     s.headSwitchRows = flag(s.headSwitchRows, DEFAULTS.headSwitchRows);
@@ -839,7 +855,7 @@ export const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools'
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
 // 1.1.7: multiAvatar(프로필 여러 개 사진 목록 — 지우면 서버 사진이 「안 쓰는 파일」이 돼요) · addonCarry(개인 확장 이어받기 단계) 도 자료라 남겨요.
 //   settings-differences.js 의 OMITTED_KEYS(모습이 아닌 자료)는 전부 RESET_KEEP · RESET_GROUPS · RESET_CLEARED 중 한 곳에 있어야 해요 (tools/tests/reset-keep-drift.mjs 가 지켜요)
-export const RESET_KEEP = ['multiAvatar', 'addonCarry', 'appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'syncWatch', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
+export const RESET_KEEP = ['multiAvatar', 'addonCarry', 'appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'syncWatch', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'headSwitchMove', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
 // 「테마 모습」 초기화에서 일부러 처음 값으로 돌리는 자료 칸 — 판 번호, 입혀 둔 스타일 상태, 고른 내 팔레트(팔레트 자체는 library 묶음)
 export const RESET_CLEARED = ['version', 'activeStyle', 'baseStyle', 'activeCustomPalette'];
 export function resetSettings(groups = { look: true }) {

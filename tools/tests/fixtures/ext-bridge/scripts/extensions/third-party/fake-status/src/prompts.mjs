@@ -15,3 +15,13 @@ export async function aiJSON(systemPrompt, prompt, max, { retry = false } = {}) 
 export async function viaProfile(id, systemPrompt, prompt, max) {
     return await ctx().ConnectionManagerRequestService.sendRequest(id, [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }], max);
 }
+// 2.7.7 부터의 꼴: 문맥 객체를 먼저 받고(그때는 기능 함수가 동기 프레임에 있어요) 「본편이 다 쓸 때까지 기다리기」 await 뒤에 generateRaw 를 불러요
+let busyTurns = 0;
+export const setBusy = n => { busyTurns = n; };
+async function waitMainIdle() { while (busyTurns > 0) { busyTurns -= 1; await new Promise(resolve => setTimeout(resolve, 5)); } }
+async function aiGenerateOnceIdle(systemPrompt, prompt, max) {
+    const c = ctx();
+    await waitMainIdle();
+    return String(await c.generateRaw({ systemPrompt, prompt, responseLength: max }) ?? '');
+}
+export async function aiGenerateIdle(systemPrompt, prompt, max) { return await aiGenerateOnceIdle(systemPrompt, prompt, max); }

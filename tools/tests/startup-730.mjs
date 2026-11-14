@@ -23,7 +23,10 @@ await test('p1: the module and its dictionary are exactly what the build makes f
     const dropped = readPrune();
     const { code, dictionary, stats } = buildKorean(source, dropped);
     assert.equal(korean, code, 'node tools/build-korean-dict.mjs');
-    assert.deepEqual(stats, { exact: 5327, htmlExact: 255, patterns: 287, dropped: 604 });   // 10-31: ko-kr.json · FIX 에만 기대던 i18n 열쇠 706개를 되돌림(브라우저 언어 ko 에서 영어로 남던 것)
+    assert.deepEqual(stats, { exact: 5642, htmlExact: 259, patterns: 342, dropped: 580 });   // 10-31: ko-kr.json · FIX 에만 기대던 i18n 열쇠 706개를 되돌림(브라우저 언어 ko 에서 영어로 남던 것)
+    // 11-12 한글화 채우기(11-14 에 1.4.5 위로 옮김): 실리태번 1.19 화면에서 아직 영어이던 글 열쇠 · 패턴을 더하고, 다듬기 도구가 줄바꿈 글자 · 이스케이프 괄호를 못 읽어 빼던 열쇠 14 · 패턴 7 을 되살림 → 5327 → 5601 · 287 → 323 · 지문 604 → 582
+    // 11-14 한글화 빈곳: 실리태번 1.19 · 공개 확장 화면을 훑어 영어로 남던 원본 열쇠 43(HTML 열쇠 4 포함) · 패턴 18 을 더하고, 중괄호 엔티티를 못 풀어 빼던 placeholder 열쇠 2 를 되살림 → 5601 → 5650 · 255 → 259 · 323 → 341 · 지문 582 → 580
+    // 1.4.6 검토 K1 · K2: 사전 범위 밖(프롬프트 관리자 목록)이라 안 쓰이던 열쇠 6과 「Line」 · 「Column」(실제 글은 「Line: N Column: N」 한 노드)을 빼고 그 패턴 하나를 더함 → 5650 → 5642 · 341 → 342
     // 1.1.3 감사 G11: 실리태번 1.16 ~ 1.19 에 없는 옛 문구 12개를 원본에서 걷고 다듬기 목록을 다시 만듦 → 열쇠 5330 → 5327 · 지문 613 → 604 (사전이 작아진 것)
     // 1.0.0 극한 최적화: 한 장(ko-ui-text.gen.js) 대신 색인 + 조각 여섯 — 파일마다 빌드가 만든 것과 같고, 조각을 합치면 사전 전체
     assert.ok(!fs.existsSync(path.join(root, 'src/ko-ui-text.gen.js')), '옛 한 장짜리 사전은 없어요');

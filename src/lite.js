@@ -178,8 +178,10 @@ export function restorePreviewRules() {
     // 검토 D-1: 확장 서랍을 닫았다 다시 열면(테마 서랍은 펼친 채) 아무도 이 함수를 다시 안 불러요 — 그래서 끄기와 똑같이 「보이는 표본이 있으면 켜기」도 봐요.
     //   다음 프레임(실리태번의 서랍 단추 처리 뒤) · 0.7초 · 2초(서랍이 미끄러지는 동안). dialog 닫힘은 거품이 없어 잡기 단계로 들어요
     const sync = () => (shown() ? restored || turnOn() : off()), later = () => { requestAnimationFrame(sync); setTimeout(sync, 700); setTimeout(sync, 2e3); };
-    document.addEventListener('click', e => e.target?.closest?.('.drawer-toggle,.inline-drawer-toggle') && later(), true);
+    // 1.4.6 검토 8: 접힌 칸을 펼칠 때도(<details> 열림 · summary · 「예시 펼치기」처럼 aria-expanded 를 단 접기 단추) — 접힌 칸 안에만 표본이 있으면 서랍 단추에 꺼진 채 남았어요
+    document.addEventListener('click', e => e.target?.closest?.('.drawer-toggle,.inline-drawer-toggle,summary,[aria-expanded]') && later(), true);
     document.addEventListener('close', later, true);
+    document.addEventListener('toggle', e => e.target?.open && later(), true);   // details 의 toggle 은 거품이 없어 잡기 단계로
 }
 function off() {
     if (holders || !restored || shown()) return;

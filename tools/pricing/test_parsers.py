@@ -1,8 +1,8 @@
 """Fixture tests for the parsers and contracts that follow today's official page shapes (reviewed 2026-10-19)."""
 from pathlib import Path
-import unittest, json, copy
+import unittest, json, copy, re
 from parsers import parse_generic
-from collect import text_contract, api_shapes, validate_models, CATALOG_PROVIDERS
+from collect import text_contract, api_shapes, validate_models, read_models, CATALOG_PROVIDERS
 
 FIXTURES=Path(__file__).with_name('fixtures')
 CONTRACTS=json.loads(Path(__file__).with_name('contracts.json').read_text(encoding='utf8'))
@@ -72,6 +72,93 @@ class ParserFixtureTests(unittest.TestCase):
         pro=models['gemini-3.1-pro-preview']
         self.assertEqual(pro['longAbove'],200000);self.assertNotIn('expires',pro)
         self.assertEqual(pro['rates'],{'input':2.0,'output':12.0,'cacheRead':0.2});self.assertEqual(pro['longRates'],{'input':4.0,'output':18.0,'cacheRead':0.4})
+        # Speech-only SKUs never receive text token rates.
+        self.assertEqual(set(models),{'gemini-4-argon','gemini-3.1-pro-preview'})
+
+    def test_openai_short_long_tables_keep_cache_write_unknown_when_retention_prices_differ(self):
+        # Reviewed 2026-11-14: 11-column short/long tables (30m and 12h writes), a 4-column table, Flex under Batch.
+        models=read_models('openai',FIXTURES,{})
+        self.assertEqual(models['gpt-6-sol']['standard'],[2.0,0.2,None,10.0,4.0,0.4,None,15.0])
+        self.assertEqual(models['gpt-6-sol']['flex'],[1.0,0.1,None,5.0,2.0,0.2,None,7.5])
+        self.assertEqual(models['gpt-6.1-sol']['ultrafast'],[12.0,0.6,None,60.0,24.0,1.2,None,90.0])
+        self.assertEqual(models['gpt-5.5']['standard'],[5.0,0.5,None,30.0,10.0,1.0,None,45.0])
+        self.assertEqual(models['gpt-5.4-mini']['standard'],[0.75,0.075,None,4.5,None,None,None,None])
+        self.assertNotIn('batch',models['gpt-6-sol'])
+        raw=(FIXTURES/'openai.raw').read_text(encoding='utf8')
+        self.assertEqual(text_contract('openai','openai',raw),text_contract('openai','openai',raw.replace('$10.00','$11.00')))
+        self.assertNotEqual(text_contract('openai','openai',raw),text_contract('openai','openai',raw.replace('≤272K','≤200K')))
+
+    def test_openai_write_prices_per_lifetime_are_kept_in_a_side_table(self):
+        # The row slot stays empty (older clients keep saying "unknown"); the side table carries [short 30m, short 12h, long 30m, long 12h].
+        from collect import openai_write_rates
+        rates=openai_write_rates(FIXTURES)
+        self.assertEqual(rates['gpt-6-sol']['standard'],[2.5,5.0,5.0,10.0])
+        self.assertEqual(rates['gpt-6.1-sol']['ultrafast'],[15.0,30.0,30.0,60.0])
+        self.assertNotIn('gpt-5.5',rates);self.assertNotIn('gpt-5.4-mini',rates)
+        self.assertNotIn('batch',rates['gpt-6-sol'])
+
+    def test_openai_sections_stop_at_headings_skip_media_rows_and_warn_on_duplicates(self):
+        import collect,tempfile
+        raw=(FIXTURES/'openai.raw').read_text(encoding='utf8')
+        base=read_models('openai',FIXTURES,{})
+        head='| Model | Input | Output | Cached input |\n| --- | --- | --- | --- |\n'
+        with tempfile.TemporaryDirectory() as d:
+            f=Path(d,'openai.raw')
+            f.write_text(raw+'\n\n## Image generation\n\n'+head+'| gpt-6-sol-late | $9.00 | $9.00 | $9.00 |\n',encoding='utf8')
+            self.assertNotIn('gpt-6-sol-late',read_models('openai',d,{}))
+            f.write_text(raw.replace('### Standard pricing data\n','### Standard pricing data\n\n'+head+'| gpt-image-2 | $9.00 | $9.00 | $9.00 |\n| gpt-realtime-2 | $9.00 | $9.00 | $9.00 |\n',1),encoding='utf8')
+            self.assertEqual(read_models('openai',d,{}),base)
+            self.assertIn('| gpt-6-sol | $2.00',raw)
+            i=raw.index('| gpt-6-sol | $2.00');j=raw.index('\n',i)
+            f.write_text(raw[:j]+'\n| gpt-6-sol (>272K context length) | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 | $99.00 |'+raw[j:],encoding='utf8')
+            collect.OPENAI_WARNINGS.clear()
+            self.assertEqual(read_models('openai',d,{})['gpt-6-sol']['standard'],base['gpt-6-sol']['standard'])
+            self.assertTrue(collect.OPENAI_WARNINGS)
+
+    def test_openai_12h_write_survives_when_the_30m_cell_is_a_dash(self):
+        import collect,tempfile
+        raw='### Standard pricing data\n| '+' | '.join(collect.OPENAI_WIDE)+' |\n| --- |\n| gpt-9 | $1 | $5 | $0.1 | - | $2.5 | $2 | $7.5 | $0.2 | - | $2.5 |\n'
+        raw+='### Batch pricing data\n#### Flex\n### Fast pricing data\n### Ultrafast pricing data\n'
+        with tempfile.TemporaryDirectory() as d:
+            Path(d,'openai.raw').write_text(raw,encoding='utf8')
+            self.assertEqual(collect.openai_write_rates(d),{'gpt-9':{'standard':[None,2.5,None,2.5]}})
+            self.assertIsNone(read_models('openai',d,{})['gpt-9']['standard'][2])
+
+    def test_kimi_reads_compiled_table_rows_by_column_title(self):
+        models=parse_generic('moonshot',FIXTURES)
+        self.assertEqual(models['kimi-k3'],{'rates':{'input':3.0,'output':15.0,'cacheRead':0.3},'cacheWrite5m':3.0,'cacheWrite1h':6.0})
+        self.assertEqual(models['kimi-k2.6'],{'rates':{'input':0.95,'output':4.0,'cacheRead':0.16}})
+        self.assertEqual(parse_generic('moonshot_cn',FIXTURES)['kimi-k3']['rates'],{'input':20.0,'output':100.0,'cacheRead':2.0})
+
+    def test_minimax_single_rate_rows_and_m3_context_rows(self):
+        models=parse_generic('minimax',FIXTURES)
+        self.assertEqual(models['MiniMax-M3.1-Flash'],{'rates':{'input':0.15,'output':0.6,'cacheRead':0.015}})
+        self.assertEqual(models['MiniMax-M3']['rates'],{'input':0.3,'output':1.2,'cacheRead':0.06});self.assertEqual(models['MiniMax-M3']['longAbove'],512000)
+
+    def test_nanogpt_context_tiers_and_cache_retention(self):
+        models=parse_generic('nanogpt',FIXTURES)
+        self.assertEqual(models['openai/gpt-5.5'],{'rates':{'input':5.0,'output':30.0,'cacheRead':0.5},'longAbove':272000,'longRates':{'input':10.0,'output':45.0,'cacheRead':1.0}})
+        self.assertEqual(models['anthropic/claude-sonnet-5'],{'rates':{'input':2.0,'output':10.0,'cacheRead':0.2,'cacheWrite':2.5},'cacheWrite5m':2.5,'cacheWrite1h':4.0})
+        self.assertEqual(models['doubao-seed-2-0-mini-260215']['longAbove'],127999)
+        # Output-counted thresholds and two tiers cannot be represented: shown but uncertain.
+        for model in ['x-ai/grok-4.3','bytedance-seed/seed-2.0-lite']:
+            self.assertTrue(models[model]['uncertain']);self.assertNotIn('longAbove',models[model])
+        # One threshold plus 1h cache writes: each rate set carries its own 5m/1h pair, so a total can be computed.
+        self.assertEqual(models['anthropic/claude-haiku-5.5'],{'rates':{'input':0.1,'output':0.5,'cacheRead':0.01,'cacheWrite5m':0.125,'cacheWrite1h':0.2},'longAbove':100000,'longRates':{'input':0.5,'output':2.5,'cacheRead':0.05,'cacheWrite5m':0.625,'cacheWrite1h':1.0}})
+
+    def test_fireworks_skips_fast_and_regional_deployment_rows(self):
+        models=parse_generic('fireworks',FIXTURES)
+        self.assertEqual(models['accounts/fireworks/models/deepseek-v4p1-flash-1017']['rates'],{'input':0.3,'output':1.2,'cacheRead':0.006})
+        self.assertEqual(models['accounts/fireworks/models/kimi-k3']['rates'],{'input':3.0,'output':15.0,'cacheRead':0.3})
+
+    def test_volatile_page_furniture_is_not_part_of_contracts(self):
+        raw='<html><body><main>Reset 817 models Provider Model Input Output Language Models per 1M tokens</main></body></html>'
+        self.assertEqual(text_contract('aimlapi','aimlapi-price',raw),text_contract('aimlapi','aimlapi-price',raw.replace('817 models','1,024 models')))
+        self.assertNotEqual(text_contract('aimlapi','aimlapi-price',raw),text_contract('aimlapi','aimlapi-price',raw.replace('per 1M','per 1K')))
+        page='<html><body>Announcement banner. Models Kimi-K3 moonshotai/Kimi-K3 Copy Open in Playground Input Price $1 / M Tokens Compare with Other Models Other $2</body></html>'
+        same=page.replace('Announcement banner.','Another banner.').replace('Other $2','Different $3')
+        self.assertEqual(text_contract('siliconflow','silicon-model-kimi-k3',page),text_contract('siliconflow','silicon-model-kimi-k3',same))
+        self.assertNotEqual(text_contract('siliconflow','silicon-model-kimi-k3',page),text_contract('siliconflow','silicon-model-kimi-k3',page.replace('/ M Tokens','/ K Tokens')))
 
 class CatalogPolicyTests(unittest.TestCase):
     def setUp(self):

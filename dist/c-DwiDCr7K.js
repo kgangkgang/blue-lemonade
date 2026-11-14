@@ -1,0 +1,2 @@
+const c="bl-async-frames-v1",u=(()=>{try{return new URL(new globalThis.URL("../src/async-frames.js",import.meta.url).href).pathname}catch{return""}})();function a(n,r=u){const e=String(n??"");if(!e.trim()||!r)return null;let t=0;for(const s of e.split(`
+`))s.includes(r)&&(t+=1);return t===0?null:t>=2}async function o(){return await null,String(new Error(c).stack||"")}async function i(){return await o()}async function l(){try{const n=a(await i());return n===null?!0:n}catch{return!0}}export{c as ASYNC_FRAMES_MARK,a as asyncFramesIn,l as probeAsyncFrames};

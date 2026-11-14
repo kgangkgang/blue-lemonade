@@ -16,7 +16,9 @@ export const PART_NAMES = ['boot', 'drawers', 'templates', 'js', 'html', 'rest']
 const normalize = text => String(text ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
 const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 const RAW = new Set(['script', 'style', 'template']);
-const decode = s => String(s).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+const decode = s => String(s).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&NewLine;/g, '\n').replace(/&Tab;/g, '\t').replace(/&lcub;/g, '{').replace(/&rcub;/g, '}').replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d))).replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))   // 11-12: 줄바꿈 글자도 풀어요
+    .replace(/&amp;/g, '&');
 
 /** html 글에서 (글 · title · placeholder · aria-label) 과 그 글이 든 body 바로 아래 칸의 id 를 뽑아요 — 작은 토크나이저(실리태번 index.html 용) */
 export function htmlTexts(html) {

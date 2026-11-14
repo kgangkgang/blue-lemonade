@@ -24,8 +24,8 @@ function startEachWith(isBooting) {
     const box = { setTimeout: (fn, ms) => setTimeout(() => { task++; fn(); }, ms), Promise, booting: () => isBooting, pending: 0, seen: 0,
         spreadBegin() { box.pending++; }, spreadEnd() { box.pending--; },
         startOne: async id => { box.seen = Math.max(box.seen, box.pending); log.push([id, task, 'start']); await tick(); log.push([id, task, 'end']); } };
-    vm.runInNewContext(part('const beat=', '\nlet lateFired') + '\nthis.startEach=startEach;', box);
-    return { run: ids => box.startEach(ids), log, box };
+    vm.runInNewContext(part('const beat=', '\nlet lateFired') + '\nthis.startEach=startEach;this.spreadRun=spreadRun;', box);
+    return { run: ids => box.startEach(ids), spreadRun: (ids, settle) => box.spreadRun(ids, settle), log, box };
 }
 await test('덮개가 걷혔으면 하나씩 · 사이사이 한 박자 · 차례 그대로 · 앞 것을 기다리지 않아요', async () => {
     const h = startEachWith(false);
@@ -44,6 +44,15 @@ await test('나눠 시작하는 동안 「나눠 시작 중」 표시(머리 스
     await g.run(['a', 'b']);
     assert.equal(g.box.seen, 0);
 });
+await test('1.4.6 검토 4: 「나눠 시작 끝」은 jQuery 준비 · 다음 작업에 붙는 창까지(lateSettled) 기다린 뒤에 내려요', async () => {
+    const h = startEachWith(false);
+    const seenAtSettle = [];
+    await h.spreadRun(['a', 'b'], async () => { seenAtSettle.push(h.box.pending); await tick(); seenAtSettle.push(h.box.pending); });
+    assert.deepEqual(seenAtSettle, [1, 1], '기다리는 동안 표시가 그대로');
+    assert.equal(h.box.pending, 0, '다 끝나면 내림');
+    await assert.rejects(h.spreadRun(['a'], async () => { throw new Error('x'); }));
+    assert.equal(h.box.pending, 0, '기다림이 실패해도 내림');
+});
 await test('덮개 아래면 예전처럼 한 작업에서 다 시작해요', async () => {
     const h = startEachWith(true);
     await h.run(['a', 'b', 'c']);
@@ -52,8 +61,8 @@ await test('덮개 아래면 예전처럼 한 작업에서 다 시작해요', as
     assert.equal(new Set(starts.map(r => r[1])).size, 1);
 });
 await test('3층 · 처음 쓸 때 두 길만 나눠요(spread) — 2층 · 덮개 아래 층은 그대로', () => {
-    assert.match(addons, /const run=async\(\)=>\{await startEach\(lateIds\);[^\n]*withReplay\('늦은 애드온',run,\{spread:true\}\)/);
-    assert.match(addons, /const run=async\(\)=>\{await startEach\(rest\);[^\n]*\n\s*await\(layers\?layers\.withReplay\('애드온',run,\{spread:true\}\):run\(\)\);/);
+    assert.match(addons, /const run=\(\)=>spreadRun\(lateIds,async\(\)=>\{await lateLayers\?\.lateSettled\?\.\(\);\}\);[^\n]*withReplay\('늦은 애드온',run,\{spread:true\}\)/);
+    assert.match(addons, /const run=\(\)=>spreadRun\(rest,async\(\)=>\{await layers\?\.lateSettled\?\.\(\);\}\);[^\n]*\n\s*await\(layers\?layers\.withReplay\('애드온',run,\{spread:true\}\):run\(\)\);/);
     assert.ok(!/withReplay\('(?:2층|테마 2층)'[^\n]*spread/.test(read('index.js')), '2층은 나누지 않아요');
     assert.match(read('src/boot-layers.js'), /const split = spread && fresh\.length > 1 && !booting\(\);/);
 });

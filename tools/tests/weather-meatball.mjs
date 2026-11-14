@@ -60,7 +60,7 @@ const R = await import(pathToFileURL(path.join(root, 'src/weather-readability.js
 const modesOf = (text, time = '') => M.meatballWeatherModes(text, time, W.detectWeatherAll);
 
 // ── ① 옮김 표 ─────────────────────────────────────────
-// 그 확장 2.7.2 src/engine.js WEATHER 표의 값(한국어 저장)과 src/skeleton_en.js SK_EN 의 영어 저장 값 — 판이 바뀌면 이 줄을 그 표와 다시 맞춰요
+// 그 확장 2.7.2 · 2.7.9(같은 표 · 11-14 대조) src/engine.js WEATHER 표의 값(한국어 저장)과 src/skeleton_en.js SK_EN 의 영어 저장 값 — 판이 바뀌면 이 줄을 그 표와 다시 맞춰요
 const UPSTREAM = [
     ['☀️ 맑음', '☀️ Clear', ['sun']], ['⛅ 구름', '⛅ Cloudy', []], ['🌧 비', '🌧 Rain', ['rain']], ['🌫 안개', '🌫 Fog', ['fog']],
     ['🌸 꽃바람', '🌸 Blossom Breeze', ['petal', 'breeze']], ['🔥 무더위', '🔥 Heat Wave', ['sun']], ['⛈ 소나기', '⛈ Shower', ['rain']], ['🌀 폭풍', '🌀 Storm', ['rain', 'breeze']],

@@ -227,7 +227,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (on || modules.promptbind) load('promptbind', './promptbind.js').then(m => m?.startPromptBinds());
     // 6.0.4 확장 위 스위치: 확장 창 안의 켜기·끄기를 제목 줄에도 (창 안 「확장 탭에 보이기」로 고른 창만 · 테마를 끄면 뗀다)
     // 6.8.8 「확장 탭에 보이기」 줄을 끄고(설정) 꺼내 둔 스위치도 없으면 모듈을 아예 쉬게 한다 (확장 칸 관찰 · 2초 맞추기 없음)
-    const headSwitchWanted = on && (s.headSwitchRows !== false || Object.keys(s.headSwitches || {}).length > 0);
+    // 1.4.6 검토 3: 옮기기를 끝낸 옛 열쇠(headSwitchMove.done — 되돌리기용으로 남김)는 꺼낸 스위치로 치지 않아요
+    const headSwitchWanted = on && (s.headSwitchRows !== false || Object.keys(s.headSwitches || {}).some(k => !Object.hasOwn(s.headSwitchMove?.done || {}, k)));
     if (headSwitchWanted || modules.headswitch) load('headswitch', './headswitch.js').then(m => m?.syncHeadSwitch(headSwitchWanted));
     // 7.9.9 프로필 여러 개: 켜져 있고 등록한 캐릭터가 있을 때만 모듈을 받는다 (이벤트 · 훑기 없음). 캐릭터 편집 화면의 단추는 등록이 없어도 보여야 하니 여기서 바로 붙인다
     const multi = on && s.multiAvatar?.on !== false && Object.keys(s.multiAvatar?.chars || {}).length > 0;

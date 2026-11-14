@@ -113,6 +113,9 @@ export function mergeTokenUsage(previous, raw, anthropic = false) {
         if (details) {
             if (details.cached_tokens !== undefined) usage.cached = n(details.cached_tokens);
             if (details.cache_write_tokens !== undefined) usage.cacheWrite = n(details.cache_write_tokens);
+            // GPT-5.6 이후 Responses API: 저장 토큰을 30분 / 12시간으로 나눠 알려 줘요(겹치지 않고 합이 cache_write_tokens).
+            const ttl = details.cache_write_tokens_details;
+            if (ttl && typeof ttl === 'object') { usage.cacheWriteTtl30m = n(ttl.ttl_30m_tokens); usage.cacheWriteTtl12h = n(ttl.ttl_12h_tokens); usage.cacheWriteTtlSplit = true; }
         }
         const outputDetails = raw.completion_tokens_details ?? raw.output_tokens_details;
         if (outputDetails) usage.reasoning = n(outputDetails.reasoning_tokens);
@@ -169,6 +172,9 @@ export function quoteRequest({ connection, model, requestedModel, usage = {}, se
         const offset = long ? 4 : 0;
         if (row[offset] === null) return { ...result, note: '이 처리 등급의 긴 문맥 가격은 확인되지 않았어요.' };
         rates = { input: row[offset], cacheRead: row[offset+1], cacheWrite: row[offset+2], output: row[offset+3] };
+        // 30분 / 12시간 저장 단가가 다르면 행의 저장 칸은 비어 있고, 두 단가는 제공처 항목의 cacheWriteTtl 표에 있어요: [짧은 30분, 짧은 12시간, 긴 30분, 긴 12시간].
+        const ttlRates = priceData?.cacheWriteTtl?.[resolvedModel]?.[tier];
+        if (rates.cacheWrite == null && Array.isArray(ttlRates) && ttlRates.length === 4) Object.assign(rates, { cacheWrite30m: ttlRates[offset ? 2 : 0], cacheWrite12h: ttlRates[offset ? 3 : 1] });
         if (long) tier += ' · 입력 27.2만 초과';
     }
     Object.assign(result, { kind: 'official', resolvedModel, rates, tier, note: '공식 공개 단가로 계산한 토큰 예상액 · 세금·도구 사용료·개별 계약 할인 제외' });
@@ -183,8 +189,14 @@ export function quoteRequest({ connection, model, requestedModel, usage = {}, se
         if (write && (!usage.cacheWriteSplit || n(usage.cacheWrite5m) + n(usage.cacheWrite1h) !== write)) return { ...result, note: '캐시 저장 시간(5분/1시간)별 사용량이 없어 비용을 확정할 수 없어요.' };
         cost += n(usage.cacheWrite5m) * rates.cacheWrite5m + n(usage.cacheWrite1h) * rates.cacheWrite1h;
     } else {
-        if (write && rates.cacheWrite == null) return { ...result, note: '이 모델의 캐시 저장 가격을 확인할 수 없어요.' };
-        cost += write * (rates.cacheWrite || 0);
+        if (write && rates.cacheWrite == null && (rates.cacheWrite30m !== undefined || rates.cacheWrite12h !== undefined)) {
+            if (!usage.cacheWriteTtlSplit || n(usage.cacheWriteTtl30m) + n(usage.cacheWriteTtl12h) !== write) return { ...result, note: '캐시 저장 시간(30분/12시간)별 사용량이 없어 비용을 확정할 수 없어요.' };
+            if ((usage.cacheWriteTtl30m && rates.cacheWrite30m == null) || (usage.cacheWriteTtl12h && rates.cacheWrite12h == null)) return { ...result, note: '이 저장 시간의 캐시 저장 가격을 확인할 수 없어요.' };
+            cost += n(usage.cacheWriteTtl30m) * (rates.cacheWrite30m || 0) + n(usage.cacheWriteTtl12h) * (rates.cacheWrite12h || 0);
+        } else {
+            if (write && rates.cacheWrite == null) return { ...result, note: '이 모델의 캐시 저장 가격을 확인할 수 없어요.' };
+            cost += write * (rates.cacheWrite || 0);
+        }
     }
     result.cost = cost / 1e6;
     return result;

@@ -55,7 +55,7 @@ def digest(value):
 def text_contract(provider, name, raw):
     """Erase only parseable money amounts; keep all non-price billing semantics."""
     if provider == 'openai':
-        for tier in ['Standard','Flex','Fast','Ultrafast']:
+        for tier in ['Standard','Batch','Fast','Ultrafast']:
             pattern=r'(### '+tier+r' pricing data\n.*?)(?=\n### |\n## |\Z)'
             raw=re.sub(pattern, lambda m: re.sub(r'\$[\d,.]+', '$PRICE', m[0]), raw, flags=re.S)
     elif provider == 'anthropic':
@@ -76,6 +76,13 @@ def text_contract(provider, name, raw):
                     if tr.find('td'):tr.decompose()
             for el in soup(['script','style','nav','footer','header','head']):el.decompose()
             raw=(soup.find('main') or soup).get_text(' ',strip=True)
+            # AIMLAPI prints its live catalog size ("817 models"); the count is not billing text.
+            if provider=='aimlapi':raw=re.sub(r'\b\d[\d,]* models\b','N models',raw)
+            # SiliconFlow model pages carry a site-wide announcement banner and a rotating "Compare with Other
+            # Models" list; keep only this model's block (its ID through its specification).
+            if provider=='siliconflow' and name.startswith('silicon-model-'):
+                start=re.search(r'\S+/\S+ Copy ',raw);end=raw.find('Compare with Other Models')
+                if start and end>start.start():raw=raw[start.start():end]
         if provider not in REVIEW_PROVIDERS:
             raw=re.sub(r'[$¥￥]\s*[\d,.]+', '$PRICE', raw)
             # Kimi's MDX currency component leaves numeric values in text nodes.
@@ -83,6 +90,43 @@ def text_contract(provider, name, raw):
             if provider.startswith('minimax'):
                 raw='\n'.join(re.sub(r'(?<=\|)([^|]+)', lambda m: re.sub(r'(?<![\w-])\d+(?:\.\d+)?','PRICE',m[0]) if not 'MiniMax' in m[0] else m[0],line) if '| **MiniMax-M' in line else line for line in raw.splitlines())
     return digest(re.sub(r'\s+',' ',raw).strip())
+
+OPENAI_WIDE=['Model','Short context input','Short context output','Short context cached input','Short context 30m write','Short context 12h write','Long context input','Long context output','Long context cached input','Long context 30m write','Long context 12h write']
+
+OPENAI_NON_TEXT=re.compile(r'image|audio|realtime|transcribe|tts|whisper|dall-e|sora|search-preview|computer-use',re.I)
+OPENAI_WARNINGS=[]
+
+def openai_rows(raw):
+    """Yield (tier, model, table head, amounts) for every OpenAI text price row; '-' is None. Flex sits under the Batch section.
+    A section ends at the next '## ' or '### ' heading (same range as the contract text); image/audio rows are skipped;
+    a model that appears twice in one tier keeps its first row and is reported in OPENAI_WARNINGS."""
+    money=lambda x:None if x=='-' else float(x.replace('$','').replace(',',''))
+    end=lambda text:re.split(r'\n#{2,3} ',text,1)[0]
+    sections={'standard':end(raw.split('### Standard pricing data',1)[1]),
+              'flex':end(raw.split('### Batch pricing data',1)[1]).split('#### Flex',1)[1].split('\n#### ',1)[0],
+              'fast':end(raw.split('### Fast pricing data',1)[1]),
+              'ultrafast':end(raw.split('### Ultrafast pricing data',1)[1])}
+    for tier,section in sections.items():
+        heads=[];seen=set()
+        for line in section.splitlines():
+            cols=[x.strip() for x in line.split('|')[1:-1]]
+            if cols and cols[0]=='Model':heads=cols;continue
+            if not cols or not cols[0].startswith(('gpt-','o1','o3','o4')) or OPENAI_NON_TEXT.search(cols[0]):continue
+            model=cols[0].split(' (')[0]
+            if model in seen:OPENAI_WARNINGS.append(f'OpenAI {tier}: {model} 행이 둘 — 앞 행만 씀');continue
+            seen.add(model)
+            yield tier,model,heads,[money(x) for x in cols[1:]]
+
+def openai_write_rates(directory):
+    """Cache-write amounts per model and tier as [short 30m, short 12h, long 30m, long 12h], only where the two lifetimes
+    differ (the main row leaves its single write slot empty there). Requests report writes per lifetime
+    (usage.input_tokens_details.cache_write_tokens_details), so the client can price each part."""
+    out={}
+    for tier,model,heads,v in openai_rows((Path(directory)/'openai.raw').read_text(encoding='utf8')):
+        if heads!=OPENAI_WIDE or len(v)!=10:continue
+        pair=[v[3],v[4],v[8],v[9]]
+        if (pair[0]!=pair[1] and (pair[0] is not None or pair[1] is not None)) or (pair[2]!=pair[3] and (pair[2] is not None or pair[3] is not None)):out.setdefault(model,{})[tier]=pair
+    return out
 
 def read_models(provider, directory, old):
     p=Path(directory)
@@ -98,13 +142,18 @@ def read_models(provider, directory, old):
             result[model]={'rates':{'input':v[0],'cacheRead':v[1],'output':v[2]},'longAbove':199999,'longRates':{'input':v[3],'cacheRead':v[4],'output':v[5]},'priorityFactor':2}
         return result
     if provider == 'openai':
-        raw=(p/'openai.raw').read_text(encoding='utf8');result={}
-        for tier in ['Standard','Flex','Fast','Ultrafast']:
-            section=raw.split('### '+tier+' pricing data',1)[1].split('\n\n',2)[1]
-            for line in section.splitlines():
-                cols=[x.strip() for x in line.split('|')[1:-1]]
-                if len(cols)!=9 or not cols[0].startswith(('gpt-','o1','o3','o4')):continue
-                result.setdefault(cols[0].split(' (')[0],{})[tier.lower()]=[None if x=='-' else float(x.replace('$','').replace(',','')) for x in cols[1:]]
+        result={}
+        def write(a,b):
+            # The page lists 30-minute and 12-hour cache writes. The row's single cache-write slot is only filled when
+            # both are the same amount; otherwise it stays unknown and the two amounts go to openai_write_rates().
+            return a if a==b else None
+        for tier,model,heads,v in openai_rows((p/'openai.raw').read_text(encoding='utf8')):
+            if heads==OPENAI_WIDE and len(v)==10:
+                row=[v[0],v[2],write(v[3],v[4]),v[1],v[5],v[7],write(v[8],v[9]),v[6]]
+            elif heads==['Model','Input','Output','Cached input'] and len(v)==3:
+                row=[v[0],v[2],None,v[1],None,None,None,None]
+            else:raise ValueError('OpenAI pricing table shape changed')
+            result.setdefault(model,{})[tier]=row
         for model in ['chat-latest','gpt-5.3-codex','text-embedding-3-small','text-embedding-3-large','text-embedding-ada-002']:
             if model not in result and model in old:result[model]=copy.deepcopy(old[model])
         return result
@@ -229,10 +278,13 @@ def collect(previous, contracts, directory, fetch=True):
                 if not set(shapes)<=set(spec.get('apiShapes',[])):raise ValueError('API price unit or fields changed')
             if provider not in API_PROVIDERS:
                 if any(text_contract(provider,name,raws[name])!=spec['contracts'][name] for name in spec['sources']):raise ValueError('Billing page changed; parser review required')
+            OPENAI_WARNINGS.clear()
             models=read_models(provider,directory,old['models'])
+            write_rates=openai_write_rates(directory) if provider=='openai' else None
             outcome=validate_models(models,old['models'],entry['format'],provider in CATALOG_PROVIDERS,spec.get('reviewed'))
-            entry.update(models=models,checkedAt=now,status='ok',revision=digest(models),sourceDigest=digest({n:digest(raws[n]) for n in spec['sources']}))
-            report[provider]={'status':'ok','models':len(models),'changed':models!=old['models'],'added':sorted(set(models)-set(old['models'])),'removed':outcome['removed'],'held':outcome['held']}
+            entry.update(models=models,checkedAt=now,status='ok',revision=digest(models if write_rates is None else [models,write_rates]),sourceDigest=digest({n:digest(raws[n]) for n in spec['sources']}))
+            if write_rates is not None:entry['cacheWriteTtl']=write_rates
+            report[provider]={'status':'ok','models':len(models),'changed':models!=old['models'],'added':sorted(set(models)-set(old['models'])),'removed':outcome['removed'],'held':outcome['held'],**({'warnings':sorted(set(OPENAI_WARNINGS))} if provider=='openai' and OPENAI_WARNINGS else {})}
         except (OSError,requests.RequestException) as e:
             entry['status']='error';report[provider]={'status':'error','reason':str(e)}
         except Exception as e:

@@ -14,6 +14,7 @@ export const PLANS = {
     '#ss-settings': {
         intro: [
             ['enabled', '이 채팅의 상태창을 켜고, AI 답에서 상태를 어떻게 읽을지 정해요.'],
+            ['memoOn', '모든 채팅에 걸리는 부가 기능을 켜고 끄고, 퀘스트 판정을 정해요.'],   // 2.7.3 부터(앞 판에는 이 탭이 없어 조용히 건너뛰어요)
             ['ssGenLang', '상태창 글을 어느 언어로 만들고 누가 번역할지 정해요. 롤플 본문과는 상관없어요.'],
             ['oocDetect', '어떤 때 상태창을 AI 에 보내지 않을지 정해요.'],
             ['contactReflect', '인물과 주고받는 연락을 본편에 얼마나 알리고, 먼저 연락이 오게 할지 정해요.'],
@@ -23,29 +24,31 @@ export const PLANS = {
             ['musicTaste', '장면에 어울리는 곡을 추천받을 때의 취향과 열 곳을 정해요.'],
             ['stageLock', '사람 사이가 가까워지는 속도와 질투 · 화면 밖 근황을 정해요.'],
             ['romBond', 'AI 가 너무 쉽게 연인처럼 구는 것을 줄여요. 전부 선택이고 처음에는 꺼져 있어요.'],
+            ['romSpark', '가끔 설레는 순간이나 새 사건을 넣어요. 처음에는 꺼져 있어요.'],   // 2.7.13 부터
             ['updateNotice', '업데이트 알림 · 세이브 · 마스코트 · 진단과 백업이에요.'],
             ['stashTags', '요약 · 번역 확장이나 다른 프리셋과 함께 쓸 때 태그를 어떻게 다룰지 정해요.'],
         ],
         folds: [
-            ['장면에 맞춰 줄이기 · 변동 칩', ['sceneFilter:장면 필터', 'sceneTurns:최근 메시지', 'pinCap:고정 메모', 'msgCard:변동 칩']],
+            ['장면에 맞춰 줄이기 · 변동 칩', ['sceneFilter:장면 필터', 'sceneTurns:최근 메시지', 'pinCap:고정 메모', 'msgCard:변동 칩', 'chipOutside:칩 밖에']],
+            ['퀘스트 · 흥정 판정', ['questJudge:완료 판정', 'questExpire:기한', 'extraJudge:흥정 · 일하기', 'questJudgeAI:AI 완료']],   // 2.7.3 ~ 2.7.6
             ['번역 모델 · 언어', ['trProfile:모델', 'trLang:언어', 'trCode:코드']],
-            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trsheet', 'toenglish']],
+            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trsheet', 'trprune', 'toenglish']],
             ['먼저 연락 오게', ['autoPing:자동 선톡', 'autoPingEvery:간격', 'rushChance:급행 %']],
             ['실패했을 때 · 묶어 만들기', ['aiFallbackMain:메인으로 다시', 'genBatch:묶어서 생성']],
             ['한 번에 보내는 양', ['genParallel:동시 요청', 'aiMaxTokens:출력 토큰', 'recentForGen:최근 채팅', 'loreChars:로어북 글자', 'injectDepth:주입 깊이']],
-            ['주입 · 긴 채팅 정리 · 정규식', ['injWorld:세계관 매 턴', 'injScan:로어북 켜기', 'autoBake:자동 정리', 'autoRegex:정규식']],   // injWorld 는 2.7.1 부터(앞 판에는 없어 조용히 건너뛰어요)
+            ['주입 · 긴 채팅 정리 · 정규식', ['injWorld:세계관 매 턴', 'injScan:로어북 켜기', 'autoBake:자동 정리', 'bakeAfter:정리 시작', 'autoRegex:정규식']],   // injWorld 는 2.7.1 부터(앞 판에는 없어 조용히 건너뛰어요)
             ['변화만 보내기 · 다시 받기', ['deltaMode:변화 위주', 'deltaEvery:전체 간격', 'retryJSON:다시 받기']],
-            ['알림 시간 · 종류', ['toastSec:시간', 'daySummary:하루 정리', 'featureTips:팁', 'tipreset']],
+            ['알림 시간 · 종류', ['toastSec:시간', 'daySummary:하루 정리', 'featureTips:팁', 'actionTips:칸 팁', 'tipreset']],
             ['마스코트 · 소리', ['showMascot:마스코트', 'mascotBuddy:제목 옆', 'mascotSound:소리', 'mascotVolume:크기', 'mascotsound']],
             ['진단 · 백업', ['diag', 'report', 'backup']],
             ['정규식 · 기본값 · 옛 태그 보관', ['stashall', 'defmods', 'regex', 'unregex']],
         ],
         // 비용 표시 — 그 확장이 줄마다 적어 둔 말(「토큰 0」 · 「확장 AI 1회」 · 「주입 조금」 …)을 같은 꼴로 모은 것
         cost: {
-            autoPing: 'ai', retryJSON: 'ai',
+            autoPing: 'ai', retryJSON: 'ai', peekOn: 'ai', goneInject: 'tok', romSpark: 'tok', storyPush: 'tok',
             injWorld: 'tok', injScan: 'tok', offscreen: 'tok', romFacts: 'tok', romDrive: 'tok', romIntent: 'tok', romInit: 'tok',
             sceneFilter: 'save', deltaMode: 'save', genBatch: 'save', autoBake: 'save',
-            romBond: 'free', romCap: 'free', romFatigue: 'free', featureTips: 'free',
+            romBond: 'free', romCap: 'free', romFatigue: 'free', featureTips: 'free', pipCheck: 'free', extraJudge: 'free', questJudgeAI: 'free', actionTips: 'free',
         },
         start: ['처음이라면 — 아래 「만들기」로 이 채팅의 상태창을 만든 뒤, 쓸 모델과 비용을 맞춰요.', [['확장 AI', 'aiProfile'], ['토큰 절약', 'deltaMode']]],
     },

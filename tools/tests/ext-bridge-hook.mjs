@@ -9,6 +9,7 @@
 //   ⑪ 같은 본문 기억 · 쓰는 것이 없어지면 걷기 · 진짜 호출 스택(가짜 확장 고정물)
 //   ⑧ 영어로 만드는 설정: 번역 요청에만
 //   ⑨ 본편 요청: 그 확장이 답 끝 상태 줄을 시킨 턴에만 한 칸 · 아니면 비워요
+//   ⑫ 2.7.7 부터 기다리기 await 뒤 요청 · 칩 점검 길 · 비동기 프레임이 안 남는 엔진(받은 때의 스택)
 //   ⑩ 설정은 바꿀 때만 저장 · 그 확장의 설정 · 채팅 자료 · 키 · 감시자에 손대지 않아요(소스 확인)
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -29,7 +30,7 @@ const FROM_OTHER = stackOf('otherCall');
 const GLOSSARY = { glossary_entries: [{ id: 'g1', scope: 'global', src: 'Leon', dst: '리온' }, { id: 'g2', scope: 'global', src: 'Ardel', dst: '아르델' }] };
 const THEME_ON = { enabled: true, usageMode: 'both', addons: { translator: true } };
 
-function setup({ mb = {}, saved, translator = GLOSSARY, theme = THEME_ON, direct, realDirect = false, service, manifests = { [MB]: { display_name: '미트볼 상태창 (Meatball Stats)' }, 'other-ext': { display_name: 'Other' }, 'fake-status': { display_name: '미트볼 상태창 흉내(시험용 가짜)' } }, chat = [], realStack = false } = {}) {
+function setup({ mb = {}, saved, translator = GLOSSARY, theme = THEME_ON, direct, realDirect = false, service, manifests = { [MB]: { display_name: '미트볼 상태창 (Meatball Stats)' }, 'other-ext': { display_name: 'Other' }, 'fake-status': { display_name: '미트볼 상태창 흉내(시험용 가짜)' } }, chat = [], realStack = false, noAsync = false } = {}) {
     const calls = { raw: [], send: [], set: [], direct: [], toast: [], saved: 0, on: [], last: [], process: [], off: [] };
     const extensionSettings = { statussim: { ssGenLang: 'ko', aiFallbackMain: true, ...mb }, 'llm-translator-custom': translator };
     if (saved) extensionSettings[C.BRIDGE_KEY] = saved;
@@ -57,7 +58,9 @@ function setup({ mb = {}, saved, translator = GLOSSARY, theme = THEME_ON, direct
     const bridge = createBridge({
         host: () => holder, own: OWN,
         // 진짜 스택: 다리 모듈 · 이 시험 파일의 프레임은 빼요(브라우저에서는 테마 폴더라 건너뛰는 프레임이에요)
-        stack: realStack ? () => String(new Error().stack).split('\n').filter(line => !/src[\\/]ext-bridge\.js|ext-bridge-hook\.mjs/.test(line)).join('\n') : () => env.stack, theme: () => theme, now: () => 1000 + calls.direct.length * 100000, textarea: () => env.text,
+        stack: realStack ? () => String(new Error().stack).split('\n').filter(line => !/src[\\/]ext-bridge\.js|ext-bridge-hook\.mjs/.test(line) && !(noAsync && /^\s*at async /.test(line))).join('\n') : () => env.stack, theme: () => theme, now: () => 1000 + calls.direct.length * 100000, textarea: () => env.text,
+        // 비동기 프레임이 안 남는 엔진 흉내(noAsync): 스택 · 받은 때의 스택 모두 「at async」 줄을 빼요
+        asyncFrames: !noAsync, birth: () => ({ stack: String(new Error().stack).split('\n').filter(line => !(noAsync && /^\s*at async /.test(line))).join('\n') }),
         direct: realDirect ? undefined : direct || (async input => { calls.direct.push(input); return 'DIRECT'; }),
         toast: (message, title) => calls.toast.push([message, title]),
     });
@@ -484,6 +487,87 @@ await test('⑪ 진짜 호출 스택(가짜 확장 고정물): 동기 프레임 
         assert.equal(await t.holder.getContext().generateRaw(own), 'MAIN', '시험 파일(그 확장이 아닌 쪽)이 직접 부르면 그대로');
         assert.equal(t.calls.raw[0], own);
     } finally { globalThis.SillyTavern = keep; }
+});
+
+await test('⑫ 2.7.7 부터의 꼴: 「본편이 다 쓸 때까지 기다리기」 await 뒤 요청도 기능 칸으로 · 칩 점검(pipFix)은 별도 분석 칸 · 비동기 프레임이 안 남는 엔진은 받은 때의 스택으로', async () => {
+    const dir = path.join(root, 'tools/tests/fixtures/ext-bridge/scripts/extensions/third-party/fake-status/src');
+    const idle = await import(pathToFileURL(path.join(dir, 'ai-idle.mjs')).href);
+    const prompts = await import(pathToFileURL(path.join(dir, 'prompts.mjs')).href);
+    const saved = { meatball: { models: { base: { provider: 'vertexai', model: 'base-model' }, contact: { provider: 'claude', model: 'contact-model' }, gen: { provider: 'openai', model: 'gen-model' }, analyze: { provider: 'google', model: 'analyze-model' } } } };
+    const keep = globalThis.SillyTavern;
+    try {
+        for (const noAsync of [false, true]) {
+            const t = setup({ realStack: true, noAsync, saved });
+            globalThis.SillyTavern = t.holder;
+            await null; await null;   // 엔진 재기(약속 하나)가 끝난 뒤
+            assert.equal(t.bridge._state.needBirth, noAsync, noAsync ? '안 남는 엔진에서만 받은 때의 스택을 달아요' : '남는 엔진은 아무것도 더 하지 않아요');
+            t.bridge.sync();
+            const models = () => t.calls.direct.map(call => call.pick.model);
+            for (const busy of [0, 2]) {
+                prompts.setBusy(busy);
+                await idle.phoneReply('SYS', `reply ${busy} ${noAsync}`);
+                await idle.genModule('SYS', `gen ${busy} ${noAsync}`);
+                await idle.pipFix('SYS', `pip ${busy} ${noAsync}`);
+            }
+            assert.deepEqual(models(), ['contact-model', 'gen-model', 'analyze-model', 'contact-model', 'gen-model', 'analyze-model'], noAsync ? '비동기 프레임 없이도' : '비동기 프레임으로');
+            assert.equal(t.calls.raw.length, 0);
+            assert.equal(Object.getOwnPropertySymbols(t.holder.getContext()).length, noAsync ? 1 : 0, '받은 때의 스택은 안 남는 엔진에서만 문맥 객체에 달려요');
+        }
+    } finally { globalThis.SillyTavern = keep; }
+});
+await test('⑫ 받은 때의 스택은 기능을 못 알아봤을 때만 · 다른 확장 · 본체가 부른 것은 여전히 그대로', async () => {
+    const t = setup({ saved: { meatball: { glossary: false, models: { base: { provider: 'vertexai', model: 'big' }, gen: { provider: 'claude', model: 'gen-model' } } } } });
+    await null;
+    t.bridge._state.needBirth = true;
+    t.bridge.sync();
+    const fresh = () => { const c = t.holder.getContext(); const [mark] = Object.getOwnPropertySymbols(c); Object.defineProperty(c, mark, { value: { err: { stack: FROM_MB('genModule') }, tail: '' }, configurable: true }); return c; };
+    let c = fresh();
+    t.env.stack = FROM_MB('');
+    await c.generateRaw({ systemPrompt: 'S', prompt: 'after await', responseLength: 5 });
+    assert.equal(t.calls.direct.at(-1).pick.model, 'gen-model', '지금 스택에 기능이 없으면 받은 때의 스택');
+    c = fresh();
+    t.env.stack = FROM_MB('analyzeMessage');
+    await c.generateRaw({ systemPrompt: 'S', prompt: 'own frames win', responseLength: 5 });
+    assert.equal(t.calls.direct.at(-1).pick.model, 'big', '지금 스택에서 알아본 기능이 먼저(별도 분석 칸은 안 골라 「확장 AI 전체」)');
+    c = fresh();
+    t.env.stack = FROM_OTHER;
+    const req = REQ();
+    assert.equal(await c.generateRaw(req), 'MAIN', '다른 확장이 부른 것은 받은 때의 스택이 있어도 그대로');
+    assert.equal(t.calls.raw.at(-1), req);
+});
+await test('⑫ 검토 M2: 받은 때의 스택은 그 요청 한 번만 — 같은 문맥 객체로 온 다른 요청 · 같은 본문 기억으로 새지 않아요', async () => {
+    const t = setup({ saved: { meatball: { glossary: false, models: { base: { provider: 'vertexai', model: 'big' }, gen: { provider: 'claude', model: 'gen-model' } } } } });
+    await null;
+    t.bridge._state.needBirth = true;
+    t.bridge.sync();
+    const c = t.holder.getContext();   // 그 확장 core.js ctx() 는 같은 동기 실행 안에서 이 객체 하나를 같이 써요
+    const [mark] = Object.getOwnPropertySymbols(c);
+    Object.defineProperty(c, mark, { value: { err: { stack: FROM_MB('genModule') }, tail: '' }, configurable: true });
+    t.env.stack = FROM_MB('');
+    await c.generateRaw({ systemPrompt: 'S', prompt: 'first request', responseLength: 5 });
+    assert.equal(t.calls.direct.at(-1).pick.model, 'gen-model');
+    assert.equal(Object.getOwnPropertySymbols(c).length, 0, 'generateRaw 길은 한 번 쓰면 지워요');
+    await c.generateRaw({ systemPrompt: 'S', prompt: 'second request on the same object', responseLength: 5 });
+    assert.equal(t.calls.direct.at(-1).pick.model, 'big', '같은 객체로 온 다음 요청은 「확장 AI 전체」');
+    await c.generateRaw({ systemPrompt: 'S\n\nIMPORTANT: again', prompt: 'first request', responseLength: 5 });
+    assert.equal(t.calls.direct.at(-1).pick.model, 'big', '받은 때의 스택으로 정한 칸은 같은 본문 기억에 적지 않아요');
+    // 연결 프로필 길: 본문 끝으로 묶어요 — 같은 요청의 「배열 → 한 줄 글」 다시 보내기는 같은 칸, 다른 본문은 안 씀
+    const p = setup({ mb: { ssGenLang: 'enview', trLang: '한국어' } });
+    await null;
+    p.bridge._state.needBirth = true;
+    p.bridge.sync();
+    const g = p.holder.getContext();
+    const svc = g.ConnectionManagerRequestService;
+    const [gm] = Object.getOwnPropertySymbols(svc);
+    svc[gm].err = { stack: FROM_MB('trJSON') };
+    p.env.stack = FROM_MB('');
+    await svc.sendRequest('p', [{ role: 'system', content: 'SYS' }, { role: 'user', content: 'Leon walked into Ardel.' }], 10);
+    await svc.sendRequest('p', 'SYS\n\nLeon walked into Ardel.', 10);
+    await svc.sendRequest('p', [{ role: 'system', content: 'SYS' }, { role: 'user', content: 'Leon met Ardel again.' }], 10);
+    const sent = p.calls.send.map(call => (typeof call.prompt === 'string' ? call.prompt : call.prompt[0].content));
+    assert.notEqual(sent[0], 'SYS', '번역 칸으로 알아봐 용어집을 실어요');
+    assert.notEqual(sent[1], 'SYS\n\nLeon walked into Ardel.', '같은 요청의 한 줄 글 다시 보내기도 같은 칸');
+    assert.equal(sent[2], 'SYS', '다른 본문은 받은 때의 스택을 안 써요(영어 설정이라 번역 칸이 아니면 안 실어요)');
 });
 
 console.log(`\next-bridge-hook: ${passed}개 통과`);

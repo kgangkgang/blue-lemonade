@@ -59,6 +59,19 @@ This is deliberately conservative: a held model stays at its last verified price
 until a person records the new value, and some harmless documentation changes will
 need maintenance.
 
+Reviewing held models: take each held model from `report.json`, confirm the new amount on a second public
+official surface of the same provider (OpenRouter's per-model endpoint table, NanoGPT's site model list and
+pricing page, AIMLAPI's model page, the first-party list price behind a reseller), then copy the collected
+`rates` into that provider's `reviewed.rates` in `contracts.json`. A value that no second surface supports,
+or that looks like a data slip (for example a cache read above the input price that only a
+third-party listing or a single surface shows), stays held. Odd values that the provider's own surfaces
+agree on are recorded as published and listed in the review report.
+
+OpenAI cache writes have two lifetimes (`30m`, `12h`). When their amounts differ, the model row's single
+write slot stays `null` (older clients keep saying "unknown") and the provider entry carries
+`cacheWriteTtl` (`model -> tier -> [short 30m, short 12h, long 30m, long 12h]`). Newer clients price
+`usage.input_tokens_details.cache_write_tokens_details` (`ttl_30m_tokens`, `ttl_12h_tokens`) with it.
+
 Each provider has its own last-success timestamp and immutable price revision.
 A failing provider retains its previous models and check date; other providers
 can still update. The workflow publishes those partial results, saves a compact
@@ -106,5 +119,7 @@ The same runtime schema validates both the produced file and downloaded data.
 
 Source links are listed in `contracts.json`; amounts are per 1,000,000 tokens.
 The initial reviewed bundle is dated 2026-10-10 and the parsers were last reviewed
-against the official pages on 2026-10-19. Prices refresh independently; new billing
-rules or unsupported model families may still require a code update.
+against the official pages on 2026-11-14 (Gemini now reads the Markdown source on
+aistudio.google.com; Kimi reads the rendered pricing page because its Markdown export
+ships empty tables). Prices refresh independently; new billing rules or unsupported
+model families may still require a code update.

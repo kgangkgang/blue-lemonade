@@ -38,6 +38,8 @@ async function startEach(ids){
     try{for(const [i,id] of ids.entries()){if(i)await beat();jobs.push(startOne(id));}return await Promise.allSettled(jobs);}
     finally{spreadEnd();}
 }
+// 1.4.6 검토 4: 「나눠 시작 끝」을 jQuery 준비 · 다음 작업에 붙는 창까지(lateSettled) 미뤄요 — 전엔 startEach 가 끝나자마자 내려서 그 뒤 붙는 창이 열쇠 번호를 밀었어요
+const spreadRun=async(ids,settle)=>{spreadBegin();try{await startEach(ids);await settle();}finally{spreadEnd();}};
 let lateFired=false;const lateHooks=new Set();
 /** 처음 쓸 때를 같이 듣는 껍데기 */
 export function onLateAddons(fn){if(lateFired)fn(lateReason);else lateHooks.add(fn);}
@@ -47,7 +49,7 @@ export function startLateAddons(reason='?'){
     if(!lateFired){lateFired=true;for(const fn of lateHooks){try{fn(reason);}catch(error){console.warn('[Blue Lemonade] 훅',error);}}lateHooks.clear();}
     if(!started)return Promise.resolve();
     if(!lateIds.length){markLateDone();return Promise.resolve();}   // 늦은 애드온이 없으면 바로 「끝」(머리 스위치 열쇠 옮기기 · addon-start-state.js)
-    lateStarted=(async()=>{try{if(lateStyling)await lateStyling();const run=async()=>{await startEach(lateIds);await lateLayers?.lateSettled?.();};await(lateLayers?lateLayers.withReplay('늦은 애드온',run,{spread:true}):run());try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}finally{changed();markLateDone();}})();
+    lateStarted=(async()=>{try{if(lateStyling)await lateStyling();const run=()=>spreadRun(lateIds,async()=>{await lateLayers?.lateSettled?.();});await(lateLayers?lateLayers.withReplay('늦은 애드온',run,{spread:true}):run());try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}finally{changed();markLateDone();}})();
     return lateStarted;
 }   // waiting: 옛 단독 폴더가 켜져 있어 내장본이 대기 중인 개인 확장 (카드에 「옛 단독 확장 끄기」)
 let started=false,saving=0,saveError='';
@@ -239,7 +241,7 @@ async function startAddonsOnce(layers){
     const startRest=async()=>{
         await ensureStyling();
         // 늦게 붙은 애드온이 놓친 채팅 바뀜은 지금 채팅으로 한 번 (boot-layers.js withReplay — APP_READY 는 실리태번이 늦은 리스너에도 바로 불러 줘요)
-        const run=async()=>{await startEach(rest);await layers?.lateSettled?.();};   // 모듈이 jQuery 준비 · 다음 작업에 거는 리스너까지 덮어요
+        const run=()=>spreadRun(rest,async()=>{await layers?.lateSettled?.();});   // 모듈이 jQuery 준비 · 다음 작업에 거는 리스너까지 덮어요
         await(layers?layers.withReplay('애드온',run,{spread:true}):run());
         try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}
     };
