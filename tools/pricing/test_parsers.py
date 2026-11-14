@@ -88,6 +88,15 @@ class ParserFixtureTests(unittest.TestCase):
         self.assertEqual(text_contract('openai','openai',raw),text_contract('openai','openai',raw.replace('$10.00','$11.00')))
         self.assertNotEqual(text_contract('openai','openai',raw),text_contract('openai','openai',raw.replace('≤272K','≤200K')))
 
+    def test_openai_write_prices_per_lifetime_are_kept_in_a_side_table(self):
+        # The row slot stays empty (older clients keep saying "unknown"); the side table carries [short 30m, short 12h, long 30m, long 12h].
+        from collect import openai_write_rates
+        rates=openai_write_rates(FIXTURES)
+        self.assertEqual(rates['gpt-6-sol']['standard'],[2.5,5.0,5.0,10.0])
+        self.assertEqual(rates['gpt-6.1-sol']['ultrafast'],[15.0,30.0,30.0,60.0])
+        self.assertNotIn('gpt-5.5',rates);self.assertNotIn('gpt-5.4-mini',rates)
+        self.assertNotIn('batch',rates['gpt-6-sol'])
+
     def test_kimi_reads_compiled_table_rows_by_column_title(self):
         models=parse_generic('moonshot',FIXTURES)
         self.assertEqual(models['kimi-k3'],{'rates':{'input':3.0,'output':15.0,'cacheRead':0.3},'cacheWrite5m':3.0,'cacheWrite1h':6.0})
@@ -104,9 +113,11 @@ class ParserFixtureTests(unittest.TestCase):
         self.assertEqual(models['openai/gpt-5.5'],{'rates':{'input':5.0,'output':30.0,'cacheRead':0.5},'longAbove':272000,'longRates':{'input':10.0,'output':45.0,'cacheRead':1.0}})
         self.assertEqual(models['anthropic/claude-sonnet-5'],{'rates':{'input':2.0,'output':10.0,'cacheRead':0.2,'cacheWrite':2.5},'cacheWrite5m':2.5,'cacheWrite1h':4.0})
         self.assertEqual(models['doubao-seed-2-0-mini-260215']['longAbove'],127999)
-        # Output-counted thresholds, two tiers, or a tier plus 1h writes cannot be represented: shown but uncertain.
-        for model in ['x-ai/grok-4.3','bytedance-seed/seed-2.0-lite','anthropic/claude-haiku-5.5']:
+        # Output-counted thresholds and two tiers cannot be represented: shown but uncertain.
+        for model in ['x-ai/grok-4.3','bytedance-seed/seed-2.0-lite']:
             self.assertTrue(models[model]['uncertain']);self.assertNotIn('longAbove',models[model])
+        # One threshold plus 1h cache writes: each rate set carries its own 5m/1h pair, so a total can be computed.
+        self.assertEqual(models['anthropic/claude-haiku-5.5'],{'rates':{'input':0.1,'output':0.5,'cacheRead':0.01,'cacheWrite5m':0.125,'cacheWrite1h':0.2},'longAbove':100000,'longRates':{'input':0.5,'output':2.5,'cacheRead':0.05,'cacheWrite5m':0.625,'cacheWrite1h':1.0}})
 
     def test_fireworks_skips_fast_and_regional_deployment_rows(self):
         models=parse_generic('fireworks',FIXTURES)

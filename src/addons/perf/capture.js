@@ -435,6 +435,8 @@ async function finishEntry(context, response, acc, marks, failure) {
         cacheWriteTokens: acc.usage?.cacheWrite || 0,
         cacheWrite5mTokens: acc.usage?.cacheWrite5m || 0,
         cacheWrite1hTokens: acc.usage?.cacheWrite1h || 0,
+        cacheWrite30mTokens: acc.usage?.cacheWriteTtl30m || 0,
+        cacheWrite12hTokens: acc.usage?.cacheWriteTtl12h || 0,
         estimated,
         usageKnown,
         cost: pricing.cost,

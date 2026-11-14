@@ -15,7 +15,7 @@ function priceFreshness(quote) {
 /** Shared by the current-connection card and each historical request. No network or account access. */
 export function priceCard(quote, title = '이 요청의 가격 기준') {
     if (!quote) return '<p class="rl-dim">예전 기록에는 연결처·단가가 저장되지 않았어요. 당시 사용자 가격표로 계산한 비용이에요.</p>';
-    const labels = { input:'일반 입력', output:'출력', cacheRead:'캐시 읽기', cacheWrite:'캐시 저장', cacheWrite5m:'캐시 저장 · 5분', cacheWrite1h:'캐시 저장 · 1시간' };
+    const labels = { input:'일반 입력', output:'출력', cacheRead:'캐시 읽기', cacheWrite:'캐시 저장', cacheWrite5m:'캐시 저장 · 5분', cacheWrite1h:'캐시 저장 · 1시간', cacheWrite30m:'캐시 저장 · 30분', cacheWrite12h:'캐시 저장 · 12시간' };
     const currency = quote.currency === 'USD' ? 'US$' : quote.currency;
     const values = Object.entries(labels).filter(([key]) => quote.rates?.[key] != null).map(([key,label]) => `<div><dt>${label}</dt><dd>${esc(currency)}${number(quote.rates[key])}</dd></div>`).join('');
     const url = PRICE_SOURCES[quote.provider];

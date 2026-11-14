@@ -898,6 +898,8 @@ function renderDetail(entry) {
         entry.cacheWriteTokens ? chip('캐시 저장', number(entry.cacheWriteTokens)) : '',
         entry.cacheWrite5mTokens ? chip('5분 저장', number(entry.cacheWrite5mTokens)) : '',
         entry.cacheWrite1hTokens ? chip('1시간 저장', number(entry.cacheWrite1hTokens)) : '',
+        entry.cacheWrite30mTokens ? chip('30분 저장', number(entry.cacheWrite30mTokens)) : '',
+        entry.cacheWrite12hTokens ? chip('12시간 저장', number(entry.cacheWrite12hTokens)) : '',
         chip('API 경로',esc(entry.endpoint||'')),
         chip('소스', entry.source ? esc(entry.source) : ''),
         entry.swipes > 1 ? chip('스와이프', `${entry.swipes}개`) : '',

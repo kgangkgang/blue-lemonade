@@ -314,5 +314,50 @@ await test('11-10 새 모델: 묶음 표의 Claude Fable 5.2 · Mythos 5.2 · GP
         for (const id of ['gemini-4-carbon', 'google/gemini-4-carbon', 'gemini-4-hydrogen', 'google/gemini-4-hydrogen']) assert.equal(models?.[id], undefined, `${prov} ${id} 값을 지어내지 않음`);
 });
 
+await test('OpenAI 캐시 저장 30분 · 12시간: 저장 칸이 비면 사용량의 나눔(cache_write_tokens_details)과 제공처 표로 셈', async () => {
+    const L = await import(pathToFileURL(path.join(root, 'src/addons/perf/pricing-live.js')).href);
+    // 저장 칸이 null 이면 두 단가가 다른 모델. 두 단가는 제공처 항목의 cacheWriteTtl 표: [짧은 30분, 짧은 12시간, 긴 30분, 긴 12시간].
+    const models = { 'gpt-w': { standard: [1, 0.1, null, 5, 2, 0.2, null, 7.5], fast: [2, 0.2, null, 10, null, null, null, null] } };
+    const cacheWriteTtl = { 'gpt-w': { standard: [1.25, 2.5, 2.5, 5] } };
+    const q = (usage, over = {}) => P.quoteRequest({ connection: { provider: 'openai' }, model: 'gpt-w', usage, priceData: { models, cacheWriteTtl, checkedAt: 'C', status: 'live', revision: 'r' }, ...over });
+    // 공식 문서 예: 입력 1달러 · 캐시 읽기 0.1 · 일반 1,000 + 읽기 4,000 + 30분 3,000 + 12시간 4,000 → 0.01515달러
+    const merged = P.mergeTokenUsage(null, { input_tokens: 12000, output_tokens: 0, input_tokens_details: { cached_tokens: 4000, cache_write_tokens: 7000, cache_write_tokens_details: { ttl_30m_tokens: 3000, ttl_12h_tokens: 4000 } } });
+    assert.deepEqual([merged.cacheWrite, merged.cacheWriteTtl30m, merged.cacheWriteTtl12h, merged.cacheWriteTtlSplit], [7000, 3000, 4000, true]);
+    const ok = q(merged);
+    assert.deepEqual([ok.kind, ok.rates.cacheWrite30m, ok.rates.cacheWrite12h], ['official', 1.25, 2.5]);
+    close(ok.cost, (1000 * 1 + 4000 * 0.1 + 3000 * 1.25 + 4000 * 2.5) / 1e6, '30분과 12시간을 따로');
+    assert.equal(q({ prompt: 1000, cached: 0, cacheWrite: 500, completion: 0 }).cost, null, '나눔이 없으면 확정하지 않음');
+    assert.match(q({ prompt: 1000, cacheWrite: 500, completion: 0 }).note, /30분\/12시간/);
+    assert.equal(q({ ...merged, cacheWriteTtl12h: 1 }).cost, null, '나눔의 합이 저장 토큰과 다르면 확정하지 않음');
+    const only30 = P.mergeTokenUsage(null, { prompt_tokens: 100, prompt_tokens_details: { cache_write_tokens: 40, cache_write_tokens_details: { ttl_30m_tokens: 40, ttl_12h_tokens: 0 } } });
+    close(q(only30).cost, (60 * 1 + 40 * 1.25) / 1e6, 'Chat Completions 꼴도 같은 칸');
+    const long = q({ prompt: 300000, cacheWrite: 1000, cacheWriteTtl30m: 400, cacheWriteTtl12h: 600, cacheWriteTtlSplit: true, completion: 0 });
+    assert.deepEqual([long.rates.cacheWrite30m, long.rates.cacheWrite12h], [2.5, 5], '긴 문맥은 긴 문맥 단가');
+    close(long.cost, (299000 * 2 + 400 * 2.5 + 600 * 5) / 1e6);
+    assert.equal(q({ prompt: 1000, cacheWrite: 10, cacheWriteTtl30m: 10, cacheWriteTtl12h: 0, cacheWriteTtlSplit: true, completion: 0 }, { serviceTier: 'priority' }).cost, null, '이 등급은 표가 없어 저장 가격 확인 불가');
+    assert.equal(P.quoteRequest({ connection: { provider: 'openai' }, model: 'gpt-w', usage: { prompt: 1000, cacheWrite: 10, cacheWriteTtl30m: 10, cacheWriteTtl12h: 0, cacheWriteTtlSplit: true, completion: 0 }, priceData: { models } }).cost, null, '표가 없는 예전 자료는 그대로 확인 불가');
+    // 자료 검사: 새 칸은 openai 항목에만 · 모양이 틀리면 통째로 거절 (예전 앱은 이 칸을 모르고 지나쳐요)
+    const feed = L.currentPriceFeed(new Date().toISOString());
+    const clone = () => JSON.parse(JSON.stringify(feed));
+    const good = clone(); good.providers.openai.cacheWriteTtl = { 'gpt-6.1-sol': { standard: [2.5, 5, 5, 10], flex: [null, null, null, null] } };
+    assert.doesNotThrow(() => L.validatePriceFeed(good));
+    for (const bad of [{ 'no-such-model': { standard: [1, 2, 3, 4] } }, { 'gpt-6.1-sol': { batch: [1, 2, 3, 4] } }, { 'gpt-6.1-sol': { standard: [1, 2, 3] } }, { 'gpt-6.1-sol': { standard: [1, 2, 3, -1] } }, { 'gpt-6.1-sol': { standard: [1, 2, 3, 'x'] } }, []]) {
+        const f = clone(); f.providers.openai.cacheWriteTtl = bad;
+        assert.throws(() => L.validatePriceFeed(f), /캐시 저장 시간 단가 오류/, JSON.stringify(bad));
+    }
+    const other = clone(); other.providers.groq.cacheWriteTtl = {};
+    assert.throws(() => L.validatePriceFeed(other), /캐시 저장 시간 단가 오류/, 'openai 가 아닌 항목');
+});
+
+await test('providerQuote: 구간 요금 + 5분/1시간 저장 — 각 구간 단가 묶음이 자기 저장 쌍을 가져요(NanoGPT 가격표 꼴)', () => {
+    const row = { rates: { input: 0.1, output: 0.5, cacheRead: 0.01, cacheWrite5m: 0.125, cacheWrite1h: 0.2 }, longAbove: 100000, longRates: { input: 0.5, output: 2.5, cacheRead: 0.05, cacheWrite5m: 0.625, cacheWrite1h: 1 } };
+    const u = usage => quote('nanogpt', { m1: row }, { usage });
+    close(u({ prompt: 1000, completion: 100 }).cost, (1000 * 0.1 + 100 * 0.5) / 1e6, '저장이 없으면 저장 단가 없이도 셈');
+    close(u({ prompt: 200000, completion: 1000 }).cost, (200000 * 0.5 + 1000 * 2.5) / 1e6, '긴 문맥');
+    assert.equal(u({ prompt: 1000, cacheWrite: 100 }).cost, null, '저장이 있는데 시간별 수가 없으면 확정하지 않음');
+    close(u({ prompt: 1000, cacheWrite: 300, cacheWriteSplit: true, cacheWrite5m: 200, cacheWrite1h: 100, completion: 0 }).cost, (700 * 0.1 + 200 * 0.125 + 100 * 0.2) / 1e6);
+    close(u({ prompt: 200000, cacheWrite: 300, cacheWriteSplit: true, cacheWrite5m: 200, cacheWrite1h: 100, completion: 0 }).cost, (199700 * 0.5 + 200 * 0.625 + 100 * 1) / 1e6, '긴 문맥은 긴 문맥의 저장 쌍');
+});
+
 console.log(`pricing-quote-edges: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

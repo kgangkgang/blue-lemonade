@@ -42,6 +42,12 @@ function modelRow(row, kind) {
     return row.note === undefined || (typeof row.note === 'string' && row.note.length <= 2000);
 }
 
+// OpenAI 캐시 저장 30분 / 12시간 단가 표: 모델 → 등급 → [짧은 30분, 짧은 12시간, 긴 30분, 긴 12시간](없으면 null). 본 행에 있는 모델 · 등급만.
+function writeTtlTable(table, models) {
+    return plain(table) && Object.entries(table).every(([id, tiers]) => !unsafe.has(id) && Object.hasOwn(models, id) && plain(tiers) &&
+        Object.entries(tiers).every(([tier, v]) => ['standard','flex','fast','ultrafast'].includes(tier) && Object.hasOwn(models[id], tier) && Array.isArray(v) && v.length === 4 && v.every(x => x === null || price(x))));
+}
+
 /** Validate every provider before changing anything; reject mixed valid/invalid feeds atomically. */
 export function validatePriceFeed(feed, now = Date.now()) {
     if (!plain(feed) || feed.schema !== 1 || !validDate(feed.generatedAt) || Date.parse(feed.generatedAt) > now + 300000 || !plain(feed.providers)) throw new Error('가격표 형식 또는 날짜 오류');
@@ -53,6 +59,7 @@ export function validatePriceFeed(feed, now = Date.now()) {
         if (!plain(entry.models) || Object.keys(entry.models).length < 1 || Object.keys(entry.models).length > 15000) throw new Error('빈 가격표');
         if (typeof entry.revision !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(entry.revision)) throw new Error('가격표 버전 오류');
         for (const [id, row] of Object.entries(entry.models)) if (!id || id.length > 250 || unsafe.has(id) || !modelRow(row, entry.format)) throw new Error('모델 단가 오류: ' + key);
+        if (entry.cacheWriteTtl !== undefined && !(entry.format === 'openai' && writeTtlTable(entry.cacheWriteTtl, entry.models))) throw new Error('캐시 저장 시간 단가 오류: ' + key);
     }
     return feed;
 }

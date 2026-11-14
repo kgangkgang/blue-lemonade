@@ -45,10 +45,22 @@ def parse_generic(target, source_dir):
      if p.get(field+suffix) is not None:long[key]=value(p,field+suffix,1000)
     tiers.append((int(p[limit]),{k:round(v,9) for k,v in long.items() if v is not None}))
    one_hour=p.get('cacheWriteInputPer1kTokens1h')
-   # The request log keeps one context threshold and one 5m/1h cache-write pair per model. Anything richer keeps
-   # the published base rates visible but is marked uncertain, so no total is computed from a partial table.
-   if len(tiers)>1 or p.get('highContextThresholdCountsOutputTokens') or (tiers and one_hour is not None) or any('input' not in t or 'output' not in t for _,t in tiers):
-    row.update(uncertain=True,note='입력 길이·캐시 보관 시간에 따라 달라지는 구간 요금이라 공개 단가만으로 총액을 확정하지 않아요.')
+   # The request log keeps one context threshold per model. Several thresholds, or a threshold counted over input
+   # plus output tokens, keep the published base rates visible but are marked uncertain, so no total is computed.
+   # One threshold together with 1h cache writes is representable: each rate set carries its own 5m/1h write pair
+   # (request logs that report cache writes per lifetime get a total; without writes the total never needed them).
+   mixed='입력 길이·캐시 보관 시간에 따라 달라지는 구간 요금이라 공개 단가만으로 총액을 확정하지 않아요.'
+   if len(tiers)>1 or p.get('highContextThresholdCountsOutputTokens') or any('input' not in t or 'output' not in t for _,t in tiers):
+    row.update(uncertain=True,note=mixed)
+   elif tiers and one_hour is not None:
+    suffix=[sf for lim,sf in [('firstContextThresholdTokens','AboveFirstThreshold'),('highContextThresholdTokens','Above200k')] if p.get(lim) is not None][0]
+    long_one=value(p,'cacheWriteInputPer1kTokens1h'+suffix,1000)
+    base_write,long_write=row['rates'].get('cacheWrite'),tiers[0][1].get('cacheWrite')
+    if base_write is None or long_write is None or long_one is None:row.update(uncertain=True,note=mixed)
+    else:
+     base=dict(row['rates']);base.pop('cacheWrite');long=dict(tiers[0][1]);long.pop('cacheWrite')
+     base.update(cacheWrite5m=base_write,cacheWrite1h=round(float(one_hour)*1000,9));long.update(cacheWrite5m=long_write,cacheWrite1h=round(long_one,9))
+     row.update(rates=base,longAbove=tiers[0][0],longRates=long)
    elif tiers:
     row.update(longAbove=tiers[0][0],longRates=tiers[0][1])
    elif one_hour is not None and 'cacheWrite' in row['rates']:
