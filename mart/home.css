@@ -15,6 +15,9 @@
 /* 시안6 규격: 글자 단추 36 · 14/400 · 모서리 8 · 면 surface + 1px 선 */
 .mart-random-links a{position:relative;display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--text);font-size:14px;font-weight:400;line-height:1;text-decoration:none}
 .mart-random-links a:hover{background:var(--tint)}
+/* 11-14 폰 폭 줄바꿈: 앞 글 · 두 단추를 따로 묶어, 좁으면 앞 글 한 줄 · 두 단추 다음 줄에 같이(「오늘의 액자」만 혼자 내려가지 않게) */
+.mart-random-lead{word-break:keep-all}
+.mart-random-pick{display:flex;flex-wrap:wrap;gap:8px}
 .mart-random-links svg{flex:none;width:16px;height:16px}   /* 11-14 🎲 → 마트와 같은 결 선 주사위 */
 @media (pointer:coarse){.mart-random-links a::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}
 /* 넓은 화면(1200 이상): 홈도 마트와 같은 최대 폭 1400(머리줄 · 첫 화면 · 칸 · 묶음 줄) */
