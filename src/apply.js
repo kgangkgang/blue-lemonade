@@ -483,6 +483,11 @@ export function applyAll() {
     const inkBacks = [...tones('bg'), ...tones('surface'), ...tones('accent').flatMap(c => [mix(c, pal.surface, 0.18), mix(c, shaded, 0.13)])];
     vars['--salty-accent-ink'] = mode === 'dark' ? pal.accent : readableInk(pal.accent, pal.text, inkBacks);
     vars['--salty-pop-ink'] = mode === 'dark' ? pop : readableInk(luminance(pop) <= 0.3 ? pop : pal.accent, pal.text, inkBacks);
+    // 1.4.8 보조 글자 잉크: 단추 묶음(.salty-seg) 안 고른 칸 글자. 묶음 면은 음영 두 겹(묶음 카드 · 묶음 판)이라 보조색이 화이트에서 4.3 : 1 —
+    //   그 위에서 4.6 : 1 이 될 때까지만 본문색 쪽으로 섞어요(화이트 약 6% · 나이트 · 이미 넘는 내 테마는 보조색 그대로). 1.4.7 의 CSS color-mix(20%)는 팔레트 밖 색이었어요
+    const segCard = mode === 'dark' ? mix(pal.text, pal.surface, 0.035) : pal.surface; // 아래 --salty-card 와 같은 값
+    const shade1 = [...tones('bg'), ...tones('surface'), segCard].map(c => mix(pal.text, c, 0.06));
+    vars['--salty-muted-ink'] = readableInk(pal.muted, pal.text, [...shade1, ...shade1.map(c => mix(pal.text, c, 0.06))], 4.6);
     // 코드 블록 구문 강조: 색상은 그대로, 코드 칸(글자색 6% 음영) 위에서 4.5 : 1 이 될 때까지만 — 칸이 밝으면 검정 · 어두우면 흰색 쪽으로 (codeInks)
     //   밝은 테마는 음영 한 겹(css/06) · 캐릭터 글 바탕과 내 말풍선 둘 다, 나이트는 지금처럼 두 겹 · 캐릭터 글 바탕만 (말풍선까지 맞추면 빨강 · 보라가 분홍 · 연보라가 됨)
     const codeBacks = mode === 'dark'

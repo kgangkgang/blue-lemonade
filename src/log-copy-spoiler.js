@@ -213,7 +213,7 @@ export function previewModel(doc) {
         for (const node of parent.childNodes) {
             if (node.nodeType === 3) { if (rows && /^[\u2060\u200b]+$/.test(node.data)) continue; const text = node.data.replace(/[ \t\r\n\f]+/g, ' '); if (text.trim() || text === ' ') out.push({ t: 'text', text }); continue; }
             if (node.nodeType !== 1) continue;
-            if (node.matches('style, script, summary, [data-bl-name], .blsp-b') || (rows && node.classList.contains('gk-nm')) || (dl && !node.matches('.gk-d, [data-bl-spoiler]'))) continue;
+            if (node.matches('style, script, summary, [data-bl-name], .blsp-b, [data-bl-pic]') || (rows && node.classList.contains('gk-nm')) || (dl && !node.matches('.gk-d, [data-bl-spoiler]'))) continue;
             if (node.tagName === 'BR') { out.push({ t: 'br' }); continue; }
             if (node.matches('[data-bl-spoiler]')) {
                 const content = node.querySelector(':scope > .blsp-c');
@@ -257,7 +257,7 @@ export function previewModel(doc) {
                 const rows = list.flatMap(el => flat(el));
                 const nm = rows.find(el => el.classList.contains('gk-nm'));
                 const name = nm ? ([...nm.childNodes].map(n => (n.nodeType === 3 ? n.data : n.nodeType === 1 && !n.getAttribute('class') ? n.textContent : '')).join('').trim() || nm.textContent.trim()) : '';   // 이름 줄 안 장식(시각)은 빼요
-                return { name, nodes: rows.filter(el => !el.classList.contains('gk-nm')).map(el => (el.matches(SP) ? convert({ childNodes: [el] }, baseOf(el), true)[0] : { t: 'el', block: true, tag: 'div', kind: 'p', style: {}, children: convert(el, baseOf(el), true) })) };
+                return { name, nodes: rows.filter(el => !el.classList.contains('gk-nm') && !el.matches('[data-bl-pic]')).map(el => (el.matches(SP) ? convert({ childNodes: [el] }, baseOf(el), true)[0] : { t: 'el', block: true, tag: 'div', kind: 'p', style: {}, children: convert(el, baseOf(el), true) })) };
             }),
         };
     }

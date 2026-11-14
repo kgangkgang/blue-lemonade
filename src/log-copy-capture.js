@@ -275,11 +275,60 @@ export function captureLog(target, { context = globalThis.SillyTavern?.getContex
         }
     };
 
+    /** 11-14 메시지의 그림 — 글 안 <img>(캐릭터 에셋 · 생성 그림 · 본문 그림: 고른 범위에 걸친 것, top 이면 고른 자리 앞 것도) · 메시지에 붙인 그림(.mes_media_wrapper — top 일 때).
+     *  보이는 것 · 64px 넘는 것만(아이콘 · 이모지 그림 빼고) · 상태창 칩 칸 · 단추 줄 안은 빼요. 주소는 절대 주소(올릴지는 log-copy-pics.js 가 정해요) */
+    const PIC_SKIP = '.mes_buttons, .mes_edit_buttons, .ss-slot, .custom-ss-slot, .ss-msgcard, button, a.mes_img_enlarge';
+    const picOk = (img) => {
+        const src = img.currentSrc || img.src || '';
+        if (!/^(https?:|data:image\/(png|gif|jpe?g|webp|avif);)/i.test(src) || img.closest(PIC_SKIP) || img.classList.contains('error')) return '';
+        if (typeof img.checkVisibility === 'function' && !img.checkVisibility()) return '';
+        // 검토 사3: 크기는 화면에 보이는 크기로 — 원본이 커도 글 속에 작게 띄운 스티커 · 이모지 그림 · 아이콘은 빼요
+        const box = img.getBoundingClientRect?.() ?? { width: 0, height: 0 };
+        const w = box.width || img.clientWidth || 0, h = box.height || img.clientHeight || 0;
+        return w >= 64 && h >= 64 ? src : '';
+    };
+    const picsOf = (root, mes, top) => {
+        const out = [];
+        // 원본 가로세로도 적어요(복사 글 aspect-ratio — 깡통에서 그림이 늦게 떠도 글이 안 밀리게 · 검토 사7)
+        const add = (src, img) => { if (src && !out.some(p => p.src === src) && out.length < 40) out.push({ src, ...(img?.naturalWidth && img?.naturalHeight ? { w: img.naturalWidth, h: img.naturalHeight } : {}) }); };
+        for (const img of root.querySelectorAll('img')) {
+            let inside = range.intersectsNode(img);
+            if (!inside && top) { try { inside = range.comparePoint(img, 0) < 0; } catch { inside = false; } }   // 고른 자리 앞(글자 없는 머리) 그림
+            if (inside) add(picOk(img), img);
+        }
+        if (top) for (const img of mes?.querySelectorAll('.mes_media_wrapper img.mes_img') ?? []) add(picOk(img), img);
+        return out;
+    };
+    /** 검토 보4: 고른 자리 앞에 「보이는 글자」가 있나 — walk 와 같은 규칙(<style> · 건너뛰는 칸 · 안 보이는 글 · 고를 수 없는 글은 안 세요).
+     *  Range.toString() 은 <style> 안 글 · 숨긴 글까지 세서, 본문 맨 앞에 <style> 이 있는 메시지(상태창 프리셋)는 첫 글자부터 골라도 「가운데부터」가 됐어요 */
+    const textBefore = (root) => {
+        if (!root.contains(range.startContainer)) return false;   // 고른 자리가 이 칸 앞(이름 줄 등) — 칸 처음부터예요
+        const tw = doc.createTreeWalker(root, 4);
+        for (let node = tw.nextNode(); node; node = tw.nextNode()) {
+            let pos;
+            try { pos = range.comparePoint(node, 0); } catch { return false; }
+            const isStart = node === range.startContainer;
+            if (pos >= 0 && !isStart) break;   // 고른 자리부터는 그만
+            const text = isStart ? node.data.slice(0, range.startOffset) : node.data;
+            if (!text.trim()) continue;
+            const parent = node.parentElement;
+            if (!parent || parent.closest(SKIP) || parent.closest('style, script, template, noscript')) continue;
+            const style = cs(parent);
+            if (style.visibility !== 'visible' || style.userSelect === 'none' || style.display === 'none') continue;
+            if (typeof parent.checkVisibility === 'function' && !parent.checkVisibility()) continue;
+            return true;
+        }
+        return false;
+    };
+
     const chat = doc.getElementById('chat');
     const chatBg = backdrop(chat ?? roots[0]);
     const first = cs(roots[0]);
     const baseFont = fontOf(first);
     const messages = [];
+    // 11-14 글 속 그림(log-copy-pics.js): 첫 메시지를 글 처음부터 골랐으면(앞에 글자 없음) 고른 자리 앞 그림 · 메시지에 붙인 그림도 그 메시지 것으로
+    let fromTop = true;
+    try { fromTop = !textBefore(roots[0]); } catch { fromTop = false; }
     for (const root of roots) {
         const mes = root.closest('.mes');
         const style = cs(root);
@@ -299,7 +348,8 @@ export function captureLog(target, { context = globalThis.SillyTavern?.getContex
         font.color = solid(font.color, own);
         const inh = { ...font };
         walk(root, nodes, inh, { weight: Number.parseInt(style.fontWeight, 10) || 400, italic: style.fontStyle !== 'normal' });
-        if (!nodes.length) continue;
+        const pics = picsOf(root, mes, root === roots[0] ? fromTop : true);
+        if (!nodes.length && !pics.length) continue;   // 검토 보3: 글 없이 그림만 있는 메시지(그림 생성 결과 · 첨부만)도 남겨요 — 그림이 안 들어가면 시트가 이름 줄을 비워요
         opaque(nodes, own);
         messages.push({
             index: Number.isInteger(index) ? index : null,
@@ -310,6 +360,7 @@ export function captureLog(target, { context = globalThis.SillyTavern?.getContex
             font,
             bubble,
             nodes,
+            ...(pics.length ? { pics } : {}),
         });
     }
     if (!messages.length) return null;

@@ -1,6 +1,6 @@
 import { applyCaptureDraft } from './capture-editor.js';
 import { preparePrivacy, attachMaskShapes } from './capture-privacy.js';
-import { applyCaptureDisplay, reflowCaptureText, capturePagePlan } from './capture-layout.js';
+import { applyCaptureDisplay, reflowCaptureText, capturePagePlan, CAPTURE_SKIP, stripCaptureUi } from './capture-layout.js';
 import { createCaptureResources } from './capture-resources.js';
 import { collectAnimated, prepareAnimated } from './capture-animate.js';
 import { filterSettings, isNeutral, applyCaptureFilter, releaseCaptureFilter, drawFilterCss } from './capture-filter.js';
@@ -57,7 +57,7 @@ async function copyPaint(source, clone, resources, signal, options={}, skip=()=>
         const pair=pairs[index],{source,clone,parent}=pair;
         if((parent>=0&&pairs[parent].skip)||!clone?.style||!source.style){pair.skip=true;continue;}
         if(source.parentNode!==pair.sourceParent||source.isConnected===false)throw Error('저장 중 메시지가 바뀌었어요. 답변·번역이 끝난 뒤 다시 만들어 주세요.');
-        if(source.matches('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter')||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.avatar'))||(options.showName===false&&source.matches('.name_text,.mes_name'))){pair.skip=true;continue;}
+        if(source.matches(CAPTURE_SKIP)||(options.showAssets===false&&source.closest('.mes_text')&&source.matches('img,picture,svg,canvas'))||(options.showAvatar===false&&source.matches('.avatar'))||(options.showName===false&&source.matches('.name_text,.mes_name'))){pair.skip=true;continue;}
         const bg=resources.paint(source,clone);
         clone.style.animation='none';clone.style.transition='none';clone.style.contentVisibility='visible';
         clone.removeAttribute('id');clone.removeAttribute('onclick');
@@ -118,7 +118,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
                 // 격자 칸(.mes)은 줄 높이가 px 로 적혀 있다 (예: 19px 1352px) — 풀지 않으면 문단을 지워도 원래 높이가 남는다
                 if(el.style.gridTemplateRows&&el.style.gridTemplateRows!=='none'){el.style.gridTemplateRows=el.style.gridTemplateRows.split(' ').map(()=>'auto').join(' ');}
             }
-            clone.querySelectorAll('script,iframe,video,audio,.mes_buttons,.mes_edit_buttons,.swipe_left,.swipe_right,.swipes-counter,.mes_ghost,.del_checkbox,.for_checkbox').forEach(el=>el.remove());
+            stripCaptureUi(clone);
             applyCaptureDisplay(clone,options,window.SillyTavern?.getContext?.().chat?.[ids[i]]?.extra?.model||'');
             reflowCaptureText(clone);
             if(options.videoLayer||options.imagePages===true)for(const image of clone.querySelectorAll('.mes_text img')){

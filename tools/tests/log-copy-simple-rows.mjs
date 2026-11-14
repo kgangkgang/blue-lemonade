@@ -182,4 +182,20 @@ await test('글만 복사(마크다운)도 고친 글: 미리보기 모델이 �
     assert.ok(got && nodesText(got.messages[2].nodes).includes('반딧불이었어요'));
 });
 
+await test('11-14 글 속 그림 줄: 미리보기 모델은 그림 칸을 글로 읽지 않아요(메시지 수 · 글 그대로 · 안 고치면 거둘 것 없음 · 고친 메시지도 그림 노드 없이 — 다시 그릴 때 그림은 시트가 또 붙여요)', async () => {
+    const { attachPics } = await load('src/log-copy-pics.js');
+    const O = 'http://127.0.0.1:8000', KK = 'https://img.kkangtong.xyz/post-images/uploads/x.jpg';
+    const withPics = attachPics({ ...MODEL, messages: MODEL.messages.map((m, i) => (i === 2 ? { ...m, pics: [{ src: `${O}/characters/a/b.png` }] } : m)) }, { origin: O, codes: [KK] });
+    for (const f of SIMPLE_FRAMES) {
+        const plainTexts = texts(parseDoc(draw(MODEL, received(f), { rows: true })));
+        const html = draw(withPics, received(f), { rows: true });
+        assert.ok(html.includes(KK), f.key);
+        const doc = parseDoc(html);
+        assert.deepEqual(texts(doc), plainTexts, `${f.key} 글 그대로`);
+        assert.equal(harvestEdits(previewModel(doc), MODEL, plainTexts), null, `${f.key} 안 고쳤으면 거둘 것 없음`);
+        const edited = harvestEdits(previewModel(parseDoc(html.replace('「반딧불이에요.」', '「반딧불이었어요.」'))), MODEL, plainTexts);
+        assert.ok(edited && !JSON.stringify(edited.messages[2].nodes).includes('"pic"'), `${f.key} 고친 메시지에 그림 노드가 섞이지 않아요`);
+    }
+});
+
 done();

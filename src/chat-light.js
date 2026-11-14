@@ -52,7 +52,7 @@ export function syncChatLight(enabled) {
     on = !!enabled;
     kickWarm();   // (10-30 perf-chatlight) 쉴 때 미리 그리기 — 아래
     if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function') syncChatCover(on);   // 같은 설정(긴 채팅 가볍게) — 아래 서랍 덮개
-    if (!on) { mo?.disconnect(); mo = null; if (chat) markTail(chat, false); if (chat && document.documentElement.classList.contains(CLASS)) document.documentElement.classList.remove(CLASS); chat = null; return; }
+    if (!on) { stopSelectAhead(); mo?.disconnect(); mo = null; if (chat) markTail(chat, false); if (chat && document.documentElement.classList.contains(CLASS)) document.documentElement.classList.remove(CLASS); chat = null; return; }
     const el = document.getElementById('chat');
     if (!el) { mo?.disconnect(); mo = null; chat = null; return; }
     if (el !== chat) {
@@ -439,7 +439,71 @@ function onReveal(event) {
     if (event.skipped || !on || warm.cool || !mes?.classList?.contains('mes') || mes.hasAttribute(WARM_ATTR) || mes.parentElement?.id !== 'chat' || warmPaused()) return;
     mes.setAttribute(WARM_ATTR, '');
 }
+// ---------------------------------------------------------------- (1.4.8 select-scroll) 채팅 글을 고른 동안은 화면 밖 건너뛰기를 쉬기
+// 제보(11-14 폰 사진): 채팅 글을 길게 눌러 고른 채 아래로 내리자 메시지 사이가 비고 문단이 반쯤 잘린 뒤 그 아래 채팅 칸 전체가 빈 화면.
+// 왜(추정 — 헤드리스 리그에서는 재현 안 됨): 화면 밖 메시지는 content-visibility:auto 로 건너뛰는데, 브라우저는 「화면 가까이 왔다」를 그 프레임의 배치가 끝난 뒤 재고
+//   건너뛰기를 다음 프레임에 풀어요(그 사이 빈 자리 — 화면 밖 메시지는 미리 칠해 둔 그림도 없어요).
+//   보통 굴리기는 쉬는 시간에 미리 그려 둔 메시지(data-bl-warm)가 받쳐 주지만, 답을 받은 뒤 · 서랍을 닫은 뒤에는 그 표식을 떼어 두고,
+//   글을 고른 채 굴리면(선택 손잡이 끌기 · 끌어 고르며 아래 끝에 대기 = 자동 스크롤) 손가락이 계속 눌려 있어 미리 그리기가 입력에 밀려 돌지 못해요.
+//   실리태번 순정 · 「긴 채팅 가볍게」를 끈 테마에는 건너뛰는 메시지가 없어요.
+// 어떻게(조정자 결정 — 재현 못 한 채 내보내니 확실한 쪽): 채팅 안에 고른 글이 있는 동안 html 에 SEL_ATTR 을 달아 css/05-chat.css 의 건너뛰기 규칙
+//   (:where(html.bl-chat-light:not([data-bl-chat-sel])) …)이 채팅 전체에서 빠지게 하고, 고르기를 풀면 떼서 되돌려요(화면 밖 최적화는 고르지 않는 동안 그대로).
+//   고를 때 한 번 화면 밖 메시지를 다 그리는 비용은 리그에서 쟀어요(보고 · 폰 4배 300개 — chat-light-select 시험 머리말). 너무 길면 쓰려고
+//   SELECT_MODE 'near' 를 남겨 둬요: 그때는 #chat 을 뿌리로 위아래 SELECT_NEAR 만큼 넓힌 IntersectionObserver 로 그 띠의 메시지에만 미리 그리기 표식을 달아요.
+//   표식은 data 속성(class 아님 — 실리태번 keyboard.js 감시가 class 만 봐요) · html 에(#chat 을 보는 감시자들이 안 봐요 · bl-chat-light 와 같은 자리).
+//   selectionchange 는 글을 칠 때마다 와요 — 긴 채팅이 아니면(표식 없음) Selection 을 읽지 않고, 메시지 편집 칸에 초점이 있으면(고른 글은 그 칸 안) 읽지 않아요.
+//   보내기 칸에 초점이 남아 있어도 채팅 글은 고를 수 있어서(리그: 고른 뒤에도 초점은 보내기 칸) 그때는 읽되, isCollapsed 대신 범위 하나의 collapsed 만(배치 강제 없음 · dem-selection.js 와 같은 길).
+//   자리 · 계산된 스타일은 읽지 않아요.
+export const SEL_ATTR = 'data-bl-chat-sel';
+export const SELECT_MODE = 'all';
+export const SELECT_NEAR = '600%';
+let selMode = SELECT_MODE, selIo = null, selChat = null, selActive = false, selOn = false;
+const TYPING = /^(TEXTAREA|INPUT)$/;
+/** 채팅 칸 안에 고른 글이 있나 (자리를 읽지 않아요) */
+export function chatSelection(doc = document) {
+    const chatEl = doc.getElementById?.('chat');
+    const active = doc.activeElement;
+    if (active && (TYPING.test(active.tagName) || active.isContentEditable) && chatEl?.contains(active)) return false;   // 메시지 편집 중
+    const sel = doc.getSelection?.();
+    if (!chatEl || !sel || !sel.rangeCount || sel.getRangeAt(0).collapsed) return false;
+    return chatEl.contains(sel.anchorNode) || chatEl.contains(sel.focusNode);
+}
+function stopSelectAhead(doc = typeof document !== 'undefined' ? document : null) {
+    selIo?.disconnect(); selIo = null; selChat = null; selActive = false;
+    const root = doc?.documentElement;
+    if (root?.hasAttribute?.(SEL_ATTR)) root.removeAttribute(SEL_ATTR);
+}
+function onSelectAhead(entries) {
+    if (!on || warmPaused()) return;
+    for (const e of entries) {
+        const mes = e.target;
+        if (!e.isIntersecting) continue;
+        selIo?.unobserve(mes);
+        if (mes.hasAttribute(WARM_ATTR) || mes.parentElement !== selChat || !mes.matches(SKIP_SELECTOR)) continue;
+        mes.setAttribute(WARM_ATTR, '');
+        announce(mes);
+    }
+}
+/** 고르기가 생기면 건너뛰기를 쉬고(또는 근처만 그리고), 풀리면 되돌려요 — selectionchange 마다(같은 상태면 아무것도 안 해요) */
+export function syncSelectAhead(doc = document) {
+    const chatEl = on ? doc.getElementById('chat') : null;
+    // 짧은 채팅(표식 없음)은 건너뛰는 메시지가 없어요 — Selection 도 읽지 않아요
+    const want = !!chatEl && lightNow(chatEl) && chatSelection(doc);
+    if (!want) { if (selActive) stopSelectAhead(doc); return false; }
+    if (selActive && selChat === chatEl) return true;
+    stopSelectAhead(doc);
+    selChat = chatEl; selActive = true;
+    if (selMode === 'near' && typeof IntersectionObserver === 'function') {
+        selIo = new IntersectionObserver(onSelectAhead, { root: chatEl, rootMargin: `${SELECT_NEAR} 0px` });
+        for (const mes of mesKids(chatEl)) if (!mes.hasAttribute(WARM_ATTR) && mes.matches(SKIP_SELECTOR)) selIo.observe(mes);
+    } else doc.documentElement.setAttribute(SEL_ATTR, '');
+    return true;
+}
+const onSelChange = () => syncSelectAhead();
+export const _select = { state: () => ({ watching: selActive, mode: selMode, near: !!selIo, listening: selOn }), stop: stopSelectAhead, mode(m) { stopSelectAhead(); selMode = m === 'near' ? 'near' : 'all'; } };
+
 function listenWarm() {
+    if (!selOn && typeof document.addEventListener === 'function') { selOn = true; document.addEventListener('selectionchange', onSelChange); }
     if (!revealOn && typeof document.addEventListener === 'function') {
         revealOn = true;
         document.addEventListener('contentvisibilityautostatechange', onReveal, true);

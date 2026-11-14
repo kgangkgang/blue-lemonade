@@ -21,6 +21,7 @@ import { readSaved, RETIRED_FALLBACK } from './log-copy-retired.js';   // 1.1.7 
 import { PAGES } from './repo.js';   // 1.1.7 뺀 내장 글꾸의 마트 새 판 바로가기 · 1.1.8 빈 「내 글꾸」 · 붙여 넣기 칸의 마트 열기
 import { motionCss, motionStyleFor } from './log-copy-motion.js';   // 1.0.1 글꾸 움직임 · 누르면 반응(미리보기 칸 · HTML 복사 맨 앞 <style>)
 import { sanitizeHtml, sanitizeTree, slotPath, fromPath, guessSlot, imagesFromCode } from './log-copy-sanitize.js';
+import { attachPics, picList, picPlan, codesFrom } from './log-copy-pics.js';   // 11-14 글 속 그림(메시지 맨 앞 · 깡통에 올린 주소로)
 import { applyFade, revealTab } from './tab-scroll.js';
 import { transformLog, recolorLog } from './log-copy-words.js';   // 이름 숨김 · 단어 바꾸기 (채팅 캡처 「로그 공유 · 이름 가림」 설정을 같이 써요) · 고른 에이드로 역할 색 다시 계산
 import { withNameAliases } from './name-aliases.js';
@@ -152,6 +153,7 @@ export async function openLogSheet(model) {
         fields: { title: model.chatTitle || 'Title', mark: 'LOG', char: model.charName || model.chatName, model: names.model, prompt: names.prompt, date: dateLabel(first), from: model.userName, tail: '', info: '', page: '1', subtitle: model.chatName ? `${model.chatName}의 기록` : '' },
         category: catList.some(c => c.id === s.category) ? s.category : 'basic',   // 분류 칩 — 처음은 「기본」, 마지막에 고른 것을 기억
         images: [],   // 갤러리: 붙여 넣은 이미지 코드 · 주소 (이번 시트에만)
+        picCodes: [],   // 11-14 글 속 그림: 깡통에 올린 그림 주소(올릴 그림 번호 차례 · 이번 시트에만)
         picking: false,
         picked: false,   // 이번에 색 칩을 직접 눌렀나 — 누른 것만 기억해요(안 누르면 다음에도 지금 팔레트)
         edited: null,   // 1.0.1 미리보기에서 고친 글(메시지 노드만 바꾼 모델) — 틀 · 색을 바꿔 다시 그려도 그대로
@@ -191,6 +193,7 @@ export async function openLogSheet(model) {
             <div class="bl-lc-band bl-lc-empty" data-lc-empty hidden><span>아직 받은 글꾸가 없어요. <b>글꾸 마트</b>에서 마음에 드는 틀을 크게 보고 <b>테마용 복사</b>를 누른 뒤, 여기에 붙여 넣어 받아요.</span><span class="bl-lc-band-go"><a class="salty-btn" href="${esc(MART_GEULKKU)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트 열기</span></a><button type="button" class="salty-btn" data-lc="paste"><i class="fa-solid fa-paste" aria-hidden="true"></i><span>붙여 넣기</span></button></span></div>
             <div class="bl-lc-mine" data-lc-mine hidden></div>
             <div class="bl-lc-gallery" data-lc-gallery hidden><textarea rows="3" placeholder="이미지 코드(&lt;img …&gt;)나 이미지 주소를 붙여 넣어요" aria-label="갤러리 사진 코드" data-lc-images></textarea><span class="bl-lc-note" data-lc-images-count></span></div>
+            <div class="bl-lc-pics" role="group" aria-label="글 속 그림" data-lc-pics hidden><div class="bl-lc-pics-h"><b><i class="fa-regular fa-image" aria-hidden="true"></i>글 속 그림</b><span class="bl-lc-note" role="status" data-lc-pics-sum></span><button type="button" class="bl-lc-chip" data-lc="pics-on" aria-pressed="true" title="고른 글의 그림을 그 메시지 맨 앞에 넣어요"><span>그림 넣기</span></button><button type="button" class="bl-lc-chip" data-lc="pics-save" title="깡통에 올릴 그림을 번호 차례대로 내려받아요"><i class="fa-solid fa-download" aria-hidden="true"></i><span>그림 받기</span></button></div><div class="bl-lc-pics-list" data-lc-pics-list></div><textarea rows="2" placeholder="깡통 글쓰기에 1번부터 차례로 그림을 올린 뒤, 그 이미지 코드(&lt;img …&gt;)나 주소를 여기에 붙여 넣어요" aria-label="깡통에 올린 그림 코드" data-lc-pic-codes></textarea></div>
             <div class="bl-lc-colors" data-lc-colors><div class="bl-lc-mode salty-mode-switch" role="group" aria-label="밝기">${['light', 'dark'].map(kind => `<button type="button" data-lc-mode="${kind}" aria-label="${kind === 'light' ? '화이트' : '나이트'}"><i class="fa-regular fa-${kind === 'light' ? 'sun' : 'moon'}" aria-hidden="true"></i></button>`).join('')}</div><button type="button" class="bl-lc-chip bl-lc-flip" data-lc="flip" aria-pressed="false" aria-label="낮 · 밤 전환 넣기"><i class="fa-regular fa-sun" aria-hidden="true"></i><i class="fa-regular fa-moon" aria-hidden="true"></i><span>전환 넣기</span></button><div class="bl-lc-pals bl-chip-row" role="radiogroup" aria-label="색" data-lc-pals></div></div>
             <div class="bl-lc-note bl-lc-flip-note" role="status" data-lc-flip-note hidden></div>
             <div class="bl-lc-easy" role="group" aria-label="조절 — 간편 · 세밀" data-lc-easy hidden></div>
@@ -503,7 +506,60 @@ export async function openLogSheet(model) {
         if (target && target !== nowPalette()) out.model = recolorLog(out.model, tokensOf(nowPalette()), tokensOf(target));
         out.model = wrapModel(out.model, store().wrap);
         if (wrapMode(store().wrap) === 'char') out.model = { ...out.model, messages: out.model.messages.map(m => (m.name ? { ...m, nameStyle: { ...m.nameStyle, 'word-break': 'keep-all' } } : m)) };   // 글자 단위여도 이름 줄은 낱말째(「틀 없이」 이름 줄은 바탕을 물려받아요)   // 11-13 메시지 글(인라인 글자 모양)의 줄바꿈 — 채팅 화면은 keep-all 이라 그대로 뜨면 단어 단위였어요
+        // 11-14 글 속 그림: 메시지 맨 앞에 그림 노드(갤러리 틀은 사진 칸이 따로라 안 넣어요) — 올릴 그림은 붙인 깡통 주소가 있을 때만 · 그림이 안 들어가면 모델 그대로
+        //   allow: 이름 숨김이 켜져 있으면 주소에 가린 이름이 든 그림은 빼요(바로 넣는 주소 · 붙인 코드 둘 다 · 칸 요약도 같은 판단 — state.picAllow)
+        const allow = src => out.rewriteImages([{ src }]).length > 0;
+        state.picAllow = allow;
+        if (!picsBlocked()) out.model = attachPics(out.model, { codes: state.picCodes, origin: location.origin, off: !!store().picsOff, allow });
+        // 검토 보3: 그림만 있는 메시지인데 그림이 안 들어가면(아직 안 붙임 · 끔 · 갤러리) 이름 줄만 남지 않게 이름을 비워요(메시지 자리는 그대로 — 고친 글 거두기가 메시지 수로 맞춰요)
+        if (out.model.messages.some(m => !m.nodes?.length && m.name)) out.model = { ...out.model, messages: out.model.messages.map(m => (!m.nodes?.length && m.name ? { ...m, name: '' } : m)) };
         return out;
+    };
+    /** 11-14 지금 틀이 글 속 그림을 안 받는가(갤러리 틀) */
+    const picsBlocked = () => !custom() && !!PRESETS.find(p => p.id === state.shape)?.images;
+    /** 11-14 「글 속 그림」 칸 — 고른 글에 그림이 있을 때만 · 올릴 그림 번호 · 들어간 수 · 그림 받기 */
+    const drawPics = () => {
+        const row = $('[data-lc-pics]'), list = picList(model, location.origin), off = !!store().picsOff, blocked = picsBlocked();
+        row.hidden = !list.length;
+        if (!list.length) return;
+        const plan = picPlan(model, { codes: state.picCodes, origin: location.origin, allow: state.picAllow ?? (() => true) });
+        const ups = list.filter(p => p.upload), nowList = plan.items.filter(x => !x.upload);
+        const box = $('[data-lc-pics-list]'), key = list.map(p => p.src).join('\n');
+        if (box.dataset.key !== key) {
+            box.dataset.key = key;
+            // 올릴 그림은 눌러서 한 장씩 받아요(누름 하나 = 받기 하나 — 폰 브라우저가 둘째 장부터 막는 일이 없게 · 검토 사1)
+            box.innerHTML = list.map(p => (p.upload
+                ? `<button type="button" class="bl-lc-pic" data-lc-pic-get="${p.n}" title="${p.n}번 — 눌러서 이 그림 받기 · 깡통에 ${p.n}번째로 올려요" aria-label="${p.n}번 그림 받기"><img src="${esc(p.src)}" alt="" loading="lazy" decoding="async"><b>${p.n}</b></button>`
+                : `<span class="bl-lc-pic is-now" title="공개 주소 — 그대로 넣어요"><img src="${esc(p.src)}" alt="" loading="lazy" decoding="async"><b>바로</b></span>`)).join('');
+        }
+        $('[data-lc="pics-on"]').setAttribute('aria-pressed', String(!off));
+        $('[data-lc="pics-save"]').hidden = !ups.length;
+        $('[data-lc-pic-codes]').hidden = !ups.length;
+        row.classList.toggle('is-off', off || blocked);
+        // 검토 사5: 칸 요약은 실제로 들어가는 수로(이름 숨김으로 뺀 것 · 거절한 코드 빼고)
+        const inUp = plan.items.filter(x => x.upload && x.to).length, inNow = nowList.filter(x => x.to).length, hidden = plan.items.filter(x => x.why === 'hidden').length;
+        const parts = [ups.length ? `올릴 그림 ${ups.length}장 중 ${inUp}장 들어가요` : '', nowList.length ? `공개 주소 ${inNow}장은 바로 들어가요` : '', hidden ? `이름 숨김으로 ${hidden}장 뺐어요` : ''];
+        if (plan.bad.length) parts.push(`붙인 코드 ${plan.bad.join(' · ')}번째는 실리태번 · 내부망 · 그림 자료 주소라 안 넣었어요 — 깡통에 올린 주소를 붙여요`);   // 검토 보1
+        $('[data-lc-pics-sum]').textContent = blocked ? '갤러리 틀은 사진 칸에 따로 넣어요' : off ? '끔 — 복사 글에 그림을 넣지 않아요' : parts.filter(Boolean).join(' · ');
+        $('[data-lc-pics]').classList.toggle('is-bad', !!plan.bad.length && !off && !blocked);
+    };
+    /** 그림 한 장 받기 — 누른 그 순간에 바로(기다림 없이) 받아요. 실리태번 주소 · 그림 자료는 같은 곳이라 download 이름이 먹어요 */
+    const getPic = (p) => {
+        const a = document.createElement('a');
+        a.href = p.src; a.download = `그림-${String(p.n).padStart(2, '0')}${(p.src.match(/\.(png|jpe?g|gif|webp|avif)(?:[?#]|$)/i)?.[0].replace(/[?#].*$/, '') ?? '.png').toLowerCase()}`;
+        a.rel = 'noopener';
+        document.body.append(a); a.click(); a.remove();
+    };
+    /** 11-14 「그림 받기」 — 올릴 그림을 번호 차례대로 받기 시작해요(그림-01.png …).
+     *  검토 사1: 기다림 없이 누른 순간에 차례로 걸어요(fetch 뒤 누름은 폰에서 막혀요) · 브라우저가 여러 장을 막아도 페이지는 알 수 없어 「시작했어요」로만 알리고 한 장씩 받는 길을 알려요 · 받는 동안 단추를 꺼요 */
+    const savePics = (button) => {
+        const ups = picList(model, location.origin).filter(p => p.upload);
+        if (!ups.length) return;
+        if (button) { button.disabled = true; setTimeout(() => { button.disabled = false; }, 1500); }
+        let bad = 0;
+        for (const p of ups) { try { getPic(p); } catch { bad++; } }
+        if (bad) toastr.warning(`그림 ${bad}장은 받기를 걸지 못했어요 — 작은 그림을 눌러 한 장씩 받아요`, '로그 복사', { timeOut: 5000 });
+        else toastr.info(ups.length > 1 ? `그림 ${ups.length}장 받기를 시작했어요 — 브라우저가 둘째 장부터 막으면(폰 · 「여러 파일 받기」 물음) 작은 그림을 눌러 한 장씩 받아요` : '그림 받기를 시작했어요', '로그 복사', { timeOut: 6000 });
     };
     // 1.0.7 「보일 것」 칩 · 머리 칸 글칸 — 틀을 그릴 때마다(직접 붙인 글꾸는 틀 칸이 없어 이름 줄만)
     const drawShows = () => {
@@ -758,6 +814,7 @@ export async function openLogSheet(model) {
         const mine = custom();
         let html;
         const shown = view();
+        drawPics();   // view 가 정한 이름 숨김 판단(state.picAllow)으로 칸 요약
         // 1.1.3 깡통 로그 틀 묶음: 인물표의 정해 둔 대사색을 먼저(이름 숨김 · 바꾸기로 이름이 바뀌어도 원래 이름으로 물어요) · 밝기는 고른 팔레트의 밝기
         const toneNow = toneOn(), toneMode = modeOf(state.palette);
         const lookup = toneNow || basicOn() || simpleOn() ? toneLookup(shown.model.messages, (state.edited ?? model).messages, name => people.get(name)) : null;
@@ -915,7 +972,7 @@ export async function openLogSheet(model) {
             resetHist(doc);
         };
         $('[data-lc-egg]').hidden = !/\sdata-bl-egg="/.test(html);   // 1.0.1 누르면 반응하는 장식이 있는 틀: 미리보기 머리에 한 줄
-        frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>html{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}${motionCss()}${toneNow ? sitePreviewCss(toneMode) : ''}</style></head><body style="margin:0;padding:12px;background-color:${esc(pageBg())};-webkit-text-size-adjust:100%;overflow-wrap:anywhere">${html}</body></html>`;
+        frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="referrer" content="no-referrer"><style>html{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}${motionCss()}${toneNow ? sitePreviewCss(toneMode) : ''}</style></head><body style="margin:0;padding:12px;background-color:${esc(pageBg())};-webkit-text-size-adjust:100%;overflow-wrap:anywhere">${html}</body></html>`;
     };
 
     /** 미리보기에 보이는 그대로(고친 것 포함) — 소독하고 고치기 표시를 걷은 HTML (marks: 표시를 남겨요 — 편집용 꼴이 메시지 · 이름 · 칸 자리를 찾아요) */
@@ -1108,6 +1165,7 @@ export async function openLogSheet(model) {
             requestAnimationFrame(() => $(`[data-shape="${CSS.escape(id)}"]`)?.focus({ preventScroll: true }));
             return;
         }
+        if (target.dataset.lcPicGet) { const p = picList(model, location.origin).find(x => x.upload && x.n === Number(target.dataset.lcPicGet)); if (p) getPic(p); return; }   // 11-14 작은 그림 = 그 한 장 받기
         if (target.dataset.lcDel) { dropMine(target.dataset.lcDel); return; }   // 1.2.0 내 글꾸 칩 옆 ✕: 바로 지우고 알림의 ↶ 로 되돌려요(전엔 두 번 눌러 지우고 되돌릴 수 없었어요)
         if (target.dataset.shape) {
             if (held) { held = false; return; }
@@ -1149,6 +1207,8 @@ export async function openLogSheet(model) {
             case 'stage-size': stageBig = !stageBig; drawStage(); break;
             case 'stage-fold': dialog.classList.toggle('bl-lc-shut'); drawStage(); break;
             case 'more': state.more = !state.more; drawMore(); drawShapes(); drawColors(); for (const strip of dialog.querySelectorAll('.bl-chip-row')) applyFade(strip); break;   // 1.1.3 더 보기 · 접기(미리보기는 다시 그리지 않아요)
+            case 'pics-on': { const s2 = store(); s2.picsOff = !s2.picsOff; saveSettings(); draw(); break; }   // 11-14 글 속 그림 넣기 켬끔(설정에 남아요)
+            case 'pics-save': savePics(target); break;
             case 'ink-reset': state.inks = {}; draw(); break;
             case 'ink-save': saveInks(); break;
             case 'auto': { const mine = custom(); if (mine) { mine.slot = 'auto'; state.picking = false; saveSettings(); draw(); } break; }   // 'auto' = 고르지 않고 guessSlot 으로
@@ -1275,7 +1335,7 @@ export async function openLogSheet(model) {
                 break;
         }
     });
-    let imageTimer = 0;
+    let imageTimer = 0, picTimer = 0;
     // 1.1.5 세밀 숫자 조절칸 — 끄는 동안은 미리보기만(칸은 그대로) · 놓으면 칸까지 다시 그려요
     const tuneInput = (event, done) => {
         const input = event.target, cell = input.closest?.('[data-lt-f]');
@@ -1315,6 +1375,17 @@ export async function openLogSheet(model) {
             imageTimer = setTimeout(() => { state.images = imagesFromCode(event.target.value); drawShapes(); draw(); }, 300);
             return;
         }
+        if (event.target.matches?.('[data-lc-pic-codes]')) {   // 11-14 깡통에 올린 그림 코드 → 올릴 그림 번호 차례대로(거를 주소도 자리를 지켜요 — 검사는 picPlan · 검토 보1) · 갤러리 칸과 타이머 따로(검토 사4)
+            clearTimeout(picTimer);
+            picTimer = setTimeout(() => {
+                const before = picPlan(model, { codes: state.picCodes, origin: location.origin }).bad.join();
+                state.picCodes = codesFrom(event.target.value);
+                const bad = picPlan(model, { codes: state.picCodes, origin: location.origin }).bad;
+                if (bad.length && bad.join() !== before) toastr.warning(`붙인 코드 ${bad.join(' · ')}번째는 실리태번 · 내부망 · 그림 자료 주소라 넣지 않았어요 — 깡통 글쓰기에 그림을 올린 뒤 그 이미지 코드를 붙여요`, '로그 복사', { timeOut: 6000 });
+                draw();
+            }, 300);
+            return;
+        }
         if (event.target.matches?.('[data-lc-field]')) {   // 1.0.7 머리 칸 글칸 → 그 칸 값 · 미리보기
             setField(event.target.dataset.lcField, event.target.value);
             clearTimeout(ruleTimer); ruleTimer = setTimeout(() => { rememberBlank(); draw(); }, 300); return;
@@ -1332,7 +1403,7 @@ export async function openLogSheet(model) {
         if (event.key === 'Enter' && event.target.matches?.('[data-lc-name-input]')) { event.preventDefault(); $('[data-lc="name-add"]').click(); }
     });
     // 1.1.0: 닫을 때 남은 대기(규칙 · 그림 주소 · 글자색 · 되돌리기 묶음 · 길게 누르기)를 모두 걷어요 — 닫힌 직후 떨어진 창을 다시 그리지 않게
-    dialog.addEventListener('close', () => { selBar.destroy(); boxWatch?.disconnect(); globalThis.visualViewport?.removeEventListener('resize', onVv); clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
+    dialog.addEventListener('close', () => { selBar.destroy(); boxWatch?.disconnect(); globalThis.visualViewport?.removeEventListener('resize', onVv); clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(picTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });
     open = dialog;
     guide(dialog, 'idle');
     drawStage();
@@ -1414,6 +1485,23 @@ const STYLE = `
 .bl-lc-gallery { display:grid; gap:4px; margin:0 16px; }
 .bl-lc-gallery textarea { box-sizing:border-box; width:100%; min-height:72px; padding:8px 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-field, var(--salty-raised)); color:var(--salty-text); font-family:var(--salty-font-code, monospace); font-size:13px; scrollbar-width:none; resize:vertical; }
 .bl-lc-gallery textarea:focus { outline:1px solid var(--salty-accent); }
+.bl-lc-pics[hidden], .bl-lc-pics [hidden] { display:none; }
+.bl-lc-pics { display:grid; gap:6px; margin:0 16px; min-width:0; }
+.bl-lc-pics-h { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; min-width:0; }
+.bl-lc-pics-h > b { display:inline-flex; align-items:center; gap:6px; font-size:13px; }
+.bl-lc-pics-h > .bl-lc-note { flex:1 1 160px; min-width:0; }
+.bl-lc-pics-list { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+.bl-lc-pics-list::-webkit-scrollbar { display:none; }
+.bl-lc-pics.is-bad [data-lc-pics-sum] { color:var(--salty-danger); }
+button.bl-lc-pic { padding:0; font:inherit; color:inherit; cursor:pointer; }
+button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-offset:1px; }
+.bl-lc-pic { position:relative; flex:0 0 auto; display:grid; width:52px; height:52px; border-radius:8px; overflow:hidden; border:1px solid var(--salty-line); background:var(--salty-raised); }
+.bl-lc-pic > img { grid-area:1/1; width:100%; height:100%; object-fit:cover; display:block; }
+.bl-lc-pic > b { grid-area:1/1; justify-self:start; align-self:start; margin:3px; padding:0 5px; border-radius:6px; background:color-mix(in srgb, var(--salty-bg) 78%, transparent); color:var(--salty-text); font-size:11px; line-height:16px; font-weight:600; }
+.bl-lc-pic.is-now > b { background:var(--salty-accent); }
+.bl-lc-pics.is-off .bl-lc-pics-list { opacity:0.45; }
+.bl-lc-pics textarea { box-sizing:border-box; width:100%; min-height:52px; padding:8px 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-field, var(--salty-raised)); color:var(--salty-text); font-family:var(--salty-font-code, monospace); font-size:13px; scrollbar-width:none; resize:vertical; }
+.bl-lc-pics textarea:focus { outline:1px solid var(--salty-accent); }
 .bl-lc-chips, .bl-lc-pals { display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; padding:5px 16px; scroll-padding:0 16px; }
 .bl-lc-chip { position:relative; flex:none; box-sizing:border-box; display:inline-flex; align-items:center; gap:4px; min-height:var(--bl-ui-chip, 34px); margin:0; padding:0 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-surface); color:var(--salty-text); font:inherit; font-size:13px; line-height:1.2; letter-spacing:inherit; white-space:nowrap; box-shadow:none; cursor:pointer; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
 .bl-lc-chip > i { font-size:12px; color:var(--salty-muted); }
@@ -1559,7 +1647,7 @@ const STYLE = `
   .bl-lc-colors:not(.bl-lc-flip-idle) .bl-lc-pals { padding-left:8px; }
   /* 차례: 분류 → 틀 → 미리보기(붙박이) → 색 · 조절 → 「로그 꾸밈」 갈래 → 숨기기 안내 */
   .bl-lc-scroll { margin-top:-5px; padding:5px 0 14px; }   /* 간격 8 은 넓은 창 규칙 그대로. 11-14 위로 5 올리고 안쪽 여백 5(내용 자리 그대로): 맨 윗줄 분류 탭의 누르는 상자 44 가 위 5px 를 이 칸 위 끝에서 잘려 아래로만 늘던 것 — 올린 5px 는 머리줄 아래 여백 4 + 선 1 자리예요 */
-  .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-mine { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
+  .bl-lc-tl { order:1; } .bl-lc-cr { order:2; } .bl-lc-mine { order:2; } .bl-lc-gallery { order:3; } .bl-lc-pics { order:3; } .bl-lc-pick { order:4; } .bl-lc-stk { order:5; } .bl-lc-paste { order:5; }
   .bl-lc-band.bl-lc-empty { order:2; } .bl-lc-band[data-lc-retired] { margin-top:8px; }   /* 1.1.8 빈 안내는 틀 줄 바로 아래 · 옛 글꾸 띠는 맨 위 */
   .bl-lc-colors { order:6; } .bl-lc-flip-note { order:6; } .bl-lc-easy { order:7; } .bl-lc-inks { order:8; } .bl-lc-sep { order:9; } .bl-lc-folds { order:10; } .bl-lc-hint { order:11; } .bl-lc-scroll > .bl-lc-more { order:12; }
   .bl-lc-tools { display:none; }

@@ -553,8 +553,8 @@ body.salty .popup[data-bl-popup~="notice"]:not(.bl-update-dialog) .popup-control
   border: 0;
   border-radius: 8px;
   background: none;
-  color: var(--salty-muted);
-  color: color-mix(in srgb, var(--salty-muted) 80%, var(--salty-text)); /* 1.4.7 감사 표3: 회색 바탕 위 안 고른 칸 글자가 4.3:1(기준 4.5) — 본문색 쪽으로 한 걸음(화이트 약 5.2:1 · 나이트는 더 밝아짐) */
+  /* 1.4.7 감사 표3: 회색 바탕 위 안 고른 칸 글자가 4.3:1(기준 4.5) → 1.4.8 팔레트 잉크 --salty-muted-ink(apply.js · 4.6:1 까지만 본문색 쪽으로) */
+  color: var(--salty-muted-ink, var(--salty-muted));
   font-weight: 650;
   min-width: 0;
   max-width: 100%;

@@ -558,8 +558,14 @@ body.salty #AdvancedFormatting :is(.disabled, [data-cc-null], input:disabled, te
 body.salty #AdvancedFormatting .disabled {
   opacity: 0.5;
 }
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"])[data-cc-null] {
-  opacity: 1;
+/* 1.4.8 머리줄 「마스터 불러오기 · 내보내기」: 채팅 완성에서도 눌리는 단추라 반투명(.5)이면 아이콘이 낮 1.96 : 1 · 밤 2.8 : 1(아이콘 기준 3)이었어요.
+   흐린 느낌은 남기되 .8 까지만 — 낮 아이콘 3.3 · 밤 4.8 : 1.
+   값은 변수로만 두고 아래 채팅 완성 규칙 하나가 읽어요(주어 아닌 :has 규칙 수를 늘리지 않으려고 — has-guard ②). 채팅 완성이 아니면 아무도 안 읽어요 */
+body.salty #AdvancedFormatting > .flex-container:first-child > .flex-container[data-cc-null] {
+  --bl-ccnull-op: 0.8;
+}
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#InstructSettingsColumn, #SystemPromptColumn > h4, #SystemPromptBlock, [name="tokenizerSettingsBlock"], #AdvancedFormatting > .flex-container:first-child > .flex-container)[data-cc-null] {
+  opacity: var(--bl-ccnull-op, 1);
 }
 /* 시스템 프롬프트: 이름(h4)과 본문이 형제라 두 조각을 이어 한 카드로 */
 body.salty #AdvancedFormatting #SystemPromptColumn > h4:first-child {
@@ -876,6 +882,39 @@ body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .mobile-only-menu-togg
   border-radius: 8px !important;
   background-color: var(--bl-media-scrim-45) !important;
   font-size: 13px;
+}
+/* 1.4.8 감사 표1 다시(조정자 안): 폰(실리태번 모바일 폭)에서 칸이 약 62×36 이라 오른쪽 위 ⋮ 가 아래 이름 띠까지 내려와 이름을 가렸어요.
+   ⋮ 를 칸 왼쪽 위 그림 위 작은 반투명 동그라미로 옮기고 이름 띠는 원래 폭 그대로 둬요. 고른 칸의 ✓(원래 왼쪽 위)는 ⋮ 바로 오른쪽으로.
+   누름 상자는 44px 이 목표지만 칸 가운데를 넘으면 그림 고르기를 뺏으니 칸 폭의 35% 까지만(min(44px, 35cqw) — 61px 칸 약 22px = 보이는 동그라미 · 넓은 칸은 44px).
+   45% 일 때는 상자 끝이 칸 가운데와 1.4px 뿐이라 가운데 터치가 ⋮ 로 붙었어요(리그 실측 · v1.4.7 도 같았어요) */
+@media screen and (max-width: 1000px) {
+  body.salty #Backgrounds .bg_example {
+    container-type: inline-size;
+  }
+  body.salty #Backgrounds .bg_example .mobile-only-menu-toggle {
+    top: 4px !important;
+    right: auto !important;
+    left: 4px !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    background-color: var(--bl-media-scrim-55) !important;
+    color: var(--bl-on-media) !important;
+    font-size: 11px;
+  }
+  body.salty #Backgrounds .bg_example .mobile-only-menu-toggle::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, min(44px, 35cqw));
+    height: max(100%, min(44px, 35cqw));
+    transform: translate(-50%, -50%);
+  }
+  body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before {
+    left: 30px !important;
+    top: 5px !important;
+  }
 }
 body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .jg-menu {
   top: 6px !important;

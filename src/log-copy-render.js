@@ -3,6 +3,7 @@
 // 틀(글꾸 모양)은 log-copy-presets.js — 여기는 로그 본문(「그대로」)과 마크다운 · 글.
 import { contrast, parseColor, compose } from './shared/ink-paint.js';
 import { spoilerHtml } from './log-copy-spoiler.js';   // 1.0.1 미리보기에서 숨긴 글을 틀을 바꿔 다시 그릴 때
+import { picHtml } from './log-copy-pics.js';   // 11-14 글 속 그림 칸
 
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 const cleanValue = value => String(value ?? '').replace(/"/g, "'").replace(/[<>{};\\]/g, '').trim();
@@ -75,6 +76,7 @@ export function nodesHtml(nodes, { inkFix = null, trimEdges = false, relayout = 
     const one = (node, edge) => {
         if (node.t === 'text') return esc(node.text);
         if (node.t === 'br') return '<br>';
+        if (node.t === 'pic') return picHtml(node);   // 11-14 글 속 그림(log-copy-pics.js attachPics — 메시지 맨 앞)
         if (node.t === 'hr') return tag('div', { ...node.style, height: '0', 'max-width': '100%' }, '');
         let style = node.style;
         if (node.block) {

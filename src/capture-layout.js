@@ -1,3 +1,17 @@
+/** 캡처 그림에 안 찍히는 표지 — 화면을 만지는 칩 · 단추를 새로 만들면 이 속성(data-bl-no-capture)이나 클래스(bl-no-capture)만 달면 된다. 목록을 고치지 않아도 빠진다 */
+export const CAPTURE_MARK='[data-bl-no-capture],.bl-no-capture';
+/** 캡처에서 빼는 화면 조작 표시(본문 · 이름 · 날씨 같은 꾸밈은 넣지 않는다 — 정보 줄의 번호 · 토큰 · 시간은 「표시할 항목」 켜고 끄기가 따로 정한다) */
+export const CAPTURE_SKIP=[
+    'script','iframe','video','audio',CAPTURE_MARK,
+    '.mes_buttons','.mes_button','.mes_edit_buttons', // 메시지 단추 줄 · 편집 연필 · 북마크 · 체크포인트 깃발 · 고정해 꺼낸 단추
+    '.swipe_left','.swipe_right','.swipeRightBlock','.swipes-counter','.mes_swipe_picker', // 스와이프 화살표 · 번호(1/3)
+    '.mes_ghost','.del_checkbox','.for_checkbox', // 숨김 유령 · 지우기 · 고르기 체크
+    '.mes_reasoning_actions','.mes_img_controls','.mes_video_controls','.mes_img_swipes','.mes_file_open','.mes_file_delete', // 생각 칸 · 그림 · 파일 단추, 그림 넘기기 번호
+    '.llmt-progress','.llmt-rsn-bar','.llmt-rsn-meta', // 테마 번역: 진행 줄 · 생각 번역 단추 · 글자 수
+    'tlr-badge','.tlr-badge', // 다른 확장의 리롤 등급 배지(「R 2/2」)
+].join(',');
+/** 사본에서 조작 표시를 뗀다 (자기 자신은 메시지라 떼지 않는다) */
+export function stripCaptureUi(clone){clone.querySelectorAll(CAPTURE_SKIP).forEach(el=>el.remove());return clone;}
 export const CAPTURE_INFO_KEYS=['showName','showAvatar','showTimestamp','showModel','showMessageId','showTokens','showGenerationTime'];
 const INFO_SELECTORS={showName:'.name_text,.mes_name',showTimestamp:'.timestamp',showModel:'.timestamp-icon,.mes_model,.model_name,[data-capture-model]',showMessageId:'.mesIDDisplay',showTokens:'.tokenCounterDisplay',showGenerationTime:'.mes_timer'};
 export function applyCaptureDisplay(clone,options={},model=''){

@@ -3,7 +3,7 @@
 // 문단 · 줄바꿈 너머로는 찾지 않아요. 한국어 조사는 바꾼 말의 받침에 맞춰요(번역기 용어집의 particleFor 를 그대로).
 // 이름 숨기기는 채팅 캡처 「로그 공유 · 이름 가림」 설정(captureTools.redact · names · mask · maskStyles)을 같이 써요 — 원래 글자는 결과에 남지 않아요.
 import { particleFor } from './addons/translator/glossary-match.js';
-import { parseColor, contrast } from './shared/ink-paint.js';
+import { parseColor, contrast, compose } from './shared/ink-paint.js';
 
 const escape = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const HANGUL_TAIL = /^[가-힣]{1,5}/;
@@ -176,9 +176,39 @@ export function transformLog(model, { rules = [], hide = null } = {}) {
 
 // ── 고른 에이드로 역할 색 다시 계산 ─────────────────────────
 // 화면 팔레트의 역할 색(본문 · 대사 · 속마음 · 강조 · 보조 · 포인트 · 형광펜 · 면 · 선 …)과 같은 색만 고른 팔레트의 같은 역할 색으로 바꿔요.
-// 맞는 역할이 없는 색(글자 모양 설정에서 직접 고른 고정 색 등)은 그대로 두고, 새 바탕에서 대비가 3 아래로 떨어지는 글자색만 그 팔레트 본문색으로.
+// 맞는 역할이 없는 색(글자 모양 설정에서 직접 고른 고정 색 등)은 그대로 두고, 새 바탕에서 대비가 4.5 아래로 떨어지는 글자색은 같은 색의 밝기만 옮겨 맞춰요(fitInk · 못 맞추면 그 팔레트 본문색).
 const near = (a, b, tol = 6) => a && b && Math.abs(a.r - b.r) <= tol && Math.abs(a.g - b.g) <= tol && Math.abs(a.b - b.b) <= tol && Math.abs((a.a ?? 1) - (b.a ?? 1)) <= 0.03;
 const rgbText = c => (c.a >= 0.999 ? `rgb(${c.r}, ${c.g}, ${c.b})` : `rgba(${c.r}, ${c.g}, ${c.b}, ${Math.round(c.a * 1000) / 1000})`);
+
+// 11-14 사용자 「왜 라이트는 글자색 없고 나이트는 있냐」: 새 바탕에서 대비가 모자란 글자색(프리셋 · 정규식이 칠한 분홍 속마음 등)을
+//   본문색으로 덮지 않고, 같은 색상 · 채도에서 밝기만 옮겨 바탕 대비 4.6(깡통이 덮는 문턱 약 4.5 위)에 맞춰요 — 밤 분홍 → 낮 진한 분홍.
+//   반투명 글자는 바탕에 겹친 색으로 보고 불투명으로 내요. 그래도 못 맞추면(중간 밝기 바탕 등) 예전처럼 본문색.
+const INK_MIN = 4.6;
+const toHsl = ({ r, g, b }) => {
+    const [x, y, z] = [r, g, b].map(v => v / 255), max = Math.max(x, y, z), min = Math.min(x, y, z), l = (max + min) / 2, d = max - min;
+    if (!d) return { h: 0, s: 0, l };
+    const s = d / (1 - Math.abs(2 * l - 1));
+    const h = max === x ? ((y - z) / d) % 6 : max === y ? (z - x) / d + 2 : (x - y) / d + 4;
+    return { h: (h * 60 + 360) % 360, s, l };
+};
+const fromHsl = ({ h, s, l }) => {
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+    const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255), a: 1 };
+};
+/** 그 색의 밝기만 옮겨 bg 위 대비 INK_MIN 이상인 가장 가까운 색(못 찾으면 fallback) */
+export function fitInk(value, bg, fallback) {
+    const under = parseColor(bg), raw = parseColor(value);
+    if (!under || !raw || raw.a < 0.05) return fallback;
+    const c = raw.a >= 0.999 ? raw : compose(raw, { ...under, a: 1 });
+    if (contrast(c, under) >= INK_MIN) return rgbText(c);
+    const hsl = toHsl(c), darker = contrast(under, { r: 0, g: 0, b: 0 }) >= contrast(under, { r: 255, g: 255, b: 255 });
+    const end = darker ? 0 : 1;
+    if (contrast(fromHsl({ ...hsl, l: end }), under) < INK_MIN) return fallback;
+    let near = hsl.l, far = end;   // near: 모자람 · far: 넉넉함 — 넉넉한 쪽 끝에서 원래 밝기에 가장 가까운 곳
+    for (let i = 0; i < 20; i++) { const mid = (near + far) / 2; if (contrast(fromHsl({ ...hsl, l: mid }), under) >= INK_MIN) far = mid; else near = mid; }
+    return Math.abs(far - end) < 0.08 ? fallback : rgbText(fromHsl({ ...hsl, l: far }));   // 거의 검정 · 흰색까지 가야 맞으면 색이 안 남아요 — 본문색
+}
 
 /**
  * @param {object} model
@@ -198,7 +228,7 @@ export function recolorLog(model, from, to) {
     const fixStyle = (style, bg) => {
         if (!style) return style;
         for (const key of Object.keys(style)) if (/color|background|border|shadow/.test(key) && typeof style[key] === 'string') style[key] = swap(style[key]);
-        for (const key of ['color', 'text-decoration-color']) if (style[key] && contrast(style[key], bg) < 4.5) style[key] = ink;
+        for (const key of ['color', 'text-decoration-color']) if (style[key] && contrast(style[key], bg) < 4.5) style[key] = fitInk(style[key], bg, ink);
         return style;
     };
     const walk = (nodes, bg) => { for (const node of nodes ?? []) { if (node.style && !node.mask) fixStyle(node.style, node.style['background-color'] && parseColor(node.style['background-color'])?.a >= 0.999 ? node.style['background-color'] : bg); if (node.children) walk(node.children, bg); } };

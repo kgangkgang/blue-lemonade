@@ -4,7 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 const sourceFile=process.argv[2]||path.resolve('src/chat-capture.js');
-const code=fs.readFileSync(sourceFile,'utf8').replace(/^import .*;\r?\n/gm,'').replace('export async function captureMessages','async function captureMessages');
+// 빼는 목록(CAPTURE_SKIP)은 capture-layout.js 에 있다 — import 를 지우니 그 두 상수만 옮겨 온다
+const layout=fs.readFileSync(path.join(path.dirname(sourceFile),'capture-layout.js'),'utf8');
+const skipConsts=['CAPTURE_MARK','CAPTURE_SKIP'].map(name=>{const m=layout.match(new RegExp(`export const ${name}=[\\s\\S]*?;\\r?\\n(?=export |/\\*\\*)`));assert.ok(m,name);return m[0].replace('export ','');}).join('');
+const code=skipConsts+fs.readFileSync(sourceFile,'utf8').replace(/^import .*;\r?\n/gm,'').replace('export async function captureMessages','async function captureMessages');
 const node=(name,kids=[],tag='DIV',classes=[])=>{
     const el={name,tagName:tag,style:{},children:kids,parentNode:null,isConnected:true,classes,
         matches(selectors){return selectors.split(',').some(s=>s[0]==='.'?this.classes.includes(s.slice(1)):s.toUpperCase()===this.tagName);},

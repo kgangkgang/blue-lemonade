@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 47e04cc5ba4e) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 59b5adef6aa6) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
-:root{--bl-release:"1.4.7";}
+:root{--bl-release:"1.4.8";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -2061,7 +2061,7 @@ body.salty :is(#chat,.bl-chat-like) .mes + .mes {
 body.salty :is(#chat,.bl-chat-like) .last_mes {
   padding-bottom: 44px !important;
 }
-:where(html.bl-chat-light) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail]) {
+:where(html.bl-chat-light:not([data-bl-chat-sel])) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail]) {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
   flex-shrink: 0;
@@ -9405,8 +9405,11 @@ body.salty #AdvancedFormatting select:disabled {
 body.salty #AdvancedFormatting .disabled {
   opacity: 0.5;
 }
-body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #InstructSettingsColumn:is(bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#SystemPromptColumn > h4)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #SystemPromptBlock:is(bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :where([name="tokenizerSettingsBlock"]):is(#bl-s, *):is(bl-s, *)[data-cc-null] {
-  opacity: 1;
+body.salty #AdvancedFormatting > .flex-container:first-child > .flex-container[data-cc-null] {
+  --bl-ccnull-op: 0.8;
+}
+body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #InstructSettingsColumn:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :where(#SystemPromptColumn > h4):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting #SystemPromptBlock:is(.bl-s, *):is(.bl-s, *):is(.bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting [name="tokenizerSettingsBlock"]:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *)[data-cc-null], body.salty #top-settings-holder:has(#main_api option[value="openai"]:checked) #AdvancedFormatting :is(#AdvancedFormatting > .flex-container:first-child > .flex-container)[data-cc-null] {
+  opacity: var(--bl-ccnull-op, 1);
 }
 body.salty #AdvancedFormatting #SystemPromptColumn > h4:first-child {
 min-height:var(--bl-h-icon);
@@ -9768,6 +9771,39 @@ background-color:var(--bl-media-scrim-45) !important;
 }
 body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .mobile-only-menu-toggle {
 font-size:13px;
+}
+@media screen and (max-width: 1000px) {
+  body.salty #Backgrounds .bg_example {
+    container-type: inline-size;
+  }
+  body.salty #Backgrounds .bg_example .mobile-only-menu-toggle {
+top:4px !important;
+right:auto !important;
+left:4px !important;
+width:22px !important;
+height:22px !important;
+border-radius:50% !important;
+}
+body.salty #Backgrounds .bg_example .mobile-only-menu-toggle:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
+background-color:var(--bl-media-scrim-55) !important;
+color:var(--bl-on-media) !important;
+}
+body.salty #Backgrounds .bg_example .mobile-only-menu-toggle {
+font-size:11px;
+}
+  body.salty #Backgrounds .bg_example .mobile-only-menu-toggle::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, min(44px, 35cqw));
+    height: max(100%, min(44px, 35cqw));
+    transform: translate(-50%, -50%);
+  }
+  body.salty #Backgrounds .bg_example:is(.selected-background, .folder-group-selected)::before {
+    left: 30px !important;
+    top: 5px !important;
+  }
 }
 body.salty #Backgrounds :is(.bg_example, .bg_folder_tile) .jg-menu {
 top:6px !important;
@@ -12621,8 +12657,7 @@ body.salty .popup[data-bl-popup~="notice"]:not(.bl-update-dialog) .popup-control
   border: 0;
   border-radius: 8px;
   background: none;
-  color: var(--salty-muted);
-  color: color-mix(in srgb, var(--salty-muted) 80%, var(--salty-text));
+  color: var(--salty-muted-ink, var(--salty-muted));
   font-weight: 650;
   min-width: 0;
   max-width: 100%;
@@ -20093,7 +20128,9 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel > i {
   display:inline-block; flex:0 0 15px!important; width:15px!important; height:15px!important;
   font-size:0!important; position:absolute!important; top:50%!important; right:10px!important; left:auto!important; bottom:auto!important; transform:translateY(-50%)!important;
-  background:var(--bl-select-arrow) no-repeat center / 15px 15px;
+  background:linear-gradient(currentColor, currentColor);
+  -webkit-mask:var(--bl-select-arrow) no-repeat center / 15px 15px;
+  mask:var(--bl-select-arrow) no-repeat center / 15px 15px;
 }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group] { position:relative; overflow:visible; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group]::after {

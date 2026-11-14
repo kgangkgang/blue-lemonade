@@ -14,6 +14,7 @@ import { tone, speakerColor } from './shared/char-tone.js';
 import { toneSimple, ORIGINAL, markEdits, simpleFrameInfo, speakerColorsOf } from './log-copy-simple-tone.js';
 import { SIMPLE_FRAMES as REGISTERED } from './log-copy-simple.gen.js';
 import { spoilerHtml, unparagraphHtml } from './log-copy-spoiler.js';   // 1.1.8 거둔 숨긴 글 다시 그리기 · 그 글이 든 <p> 줄은 div.blsp-p 로
+import { picHtml } from './log-copy-pics.js';   // 11-14 글 속 그림 줄
 
 export const SIMPLE = Object.freeze({
     category: 'simple',                 // 프리셋 분류 id(log-copy-presets.js ALL_CATEGORIES)
@@ -214,6 +215,7 @@ function paragraphs(nodes) {
                 if (ctx.b) html = `<strong>${html}</strong>`;
                 cur.push({ dlg: ctx.dlg, html, text: node.text, who: ctx.dlg ? ctx.who : null });   // 1.4.1 who: 이 대사 띠를 정한 화자 색(retintModel)
             } else if (node.t === 'br') cur.push({ dlg: ctx.dlg, html: '<br>', text: '', br: true });
+            else if (node.t === 'pic') { flush(); out.push([{ pic: node, dlg: false, html: '', text: '' }]); }   // 11-14 글 속 그림 — 문단 하나를 따로(drawSimple 이 그림 줄로)
             else if (node.t === 'hr') flush();
             else if (node.t === 'el' && node.kind === 'spoiler') {   // 1.1.8 미리보기에서 숨긴 글(거둔 모델에만 있어요 — log-copy-basic.js 와 같은 길)
                 const html = spoilerHtml(inline(node.children, ctx).replace(/^(<br>)+|(<br>)+$/g, ''), node.sp, !node.block);
@@ -291,7 +293,7 @@ function rowForm(frame, said, showNames) {
     const vary = frame.vary;
     if (!vary) return kind => frame.rows[kind];
     const total = { 이름: said.filter(m => showNames && m.name).length, 대사: 0, 지문: 0 };
-    for (const m of said) for (const b of m.body) total[b.kind]++;
+    for (const m of said) for (const b of m.body) if (b.kind in total) total[b.kind]++;   // 그림 줄은 세지 않아요
     const seen = { 이름: 0, 대사: 0, 지문: 0 };
     return (kind) => {
         const i = seen[kind]++, v = vary[kind];
@@ -312,11 +314,13 @@ function unitPages(frame, said, showNames) {
     for (const m of said) {
         const chunks = [];
         for (const b of m.body) {
+            if (b.kind === '그림') { chunks.push({ pic: b.html }); continue; }   // 11-14 글 속 그림 줄은 칸에 담지 않고 그 자리에 한 줄로
             const last = chunks[chunks.length - 1];
-            if (!last || (b.kind === '지문' && last.dl.length)) chunks.push({ nr: [], dl: [] });
+            if (!last || last.pic || (b.kind === '지문' && last.dl.length)) chunks.push({ nr: [], dl: [] });
             chunks[chunks.length - 1][b.kind === '대사' ? 'dl' : 'nr'].push(b.vals);
         }
         for (const c of chunks) {
+            if (c.pic) { pages[n === 0 ? 0 : 1].push(c.pic); continue; }   // 다음 칸이 갈 쪽에(첫 칸 앞이면 첫 쪽)
             const unit = frame.units[n++ ? 1 : 0];
             const map = {
                 '{{화자}}': m.letter, '{{이름}}': showNames && m.name ? esc(m.name) : '',
@@ -359,6 +363,7 @@ export function drawSimple(frame, model, o = {}) {
         const name = String(message.name ?? '').trim();
         const letter = who.letterOf.get(name) ?? frame.main;
         const body = paragraphs(message.nodes).map((list) => {
+            if (list[0]?.pic) return { kind: '그림', html: picHtml(list[0].pic) };   // 11-14 글 속 그림 줄(줄 꼴 없이 그림 칸 그대로)
             const talk = list.filter(p => p.text.trim());
             if (talk.every(p => p.dlg) || SIMPLE.quoted.test(list.map(p => p.text).join(''))) {
                 const delay = seconds(Math.min(SIMPLE.delayStart + SIMPLE.delayStep * lines++, SIMPLE.delayMax));
@@ -384,7 +389,7 @@ export function drawSimple(frame, model, o = {}) {
         rowCount = said.map(m => (m.body.length ? counts[k++] : 0));
     } else {
         const form = rowForm(frame, live, showNames);
-        const perMessage = said.map(m => (m.body.length ? [...(showNames && m.name ? [fill(form('이름'), { [SIMPLE.who]: m.letter, '{{이름}}': esc(m.name) })] : []), ...m.body.map(b => fill(form(b.kind), b.vals))] : []));
+        const perMessage = said.map(m => (m.body.length ? [...(showNames && m.name ? [fill(form('이름'), { [SIMPLE.who]: m.letter, '{{이름}}': esc(m.name) })] : []), ...m.body.map(b => (b.kind === '그림' ? b.html : fill(form(b.kind), b.vals)))] : []));
         rowCount = perMessage.map(b => b.length);
         const blocks = perMessage.filter(b => b.length);
         [page1, page2] = frame.pages === 2 ? splitPages(blocks) : [blocks.flat(), []];

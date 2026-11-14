@@ -210,8 +210,10 @@ await test('오늘의 에이드: 오늘 처음 켜면 기본이 오늘 것으로
     const was = S.getSettings().palette; mod.syncAde(true, q(), hooks);
     assert.equal(S.getSettings().palette, was);
     assert.equal(S.getSettings().palette.endsWith('-night') || S.getSettings().palette === 'black', true, '밝기는 나이트 그대로');
-    S.getSettings().palette = 'lemon-night'; mod.syncAde(true, q(), hooks);
-    assert.equal(mod._forTest.state().chats['c:char.png'], 'lemon');
+    // 1.4.8: 오늘의 에이드가 마침 레몬인 날(2026-11-15)에는 레몬을 골라도 「기본과 같음」이라 안 적혀서 시험이 날짜에 따라 깨졌어요 — 오늘 것과 다른 가족을 골라요
+    const pick = st.base === 'lemon' ? 'peach' : 'lemon';
+    S.getSettings().palette = `${pick}-night`; mod.syncAde(true, q(), hooks);
+    assert.equal(mod._forTest.state().chats['c:char.png'], pick);
 });
 
 await test('끄면 기본 에이드로 돌아와요 · 다시 켜도 리스너는 그대로', () => {

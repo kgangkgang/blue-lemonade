@@ -108,7 +108,11 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel > i {
   display:inline-block; flex:0 0 15px!important; width:15px!important; height:15px!important;
   font-size:0!important; position:absolute!important; top:50%!important; right:10px!important; left:auto!important; bottom:auto!important; transform:translateY(-50%)!important;
-  background:var(--bl-select-arrow) no-repeat center / 15px 15px;
+  /* 1.4.8 꺾쇠 색은 칸 글자를 따라가요: 공용 ▾ 그림(회색 #808080)은 모양(mask)으로만 쓰고 칠은 글자색 —
+     밤 칸 면 위 회색이 2.2 ~ 2.8 : 1(아이콘 기준 3)이었어요. 안 고른 칸은 창의 보조 글자색(--ink2) · 고른 칸은 포인트 글자색(currentColor) */
+  background:linear-gradient(currentColor, currentColor);
+  -webkit-mask:var(--bl-select-arrow) no-repeat center / 15px 15px;
+  mask:var(--bl-select-arrow) no-repeat center / 15px 15px;
 }
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group] { position:relative; overflow:visible; }
 :is(html > body.salty #fruit-heart-v6, html > body.salty ~ #fruit-heart-v6) .fh-sel[data-pick-group]::after {

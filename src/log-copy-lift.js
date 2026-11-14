@@ -7,6 +7,7 @@
 //   - <style> 이 지워지는 곳에서는 그림만 빠지고 나머지 모양 · 글은 그대로예요(인라인에 깨진 조각을 남기지 않아요).
 //   - <style> · <script> · <textarea> 안 글과 주석은 건드리지 않아요. 순수 함수(DOM 없음) — 테마 로그 복사 창과 글꾸 마트가 같이 써요.
 import { polishHtml, SCROLL_RULE } from './log-copy-polish.js';   // 정화기 맞춤(overflow:clip · block-size · 스크롤바 숨김)
+import { PIC_CLASS, PIC_RULE } from './log-copy-pics.js';   // 11-14 글 속 그림 칸
 
 export const LIFT_CLASS = 'blq-';
 
@@ -223,7 +224,8 @@ export const withCommentSlots = html => `${COMMENT_SLOT}${html}${COMMENT_SLOT}`;
 export function liftForCopy(html, motionHead = '', { comments = true, width = 640 } = {}) {
     const { html: out, css } = copyBody(html);
     const scroll = /scrollbar-width\s*:\s*none/i.test(out) ? SCROLL_RULE : '';
-    const head = joinHead(motionHead, css + scroll + (comments ? commentCss(width) : ''));
+    const pics = new RegExp(`\\sclass="(?:[^"]*\\s)?${PIC_CLASS}(?:\\s[^"]*)?"`).test(out) ? PIC_RULE : '';   // 11-14 글 속 그림 칸 안 깡통 번호표 숨기기(그림이 없으면 글 그대로)
+    const head = joinHead(motionHead, css + scroll + pics + (comments ? commentCss(width) : ''));
     const full = insertHead(out, head);
     return { head, html: out, full: comments ? withCommentSlots(full) : full };
 }

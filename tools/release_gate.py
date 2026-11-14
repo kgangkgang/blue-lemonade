@@ -502,6 +502,9 @@ RUNTIME_REFS = {
     ('src/addons.js', "id==='order'?'./addons/order/panel.js':'./addons/perf/hub.js'"): ('names', ('src/addons/order/panel.js', 'src/addons/perf/hub.js')),
     # 다른 확장(LLM 번역 단독판) 폴더의 모듈 — 실리태번 쪽
     ('src/addons/bookmarks/translate.js', 'url'): ('none', '확장 폴더 밖(다른 확장)의 index.js — 주소는 ../../../../ 템플릿'),
+    # 미트볼 상태창 빈틈 메우기: 그 확장 폴더(실리태번이 붙인 모듈 script 주소)의 src/translate.js · core.js · prompts.js · manifest.json — 실리태번 쪽
+    ('src/ext-bridge-tr.js', 'url'): ('none', '다른 확장(미트볼 상태창) 폴더의 모듈 — script 주소 기준'),
+    ('src/ext-bridge-tr.js', 'manifest'): ('none', '다른 확장 폴더의 manifest.json(이름만 읽음)'),
     # Mermaid: 기준 주소 + 'index.js' · 묶음이 같은 폴더 조각을 __blMermaidBase 로 받아요
     ('src/addons/mermaid/index.js', "'./vendor/'"): ('glob', ('src/addons/mermaid/vendor/index.js', 'src/addons/mermaid/vendor/*.js')),
     # 모델 전환: 메모리 확장(다른 확장 폴더)의 패널 모듈 — 실리태번 쪽

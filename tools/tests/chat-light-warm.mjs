@@ -394,7 +394,7 @@ test('CSS: 표식(data 속성)이 붙은 메시지는 content-visibility: visibl
     const src = read('css/05-chat.css');
     assert.match(src, /^body\.salty #chat > \.mes\[data-bl-warm\] \{\n  content-visibility: visible !important;\n\}/m);
     assert.ok(!/\.bl-warm\b/.test(src), 'class 표식을 쓰지 않는다(실리태번 keyboard.js 감시자가 class 마다 다시 훑음)');
-    const rule = src.match(/^:where\(html\.bl-chat-light\) body\.salty \[id="chat"\]:not\(#salty-none\) > (\.mes[^{]*?) \{\n  content-visibility: auto;/m);
+    const rule = src.match(/^:where\(html\.bl-chat-light:not\(\[data-bl-chat-sel\]\)\) body\.salty \[id="chat"\]:not\(#salty-none\) > (\.mes[^{]*?) \{\n  content-visibility: auto;/m);
     assert.ok(rule, '긴 채팅 가볍게 규칙');
     assert.equal(rule[1], M.SKIP_SELECTOR, 'JS 가 matches 로 고르는 선택자와 CSS 가 건너뛰는 선택자가 같다');
     assert.match(read('style.css'), /> \.mes\[data-bl-warm\] \{\n  content-visibility: visible !important;/);

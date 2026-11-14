@@ -178,7 +178,7 @@ test('③ 읽기 함수는 배치가 끝난 뒤(afterLayout 콜백 → evaluate 
     const p = problems.filter(x => x.startsWith('③'));
     assert.deepEqual(p, [], p.join('\n'));
 });
-test('afterLayout 은 ResizeObserver 첫 알림(배치 뒤 · 칠하기 전)을 쓰고, 미리 그리기 표식은 stepWarm(낮은 우선순위 작업) · onReveal 에서만 · void 읽기는 stepWarm 의 한 줄뿐 · 쉬는 시간 콜백 없음', () => {
+test('afterLayout 은 ResizeObserver 첫 알림(배치 뒤 · 칠하기 전)을 쓰고, 미리 그리기 표식은 stepWarm(낮은 우선순위 작업) · onReveal · onSelectAhead 에서만 · void 읽기는 stepWarm 의 한 줄뿐 · 쉬는 시간 콜백 없음', () => {
     const { code, problems } = check(source);
     assert.deepEqual(problems.filter(x => x.startsWith('⑤')), [], problems.join('\n'));
     const al = functionBody(code, 'afterLayout');
@@ -192,7 +192,9 @@ test('afterLayout 은 ResizeObserver 첫 알림(배치 뒤 · 칠하기 전)을 
     assert.match(raw, /warm\.job = bgTask\(stepWarm\)/, 'stepWarm 은 낮은 우선순위 작업으로');
     const setters = [...raw.matchAll(/setAttribute\(WARM_ATTR/g)].map(m => m.index);
     const reveal = functionBody(raw, 'onReveal');
-    assert.ok(setters.every(at => (sw.start < at && at < sw.end) || (reveal.start < at && at < reveal.end)), '표식은 stepWarm · onReveal(크롬이 이미 그린 메시지) 에서만');
+    // (1.4.8 select-scroll) 고른 채 굴릴 때 앞당겨 다는 곳 — IntersectionObserver 알림(배치 뒤 비동기) 안이라 강제 배치가 없어요
+    const ahead = functionBody(raw, 'onSelectAhead');
+    assert.ok(setters.every(at => (sw.start < at && at < sw.end) || (reveal.start < at && at < reveal.end) || (ahead.start < at && at < ahead.end)), '표식은 stepWarm · onReveal(크롬이 이미 그린 메시지) · onSelectAhead(고른 채 굴릴 때 · 관찰 알림 안) 에서만');
     assert.equal([...raw.matchAll(/\bvoid\s+[\w$.?]+\.(?:offset|client|scroll)/g)].length, 1, 'void 로 배치를 끝내는 곳은 stepWarm 한 줄뿐');
     assert.ok(!/requestIdleCallback\(/.test(code));
 });

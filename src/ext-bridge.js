@@ -9,6 +9,7 @@
 //      · 실리태번의 공용 함수 자체는 바꾸지 않아요(getContext 가 매번 새로 만드는 객체에만 꽂아요). 어디서든 어긋나면 원래 함수를 그대로 불러요.
 //      · 쓰는 것이 없어지면(용어집 끔 · 모델 안 고름) 감싸개를 걷어요 — 그 위에 다른 감싸개가 얹혀 있으면 쉬기만 해요.
 //   감시자 · 타이머 없음: 문서 누름 받기 하나(설정 칸 그리기) + 본편 용어집을 켰을 때 「생성 직전」 사건 하나.
+//   (화면만 번역 빈틈 메우기 src/ext-bridge-tr.js 는 따로: 메시지 꾸미기에 얹은 칩 자리 번역 하나 · 번역 단추를 누른 뒤에만 도는 짧은 확인)
 //   설정: extension_settings[BRIDGE_KEY] (칸을 바꿀 때만 생겨요) · 화면: src/ext-bridge-ui.js · 판단: src/ext-bridge-core.js · 시험: tools/tests/ext-bridge-*.mjs
 import { getSettings } from './settings.js';
 import { addonsEnabled } from './usage-mode.js';
@@ -347,7 +348,11 @@ export function startExtBridge(doc = globalThis.document) {
             if (target.closest(Core.TARGET.root) || target.closest('.drawer-toggle')?.parentElement?.id === 'extensions-settings-button') ensureUi(doc);
         }, true);
         // 본편 용어집은 그 확장이 사건을 다 건 뒤에 걸어야 차례가 맞아요 — 앱이 준비된 다음 한 박자 뒤에
-        const late = () => setTimeout(() => { try { bridge.sync(); } catch (error) { console.warn('[Blue Lemonade] 확장 기능 다리', error); } }, 0);
+        //   같은 때 「화면만 번역」 빈틈 메우기(src/ext-bridge-tr.js)도 — 칩 · 알림 글이 영어로 남던 것(그 확장이 내보낸 번역 함수를 그대로 불러요)
+        const late = () => setTimeout(() => {
+            try { bridge.sync(); } catch (error) { console.warn('[Blue Lemonade] 확장 기능 다리', error); }
+            import('./ext-bridge-tr.js').then(module => module.startTrFill(doc)).catch(error => console.warn('[Blue Lemonade] 미트볼 번역 메우기', error));
+        }, 0);
         try {
             const { eventSource, event_types } = globalThis.SillyTavern.getContext();
             if (doc.getElementById('loader') && event_types?.APP_READY) eventSource.once(event_types.APP_READY, late); else late();

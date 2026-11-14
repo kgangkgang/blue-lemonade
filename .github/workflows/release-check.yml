@@ -43,6 +43,7 @@ jobs:
           node tools/tests/char-tone-ladder.mjs .
           node tools/tests/log-copy-tone.mjs .
           node tools/tests/log-copy-user-color.mjs .
+          node tools/tests/log-copy-day-ink.mjs .
           node tools/tests/log-copy-audit-113.mjs .
           node tools/tests/log-copy-connect-113.mjs .
           node tools/tests/log-copy-connect-sheet-113.mjs .
@@ -79,6 +80,9 @@ jobs:
           # 1.2.1 받은 글꾸의 고친 글에 「&nbsp;」 글자가 보이던 것(마트 고침 ce06d4f8b 와 같은 규칙)
           node tools/tests/geulkku-mart-nbsp.mjs .
           node tools/tests/log-copy-simple-rows.mjs .
+          # 11-14 글 속 그림(메시지 맨 앞 · 깡통에 올린 주소로만 · 그림 없으면 글 그대로)
+          node tools/tests/log-copy-pics.mjs .
+          node tools/tests/log-copy-pics-sheet.mjs .
           node tools/tests/log-copy-copy-fidelity.mjs .
           node tools/tests/log-copy-tune.mjs .
           node tools/tests/log-copy-tune-focus.mjs .
@@ -275,6 +279,7 @@ jobs:
           node tools/tests/chat-cover.mjs .
           node tools/tests/chat-light-warm.mjs .
           node tools/tests/chat-light-layout.mjs .
+          node tools/tests/chat-light-select.mjs .
           node tools/tests/model-register-panel.mjs .
           node tools/tests/model-register-picks.mjs .
           node tools/tests/model-register-state.mjs .
@@ -646,6 +651,7 @@ jobs:
           node tools/tests/capture-editor.mjs .
           node tools/tests/capture-resources.mjs
           node tools/tests/capture-paint.mjs
+          node tools/tests/capture-clean-ui.mjs .
           node tools/tests/capture-pages.mjs
           node tools/tests/capture-picker.mjs
           node tools/tests/capture-open.mjs
@@ -799,6 +805,7 @@ jobs:
           node tools/tests/fruit-style-idle-scan.mjs .
           node tools/tests/fruit-style-hub.mjs .
           node tools/tests/fruit-skin-contrast.mjs .
+          node tools/tests/seg-muted-ink.mjs .
           node tools/tests/role-icons.mjs .
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/manifest-reuse.mjs .
@@ -902,6 +909,8 @@ jobs:
           node tools/build-bundle.mjs
           # 1.4.6 머리 스위치: jsdom(tools 개발 의존성 · 위 npm ci 가 받음)으로 실제 DOM · 타이머를 돌려 봐요 — jsdom 이 없으면 종료 2 라 통과로 안 쳐요
           node tools/tests/headswitch-dom.mjs . tools
+          # 1.4.x 미트볼 「화면만 번역」 빈틈 메우기: 같은 jsdom 으로 칩 자리 감시 · 누른 뒤 메우기
+          node tools/tests/ext-bridge-tr.mjs . tools
           git status --porcelain
           git diff --exit-code --stat
           test -z "$(git status --porcelain)"

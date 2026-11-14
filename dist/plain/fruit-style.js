@@ -58,7 +58,7 @@ function Rt(mt,bt){function pt(h,k){let s=bt;try{for(;s.parent&&s.parent!==s&&s.
   --salty-fill-field:color-mix(in srgb,var(--salty-accent) 3%,#e9edf2);\r
   --salty-text:#242b35; --salty-muted:#586473; --salty-line:rgba(43,56,73,.16);\r
   --salty-shade:rgba(43,56,73,.055); --salty-shade-2:rgba(43,56,73,.09);\r
-  --salty-raised:#fff; --salty-accent-ink:color-mix(in srgb,var(--salty-accent) 58%,#17222e);\r
+  --salty-raised:#fff; --salty-accent-ink:color-mix(in srgb,var(--salty-accent) 58%,#17222e); --bl-ui-pick-face:color-mix(in srgb,var(--salty-accent) 13%,var(--salty-fill-surface));\r
   --salty-scrim:rgba(21,27,35,.22); color-scheme:light !important;\r
 }\r
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6)[data-bl-fruit-skin="lemonade"][data-theme="night"] {\r
@@ -69,7 +69,7 @@ function Rt(mt,bt){function pt(h,k){let s=bt;try{for(;s.parent&&s.parent!==s&&s.
   --salty-fill-field:color-mix(in srgb,var(--salty-accent) 3%,#1b2028);\r
   --salty-text:#ecf0f5; --salty-muted:#b1bdcc; --salty-line:rgba(221,232,246,.17);\r
   --salty-shade:rgba(221,232,246,.06); --salty-shade-2:rgba(221,232,246,.10);\r
-  --salty-raised:#dce6f2; --salty-accent-ink:color-mix(in srgb,var(--salty-accent) 50%,#fff); /* 7.9.9: 66% 는 밝은 팔레트의 진한 포인트(#2477D3)를 고른 칸 면(13%) 위에 3.97 로 깔았다 → 50% 면 내장 팔레트 전부 4.9 이상(리얼 블랙 #5C5C5C 가 가장 낮음) */\r
+  --salty-raised:#dce6f2; --salty-accent-ink:color-mix(in srgb,var(--salty-accent) 50%,#fff); --bl-ui-pick-face:color-mix(in srgb,var(--salty-accent) 13%,var(--salty-fill-surface)); /* 1.4.8 고른 칸 면은 창의 낮 · 밤을 따라요: 공용 --bl-ui-pick-face(뿌리 · 테마 팔레트 낮밤)를 그대로 받으면 테마 화이트 + 창 밤일 때 밝은 면에 밤 잉크가 얹혀 글자 · 꺾쇠가 1.6 : 1 이었어요 */ /* 7.9.9: 66% 는 밝은 팔레트의 진한 포인트(#2477D3)를 고른 칸 면(13%) 위에 3.97 로 깔았다 → 50% 면 내장 팔레트 전부 4.9 이상(리얼 블랙 #5C5C5C 가 가장 낮음) */\r
   --salty-scrim:rgba(4,7,12,.40); color-scheme:dark !important;\r
 }\r
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6)[data-bl-fruit-skin="lemonade"] .fh-shell { background:var(--paper); border:0; box-shadow:var(--salty-e5); backdrop-filter:none; -webkit-backdrop-filter:none; }\r

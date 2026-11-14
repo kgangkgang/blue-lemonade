@@ -719,3 +719,15 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
     transform: translate(-50%, -50%);
   }
 }
+
+/* ---------- 간격 한 벌: 상태창 절 안(관리 · 상점 · 연락 · 기록 … 모든 탭 · 11-14 「글자랑 버튼이랑 막 붙어 있는데 간격 맞춰 줘」) ----------
+   절 제목 → 내용 8 · 단추 줄(낱 단추 · 단추 격자 · 고르개) → 바로 아래 설명 · 목록 · 접기 8 · 설명 → 설명 4 · 설명 → 다음 단추 줄 · 낱 단추 · 스위치 · 접기 12(단추 줄은 원래 값) · 단추 ↔ 단추 8 · 절 ↔ 절 24.
+   절(.ss-sec)의 바로 아래 자식끼리만 걸어요 — 카드 · 퀘스트 안 단추 줄은 그대로. 가장 오른쪽이 클래스 하나라 고르는 비용이 늘지 않아요. 색 · 글꼴은 안 건드려요. */
+body.salty .ss-scope .ss-sec { margin: var(--bl-s6, 24px) 0 0; }
+body.salty .ss-scope .ss-sec:first-child { margin-top: 0; }
+body.salty .ss-scope .ss-grid-btns { gap: var(--bl-s2, 8px); }
+body.salty .ss-scope .ss-sec > .ss-sec-h + .ss-row-btns, body.salty .ss-scope .ss-sec > .ss-sec-h + .ss-grid-btns { margin-top: 0; }
+body.salty .ss-scope .ss-sec > .ss-row-btns + .ss-hint, body.salty .ss-scope .ss-sec > .ss-grid-btns + .ss-hint, body.salty .ss-scope .ss-sec > .ss-seg + .ss-hint,
+body.salty .ss-scope .ss-sec > .ss-row-btns + .ss-stack, body.salty .ss-scope .ss-sec > .ss-row-btns + .ss-more, body.salty .ss-scope .ss-sec > .ss-grid-btns + .ss-more { margin-top: var(--bl-s2, 8px); }
+body.salty .ss-scope .ss-sec > .ss-hint + .ss-hint, body.salty .ss-scope .ss-sec > .ss-stack + .ss-hint { margin-top: var(--bl-s1, 4px); }
+body.salty .ss-scope .ss-sec > .ss-hint + .ss-more, body.salty .ss-scope .ss-sec > .ss-hint + .ss-grid-btns, body.salty .ss-scope .ss-sec > .ss-hint + .ss-tog, body.salty .ss-scope .ss-sec > .ss-hint + .ss-btn { margin-top: var(--bl-s3, 12px); }

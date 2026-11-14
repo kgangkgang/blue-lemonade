@@ -70,8 +70,8 @@ test('채팅 칸이 바뀌면(다시 그림) 새 칸을 감시한다 · 끄면 �
 });
 test('CSS: html.bl-chat-light(:where) 아래 #chat 의 메시지에 content-visibility:auto · contain-intrinsic-size auto · 마지막 · 바닥 10개 · 메뉴 · 고른 메시지 제외 · :has 없음 · [style 없음 · style.css 에 들어 있다', () => {
     const src = read('css/05-chat.css');
-    const m = src.match(/^:where\(html\.bl-chat-light\) body\.salty \[id="chat"\]:not\(#salty-none\) > \.mes([^{]*)\{([^}]*)\}/m);
-    assert.ok(m, '규칙이 없다');
+    const m = src.match(/^:where\(html\.bl-chat-light:not\(\[data-bl-chat-sel\]\)\) body\.salty \[id="chat"\]:not\(#salty-none\) > \.mes([^{]*)\{([^}]*)\}/m);
+    assert.ok(m, '규칙이 없다(1.4.8: 채팅 글을 고른 동안 html[data-bl-chat-sel] 이면 건너뛰기를 쉬어요 — chat-light-select)');
     assert.match(m[1], /:not\(\.last_mes, \.bl-menu-open, \.selected\)/);
     assert.match(m[1], /:not\(\[data-bl-tail\]\)/, '바닥 10개는 실제 높이로 — 바닥 붙이기 정확(src/chat-light.js 가 다는 표식)');
     assert.ok(!m[1].includes(':nth-'), '뒤에서 세는 자리 규칙(:nth-last-child)은 메시지가 하나 붙을 때마다 형제 메시지 전부를 다시 계산해요');
@@ -79,7 +79,7 @@ test('CSS: html.bl-chat-light(:where) 아래 #chat 의 메시지에 content-visi
     assert.ok(!/\[\s*style/.test(m[1]));
     assert.match(m[2], /content-visibility:\s*auto/); assert.match(m[2], /contain-intrinsic-size:\s*auto \d+px/);
     assert.match(m[2], /flex-shrink:\s*0/, '#chat 세로 flex 에서 건너뛴 메시지가 납작해지지 않게');
-    assert.ok(read('style.css').includes(':where(html.bl-chat-light) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail])'), 'style.css 에 빌드돼 있다 (진짜 채팅 칸만 — 빌드의 #chat 넓히기에 안 걸리는 꼴)');
+    assert.ok(read('style.css').includes(':where(html.bl-chat-light:not([data-bl-chat-sel])) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail])'), 'style.css 에 빌드돼 있다 (진짜 채팅 칸만 — 빌드의 #chat 넓히기에 안 걸리는 꼴)');
     assert.doesNotMatch(read('css/23-preview.gen.css'), /bl-chat-light/, '미리보기 사본에는 안 넣어요(html 표식이 미리보기 상자에 걸리지 않게)');
     assert.match(src, /\.mes\.bl-menu-open \{[^}]*content-visibility: visible !important/s, '메뉴 열린 메시지는 visible !important 로 이미 뺀다');
 });

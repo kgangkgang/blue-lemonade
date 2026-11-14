@@ -16,6 +16,7 @@ body.salty .lm-root[data-lm-mode]:not([data-bl-ext]), body.salty .lm-root[data-b
   --salty-on-accent: var(--lm-card);
   --salty-text: var(--lm-text);
   --salty-muted: var(--lm-muted);
+  --salty-muted-ink: var(--lm-muted);
   --salty-line: var(--lm-line-strong);
   --salty-surface: var(--lm-bg);
   --salty-card: var(--lm-card);

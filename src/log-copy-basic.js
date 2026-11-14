@@ -16,6 +16,7 @@ import { tone } from './shared/char-tone.js';
 import { speakerLetters, colorLetters, SIMPLE } from './log-copy-simple.js';
 import { spoilerHtml, unparagraphHtml } from './log-copy-spoiler.js';
 import { buildFrame, frames as GEN_FRAMES, HEIGHTS as GEN_HEIGHTS, LEMON_HOME } from './log-copy-basic.gen.js';
+import { picHtml } from './log-copy-pics.js';   // 11-14 글 속 그림 칸
 
 /** 새 그림으로 바꾼 틀 — 432 상태창(status)은 사용자 결정 보류라 옛 그림 그대로예요 */
 export const BASIC_FRAMES = Object.freeze(GEN_FRAMES.filter(f => f.id !== 'status').map(f => Object.freeze({ id: f.id, no: f.no, key: f.k })));
@@ -67,6 +68,25 @@ function dropLemon(html, id, key, info) {
     const css = out.indexOf('</style>');
     return rules.length && css > 0 ? `${out.slice(0, css)}${rules.join('')}${out.slice(css)}` : out;
 }
+// 11-14 글 속 그림: 생성기는 문단을 <p class="nr"> 로 감싸요 — <p> 안에 그림 칸(div)을 두면 붙인 곳에서 문단이 쪼개져요.
+//   그래서 문단 자리엔 표지 주석만 두고, 다 그린 뒤 「표지만 든 지문 문단」을 통째로 그림 칸으로 바꿔요. 다른 자리(말풍선 안 등)에 남은 표지는 그림 없이 걷어요.
+//   검토 보2: 메신저처럼 지문을 <br> 로 이어 말풍선 하나로 그리는 틀은 표지가 문단 안에 남아요 — 걷지 않고 그 <p> 바로 앞으로 꺼내 그림 칸으로(글 줄은 그대로 이어요)
+const picMark = node => `<!--blpic:${encodeURIComponent(JSON.stringify({ src: String(node?.src ?? ''), w: node?.w, h: node?.h }))}-->`;
+const picOf = (code) => { try { return picHtml(JSON.parse(decodeURIComponent(code))); } catch { return ''; } };
+function placePics(html) {
+    let s = html.replace(/<p class="nr"><!--blpic:([^>]*?)--><\/p>/g, (all, code) => picOf(code));
+    const MARK = /(<br>)?<!--blpic:([^>]*?)-->(<br>)?/;
+    for (let m; (m = MARK.exec(s));) {
+        const at = m.index, pic = picOf(m[2]), keep = m[1] && m[3] ? '<br>' : '';   // 앞뒤 줄바꿈이 둘 다 있으면 하나는 남겨요(글 줄이 붙지 않게)
+        s = s.slice(0, at) + keep + s.slice(at + m[0].length);
+        // 감싼 말풍선(누르는 <details>) · 문단(<p>) 바로 앞 — 말풍선 앞(이름 줄 뒤) 한 줄로 · 없으면 그 자리
+        const around = (tag) => { const open = s.lastIndexOf(`<${tag}`, at); return open >= 0 && open > s.lastIndexOf(`</${tag}>`, at) && /^[\s>]/.test(s.charAt(open + tag.length + 1)) ? open : -1; };
+        const near = Math.max(around('details'), around('p'));   // 가장 가까이 감싼 것(글 전체를 감싼 소품 상자 앞으로 멀리 가지 않게)
+        const put = near >= 0 ? near : at;
+        s = s.slice(0, put) + pic + s.slice(put);
+    }
+    return s;
+}
 const two = n => String(n).padStart(2, '0');
 const clockOf = (ms) => { const d = new Date(ms); return ms != null && Number.isFinite(d.getTime()) ? `${two(d.getHours())}:${two(d.getMinutes())}` : ''; };
 /** CSS 설명 주석 걷기(앞 공백까지) */
@@ -103,6 +123,7 @@ export function paragraphs(nodes) {
                 if (ctx.b) html = `<b>${html}</b>`;
                 cur.push({ dlg: ctx.dlg, html, text: node.text, who: ctx.dlg ? ctx.who : null });   // 1.4.1 who: 이 대사 띠를 정한 화자 색
             } else if (node.t === 'br') cur.push({ dlg: ctx.dlg, html: '<br>', text: '', br: true });
+            else if (node.t === 'pic') { flush(); cur.push({ dlg: false, html: picMark(node), text: '그림' }); flush(); }   // 11-14 글 속 그림 — 지문 문단 하나로(그린 뒤 drawBasic 이 그림 칸으로)
             else if (node.t === 'hr') flush();
             else if (node.t === 'el' && node.kind === 'spoiler') {
                 const html = spoilerHtml(inline(node.children, ctx), node.sp, !node.block);
@@ -198,6 +219,7 @@ export function drawBasic(id, model, o = {}) {
     });
     // 1.4.1 섞인 대사의 글자 표지 → 생성기가 감싼 대사 칸 글자를 그 사람 것으로(표지가 남은 곳 — 말풍선처럼 메시지 하나가 칸 하나인 틀 — 은 표지만 걷어요)
     html = html.replace(/(<span class="d )d[A-Z]("><!--blw:([A-Z])-->)/g, (all, a, b, x) => `${a}d${x}">`).replace(/<!--blw:[A-Z]-->/g, '');
+    if (html.includes('<!--blpic:')) html = placePics(html);   // 11-14 글 속 그림 칸
     // <style> 안 설명 주석(/* … */)은 빼요 — 붙일 곳 소독기가 어차피 걷어요(모양 그대로 · 미리보기와 복사 글이 같게)
     html = html.replace(/(<style>)([\s\S]*?)(<\/style>)/, (all, open, css, close) => open + stripCssNotes(css) + close);
     // 시각: 견본 시각(21:04 …)을 메시지 시각으로 — 생성기는 메시지 차례대로 찍어요(436 알림 · 438 기록)
