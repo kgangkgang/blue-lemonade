@@ -33,6 +33,26 @@ def parse_generic(target, source_dir):
    if p.get('unit')!='per_million_tokens' or p.get('currency')!='USD':continue
    if x.get('architecture',{}).get('output_modalities')!=['text']:continue
    add('nanogpt',x['id'],p.get('prompt'),p.get('completion'),value(p,'cacheReadInputPer1kTokens',1000),value(p,'cacheWriteInputPer1kTokens',1000))
+   row=DATA.get('nanogpt',{}).get(x['id'])
+   if not row:continue
+   # Context tiers: "...Above200k" fields belong to highContextThresholdTokens (the name is historical, the
+   # threshold is not always 200k); "...AboveFirstThreshold" to firstContextThresholdTokens. Amounts are per 1k.
+   tiers=[]
+   for limit,suffix in [('firstContextThresholdTokens','AboveFirstThreshold'),('highContextThresholdTokens','Above200k')]:
+    if p.get(limit) is None:continue
+    long={'input':value(p,'inputPer1kTokens'+suffix,1000),'output':value(p,'outputPer1kTokens'+suffix,1000)}
+    for key,field in [('cacheRead','cacheReadInputPer1kTokens'),('cacheWrite','cacheWriteInputPer1kTokens')]:
+     if p.get(field+suffix) is not None:long[key]=value(p,field+suffix,1000)
+    tiers.append((int(p[limit]),{k:round(v,9) for k,v in long.items() if v is not None}))
+   one_hour=p.get('cacheWriteInputPer1kTokens1h')
+   # The request log keeps one context threshold and one 5m/1h cache-write pair per model. Anything richer keeps
+   # the published base rates visible but is marked uncertain, so no total is computed from a partial table.
+   if len(tiers)>1 or p.get('highContextThresholdCountsOutputTokens') or (tiers and one_hour is not None) or any('input' not in t or 'output' not in t for _,t in tiers):
+    row.update(uncertain=True,note='입력 길이·캐시 보관 시간에 따라 달라지는 구간 요금이라 공개 단가만으로 총액을 확정하지 않아요.')
+   elif tiers:
+    row.update(longAbove=tiers[0][0],longRates=tiers[0][1])
+   elif one_hour is not None and 'cacheWrite' in row['rates']:
+    row.update(cacheWrite5m=row['rates']['cacheWrite'],cacheWrite1h=round(float(one_hour)*1000,9))
  if target == 'electronhub':
   for x in rows('electronhub'):
    p=x.get('pricing',{})
@@ -76,12 +96,15 @@ def parse_generic(target, source_dir):
    if fields['input'] and fields['output']:add('workers',c[0],fields['input'][1],fields['output'][1],fields['cache'][1] if fields['cache'] else None)
  if target == 'together':
   # Together's API model string is taken from its serverless table, not guessed from marketing names.
-  for tr in soup('together-models').find_all('table')[0].find_all('tr')[1:]:
+  table=soup('together-models').find_all('table')[0]
+  head=[th.get_text(' ',strip=True) for th in table.find_all('th')][2:7]
+  if head!=['API model string','Context length','Input pricing (per 1M tokens)','Cached input pricing (per 1M tokens)','Output pricing (per 1M tokens)']:raise ValueError('Together model table changed')
+  for tr in table.find_all('tr')[1:]:
    c=[td.get_text(' ',strip=True) for td in tr.find_all('td')]
    if len(c)<7:continue
    add('together',c[2],price(c[4]),price(c[6]),price(c[5]))
-  for m in ['moonshotai/Kimi-K3','Qwen/Qwen3.7-Max','Qwen/Qwen3.8-2.4T-A95B','together/Tev1-4B-experimental']:
-   if m in DATA['together']:DATA['together'][m]['note']='공식 가격 페이지와 모델 문서의 일부 단가가 달라 모델 문서 기준을 표시해요. 청구 단가는 제공처 확인이 필요해요.';DATA['together'][m]['uncertain']=True
+  # 2026-11-14: the pricing page and the model table agree again for Kimi K3, Qwen3.7-Max and Tev1, so the
+  # earlier "uncertain" marking for those rows was removed.
  if target == 'fireworks':
   # Fireworks table contains service tiers and links to the exact deployment model.
   for tr in soup('fireworks-doc').find('table').find_all('tr')[1:]:
@@ -90,7 +113,9 @@ def parse_generic(target, source_dir):
    model='accounts/fireworks/models/'+a['href'].split('/')[-1]
    vals=dollars(c[1]);prio=dollars(c[2])
    if len(vals)!=3:continue
-   if '(US)' in c[0] or ' Fast' in c[0]:continue
+   # Regional (US), Fast and Ultra-fast rows are separate deployments of the same linked model.
+   if '(US)' in c[0] or re.search(r'(?:^|[\s-])fast\b',c[0],re.I):continue
+   if model in DATA.get('fireworks',{}):raise ValueError('Fireworks deployment row needs review: '+c[0])
    add('fireworks',model,vals[0],vals[2],vals[1],tiers={'priority':{'input':prio[0],'cacheRead':prio[1],'output':prio[2]}} if len(prio)==3 else {})
  if target == 'xai':
   for line in (P/'xai-list.raw').read_text(encoding='utf8').splitlines():
@@ -101,9 +126,13 @@ def parse_generic(target, source_dir):
   for provider,name in [('minimax','minimax-pay'),('minimax_cn','minimax-cn')]:
    raw=(P/(name+'.raw')).read_text(encoding='utf8').split('## Audio')[0].split('## 语音')[0]
    for line in raw.splitlines():
-    if '| **MiniMax-M2' not in line:continue
+    # Single-rate text models (input, output, cache read[, cache write]); MiniMax-M3's context rows follow below.
+    if not line.startswith('| **MiniMax-M') or '512k' in line:continue
     c=[v.strip() for v in line.split('|')[1:-1]];model=c[0].strip('*')
-    v=[float(re.findall(r'[\d.]+',x)[0]) for x in c[1:]];add(provider,model,v[0],v[1],v[2],v[3])
+    if not re.fullmatch(r'MiniMax-M[\w.-]+',model):raise ValueError('MiniMax model row changed')
+    v=[float(re.findall(r'[\d.]+',x)[-1]) for x in c[1:]]
+    if len(v) not in [3,4] or any('~~' in x for x in c[1:]):raise ValueError('MiniMax price row changed')
+    add(provider,model,v[0],v[1],v[2],v[3] if len(v)==4 else None)
    # Parse both context lengths and priority rows; never hard-code an advertised price.
    raw=(P/(name+'.raw')).read_text(encoding='utf8')
    m3=[]
@@ -116,39 +145,62 @@ def parse_generic(target, source_dir):
    DATA.setdefault(provider,{})['MiniMax-M3']={'rates':m3[0],'longAbove':512000,'longRates':m3[1],'tiers':{'priority':m3[2]},'longTiers':{'priority':m3[3]}}
  if target in ['moonshot','moonshot_cn']:
   for provider,name in [('moonshot','moonshot'),('moonshot_cn','moonshot-cn')]:
+   # The Markdown export now ships empty <table> shells, so the rendered page is read instead. Its tables are
+   # compiled MDX data ("columns:[...],rows:[[...]]") read as plain text; columns are matched by their titles.
    raw=(P/(name+'.raw')).read_text(encoding='utf8')
-   for line in raw.splitlines():
-    m=re.match(r'\["(kimi-[^"]+)"',line)
-    if not m:continue
-    vals=[float(x) for x in re.findall(r'\}(\d+\.\d+)</>',line)]
-    if not vals:vals=[float(x) for x in re.findall(r'[¥￥](\d+(?:\.\d+)?)',line)]
-    if len(vals)==5:add(provider,m[1],vals[3],vals[4],vals[2],cacheWrite5m=vals[0],cacheWrite1h=vals[1])
-    elif len(vals)==3:add(provider,m[1],vals[1],vals[2],vals[0])
+   heads={'Model':'model','模型':'model','Input':'input','输入':'input','Output':'output','输出':'output','Cached Input':'cacheRead','缓存命中':'cacheRead',
+          '5m writes':'cacheWrite5m','缓存写入（5min）':'cacheWrite5m','1h writes':'cacheWrite1h','缓存写入（1h）':'cacheWrite1h'}
+   tables=0
+   for block in re.finditer(r'columns:\[(.*?)\],rows:\[\[(.*?)\]\]\}',raw,re.S):
+    titles=[a or b for a,b in re.findall(r'\{title:(?:`([^`]*)`|_jsx\(Tooltip,\{tip:`[^`]*`,children:`([^`]*)`\}\))',block[1])]
+    if not titles or titles[0] not in ['Model','模型']:continue
+    if any(t not in heads for t in titles):raise ValueError('Kimi pricing columns changed')
+    keys=[heads[t] for t in titles];tables+=1
+    for row in block[2].split('],['):
+     cells=re.findall(r'`([^`]*)`',re.sub(r'href:`[^`]*`','',row))
+     if len(cells)!=len(keys) or not re.fullmatch(r'kimi-[\w.-]+',cells[0]):raise ValueError('Kimi pricing row changed')
+     v={}
+     for key,cell in zip(keys[1:],cells[1:]):
+      m=re.fullmatch(r'[$¥￥]\s*(\d+(?:\.\d+)?) / MTok',cell)
+      if not m:raise ValueError('Kimi price unit changed')
+      v[key]=float(m[1])
+     extra={k:v[k] for k in ['cacheWrite5m','cacheWrite1h'] if k in v}
+     add(provider,cells[0],v['input'],v['output'],v.get('cacheRead'),**extra)
+   if tables!=2:raise ValueError('Kimi pricing tables changed')
  if target == 'zai':
   for line in (P/'zai.raw').read_text(encoding='utf8').splitlines():
-   line=line.strip()
+   # Older tables now sit inside a quoted accordion block ("> | GLM-...").
+   line=line.strip().lstrip('>').strip()
    if not re.match(r'\| GLM-',line):continue
    c=[v.strip() for v in line.split('|')[1:-1]]
    if len(c)!=5:continue
    add('zai',c[0].lower(),price(c[1]),price(c[4]),price(c[2]))
  if target == 'gemini':
-  # Gemini text model tables. Output includes reasoning; audio and media-only SKUs are not text rates.
-  gs=soup('gemini')
-  for h in gs.find_all('h2'):
-   title=h.get_text(' ',strip=True)
+  # Gemini text model tables (Markdoc source of aistudio.google.com/docs/pricing). Output includes reasoning;
+  # audio and media-only SKUs are not text rates. Each "## " section names one model in its first `code` span,
+  # each {% tab %} is a service tier and each table row is "* Feature / * Free Tier / * Paid Tier".
+  text=(P/'gemini.raw').read_text(encoding='utf8')
+  for section in re.split(r'\n(?=## )',text)[1:]:
+   title=section.split('\n',1)[0]
    if any(x in title.lower() for x in ['image','tts','live','transcri','omni','embedding','lyria','veo','imagen']):continue
-   code=h.parent.find('code')
+   code=re.search(r'`([^`]+)`',section)
    if not code:continue
-   model=code.get_text(strip=True)
+   model=code[1]
    if not model.startswith('gemini-'):continue
-   for table in gs.find_all('table'):
-    if table.find_previous('h2') is not h:continue
-    head=table.find_previous('h3');tier=head.get_text(' ',strip=True).lower() if head else 'standard'
+   for tab in re.finditer(r'\{% tab title="([^"]+)" %\}(.*?)\{% /tab %\}',section,re.S):
+    tier=tab[1].strip().lower()
     if tier not in ['standard','priority','flex','batch']:continue
+    table=re.search(r'\{% table %\}(.*?)\{% /table %\}',tab[2],re.S)
+    if not table:continue
     fields={}
-    for tr in table.find_all('tr'):
-     c=[td.get_text(' ',strip=True) for td in tr.find_all('td')]
-     if len(c)==3:fields[c[0]]=c[2]
+    for block in re.split(r'\n\s*---\s*\n',table[1]):
+     cells=[]
+     for line in block.splitlines():
+      line=line.strip()
+      if not line:continue
+      if line.startswith('* '):cells.append(line[2:].strip())
+      elif cells:cells[-1]+=' '+line
+     if len(cells)==3:fields[cells[0]]=cells[2]
     ik=next((x for x in fields if x.startswith('Input price')),None);ok=next((x for x in fields if x.startswith('Output price')),None)
     if not ik or not ok:continue
     ins=dollars(fields[ik]);outs=dollars(fields[ok]);cached=dollars(fields.get('Context caching price',''))
@@ -198,12 +250,12 @@ def parse_generic(target, source_dir):
    c=[td.get_text(' ',strip=True) for td in tr.find_all('td')];a=tr.find('a')
    if len(c)!=4 or not a or any(x in c[0] for x in ['OCR','Voxtral','Embed','Moderation']):continue
    slug=a['href'].split('/')[-1];detail=soup('mistral-model-'+slug);text=detail.get_text(' ',strip=True)
-   match=re.search(r'([a-z][a-z0-9.-]+) \+\d+ Speed Performance',text)
+   match=re.search(r'([a-z][a-z0-9.-]+)(?: \+\d+)? Speed Performance',text)
    if not match:continue
    model=match[1];nums=[dollars(x)[-1] if dollars(x) else None for x in c[1:]]
    aliases=list(dict.fromkeys(re.findall(re.escape(model.split('-')[0])+r'-[a-z0-9.-]*-latest',(P/('mistral-model-'+slug+'.raw')).read_text(encoding='utf8'))))
    # Navigation may contain other models; retain only matching family.
-   aliases=[x for x in aliases if x.rsplit('-latest',1)[0]==re.sub(r'-(?:\d{4}|\d-\d)$','',model)]
+   aliases=[x for x in aliases if x.rsplit('-latest',1)[0]==re.sub(r'-(?:\d{4}|\d-\d|\d)$','',model)]
    add('mistral',model,nums[0],nums[2],nums[1],aliases=aliases)
  if target == 'siliconflow':
   for f in P.glob('silicon-model-*.raw'):

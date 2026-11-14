@@ -55,7 +55,7 @@ def digest(value):
 def text_contract(provider, name, raw):
     """Erase only parseable money amounts; keep all non-price billing semantics."""
     if provider == 'openai':
-        for tier in ['Standard','Flex','Fast','Ultrafast']:
+        for tier in ['Standard','Batch','Fast','Ultrafast']:
             pattern=r'(### '+tier+r' pricing data\n.*?)(?=\n### |\n## |\Z)'
             raw=re.sub(pattern, lambda m: re.sub(r'\$[\d,.]+', '$PRICE', m[0]), raw, flags=re.S)
     elif provider == 'anthropic':
@@ -76,6 +76,13 @@ def text_contract(provider, name, raw):
                     if tr.find('td'):tr.decompose()
             for el in soup(['script','style','nav','footer','header','head']):el.decompose()
             raw=(soup.find('main') or soup).get_text(' ',strip=True)
+            # AIMLAPI prints its live catalog size ("817 models"); the count is not billing text.
+            if provider=='aimlapi':raw=re.sub(r'\b\d[\d,]* models\b','N models',raw)
+            # SiliconFlow model pages carry a site-wide announcement banner and a rotating "Compare with Other
+            # Models" list; keep only this model's block (its ID through its specification).
+            if provider=='siliconflow' and name.startswith('silicon-model-'):
+                start=re.search(r'\S+/\S+ Copy ',raw);end=raw.find('Compare with Other Models')
+                if start and end>start.start():raw=raw[start.start():end]
         if provider not in REVIEW_PROVIDERS:
             raw=re.sub(r'[$¥￥]\s*[\d,.]+', '$PRICE', raw)
             # Kimi's MDX currency component leaves numeric values in text nodes.
@@ -99,12 +106,29 @@ def read_models(provider, directory, old):
         return result
     if provider == 'openai':
         raw=(p/'openai.raw').read_text(encoding='utf8');result={}
-        for tier in ['Standard','Flex','Fast','Ultrafast']:
-            section=raw.split('### '+tier+' pricing data',1)[1].split('\n\n',2)[1]
+        money=lambda x:None if x=='-' else float(x.replace('$','').replace(',',''))
+        def write(a,b):
+            # The page lists 30-minute and 12-hour cache writes; requests do not say which one applied, so a single
+            # cache-write rate is only recorded when both are the same amount. Otherwise it stays unknown.
+            return a if a==b else None
+        # Flex moved under "### Batch pricing data" as a "#### Flex" table; Batch itself is not a request tier here.
+        sections={'standard':raw.split('### Standard pricing data',1)[1].split('\n### ',1)[0],
+                  'flex':raw.split('### Batch pricing data',1)[1].split('\n### ',1)[0].split('#### Flex',1)[1].split('\n#### ',1)[0],
+                  'fast':raw.split('### Fast pricing data',1)[1].split('\n### ',1)[0],
+                  'ultrafast':raw.split('### Ultrafast pricing data',1)[1].split('\n### ',1)[0]}
+        for tier,section in sections.items():
+            heads=[]
             for line in section.splitlines():
                 cols=[x.strip() for x in line.split('|')[1:-1]]
-                if len(cols)!=9 or not cols[0].startswith(('gpt-','o1','o3','o4')):continue
-                result.setdefault(cols[0].split(' (')[0],{})[tier.lower()]=[None if x=='-' else float(x.replace('$','').replace(',','')) for x in cols[1:]]
+                if cols and cols[0]=='Model':heads=cols;continue
+                if not cols or not cols[0].startswith(('gpt-','o1','o3','o4')):continue
+                v=[money(x) for x in cols[1:]]
+                if heads==['Model','Short context input','Short context output','Short context cached input','Short context 30m write','Short context 12h write','Long context input','Long context output','Long context cached input','Long context 30m write','Long context 12h write'] and len(v)==10:
+                    row=[v[0],v[2],write(v[3],v[4]),v[1],v[5],v[7],write(v[8],v[9]),v[6]]
+                elif heads==['Model','Input','Output','Cached input'] and len(v)==3:
+                    row=[v[0],v[2],None,v[1],None,None,None,None]
+                else:raise ValueError('OpenAI pricing table shape changed')
+                result.setdefault(cols[0].split(' (')[0],{})[tier]=row
         for model in ['chat-latest','gpt-5.3-codex','text-embedding-3-small','text-embedding-3-large','text-embedding-ada-002']:
             if model not in result and model in old:result[model]=copy.deepcopy(old[model])
         return result

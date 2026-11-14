@@ -106,5 +106,7 @@ The same runtime schema validates both the produced file and downloaded data.
 
 Source links are listed in `contracts.json`; amounts are per 1,000,000 tokens.
 The initial reviewed bundle is dated 2026-10-10 and the parsers were last reviewed
-against the official pages on 2026-10-19. Prices refresh independently; new billing
-rules or unsupported model families may still require a code update.
+against the official pages on 2026-11-14 (Gemini now reads the Markdown source on
+aistudio.google.com; Kimi reads the rendered pricing page because its Markdown export
+ships empty tables). Prices refresh independently; new billing rules or unsupported
+model families may still require a code update.
