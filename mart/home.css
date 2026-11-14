@@ -5,8 +5,8 @@
 .mart-cards a:hover{translate:0 -2px}
 .mart-cards .mart-art{position:relative;height:150px;border-radius:8px;overflow:hidden;background:var(--tint)}
 .mart-cards .mart-art.frames{background:url(data/frames/picnic-clay-portrait-t-10fc6aa8.webp) 36% 55%/auto 88% no-repeat,url(data/frames/rainbow-illustrated-portrait-t-70408717.webp) 64% 55%/auto 88% no-repeat,linear-gradient(165deg,#e3eefa,#f6e9f2)}
-/* 글꾸 마트 표지: 실제 글꾸 틀(비 · 호박 · 메신저 말풍선) 미리보기를 겹친 몽타주(cover-geulkku.webp · 1120×300 · 마트-모바일/gen-cover.mjs 로 만들어요) */
-.mart-cards .mart-art.geulkku{background:url(cover-geulkku.webp) 50% 0/cover no-repeat,linear-gradient(165deg,#f6efe2,#efe9f6)}
+/* 글꾸 마트 표지: 지금 마트의 심플 틀 셋(편지 봉투 · 카페 영수증 · 라면) 실제 미리보기를 겹친 몽타주(cover-geulkku.webp · 1120×300 · 11-14 허브 지시-1114/홈-영상/대본/gen-cover-geulkku.mjs 로 다시 구움) */
+.mart-cards .mart-art.geulkku{background:url(cover-geulkku.webp?v=20261114a) 50% 0/cover no-repeat,linear-gradient(165deg,#f6efe2,#efe9f6)}
 .mart-cards b{font-size:16px;font-weight:650;line-height:1.4}
 .mart-cards p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
 .mart-cards .mart-go{margin-top:auto;font-size:14px;font-weight:650;color:var(--blue-strong)}
