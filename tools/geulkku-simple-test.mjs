@@ -2133,7 +2133,7 @@ await test('점검 2-④ 홈: 깨진 % 주소(#% · #100%)에서도 「바로 �
     const pick = (0, eval)(`(hash) => ${body.match(/hash==='#portraits'.*?\}\)\(\)(?=\);)/)[0]}`);
     for (const h of ['#%', '#100%', '#%E0%A4%A']) assert.equal(pick(h), '', h);
     assert.equal(pick('#start'), 'start'); assert.equal(pick('#' + encodeURIComponent('한눈에')), '한눈에');
-    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /home-guide\.js\?v=20261114a/);   // 11-14 홈 영상 새로 찍기에서 꼬리 올림(20261112n → 20261114a)
+    assert.match(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), /home-guide\.js\?v=20261114b/);   // 11-14 홈 영상 새로 찍기에서 꼬리 올림(20261112n → 20261114a → 폰 캡처 다시 찍어 20261114b)
 });
 // ── 11-12 「테마 아직 못 받음」 — 마트 판정(mart/theme-take.js · 목록 nt)이 테마 받기 검사(src/mart-import.js checkItem)와 420틀 모두 같아요 ──
 {
