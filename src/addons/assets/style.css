@@ -416,7 +416,7 @@
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
 }
 
 .eh-tile-off {
@@ -818,7 +818,7 @@
     object-fit: contain;
     /* 확대하면 둥글기도 같이 커지므로 배율(viewer.js 가 넣는 --eh-zoom-scale)로 나눠 늘 8px 로 보이게 */
     border-radius: calc(8px / var(--eh-zoom-scale, 1));
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
     -webkit-user-drag: none;
     transform-origin: 50% 50%;
 }

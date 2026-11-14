@@ -273,15 +273,23 @@ function solaMap(prompts, order, metadata, kind = 'flame') {
   return { key:'sola', kind, mark:kind, label:'', title:kindling ? '솔라 킨들링' : '솔라', groups, toggles, tabs };
 }
 /** 길게 눌러 효과 보기: 사전의 짧은 설명(블루레몬에이드가 쓴 글) + 지금 프리셋 원문(이 기기에서 읽기만). */
+// 11-14 솔라에 더해 쓰는 항목(공개 솔라 사전 밖 · 출력 언어 넷 · 카드 따라 자동 대사 색)의 설명 — 원문을 읽고 우리 말로 요약했어요.
+const SOLA_EXTRA_HELP = {
+  'bl-sola-language-ko-ko': '서술과 대사를 모두 한국어로 쓰고, 말로 하는 대사는 큰따옴표로 감싸요. 시점 · 인물 말투 · 켜 둔 솔라 기능과 상태창 칸 이름은 그대로 두고 언어만 바꿔요. 출력 언어 묶음에서 하나만 골라요.',
+  'bl-sola-language-en-ko': '서술 · 묘사는 영어로, 말로 하는 대사만 한국어로 큰따옴표 안에 쓰게 해요. 소리 내지 않은 속생각은 서술과 같은 영어로 써요. 출력 언어 묶음에서 하나만 골라요.',
+  'bl-sola-language-en-ja': '서술 · 묘사는 영어로, 말로 하는 대사만 일본어로 「」 안에 쓰게 해요. 소리 내지 않은 속생각은 서술과 같은 영어로 써요. 출력 언어 묶음에서 하나만 골라요.',
+  'bl-sola-language-ja-ja': '서술과 대사를 모두 일본어로 쓰고, 대사는 「」로 감싸요. 시점 · 인물 말투 · 켜 둔 솔라 기능과 상태창 칸 이름은 그대로 두고 언어만 바꿔요. 출력 언어 묶음에서 하나만 골라요.',
+  'bl-sola-dialogue-color-auto': '지금 캐릭터 카드에 맞춰 미리 정해 둔 인물별 색을 골라, 말로 한 대사를 그 색 글자로 감싸게 해요. 별명 · 다른 언어 이름도 같은 인물로 보고, 표에 없는 인물은 읽기 쉬운 색을 하나 정해 계속 써요. 말투 태그는 색 안에 남기고, 대사 색상 묶음의 다른 방식과는 하나만 켜요.',
+};
 function solaDescribe(key, preset) {
   const variant = solaVariant(preset); if (!variant) return null;
   const group = variant.groups.find(x => x.key === key), toggle = variant.toggles.find(x => x.id === key);
   if (!group && !toggle) return null;
   // 사전에 없는 항목은 본문 맨 앞의 도움말 주석({{// 도움말: …}} · 모델에는 안 가요)을 설명으로 써요 — 킨들링에 더한 선택 항목이 이 꼴이에요.
   const helpNote = content => (String(content || '').match(/^\s*\{\{\/\/\s*도움말\s*:\s*([\s\S]*?)\}\}/u) || [])[1]?.replace(/\s+/g,' ').trim() || '';
-  const rows = (group ? group.options : [toggle]).map(item => { const prompt = preset.prompts.find(p => p.identifier === item.id); return { label:item.label, prompt, desc:solaText(solaEntry(item.id, prompt?.name)?.desc || helpNote(prompt?.content)) }; }).filter(x => x.prompt);
+  const rows = (group ? group.options : [toggle]).map(item => { const prompt = preset.prompts.find(p => p.identifier === item.id); return { label:item.label, prompt, desc:solaText(solaEntry(item.id, prompt?.name)?.desc || helpNote(prompt?.content) || SOLA_EXTRA_HELP[item.id] || '') }; }).filter(x => x.prompt);
   if (!rows.length) return null;
-  const missing = '이 항목의 설명이 사전에 없어요. 아래 현재 원문을 확인해 주세요.';
+  const missing = '이 항목은 아직 설명이 없어요. 아래 「현재 원문 확인」을 펼쳐 보세요. 본문 맨 앞에 {{// 도움말: 설명}} 을 적어 두면 다음부터 그 글이 여기에 떠요.';
   return { title:group?.label || toggle.label, text:group ? rows.map(r => `${r.label}: ${r.desc || missing}`).join('\n\n') : rows[0].desc || missing,
     items:group ? rows.map(r => ({ label:r.label, text:r.desc || missing })) : undefined,
     original:rows.map(r => `${r.label}\n${r.prompt.content || ''}`).join('\n\n'), verified:rows.every(r => r.desc) };

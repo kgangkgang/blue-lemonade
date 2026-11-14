@@ -98,10 +98,21 @@ await test('못 받으면 거절 · 실리태번 사본 자리가 없거나 미�
     const old = link([], { preload: false }); const r = fc.loadSheet(old); assert.equal(old.rel, 'stylesheet'); fire(old); await r;
     const before = host.cssRules.length; fc.flushFocusCopies(); assert.equal(host.cssRules.length, before, '예전 길은 실리태번 몫이라 테마가 넣지 않아요');
 });
+await test('2차: asSheet 는 시트가 되는 순간에만 — 미리 받기 동안엔 안 불러요(media 를 끄면 받지 않아서) · 예전 길은 붙이기 앞에', async () => {
+    const seen = [];
+    const pre = link([]); const p = fc.loadSheet(pre, undefined, el => seen.push([el, el.rel]));
+    assert.deepEqual(seen, [], '미리 받기 동안엔 부르지 않아요');
+    fire(pre); assert.deepEqual(seen, [[pre, 'preload']], '받기가 끝나 stylesheet 로 바꾸기 바로 앞');
+    assert.equal(pre.rel, 'stylesheet'); fire(pre); await p;
+    const old = link([], { preload: false }); const q = fc.loadSheet(old, el => { seen.push(['붙임', el.rel]); head.push(el); }, el => seen.push(['꺼 두기', el.rel]));
+    assert.deepEqual(seen.slice(1), [['꺼 두기', 'stylesheet'], ['붙임', 'stylesheet']], '예전 길은 붙이기 앞에');
+    fire(old); await q;
+    fc.flushFocusCopies();
+});
 await test('애드온 · 번역기 시트가 이 길로 붙어요 · CI 등록', () => {
     const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
     const addons = read('src/addons.js');
-    assert.match(addons, /loadSheet\(link,el=>document\.head\.append\(el\)\)/, '첫 장 · 한 장씩');
+    assert.match(addons, /loadSheet\(link,el=>document\.head\.append\(el\),holdSheet\)/, '첫 장 · 한 장씩(2차: 덮개 동안이면 꺼 둔 채 — holdSheet)');
     assert.match(addons, /loadSheet\(full,\(\)=>\{if\(link\.isConnected\)link\.after\(full\);/, '전체 장(같은 자리)');
     assert.match(read('src/addons/translator/shell.js'), /loadSheet\(link\)\.catch\(\(\) => \{\}\)/, '번역기 첫 장');
     assert.match(read('src/addons/translator/index.js'), /loadSheet\(cssLink\[0\]\)\.catch\(\(\) => \{\}\)/, '번역기 전체 장');

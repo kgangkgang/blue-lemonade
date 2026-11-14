@@ -46,7 +46,7 @@ body.salty .bl-chat-graph-search:focus-within { outline: 2px solid var(--salty-a
 body.salty .bl-chat-graph-search input:focus { outline: none; }
 body.salty .bl-chat-graph-zoom { display: flex; align-items: center; gap: 2px; }
 body.salty .bl-chat-graph-zoom output { min-width: 3.6em; text-align: center; font-size: .85em; font-variant-numeric: tabular-nums; color: var(--salty-muted); }
-body.salty .bl-chat-graph-viewport { position: relative; flex: 1 1 auto; min-height: 180px; height: min(57dvh,640px); overflow: hidden; touch-action: none; border: 1px solid var(--salty-line); border-radius: 12px; background-color: var(--salty-bg); background-image: radial-gradient(circle,var(--salty-line) 1px,transparent 1px); background-size: var(--bl-chat-graph-grid,24px) var(--bl-chat-graph-grid,24px); background-position: var(--bl-chat-graph-grid-x,0) var(--bl-chat-graph-grid-y,0); cursor: grab; user-select: none; }
+body.salty .bl-chat-graph-viewport { position: relative; flex: 1 1 auto; min-height: 180px; height: min(57dvh,640px); overflow: hidden; touch-action: none; border: 1px solid var(--salty-line); border-radius: 12px; background-color: var(--salty-bg); background-image: radial-gradient(circle,var(--salty-line) 1px,transparent 1px); background-size: var(--bl-chat-graph-grid,24px) var(--bl-chat-graph-grid,24px); background-position: var(--bl-chat-graph-grid-x,0) var(--bl-chat-graph-grid-y,0); cursor: grab; -webkit-user-select: none; user-select: none; }
 body.salty .bl-chat-graph-viewport:active { cursor: grabbing; }
 body.salty .bl-chat-graph-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 body.salty .bl-chat-graph-stage svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }

@@ -102,7 +102,7 @@
 }
 .bl-sticky.is-top { z-index: 3901; }
 .bl-sticky.is-dragging { opacity: .92; }
-.bl-sticky-head { display: flex; align-items: center; gap: 0; padding: 6px 4px 0 6px; cursor: grab; touch-action: none; user-select: none; }
+.bl-sticky-head { display: flex; align-items: center; gap: 0; padding: 6px 4px 0 6px; cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
 .bl-sticky.is-dragging .bl-sticky-head { cursor: grabbing; }
 .bl-sticky-head .bl-note-btn { min-width: 28px; height: 28px; font-size: 12px; }
 .bl-sticky .bl-sticky-body { flex: 1 1 auto; padding: 4px 10px 10px !important; }
@@ -393,7 +393,7 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-note-swatch:hover { outline: 2px solid var(--bl-notes-accent); outline-offset: 1px; }
 /* ── 설정: 서식 버튼 목록 (2열 · 켜기/끄기 · 끌어서 순서) ── */
 .bl-look-fmtlist { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
-.bl-look-fmtrow { display: flex; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 6px 0 2px; border-radius: var(--bl-r-sm, 6px); background: var(--bl-notes-card); font-size: 12px; -webkit-touch-callout: none; user-select: none; }
+.bl-look-fmtrow { display: flex; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 6px 0 2px; border-radius: var(--bl-r-sm, 6px); background: var(--bl-notes-card); font-size: 12px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .bl-look-fmtrow.is-off .bl-look-fmticon, .bl-look-fmtrow.is-off .bl-look-fmtname { opacity: .4; }
 .bl-look-fmtrow.is-dragging { opacity: .35; }
 .bl-look-grip { display: grid; place-items: center; width: 22px; height: 30px; color: var(--bl-notes-muted); cursor: grab; touch-action: none; }
@@ -451,7 +451,7 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-note-colorlabel { flex: 0 0 100%; font-size: 11px; color: var(--bl-notes-muted); }
 
 /* ── 귀속 표시 (날짜 옆 프로필 동그라미 · 누르면 채팅방 이름) ── */
-.bl-note-owner { display: inline-flex; align-items: center; gap: 5px; height: 22px; margin-left: 6px; padding: 0; border-radius: 999px; cursor: pointer; -webkit-touch-callout: none; user-select: none; max-width: 60%; }
+.bl-note-owner { display: inline-flex; align-items: center; gap: 5px; height: 22px; margin-left: 6px; padding: 0; border-radius: 999px; cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; max-width: 60%; }
 .bl-note-owner img { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--bl-notes-accent) 50%, transparent); }
 .bl-note-owner > i { width: 18px; text-align: center; font-size: 12px; color: var(--bl-notes-muted); }
 .bl-note-owner.is-global > i { opacity: .55; }

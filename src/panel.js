@@ -1,4 +1,5 @@
 import { deviceKind } from './device-layout-options.js';
+import { armGuard, disarmGuard } from './cheap-guards.js';
 import { trackerWeatherOn } from './weather-readability.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { syncProfileClip } from './profile-clip.js';
@@ -332,6 +333,8 @@ export function mountPanel(container, { popup = false, onFullscreen = null, init
     const root = document.createElement('div');
     root.className = popup ? 'salty-panel in-popup bl-editor' : 'salty-panel bl-editor';
     root._onFullscreen = onFullscreen;
+    // 1.4.x 최적화 3차: 설정 창(.salty-panel)을 문서에 넣기 전에 테마 시트의 `.salty-panel *` 지킴 갈래를 원래 꼴로(src/cheap-guards.js — 창이 없을 땐 조상을 걷지 않는 꼴)
+    armGuard('panel');
     container.appendChild(root);
     panels.add(root);
     root._compareCleanup = bindComparison(root, getSettings(), () => { applyAll(); for (const panel of panels) syncWeatherPreview(panel, "chat.weather"); });
@@ -405,6 +408,7 @@ export function unmountPanel(root) {
     root._previewCleanup?.();
     for (const key of ['_fontIO', '_rowsRO', '_mainStickRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
+    if (!panels.size) disarmGuard('panel');   // 마지막 창을 뗐을 때만 — 문서에 .salty-panel 이 남아 있으면 그대로 켜 둬요
     const settings = panelAppearanceSettings(); syncDecor(settings); syncProfileClip(settings);
 }
 
@@ -828,7 +832,7 @@ function prevMes(user, name, text, sequence = 42) {
         <div class="mes_block">
             <div class="ch_name flex-container justifySpaceBetween">
                 <div class="flex-container flex1 alignitemscenter"><div class="flex-container alignItemsBaseline">
-                    <span class="name_text">${name}</span><small class="timestamp">오늘 4:12pm</small>
+                    <span class="name_text">${name}</span><small class="timestamp">오늘 오후 4:12</small>
                 </div></div>${PREV_BTNS}
             </div>
             <div class="mes_text">${text}</div>
@@ -877,7 +881,7 @@ function markdownStage() {
 function imgStage(art) {
     return `<div class="salty-preview bl-image-reading" data-prev="img" data-art="${art}" aria-hidden="true" inert>
         <div class="mes"><div class="mes_block">
-            <div class="ch_name bl-pc-detail"><span class="name_text">세라피나</span><small class="timestamp">오늘 4:12pm</small></div>
+            <div class="ch_name bl-pc-detail"><span class="name_text">세라피나</span><small class="timestamp">오늘 오후 4:12</small></div>
             <div class="mes_text">
                 <p class="bl-pc-detail">세라피나가 창가로 다가섰다. <q>「여기서 보는 풍경이 가장 좋아요.」</q></p>
                 <div class="custom-cac-wrap"><div class="custom-cac-frame"><div class="custom-cac-inner">

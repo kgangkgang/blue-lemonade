@@ -281,7 +281,7 @@ export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설
     };
     await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.CONFIRM, '', {
         okButton: '업데이트', cancelButton: '나중에', allowVerticalScrolling: true,
-        onOpen: (p) => { popup = p; p?.dlg?.classList.add('bl-roomy-dialog'); buttons(); if (start) void go(); },
+        onOpen: (p) => { popup = p; p?.dlg?.classList.add('bl-roomy-dialog', 'bl-update-dialog'); buttons(); if (start) void go(); },
         onClosing: (p) => {
             if (stage === 'busy') return false;                       // 업데이트 중에는 닫지 않는다
             if (p.result !== ctx.POPUP_RESULT.AFFIRMATIVE) return true;

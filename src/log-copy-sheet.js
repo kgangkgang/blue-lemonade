@@ -877,6 +877,13 @@ export async function openLogSheet(model) {
                 if (event.key === 'Escape') { if (state.ed.on && event.target?.closest?.('[data-bl-ed]')) return; dialog.close(); return; }   // 11-12 글 고치기 칸 안 Esc 는 그 칸만 고치기 전으로(편집 모듈)
                 const key = event.key.toLowerCase();
                 const ed = !!(eb && state.ed.on);
+                // 11-14 감사: 문서 전체 편집(designMode) 미리보기는 Tab · Shift+Tab 이 밖으로 안 나가 키보드로는 Esc(창 닫기) 말고 빠질 길이 없었어요 — 창 안 앞 · 뒤 칸으로 넘겨요
+                if (event.key === 'Tab' && !ed && !event.ctrlKey && !event.altKey && !event.metaKey) {
+                    const list = [...dialog.querySelectorAll('button, a[href], input, select, textarea, iframe, [tabindex]:not([tabindex="-1"])')].filter(el => !el.disabled && !el.closest('[hidden], [inert]') && el.getClientRects().length);
+                    const next = list[list.indexOf(frame) + (event.shiftKey ? -1 : 1)];
+                    if (next) { event.preventDefault(); next.focus(); }
+                    return;
+                }
                 if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { if (ed) return; event.preventDefault(); if (!doc.execCommand('insertLineBreak')) doc.execCommand('insertHTML', false, '<br>'); }   // 글 고치기 중 Enter = 칸 끝내기(편집 모듈)
                 else if (ed && (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && (key === 'b' || key === 'i')) { const cell = edCell(doc.getSelection()?.rangeCount ? doc.getSelection().getRangeAt(0) : null); if (cell) { event.preventDefault(); edFormat(doc, cell, key === 'b' ? 'bold' : 'italic'); } }
                 else if ((event.ctrlKey || event.metaKey) && !event.shiftKey && key === 'z') { event.preventDefault(); travel(-1); drawHist(); }

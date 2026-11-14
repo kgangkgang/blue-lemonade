@@ -10,7 +10,7 @@ html body .blpt .blpt-btn:active:not(:disabled) { background:var(--salty-raised,
 html body .blpt .blpt-btn:focus-visible { outline:2px solid var(--salty-accent-ink, currentColor); outline-offset:2px; }
 /* 폰(세부 설정 단추)에서 여는 창 — ZIP 설치 창과 같은 모양 */
 .blpt-dialog { width:min(480px, calc(100vw - 24px)); max-width:none; max-height:calc(100dvh - 24px); padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:20px; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); box-shadow:0 18px 60px color-mix(in srgb, var(--salty-text, black) 18%, transparent); }
-.blpt-dialog::backdrop { background:color-mix(in srgb, var(--salty-bg, black) 65%, transparent); backdrop-filter:blur(5px); }
+.blpt-dialog::backdrop { background:color-mix(in srgb, var(--salty-bg, black) 65%, transparent); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
 .blpt-dialog > header { display:flex; align-items:center; gap:8px; padding:8px 8px 8px 12px; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
 .blpt-dialog > header strong { flex:1; text-align:left; font-size:var(--bl-ts-ui, 14px); font-weight:600; }
 .blpt-dialog > header button { display:inline-grid; place-items:center; flex:none; width:var(--bl-h-icon, 34px); height:var(--bl-h-icon, 34px); min-height:0; padding:0; border:0; border-radius:var(--bl-r-sm, 8px); background:transparent; color:var(--salty-text, var(--SmartThemeBodyColor)); font:inherit; font-size:16px; line-height:1; cursor:pointer; box-shadow:none; }

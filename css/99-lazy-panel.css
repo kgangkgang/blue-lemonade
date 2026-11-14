@@ -392,7 +392,7 @@ body.salty #rm_api_block #openai_api :is(form, div):where([data-bl-row~="h4"]):i
   }
 }
 
-.bl-editor-actions [data-compare]{touch-action:none;user-select:none;white-space:nowrap;}
+.bl-editor-actions [data-compare]{touch-action:none;-webkit-user-select:none; user-select:none;white-space:nowrap;}
 .bl-editor-actions [data-compare][aria-pressed="true"]{background:var(--salty-accent);color:var(--salty-on-accent);}
 
 /* 원래 css/20-panel.css (2026-10-12 쓸데없는 줄바꿈): PC 팝업인데 설정 칸이 좁을 때 설명 · 고르기가 있는 묶음은 한 열.

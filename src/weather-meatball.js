@@ -8,7 +8,7 @@ export const MEATBALL_MODULE = 'statussim';
 
 /** 그 확장 날씨 표(engine.js WEATHER · skeleton_en.js)의 모든 값 + 자주 쓰는 자유 글 → 테마 날씨 종류. 빈 배열 = 아는 말인데 그릴 것 없음(흐림 · 구름 → 끔) */
 export const MEATBALL_WEATHER = Object.freeze([
-    // 그 확장 2.7.2 표 (봄 · 여름 · 가을 · 겨울) — 한국어 · 영어 저장 둘 다 · 2.7.9 · 2.7.11 · 2.7.15 도 표 · 매크로({{ss::weather}} · {{ss_weather}}) · 달력 칸이 같아요(11-14 원작 사본 대조)
+    // 그 확장 2.7.2 표 (봄 · 여름 · 가을 · 겨울) — 한국어 · 영어 저장 둘 다 · 2.7.9 · 2.7.11 · 2.7.15 · 2.7.17 도 표 · 매크로({{ss::weather}} · {{ss_weather}}) · 달력 칸이 같아요(11-14 원작 사본 대조)
     [['맑음', 'clear'], ['sun']],
     [['구름', 'cloudy'], []],
     [['비', 'rain'], ['rain']],

@@ -6,7 +6,7 @@ import { scriptCode } from './script-code.mjs';
 const root = path.resolve(process.argv[2] || '.');
 const { solaFixturePreset } = await import(pathToFileURL(path.join(root, 'tools/tests/sola-qr-fixture.mjs')).href);
 const bundled = await scriptCode(root, 'deus-qr');
-const api = new Function(bundled.split('// INSTALL')[0] + '\nreturn { solaVariant, solaMap, solaDescribe, setSolaDictionary, quickVariant, deusVariant, create:createDeusQuickController, solaBadge };')();
+const api = new Function(bundled.split('// INSTALL')[0] + '\nreturn { SOLA_EXTRA_HELP, solaVariant, solaMap, solaDescribe, setSolaDictionary, quickVariant, deusVariant, create:createDeusQuickController, solaBadge };')();
 let passed = 0;
 async function test(name, fn) { await fn(); console.log('PASS', name); passed++; }
 const order = p => p.prompt_order.find(x => String(x.character_id) === '100001').order;
@@ -71,10 +71,21 @@ await test('사전: 같은 id · 같은 이름이면 그 제목, id 가 바뀌�
         const d = api.solaDescribe(id, p);
         assert.equal(d.title, '평범한 문장 토글'); assert.equal(d.text, '합성 설명이에요.'); assert.equal(d.verified, true); assert.ok(d.original.includes('합성 검사 문구예요.'));
         const g = v.groups.find(x => x.label === '주도권'), dg = api.solaDescribe(g.key, p);
-        assert.equal(dg.verified, false); assert.ok(dg.text.includes('사전에 없어요'));
+        assert.equal(dg.verified, false); assert.ok(dg.text.includes('아직 설명이 없어요') && dg.text.includes('현재 원문 확인'), '설명이 없으면 「모른다」 대신 원문을 펼쳐 보라는 안내(11-14)');
         assert.equal(api.solaDescribe('없는-키', p), null);
     } finally { api.setSolaDictionary(null); }
     assert.equal(api.solaVariant(p).toggles.find(x => x.id === id).label, 'Plain Prose Toggle');
+});
+await test('11-14 솔라에 더해 쓰는 항목(출력 언어 넷 · 카드 따라 자동 대사 색)은 사전 밖이라도 우리 말 설명이 있어요', () => {
+    const ids = ['bl-sola-language-ko-ko', 'bl-sola-language-en-ko', 'bl-sola-language-en-ja', 'bl-sola-language-ja-ja', 'bl-sola-dialogue-color-auto'];
+    assert.deepEqual(Object.keys(api.SOLA_EXTRA_HELP).sort(), [...ids].sort());
+    for (const id of ids) { const t = api.SOLA_EXTRA_HELP[id]; assert.ok(t.length >= 40 && t.length <= 240 && /요\.$/.test(t) && /하나만/.test(t), id); }
+    const p = solaFixturePreset(), first = api.solaVariant(p).groups.find(x => x.label === '주도권').options[0].id;
+    p.prompts.find(x => x.identifier === first).identifier = 'bl-sola-language-ko-ko';
+    for (const o of p.prompt_order) for (const x of o.order) if (x.identifier === first) x.identifier = 'bl-sola-language-ko-ko';
+    const g = api.solaVariant(p).groups.find(x => x.label === '주도권');
+    assert.ok(g.options.some(x => x.id === 'bl-sola-language-ko-ko'));
+    assert.ok(api.solaDescribe(g.key, p).text.includes(api.SOLA_EXTRA_HELP['bl-sola-language-ko-ko']));
 });
 await test('같은 이름 · 순서면 같은 지도 객체(저장본과 화면 값 비교) · 이름이 바뀌면 새 지도', () => {
     const p = solaFixturePreset(), q = structuredClone(p);

@@ -50,4 +50,13 @@ test('테마 모습 초기화로 기기 알림 선택이 바뀌지 않아요', (
     F.chooseDeviceUse(S.getSettings(), 'single');
     S.resetSettings({ look: true }); assert.equal(S.getSettings().syncWatch, false);
 });
+test('(1.4.x 최적화 3차) 성능 보조 「로딩 시간」 불러오기는 기본 끔 · 저장된 켬/끔은 그대로 · 다른 도구 기본은 켬', () => {
+    assert.equal(S.DEFAULTS.addonUI.perfLoad.timer, false);
+    for (const k of ['watchdog', 'perf', 'log', 'dedupe']) assert.equal(S.DEFAULTS.addonUI.perfLoad[k], true, k);
+    assert.equal(read({}).addonUI.perfLoad.timer, false, '새 설치');
+    assert.equal(read({ salty: { addonUI: { perfLoad: { watchdog: true } } } }).addonUI.perfLoad.timer, false, '빠진 칸은 기본값으로');
+    assert.equal(read({ salty: { addonUI: { perfLoad: { timer: true } } } }).addonUI.perfLoad.timer, true, '켜 둔 사람은 그대로');
+    assert.equal(read({ salty: { addonUI: { perfLoad: { timer: false } } } }).addonUI.perfLoad.timer, false);
+    assert.equal(read({ salty: { addonUI: { perfLoad: {} } } }).addonUI.perfLoad.dedupe, true);
+});
 console.log(`가벼운 기본값 시험 ${passed}개를 통과했어요.`);

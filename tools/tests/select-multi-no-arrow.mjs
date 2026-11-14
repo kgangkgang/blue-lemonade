@@ -29,7 +29,8 @@ function rules(css) {
 
 const controls = read('css/02-controls.css');
 const cr = rules(controls);
-const isMultiRule = r => /^body\.salty select\[multiple\]:where\(:not\(\.salty-panel \*\)\)/.test(r.sel) && !/option/.test(r.sel) && /background-image:\s*none\s*!important/.test(r.body);
+// 1.4.x 최적화 3차: 생성물은 가벼운 지킴 꼴(tools/css-light-guards.cjs) — 두 꼴 다 받아요
+const isMultiRule = r => /^body\.salty select\[multiple\]:where\(:not\(\.salty-panel(?: \*|:not\(\*\))\)\)/.test(r.sel) &&!/option/.test(r.sel) && /background-image:\s*none\s*!important/.test(r.body);
 
 t('① 여러 개 고르기 규칙이 ▾ 그림을 지운다(!important)', () => {
     const hit = cr.filter(isMultiRule);

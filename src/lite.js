@@ -3,6 +3,7 @@ import { getSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 import { booting, afterBoot } from './boot-gate.js';
 import { watchDom } from './dom-watch.js';
+import { guardSheet, lightSelector } from './cheap-guards.js';
 import { GATE_SHEETS, PANEL_SHEET } from './css-gates.gen.js';   // 1.1.6 뗀 규칙 시트 표(tools/build-css.cjs 가 만들어요)
 // 9.0.1 설정 창 미리보기 CSS 는 따로 받는 시트(src/preview.gen.css)로만 — 설정 창 · 미리보기를 처음 쓸 때 <link> 로 붙인다.
 //
@@ -358,7 +359,7 @@ export function deferPanelHasRules(tries = 25) {
                 style.id = 'salty-panel-css';
                 style.media = 'not all';
                 style.textContent = tail;
-                sheetTail(sheet).after(style); // 1.1.6 테마 시트 뒤 줄(미리보기 · 뗀 규칙 시트 포함) 끝 뒤 · 9.0.1 미리보기 <link> 가 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
+                sheetTail(sheet).after(style); guardSheet(style.sheet); // 1.4.x 최적화 3차: 지킴 갈래가 켜진 동안이면 넣은 자리에서 원래 꼴로(src/cheap-guards.js) · 1.1.6 테마 시트 뒤 줄(미리보기 · 뗀 규칙 시트 포함) 끝 뒤 · 9.0.1 미리보기 <link> 가 먼저 붙었으면 그 뒤(원래 차례: 미리보기 → 게으른 칸). 먼저 새 시트를 붙이고(꺼진 채) 원래 규칙을 지운다 — 같은 태스크라 그 사이 그리기가 없다
                 for (let i = sheet.cssRules.length - 1; i > from; i--) sheet.deleteRule(i);
                 panelCount = live.length;
                 panelStyle = style;
@@ -379,7 +380,7 @@ function sameShape(a, b) {
     if (a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) {
         const x = a[i], y = b[i];
-        if (x.type !== y.type || x.constructor !== y.constructor || x.selectorText !== y.selectorText) return false;
+        if (x.type !== y.type || x.constructor !== y.constructor || lightSelector(x.selectorText) !== lightSelector(y.selectorText)) return false;   // 1.4.x 최적화 3차: 지킴 갈래를 원래 꼴로 되돌린 동안(src/cheap-guards.js)도 같은 뼈대
         if ((x.conditionText ?? x.media?.mediaText ?? x.name ?? '') !== (y.conditionText ?? y.media?.mediaText ?? y.name ?? '')) return false;
         if ((x.cssRules || y.cssRules) && !(x.cssRules && y.cssRules && sameShape(x.cssRules, y.cssRules))) return false;
     }

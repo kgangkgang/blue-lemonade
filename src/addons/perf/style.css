@@ -514,7 +514,7 @@
     padding: 7px 10px;
     cursor: pointer;
     list-style: none;
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
 }
 
 .rl-msg summary::-webkit-details-marker { display: none; }

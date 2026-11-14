@@ -6,13 +6,21 @@ html:not(#bl-scrollbars-on) body.salty :not(#chat) {
   scrollbar-width: none;
   scrollbar-gutter: auto;
 }
-html:not(#bl-scrollbars-on) body.salty :not(#chat)::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+/* 1.4.x 최적화 3차: 같은 요소들의 ::-webkit-scrollbar 숨김 짝은 scrollbar-width 를 모르는 엔진(옛 크로미움 · 옛 사파리)과 애플 웹킷에만 —
+   크로미움 121+ 는 scrollbar-width 가 auto 가 아니면 ::-webkit-scrollbar 를 아예 안 써서(위 규칙이 none) 이 짝은 화면에 아무 일도 안 하면서
+   모든 요소마다 가상 요소 규칙을 견줬어요(2차 측정 선택자 비용 13.9 + 13.5ms · 부풂). 사파리는 둘 중 무엇이 이기는지 확인하지 않아 예전처럼 둬요
+   (`font: -apple-system-body` = 애플 웹킷만 아는 글꼴 이름). 빌드가 이 묶음을 첫 장 밖 호환 시트로 떼어요(tools/css-compat.cjs — 크로미움 최신에서는 받지도 않아요) */
+@supports not ((scrollbar-width: none) and (not (font: -apple-system-body))) {
+  html:not(#bl-scrollbars-on) body.salty :not(#chat)::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
 }
 /* 11-01: 과일의 마음 창은 body 밖(html 의 자식)이라 위 규칙이 못 닿아 본문 · 글칸에 얇은 막대가 보였어요 — 같은 숨김(프리셋 CSS 가 ID 를 겹쳐 써서 !important) */
 html:not(#bl-scrollbars-on) :is(body.salty #fruit-heart-v6, body.salty ~ #fruit-heart-v6, body.salty ~ #fruit-heart-v6 *) { scrollbar-width: none !important; scrollbar-gutter: auto !important; }
-html:not(#bl-scrollbars-on) :is(body.salty #fruit-heart-v6, body.salty ~ #fruit-heart-v6, body.salty ~ #fruit-heart-v6 *)::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+@supports not ((scrollbar-width: none) and (not (font: -apple-system-body))) {
+  html:not(#bl-scrollbars-on) :is(body.salty #fruit-heart-v6, body.salty ~ #fruit-heart-v6, body.salty ~ #fruit-heart-v6 *)::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+}
 /* 스크롤바 홈만큼 띄우던 여백(--bl-sbw, 09)은 홈이 없으니 0 — #chat 은 제 규칙 */
 html:not(#bl-scrollbars-on) body.salty { --bl-sbw: 0px; }

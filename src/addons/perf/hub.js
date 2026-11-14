@@ -7,6 +7,7 @@
 import { callGenericPopup, POPUP_TYPE } from '../../../../../../popup.js';
 import { getSettings, saveSettings } from '../../settings.js';
 import { perfErrorText } from './start-error.js';
+import { loadOn } from './load-defaults.js';
 
 export const SUITE_TITLE = '성능 보조';   // 7.0.3 창 제목이 「설정」이라 무슨 창인지 몰랐다 — 애드온 이름으로
 export const SUITE_VERSION = '2.3.4';
@@ -98,9 +99,9 @@ export function markOff(id) {
 
 // 4.5.5: 도구마다 '불러오기' 스위치. 끄면 다음 새로고침부터 그 파일을 아예 안 읽는다
 // (perfMenu 는 마법봉 메뉴에 보일지, 이것은 파일을 읽을지 — 다른 설정이다).
-function syncLoadSwitches() {
+function syncLoadSwitches() {   // 1.4.x 최적화 3차: 값이 없으면 도구마다의 기본(load-defaults.js — 「로딩 시간」만 끔)
     const on = getSettings().addonUI?.perfLoad ?? {};
-    for (const box of root.querySelectorAll('[data-load]')) box.checked = on[box.dataset.load] !== false;
+    for (const box of root.querySelectorAll('[data-load]')) box.checked = loadOn(on, box.dataset.load);
 }
 root.addEventListener('change', (event) => {
     const box = event.target.closest('[data-load]');

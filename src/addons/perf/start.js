@@ -1,6 +1,6 @@
 import { perfStartError, perfErrorText } from './start-error.js';
-const old = { timer:'load-timer', watchdog:'stream-watchdog', dedupe:'save-dedupe', log:'request-log' };
-export const failures=[];
+import { loadOn } from './load-defaults.js';
+const old = { timer:'load-timer', watchdog:'stream-watchdog', dedupe:'save-dedupe', log:'request-log' };export const failures=[];
 // Finish evaluating this module before its dependencies can import it back.
 // The caller awaits ready, so "running" still means all enabled imports settled.
 export const ready = start();
@@ -26,7 +26,7 @@ async function start() {
  for (const [id,file] of [['timer','loadtimer'],['perf','perfassist'],['watchdog','watchdog-main'],['dedupe','savededupe'],['log','requestlog']]) {
   try {
    const folder=old[id], key=`third-party/${folder}`;
-   if (load[id] === false) { hub.markOff(id); continue; }
+   if (!loadOn(load, id)) { hub.markOff(id); continue; }   // 1.4.x 최적화 3차: 값이 없으면 도구마다의 기본(load-defaults.js — 「로딩 시간」만 끔)
    if (folder && names.includes(key) && !disabled.includes(key)) { hub.markLegacy(id,folder); continue; }
    await import(`./${file}.js`);
   } catch (error) {

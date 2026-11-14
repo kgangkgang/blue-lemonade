@@ -85,6 +85,8 @@
 
 /* 읽기 방식 카드: 지금 글꼴로 그 모양의 한 문단 */
 .bl-first-run .bl-fr-read-sample { display: block; padding: 2px 0; color: var(--salty-text, inherit); overflow-wrap: anywhere; word-break: keep-all; }
+/* 1.4.7 감사 표5: 견본 카드는 폭이 좁아 「소설책」의 양쪽 맞춤이 낱말 사이를 크게 벌려 깨진 듯 보였어요 — 견본만 왼쪽 맞춤(실제 채팅의 맞춤 설정은 그대로) */
+.bl-first-run .bl-fr-read-sample { text-align: left !important; }
 .bl-first-run .bl-fr-read-sample.is-indent { text-indent: 1em; }
 .bl-first-run .bl-fr-read-sample.is-bubble { padding: .45em .7em; border-radius: var(--bl-r-md, 12px); background: var(--salty-raised, var(--fr-control)); }
 .bl-first-run .bl-fr-read-sample q { color: var(--salty-dialogue, inherit); }

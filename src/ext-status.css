@@ -679,6 +679,17 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-t { flex: 1 1 calc(100% - 60px); padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s1, 4px)); }
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-a { flex: 1 1 100%; justify-content: flex-end; }
+  /* 폰: 띠를 딱 두 줄로(11-14 사용자 「빈 공간 많은데 왜 이렇게 자리 차지하냐」 · 「위에 2줄만 써도 될 것 같다」)
+     1줄 = 왼쪽 제목 · 오른쪽 칩(소지금 · 난이도) / 2줄 = 왼쪽 날짜 · 장소 · 오른쪽 아이콘(주사위 · 연락 · 알림함 · 일시정지 · 펼침).
+     제목 · 날짜는 한 단추(누르면 상태창)라 왼쪽 칸이 두 줄을 같이 쓰고, 길면 말줄임(원작 규칙). 아이콘은 줄 높이에 맞게 작게 — 누름 상자는 손가락 화면의 44 그대로(아래 pointer: coarse).
+     원작 요소는 옮기지 않고 칸 배치만 바꿔요. 게이지 · 일시정지 띠 · 알림 줄은 원래대로 그 아래. PC(701px 이상)는 그대로. */
+  body.salty #ss-hud.ss-hud { padding: 4px 8px; }
+  body.salty #ss-hud .ss-hud-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 't c' 't a'; column-gap: var(--bl-s2, 8px); row-gap: 0; align-items: center; }
+  body.salty #ss-hud .ss-hud-t { grid-area: t; align-self: stretch; min-width: 0; min-height: 0; justify-content: space-around; }
+  body.salty #ss-hud .ss-hud-chips { grid-area: c; justify-self: end; }
+  body.salty #ss-hud .ss-hud-chips .ss-chip { min-height: 20px; padding-block: 0; }
+  body.salty #ss-hud .ss-hud-a { grid-area: a; justify-self: end; margin: 0; }
+  body.salty #ss-hud .ss-hud-a .ss-ib { width: 32px; height: 26px; }
 }
 
 /* ---------- 손가락 화면: 누르는 넓이 44 — 보이는 크기는 그대로, 가운데 맞춘 투명 상자(86-touch-targets 와 같은 방식) ---------- */

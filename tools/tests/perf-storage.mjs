@@ -38,6 +38,10 @@ await test('주인: 고정 주인은 블루 레몬에이드 · 실리태번 둘,
     assert.equal(S.dbInfo('sample-db').owner, 'sample-ext');
     assert.deepEqual(S.allOwners().map(o => o.id), ['blue-lemonade', 'sample-ext', 'sillytavern'], '실리태번 · 기타는 늘 끝');
     assert.deepEqual(S.dbInfo('LLMtranslatorDB'), { owner: 'blue-lemonade', label: '번역 저장(캐시)' });
+    // 11-14 감사: 실리태번 localforage 넷이 한 이름(「실리태번 설정 사본」)으로 겹치지 않게
+    const st = ['SillyTavern_Thumbnails', 'SillyTavern_Prompts', 'SillyTavern_ChatCompletions', 'SillyTavern_TextCompletions'].map(n => S.dbInfo(n));
+    assert.ok(st.every(d => d.owner === 'sillytavern'));
+    assert.equal(new Set(st.map(d => d.label)).size, 4, '실리태번 저장소 넷은 이름이 서로 달라요');
 });
 
 await test('저장 공간 다리: 먼저 쌓인 provider 를 거두고, 뒤에 push 한 것도 바로 등록 · 두 번 세워도 한 벌', () => {

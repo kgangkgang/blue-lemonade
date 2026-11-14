@@ -52,7 +52,7 @@
     min-height: 36px;
     margin: 0;
     cursor: pointer;
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
 }
 
 .bwr_settings .bwr_switch_row > span:first-child {
@@ -193,7 +193,7 @@
     text-align: center;
     white-space: nowrap;
     cursor: pointer;
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
     opacity: 0.72;
     transition: background 0.15s, color 0.15s;
 }
@@ -298,7 +298,7 @@
     background: var(--bwr-tint);
     font-size: 0.9em;
     cursor: pointer;
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
     transition: background 0.15s, color 0.15s;
 }
 

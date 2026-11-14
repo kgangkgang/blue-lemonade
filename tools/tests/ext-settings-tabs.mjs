@@ -136,7 +136,7 @@ test('⑤ 안내 한 줄 — 확인한 판 · 다른 판', () => {
     assert.ok(content.children.at(-1).textContent.includes('지금 판은 9.9.9'));
     const unread = compatText(SET, '');
     assert.ok(/읽지 못했어요/.test(unread) && !/맞춰 뒀어요/.test(unread), '판을 못 읽으면 맞는 판처럼 적지 않아요: ' + unread);
-    assert.deepEqual(SET.verified, ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15'], '확인한 판(리그 사진 · 점검 대본으로 본 것만)');
+    assert.deepEqual(SET.verified, ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17'], '확인한 판(리그 사진 · 점검 대본으로 본 것만)');
     for (const v of SET.verified) assert.match(compatText(SET, v), /화면에 맞춰 뒀어요/);
 });
 test('⑥ 감시자 · 타이머가 없고 맞춤 시트는 한 번만 붙여요', () => {

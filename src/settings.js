@@ -114,8 +114,9 @@ export const DEFAULTS = {
     addonCarry: 0,   // 8.3.0 개인 확장 플래그 이어받기를 어느 단계까지 했나 (private-addons.js ADDON_CARRY · addons.js 가 한 번 올린다)
     addonUI: { translatorDrawer: true, ttsDrawer: true, orderIcon: false, perfIcon: false, wordsMenu: false, captureMenu: false, modelswitchMenu: true, notesMenu: true, notesBarMenu: true, zipinstallMenu: true, perfMenu: { watchdog:false, timer:true, perf:false, log:true, dedupe:false, storage:true },
         // 4.5.5: 성능 보조의 도구를 아예 안 불러오게 (perfMenu 는 '메뉴에 보이기', 이것은 '불러오기').
-        // 기본은 전부 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.
-        perfLoad: { watchdog:true, timer:true, perf:true, log:true, dedupe:true } },
+        // 기본은 켬 — 지금 쓰던 대로 돌아가고, 안 쓰는 도구를 끄면 그만큼 시작이 가벼워진다.
+        // 1.4.x 최적화 3차: 「로딩 시간」(timer — 폰에서 잠깐 켜 두고 숫자를 보는 진단 도구)만 기본 끔. 이미 저장된 값(켬 · 끔)은 그대로 둬요 — 빠진 칸만 이 기본값으로 채워요.
+        perfLoad: { watchdog:true, timer:false, perf:true, log:true, dedupe:true } },
     wordTools: { messageView: 'translation', rules: [], presets: [], syntax: 'comma', caseSensitive: false, wholeWords: false, particles: true, maskWords: '' }, // maskWords: 6.0.4 잠시 가리기 낱말(한 줄에 하나 · 쉼표) — 스위치는 세션 안에서만, 저장하지 않는다 (wordmask.js) · 1.0.0 되살림(9.0.0 5357f89e 에서 걷었던 단어 치환)
     captureTools: { replace: false, replaceRules: [], preset: '', redact: false, names: [], mask: 'auto', maskWord: '○○', maskStyles: {}, format:'image', imagePages:false, duration:6, maxMB:8, maxParagraphs:4, resolution:1080, backgroundTint:60, includeWeather:true, includeBackground:true, showName:true, showAvatar:true, showAssets:true, showTimestamp:true, showModel:true, showMessageId:true, showTokens:true, showGenerationTime:true, filterPreset:'none', grain:0, brightness:0, contrast:0, saturation:0, temperature:0, vignette:0 }, // filterPreset · grain … vignette: 5.5.3 캡처 필터 (프리셋 none|mono|film|vintage|cool|warm|custom · 전부 0 이면 결과 픽셀 그대로)
     onehand: { on: false, swipe: true, imp: true, cont: true, regen: true, top: true, bottom: true, jump: true, delLast: true },
@@ -783,7 +784,7 @@ export function getSettings() {
     if (!isObj(s.addonUI)) s.addonUI=structuredClone(DEFAULTS.addonUI);
     if (!isObj(s.addonUI.perfMenu)) s.addonUI.perfMenu=structuredClone(DEFAULTS.addonUI.perfMenu);
     if (!isObj(s.addonUI.perfLoad)) s.addonUI.perfLoad=structuredClone(DEFAULTS.addonUI.perfLoad);
-    for (const k of Object.keys(DEFAULTS.addonUI.perfLoad)) if (typeof s.addonUI.perfLoad[k] !== 'boolean') s.addonUI.perfLoad[k]=true;
+    for (const k of Object.keys(DEFAULTS.addonUI.perfLoad)) if (typeof s.addonUI.perfLoad[k] !== 'boolean') s.addonUI.perfLoad[k]=DEFAULTS.addonUI.perfLoad[k];
     s.addonUI.translatorDrawer=flag(s.addonUI.translatorDrawer,true);
     s.addonUI.ttsDrawer=flag(s.addonUI.ttsDrawer,true);
     for (const key of ['orderIcon','perfIcon','wordsMenu','captureMenu']) s.addonUI[key]=flag(s.addonUI[key],false);

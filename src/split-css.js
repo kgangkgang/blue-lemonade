@@ -3,6 +3,7 @@
 //   원문 글이 자바스크립트 힙과 DOM 글 노드에 두 벌 남지 않아요. 꺼진 채(media="not all") 받아 꼬리를 떼고 데우스 규칙을 준비한 뒤,
 //   켜기 · 첫 장 끄기 · 서랍 전용 칸 연결을 한 작업에서 해요 — 다시 계산이 한 번이에요. 붙는 자리(첫 장 바로 뒤 — 본문 → 미리보기 → 뗀 규칙 → 서랍 전용)는 그대로예요.
 import { syncThemeSheet, prepareDemThemeSheet, demStylesEnabled } from './theme-sheet.js';
+import { guardSheet } from './cheap-guards.js';
 const URL = new globalThis.URL('./style-lazy.gen.css', import.meta.url).href;
 const TAIL_URL = new globalThis.URL('./lazy-panel.gen.css', import.meta.url).href;   // 빌드가 같은 꼬리를 따로 써 둔 것(src/lite.js deferPanelHasRules 와 같은 파일)
 const MARK = '#salty-lazy-panel-start';
@@ -64,7 +65,9 @@ export function loadFullCss(sheet, readyPanel, themeOn) {
             let end = link; for (let n = link.nextElementSibling; n && (n.id === 'salty-ext-css' || n.dataset?.blGate != null); n = n.nextElementSibling) end = n;
             end.after(panel);
             panel.textContent = text;
+            guardSheet(panel.sheet);   // 1.4.x 최적화 3차: 지킴 갈래가 켜진 동안이면 넣은 자리에서 원래 꼴로(src/cheap-guards.js)
         }
+        guardSheet(full);   // 꺼진 채 받은 전체 장도 켜기 전에(load 잡기에서 이미 맞췄으면 할 일이 없어요)
         // 여기부터 한 작업 — 서랍 전용 칸 연결 · 전체 장 켜기 · 첫 장 끄기가 한 번의 다시 계산으로 묶여요
         readyPanel(panel);
         link.dataset.blFullTheme = 'ready'; link.media = 'all';

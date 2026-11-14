@@ -42,7 +42,11 @@ const DB_RULES = [
     [/^BlueLemonadePromptCacheLocal$/i, 'blue-lemonade', '한글화 패널 번역 캐시'],
     [/^PTTranslationDB_PLUS$/i, 'blue-lemonade', '옛 한글화 패널 캐시'],
     [/^(prompt[-_]?panel|bookmark)/i, 'blue-lemonade', '프롬프트 · 북마크 번역 캐시'],
-    [/^SillyTavern_/i, 'sillytavern', '실리태번 설정 사본'],
+    // 11-14 감사: 실리태번 localforage 넷이 모두 「실리태번 설정 사본」 한 이름으로 나와 줄을 가를 수 없었어요(설정 사본도 아니에요) — 쓰임대로
+    [/^SillyTavern_Thumbnails$/i, 'sillytavern', '실리태번 배경 미리보기 그림'],
+    [/^SillyTavern_Prompts$/i, 'sillytavern', '실리태번 보낸 프롬프트 기록'],
+    [/^SillyTavern_ChatCompletions$/i, 'sillytavern', '실리태번 토큰 수 캐시'],
+    [/^SillyTavern_TextCompletions$/i, 'sillytavern', '실리태번 샘플러 고르기'],
     [/^localforage$/i, 'sillytavern', '실리태번 저장소'],
 ];
 export function dbInfo(name) {

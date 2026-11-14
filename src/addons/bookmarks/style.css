@@ -2164,7 +2164,7 @@ body.salty .cg-root .cg-setting-text small {
     border-radius: calc(6px / var(--eh-zoom-scale, 1));
     transform-origin: 50% 50%;
     -webkit-user-drag: none;
-    user-select: none;
+    -webkit-user-select: none; user-select: none;
 }
 .cg-root .cg-viewer-img[hidden] { display: none; }
 .cg-root .cg-viewer-img.is-easing { transition: transform var(--eh-zoom-ms, .26s) var(--cg-ease, ease); }

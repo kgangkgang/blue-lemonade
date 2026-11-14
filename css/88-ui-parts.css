@@ -358,3 +358,6 @@ html:not(#bl-ui-parts-off) body :is(.bl-tool-field, .bl-mask-number-head, #bl-de
 }
 /* 캐릭터 에셋 프리셋 칩(role=tab)도 글자 탭 글자 */
 html:not(#bl-ui-parts-off) body .eh-pchip { font-size: var(--bl-ui-tab-fs) !important; min-height: var(--bl-ui-ctl) !important; height: var(--bl-ui-ctl) !important; }
+/* 1.4.7 감사 표6: 테마 창(dialog.bl-tool-dialog — 로그 복사 · 월드인포 도움말 등 · 출처 창 .bl-credits-dialog)의 단추 · 링크는 제 초점 규칙이 없어
+   브라우저 기본 검정 테가 나왔어요 — 다른 테마 창과 같은 포인트 2px 테 하나로. 특이도는 :focus-visible 하나(0,1,0)라 제 규칙이 있는 칸은 그대로예요 */
+:where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(button, a[href], summary, [tabindex]:not([tabindex="-1"])):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }

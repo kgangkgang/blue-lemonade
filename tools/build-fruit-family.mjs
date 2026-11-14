@@ -48,11 +48,12 @@ export function readOptionEffects() {
         if (typeof text !== 'string' || !text.trim()) throw Error(`option-effects.json ${kind} ${key} 설명이 비었어요`);
         if (kind === 'effects' && !/^[0-9a-f]{64}$/.test(key)) throw Error(`option-effects.json effects 열쇠가 SHA-256 지문이 아니에요: ${key}`);
     }
+    for (const id of data.dynamic || []) if (!data.baselines?.[id]) throw Error(`option-effects.json dynamic ${id} 에 id 설명이 없어요`);
     return data;
 }
 function optionEffectsCode() {
     const data = readOptionEffects();
-    return `// 과일 계열 항목 도움말 사전 — tools/scripts-src/fruit-family/option-effects.json 에서 tools/build-fruit-family.mjs 가 만들어요(손으로 고치지 않아요).\n// 본문 지문(SHA-256)과 표준 항목 id 만 있고 원문 본문은 없어요.\nexport const FRUIT_OPTION_EFFECTS = ${JSON.stringify(data.effects, null, 2)};\nexport const FRUIT_OPTION_BASELINES = ${JSON.stringify(data.baselines, null, 2)};\n`;
+    return `// 과일 계열 항목 도움말 사전 — tools/scripts-src/fruit-family/option-effects.json 에서 tools/build-fruit-family.mjs 가 만들어요(손으로 고치지 않아요).\n// 본문 지문(SHA-256)과 표준 항목 id 만 있고 원문 본문은 없어요.\nexport const FRUIT_OPTION_EFFECTS = ${JSON.stringify(data.effects, null, 2)};\nexport const FRUIT_OPTION_BASELINES = ${JSON.stringify(data.baselines, null, 2)};\n// 쓰는 동안 본문이 늘 바뀌는 항목(설정 자료) — 지문이 달라도 id 설명을 확인된 설명으로 봐요.\nexport const FRUIT_OPTION_DYNAMIC = ${JSON.stringify(data.dynamic || [])};\n`;
 }
 
 function fruitCode() {

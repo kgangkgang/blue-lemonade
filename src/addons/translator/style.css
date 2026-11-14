@@ -705,7 +705,7 @@ body.expandMessageActions .mes .mes_buttons .extraMesButtons:has(> .mes_llm_tran
 @media (prefers-reduced-motion: reduce) { #llm_translate_input_button, #llm_translate_input_button.is-busy i { transition: none; animation: none; } }
 
 /* 2.1.0 번역 진행 표시 */
-.llmt-progress { font-size: 0.8em; opacity: 0.55; margin-bottom: 4px; user-select: none; }
+.llmt-progress { font-size: 0.8em; opacity: 0.55; margin-bottom: 4px; -webkit-user-select: none; user-select: none; }
 
 /* Blue Lemonade integration, modified 2026-09-24. */
 [data-bl-translator][hidden]{display:none!important}
@@ -746,7 +746,7 @@ body.salty .bl-translator-dialog .bl-hs-row .bl-hs-switch:focus-visible { outlin
 .mes_text :is(.custom-llmt-flag, .llmt-flag) {
   display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
   width: 1.6em; height: 1.6em; margin: -0.35em 0 -0.35em 0.1em; vertical-align: middle;
-  border-radius: var(--bl-r-xs, 6px); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  border-radius: var(--bl-r-xs, 6px); cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
   color: var(--bl-pop-ink, var(--salty-accent, #c9932c)); opacity: 0.62; text-indent: 0;
   transition: opacity .15s ease, background-color .15s ease;
 }

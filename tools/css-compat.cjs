@@ -77,7 +77,8 @@ function media(prelude, p) {
 /** 규칙의 겉 조건(ctx) 전체가 그 기기에서 거짓인가 — @media 만 보고, 하나라도 거짓이면 거짓 */
 function falseOn(ctx, p) { return ctx.some(c => /^@media\b/i.test(c) && media(c, p) === false); }
 
-const BROWSER_SEL = /-moz-|\.bl-apple-webkit\b/;
+// 1.4.x .bl-no-sq = @container style() 를 모르는 엔진(사파리 · iOS 18 앞 · 파이어폭스 — src/compat-css.js 가 재서 달아요)
+const BROWSER_SEL = /-moz-|\.bl-apple-webkit\b|\.bl-no-sq\b/;
 function browserOnly(rule) {
     if (rule.ctx.some(c => /^@supports\s+not\b/i.test(c) || /^@media\b[^{]*forced-colors/i.test(c))) return true;
     return BROWSER_SEL.test(rule.selector);

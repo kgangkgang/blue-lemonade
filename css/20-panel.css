@@ -330,7 +330,9 @@ body.salty .popup[data-bl-popup~="notice"] .popup-content {
 .bl-notice-actions > .salty-btn,
 .salty-notice-toggle { min-height:44px; min-width:44px; }
 /* 7.7.8 업데이트 · 공지가 실리태번 팝업일 때도 「닫기」 하나 — 「취소」가 같이 보여 둘 다 닫는 단추였다 */
-body.salty .popup[data-bl-popup~="notice"] .popup-controls .popup-button-cancel { display:none !important; }
+/* 11-14 감사: 새 판 창(update-check.js)은 공지 글 모양(.salty-notice)을 빌려 「notice」 표시가 붙지만 「업데이트 · 나중에」 두 단추 창이에요 —
+   취소(나중에 · 다 받은 뒤 닫기)까지 숨겨 폰에서 「업데이트」 하나만 보였어요 → 그 창은 빼요 */
+body.salty .popup[data-bl-popup~="notice"]:not(.bl-update-dialog) .popup-controls .popup-button-cancel { display:none !important; }
 .salty-sub {
   font-size: var(--fs-small);
   color: var(--salty-muted);
@@ -552,6 +554,7 @@ body.salty .popup[data-bl-popup~="notice"] .popup-controls .popup-button-cancel 
   border-radius: 8px;
   background: none;
   color: var(--salty-muted);
+  color: color-mix(in srgb, var(--salty-muted) 80%, var(--salty-text)); /* 1.4.7 감사 표3: 회색 바탕 위 안 고른 칸 글자가 4.3:1(기준 4.5) — 본문색 쪽으로 한 걸음(화이트 약 5.2:1 · 나이트는 더 밝아짐) */
   font-weight: 650;
   min-width: 0;
   max-width: 100%;

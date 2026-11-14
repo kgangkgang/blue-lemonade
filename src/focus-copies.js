@@ -29,14 +29,17 @@ export function canTakeOver(link) {
 /**
  * 시트 <link> 를 붙이고 다 받으면 풀리는 약속(못 받으면 거절). place(link) 가 실제로 붙여요(head 끝 · 어떤 시트 바로 뒤 등).
  * href 는 부르기 전에 넣어 두어요. 사본을 맡을 수 없으면 예전처럼 rel=stylesheet 로 붙여요.
+ * asSheet(link): 2차 최적화 — <link> 가 시트(rel=stylesheet)가 되기 바로 앞에 불러요(시작 덮개 동안 꺼 두기 holdSheet 용).
+ *   미리 받기 동안 media 를 끄면 받지 않으니, 받기가 끝나 시트로 바뀌는 그 자리에서만 불러요.
  */
-export function loadSheet(link, place = el => doc().head.append(el)) {
+export function loadSheet(link, place = el => doc().head.append(el), asSheet = null) {
     return new Promise((resolve, reject) => {
         const fail = () => { link.onload = link.onerror = null; reject(Error('스타일을 읽지 못했어요.')); };
         if (!canTakeOver(link)) {
             link.rel = 'stylesheet';
             link.onload = () => { link.onload = link.onerror = null; resolve(); };
             link.onerror = fail;
+            asSheet?.(link);
             place(link);
             return;
         }
@@ -45,6 +48,7 @@ export function loadSheet(link, place = el => doc().head.append(el)) {
         link.onload = () => {   // 받기 끝 → 같은 자리에서 시트로(캐시에서 읽어요) — 실리태번 감시는 rel 바뀜을 보지 않아요
             link.onload = () => { link.onload = link.onerror = null; enqueue(link); resolve(); };
             link.removeAttribute?.('as');
+            asSheet?.(link);
             link.rel = 'stylesheet';
         };
         place(link);

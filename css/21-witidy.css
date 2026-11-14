@@ -223,7 +223,7 @@ body.salty #send_form #qr--bar.bl-qr-dragging { scroll-snap-type: none; }
 body.salty #send_form #qr--bar.bl-qr-dragging .qr--button { transform: none !important; background: var(--bl-fill-hover, var(--bl-hover)) !important; box-shadow: none !important; transition: none !important; }
 @media (hover: hover) and (pointer: fine) {
   body.salty #send_form #qr--bar:is(.bl-qr-more-left, .bl-qr-more-right) { cursor: grab; }
-  body.salty #send_form #qr--bar.bl-qr-dragging, body.salty #send_form #qr--bar.bl-qr-dragging * { cursor: grabbing !important; user-select: none; }
+  body.salty #send_form #qr--bar.bl-qr-dragging, body.salty #send_form #qr--bar.bl-qr-dragging * { cursor: grabbing !important; -webkit-user-select: none; user-select: none; }
 }
 /* 찾기 팝업: 이름 한 줄 + 내용 미리보기 한 줄 */
 body.salty .bl-qrf .salty-pick-rows > button { flex-direction: column; align-items: stretch; justify-content: center; gap: 1px; padding: 6px 12px 6px 12px; }

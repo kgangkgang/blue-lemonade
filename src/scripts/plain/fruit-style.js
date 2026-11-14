@@ -13,12 +13,13 @@ function installFruitStyle(BlueLemonade, css) {
   style.dataset.blFruitStyle = '1';
   style.textContent = css;
   (doc.head || doc.documentElement).append(style);
-  const stopHelp = installFruitHelp(doc, host, FRUIT_HELP_GUIDE);
+  const hub = fruitWatchHub(doc, host);
+  const stopHelp = installFruitHelp(doc, host, FRUIT_HELP_GUIDE, hub);
   const stopOptionHelp = BlueLemonade.fruitOptionHelp?.();
-  const stopReading = installFruitReading(doc, host);
-  const stopSkin = installFruitSkin(doc, host);
-  const stopHomeOrder = installFruitHomeOrder(doc, host);
-  const stopExtra = installFruitExtraControls(doc, host, BlueLemonade);
+  const stopReading = installFruitReading(doc, host, hub);
+  const stopSkin = installFruitSkin(doc, host, hub);
+  const stopHomeOrder = installFruitHomeOrder(doc, host, hub);
+  const stopExtra = installFruitExtraControls(doc, host, BlueLemonade, hub);
   let stopped = false;
   function stop() {
     if (stopped) return;
@@ -29,6 +30,7 @@ function installFruitStyle(BlueLemonade, css) {
     stopSkin();
     stopHomeOrder();
     stopExtra();
+    hub.stop();
     style.remove();
     if (host[key]?.stop === stop) delete host[key];
   }
@@ -36,13 +38,75 @@ function installFruitStyle(BlueLemonade, css) {
   BlueLemonade.onCleanup(stop);
 }
 
+// BL 1.4.x 최적화 3차: 아래 다섯 설치(도움말 · 읽기 · 겉모습 · 홈 차례 · 더한 칸)가 저마다 걸던 html · body 자식 감시와
+//   과일 창(#fruit-heart-v6) subtree 감시(감시자 열 · 창이 다시 그려질 때마다 같은 기록 다섯 벌)를 감시자 하나로 모아요.
+//   기록마다 「예전에 그 설치의 감시가 받았을 종류인가」(mask)를 따져 그 설치만 깨우고, 깨우는 차례는 설치 차례 그대로예요.
+//   과일 창 기록은 그 창을 이미 본 설치(seen — 예전에 제 sync 가 창을 찾은 뒤 창 감시를 걸던 자리)에게만 가요.
+const FW_HTML = 1, FW_BODY = 2, FW_BODY_CLASS = 4, FW_BODY_ENTRY = 8, FW_ROOT = 16, FW_ROOT_TEXT = 32, FW_ROOT_CLASS = 64, FW_ROOT_STYLE = 128;
+function fruitWatchHub(doc, host) {
+  const subs = [], roots = new Map(), bodies = new Set();
+  const ROOT_OPTIONS = { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'style'] };
+  const BODY_OPTIONS = { childList: true, attributes: true, attributeFilter: ['class', 'data-bl-fruit-entry'] };
+  let stopped = false;
+  const watchBody = () => { const body = doc.body; if (body && !bodies.has(body)) { bodies.add(body); observer.observe(body, BODY_OPTIONS); } };
+  function deliver(records) {
+    let common = 0;
+    const rootBits = new Map();
+    for (const r of records) {
+      const t = r.target;
+      if (t === doc.documentElement && r.type === 'childList') { common |= FW_HTML; continue; }
+      if (bodies.has(t)) { common |= r.type === 'childList' ? FW_BODY : r.attributeName === 'class' ? FW_BODY_CLASS : FW_BODY_ENTRY; continue; }
+      const bit = r.type === 'childList' ? FW_ROOT : r.type === 'characterData' ? FW_ROOT_TEXT : r.attributeName === 'class' ? FW_ROOT_CLASS : FW_ROOT_STYLE;
+      const owner = roots.size === 1 ? roots.keys().next().value : [...roots.keys()].find(root => root === t || root.contains?.(t));
+      for (const root of owner ? [owner] : roots.keys()) rootBits.set(root, (rootBits.get(root) || 0) | bit);
+    }
+    if (common & FW_HTML) watchBody();   // 예전 도움말 감시처럼 body 가 바뀌면 새 body 도 봐요
+    for (const sub of subs.slice()) if (!sub.off && sub.mask & (common | (sub.root ? rootBits.get(sub.root) || 0 : 0))) sub.wake();
+  }
+  const observer = new host.MutationObserver(records => { if (!stopped) deliver(records); });
+  observer.observe(doc.documentElement, { childList: true });
+  watchBody();
+  function rewatch() {
+    // 아무 설치도 안 보는 창 감시만 걷어요 — 걷기 전에 받아 둔 기록은 꺼내 그대로 나눠요(disconnect 는 쌓인 기록을 버려요)
+    const pending = observer.takeRecords();
+    if (pending.length) deliver(pending);
+    observer.disconnect(); bodies.clear();
+    observer.observe(doc.documentElement, { childList: true }); watchBody();
+    for (const root of roots.keys()) observer.observe(root, ROOT_OPTIONS);
+  }
+  function seen(sub, root, quiet = false) {
+    root = root || null;
+    if (sub.root === root) return;
+    const old = sub.root;
+    sub.root = root;
+    if (root) { const n = roots.get(root) || 0; roots.set(root, n + 1); if (!n && !stopped) observer.observe(root, ROOT_OPTIONS); }
+    if (old) { const n = (roots.get(old) || 1) - 1; if (n > 0) roots.set(old, n); else { roots.delete(old); if (!quiet && !stopped) rewatch(); } }
+  }
+  function stop() { if (stopped) return; stopped = true; observer.disconnect(); subs.length = 0; roots.clear(); bodies.clear(); }
+  return {
+    add(mask, wake) {
+      const sub = { mask, wake, root: null, off: false };
+      subs.push(sub);
+      return {
+        seen: root => { if (!sub.off) seen(sub, root); },
+        off: () => { if (sub.off) return; sub.off = true; seen(sub, null, true); const i = subs.indexOf(sub); if (i >= 0) subs.splice(i, 1); if (!subs.length) stop(); },
+      };
+    },
+    stop,
+  };
+}
+const FW_HELP = FW_HTML | FW_BODY | FW_ROOT;
+const FW_READING = FW_BODY | FW_BODY_CLASS | FW_ROOT | FW_ROOT_TEXT;
+const FW_SKIN = FW_HTML | FW_BODY | FW_BODY_CLASS | FW_ROOT | FW_ROOT_CLASS;
+const FW_HOME = FW_HTML | FW_BODY | FW_BODY_CLASS | FW_ROOT;
+const FW_EXTRA = FW_HTML | FW_BODY | FW_BODY_CLASS | FW_BODY_ENTRY | FW_ROOT | FW_ROOT_TEXT | FW_ROOT_STYLE;
+
 
 // This guide only owns its button and inline reading panel.
-function installFruitHelp(doc, host, guide) {
+function installFruitHelp(doc, host, guide, hub) {
   const marker = 'data-bl-fruit-help';
   let stopped = false, scheduled = false, root = null, main = null;
   let button = null, card = null, open = false, previousScroll = 0, currentView = '';
-  let watchedBody = null;
   const make = (tag, text, className) => {
     const node = doc.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -118,7 +182,6 @@ function installFruitHelp(doc, host, guide) {
     }
   }
   function detach() {
-    inner.disconnect();
     root?.removeEventListener('keydown', keydown, true);
     button?.removeEventListener('click', toggle);
     button?.remove(); card?.remove();
@@ -129,19 +192,10 @@ function installFruitHelp(doc, host, guide) {
   }
   function sync() {
     if (stopped) return;
-    if (watchedBody !== doc.body) {
-      watchedBody = doc.body;
-      outer.disconnect();
-      outer.observe(doc.documentElement, {childList: true});
-      if (watchedBody) outer.observe(watchedBody, {childList: true});
-    }
     const next = doc.getElementById('fruit-heart-v6');
     if (next !== root) {
-      detach(); root = next;
-      if (root) {
-        root.addEventListener('keydown', keydown, true);
-        inner.observe(root, {childList: true, subtree: true});
-      }
+      detach(); root = next; watch.seen(root);
+      if (root) root.addEventListener('keydown', keydown, true);
     }
     if (!root) return;
     const title = root.querySelector('.fh-brand strong');
@@ -177,19 +231,17 @@ function installFruitHelp(doc, host, guide) {
     scheduled = true;
     Promise.resolve().then(() => {scheduled = false; sync();});
   }
-  const outer = new host.MutationObserver(schedule);
-  const inner = new host.MutationObserver(schedule);
-  outer.observe(doc.documentElement, {childList: true});
+  const watch = hub.add(FW_HELP, schedule);   // 예전: html · body 자식 감시 + 과일 창 subtree 자식 감시
   sync();
   return () => {
     if (stopped) return;
-    stopped = true; outer.disconnect(); detach();
+    stopped = true; watch.off(); detach();
   };
 }
 
 const FRUIT_HELP_GUIDE = {"intro":"과일 프리셋의 옵션을 화면에서 고르는 도구예요. 아래에서 처음 쓰는 법과 현재 탭의 설명을 볼 수 있어요.","sections":[{"id":"general","title":"처음 쓰는 분께","items":[{"title":"어디서 시작하나요?","text":"홈에서 자주 쓰는 옵션을 고르고, 더 자세한 설정은 ‘항목’에서 찾아요.","source":"원작 안내 정리"},{"title":"선택하면 무엇이 바뀌나요?","text":"프리셋 옵션은 고르면 실제 설정에 저장돼요. 화면에 보일 구역을 고르는 설정은 표시만 바꿔요.","source":"동작 해설"},{"title":"QR을 누르기 전에","text":"입력창만 채우는 카드와 바로 전송하는 카드가 있어요. 카드 설명을 확인하고 눌러요.","source":"원작 안내 정리"}]},{"id":"overview","title":"홈","items":[{"title":"모델 묶음","text":"선택한 모델에 맞는 프리셋 항목 묶음을 켜요. API 연결이나 실제 모델을 바꾸는 버튼은 아니에요.","source":"동작 해설"},{"title":"자주 쓰는 옵션","text":"홈에서 고른 옵션도 실제 프리셋에 적용돼요. 하나만 고르는 종류는 다른 선택이 함께 꺼질 수 있어요.","source":"동작 해설"},{"title":"본문 글자 수","text":"프리셋에 적힌 답변 길이 요청을 바꿔요. API의 최대 출력 토큰 설정과는 달라요.","source":"동작 해설"},{"title":"NSFW 자동","text":"답변 생성 전에 입력의 시작·종료 단어와 이전 답변의 장면 정보를 보고 전체 스위치를 바꿔요. 판단할 정보가 없으면 현재 상태를 유지해요.","source":"동작 해설"}]},{"id":"qr","title":"QR","items":[{"title":"입력창에 먼저 넣기","text":"기본 ‘전개 지시’와 ‘괄호 지시’는 입력창을 채워요. 내용을 확인하거나 고친 뒤 직접 보내면 돼요.","source":"원작 안내 정리"},{"title":"바로 전송하는 카드","text":"기본 요약·개요·카드 작성·프롬프트 조정·자동 계속은 메시지를 보내고 AI 답변 생성을 시작해요.","source":"동작 해설"},{"title":"채팅 숨기기","text":"숨기기는 지정한 대화를 AI에게 보내는 내용에서 빼고, 숨김 해제는 다시 넣어요. 채팅 기록은 남아 있어요.","source":"동작 해설"},{"title":"직접 가져온 QR","text":"가져오거나 편집한 카드는 그 안의 명령대로 실행돼요. 위 설명은 기본 카드 기준이에요.","source":"동작 해설"}]},{"id":"entries","title":"항목","items":[{"title":"항목 켜고 끄기","text":"체크하면 실제 프리셋 항목을 켜거나 꺼요. 핵심 항목은 변경 전에 확인창이 나올 수 있어요.","source":"동작 해설"},{"title":"필요한 항목 찾기","text":"이름으로 검색하거나 ‘켜진 항목만’으로 좁혀 볼 수 있어요. 구역을 열면 그 안의 항목이 보여요.","source":"원작 안내 정리"},{"title":"구역 순서와 표시","text":"구역 정렬은 패널 안의 순서만 바꿔요. 설정에서 구역을 숨겨도 프리셋 항목 자체는 꺼지지 않아요.","source":"원작 안내 정리"}]},{"id":"settings","title":"설정","items":[{"title":"연결 모델 따라가기","text":"연결된 모델을 알아보면 그 모델용 프리셋 항목으로 맞춰요. 알아보지 못한 모델은 그대로 둬요.","source":"원작 안내 정리"},{"title":"NSFW 단어와 종료 여유","text":"종료 단어가 우선이며, 단어 편집은 자동 저장돼요. 종료 여유는 NSFW 장면이 끝난 뒤 몇 회 더 유지할지 정해요. 판단은 답변 생성 전에 해요.","source":"동작 해설"},{"title":"보일 구역 고르기","text":"홈의 펼침 상태와 ‘항목’에 표시할 구역을 정해요. 표시를 줄이는 설정이며, 실제 프리셋 항목의 켜짐 상태는 바꾸지 않아요.","source":"원작 안내 정리"},{"title":"항목 변경 동기화","text":"실리태번에서 항목을 추가하거나 옮겼다면 구역 목록을 다시 읽어요. 프리셋 본문이나 항목의 켜짐 상태는 바꾸지 않아요.","source":"원작 안내 정리"},{"title":"스킨과 글꼴","text":"스킨에서 블루레몬에이드를 고르면 테마 색을 따라요. 글꼴 목록 아래에 블루레몬에이드 글꼴이 이어지고, 여기서 고른 글꼴은 이 창에만 적용돼요.","source":"동작 해설"},{"title":"빠른 답장 이름","text":"빠른 답장 줄에 보일 이름을 적어요. 비우면 원래 이름으로 돌아가고, QR 명령은 바뀌지 않아요.","source":"동작 해설"},{"title":"홈 화면 항목 되돌리기","text":"⠿ 손잡이를 잡았을 때만 순서가 바뀌어요. 처음 순서로 되돌리기는 이 프리셋에 저장된 순서와 펼침 상태만 지워요.","source":"동작 해설"}]}],"credit":"원작 화면의 안내를 정리하고, 코드로 확인한 내용은 ‘동작 해설’로 구분했어요.","links":[{"label":"원작 저장소","url":"https://github.com/kongkongmie/guoshizhixin"},{"label":"프롬프트 원문","url":"https://discord.com/channels/1384945301780955246/1395707630302789653/1554887154583212064"}]};
 // Compact optional explanations without moving or replacing original text/control nodes.
-function installFruitReading(doc,host) {
+function installFruitReading(doc,host,hub) {
   const HIDDEN='data-bl-fruit-reading-hidden',groups=new Map(),opened=new Map();
   let root=null,stopped=false,scheduled=false;
   const restore=record=>{for(const [node,before]of record.notes){if(node.getAttribute(HIDDEN)==='1'){if(before===null)node.removeAttribute(HIDDEN);else node.setAttribute(HIDDEN,before);}}record.notes.clear();record.tools.remove();};
@@ -207,7 +259,7 @@ function installFruitReading(doc,host) {
   const sync=()=>{
     scheduled=false;if(stopped)return;
     const next=doc.getElementById('fruit-heart-v6');
-    if(next!==root){inner.disconnect();clear();root=next;if(root)inner.observe(root,{childList:true,subtree:true,characterData:true});}
+    if(next!==root){clear();root=next;watch.seen(root);}
     if(!root || !doc.body?.classList.contains('salty') || root.querySelector('.fh-nav-item.on')?.dataset.nav!=='settings'){clear();return;}
     const cards=[...root.querySelectorAll('.fh-main .fh-card,.fh-main .fh-grp')],live=new Set(cards);
     for(const [card,record]of groups)if(!live.has(card)){restore(record);groups.delete(card);}
@@ -230,9 +282,8 @@ function installFruitReading(doc,host) {
     }
   };
   const queue=()=>{if(!stopped&&!scheduled){scheduled=true;queueMicrotask(sync);}};
-  const inner=new host.MutationObserver(queue),outer=new host.MutationObserver(queue);
-  outer.observe(doc.body||doc.documentElement,{childList:true,attributes:true,attributeFilter:['class']});sync();
-  return ()=>{if(stopped)return;stopped=true;outer.disconnect();inner.disconnect();clear();opened.clear();};
+  const watch=hub.add(FW_READING,queue);sync();   // 예전: body 자식 · class 감시 + 과일 창 subtree 자식 · 글자 감시
+  return ()=>{if(stopped)return;stopped=true;watch.off();clear();opened.clear();};
 }
 
 // ── Added controls. The quick-reply name lives with the theme's script settings (it follows the
@@ -271,7 +322,7 @@ const fruitLocal = {
 
 // Skin: a 블루레몬에이드 choice beside the original skins. Only the shown state of the original
 // skin buttons changes; the skin the window stores for itself is untouched.
-function installFruitSkin(doc, host) {
+function installFruitSkin(doc, host, hub) {
   const KEY = 'blue-lemonade-fruit-skin', ATTR = 'data-bl-fruit-skin';
   let lemonade = fruitLocal.read(host, KEY) !== 'native';
   let root = null, stopped = false, queued = false, button = null;
@@ -282,8 +333,7 @@ function installFruitSkin(doc, host) {
     queued = false; if (stopped) return;
     const next = doc.getElementById('fruit-heart-v6');
     if (next !== root) {
-      inner.disconnect(); root?.removeAttribute(ATTR); restoreNative(); dropButton(); root = next;
-      if (root) inner.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      root?.removeAttribute(ATTR); restoreNative(); dropButton(); root = next; watch.seen(root);
     }
     if (!root) return;
     if (!fruitSalty(doc)) { root.removeAttribute(ATTR); restoreNative(); dropButton(); return; }
@@ -312,13 +362,11 @@ function installFruitSkin(doc, host) {
     lemonade = false; fruitLocal.write(host, KEY, 'native'); schedule();
   };
   doc.addEventListener('click', onClick, true);
-  const inner = new host.MutationObserver(schedule), outer = new host.MutationObserver(schedule);
-  outer.observe(doc.documentElement, { childList: true });
-  if (doc.body) outer.observe(doc.body, { childList: true, attributes: true, attributeFilter: ['class'] });
+  const watch = hub.add(FW_SKIN, schedule);   // 예전: html 자식 · body 자식 · class 감시 + 과일 창 subtree 자식 · class 감시
   sync();
   return () => {
     if (stopped) return; stopped = true;
-    inner.disconnect(); outer.disconnect(); doc.removeEventListener('click', onClick, true);
+    watch.off(); doc.removeEventListener('click', onClick, true);
     root?.removeAttribute(ATTR); restoreNative(); dropButton();
   };
 }
@@ -326,7 +374,7 @@ function installFruitSkin(doc, host) {
 // Home order: only the ⠿ handle starts a drag, and a reset removes the saved order so the
 // original window computes its own default again. The preset is written through the same
 // Helper API the original uses for the same prompt.
-function installFruitHomeOrder(doc, host) {
+function installFruitHomeOrder(doc, host, hub) {
   const CONFIG = 'fruit-heart-control-config-v2';
   let root = null, stopped = false, queued = false, saving = false;
   const boxes = new Map();
@@ -363,7 +411,7 @@ function installFruitHomeOrder(doc, host) {
   function sync() {
     queued = false; if (stopped) return;
     const next = doc.getElementById('fruit-heart-v6');
-    if (next !== root) { inner.disconnect(); clear(); root = next; if (root) inner.observe(root, { childList: true, subtree: true }); }
+    if (next !== root) { clear(); root = next; watch.seen(root); }
     if (!root || !fruitSalty(doc)) { clear(); return; }
     for (const [list, box] of boxes) if (!list.isConnected) { box.remove(); boxes.delete(list); }
     for (const list of root.querySelectorAll('[data-home-sort]')) {
@@ -385,16 +433,14 @@ function installFruitHomeOrder(doc, host) {
     event.stopPropagation();
   };
   doc.addEventListener('pointerdown', pointer, true);
-  const inner = new host.MutationObserver(schedule), outer = new host.MutationObserver(schedule);
-  outer.observe(doc.documentElement, { childList: true });
-  if (doc.body) outer.observe(doc.body, { childList: true, attributes: true, attributeFilter: ['class'] });
+  const watch = hub.add(FW_HOME, schedule);   // 예전: html 자식 · body 자식 · class 감시 + 과일 창 subtree 자식 감시
   sync();
-  return () => { if (stopped) return; stopped = true; inner.disconnect(); outer.disconnect(); doc.removeEventListener('pointerdown', pointer, true); clear(); };
+  return () => { if (stopped) return; stopped = true; watch.off(); doc.removeEventListener('pointerdown', pointer, true); clear(); };
 }
 
 // Quick-reply name and Blue Lemonade fonts, added through the original window's own controls.
 // The entry keeps its id, command and click handler; only its visible label and tooltip change.
-function installFruitExtraControls(doc, host, BlueLemonade) {
+function installFruitExtraControls(doc, host, BlueLemonade, hub) {
   const FONT_KEY = 'blue-lemonade-fruit-font';
   const store = fruitSettingsStore(host);
   let selectedFont = fruitLocal.read(host, FONT_KEY) || '', entryName = store?.read() || '', draft = entryName;
@@ -545,8 +591,8 @@ function installFruitExtraControls(doc, host, BlueLemonade) {
     for (const node of ['#form_sheld', '#qr--popout', '#quickReplies'].flatMap(id => [...doc.querySelectorAll(id)])) if (!barRoots.has(node)) { barRoots.add(node); barObserver.observe(node, { childList: true, subtree: true, characterData: true }); }
     const next = doc.getElementById('fruit-heart-v6');
     if (next !== root) {
-      restoreFont(); inner.disconnect(); root = next; nameRow = nameInput = null; sheetPending = false;
-      if (root) inner.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['style'] });
+      restoreFont(); root = next; nameRow = nameInput = null; sheetPending = false;
+      watch.seen(root);
     }
     for (const [sheet, { group }] of sheets) if (!sheet.isConnected) { group.remove(); sheets.delete(sheet); }
     const active = fruitSalty(doc);
@@ -567,15 +613,14 @@ function installFruitExtraControls(doc, host, BlueLemonade) {
   };
   const onPointer = event => { if (nameRow && !nameRow.contains(event.target)) draftFocused = false; };
   const onFocus = event => { if (nameRow && !nameRow.contains(event.target)) draftFocused = false; };
-  const inner = new host.MutationObserver(queue), outer = new host.MutationObserver(queue), barObserver = new host.MutationObserver(queue);
-  outer.observe(doc.documentElement, { childList: true });
-  if (doc.body) outer.observe(doc.body, { childList: true, attributes: true, attributeFilter: ['class', 'data-bl-fruit-entry'] });
+  // 예전: html 자식 · body 자식 · class · data-bl-fruit-entry 감시 + 과일 창 subtree 자식 · 글자 · style 감시. 입력 줄 QR 자리 감시(barObserver)는 대상이 달라 그대로예요
+  const watch = hub.add(FW_EXTRA, queue), barObserver = new host.MutationObserver(queue);
   doc.addEventListener('click', onClick, true); doc.addEventListener('pointerdown', onPointer, true); doc.addEventListener('focusin', onFocus, true);
   if (selectedFont) try { BlueLemonade.fonts?.load?.(selectedFont); } catch {}
   sync();
   return () => {
     if (stopped) return; stopped = true;
-    inner.disconnect(); outer.disconnect(); barObserver.disconnect();
+    watch.off(); barObserver.disconnect();
     doc.removeEventListener('click', onClick, true); doc.removeEventListener('pointerdown', onPointer, true); doc.removeEventListener('focusin', onFocus, true);
     restoreFont(); for (const record of entries.values()) restoreEntry(record); entries.clear();
     nameRow?.remove(); nameRow = nameInput = null;

@@ -188,8 +188,11 @@ body.salty #toast-container .toast-progress {
 /* ---------- 지우기는 빨강: 휴지통 · 해골 아이콘은 쉴 때도 빨강 ----------
    누르면 빨간 면 + 바탕색 아이콘으로 뒤집힘 (폰에서 눌린 색이 남지 않게 :hover 는 (hover: hover) 안에서만)
    8.0.8: :not() 안 대안은 `#chat .mes_text *` 를 맨 앞에 — :has 갈래는 모든 요소와 견주는데, 요소 대부분이 메시지 글 안이라 첫 대안에서 끝난다
-   (뜻은 그대로 · 집합이라 순서 무관 · 문서 전체 다시 계산에서 이 규칙 13.4 → 4.1ms) */
-body.salty :is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull, :has(> :is(i, span):only-child:is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull))):where(:not(#chat .mes_text *, .salty-panel, .salty-panel *, #nonQRFormItems *, #toast-container *, .popup-controls *)) {
+   (뜻은 그대로 · 집합이라 순서 무관 · 문서 전체 다시 계산에서 이 규칙 13.4 → 4.1ms)
+   1.4.x 최적화 3차: :has 갈래는 맨 오른쪽 칸이 아무 요소나라(크롬 2차 측정 선택자 비용 1위) 요소마다 자식을 훑고 「:has 영향」 표식을 남겨, 그 뒤 메시지 글이
+   바뀔 때마다 :has 다시 보기가 따라와요. 그 갈래 앞에 같은 빼기 조건의 첫 대안(#chat .mes_text * — 요소 대부분)을 먼저 둬서 메시지 글 안 요소는 :has 를 견주지 않게 해요.
+   칸 안 조건은 「그리고」라 뜻이 같고, :where 라 특이도도 그대로예요(아래 빼기 목록은 그대로 둬요 — 휴지통 클래스 갈래는 클래스 바구니라 원래 싸요) */
+body.salty :is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull, :where(:not(#chat .mes_text *)):has(> :is(i, span):only-child:is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull))):where(:not(#chat .mes_text *, .salty-panel, .salty-panel *, #nonQRFormItems *, #toast-container *, .popup-controls *)) {
   color: var(--bl-danger) !important;
 }
 /* 1.0.0 위험 · 주요(채움) 단추 안의 휴지통 · 해골은 그 단추의 글자색을 따라요 — 위험 단추는 제 면에 맞춰 글자색을 정해 두는데(빨간 면이면 흰 글자),

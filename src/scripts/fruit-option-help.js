@@ -12,9 +12,28 @@ export function optionFamily(prompt, groups = {}) {
     }
     return name.startsWith('⌨') ? '文风' : groups[promptId(prompt)] || '';
 }
-export async function optionEffect(content, crypto = globalThis.crypto, identifier = '') {
+// 11-14 이름으로 찾기: 프리셋마다 같은 항목의 이름이 조금씩 달라요(앞 그림 글자 · 「택1」 「单选」 꼬리 · 「(데우스)」 꼬리 · #모델 · @작가 · from 출처).
+//   그런 것을 다 떼고 첫 칸(｜ 앞)의 글자 · 숫자만 남긴 열쇠로 이름 사전(과일 · 솔라 · 데우스)의 설명을 찾아요.
+export function helpNameKey(name) {
+    const head = String(name || '').normalize('NFKC').replace(/\s*#\s*[A-Za-z][^#｜]*/g, '').replace(/\s*@[^\s#｜]+/g, '').replace(/\s+from\S*$/i, '')
+        .replace(/^\s*\[(?:택|PICK)\s*1[^\]]*\]\s*/i, '').split(/[｜|]/)[0].split(/\s*(?:택1|单选|(?:\d{1,2}|多)选1)\s*[:：]\s*/).pop();
+    return head.replace(/[(（]\s*데우스[^)）]*[)）]/g, '').replace(/[^\p{L}\p{N}]/gu, '').replace(/(?:택1|单选|选开|(?:\d{1,2}|多)选1)$/u, '').toLowerCase();
+}
+/** 이름 사전들(BlueLemonade.translate 자료 {prompts:[{id,name,title,desc}]})에서 이 항목의 설명 — id + 이름이 같은 것 → 이름 열쇠가 같은 것 → id 가 같은 것 차례. 설명이 갈리면 쓰지 않아요. */
+export function dictionaryHelp(dictionaries, identifier = '', name = '') {
+    const rows = (Array.isArray(dictionaries) ? dictionaries : [dictionaries]).flatMap(d => Array.isArray(d?.prompts) ? d.prompts : []).filter(r => r && typeof r.desc === 'string' && r.desc.trim());
+    const id = String(identifier || ''), key = helpNameKey(name);
+    const one = list => { const texts = [...new Set(list.map(r => r.desc.trim()))]; return texts.length === 1 ? texts[0] : ''; };
+    return (id && key && one(rows.filter(r => r.id === id && helpNameKey(r.name) === key)))
+        || (key.length >= 2 && one(rows.filter(r => helpNameKey(r.name) === key)))
+        || (id && one(rows.filter(r => r.id === id))) || '';
+}
+// 본문 맨 앞 도움말 주석({{// 도움말: …}} · 모델에는 안 가요) — 직접 만든 항목에 설명을 달아 두는 자리예요(솔라 빠른 설정과 같은 꼴).
+export const helpNote = content => (String(content || '').match(/^\s*\{\{\/\/\s*도움말\s*:\s*([\s\S]*?)\}\}/u) || [])[1]?.replace(/\s+/g, ' ').trim() || '';
+export const NO_HELP_TEXT = '이 항목은 아직 설명이 없어요. 아래 「현재 원문 확인」을 펼쳐 보세요. 본문 맨 앞에 {{// 도움말: 설명}} 을 적어 두면 다음부터 그 글이 여기에 떠요.';
+export async function optionEffect(content, crypto = globalThis.crypto, identifier = '', {name = '', dictionaries} = {}) {
     // 효과 설명 213KB는 옵션 도움말을 실제로 열 때 받아요. 기본 탭과 일반 클릭에는 필요하지 않아요.
-    const { FRUIT_OPTION_EFFECTS, FRUIT_OPTION_BASELINES } = await import('./fruit-option-effects.js');
+    const { FRUIT_OPTION_EFFECTS, FRUIT_OPTION_BASELINES, FRUIT_OPTION_DYNAMIC = [] } = await import('./fruit-option-effects.js');
     const body = normalize(content), baseline = FRUIT_OPTION_BASELINES[String(identifier)];
     if (!body) return {text:baseline || '내용이 없는 구분 항목이에요. 이 항목만 켜도 새 지시가 추가되지는 않아요.', verified:true};
     let hash;
@@ -22,8 +41,14 @@ export async function optionEffect(content, crypto = globalThis.crypto, identifi
     hash ||= localPromptHash(body);
     const text = FRUIT_OPTION_EFFECTS[hash];
     if (text) return {text,verified:true};
+    if (baseline && FRUIT_OPTION_DYNAMIC.includes(String(identifier))) return {text:baseline,verified:true}; // 설정 자료처럼 쓰는 동안 본문이 바뀌는 항목
     if (baseline) return {text:baseline,verified:false,baseline:true};
-    return {text:'과일 · 야한 과일 · 청과 프리셋의 표준 항목 목록에 없는 항목이에요(직접 만들었거나 다른 프리셋에서 가져온 항목). 이름만으로 효과를 추측하지 않도록 현재 원문을 함께 확인해 주세요.',verified:false};
+    const note = helpNote(body);
+    if (note) return {text:note,verified:false,source:'note'};
+    let fromName = '';
+    try { fromName = dictionaryHelp(typeof dictionaries === 'function' ? await dictionaries() : dictionaries, identifier, name); } catch { /* 사전을 못 받으면 아래 안내로 */ }
+    if (fromName) return {text:fromName,verified:false,source:'name'};
+    return {text:NO_HELP_TEXT,verified:false};
 }
 
 // 11-05 설명 창 본문 나누기: 고르기 칸 설명은 선택지마다 한 문단(「이름: 설명」)이에요. 선택지마다 같은 문장(「마음은 하나만 켭니다.」 같은 것)은
@@ -94,7 +119,7 @@ export function installFruitOptionHelp(doc = document, host = window, config = {
         return null;
     }
     function close() { const old=modal;modal=null;if(old){old.close?.();old.remove();} }
-    function show(target, title, text, original, verified, baseline = false, items) {
+    function show(target, title, text, original, verified, baseline = false, items, source = '') {
         if (stopped || !target.isConnected) return;
         close();
         const dialog = doc.createElement('dialog');dialog.className='bl-fruit-option-help';dialog.setAttribute('aria-label',config.label || '과일 옵션 설명');
@@ -102,7 +127,7 @@ export function installFruitOptionHelp(doc = document, host = window, config = {
         heading.textContent=title || '옵션 설명';button.type='button';button.textContent='닫기';button.setAttribute('aria-label','옵션 설명 닫기');
         button.addEventListener('click',close);head.append(heading,button);
         const description=renderOptionHelp(doc,text,items);
-        const note=doc.createElement('p');note.className='bl-fruit-option-note';note.textContent=baseline?'기본 옵션의 효과 설명이에요. 현재 내용이 확인한 기본판과 달라 실제 효과가 다를 수 있어요. 아래에서 수정된 원문을 확인할 수 있어요.':verified?'이 옵션이 더하는 지시의 뜻이에요. 끈다고 반대 행동을 강제하지는 않으며, 다른 옵션과 모델에 따라 실제 응답은 달라질 수 있어요.':'원문은 이 기기에서만 읽어요. 자동 번역 API를 호출하지 않아요.';
+        const note=doc.createElement('p');note.className='bl-fruit-option-note';note.textContent=source==='name'?'프리셋 이름 사전의 설명이에요. 이름이 같은 항목의 설명을 가져왔어요 — 원문이 조금 달라 실제 효과가 다를 수 있으니 아래 원문도 함께 보세요.':source==='note'?'이 항목 본문 맨 앞의 도움말 주석이에요(모델에는 보내지 않아요).':baseline?'기본 옵션의 효과 설명이에요. 현재 내용이 확인한 기본판과 달라 실제 효과가 다를 수 있어요. 아래에서 수정된 원문을 확인할 수 있어요.':verified?'이 옵션이 더하는 지시의 뜻이에요. 끈다고 반대 행동을 강제하지는 않으며, 다른 옵션과 모델에 따라 실제 응답은 달라질 수 있어요.':'원문은 이 기기에서만 읽어요. 자동 번역 API를 호출하지 않아요.';
         dialog.append(head,description,note);
         if (original !== undefined) {
             const details=doc.createElement('details'),summary=doc.createElement('summary'),pre=doc.createElement('pre');
@@ -123,11 +148,11 @@ export function installFruitOptionHelp(doc = document, host = window, config = {
             const preset=getPreset(), prompt=findPrompt(target,preset);
             const title=target.querySelector('span')?.textContent?.trim() || target.getAttribute('aria-label') || target.textContent.trim();
             if (prompt) {
-                const content=String(prompt.content || ''), id=promptId(prompt), effect=await optionEffect(content,host.crypto,id);
+                const content=String(prompt.content || ''), id=promptId(prompt), effect=await optionEffect(content,host.crypto,id,{name:prompt.name,dictionaries:config.dictionaries});
                 if(stopped||ticket!==sequence||!target.isConnected||getName()!==presetName)return;
                 const current=getPreset()?.prompts?.find(p=>promptId(p)===id);
                 if(!current||String(current.content||'')!==content)return;
-                show(target,title||prompt.name,effect.text,content,effect.verified,effect.baseline);return;
+                show(target,title||prompt.name,effect.text,content,effect.verified,effect.baseline,undefined,effect.source);return;
             }
             if(target.matches('[data-pick-index]')&&target.dataset.pickIndex==='0') {
                 show(target,'이 묶음 모두 끄기','이 선택 묶음의 옵션들을 모두 꺼요. 다른 묶음이나 기본 프롬프트는 그대로예요.',undefined,true);return;

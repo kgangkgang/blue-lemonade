@@ -71,10 +71,12 @@ function promptDictionary(file){
     if(!dictionaries.has(file))dictionaries.set(file,timed(import(moduleUrl({file},false)),25000).then(module=>{let data=null;module.default(Object.freeze({translate(value){data=value;},onCleanup(){}}),window);return data;}).catch(error=>{dictionaries.delete(file);throw error;}));
     return dictionaries.get(file);
 }
+// 11-14 과일의 마음 길게 누르기: 지문 · id 로 설명을 못 찾은 항목은 이름 사전(과일 · 솔라 · 데우스)의 설명을 이름으로 찾아요 — 길게 누를 때만 받아요.
+const optionHelpDictionaries=()=>Promise.all(['fruit','sola','deus'].map(file=>promptDictionary(file).catch(()=>null)));
 function apiFor(id,cleanups){
     return Object.freeze({fonts,koreanDictionary,
         deusOptionHelp:(read,describe)=>{const help=installDeusOptionHelp(document,window,read,describe),links=installFruitTypeShortcuts(document,window);return()=>{help();links();};},
-        fruitOptionHelp:()=>{const help=installFruitOptionHelp(document,window),links=installFruitTypeShortcuts(document,window),entry=installFruitEntry(document,window,{every:(fn,ms)=>every(fn,ms,{owner:'fruit-entry'}),cancel});return()=>{help();links();entry();};},
+        fruitOptionHelp:()=>{const help=installFruitOptionHelp(document,window,{dictionaries:optionHelpDictionaries}),links=installFruitTypeShortcuts(document,window),entry=installFruitEntry(document,window,{every:(fn,ms)=>every(fn,ms,{owner:'fruit-entry'}),cancel});return()=>{help();links();entry();};},
         localizeFruitStatus:()=>installFruitStatusKorean(document,window),
         promptTitle:(promptId,name)=>translations.titleExact('prompts',promptId??null,name),
         promptDictionary,

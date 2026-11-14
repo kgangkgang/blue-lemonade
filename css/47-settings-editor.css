@@ -10,6 +10,7 @@ html body .salty-panel.bl-editor .salty-nav { position:relative; top:auto; flex:
 .bl-editor .bl-editor-actions { display:flex; align-items:center; gap:4px; flex:none; }
 html body .bl-editor .bl-settings-toprow button { min-height:36px; margin:0; border:0; border-radius:8px; padding:6px 8px; color:var(--salty-text); background:transparent; font:inherit; font-size:calc(12 * var(--sp)); line-height:1.3; box-shadow:none; }
 html body .bl-editor .bl-settings-toprow button:hover { background:var(--salty-fill-shade, var(--salty-shade)); }
+html body .bl-editor .bl-settings-toprow button:focus-visible { box-shadow:var(--ring); } /* 11-14 감사: 위 줄 box-shadow:none 이 20-panel 의 초점 테(.salty-panel button:focus-visible)를 지워 Tab 으로 온 머리 단추 다섯(화면 고르기 · 비교 · 검색 · 전체 화면 · 닫기)에 표시가 없었어요 */
 html body .bl-editor .bl-settings-toprow .bl-settings-close { font:var(--bl-deco-glyph-24)/1 sans-serif; width:34px; padding:0; }
 html body .bl-editor .bl-settings-toprow :is([data-compare], .bl-settings-expand) { padding-top:calc(6px + var(--bl-text-nudge, 0px)); padding-bottom:calc(6px - var(--bl-text-nudge, 0px)); } /* 5.5.3 세로 중앙: 글자 단추만 (아이콘 단추는 그대로) */
 .bl-editor-choose { display:flex; align-items:center; gap:10px; min-width:0; text-align:left; }

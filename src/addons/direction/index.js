@@ -472,6 +472,29 @@ function syncOnColor() {
 function isRawGeneration() {
     return /\bgenerateRaw(?:Data)?\b/.test(new Error().stack ?? '');
 }
+/**
+ * 1.4.x 사파리 호환: 실리태번 eventSource.emit 은 듣는 함수를 하나씩 await 해요 — 둘째부터는 await 뒤라 사파리(JavaScriptCore)처럼
+ * Error.stack 에 await 너머 호출자를 남기지 않는 엔진에서는 generateRawData 가 스택에 없어요. 그러면 다른 확장의 따로 보내는 요청에
+ * 지시가 끼고, 본 생성 표시(generationType)까지 그 요청이 먼저 써 버렸어요. 맨 앞(makeFirst)에 거는 작은 표시 함수가 아직 같은 동기
+ * 흐름일 때 스택을 보고 그 사건 데이터에 표시해 둬요(본 처리 차례는 그대로 · 크롬은 원래도 스택으로 알아서 결과가 같아요).
+ * 웹킷은 await 뒤 다시 도는 async 함수 프레임의 이름도 비워요(「@…/script.js:줄:칸」 — 웹킷 18 로 확인). 그래서 이름 대신
+ * 이벤트 전달기(lib/eventemitter.js) 바로 바깥 프레임의 파일로도 봐요: 이 사건을 script.js 에서 쏘는 곳은 generateRawData 하나,
+ * 본 생성은 scripts/openai.js(prepareOpenAIMessages)예요.
+ */
+const rawEvents = new WeakSet();
+const EMITTER = /\/lib\/eventemitter\.js(?:[?#:]|\)|$)/;
+function rawFromStack(stack) {
+    const lines = String(stack ?? '').split('\n');
+    if (lines.some(line => /\bgenerateRaw(?:Data)?\b/.test(line))) return true;
+    // 지금 도는 emit(맨 처음 이어진 전달기 프레임 묶음) 바로 바깥 한 프레임만 — 더 바깥의 비동기 프레임(크롬)은 보지 않아요
+    let at = lines.findIndex(line => EMITTER.test(line));
+    if (at < 0) return false;
+    while (at < lines.length && EMITTER.test(lines[at])) at++;
+    return /\/script\.js(?:[?#:]|\)|$)/.test(lines[at] || '');
+}
+function markRawGeneration(eventData) {
+    if (eventData && typeof eventData === 'object' && rawFromStack(new Error().stack)) rawEvents.add(eventData);
+}
 
 /**
  * 2026-10-13 지시 글의 {{user}} · {{char}} 같은 매크로를 보내기 직전에 실제 값으로 바꾼다. 실리태번은 CHAT_COMPLETION_PROMPT_READY 를
@@ -553,7 +576,7 @@ function anchorParts({ anchor, type }) {
 }
 
 function injectDirection(eventData) {
-    if (isRawGeneration()) return;
+    if ((eventData && typeof eventData === 'object' && rawEvents.has(eventData)) || isRawGeneration()) return;
     const dry = !!eventData?.dryRun;
     const type = dry ? 'normal' : generationType;
     if (!dry) generationType = null;
@@ -2197,6 +2220,7 @@ export const ready = new Promise((resolve, reject) => jQuery(() => {
     eventSource.on(event_types.GENERATION_STARTED, trackGeneration);
     for (const name of ['GENERATION_ENDED', 'GENERATION_STOPPED']) if (event_types[name]) eventSource.on(event_types[name], () => { generationType = null; });
     eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, injectDirection);
+    if (typeof eventSource.makeFirst === 'function') eventSource.makeFirst(event_types.CHAT_COMPLETION_PROMPT_READY, markRawGeneration);   // 1.4.x 사파리: 따로 보내는 요청 표시(위 markRawGeneration)
     // 1.4.4 채팅방마다 따로: 채팅방을 바꾸면 깃털 · 상태 카드를 그 채팅방 것으로 (열린 창의 글은 앞 채팅방 것이라 닫는다). 꺼져 있으면 아무것도 안 한다
     if (event_types.CHAT_CHANGED) eventSource.on(event_types.CHAT_CHANGED, () => { if (!perChatOn()) return; closePopup(); refreshButton(); });
     // 테마를 바꾸면 테마 색을 쓰는 경우의 글자색(켜짐 배지)도 다시 계산한다.

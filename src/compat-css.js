@@ -20,6 +20,30 @@ export function isAppleWebkit(nav) {
     return /iP(hone|ad|od)/.test(ua) || (nav?.platform === 'MacIntel' && nav?.maxTouchPoints > 1) || (/Safari\//.test(ua) && /Macintosh/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua));
 }
 
+/** 1.4.x 사파리 호환: @container style(--사용자 속성) 를 모르는 엔진(사파리 · iOS 18 앞 · 파이어폭스)인가 — 작은 표본 하나로 한 번 재요.
+ *  모르면 html 에 bl-no-sq 를 달아 브라우저 호환 시트의 옛 꼴 규칙(체크박스 · 몇 곳)이 대신 먹게 해요. 잴 수 없는 곳(시험의 가짜 문서)은 「안다」로 봐요 */
+export function lacksStyleQueries(win) {
+    const doc = win?.document;
+    if (!doc?.body || typeof win.getComputedStyle !== 'function') return false;
+    let host = null, sheet = null;
+    try {
+        sheet = doc.createElement('style');
+        sheet.textContent = '@container style(--bl-sq-probe: 1) { .bl-sq-probe > i { --bl-sq-ok: 1; } }';
+        host = doc.createElement('div');
+        host.className = 'bl-sq-probe';
+        host.setAttribute('aria-hidden', 'true');
+        host.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;--bl-sq-probe:1';
+        host.append(doc.createElement('i'));
+        doc.head.append(sheet);
+        doc.body.append(host);
+        return win.getComputedStyle(host.firstChild).getPropertyValue('--bl-sq-ok').trim() !== '1';
+    } catch {
+        return false;
+    } finally {
+        try { host?.remove(); sheet?.remove(); } catch { /* 그대로 */ }
+    }
+}
+
 function themeLink(doc) {
     for (const sheet of doc.styleSheets) if (sheet.href && (sheet.href === OWN_SHEET || /\/blue-lemonade\/style\.css/.test(sheet.href)) && sheet.ownerNode?.isConnected) return sheet.ownerNode;
     return null;
@@ -33,6 +57,7 @@ export function attachCompat(what, win = window) {
     const id = `salty-compat-${what}`;
     const have = doc.getElementById(id);
     if (have?.isConnected) return have;
+    if (what === 'browser' && lacksStyleQueries(win)) doc.documentElement.classList.add('bl-no-sq');
     const theme = themeLink(doc);
     if (!theme) return null;
     const link = doc.createElement('link');

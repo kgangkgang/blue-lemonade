@@ -59,7 +59,8 @@ test('맨 오른쪽 칸 · 칸 일부만 :is 인 곳은 그대로', () => {
     assert.equal(F.fanOne('body.salty div:is(.b, .c) p', st()), null);
 });
 for (const file of ['style.css', 'src/style-lazy.gen.css']) {
-    const text = fs.readFileSync(path.join(root, file), 'utf8');
+    // 1.4.x 최적화 3차: 빌드는 펼치기 · 열쇠 달기 뒤 맨 끝에 지킴 갈래를 가벼운 꼴로 적어요(tools/css-light-guards.cjs) — 그 앞 글(원래 꼴)로 견줘요
+    const text = require(path.join(root, 'tools/css-light-guards.cjs')).full(fs.readFileSync(path.join(root, file), 'utf8'));
     test(`${file}: 이미 펼친 글 — 다시 돌려도(펼치기 → 열쇠 달기) 같아요`, () => {
         const again = K.keyize(F.fanout(text).text).text;
         assert.equal(again, text);

@@ -1,4 +1,5 @@
 // 성능 보조 · 저장 공간 창 · 점검 도구가 같이 쓰는 창 틀 (열 때만 불러온다). 모달 <dialog>: × · Esc · 바깥 누르기로 닫힘, data-bl-popup 으로 다른 팝업 등록부와 어울림.
+import { armGuard } from '../../../cheap-guards.js';
 //   색은 공용 팔레트(style.css · --lp-*)가 테마를 그대로 따르고(data-lp-mode="auto"), 낮 · 밤 표시(data-bls-tone)는 지금 글자 밝기로 골라요.
 /** 글자색 밝기로 어두운/밝은 판 — 밝은 글자면 어두운 바탕(dark) */
 export function toneFromColor(color) {
@@ -16,6 +17,7 @@ export function stamp(el) {
     el.classList?.add?.('lp-root');
     el.setAttribute?.('data-lp-mode', 'auto');
     el.setAttribute?.('data-bls-tone', tone);
+    armGuard('ext');   // 1.4.x 최적화 3차: 표식 전에 테마 시트의 지킴 갈래를 원래 꼴로(src/cheap-guards.js)
     el.setAttribute?.('data-bl-native-ext-colors', '');
     return el;
 }

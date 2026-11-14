@@ -45,8 +45,9 @@ export const promptKey = prompt => { const text = String(prompt ?? ''); return `
 /** 다시 보내면 두 번 청구될 수 있는 실패(기다리다 끊음 · 중계 서버 524) — 메인 연결로 다시 보내지 않아요(번역기 현재 연결과 같은 규칙) */
 export const billedMaybe = reason => /(?<![\d.,])\b524\b(?![.,]\d)/.test(String(reason ?? ''));
 
-/** 스택에 남는 그 확장의 함수 이름 → 칸 (2.6.1 · 2.7.0 · 2.7.2 · 2.7.9 · 2.7.11 · 2.7.15 에서 같아요 · 판이 바뀌어 이름이 달라지면 못 알아보고 「확장 AI 전체」로)
+/** 스택에 남는 그 확장의 함수 이름 → 칸 (2.6.1 · 2.7.0 · 2.7.2 · 2.7.9 · 2.7.11 · 2.7.15 · 2.7.17 에서 같아요 · 판이 바뀌어 이름이 달라지면 못 알아보고 「확장 AI 전체」로)
  *  2.7.9 전수(원작 사본을 구문 분석해 aiGenerate · aiJSON · 번역 함수를 부르는 곳을 모두 뽑음): 새 길은 칩 점검(pipFix → analyzeMessage) 하나 — 안쪽 함수가 같아 그대로 걸려요.
+ *  2.7.17: 「남은 글 번역하기」가 실리 번역기가 못 바꾼 글을 묻고 나서 번역 모델로 한 번 더 보내요(같은 translateMissing → trJSON · 번역 칸) — 「실리 기본 번역」이어도 이때는 번역 요청이 나가요.
  *  2.7.15: 새 길 「남은 글 번역하기」(translateMissing → trJSON) 하나 — 안쪽 함수가 trJSON 이라 번역 칸으로 걸려요. 채팅이 바뀌면 번역 결과도 버려요(원작).
  *  2.7.11 전수도 같은 길(부르는 곳 · 기능 묶음 그대로 — aiGenerate 가 채팅이 바뀌면 결과를 버리는 것과 「본편 쓰는 중」 판단을 실리 표시(#mes_stop · data-generating)로 바꾼 것뿐).
  *  2.7.7 부터 메인 연결 요청은 「본편이 다 쓸 때까지 기다리기」 await 뒤에 나가요 → 기능 함수는 비동기 프레임으로만 남아요(남지 않는 엔진은 ext-bridge.js 가 받은 때의 스택으로 봐요). */
@@ -221,7 +222,7 @@ export function glossaryNote({ addon = true, enabled = true, count = 0, mode = '
     if (!count) return '이 채팅에 걸린 용어집 항목이 아직 없어요.';
     const head = `이 채팅에 걸린 용어집 ${count}개 가운데 요청 글에 나온 이름만 실어요.`;
     if (mode !== 'en' && mode !== 'enview') return `${head} 이미 상태창에 있는 이름은 바꾸지 않아요.`;
-    if (engine === 'st') return `${head} 지금은 「실리 기본 번역」이라 실을 요청이 없어요(번역 모델로 바꾸면 번역 요청에 실려요).`;
+    if (engine === 'st') return `${head} 지금은 「실리 기본 번역」이라 보통은 실을 요청이 없어요(실리 번역기가 못 바꾼 글을 번역 모델로 다시 보낼 때 · 번역 모델로 바꾸면 번역 요청에 실려요).`;
     if (panelLangCode(trLang || '한국어') !== 'ko') return `${head} 번역할 언어가 한국어가 아니라 싣지 않아요.`;
     return `${head} 상태창을 영어로 만드는 설정이라 번역 요청에만 실어요.`;
 }

@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 
 const root = path.resolve(process.argv[2] || '.');
 const scenario = process.argv[3];
-const cases = ['normal', 'off', 'legacy', 'old-settings', 'tool-delayed', 'tool-timer', 'tool-perf', 'tool-watchdog', 'tool-dedupe', 'tool-log', 'broken-note', 'hub-cycle', 'hub-export', 'settings', 'host-shape', 'module-fetch'];
+const cases = ['normal', 'fresh-default', 'off', 'legacy', 'old-settings', 'tool-delayed', 'tool-timer', 'tool-perf', 'tool-watchdog', 'tool-dedupe', 'tool-log', 'broken-note', 'hub-cycle', 'hub-export', 'settings', 'host-shape', 'module-fetch'];
 if (!scenario) {
     let failed = 0;
     for (const name of cases) {
@@ -22,7 +22,8 @@ if (!scenario) {
 } else {
     const src = pathToFileURL(path.join(root, 'src/')).href;
     const js = code => `data:text/javascript,${encodeURIComponent(code)}`;
-    const T = globalThis.__perfStartTest = { loaded: [], off: [], legacy: [], broken: [], errors: [], settings: { enabled: true, usageMode: 'extensions', addons: { perf: true }, addonUI: { perfLoad: {} } } };
+    const T = globalThis.__perfStartTest = { loaded: [], off: [], legacy: [], broken: [], errors: [], settings: { enabled: true, usageMode: 'extensions', addons: { perf: true }, addonUI: { perfLoad: { timer: true } } } };   // 1.4.x 최적화 3차: 「로딩 시간」은 기본 끔 — 다른 장면은 켜 둔 사람(저장값 그대로)으로 봐요
+    if (scenario === 'fresh-default') T.settings.addonUI.perfLoad = {};   // 값이 없으면 「로딩 시간」만 안 불러와요
     const G = 'const T=globalThis.__perfStartTest;\n';
     const tools = { loadtimer: 'timer', perfassist: 'perf', 'watchdog-main': 'watchdog', savededupe: 'dedupe', requestlog: 'log' };
     if (scenario === 'off') T.settings.addonUI.perfLoad = Object.fromEntries(Object.values(tools).map(id => [id, false]));
@@ -73,10 +74,12 @@ export async function load(url,ctx,next){
     }
     await starting;
     const failure = addon.testFailed.get('perf');
-    if (['normal', 'off', 'legacy', 'hub-cycle', 'old-settings', 'tool-delayed'].includes(scenario)) {
+    if (['normal', 'fresh-default', 'off', 'legacy', 'hub-cycle', 'old-settings', 'tool-delayed'].includes(scenario)) {
         assert.equal(addon.testRunning.has('perf'), true, 'the addon must finish starting');
         assert.equal(failure, undefined);
-        assert.deepEqual(T.loaded, scenario === 'off' ? [] : scenario === 'legacy' ? ['perf', 'watchdog', 'dedupe', 'log'] : Object.values(tools));
+        const noTimer = ['fresh-default', 'old-settings'].includes(scenario);   // 저장값이 없으면 「로딩 시간」은 기본 끔(1.4.x 최적화 3차)
+        assert.deepEqual(T.loaded, scenario === 'off' ? [] : scenario === 'legacy' ? ['perf', 'watchdog', 'dedupe', 'log'] : Object.values(tools).filter(id => !noTimer || id !== 'timer'));
+        if (noTimer) assert.deepEqual(T.off, ['timer']);
         if (scenario === 'off') assert.deepEqual(T.off, Object.values(tools));
         if (scenario === 'legacy') assert.deepEqual(T.legacy, ['timer']);
         if (scenario === 'hub-cycle') assert.equal(T.cycleRead, 0);

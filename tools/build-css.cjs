@@ -229,23 +229,28 @@ function build(dir = CSS_DIR, { bucket = true, key = true, split = true, fan = k
     //   테마 설정 창(.salty-panel) 안에서만 맞는 규칙을 첫 장 · 전체 장 둘 다에서 떼어 작은 시트로 — src/lite.js 가 그 설정을 켤 때 · 설정 창을 만들기 전에 붙여요.
     //   덮어쓰기 차례가 바뀔 수 있는 규칙은 도구가 제자리에 남겨요(tools/tests/css-gates-order.mjs). 두 장 빌드만 — 한 장이면 그대로예요(1.1.1 마크다운 분리도 이리로 합쳤어요)
     const gates = rest ? gatePlan(whole) : null;
-    const firstText = gates ? require('./css-gates.cjs').strip(scoped.text, gates.moved).text : scoped.text;
-    const fullText = gates ? require('./css-gates.cjs').strip(whole.keyed.text, gates.moved).text : whole.keyed.text;
+    // 1.4.x 최적화 3차: 맨 끝에 지킴 갈래(`[data-bl-native-ext-colors] *` · `.salty-panel *`)를 조상을 걷지 않는 `…:not(*)` 꼴로(tools/css-light-guards.cjs —
+    //   그 요소를 문서에 넣기 전에 src/cheap-guards.js 가 실행 중 시트에서 원래 꼴로 되돌려요). 차례 · 뗀 규칙 판단은 모두 원래 글로 끝낸 뒤예요
+    const light = t => require('./css-light-guards.cjs').lighten(t).text;
+    const firstText = light(gates ? require('./css-gates.cjs').strip(scoped.text, gates.moved).text : scoped.text);
+    const fullText = light(gates ? require('./css-gates.cjs').strip(whole.keyed.text, gates.moved).text : whole.keyed.text);
     const dem = require('./css-dem-slots.cjs').compileDemSheets(firstText, rest ? fullText.replace(/^[ \t]+$/gm, '') : null);
+    // 데우스 분리 규칙은 실행 중에 insertRule 로 넣어요 — 그 글이 가벼운 꼴이면 켜진 동안 되돌림을 못 받으니 들어 있으면 멈춰요
+    if (/(\[data-bl-native-ext-colors\]|\.salty-panel):not\(\*\)/.test(dem.data)) throw new Error('데우스 분리 규칙에 가벼운 지킴 꼴(…:not(*))이 들어갔어요 — tools/css-light-guards.cjs 를 dem 분리 뒤로 옮기거나 그 규칙을 분리에서 빼요');
     if (dem.count) marks.push(`--bl-dem-style-key:"${dem.key}"`);
     const body = (marks.length ? `:root{${marks.join(';')}}\n` : '') + dem.boot;
     const head = `/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 ${names.length - lazyNames.length}개를 이어 붙여 만든 파일(설명 주석은 css/ 에만${rest ? ` · --split: 나머지 ${lazyNames.length}개는 src/style-lazy.gen.css` : ''}). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build ${HASH_SLOT}) */\n`;
     const draft = head + body;
     const digest = hashOf(draft);
-    const preview = `/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 ${parked.rules}개(덩어리 ${parked.blocks}개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build ${digest}) */\n${whole.previewText}\n`;
+    const preview = `/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 ${parked.rules}개(덩어리 ${parked.blocks}개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build ${digest}) */\n${light(whole.previewText)}\n`;
     // 둘째 파일은 빠진 모듈만 뒤에 덧붙이지 않고 원래 모듈 순서 전체를 담아요.
     // 처음 사용할 때 lite.js가 원문에서99꼬리를 나눈 뒤 이 전체 시트로 첫 시트를 교체해요.
     const lazyText = rest ? `/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ${digest}) */\n${marks.length ? `:root{${marks.join(';')}}\n` : ''}${dem.full}` : null;
     if (lazyText) assertInlineSafe(lazyText);
     const gateFiles = gateOutputs(gates, digest);
     const compatHead = (file, what) => `/* ${file} — tools/build-css.cjs 가 css/ 에서 ${what}만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build ${digest}) */\n`;
-    const compatBrowser = compatHead('src/compat-browser.gen.css', `크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 ${compat.rules.browser}개`) + (compat.browser ? `${compat.browser}\n` : '');
-    const compatWidth = compatHead('src/compat-width.gen.css', `폰 384 · PC 1280 밖 화면 폭 규칙 ${compat.rules.width}개`) + (compat.width ? `${compat.width}\n` : '');
+    const compatBrowser = compatHead('src/compat-browser.gen.css', `크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 ${compat.rules.browser}개`) + (compat.browser ? `${light(compat.browser)}\n` : '');
+    const compatWidth = compatHead('src/compat-width.gen.css', `폰 384 · PC 1280 밖 화면 폭 규칙 ${compat.rules.width}개`) + (compat.width ? `${light(compat.width)}\n` : '');
     return { text: draft.replace(HASH_SLOT, digest), preview, gateFiles, gates, gateInput: rest ? { order: whole.order, full: whole.keyed.text, first: scoped.text } : null, lazyText, compatBrowser, compatWidth, compat, dem, names, digest, kept, parked, extensionColors, keyed: keyed.stats, scoped: scoped.stats };
 }
 /** 1.1.6 뗄 규칙 정하기 — 차례는 미리보기 · 호환을 떼기 전 글로(tools/css-gates.cjs plan) */
@@ -269,7 +274,7 @@ function gateOutputs(gates, digest) {
         if (!g.rules.length) continue;
         assertInlineSafe(g.text);   // 전체 장(상대 URL 없음)에서 온 규칙이라 src/ 에 두어도 주소 뜻이 같아요
         const when = g.kind === 'panel' ? '테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js)' : `body 에 ${[...g.trig].sort().slice(0, 6).join(' · ')}${g.trig.size > 6 ? ` 외 ${g.trig.size - 6}개` : ''} 가 붙기 전에`;
-        out[g.out] = `/* ${g.out} — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 ${g.rules.length}개(${g.what || g.id}) — 고치지 말 것. src/lite.js 가 ${when} 테마 시트 뒤에 붙여요 (build ${digest}) */\n${g.text}\n`;
+        out[g.out] = `/* ${g.out} — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 ${g.rules.length}개(${g.what || g.id}) — 고치지 말 것. src/lite.js 가 ${when} 테마 시트 뒤에 붙여요 (build ${digest}) */\n${require('./css-light-guards.cjs').lighten(g.text).text}\n`;   // 1.4.x 최적화 3차: 가벼운 지킴 꼴(위 light 와 같음)
     }
     const table = gates ? G.runtimeTable(gates.groups, cfg) : { gates: [], panel: null };
     out[GATE_TABLE] = `// 생성 파일 — tools/build-css.cjs (tools/css-gates.cjs · tools/css-gates.json). 고치지 말 것.\n// 켜짐 시트: body 에 클래스(classes) 나 접두사(prefixes) 로 시작하는 클래스가 하나라도 붙을 때 필요해요(src/lite.js syncGateCss). 차례 = 붙는 차례.\nexport const GATE_SHEETS = ${JSON.stringify(table.gates)};\n// 테마 설정 창(.salty-panel) 안에서만 맞는 규칙 시트(src/lite.js panelCssReady) — 없으면 null\nexport const PANEL_SHEET = ${JSON.stringify(table.panel)};\n`;

@@ -1,4 +1,5 @@
 import { watchDom } from './dom-watch.js';
+import { armGuard, disarmGuard } from './cheap-guards.js';
 // Opt out of our UI color overrides without changing another extension's settings,
 // inline styles, class-based panel-order keys, or layout rules.
 const MARKER = 'data-bl-native-ext-colors';
@@ -95,6 +96,8 @@ function refresh() {
     for (const root of marked) {
         if (!next.has(root)) { root.removeAttribute(MARKER); marked.delete(root); }
     }
+    // 1.4.x 최적화 3차: 표식을 처음 붙이기 전에 테마 시트의 지킴 갈래를 원래 꼴로(src/cheap-guards.js — 표식이 없을 땐 조상을 걷지 않는 꼴)
+    if (next.size) armGuard('ext');
     for (const root of next) {
         if (!marked.has(root)) { root.setAttribute(MARKER, ''); marked.add(root); }
     }
@@ -136,6 +139,7 @@ export function syncExtensionColors(enabled, offList = []) {
         pending = null;
         for (const root of marked) root.removeAttribute(MARKER);
         marked.clear(); foreign.clear();
+        disarmGuard('ext');   // 다른 곳(코끼리 「색 두기」 · 성능 보조 창)의 표식이 남아 있으면 그대로 켜 둬요
         return;
     }
     collectForeign(document.body);

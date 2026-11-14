@@ -12,6 +12,8 @@ const require = createRequire(import.meta.url);
 const K = require(path.join(root, 'tools/css-key.cjs'));
 const L = require(path.join(root, 'tools/css-lib.cjs'));
 let passed = 0;
+// 1.4.x 사파리 호환 대체 규칙(html.bl-no-sq …)은 크로미움 시트에 안 실려요 — 원본 모듈 검사에서는 빼고 봐요
+const noSq = css => css.replace(/(^|\n)html\.bl-no-sq[^{]*\{[^}]*\}/g, '$1');
 const check = async (name, fn) => { await fn(); passed++; console.log('ok', name); };
 
 const CLASS_ATTR = /\[\s*class\s*([~|^$*]?=|\])/i;
@@ -86,7 +88,8 @@ await check('빌드된 시트: 조상 칸 class 속성 + 주어 div · span · :
     assert.ok(list.length <= LIMIT, `맨 태그 주어 갈래 ${list.length}개(한도 ${LIMIT}) — 새 규칙이면 class · 속성 주어나 @container style() 표시로`);
 });
 await check('Tavern Helper 고른 탭 자식: 부모 표시(@property inherits:false) + @container style() — 고르는 요소 · 특이도 그대로', () => {
-    const src = fs.readFileSync(path.join(root, 'css/15-drawers.css'), 'utf8');
+    // 1.4.x 사파리 호환: html.bl-no-sq 옛 꼴은 style() 를 모르는 엔진용 — 브라우저 호환 시트로만 떼어져요(tools/tests/safari-style-query-fallback.mjs)
+    const src = noSq(fs.readFileSync(path.join(root, 'css/15-drawers.css'), 'utf8'));
     assert.ok(!/div\[class\*="bg-\[color-mix"\]\s*>\s*div/.test(src), '[class*=…] > div 꼴이 남아 있어요');
     assert.match(src, /@property --bl-q-th-tab \{ syntax: '<integer>'; inherits: false; initial-value: 0; \}/);
     assert.match(src, /> \.border-x-2 > div\[class\*="bg-\[color-mix"\] \{\s*--bl-q-th-tab: 1;\s*\}/);
@@ -98,7 +101,7 @@ await check('Tavern Helper 고른 탭 자식: 부모 표시(@property inherits:f
     assert.ok(lazy.includes('@container style(--bl-q-th-tab: 1)') && lazy.includes('@property --bl-q-th-tab'), '빌드된 둘째 장에 실려요');
 });
 await check('체크박스: 스위치 빼기는 부모 표시 두 갈래(13 · 13) · 줄 체크 여백은 label 표시 — :not 안 [class*=…] > input 없음', () => {
-    const src = fs.readFileSync(path.join(root, 'css/92-checkboxes.css'), 'utf8');
+    const src = noSq(fs.readFileSync(path.join(root, 'css/92-checkboxes.css'), 'utf8'));
     assert.ok(!src.includes('[class*="-switch"] > input') && !src.includes('[class*="-toggle"] > input'), ':not 안 조상 칸 class 속성이 남았어요');
     for (const p of ['bl-q-sw', 'bl-q-tg', 'bl-q-rsw']) assert.match(src, new RegExp(`@property --${p} \\{ syntax: '<integer>'; inherits: false; initial-value: 0; \\}`));
     assert.ok(src.includes(':is([class*="-switch"]):not(input) { --bl-q-sw: 1; }') && src.includes(':is([class*="-toggle"]):not(input) { --bl-q-tg: 1; }'));

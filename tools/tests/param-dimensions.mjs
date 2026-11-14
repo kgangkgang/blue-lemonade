@@ -92,7 +92,8 @@ const badThumb=thumbs.filter(({v})=>!/var\(--bl-knob-size/.test(v)).map(({sel,v}
 assert.deepEqual(badThumb,[],'손잡이 지름은 --bl-knob-size:\n'+badThumb.join('\n'));
 const tracks=find(/::-webkit-slider-runnable-track$/,'height');
 assert.ok(tracks.length>=2&&tracks.every(({v})=>/var\(--bl-track-h/.test(v)),'막대 두께는 --bl-track-h: '+tracks.map(x=>x.v).join(' | '));
-assert.ok(find(/^body\.salty input\[type="range"\]:where\(:not\(\.salty-panel \*\)\)$/,'height').some(({v})=>/var\(--bl-track-h\)/.test(v)),'실리태번 슬라이더 막대 두께 토큰');
+// 1.4.x 최적화 3차: 빌드가 설정 창 지킴을 가벼운 꼴(…:not(*))로 적어요(tools/css-light-guards.cjs) — 두 꼴 다 받아요
+assert.ok(find(/^body\.salty input\[type="range"\]:where\(:not\(\.salty-panel(?: \*|:not\(\*\))\)\)$/,'height').some(({v})=>/var\(--bl-track-h\)/.test(v)),'실리태번 슬라이더 막대 두께 토큰');
 
 // 7. 확인 창 단추 아래 여유 (초점 테두리 3px · 포인트 그림자) — 바닥 6px 이상 · 옆 3px 이상
 const pc=find(/^body\.salty \.popup \.popup-controls$/,'padding');

@@ -10,7 +10,7 @@ import { scriptCode } from './script-code.mjs';
 const root = path.resolve(process.argv[2] || '.');
 const bundled = await scriptCode(root, 'fruit-style');
 const at = bundled.lastIndexOf('installFruitStyle(BlueLemonade, ');
-const { installFruitExtraControls } = new Function(bundled.slice(0, at) + '\nreturn { installFruitExtraControls };')();
+const { installFruitExtraControls, fruitWatchHub } = new Function(bundled.slice(0, at) + '\nreturn { installFruitExtraControls, fruitWatchHub };')();
 let pass = 0; const test = (name, fn) => { fn(); pass++; console.log('PASS ' + name); };
 function rig(name = '', fonts = null) {
     const queries = [];
@@ -23,7 +23,8 @@ function rig(name = '', fonts = null) {
     const host = { document: doc, queueMicrotask: fn => fn(), MutationObserver: class { constructor(cb) { this.cb = cb; observers.push(this); this.targets = []; } observe(t) { this.targets.push(t); } disconnect() {} },
         localStorage: { getItem: () => null, setItem() {} },
         SillyTavern: { getContext: () => ({ extensionSettings: { blue_lemonade_scripts: { version: 1, enabled: {}, overrides: {}, names: name ? { fruit: name } : {} } }, saveSettingsDebounced() {} }) } };
-    const stop = installFruitExtraControls(doc, host, { fonts });
+    // 1.4.x 최적화 3차: html · body · 과일 창 감시는 다섯 설치가 함께 쓰는 감시 하나(fruitWatchHub)예요 — 감시자 0 번이 그것, 1 번이 입력 줄 감시
+    const stop = installFruitExtraControls(doc, host, { fonts }, fruitWatchHub(doc, host));
     return { queries, observers, stop, formSheld, open() { panel = el('fruit-heart-v6'); observers[1].cb([]); } };
 }
 test('이름을 바꾸지 않았으면 sync 마다 문서 전체를 [data-fh-cat] 로 훑지 않아요 (고치기 전: sync 마다 한 번)', () => {

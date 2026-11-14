@@ -11,6 +11,8 @@ const fixture=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/fruit-optio
 // 생성 파일 = 원본 json
 assert.deepEqual(FRUIT_OPTION_EFFECTS,source.effects,'fruit-option-effects.js 가 option-effects.json 과 달라요 — node tools/build-fruit-family.mjs');
 assert.deepEqual(FRUIT_OPTION_BASELINES,source.baselines);
+const {FRUIT_OPTION_DYNAMIC}=await import(pathToFileURL(path.join(root,'src/scripts/fruit-option-effects.js')));
+assert.deepEqual(FRUIT_OPTION_DYNAMIC,source.dynamic||[]);for(const id of FRUIT_OPTION_DYNAMIC)assert(FRUIT_OPTION_BASELINES[id],`dynamic ${id} 설명`);
 // 세 프리셋의 항목마다 본문 지문(확인된 설명) + id 기본 설명 둘 다
 let total=0;const missing=[];
 for(const [preset,items] of Object.entries(fixture.presets)){
@@ -21,6 +23,13 @@ for(const [preset,items] of Object.entries(fixture.presets)){
         if(!FRUIT_OPTION_EFFECTS[it.hash])missing.push(`${preset}: ${it.name} (지문 없음)`);
         if(!FRUIT_OPTION_BASELINES[it.id])missing.push(`${preset}: ${it.name} (id 기본 설명 없음)`);
     }
+}
+// 11-14 청과 4.0 에서 「표준 목록에 없음」으로 떨어지던 항목 — 지문(확인된 설명)과 id 기본 설명 둘 다
+assert(fixture.extras.items.length>=216);
+for(const it of fixture.extras.items){
+    total++;
+    if(!FRUIT_OPTION_EFFECTS[it.hash])missing.push(`추가: ${it.name} (지문 없음)`);
+    if(!FRUIT_OPTION_BASELINES[it.id])missing.push(`추가: ${it.name} (id 기본 설명 없음)`);
 }
 assert.deepEqual(missing,[],`도움말이 빠진 항목 ${missing.length}개`);
 // 설명 글 자체: 해요체 문장 · 길이 · 금지어 · 영어 문장 없음

@@ -193,7 +193,13 @@ check('⑥ 원작 표식이 든 설정 칸에만 시트 · 표식 · 안내 줄�
 });
 check('⑦ 안내 한 줄 — 확인한 판 · 다른 판 · 늦게 채워진 판', () => {
     assert.match(compatText(ELEPHANT, '1.9.60'), /코끼리를 생각하지마 1\.9\.60 화면에 맞춰 뒀어요/);
-    assert.match(compatText(ELEPHANT, ''), /코끼리를 생각하지마 1\.9\.60 화면에 맞춘 모습이에요\(지금 판은 읽지 못했어요\)/, '판을 못 읽으면 맞는 판처럼 적지 않아요(1.2.3 독립 검토 고침과 같은 글)');
+    assert.match(compatText(ELEPHANT, ''), /코끼리를 생각하지마 1\.9\.60 · 1\.9\.61 화면에 맞춘 모습이에요\(지금 판은 읽지 못했어요\)/, '판을 못 읽으면 맞는 판처럼 적지 않아요(1.2.3 독립 검토 고침과 같은 글)');
+    // 11-14: 코끼리 1.9.61 · Memoria 2.1.0 은 화면 · 선택자가 그대로라 확인한 목록에 더했어요(옛 1.9.60 · 2.0.4 도 그대로 목록에)
+    assert.deepEqual(ELEPHANT.verified, ['1.9.60', '1.9.61']);
+    assert.deepEqual(MEMORIA.verified, ['2.0.4', '2.1.0']);
+    assert.match(compatText(ELEPHANT, '1.9.61'), /코끼리를 생각하지마 1\.9\.61 화면에 맞춰 뒀어요/);
+    assert.match(compatText(MEMORIA, '2.1.0'), /Memoria 2\.1\.0 화면에 맞춰 뒀어요/);
+    assert.match(compatText(MEMORIA, '2.0.4'), /Memoria 2\.0\.4 화면에 맞춰 뒀어요/);
     const other = compatText(ELEPHANT, '1.9.72');
     assert.ok(other.includes('1.9.72') && other.includes('1.9.60') && /어긋나 보일 수 있어요/.test(other), other);
     // 원작이 판 글자를 늦게 채워요(틀에는 옛 번호) — 다시 부르면 글이 맞춰져요

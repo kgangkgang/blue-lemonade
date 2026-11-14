@@ -180,6 +180,7 @@ jobs:
           node tools/tests/markdown-css-split.mjs .
           node tools/tests/css-gates-order.mjs .
           node tools/tests/css-fanout.mjs .
+          node tools/tests/cheap-guards.mjs .
           # 뗀 규칙 시트 실행 길을 실제로 돌려요: 받는 동안 미룸 · 달기 전 식히기 · 못 받으면 다음에 새 주소로 다시(공개판 감사 결함 둘 + 시험 공백)
           node tools/tests/gate-css-run.mjs .
           node tools/tests/gradients-core.mjs .
@@ -384,6 +385,7 @@ jobs:
           node tools/tests/preview-rules-off.mjs .
           node tools/tests/css-split.mjs .
           node tools/tests/css-compat.mjs .
+          node tools/tests/safari-style-query-fallback.mjs .
           node tools/tests/preview-measure-batch.mjs .
           node tools/tests/preview-coverage.mjs .
           node tools/tests/theme-sheet-ext.mjs .
@@ -795,6 +797,7 @@ jobs:
           node tools/tests/st-prompt-names.mjs .
           node tools/tests/fruit-style.mjs
           node tools/tests/fruit-style-idle-scan.mjs .
+          node tools/tests/fruit-style-hub.mjs .
           node tools/tests/fruit-skin-contrast.mjs .
           node tools/tests/role-icons.mjs .
           node tools/tests/fruit-entry-rows.mjs .

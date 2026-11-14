@@ -8,6 +8,7 @@
    그 라벨은 for 가 없는 id 를 가리켜 눌러도 아무 칸도 안 바뀌고, 실리태번은 아이콘(.regex-toggle-on/off) click 으로만 값을 바꾼다.
    라벨 상자(::before)가 켜짐 아이콘을 덮어 폰에서 「끄기」가 안 먹었다(꺼짐 아이콘은 실리태번이 준 filter: grayscale 로 쌓임 맥락이 생겨 상자보다 위라 「켜기」는 됐다 · 깡통 질문 11-14).
    대신 아이콘 자신에 ::after 상자(Font Awesome 글자는 ::before) — 시험 tools/tests/regex-toggle-touch.mjs.
+   1.4.7 감사 표4: 묶음 제목 옆 「?」(.bl-help-btn — 설정 창 · 메모 창 등)는 17px 만 눌렸어요 — 낱말 가림 ?(.bl-word-help)와 같은 ::before 상자. 원 그림은 자식 <i> 라 ::before 는 비어 있어요.
    ===== */
 @media (pointer: coarse) {
   /* 기준점: 원래 static 인 칸만 relative (이미 relative 인 스위치 · ↺ 는 그대로)
@@ -20,6 +21,8 @@
     .salty-panel .salty-btn,
     .salty-panel .bl-view-toggle,
     .salty-panel .bl-word-help,
+    .salty-panel .bl-help-btn,
+    dialog .bl-help-btn,
     .salty-panel .bl-preview-samples > button,
     .salty-panel .bl-addon-ver,
     .salty-panel .bl-addon-credit-all,
@@ -60,6 +63,8 @@
     .salty-panel .salty-btn,
     .salty-panel .bl-view-toggle,
     .salty-panel .bl-word-help,
+    .salty-panel .bl-help-btn,
+    dialog .bl-help-btn,
     .salty-panel .bl-addon-ver,
     .salty-panel .bl-addon-credit-all,
     .salty-panel .bl-rule-swap,
@@ -159,4 +164,7 @@
     height: 44px !important;
     margin-block: calc((44px - 24px) / -2) !important;
   }
+  /* 11-14 감사: 상단 바 아이콘 아홉 칸 — 칸(.drawer)은 폰 384 에서 43px 인데 누르는 토글은 아이콘 폭 26px 만이라 칸 사이 17px 를 누르면 아무것도 안 열렸어요.
+     토글이 제 칸을 다 채우게만 해요(아이콘은 가운데 그대로 · 보이는 모습 같음 — 사진 화소 비교 차이 0) */
+  html body.salty #top-settings-holder > .drawer > .drawer-toggle { flex: 1 1 auto; }
 }

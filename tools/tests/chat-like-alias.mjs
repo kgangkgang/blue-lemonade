@@ -13,7 +13,9 @@ const bare = norm.match(/#chat(?![\w-])/g) || [];
 const aliased = norm.match(/:is\(#chat,\.bl-chat-like\)/g) || [];
 assert.equal(bare.length, aliased.length, `style.css: #chat ${bare.length} vs aliased ${aliased.length}`);
 assert.ok(aliased.length > 500, 'alias count');
-assert.ok((built.match(/:where\(:not\(\.bl-chat-like\)\):not\(#chat\)/g) || []).length >= 2, ':not(#chat) 꼴');
+// 1.4.x 최적화 3차: 스크롤바 숨김의 ::-webkit-scrollbar 짝은 호환 시트(src/compat-browser.gen.css)로 옮겼어요 — 두 장을 같이 세요
+const compatBuilt = fs.existsSync(path.join(root, 'src/compat-browser.gen.css')) ? fs.readFileSync(path.join(root, 'src/compat-browser.gen.css'), 'utf8') : '';
+assert.ok(((built + compatBuilt).match(/:where\(:not\(\.bl-chat-like\)\):not\(#chat\)/g) || []).length >= 2, ':not(#chat) 꼴');
 assert.ok(!/:not\(:is\(#chat,\.bl-chat-like\)\)/.test(built), ':not(:is(#chat,…)) 는 더 비싼 꼴이라 쓰지 않는다');
 assert.ok(!/#chat_import_button\)/.test(built) && built.includes('#chat_import_button'), 'neighbouring ids untouched');
 const source = fs.readdirSync(path.join(root, 'css')).filter(n => n.endsWith('.css')).map(n => fs.readFileSync(path.join(root, 'css', n), 'utf8')).join('\n');

@@ -7,9 +7,9 @@ import { DUPLICATES } from './extension-folder.js';
 import { PRIVATE_ADDONS, EMBEDDED_PRIVATE, ADDON_CARRY } from './private-addons.js';
 import { legacyFolders } from './extension-folder.js';
 import { perfErrorText } from './addons/perf/start-error.js';
-import { ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
+import { ADDON_STYLE_IDS, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
 import { onGate } from './boot-layers.js';
-import { afterBoot, booting } from './boot-gate.js';
+import { afterBoot, booting, holdSheet } from './boot-gate.js';
 import { spreadBegin, spreadEnd, markLateDone } from './addon-start-state.js';
 // 1.4.1 키보드 초점 사본 길(focus-copies.js)은 애드온 시트를 처음 붙일 때(덮개가 걷힌 뒤) 받아요 — 시작 묶음에 넣지 않아요
 const loadSheet=(link,place)=>import('./focus-copies.js').then(m=>m.loadSheet(link,place));
@@ -83,7 +83,7 @@ export async function disableLegacy(ids=EMBEDDED_PRIVATE){
 function attachStyle(link){
     return new Promise((resolve,reject)=>{
         const timer=setTimeout(()=>{link.remove();reject(Error('스타일 로딩 시간 초과'));},15000);
-        loadSheet(link,el=>document.head.append(el)).then(()=>{clearTimeout(timer);resolve();},()=>{clearTimeout(timer);link.remove();reject(Error('스타일을 읽지 못했어요.'));});
+        loadSheet(link,el=>document.head.append(el),holdSheet).then(()=>{clearTimeout(timer);resolve();},()=>{clearTimeout(timer);link.remove();reject(Error('스타일을 읽지 못했어요.'));});
     });
 }
 const addonUrl=rel=>new URL(`./addons/${rel}`,import.meta.url).href;
@@ -122,10 +122,13 @@ async function stylesheet(id){
 //   data-bl-addons는 실제 켜진 항목만 적어 한글화 패널·파일 검사기가 CSS를 중복으로 붙이지 않게 해요.
 //   못 받으면 개별 시트로 돌아가요. 첫 장→전체 장 교체는 같은 자리에서 하므로 규칙 순서가 유지돼요.
 function stylesheetBundle(ids){
-    bundledStyleIds=[...ids];syncAddonStyleFlags(document,ids);
+    bundledStyleIds=[...ids];
+    // 2차: 덮개 동안이면 표식은 덮개가 걷힐 때(꺼 둔 시트를 켜는 같은 마이크로태스크 — boot-gate.js release) — 그사이 거뒀거나 실패했으면 안 붙여요
+    const key=ids.join(' '),setFlags=()=>{if(bundledStyleIds.join(' ')===key)syncAddonStyleFlags(document,ids);};
+    if(booting())afterBoot(setFlags);else setFlags();
     const link=document.createElement('link');link.rel='stylesheet';link.dataset.blAddons=ids.filter(id=>!LATE_STYLE_IDS.includes(id)).join(' ');link.href=addonUrl(ADDON_GATED_BOOT_BUNDLE);
     pendingSheets.set(link,addonUrl(ADDON_GATED_BUNDLE));
-    return attachStyle(link).catch(error=>{pendingSheets.delete(link);bundledStyleIds=[];syncAddonStyleFlags(document,[]);throw error;}).then(()=>{link.dataset.blAddonsAll=ids.join(' ');});
+    return attachStyle(link).catch(error=>{pendingSheets.delete(link);bundledStyleIds=[];syncAddonStyleFlags(document,[]);throw error;}).then(()=>{link.dataset.blAddonsAll=ids.join(' ');return link;});   // 2차: 붙인 <link> 를 돌려줘요(덮개 아래 먼저 붙인 것을 거둘 때)
 }
 async function persist(){saving++;saveError='';changed();try{await saveAddonsNow();saveError='';}catch(error){saveError=error.message;throw error;}finally{saving--;changed();}}
 // 확장은 실리태번이 설정을 다 읽기 전에 시작한다 (settingsReady 전엔 saveSettings 가 미루기만 해서 저장 확인이 실패로 남았다) — 저장은 APP_READY 뒤에
@@ -201,10 +204,27 @@ export async function startAddons(layers=null){
     if(started)return;started=true;
     try{await startAddonsOnce(layers);}finally{settlePerf();}
 }
+// 2차 최적화(11-14): 덮개 아래에서 애드온 첫 장 · 뿌리 표식을 먼저 붙여요(설정에 켠 목록 그대로 · 시트는 holdSheet 로 꺼 둔 채 → 덮개가 걷힐 때 다른 시트와 한 번에 켜요).
+//   아래 시작 길은 실리태번 모듈(extensions.js · user.js)을 동적으로 가져오는데, 그 약속은 실리태번 초기화가 끝나 덮개가 걷힐 때에야 풀려요 —
+//   그래서 예전엔 첫 화면 뒤(3층)에 표식 열다섯 · 시트 한 장이 따로 붙어 문서 전체를 두 번 더 다시 계산했어요(부팅 추적 cause-145 · 요소 127 · 429).
+//   확정된 목록(대기 중 되살리기 · 옛 단독 확장 겹침 반영)이 먼저 붙인 목록과 다르면 먼저 붙인 것을 거두고 예전 길로 붙여요. 덮개가 이미 걷혔으면 아무것도 안 해요.
+function earlyStyle(layers){
+    if(!layers||!booting())return null;
+    const s=getSettings();if(!addonsEnabled(s))return null;
+    const styled=ADDON_STYLE_IDS.filter(id=>s.addons[id]);   // 시작 순서표(build-addon-css 가 아래 시작 목록에서 만든 것) — 번역기 · 단어 빼고 같은 차례
+    if(!gatedBundleFits(styled))return null;
+    const job={styled,cancelled:false};
+    job.link=layers.afterFirstFrame(()=>(job.cancelled||!booting())?null:stylesheetBundle(styled).catch(()=>null));
+    return job;
+}
+function undoEarlyStyle(link){
+    link.remove();pendingSheets.delete(link);bundledStyleIds=[];syncAddonStyleFlags(document,[]);
+}
 async function startAddonsOnce(layers){
+    const early=earlyStyle(layers);
     const restored=await restorePendingAddons();
     if(restored)whenAppReady(()=>persist().catch(()=>{}));
-    const s=getSettings();if(!addonsEnabled(s)){markLateDone();return;}
+    const s=getSettings();if(!addonsEnabled(s)){if(early){early.cancelled=true;early.link.then(link=>link&&undoEarlyStyle(link));}markLateDone();return;}
     // 8.3.0 한 번(설계 §3.2): 옛 단독 폴더가 켜져 있던 개인 확장은 내장본 플래그도 켠다 → 「대기」로 시작하고, 옛 것을 끄고 새로고침하면 설정 · 자료 그대로 이어진다
     if((s.addonCarry|0)<ADDON_CARRY){
         try{for(const id of EMBEDDED_PRIVATE)if(!s.addons[id]&&await conflict(id))s.addons[id]=true;}catch(error){console.warn('[Blue Lemonade] 개인 확장 플래그 이어받기',error);}
@@ -229,7 +249,11 @@ async function startAddonsOnce(layers){
     const styleAll=()=>gatedBundleFits(styled)?stylesheetBundle(styled).catch(error=>{console.warn('[Blue Lemonade] 애드온 스타일 한 장:',error?.message||error,'— 한 장씩 다시 받아요');return styleEach();}):styleEach();
     // 애드온 CSS는 본체 시작 직전에 붙여요. 별도 미리 받기로 요청을 중복하지 않아요.
     watchUpgrade();
-    let styling=null;const ensureStyling=()=>styling||=styleAll();lateStyling=()=>ensureStyling().then(upgradeAddonStyles);
+    // 2차: 덮개 아래에서 먼저 붙인 첫 장이 있으면 그것을 써요(같은 목록일 때) · 목록이 다르면 거두고 예전 길
+    const sameEarly=!!early&&early.styled.join(' ')===styled.join(' ');
+    if(early&&!sameEarly)early.cancelled=true;
+    const fromEarly=()=>early.link.then(link=>{if(link&&sameEarly)return link;if(link)undoEarlyStyle(link);return styleAll();});
+    let styling=null;const ensureStyling=()=>styling||=(early?fromEarly():styleAll());lateStyling=()=>ensureStyling().then(upgradeAddonStyles);
     if(!layers)ensureStyling();   // 미리 받기(fetch) 없음 — 두 번 받혀 바이트만 늘어요. 3층에서 붙일 때 받아요
     // 성능 보조는 fetch 를 감싸고 로딩 시간을 재므로 스타일을 기다리지 않고 맨 먼저 시작한다 (5.2.3: 기다리면 그 사이 실린 확장을 못 잰다)
     if(ids.includes('perf')){await startOne('perf');try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}

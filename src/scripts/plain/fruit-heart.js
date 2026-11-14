@@ -422,8 +422,13 @@ function installFruitHeartKorean(BlueLemonade, data) {
     if (helper) for (const el of helper.querySelectorAll(helperRootsSelector)) if (unseen(el)) return true;
     return false;
   }
+  // BL 1.4.x 최적화 3차(과일 창 꾸미기 감시 정리와 함께): 「방금 이 창을 썼다(15초)」만으로는 박자마다 다시 칠하지 않아요 — 지켜보는 뿌리(과일 창 · 입구 · 알림 칸 …)는
+  //   제 감시가 바뀔 때마다 칠하니 겹쳐요. 그 15초 창이 따로 맡던 것은 「감시 밖의 열린 팝업」(창에서 연 확인 · 입력 창 — 붙은 뒤에 열림 표시가 붙어 붙는 순간에는 못 골라요)이라,
+  //   그런 팝업이 있을 때만 예전처럼 다시 칠해요(그 팝업을 고르는 판정 ownsPopup · 고른 팝업을 보는 popupRoots 는 그대로). 박자 자체가 왜 남는지: 깊은 곳에 생기는 뿌리(QR 줄의 입구 ·
+  //   Helper 목록 · 추론 고르기 칸)와 감시 밖에서 떨어져 나간 뿌리는 html · body 자식 감시로 못 봐요 — 아래 세 줄이 맡고, 진짜 타이머는 과일 입구 안전망과 하나(scripts/scheduler.js)예요.
+  const unseenPopup = () => { for (const branch of branchable() ? outsideChat() : [doc.documentElement]) { if (!branch) continue; if (branch.matches?.(POPUPS) && !observed.has(branch)) return true; for (const el of branch.querySelectorAll(POPUPS)) if (!observed.has(el)) return true; } return false; };
   const discover = () => {
-    if (Date.now() - recent < 15000 || popupRoots.size) return schedule();
+    if (popupRoots.size || (Date.now() - recent < 15000 && unseenPopup())) return schedule();
     for (const node of observed) if (!node.isConnected) return schedule();
     if (rootAppeared()) return schedule();
     if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll(fruitOption)) if (!texts.has(option.firstChild) && /[\u4e00-\u9fff]/.test(option.textContent)) return schedule();

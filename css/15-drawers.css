@@ -899,6 +899,11 @@ body.salty #Backgrounds #bg-scroll-top {
   outline: none !important;
   filter: none !important;
 }
+/* 11-14 감사: 실리태번은 맨 위에 있을 때 이 단추를 opacity 0 · pointer-events none 으로 숨기고 .visible 일 때만 보여요.
+   테마 공용 단추 규칙(.menu_button { opacity: 1 !important })이 숨김을 덮어 「맨 위인데도 보이고 눌러도 안 되는 ^」가 늘 떠 있었어요 */
+body.salty #Backgrounds #bg-scroll-top:not(.visible) {
+  opacity: 0 !important;
+}
 body.salty #Backgrounds .bg_folder_breadcrumb {
   gap: var(--bl-s2);
   margin-bottom: var(--bl-s2);
@@ -1133,6 +1138,10 @@ body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div
   body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div > div:is(.bl-s, *) {
     color: inherit !important;
   }
+}
+/* 1.4.x 사파리 호환: style() 를 모르는 엔진(bl-no-sq · src/compat-css.js)용 옛 꼴 — 브라우저 호환 시트로 떼어져 크로미움 첫 시트에는 없어요 */
+html.bl-no-sq body.salty #tavern_helper .inline-drawer-content > .flex-col > .border-x-2 > div[class*="bg-[color-mix"] > div:is(.bl-s, *) {
+  color: inherit !important;
 }
 
 /* 묶음 상자: 1px 테 대신 오목한 페이지 톤 칸 (팝업 체크 묶음과 같은 모양) */

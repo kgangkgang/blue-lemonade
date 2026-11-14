@@ -17,20 +17,23 @@
 //     고른 탭을 탭 줄 안으로 굴리기(scrollIntoView — 스타일 · 배치를 그 자리에서 강제해요)는 걷힌 뒤로 미뤄요. 확장이 없으면 이 모듈을 안 받아 예전과 같아요.
 
 import { booting, afterBoot, holdSheet } from './boot-gate.js';
+import { armGuard } from './cheap-guards.js';
 import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
  *  mark: 원작만 가진 요소(이것이 든 설정 칸에만 맞춰요 — 있으면 분류 탭 대신 표식 · 안내 줄만) · sheet: 판 번호를 화면에 안 적는 확장의 제 시트 첫 규칙(그 시트 옆 manifest.json 에서 판을 읽어요) */
 export const SETS = [
-    // 미트볼 상태창 — 2.6.1 · 2.7.0 · 2.7.1 · 2.7.2 화면에서 확인(2026-11-13 · 리그 — 2.6.1 은 재설계 앞 판에서) · 2.7.9 는 2026-11-14 리그(새 묶음 「기능 켜고 끄기」 탭 · 칩 점검 창) · 2.7.11 · 2.7.15 는 같은 날 점검 대본 대조(설정 칸 · 선택자 · 시트 그대로 · 2.7.15 는 새 묶음 「설렘 · 사건 한 스푼」 탭) — 리그 사진은 아직. 판이 달라도 맞춤 CSS 는 그대로 걸고, 안내 한 줄만 바뀌어요.
+    // 미트볼 상태창 — 2.6.1 · 2.7.0 · 2.7.1 · 2.7.2 화면에서 확인(2026-11-13 · 리그 — 2.6.1 은 재설계 앞 판에서) · 2.7.9 는 2026-11-14 리그(새 묶음 「기능 켜고 끄기」 탭 · 칩 점검 창) · 2.7.11 · 2.7.15 · 2.7.17 은 같은 날 점검 대본 대조(설정 칸 · 선택자 · 시트 그대로 · 2.7.15 는 새 묶음 「설렘 · 사건 한 스푼」 탭 · 2.7.17 은 그 묶음이 「설렘 한 스푼」으로 줄고 연락 간단하게 칸) — 리그 사진은 아직. 판이 달라도 맞춤 CSS 는 그대로 걸고, 안내 한 줄만 바뀌어요.
     //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
-    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15'],
+    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17'],
         strips: ['.ss-scope .ss-tabs'] },   // 맞춤 시트가 「한 줄 · 스크롤바 없음」으로 바꾼 그 확장의 탭 줄 — 등록부에 넣어야 휠로 넘친 탭에 닿고, 그 확장이 판을 다시 그린 뒤에도 고른 탭이 보여요
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
+    //   1.9.61(2026-11-14 점검 대본 대조): 바뀐 것은 백그라운드 답장의 반쪽 답을 건너뛰는 사건 처리뿐 — 화면 · CSS · 선택자 39개 · 구조 표식 8개 그대로라 맞춤도 그대로예요.
     //   「색 두기」 안: 그 확장의 제 색 · 글꼴은 그대로 — 설정 내용 칸(native)에 「원래 색 유지」 표식을 붙여 테마 색 규칙이 비켜 가게 하고, 낮밤 표식(mode)을 테마 밝기에 다시 맞춰요.
-    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60'] },
+    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60', '1.9.61'] },
     // Memoria — 2.0.4 화면에서 확인(2026-11-13). 원작이 실리태번 색 변수를 따라가서 선 · 머리줄만 맞춰요.
-    { root: '#memoria_settings', mark: '.memoria__version', css: './ext-memoria.css', version: '.memoria__version', name: 'Memoria', verified: ['2.0.4'] },
+    //   2.1.0(2026-11-14 점검 대본 대조): 설정 「기본」에 같은 꼴의 숫자 칸 하나(묶어 기록 · .memoria__field) — 선택자 9개 · 구조 표식 3개 · CSS 그대로라 맞춤도 그대로예요. 리그 사진은 아직.
+    { root: '#memoria_settings', mark: '.memoria__version', css: './ext-memoria.css', version: '.memoria__version', name: 'Memoria', verified: ['2.0.4', '2.1.0'] },
 ];
 export const FIRST_TAB = '기본';
 const NAV = 'bl-ext-tabs', TAB = 'bl-ext-tab', NOTE = 'bl-ext-compat';
@@ -194,7 +197,7 @@ export function syncMode(doc, root) {
 export function keepNative(root, set) {
     if (!set.native) return 0;
     let n = 0;
-    for (const part of root.querySelectorAll(set.native)) if (!(NATIVE in part.dataset)) { part.dataset[NATIVE] = ''; n++; }
+    for (const part of root.querySelectorAll(set.native)) if (!(NATIVE in part.dataset)) { if (!n) armGuard('ext'); part.dataset[NATIVE] = ''; n++; }   // 1.4.x 최적화 3차: 표식 전에 지킴 갈래를 원래 꼴로(src/cheap-guards.js)
     return n;
 }
 
