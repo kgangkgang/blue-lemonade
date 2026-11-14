@@ -48,7 +48,7 @@ async function open(logCopy = BASE) {
     const pick = sel => dialog.querySelector(sel);
     const all = sel => [...dialog.querySelectorAll(sel)];
     const click = async (sel) => { const b = pick(sel); assert.ok(b, `없음: ${sel}`); b.click(); await settle(); };
-    return { dialog, pick, all, click, store: () => S.getSettings().logCopy, chips: () => all('[data-lc-shapes] > [data-shape]').map(b => b.querySelector('span:not(.bl-lc-emoji)')?.textContent) };
+    return { dialog, pick, all, click, store: () => S.getSettings().logCopy, chips: () => all('[data-lc-shapes] > [data-shape]').map(b => b.querySelector('span')?.textContent) };
 }
 
 await test('분류: 「기본」 바로 뒤 「블루레몬 추천」 · 추천 칩 22(차례 = 사용자 목록) · 기본 틀 18 은 그대로', async () => {

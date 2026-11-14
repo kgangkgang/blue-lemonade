@@ -207,7 +207,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw {
   position: relative; flex: none;
   width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
-  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; transition: none;
+  border: 1px solid var(--salty-faint, var(--line)); border-radius: 5px; background: transparent; box-shadow: none; transition: none; /* 1.5.0: 꺼진 네모 테를 공용 체크박스와 같은 --salty-faint 로(구분선 색이라 잘 안 보였어요) */
 }
 /* 꺾쇠: 공용 정의(10-foundation --bl-check-mask) — 단추 테두리 상자(20)와 같은 자리에 1em 상자(inset −1px · transform 없음 · 10-31) */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw::after {
@@ -261,7 +261,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=checkbox] {
   -webkit-appearance: none; appearance: none; display: inline-grid; place-content: center; flex: none; box-sizing: border-box;
   width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
-  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, var(--bl-fb-fff)); cursor: pointer; vertical-align: middle;
+  border: 1px solid var(--salty-faint, var(--line)); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, var(--bl-fb-fff)); cursor: pointer; vertical-align: middle;
 }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=checkbox]::after {
   content: ""; display: block; box-sizing: border-box; font-size: var(--bl-check-face); width: 1em; height: 1em; border: 0;
@@ -323,7 +323,7 @@ html body.salty #bl-deus-popover .dq-toggle > .dq-toggle-control > input[type="c
 html body.salty #bl-deus-popover .dq-toggle > input[type="checkbox"] {
   appearance: none !important; -webkit-appearance: none !important; display: grid !important; place-content: center; box-sizing: border-box;
   width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; margin: 0 !important; padding: 0 !important;
-  border: 1px solid var(--salty-line) !important; border-radius: 5px !important; background: transparent !important; background-image: none !important;
+  border: 1px solid var(--salty-faint, var(--salty-line)) !important; border-radius: 5px !important; background: transparent !important; background-image: none !important; /* 1.5.0: 미체크 테를 공용 체크박스(92-checkboxes · 1.4.7 감사 표2)와 같은 --salty-faint 로 — 여기만 구분선 색으로 남아 흰 바탕에서 네모가 안 보였어요 */
   color: var(--salty-on-accent, var(--bl-fb-fff)) !important; box-shadow: none !important; filter: none !important; cursor: pointer;
 }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::before { content: none !important; display: none !important; }
@@ -332,7 +332,7 @@ html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after {
   border: 0 !important; border-radius: 0 !important; background: currentColor !important; -webkit-mask: var(--bl-check-mask) !important; mask: var(--bl-check-mask) !important;
   box-shadow: none !important; transform: none !important; opacity: 0 !important;
 }
-html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: var(--salty-accent) !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: transparent !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked::after { opacity: 1 !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:disabled { opacity: .5 !important; }
 

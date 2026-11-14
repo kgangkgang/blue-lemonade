@@ -318,3 +318,10 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 .bl-capture-options [data-redact-options][hidden] { display:none; }
 /* 저장 방식: 「날씨 효과 포함」 같은 스위치를 옆 칸 입력 상자 높이에 맞춘다 (위로 떠 보이던 것) */
 .bl-capture-options .bl-tool-grid > .bl-addon-toggle { align-self:end; }
+
+/* 1.5.0 숫자 칸은 폰에서도 두 열: 고르기 칸(select)이 섞인 격자는 반 칸(149px)이 11em 에 5px 모자라 통째로 한 열이 됐어요(채팅 캡처 「저장 방식」 숫자 칸 넷이 세로로).
+   폰 폭에서는 숫자 칸 기준(8em)으로 두 열을 잡고, 글자가 잘릴 고르기 칸(.bl-tool-pick)만 전체 폭으로 둬요. */
+@media (max-width: 520px) {
+  .bl-tool-grid:has(> .bl-tool-field > input[type=number]):has(> .bl-tool-field > select) { --bl-tool-min: 8em; }
+  .bl-tool-grid > .bl-tool-pick { grid-column: 1 / -1; }   /* 고르기 칸은 표식(bl-tool-pick · 숫자 칸과 섞인 「저장 방식」 격자에만 달아요)으로 — :has 를 늘리지 않게(drawer-marks 옛 서랍 신호 · has-guard 주어 아닌 :has 기준) */
+}

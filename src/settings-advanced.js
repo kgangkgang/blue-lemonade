@@ -193,6 +193,56 @@ export function moveLongNotes(root, section, route, title, chipped) {
     root._groupHelp = helps;
 }
 
+// ───────── 1.5.0 짧은 줄 두 열(폰에서도) ─────────
+//   스위치 · 아이콘 단추 · 색 칸 하나만 가진 짧은 줄이 둘 이상 이어지면 그 묶음에 .bl-pairs, 줄에 data-pair="1" 을 달아요(css/33-panel-columns).
+//   이름이 길어 반 칸에서 세 줄이 되는 줄 · 설명이 남은 줄 · 짝 없는 끝 줄은 전체 폭 그대로예요.
+//   제목 아래 짧은 줄 하나뿐인 묶음이 이어지면 묶음끼리 나란히(.bl-solo · data-solo="a|b").
+const PAIR_MAX = 14;   // 폰 360 반 칸(이름 자리 약 95px)에서 두 줄에 드는 글자 수
+const labelOf = row => { const span = row.querySelector(':scope > span'); if (!span) return ''; const c = span.cloneNode(true); c.querySelectorAll('small,button').forEach(n => n.remove()); return c.textContent.replace(/\s+/g, ''); };
+function shortRow(row) {
+    if (!row.matches('.salty-row') || row.hidden) return false;
+    if (row.querySelector(':scope > span > small')?.textContent.trim()) return false;
+    const rest = [...row.children].filter(c => !c.matches('span'));
+    if (rest.length !== 1) return false;
+    const control = rest[0];
+    if (!(control.matches('.salty-switch,.salty-btn-icon,toolcool-color-picker') || row.matches('.salty-color'))) return false;
+    const n = labelOf(row).length;
+    return n > 0 && n <= PAIR_MAX;
+}
+export function pairShortRows(section, chipped) {
+    for (const group of section.querySelectorAll('.salty-group')) {
+        if (group.matches('.salty-sizes,.bl-setting-locks,.bl-backup-actions') || group.closest('.bl-etc-grid,.bl-backup-layout')) continue;
+        const kids = [...group.children].filter(k => !k.hidden);
+        // 혼자 선 슬라이더(앞뒤에 슬라이더 짝이 없는 것)는 반 칸이 되지 않게 전체 폭 표시
+        for (const s of kids) if (s.matches('.salty-slider')) s.toggleAttribute('data-pair-wide', !s.nextElementSibling?.matches('.salty-slider') && !s.previousElementSibling?.matches('.salty-slider'));
+        let any = false;
+        for (let i = 0; i < kids.length;) {
+            let j = i; while (j < kids.length && shortRow(kids[j])) j++;
+            const run = j - i;
+            if (run >= 2) { for (let k = i; k < i + run - run % 2; k++) kids[k].dataset.pair = '1'; any = true; }
+            i = Math.max(j, i + 1);
+        }
+        group.classList.toggle('bl-pairs', any);
+    }
+    if (chipped) return;
+    const solo = g => {
+        if (g.hidden || g.parentElement !== section) return false;
+        const body = g.querySelector(':scope > .bl-editor-group-body'), head = g.querySelector(':scope > .bl-editor-group-head');
+        if (!body || !head || body.children.length !== 1) return false;
+        const box = body.children[0];
+        if (!box.matches('.salty-group') || box.children.length !== 1 || !shortRow(box.children[0])) return false;
+        const c = head.cloneNode(true); c.querySelectorAll('button').forEach(n => n.remove());
+        return c.textContent.replace(/\s+/g, '').length <= 10;
+    };
+    const groups = [...section.children].filter(g => g.matches('.bl-editor-group'));
+    for (let i = 0; i < groups.length;) {
+        let j = i; while (j < groups.length && solo(groups[j]) && (j === i || groups[j].previousElementSibling === groups[j - 1])) j++;
+        const run = j - i;
+        for (let k = i; k < i + run - run % 2; k++) { groups[k].classList.add('bl-solo'); groups[k].dataset.solo = (k - i) % 2 ? 'b' : 'a'; }
+        i = Math.max(j, i + 1);
+    }
+}
+
 /** 설정 키 없이 화면으로 오는 검색 항목(예: 「설정 일부 잠그기」)이 「고급」 안 줄을 가리키면 그 접힘을 펼쳐요.
  *  words: 검색 항목의 낱말들 — 고급 안 줄 이름의 낱말이 모두 들어 있으면 그 줄을 찾는 것으로 봐요. 펼친 첫 줄을 돌려줘요 */
 export function openFoldsFor(root, words) {

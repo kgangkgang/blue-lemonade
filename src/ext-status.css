@@ -15,7 +15,7 @@
   font-family: 'bl-mb-icons';
   src: url('./ext-status-icons.woff2') format('woff2');
   font-display: block;
-  unicode-range: U+200D, U+2194, U+21A9, U+231B, U+23EA, U+23F3, U+23F8, U+2600, U+2601, U+2605, U+2615, U+2620, U+2661, U+2665, U+266A, U+267B, U+2692, U+2693, U+2694, U+2696, U+2699, U+26A0, U+26A1, U+26C5, U+26C8, U+26D3, U+26EA, U+26F0, U+26F2, U+26F5, U+26F6, U+2702, U+2705, U+2709, U+270D, U+270F, U+2714, U+2715, U+2728, U+2744, U+274C, U+2753, U+2754, U+2764, U+2B50, U+FE0F, U+1F0CF, U+1F193, U+1F300, U+1F309, U+1F30A, U+1F310, U+1F319, U+1F31F, U+1F327, U+1F328, U+1F32B, U+1F331, U+1F332, U+1F333, U+1F338, U+1F33C, U+1F33E, U+1F342, U+1F35D, U+1F377, U+1F37A, U+1F37D, U+1F381, U+1F382, U+1F389, U+1F392, U+1F39B, U+1F3AC, U+1F3AD, U+1F3B2, U+1F3C6, U+1F3CE, U+1F3D6, U+1F3D8, U+1F3D9, U+1F3E0, U+1F3E2, U+1F3E5, U+1F3E6, U+1F3EA, U+1F3EB, U+1F3F0, U+1F3F7, U+1F40E, U+1F415, U+1F41E, U+1F426, U+1F431, U+1F43E, U+1F441, U+1F449, U+1F44D, U+1F464, U+1F465, U+1F48C, U+1F48D, U+1F494, U+1F495, U+1F497, U+1F49E, U+1F4A1, U+1F4A2, U+1F4A4, U+1F4A5, U+1F4A8, U+1F4AC, U+1F4AD, U+1F4B0, U+1F4B1, U+1F4B8, U+1F4BE, U+1F4C2, U+1F4C5, U+1F4CA, U+1F4CB, U+1F4CC, U+1F4CD, U+1F4D6, U+1F4DA, U+1F4DC, U+1F4DD, U+1F4E3, U+1F4EC, U+1F4F0, U+1F4F1, U+1F4F7, U+1F500, U+1F501, U+1F504, U+1F507, U+1F50D, U+1F50E, U+1F512, U+1F513, U+1F514, U+1F524, U+1F525, U+1F527, U+1F52C, U+1F52E, U+1F534, U+1F54A, U+1F550, U+1F573, U+1F5B1, U+1F5BC, U+1F5D1, U+1F5E8, U+1F5FA, U+1F5FC, U+1F602, U+1F605, U+1F622, U+1F62D, U+1F62E, U+1F63C, U+1F63F, U+1F648, U+1F689, U+1F693, U+1F6A6, U+1F6AA, U+1F6AB, U+1F6B2, U+1F6B6, U+1F6CF, U+1F6D2, U+1F6DF, U+1F6E0, U+1F6E1, U+1F6E3, U+1F6F0, U+1F916, U+1F91D, U+1F976, U+1F989, U+1F9E9, U+1F9ED, U+1F9F0, U+1F9F1, U+1F9F8, U+1F9F9, U+1FA91, U+1FAB4, U+1FAB6, U+1FAE7;
+  unicode-range: U+200D, U+2194, U+2197, U+21A9, U+231B, U+23EA, U+23F3, U+23F8, U+25B6, U+2600, U+2601, U+2605, U+2615, U+2620, U+2661, U+2665, U+266A, U+267B, U+2692, U+2693, U+2694, U+2696, U+2699, U+26A0, U+26A1, U+26C5, U+26C8, U+26D3, U+26EA, U+26F0, U+26F2, U+26F5, U+26F6, U+2702, U+2705, U+2709, U+270D, U+270F, U+2714, U+2715, U+2728, U+2744, U+274C, U+2753, U+2754, U+2764, U+2B50, U+FE0F, U+1F0CF, U+1F193, U+1F300, U+1F309, U+1F30A, U+1F310, U+1F319, U+1F31F, U+1F327, U+1F328, U+1F32B, U+1F331, U+1F332, U+1F333, U+1F338, U+1F33C, U+1F33E, U+1F340, U+1F342, U+1F353, U+1F356, U+1F35D, U+1F377, U+1F37A, U+1F37D, U+1F380, U+1F381, U+1F382, U+1F389, U+1F392, U+1F39B, U+1F3A9, U+1F3AC, U+1F3AD, U+1F3B2, U+1F3C6, U+1F3CE, U+1F3D6, U+1F3D8, U+1F3D9, U+1F3E0, U+1F3E2, U+1F3E5, U+1F3E6, U+1F3EA, U+1F3EB, U+1F3F0, U+1F3F7, U+1F40E, U+1F415, U+1F419, U+1F41E, U+1F426, U+1F427, U+1F428, U+1F42E, U+1F42F, U+1F430, U+1F431, U+1F432, U+1F436, U+1F438, U+1F439, U+1F43A, U+1F43B, U+1F43C, U+1F43E, U+1F441, U+1F449, U+1F44D, U+1F451, U+1F464, U+1F465, U+1F489, U+1F48C, U+1F48D, U+1F494, U+1F495, U+1F496, U+1F497, U+1F49E, U+1F4A1, U+1F4A2, U+1F4A4, U+1F4A5, U+1F4A8, U+1F4AC, U+1F4AD, U+1F4B0, U+1F4B1, U+1F4B8, U+1F4BE, U+1F4C2, U+1F4C5, U+1F4CA, U+1F4CB, U+1F4CC, U+1F4CD, U+1F4D6, U+1F4DA, U+1F4DC, U+1F4DD, U+1F4E3, U+1F4E6, U+1F4EC, U+1F4F0, U+1F4F1, U+1F4F7, U+1F500, U+1F501, U+1F504, U+1F507, U+1F50D, U+1F50E, U+1F512, U+1F513, U+1F514, U+1F524, U+1F525, U+1F527, U+1F52C, U+1F52E, U+1F534, U+1F54A, U+1F550, U+1F573, U+1F5B1, U+1F5BC, U+1F5D1, U+1F5E1, U+1F5E8, U+1F5FA, U+1F5FC, U+1F602, U+1F605, U+1F622, U+1F62D, U+1F62E, U+1F63C, U+1F63F, U+1F648, U+1F689, U+1F693, U+1F6A6, U+1F6AA, U+1F6AB, U+1F6B2, U+1F6B6, U+1F6CF, U+1F6D2, U+1F6DF, U+1F6E0, U+1F6E1, U+1F6E3, U+1F6F0, U+1F916, U+1F91D, U+1F976, U+1F981, U+1F988, U+1F989, U+1F98A, U+1F98B, U+1F99D, U+1F9E9, U+1F9ED, U+1F9F0, U+1F9F1, U+1F9F8, U+1F9F9, U+1FA91, U+1FAB4, U+1FAB6, U+1FAE7;
 }
 body.salty :is(#ss-settings, #ss-settings select, .ss-toasts, .ss-mbubble, dialog.popup.ss-dlg .popup-controls) { font-family: 'bl-mb-icons', var(--salty-font-ui); }
 body.salty .ss-scope :is(input, textarea):where(:not(.ss-letter *, .ss-paper *, .ss-pdef *, .ss-json)), body.salty .ss-scope :where(.ss-bub > span) { font-family: var(--salty-font-ui); }
@@ -248,7 +248,7 @@ body.salty .ss-scope :is(.ss-seg, .ss-groups) > button.on {
   box-shadow: none;
   font-weight: var(--bl-ui-strong, 650);
 }
-body.salty .ss-scope .ss-seg > button small { font-size: var(--bl-ts-micro, 11.5px); color: var(--salty-muted); font-weight: 400; }
+body.salty .ss-scope .ss-seg > button small { font-size: var(--bl-ts-micro, 11.5px); color: var(--ss-dim); font-weight: 400; }   /* 11-15: 보조색 그대로는 고르기 면 위에서 4.35 : 1(리그) — 흐린 글 색(보조색 + 본문색)으로 */
 body.salty .ss-scope .ss-seg > button.on small { color: inherit; }
 body.salty .ss-scope .ss-pill { min-height: var(--bl-ui-chip, 34px); padding: 0 12px; border-radius: var(--bl-ui-radius, 8px); background: var(--bl-hover); border-color: var(--salty-line); font-size: var(--bl-ts-cap, 12.5px); }
 body.salty .ss-scope .ss-pill.on { background: var(--bl-ui-pick-face); border-color: transparent; color: var(--bl-ui-pick-ink); font-weight: var(--bl-ui-strong, 650); }
@@ -358,7 +358,7 @@ body.salty #ss-settings .ss-set-inline { gap: var(--bl-s2, 8px); }
 /* 묶음 머리: 절 제목 단 · 팔레트 선 */
 body.salty #ss-settings .ss-set-h { margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s4, 16px); font-size: var(--bl-ui-h-sub, 16px); font-weight: var(--bl-ui-strong, 650); }
 body.salty #ss-settings .ss-set-h:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top: 1px solid var(--salty-line); }
-body.salty #ss-settings .ss-set-more > summary { padding: var(--bl-s2, 8px) 0; cursor: pointer; }
+body.salty #ss-settings .ss-set-more > summary { padding: var(--bl-s2, 8px) 0; cursor: pointer; opacity: 1; }   /* 11-15: 원작 85% 흐림 + 보조색 = 3.93 : 1(리그) — 흐림을 풀어요 */
 body.salty #ss-settings .ss-set-more > summary:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
 
 /* ---------- 설정 서랍의 분류 탭(src/ext-compat.js) — 탭 모양은 공용 글자 탭(88) ---------- */
@@ -721,8 +721,8 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
   body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary, body.salty #ss-hud .ss-hud-alert button { position: relative; }
   body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::before, body.salty #ss-hud .ss-hud-alert button::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: var(--bl-ui-touch, 44px); transform: translateY(-50%); }
   /* 정리한 보기의 단추들(보기 스위치 · 길잡이 · 갈래 줄 · 자세히) — 갈래 줄은 화살표가 ::after 라 상자는 ::before */
-  body.salty #ss-settings :is(.bl-ext-view, .bl-ext-jump, .bl-ext-fold, .bl-ext-more) { position: relative; }
-  body.salty #ss-settings :is(.bl-ext-view, .bl-ext-jump, .bl-ext-start-x, .bl-ext-fold, .bl-ext-more)::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }
+  body.salty #ss-settings :is(.bl-ext-view, .bl-ext-findbtn, .bl-ext-jump, .bl-ext-fold, .bl-ext-more) { position: relative; }
+  body.salty #ss-settings :is(.bl-ext-view, .bl-ext-findbtn, .bl-ext-jump, .bl-ext-start-x, .bl-ext-fold, .bl-ext-more)::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }
   /* 안쪽 탭 줄: 아래 여백 4 — 누르는 상자가 안 잘리게(손가락 화면만) */
   body.salty .ss-scope .ss-tabs { padding-bottom: var(--bl-s1, 4px); }
   /* 꾸미기 색 줄은 줄 전체가 누르는 칸(44) · 큰 창 위아래 빈틈으로 뒤 설정 글이 비치지 않게 뒷막을 테마 바탕색으로 */
@@ -752,3 +752,100 @@ body.salty .ss-scope .ss-sec > .ss-row-btns + .ss-hint, body.salty .ss-scope .ss
 body.salty .ss-scope .ss-sec > .ss-row-btns + .ss-stack, body.salty .ss-scope .ss-sec > .ss-row-btns + .ss-more, body.salty .ss-scope .ss-sec > .ss-grid-btns + .ss-more { margin-top: var(--bl-s2, 8px); }
 body.salty .ss-scope .ss-sec > .ss-hint + .ss-hint, body.salty .ss-scope .ss-sec > .ss-stack + .ss-hint { margin-top: var(--bl-s1, 4px); }
 body.salty .ss-scope .ss-sec > .ss-hint + .ss-more, body.salty .ss-scope .ss-sec > .ss-hint + .ss-grid-btns, body.salty .ss-scope .ss-sec > .ss-hint + .ss-tog, body.salty .ss-scope .ss-sec > .ss-hint + .ss-btn { margin-top: var(--bl-s3, 12px); }
+
+
+/* ====================== 검수 · 다듬기(2026-11-15 · 2.7.21 화면) ======================
+   사용자: 「지금은 좀 엉성하더라 · 가능한 부분은 다 세로 2열로 · 너무 세로 스크롤 길어지지 않게 · 이모티콘 절대 금지 다 아이콘으로」
+   리그 사진(PC 1280 · 폰 384 · 360 × 낮 · 밤)을 보고 고른 곳만 — 원작 요소는 옮기지 않고 칸 배치 · 크기만 바꿔요. 색은 팔레트 · 부품 토큰만. */
+
+/* ---------- 얼굴(2.7.21 — 사람마다 고른 그림 글자 · 안 골랐으면 이름으로 정해지는 동물 · 설정을 끄면 이름 첫 글자) ----------
+   그림 글자는 위 선 아이콘 글꼴이 그려요(동물 16 · 고르개의 그림까지 표에 있어요) — 동그라미는 고른 면 + 강조 글자색 하나(원작은 사람마다 다른 파스텔 면이라 밤 판에서 밝게 떴어요).
+   「원작 그대로 보기」면 원래 색 · 원래 그림 글자예요. */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-ava { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); font-weight: var(--bl-ui-strong, 650); }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-ava.emo { font-size: 18px; font-weight: 400; line-height: 1; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-ava.emo.xs { font-size: 13px; }
+body.salty .ss-scope .ss-ava-btn:focus-visible .ss-ava { box-shadow: inset 0 0 0 1px var(--salty-accent); }
+/* 「원작 그대로 보기」: 선 아이콘 글꼴을 빼서 그림 글자가 원래대로 보여요(위 글꼴 규칙들과 같은 뿌리) */
+body.salty:is([data-bl-ext-raw]) :is(#ss-settings, #ss-settings select, .ss-toasts, .ss-mbubble, dialog.popup.ss-dlg .popup-controls, .ss-root, .ss-hud, .ss-side, .ss-float, .ss-msgcard, dialog.ss-dlg .popup-content) { font-family: var(--salty-font-ui); }
+/* 얼굴 고르기 창(src/ext-compat.js 가 표식 .bl-ext-avadlg 와 선 아이콘 고르개 .bl-ext-avapick 를 달아요 — 2.7.21 은 고르개 자리에 글자만 나와요)
+   8열 격자 · 칸 36 · 고른 것 = 옅은 강조 면 + 강조 글자색. 입력칸에도 같은 글꼴이라 고른 그림이 그대로 보여요. 원작이 제 고르개(.ss-emopick)를 그리는 판이면 그 칸을 같은 꼴로. */
+body.salty dialog.bl-ext-avadlg :is(.popup-content, .popup-input) { font-family: 'bl-mb-icons', var(--salty-font-ui); }
+body.salty dialog.bl-ext-avadlg .popup-input { text-align: center; font-size: var(--bl-ui-h-sub, 16px); }
+body.salty dialog.bl-ext-avadlg .bl-ext-avahint { margin: var(--bl-s1, 4px) 0 0; font-size: var(--bl-ts-meta, 13px); line-height: 1.45; color: var(--salty-muted); }
+body.salty dialog.bl-ext-avadlg :is(.bl-ext-avapick, .ss-emopick) { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--bl-s1, 4px); margin: var(--bl-s2, 8px) 0; }
+body.salty dialog.bl-ext-avadlg :is(.bl-ext-avapick, .ss-emopick) > button { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; height: var(--bl-ui-ctl, 36px); border-radius: var(--bl-ui-radius, 8px); color: var(--salty-text); font-family: 'bl-mb-icons', var(--salty-font-ui); font-size: 18px; line-height: 1; cursor: pointer; }
+body.salty dialog.bl-ext-avadlg :is(.bl-ext-avapick, .ss-emopick) > button:hover { background: var(--bl-hover); }
+body.salty dialog.bl-ext-avadlg :is(.bl-ext-avapick, .ss-emopick) > button:focus-visible { box-shadow: inset 0 0 0 1px var(--salty-accent); }
+body.salty dialog.bl-ext-avadlg :is(.bl-ext-avapick, .ss-emopick) > button.on { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
+
+/* ---------- 세로 2열: 짧은 항목은 둘씩 나란히(스크롤 줄이기) ----------
+   · 단추 격자(백업 · 카드 · 전체 · 미니게임): 원작은 칸 최소 170 이라 폰 · 좁은 창(안쪽 폭 330 안팎)에서 한 줄에 하나였어요 → 최소 136 으로 둘씩. 긴 이름은 단추 안에서 줄을 바꿔요(자르지 않아요).
+   · 쓸 기능 카드(관리 탭 · 만들기 창 — 스무 칸): 최소 200 → 140 으로 둘씩. 카드 안은 윗줄 「켬끔 · 아이콘 · 이름」 · 아랫줄 설명(카드 폭 전부)이라 설명이 좁은 칸에 갇히지 않아요.
+   · 넓은 창(전체화면)에서는 칸이 더 들어가요(auto-fill 그대로). */
+body.salty .ss-scope .ss-grid-btns { grid-template-columns: repeat(auto-fill, minmax(min(100%, 136px), 1fr)); }
+body.salty .ss-scope .ss-grid-btns .ss-btn { min-width: 0; padding: 6px 10px; white-space: normal; overflow-wrap: anywhere; text-align: start; }
+body.salty .ss-scope .ss-mods { grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: var(--bl-s2, 8px); }
+body.salty .ss-scope .ss-mod { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; align-content: start; gap: var(--bl-s1, 4px) var(--bl-s2, 8px); padding: var(--bl-s2, 8px) 10px; }
+body.salty .ss-scope .ss-mod > span { display: contents; }
+body.salty .ss-scope .ss-mod > span > b { grid-column: 3; grid-row: 1; min-width: 0; overflow-wrap: anywhere; font-size: var(--bl-ts-ctl, 14px); line-height: 1.3; }
+body.salty .ss-scope .ss-mod > span > small { grid-column: 1 / -1; grid-row: 2; line-height: 1.4; }
+body.salty .ss-scope .ss-mod > em { grid-column: 1 / -1; grid-row: 3; justify-self: start; font-size: var(--bl-ts-micro, 11.5px); }
+/* 관계 카드 머리: 단추 넷(34 칸 · 틈 10)이 이름 자리를 다 써서 이름이 「도윤 …」으로 잘리고 단계 딱지가 안 보였어요 → 단추는 30 칸 · 틈 4, 이름은 두 줄까지 */
+body.salty .ss-scope .ss-relc-h { gap: var(--bl-s1, 4px); }
+body.salty .ss-scope .ss-relc-h > .ss-ava-btn { margin-inline-end: 6px; }
+body.salty .ss-scope .ss-relc-h > .ss-ib { width: 30px; }
+body.salty .ss-scope .ss-relc-h .ss-ct-b b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
+
+/* ---------- 편집 모드: 줄 목록은 둘씩 · 짧은 칸은 한 줄에 여럿 ----------
+   · 접힌 줄(.ss-erow — 달 12 · 일정 · 게이지 · 능력치 …)이 한 줄에 하나(높이 44 + 틈 6)라 달력 편집이 2,000px 에 가까웠어요 → 목록을 2열 격자로, 펼친 줄은 두 칸을 다 써요.
+     이름은 자르지 않고 두 줄까지(그보다 길면 말줄임) · 위로 · 지우기 단추는 30 칸.
+   · 숫자 칸(.ss-f.n — 년 · 월 · 일 · x · y …)은 반 폭 둘씩 규칙이 편집기의 줄 틈(12)과 겹쳐 한 줄에 하나로 넘어갔어요 → 최소 88 로 들어가는 만큼 나란히(폰 384 · 360 에서 셋).
+   · 짧은 글 칸(이름 · 종류 · 구역 …)은 최소 132 로 둘씩. 긴 글 칸(.wide · .grow · 글 상자)은 한 줄 통째로 그대로. */
+body.salty .ss-scope .ss-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr)); gap: 6px var(--bl-s2, 8px); align-items: start; }
+body.salty .ss-scope .ss-list > * { grid-column: 1 / -1; }
+body.salty .ss-scope .ss-list > .ss-erow { grid-column: auto; min-width: 0; margin: 0; }
+body.salty .ss-scope .ss-list > .ss-erow[open] { grid-column: 1 / -1; }
+body.salty .ss-scope .ss-erow > summary { min-height: var(--bl-ui-ctl, 36px); gap: 2px; padding: 2px 4px 2px var(--bl-s2, 8px); font-size: var(--bl-ts-meta, 13px); font-weight: 400; }
+body.salty .ss-scope .ss-erow[open] > summary { font-weight: var(--bl-ui-strong, 650); }
+body.salty .ss-scope .ss-erow > summary > span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+body.salty .ss-scope .ss-erow-b > .ss-ib { width: 30px; height: 30px; }
+body.salty .ss-scope :is(.ss-editor, .ss-erow-body) > label.ss-f.n { flex: 1 1 88px; width: auto; margin-inline-end: 0; }
+body.salty .ss-scope :is(.ss-editor, .ss-erow-body) > label.ss-f:where(:not(.n, .b, .wide, .grow)) { flex: 1 1 132px; }
+body.salty .ss-scope :is(.ss-editor, .ss-erow-body) > label.ss-f > :is(input, select).ss-in { width: 100%; min-width: 0; }
+
+/* ---------- 설정 서랍 「정리한 보기」: 혼자 남는 숫자 줄은 한 줄 통째로 ----------
+   짝이 없는 숫자 줄이 왼쪽 반 칸에만 놓이면 이름이 세 줄로 꺾이고 오른쪽 반이 비었어요 — 그런 줄(src/ext-organize.js 가 표식을 안 달아요)은 원래 꼴(왼쪽 이름 · 오른쪽 숫자 칸)이에요. 규칙은 위 숫자 줄 것 그대로. */
+
+/* ---------- 달력 「오늘」 칸의 달 · 요일 글자: 강조색 면 위인데 보조색이 걸려 1.2 : 1 로 안 읽혔어요(리그 대비 훑기 · 낮 1.22 · 밤 1.13) → 그 칸의 글자색(강조색 위 글자색) 그대로 ---------- */
+body.salty .ss-scope .ss-today2-d small { color: inherit; opacity: 1; }
+
+/* ---------- 초점 모양: 단추에 브라우저 기본 테두리(검은 2px)가 떴어요 — 창이 열리며 첫 단추에 초점이 갈 때(알림함 「모두 지우기」 · 빈 상태 「상태창 만들기」) → 테마 초점 고리로 ---------- */
+body.salty .ss-scope :is(.ss-btn, .ss-ib, .ss-pill, .ss-tool, button.ss-chip):focus-visible { outline: none; box-shadow: var(--salty-ring); }
+
+/* ---------- 편의 기능(src/ext-compat.js · 테마 설정 「미트볼 상태창 편의 기능」을 끄면 body 표식 data-bl-mb-plain 으로 전부 숨겨요) ----------
+   · 설정 찾기: 서랍 머리의 돋보기 단추를 누르면 분류 탭 줄 아래에 찾기 칸이 열려요(기본 닫힘 — 탭마다 세로로 44 늘지 않게) — 칸 이름을 적으면 「탭 › 줄」 목록이 나오고, 누르면 그 탭으로 가서 그 줄을 옅은 강조 면으로 보여요.
+   · 맨 위로: 상태창 창을 한 화면 넘게 내렸을 때만 오른쪽 아래에 뜨는 단추(움직임 없음 · 누르면 바로 맨 위). 편집 모드의 저장 줄 · 한 손 모드의 아래 탭 줄을 덮지 않게 바닥에서 68 위에 둬요(:has 없이 늘 같은 자리). */
+/* 돋보기 단추(서랍 머리 · 보기 스위치 옆): 같은 28 칸 · 열려 있으면 고른 면 */
+body.salty:not([data-bl-mb-plain]) #ss-settings[data-bl-view="org"] .inline-drawer-header > .bl-ext-findbtn { display: inline-flex !important; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 28px; height: 28px; margin: 0 var(--bl-s1, 4px) 0 0; padding: 0; border: 0; border-radius: var(--bl-ui-radius, 8px); background: transparent; box-shadow: none; color: var(--salty-faint, var(--salty-muted)); font-size: 0; line-height: 0; cursor: pointer; }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-findbtn::after { content: ''; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--salty-mi-search) center / contain no-repeat; mask: var(--salty-mi-search) center / contain no-repeat; }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-findbtn[aria-expanded="true"] { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
+body.salty:not([data-bl-mb-plain]) #ss-settings[data-bl-view="org"][data-bl-find] .bl-ext-find { display: block !important; box-sizing: border-box; width: 100%; min-height: var(--bl-ui-ctl, 36px); margin: var(--bl-s2, 8px) 0 0; padding: 0 var(--bl-s3, 12px); border: 0; border-radius: var(--bl-ui-radius, 8px); font: inherit; font-size: var(--bl-ts-ui, 14px); }
+body.salty #ss-settings .bl-ext-find:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { background: var(--salty-field); box-shadow: inset 0 0 0 1px var(--salty-line); color: var(--salty-text); }
+body.salty #ss-settings .bl-ext-find:focus-visible { outline: none; }
+body.salty #ss-settings .bl-ext-find:focus-visible:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { box-shadow: inset 0 0 0 1px var(--salty-accent); }
+body.salty:not([data-bl-mb-plain]) #ss-settings[data-bl-view="org"][data-bl-find] .bl-ext-found { display: grid !important; gap: var(--bl-s1, 4px); margin: var(--bl-s1, 4px) 0 0; }
+body.salty #ss-settings[data-bl-view="org"][data-bl-find] .bl-ext-found:empty { display: none !important; }
+body.salty #ss-settings .bl-ext-found > .bl-ext-hit { display: flex; align-items: center; gap: var(--bl-s2, 8px); box-sizing: border-box; min-height: var(--bl-ui-ctl, 36px); margin: 0; padding: var(--bl-s1, 4px) var(--bl-s3, 12px); border-width: 1px; border-style: solid; border-radius: var(--bl-ui-radius, 8px); box-shadow: none; font: inherit; font-size: var(--bl-ts-meta, 13px); font-weight: 400; line-height: 1.35; text-align: start; cursor: pointer; }
+body.salty #ss-settings .bl-ext-hit > small { flex: none; font-size: var(--bl-ts-micro, 11.5px); opacity: 1; }
+body.salty #ss-settings .bl-ext-hit > span { min-width: 0; overflow-wrap: anywhere; }
+body.salty #ss-settings .bl-ext-hit:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-color: var(--salty-line); background: var(--bl-hover); color: var(--salty-text); }
+body.salty #ss-settings .bl-ext-hit:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) > small { color: var(--salty-muted); }
+body.salty #ss-settings .bl-ext-hit:where([data-bl-native-ext-colors], [data-bl-native-ext-colors] *) { border-color: var(--SmartThemeBorderColor); background: transparent; color: inherit; }
+body.salty #ss-settings .bl-ext-hit:focus-visible { outline: none; box-shadow: inset 0 0 0 2px currentColor; }
+body.salty #ss-settings .inline-drawer-content > [data-bl-hit] { border-radius: var(--bl-ui-radius, 8px); }
+body.salty #ss-settings .inline-drawer-content > [data-bl-hit]:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { background: var(--bl-ui-pick-face); box-shadow: 0 0 0 4px var(--bl-ui-pick-face); }
+/* 편의 기능을 끄면(body 표식) 위 세 규칙이 걸리지 않아 돋보기 · 찾기 칸 · 목록이 제 스타일(숨김) 그대로예요 — 숨기는 규칙을 따로 두면 보이는 규칙보다 약해 못 이겼어요(리그) */
+body.salty dialog.popup.ss-dlg > .bl-ext-top { display: none; position: absolute; right: var(--bl-s4, 16px); bottom: calc(var(--bl-s4, 16px) + 52px); z-index: 3; box-sizing: border-box; align-items: center; justify-content: center; width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0; border: 1px solid var(--salty-line); border-radius: var(--bl-ui-radius, 8px); background: var(--salty-surface); box-shadow: var(--bl-e2); color: var(--salty-text); cursor: pointer; }
+body.salty dialog.popup.ss-dlg > .bl-ext-top::before { content: ''; width: var(--bl-ui-chev, 14px); height: var(--bl-ui-chev, 14px); background: currentColor; -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat; mask: var(--bl-ui-glyph-chev) center / contain no-repeat; transform: rotate(180deg); }
+body.salty:not([data-bl-mb-plain]) dialog.popup.ss-dlg[data-bl-top] > .bl-ext-top { display: inline-flex; }
+body.salty dialog.popup.ss-dlg > .bl-ext-top:hover { background: var(--salty-control-hover, var(--bl-hover)); }

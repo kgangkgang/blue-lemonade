@@ -124,6 +124,7 @@ async function repair(r) {
     if (e.f !== hit.f) { e.f = hit.f; save(); }
     return hit;
 }
+const notSwitched = () => globalThis.toastr?.warning?.('답을 만들거나 저장하는 중이라 채팅을 바꾸지 못했어요. 끝난 뒤 다시 눌러 주세요.', 'Blue Lemonade');
 async function openChat(r) {
     if (busy || isCurrent(r)) return;
     if (!ownerOf(r)) { globalThis.toastr?.warning?.('이 채팅의 캐릭터 · 그룹을 찾지 못했어요.', 'Blue Lemonade'); return; }
@@ -140,12 +141,18 @@ async function openChat(r) {
         if (r.k === 'g') {
             const groups = await st.groups();
             await groups.openGroupById?.(r.o);
+            // 답 생성 · 저장 중이면 실리태번이 그룹을 안 바꾸고 그냥 돌아가요 — 그때 openGroupChat 은 지금 그룹에 일을 해요
+            if (String(ctx().groupId ?? '') !== String(r.o)) { notSwitched(); return; }
             if (ctx().getCurrentChatId?.() !== r.f) await c.openGroupChat?.(r.o, r.f);
         } else {
             const at = (c.characters || []).findIndex(x => x.avatar === r.o);
             if (at < 0) return;
             await c.selectCharacterById?.(at, { switchMenu: false });
-            if (ctx().getCurrentChatId?.() !== r.f) await c.openCharacterChat?.(r.f);
+            // selectCharacterById 는 isChatSaving · is_send_press 면 아무것도 안 해요 — 그대로 openCharacterChat 을 부르면
+            // 지금 캐릭터의 chat 값을 이 파일 이름으로 바꾸고 카드까지 저장해요
+            const now = ctx();
+            if (now.groupId != null || now.characters?.[now.characterId]?.avatar !== r.o) { notSwitched(); return; }
+            if (now.getCurrentChatId?.() !== r.f) await c.openCharacterChat?.(r.f);
         }
     } catch (error) {
         warn(error);

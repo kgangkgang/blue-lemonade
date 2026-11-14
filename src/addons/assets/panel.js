@@ -637,7 +637,7 @@ function renderPickModels(pick) {
     pick.models[provider] = picked;
     const modelSelect = pickEl('[data-pick-field="model"]');
     if (document.activeElement !== modelSelect) {
-        fillSelect(modelSelect, ids, { saved: picked, missingSuffix: ` (${missingNote(provider, ids)})`, customValue: 'custom', customLabel: '⚙️ 커스텀 모델 입력', customSelected: picked === 'custom' });
+        fillSelect(modelSelect, ids, { saved: picked, missingSuffix: ` (${missingNote(provider, ids)})`, customValue: 'custom', customLabel: '커스텀 모델 입력', customSelected: picked === 'custom' });
     }
     pickEl('.eh-pick-custom-model').hidden = picked !== 'custom';
     const typed = pickEl('[data-pick-field="customModel"]');

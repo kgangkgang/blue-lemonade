@@ -21,11 +21,11 @@ export async function waitAddonModule(id,ms=10000){
     if(modules.has(id))return modules.get(id);
     const s=getSettings();if(!addonsEnabled(s)||!s.addons?.[id]||failed.has(id))return null;
     startLateAddons('도구');const t0=Date.now();
-    while(!modules.has(id)&&Date.now()-t0<ms){if(started&&lateFired&&!loading.has(id)&&!running.has(id))break;await new Promise(r=>setTimeout(r,50));}
+    while(!modules.has(id)&&Date.now()-t0<ms){if(started&&lateKnown&&lateFired&&!loading.has(id)&&!running.has(id))break;await new Promise(r=>setTimeout(r,50));}
     return modules.get(id)||null;
 }
 export const LATE_ADDONS=new Set(['rewrite','prompt','modelswitch']);
-let lateIds=[],lateStarted=null,lateLayers=null,lateStyling=null;
+let lateIds=[],lateStarted=null,lateLayers=null,lateStyling=null,lateKnown=false;   // lateKnown: 늦은 목록이 정해졌나(1.5.0 — 그 전엔 빈 목록을 「없음」으로 읽지 않아요)
 /** 처음 쓸 때 시작하는 애드온(LATE_ADDONS)을 지금 시작해요 — 한 번만. 1층 애드온(3층 유휴) 시작이 끝난 뒤에 차례로 */
 export let lateReason='';
 // 1.4.1 덮개가 걷힌 뒤(3층 · 처음 쓸 때)에는 애드온을 하나씩 시작하고 사이사이 한 박자 쉬어요 — 예전엔 한 작업에서 모두의 import 를 걸어, 이미 받은 모듈이면
@@ -47,7 +47,7 @@ export function startLateAddons(reason='?'){
     if(lateStarted)return lateStarted;
     lateReason=reason;
     if(!lateFired){lateFired=true;for(const fn of lateHooks){try{fn(reason);}catch(error){console.warn('[Blue Lemonade] 훅',error);}}lateHooks.clear();}
-    if(!started)return Promise.resolve();
+    if(!started||!lateKnown)return Promise.resolve();   // 1.5.0: 시작 목록이 정해지기 전 — 정해지면 startAddonsOnce 가 다시 불러요
     if(!lateIds.length){markLateDone();return Promise.resolve();}   // 늦은 애드온이 없으면 바로 「끝」(머리 스위치 열쇠 옮기기 · addon-start-state.js)
     lateStarted=(async()=>{try{if(lateStyling)await lateStyling();const run=()=>spreadRun(lateIds,async()=>{await lateLayers?.lateSettled?.();});await(lateLayers?lateLayers.withReplay('늦은 애드온',run,{spread:true}):run());try{await syncAddonIcons();}catch(error){console.warn('[Blue Lemonade]',error);}}finally{changed();markLateDone();}})();
     return lateStarted;
@@ -261,7 +261,7 @@ async function startAddonsOnce(layers){
     // 1.0.0: 바로 보이지 않는 큰 애드온은 처음 쓸 때만
     const late=ids.filter(id=>LATE_ADDONS.has(id));
     const rest=ids.filter(id=>id!=='perf'&&!LATE_ADDONS.has(id));
-    lateIds=late;if(!late.length)markLateDone();
+    lateIds=late;lateKnown=true;if(!late.length)markLateDone();
     const startRest=async()=>{
         await ensureStyling();
         // 늦게 붙은 애드온이 놓친 채팅 바뀜은 지금 채팅으로 한 번 (boot-layers.js withReplay — APP_READY 는 실리태번이 늦은 리스너에도 바로 불러 줘요)
@@ -271,6 +271,7 @@ async function startAddonsOnce(layers){
     };
     lateLayers=layers;
     if(!layers){await startRest();await startLateAddons();return;}
+    if(lateFired&&late.length)startLateAddons(lateReason).catch(error=>console.warn('[Blue Lemonade] 늦은 애드온',error));   // 1.5.0: 목록이 정해지기 전에 「처음 쓸 때」가 왔으면 지금 시작해요
     if(!rest.length&&!late.length)return;
     await new Promise(resolve=>layers.whenIdle('애드온',()=>startRest().finally(resolve)));
 }

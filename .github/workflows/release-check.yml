@@ -83,6 +83,7 @@ jobs:
           # 11-14 글 속 그림(메시지 맨 앞 · 깡통에 올린 주소로만 · 그림 없으면 글 그대로)
           node tools/tests/log-copy-pics.mjs .
           node tools/tests/log-copy-pics-sheet.mjs .
+          node tools/tests/log-copy-rules-sheet.mjs .
           node tools/tests/log-copy-copy-fidelity.mjs .
           node tools/tests/log-copy-tune.mjs .
           node tools/tests/log-copy-tune-focus.mjs .
@@ -911,6 +912,8 @@ jobs:
           node tools/tests/headswitch-dom.mjs . tools
           # 1.4.x 미트볼 「화면만 번역」 빈틈 메우기: 같은 jsdom 으로 칩 자리 감시 · 누른 뒤 메우기
           node tools/tests/ext-bridge-tr.mjs . tools
+          # 1.5.0 버그 사냥: 장식 액자 — 감시가 걸린 뒤 새 메시지 사진에도 액자
+          node tools/tests/decor-view-dom.mjs . tools
           git status --porcelain
           git diff --exit-code --stat
           test -z "$(git status --porcelain)"

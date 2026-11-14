@@ -1139,7 +1139,7 @@ function renderModels() {
         saved: picked,
         missingSuffix: ` (${missingNote(provider, ids)})`,
         customValue: 'custom',
-        customLabel: '⚙️ 커스텀 모델 입력',
+        customLabel: '커스텀 모델 입력',
         customSelected: picked === 'custom',
     });
     $('#bwr_custom_model_box').toggle(picked === 'custom');

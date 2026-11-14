@@ -1,4 +1,4 @@
-/* src/panel.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 163개(테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요) — 고치지 말 것. src/lite.js 가 테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js) 테마 시트 뒤에 붙여요 (build a63d2b609f80) */
+/* src/panel.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 174개(테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요) — 고치지 말 것. src/lite.js 가 테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js) 테마 시트 뒤에 붙여요 (build 60d1838e96a1) */
 body.salty-dark .salty-panel {
   --danger: var(--salty-danger);
 }
@@ -65,6 +65,38 @@ html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(
 html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(.bl-s, *) > .salty-slider > header {
     grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(min-content,1fr) auto;
   }
+}
+@media (max-width: 1000px) {
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs:not(.bl-control-grid) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs:not(.bl-control-grid) > :not(.salty-slider, .salty-row[data-pair="1"]),
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs:not(.bl-control-grid) > .salty-slider[data-pair-wide] { grid-column: 1 / -1; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group.bl-pairs:not(.bl-control-grid) > .salty-row[data-pair="1"] { grid-column: auto; min-width: 0; gap: 8px; }
+}
+@container bl-controls (22em <= width < 34em) {
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-control-grid.bl-pairs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-control-grid.bl-pairs > :not(.salty-slider, .salty-row[data-pair="1"]),
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-control-grid.bl-pairs > .salty-slider[data-pair-wide] { grid-column: 1 / -1; }
+html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group.bl-control-grid.bl-pairs > .salty-row[data-pair="1"] { grid-column: auto; min-width: 0; gap: 8px; }
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs > .salty-row[data-pair="1"] > span,
+html body .salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo .salty-row > span {
+  flex: 1 1 0; min-width: 0; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3;
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs > .salty-row[data-pair="1"] > :not(span),
+html body .salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo .salty-row > :not(span) { flex: none; }
+@container bl-controls (width < 22em) {
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs { display: block; }
+}
+@container bl-controls (min-width: 22em) {
+.salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo[data-solo="a"] { margin-inline: calc((100% - min(100%, 1120px)) / 2) 16px; }
 }
 .salty-panel .bl-qr-sample::-webkit-scrollbar {
   display: none;
@@ -174,6 +206,7 @@ html body .salty-panel.bl-editor .salty-sec { padding-inline:var(--bl-editor-gut
 .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider { display:flex; flex-direction:column; align-self:stretch; min-width:0; }
 .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header { flex:1 0 auto; flex-wrap:wrap; align-content:flex-start; row-gap:2px; }
 .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header > .salty-num { margin-inline-start:auto; }
+html:not(#bl-ui-parts-off) body:not(#bl-md-chev) .salty-panel .bl-md-groups > .bl-md-group > summary::after { top:22px !important; }
 .salty-panel .bl-installed-versions > div.is-off dt { color: var(--salty-muted); }
 .salty-panel .bl-mav-list .bl-mav-list-name b { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .salty-panel .bl-mav-list .bl-mav-list-name small { color:var(--salty-muted); font-size:11px; }

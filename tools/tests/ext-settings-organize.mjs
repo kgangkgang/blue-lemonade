@@ -1,6 +1,6 @@
 // 1.2.x 남의 확장 설정 칸 「정리한 보기」(src/ext-organize.js) — 브라우저 없이 도는 계산 · 계약 시험
 //   ① 접는 갈래: 표의 열쇠가 든 줄만 접고, 모르는 줄 · 못 찾는 열쇠는 그대로(판이 달라져도 조용히 원래 모습) · 갈래 줄 바로 뒤 설명 문단은 같이 접어요
-//   ② 숫자 줄(파라미터)은 전부 2열 칸 — 홀수면 마지막 칸은 왼쪽 열만 · 그 확장 창 안의 슬라이더 · 숫자 줄도 2열
+//   ② 숫자 줄(파라미터)은 2열 칸 — 짝이 없는 줄(혼자 · 홀수의 마지막)은 한 줄 통째로 · 그 확장 창 안의 슬라이더 · 숫자 줄도 2열
 //   ③ 탭 한 줄 설명 · 비용 표시는 그 칸이 있는 탭 · 줄에만
 //   ④ 접힌 줄의 「지금 값」 글
 //   ⑤ 그 확장의 요소를 옮기거나 지우거나 다시 만들지 않아요 · 감시자 · 타이머 없음 · 끼우는 것은 기본 숨김 · 기억은 이 기기에만
@@ -13,7 +13,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 const root = path.resolve(process.argv[2] || '.');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const { PLANS, planRows, summaryOf, valueOf, setView } = await import(pathToFileURL(path.join(root, 'src/ext-organize.js')).href);
+const { PLANS, planRows, summaryOf, valueOf, setView, rowLabel, findRows } = await import(pathToFileURL(path.join(root, 'src/ext-organize.js')).href);
 const { SETS } = await import(pathToFileURL(path.join(root, 'src/ext-compat.js')).href);
 let passed = 0;
 const test = (name, fn) => { fn(); passed++; console.log(`  PASS  ${name}`); };
@@ -33,12 +33,14 @@ test('① 표의 열쇠가 든 줄만 접고, 모르는 줄은 그대로 · 뒤�
     const split = planRows([row(['b']), row(['c'], { group: '2' })], PLAN);
     assert.deepEqual(split.rows.map(r => r.fold), ['f0', null]);
 });
-test('② 숫자 줄(파라미터)은 전부 2열 칸 — 이어지면 둘씩 나란히, 홀수면 마지막 칸은 왼쪽 열만(사용자 「파라미터는 다 세로 2열」)', () => {
+test('② 숫자 줄(파라미터)은 2열 칸 — 이어지면 둘씩 나란히 · 짝이 없는 줄(혼자 · 홀수의 마지막)은 한 줄 통째로(사용자 「파라미터는 다 세로 2열」 · 11-15 검수: 반 칸에 혼자 놓이면 이름이 꺾이고 오른쪽이 비어요)', () => {
     const n = (keys, extra) => row(keys, { num: true, ...extra });
     const five = planRows([n(['n1']), n(['n2']), n(['n3']), n(['n4']), n(['n5']), row(['a'])], PLAN);
-    assert.deepEqual(five.rows.map(r => r.col), [true, true, true, true, true, false], '숫자 줄은 다 반 폭 칸 · 숫자가 아닌 줄은 한 줄 전체');
-    assert.deepEqual(planRows([n(['n1']), row(['a']), n(['n2'])], PLAN).rows.map(r => r.col), [true, false, true], '혼자 떨어진 숫자 줄도 왼쪽 열 칸');
-    assert.deepEqual(planRows([n(['b']), n(['n2'])], PLAN).rows.map(r => r.col), [true, true], '접힌 갈래 안의 숫자 줄도 같아요(접혀 있으면 자리를 안 차지해요)');
+    assert.deepEqual(five.rows.map(r => r.col), [true, true, true, true, false, false], '둘씩 짝지은 숫자 줄은 반 폭 칸 · 홀수의 마지막 줄과 숫자가 아닌 줄은 한 줄 전체');
+    assert.deepEqual(planRows([n(['n1']), row(['a']), n(['n2'])], PLAN).rows.map(r => r.col), [false, false, false], '혼자 떨어진 숫자 줄은 한 줄 통째로(왼쪽 이름 · 오른쪽 숫자 칸)');
+    assert.deepEqual(planRows([n(['b']), n(['c'])], PLAN).rows.map(r => r.col), [true, true], '접힌 갈래 안의 숫자 줄도 같아요(접혀 있으면 자리를 안 차지해요)');
+    assert.deepEqual(planRows([n(['b']), n(['n2'])], PLAN).rows.map(r => r.col), [false, false], '갈래가 다르면(하나는 접히고 하나는 늘 보임) 짝이 아니에요');
+    assert.deepEqual(planRows([n(['n1']), n(['n2'], { group: '1' })], PLAN).rows.map(r => r.col), [false, false], '탭이 다르면 짝이 아니에요');
     // 시트: 반 폭 칸은 표식이 달린 줄만 · 그 밖의 줄은 두 칸 전체 · 숫자 칸은 칸 폭을 채워요 · 그 확장의 창 안 조절 칸(슬라이더 · 숫자)도 반 폭
     const sheet = read('src/ext-status.css').replace(/\/\*[\s\S]*?\*\//g, '');
     assert.match(sheet, /#ss-settings\[data-bl-view="org"\] \.inline-drawer-content\[style\*="display: block"\] \{ display: grid !important; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
@@ -95,7 +97,8 @@ test('⑦ 맞춤 모듈: 정리가 실패해도 탭 · 시트는 그대로 · �
     const mod = read('src/ext-compat.js');
     assert.ok(mod.includes("try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }"), '탭을 만든 뒤 한 번 · 실패는 삼켜요');
     assert.equal((mod.match(/stopPropagation/g) || []).length, 1); assert.equal((mod.match(/preventDefault/g) || []).length, 1);
-    assert.ok(mod.includes("else { setView(root, root.dataset.blView !== 'raw'); event.stopPropagation?.(); event.preventDefault?.(); }"), '보기 스위치는 서랍 머리 안이라 그 누름만 멈춰요(서랍이 같이 접히지 않게)');
+    assert.ok(mod.includes("} else setView(root, root.dataset.blView !== 'raw');\n                    if (stay) { event.stopPropagation?.(); event.preventDefault?.(); }"), '서랍 머리 안의 단추(보기 스위치 · 설정 찾기)는 그 누름만 멈춰요(서랍이 같이 접히지 않게) — 멈추는 곳은 한 곳');
+    assert.ok(mod.includes("stay = !!root.querySelector('.inline-drawer-content')?.getClientRects?.().length;"), '설정 찾기 단추: 서랍이 접혀 있으면 누름을 흘려 서랍이 펼쳐지게');
     assert.equal((mod.match(/addEventListener\('click'/g) || []).length, 1, '누름 감시자는 하나 그대로');
     assert.equal((mod.match(/addEventListener\('change'/g) || []).length, 1, '값이 바뀔 때 접힌 줄의 지금 값만 다시 적어요');
 });
@@ -117,5 +120,37 @@ test('⑧ 보기 스위치는 문서 몸통에 표식 하나(data-bl-ext-raw)를
     assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view::after \{[^}]*mask: var\(--salty-logo\) center \/ contain no-repeat;/, '아이콘은 테마 레몬 표식(단색)');
     assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view\[aria-pressed="true"\] \{ background: var\(--bl-ui-pick-face\); color: var\(--bl-ui-pick-ink\); \}/, '켜짐은 고른 면 + 테마 파랑');
     assert.ok(!/document\.body|documentElement/.test(code), '칸의 문서를 거쳐서만(전역 문서를 직접 잡지 않아요)');
+});
+test('⑨ 설정 찾기(11-15 검수): 줄 이름으로만 찾고(고르기 선택지 · 글 상자 · 덧글은 빼요) · 탭 이름과 함께 돌려줘요 · 찾기 칸은 숨긴 채 끼우고 사건은 맞춤 모듈이 받아요', () => {
+    const text = value => ({ nodeType: 3, nodeValue: value });
+    const node = (localName, kids = [], extra = {}) => ({ nodeType: 1, localName, childNodes: kids, dataset: {}, className: '', querySelectorAll: () => [], ...extra });
+    const label = node('label', [text('  확장 AI 최대 '), node('b', [text('출력 토큰')]), node('small', [text('덧글은 빼요')]), node('select', [node('option', [text('선택지 토큰')])]), node('textarea', [text('글 상자')])]);
+    assert.equal(rowLabel(label), '확장 AI 최대 출력 토큰');
+    const row = (name, group, extra = {}) => node('label', [text(name)], { dataset: { blTabG: String(group) }, ...extra });
+    const buttons = ['상태창 열기', '프롬프트 · 토큰', '꾸미기'].map(name => node('button', [text(name)]));
+    const rows = [
+        node('nav', [], { className: 'bl-ext-tabs' }),                                          // 테마가 끼운 것 — 건너뛰어요
+        row('사용', 0), node('div', buttons, { dataset: { blTabG: '0' }, querySelectorAll: () => buttons }),
+        node('small', [text('토큰 설명 문단')], { dataset: { blTabG: '1' } }),                    // 설명 문단은 찾지 않아요
+        row('최대 출력 토큰', 1), row('토큰 절약', 2), row('알림 방식', 3), node('label', [text('표식 없는 줄 토큰')]),
+    ];
+    const tabs = ['기본', '확장 AI', '모델 맞춤', '알림'].map(name => ({ dataset: { blTabName: name } }));
+    const content = { children: rows, querySelectorAll: sel => (sel === ':scope > .bl-ext-tabs > .bl-ext-tab' ? tabs : []) };
+    const fake = { querySelector: sel => (sel === '.inline-drawer-content' ? content : null) };
+    assert.deepEqual(findRows(fake, '토큰').map(h => [h.tab, h.label, h.group]), [['기본', '프롬프트 · 토큰', 0], ['확장 AI', '최대 출력 토큰', 1], ['모델 맞춤', '토큰 절약', 2]], '단추 여럿인 줄은 맞은 단추 이름만 · 탭 번호 없는 줄 · 설명 문단 · 테마 것은 빼요');
+    assert.deepEqual(findRows(fake, '토 큰').length, 3, '띄어쓰기는 보지 않아요');
+    assert.deepEqual(findRows(fake, '토'), [], '한 글자로는 찾지 않아요');
+    assert.equal(findRows(fake, '토큰', 2).length, 2, '많아야 max 줄');
+    assert.ok(code.includes("const button = hidden(make(doc, 'button', 'bl-ext-findbtn', ''));") && code.includes("header.querySelector('.bl-ext-view')?.after(button);"), '돋보기 단추도 숨긴 채 · 보기 스위치 바로 뒤');
+    const sheet9 = read('src/ext-status.css');
+    assert.ok(sheet9.includes('body.salty:not([data-bl-mb-plain]) #ss-settings[data-bl-view="org"][data-bl-find] .bl-ext-find { display: block !important;') && !sheet9.includes('#ss-settings[data-bl-view="org"] .bl-ext-find { display: block'), '찾기 칸은 돋보기 단추로 열었을 때만(기본 닫힘 — 탭마다 세로로 늘지 않게)');
+    assert.ok(code.includes("const find = hidden(make(doc, 'input', 'bl-ext-find', ''));") && code.includes("const found = hidden(make(doc, 'div', 'bl-ext-found', ''));"), '찾기 칸 · 목록은 제 스타일로 숨겨 둬요(테마를 끄면 안 보여요)');
+    const mod = read('src/ext-compat.js');
+    assert.equal((mod.match(/addEventListener\('input'/g) || []).length, 1, '적는 것은 맞춤 모듈의 문서 감시자 하나가 받아요');
+    assert.ok(mod.includes("if (!box?.classList?.contains('bl-ext-find')) return;"), '다른 칸의 입력은 첫 줄에서 돌아가요');
+    assert.ok(mod.includes("else if (has('bl-ext-hit')) { const group = gotoHit(root, own); if (group >= 0) { showGroup(root, group);"), '찾은 줄을 누르면 그 탭으로');
+    assert.ok(mod.includes("if (row) revealTab(row);"), '찾은 줄 보이기도 탭 굴리기와 같은 한 곳(revealTab)으로 — 시작 덮개 계약(boot-sheet-hold ③)');
+    assert.ok(mod.includes("if (!plain(doc)) armTop(dlg);") && mod.includes("const plain = doc => !!doc.body?.hasAttribute?.('data-bl-mb-plain');"), '「맨 위로」는 편의 기능을 끄면 달지 않아요');
+    assert.ok(/pane\.addEventListener\('scroll', \(\) => \{[\s\S]*?\}, \{ passive: true \}\);/.test(mod), '스크롤 받기는 그 창의 내용 칸 하나 · 수동(passive)');
 });
 console.log(`ext-settings-organize: ${passed}개 통과`);

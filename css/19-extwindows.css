@@ -167,7 +167,7 @@ body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b 
 .bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:12px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:var(--bl-scrim)}
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;flex:none;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}
-.bl-credits-dialog h2{font-size:var(--bl-ts-head);margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 var(--bl-deco-glyph-26)/1 system-ui;cursor:pointer}
+.bl-credits-dialog h2{font-size:var(--bl-ts-head);margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:inherit;font:400 var(--bl-deco-glyph-26)/1 system-ui;cursor:pointer}
 .bl-credits-body{overflow:auto;min-height:0;padding:4px 16px 16px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}.bl-credits-body h3{font-size:var(--bl-fs-body);margin:8px 0}.bl-credits-body a{color:var(--salty-accent, var(--bl-fb-3975b8));text-decoration:underline}
 
 /* Embedded tools also open outside the editor. Keep their controls on the same

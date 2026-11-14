@@ -106,6 +106,22 @@ await test('작은 그림 = 한 장 받기 단추 · 「그림 받기」는 받�
     } finally { globalThis.toastr.info = () => {}; }
 });
 
+await test('1.5.0 버그 사냥: 다른 곳(http · 내부망) 그림 받기는 새 탭으로 — 실리태번 탭이 그림 주소로 넘어가지 않아요', async () => {
+    const OTHER = 'http://192.168.0.7:8080/art/x.png';
+    const w = await open({ ...base, messages: [one(0, '미나', false, '미나', [LOCAL, OTHER])] });
+    const made = [];
+    const realAppend = document.body.append.bind(document.body);
+    document.body.append = (...nodes) => { for (const n of nodes) if (n?.tagName === 'A') made.push({ href: n.href, target: n.target || '', download: n.download }); return realAppend(...nodes); };
+    try {
+        w.pick('[data-lc="pics-save"]').click(); await settle();
+    } finally { delete document.body.append; }
+    const local = made.find(a => a.href === LOCAL), other = made.find(a => a.href === OTHER);
+    assert.ok(local && other, JSON.stringify(made));
+    assert.equal(local.target, '', '같은 곳은 그대로 내려받기');
+    assert.equal(other.target, '_blank', '다른 곳은 새 탭');
+    await settle(1600);
+});
+
 await test('검토 보3: 그림만 있는 메시지 — 코드를 붙이기 전엔 이름 줄도 비워요 · 붙이면 그림이 그 자리에', async () => {
     const onlyPic = { ...PLAIN, messages: [PLAIN.messages[0], { ...one(1, '미나', false, 'x', [LOCAL]), nodes: [] }, PLAIN.messages[1]] };
     const w = await open(onlyPic);

@@ -15,7 +15,7 @@ function test(name, fn) {
 const start = src.indexOf('function applyOnColor()');
 const end = src.indexOf('\n}', start);
 const body = src.slice(start, end);
-const firstWrite = body.search(/rootStyle\.(setProperty|removeProperty)\(/);
+const firstWrite = body.search(/rootStyle\.(setProperty|removeProperty)\(|setRootVar\(/);   // 1.4.8 opt: 같은 값 건너뛰기(setRootVar)도 쓰기
 const swatch = body.indexOf('const swatch');
 
 test('applyOnColor 를 찾았고 :root 쓰기가 있어요', () => {
@@ -36,7 +36,7 @@ test('첫 쓰기부터 색 견본 줄 앞까지는 계산된 스타일을 읽지
 });
 test('쓰는 값은 그대로예요 — 어두운 테마면 var(--jj-on), 밝으면 80% 섞기 · 바탕 #141318 / #fbf9f6', () => {
     assert.match(body, /base = dark \? '#141318' : '#fbf9f6'/);
-    assert.match(body, /setProperty\('--jj-stroke', dark \? 'var\(--jj-on\)' : 'color-mix\(in srgb, var\(--jj-on\) 80%, #b08000\)'\)/);
+    assert.match(body, /(?:setProperty|setRootVar)\('--jj-stroke', dark \? 'var\(--jj-on\)' : 'color-mix\(in srgb, var\(--jj-on\) 80%, #b08000\)'\)/);
 });
 
 console.log(`\n${pass} 통과 · ${fail} 실패`);

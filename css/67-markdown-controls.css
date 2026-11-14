@@ -30,4 +30,15 @@
 .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header { flex:1 0 auto; flex-wrap:wrap; align-content:flex-start; row-gap:2px; }
 .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider > header > .salty-num { margin-inline-start:auto; }
 .salty-panel .bl-md-general { margin-block:8px; }
-@media (max-width:760px) { .salty-panel .bl-md-groups { grid-template-columns:1fr; gap:6px; } }
+/* 1.5.0: 폰에서도 접힌 묶음은 두 열(전엔 한 열 — 10줄이 440px), 펼친 묶음은 전체 폭. 큰 글씨 · 폰 320 만 한 열 */
+@media (max-width:760px) { .salty-panel .bl-md-groups { gap:6px; } .salty-panel .bl-md-groups > .bl-md-group > summary { gap:.4em; padding-inline:.7em; } }
+.salty-panel .bl-md-groups > .bl-md-group[open] { grid-column:1 / -1; }
+@container bl-controls (width < 22em) { .salty-panel .bl-md-groups { grid-template-columns:1fr; } }
+/* 1.5.0 두 열 접는 묶음 칸 맞춤(마크다운 · 변경한 설정): 같은 줄의 두 칸은 높이를 같게, 개수 · 꺾쇠는 늘 오른쪽 위 첫 줄 자리에 두고 제목만 왼쪽에서 줄바꿈.
+   전엔 제목이 긴 칸만 개수가 아랫줄로 떨어지고 높이가 달라 옆 칸 아래에 구멍이 났어요. */
+.salty-panel .bl-md-groups { align-items:stretch; }
+.salty-panel .bl-md-groups > .bl-md-group > summary { flex-wrap:nowrap; align-items:flex-start; padding-block:max(.6em, calc((44px - 1.4em) / 2)); }   /* 한 줄 제목은 44px 칸의 세로 가운데 그대로 */
+.salty-panel .bl-md-groups > .bl-md-group > summary > span { flex:1 1 0; align-self:flex-start; min-width:0; word-break:keep-all; overflow-wrap:anywhere; }
+.salty-panel .bl-md-groups > .bl-md-group > summary > small { flex:none; align-self:flex-start; white-space:nowrap; line-height:1.75; }
+/* 꺾쇠는 공용 부품(88-ui-parts: 요약 줄 세로 가운데 · !important)이 그려요 — 두 줄 제목 칸에서도 첫 줄(44px 칸의 가운데 = 22px) 자리에 두려고 같은 무게로 위만 바꿔요 */
+html:not(#bl-ui-parts-off) body:not(#bl-md-chev) .salty-panel .bl-md-groups > .bl-md-group > summary::after { top:22px !important; }   /* :not(#…) 둘 = 공용 규칙의 :is(… #id …) 무게와 맞춤(그런 id 는 없어요) */

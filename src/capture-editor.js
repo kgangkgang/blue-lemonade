@@ -22,7 +22,7 @@ function markupOf(text){
  return copy.innerHTML;
 }
 export function captureDraft(ids){
- return ids.map(id=>{const message=document.querySelector(`#chat .mes[mesid="${id}"]`),text=message?.querySelector('.mes_text');if(!text)throw Error('선택한 메시지를 찾지 못했어요. 다시 선택해 주세요.');return {id,original:markupOf(text),blocks:[...text.childNodes].map((node,index)=>({index,text:node.textContent||'',originalText:node.textContent||'',kind:node.nodeType===1?node.tagName:'TEXT',media:mediaOf(node)})).filter(b=>!['STYLE','SCRIPT'].includes(b.kind)&&(b.text.trim()||b.kind!=='TEXT'))};});
+ return ids.map(id=>{const message=document.querySelector(`#chat .mes[mesid="${id}"]`),text=message?.querySelector('.mes_text');if(!text)throw Error('선택한 메시지를 찾지 못했어요. 다시 선택해 주세요.');return {id,original:markupOf(text),blocks:[...text.childNodes].map((node,index)=>({index,text:node.textContent||'',originalText:node.textContent||'',kind:node.nodeType===1?node.tagName:node.nodeType===3?'TEXT':null,media:mediaOf(node)})).filter(b=>b.kind&&!['STYLE','SCRIPT'].includes(b.kind)&&(b.text.trim()||b.kind!=='TEXT'))};});   // 1.5.0: 주석 같은 글 아닌 노드는 문단에서 빼요(고치면 style 이 없어 터졌어요)
 }
 export function applyCaptureDraft(clone,draft,source){
  if(!draft)return;

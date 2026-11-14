@@ -7,6 +7,9 @@ import { installUsageLedger } from './src/usage-ledger-lite.js';   // 7.4.0 사�
 //   모드를 바꾸면 새로고침해요(설정 › 테마 › 기타 › 사용 모드). 시험 tools/tests/zero-mode.mjs
 const ZERO = (() => { try { return zeroMode(getSettings()); } catch { return false; } })();
 if (!ZERO) installUsageLedger();
+// 1.4.8 opt: 애드온 :root 색 변수를 덮개 아래 첫 그리기에 같이(덮개 뒤 문서 전체 재계산 두 번이 빠져요 — src/root-var-seed.js)
+if (!ZERO) { try { seedRootVars(); } catch { /* 그대로 */ } }
+import { seedRootVars } from './src/root-var-seed.js';
 // 6.6.9 진단 파일용 최근 오류 20줄 (diag-errors.js — 시작 그래프 밖)
 if (!ZERO) import('./src/diag-errors.js').then(m => m.startErrorLog()).catch(() => {});
 // 실리태번 판 호환: getContext().event_types 는 실리태번이 「옛 이름」으로 표시해 둔 것(새 이름 eventTypes). 그 이름이 빠진 판이 오면 새 이름을 옛 이름으로도

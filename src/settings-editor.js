@@ -1,5 +1,5 @@
 // Layout state is local to the open editor; theme values and controls stay intact.
-import { applyAdvanced, moveLongNotes } from './settings-advanced.js';   // 1.0.0 간단화: 화면 맨 아래 「고급」 접힘 · 긴 설명은 묶음 제목 옆 ? 로
+import { applyAdvanced, moveLongNotes, pairShortRows } from './settings-advanced.js';   // 1.0.0 간단화: 화면 맨 아래 「고급」 접힘 · 긴 설명은 묶음 제목 옆 ? 로
 export function openEditorCatalog(root, open, search = false) {
     const catalog = root.querySelector('.bl-editor-catalog');
     if (!catalog) return;
@@ -153,4 +153,5 @@ export function arrangeEditor(root, route, title) {
         showChipGroup(root, groups.find(g => g.dataset.group === remembered) || groups[0], false);
     }
     moveLongNotes(root, section, route, title, !!root._chipGroups);
+    pairShortRows(section, !!root._chipGroups);   // 1.5.0 짧은 줄 두 열
 }

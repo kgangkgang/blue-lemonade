@@ -6,6 +6,7 @@
 //     테마 것(.bl-ext-intro · .bl-ext-fold · .bl-ext-more · .bl-ext-start · .bl-ext-view)만 사이에 끼워요. 값 저장 · 사건 처리는 그 확장 것 그대로예요.
 //   · 열쇠는 그 확장의 설정 칸 이름(data-s · data-s-act …)이에요. 못 찾는 열쇠 · 모르는 줄은 그대로 보여요 — 판이 바뀌어 구조가 달라지면 조용히 원래 모습으로 떨어져요.
 //   · 감시자 · 타이머 없음. 접힘 · 보기 · 길잡이 닫음은 이 기기에(localStorage) 기억해요. 「원작 그대로」는 표식을 둔 채 시트가 전부 펼쳐 보여요(DOM 을 되돌릴 것이 없어요).
+//   ⑧ 설정 찾기(11-15): 탭 줄 아래 찾기 칸 — 줄 이름으로 찾아 그 탭 · 그 줄로 가요(테마 설정 「미트볼 상태창 편의 기능」을 끄면 시트가 숨겨요)
 //   시험: tools/tests/ext-settings-organize.mjs
 
 /** 확장마다의 정리 표 — 열쇠는 설정 칸 뿌리(SETS 의 root).
@@ -76,6 +77,13 @@ export function planRows(rows, plan) {
     rows.forEach((r, i) => { if (r.small && !r.keys.length && i > 0 && out[i - 1].fold && rows[i - 1].group === r.group) out[i].fold = out[i - 1].fold; });
     // 숫자 줄(파라미터)은 전부 2열 칸(반 폭) — 이어진 것끼리 둘씩 나란히 놓이고, 홀수면 마지막 칸은 왼쪽 열만 차지해요(11-13 사용자 「파라미터는 다 세로 2열」)
     rows.forEach((r, i) => { if (r.num) out[i].col = true; });
+    // 짝이 없는 숫자 줄은 2열 칸으로 두지 않아요(11-15 검수) — 반 칸에 혼자 놓이면 이름이 세 줄로 꺾이고 오른쪽 반이 비어요. 이어진 숫자 줄(같은 탭 · 같은 갈래)이 홀수면 마지막 줄은 한 줄 통째로(왼쪽 이름 · 오른쪽 숫자 칸)
+    for (let i = 0; i < rows.length; i++) {
+        if (!out[i].col) continue;
+        let j = i; while (j + 1 < rows.length && out[j + 1].col && rows[j + 1].group === rows[i].group && out[j + 1].fold === out[i].fold) j++;
+        if ((j - i + 1) % 2) out[j].col = false;
+        i = j;
+    }
     rows.forEach((r, i) => { const key = r.keys.find(k => plan.cost?.[k]); if (key) out[i].cost = plan.cost[key]; });
     const intro = (plan.intro || []).map(([key, text]) => [groupOf(key), text]).filter(pair => pair[0] !== null);
     return { rows: out, folds, intro };
@@ -200,13 +208,80 @@ export function organize(root, set) {
         box.append(close);
         (content.querySelector(':scope > .bl-ext-intro') || tabs).after(box);
     }
+    // 설정 찾기(편의 기능): 탭 줄 바로 아래 찾기 칸 + 찾은 줄 목록 — 서랍 머리의 돋보기 단추로 열었을 때만 보이고(표식 data-bl-find), 칸에 적을 때만 일해요
+    if (tabs && !content.querySelector(':scope > .bl-ext-find')) {
+        const find = hidden(make(doc, 'input', 'bl-ext-find', ''));
+        find.type = 'search'; find.placeholder = '설정 찾기 — 칸 이름을 적어요'; find.setAttribute('aria-label', `${set.name} 설정 찾기`); find.autocomplete = 'off';
+        const found = hidden(make(doc, 'div', 'bl-ext-found', ''));
+        tabs.after(find, found);   // 적는 것은 맞춤 모듈의 문서 감시자가 받아요(이 모듈은 사건을 받지 않아요)
+    }
     // 서랍 머리의 보기 스위치
     const header = root.querySelector('.inline-drawer-header');
     if (header && !header.querySelector('.bl-ext-view')) { const button = hidden(make(doc, 'button', 'bl-ext-view', '')); const icon = header.querySelector('.inline-drawer-icon'); if (icon) icon.before(button); else header.append(button); }
+    // 설정 찾기 단추(편의 기능): 보기 스위치 바로 뒤 — 누르면 찾기 칸이 열려요(맞춤 모듈이 받아요)
+    if (header && !header.querySelector('.bl-ext-findbtn') && content.querySelector(':scope > .bl-ext-find')) { const button = hidden(make(doc, 'button', 'bl-ext-findbtn', '')); button.title = '설정 찾기'; button.setAttribute('aria-label', '설정 찾기'); button.setAttribute('aria-expanded', 'false'); header.querySelector('.bl-ext-view')?.after(button); }
     root.dataset.blOrg = '1';
     setView(root, recall(root, 'view') === 'raw');
     refreshSummaries(root);
     return true;
+}
+/** 설정 찾기(11-15 검수 · 편의 기능): 줄 이름(고르기 선택지 · 글 상자 내용 · 덧글은 빼요)에 찾는 말이 든 줄 — [{ row, group, tab, label }] (많아야 max 줄) */
+const squash = text => String(text || '').replace(/\s+/g, '').toLowerCase();
+export function rowLabel(row) {
+    let text = '';
+    const walk = node => { for (const child of node.childNodes || []) { if (child.nodeType === 3) text += child.nodeValue; else if (child.nodeType === 1 && !/^(select|textarea|small|option)$/.test(child.localName)) walk(child); } };
+    walk(row);
+    return text.replace(/\s+/g, ' ').trim();
+}
+export function findRows(root, query, max = 8) {
+    const q = squash(query), content = root.querySelector('.inline-drawer-content');
+    if (q.length < 2 || !content) return [];
+    const tabs = [...content.querySelectorAll(':scope > .bl-ext-tabs > .bl-ext-tab')], out = [];
+    for (const row of content.children) {
+        if (own(row) || !('blTabG' in row.dataset) || row.localName === 'small') continue;
+        let label = rowLabel(row);
+        if (!squash(label).includes(q)) continue;
+        // 단추 여럿이 든 줄은 맞은 단추 이름만 보여요(줄 전체를 이으면 무엇을 찾았는지 안 보여요)
+        const parts = [...row.querySelectorAll('.menu_button, button')].map(b => rowLabel(b)).filter(Boolean);
+        if (parts.length > 1) label = parts.filter(text => squash(text).includes(q)).join(' · ') || label;
+        const group = Number(row.dataset.blTabG) || 0;
+        out.push({ row, group, tab: tabs[group]?.dataset.blTabName || '', label: label.slice(0, 48) });
+        if (out.length >= max) break;
+    }
+    return out;
+}
+/** 찾은 줄 목록을 다시 그려요 — 단추마다 줄 번호(내용 칸에서 몇째 자식인지)를 적어 둬요 */
+export function renderFound(root, query) {
+    const list = root.querySelector('.bl-ext-found'), content = root.querySelector('.inline-drawer-content');
+    if (!list || !content) return 0;
+    for (const old of content.querySelectorAll(':scope > [data-bl-hit]')) delete old.dataset.blHit;
+    const hits = findRows(root, query), kids = [...content.children], doc = root.ownerDocument;
+    list.textContent = '';   // 테마가 끼운 목록 칸만 비워요(그 확장의 요소는 그대로)
+    for (const hit of hits) {
+        const button = make(doc, 'button', 'bl-ext-hit', '');
+        button.dataset.blHitRow = String(kids.indexOf(hit.row));
+        button.append(make(doc, 'small', '', hit.tab), make(doc, 'span', '', hit.label));
+        list.append(button);
+    }
+    return hits.length;
+}
+/** 찾은 줄로 가요: 접힌 갈래면 펼치고 · 그 줄에 표식(data-bl-hit)을 달고 · 목록은 비워요. 탭 바꾸기는 부른 쪽(ext-compat showGroup)이 해요. 돌려줌: 탭 번호(-1 = 못 찾음) */
+export function gotoHit(root, button) {
+    const content = root.querySelector('.inline-drawer-content'), row = content?.children[Number(button.dataset.blHitRow)];
+    if (!row) return -1;
+    if (row.dataset.blFold && 'blFoldOff' in row.dataset) { const fold = root.querySelector(`.bl-ext-fold[data-bl-fold-for="${row.dataset.blFold}"]`); if (fold) toggleFold(root, fold); }
+    for (const old of content.querySelectorAll(':scope > [data-bl-hit]')) delete old.dataset.blHit;
+    row.dataset.blHit = '';
+    const list = root.querySelector('.bl-ext-found'); if (list) list.textContent = '';
+    return Number(row.dataset.blTabG) || 0;
+}
+
+/** 찾기 칸 열고 닫기 — 표식(data-bl-find)과 단추의 열림 표시만 바꿔요. 돌려줌: 열렸으면 true */
+export function toggleFind(root, button) {
+    const open = !('blFind' in root.dataset);
+    if (open) root.dataset.blFind = ''; else delete root.dataset.blFind;
+    button?.setAttribute('aria-expanded', String(open));
+    return open;
 }
 /** 길잡이 단추: 그 칸이 있는 탭 번호 */
 export function groupOfKey(root, key) {

@@ -298,6 +298,19 @@ await test('열기: 캐릭터를 고르고(서랍 화면은 그대로) 그 채�
     assert.deepEqual(opened.slice(-2), [['openGroup', 'g1'], ['group', 'g1', 'g chat']]);
     current = 'Ann now'; ctx.groupId = null; ctx.characterId = 0;
 });
+await test('열기(1.5.0 버그 사냥): 답 생성 · 저장 중이라 실리태번이 캐릭터를 안 바꾸면 지금 캐릭터에 그 채팅을 열지 않아요', async () => {
+    const real = ctx.selectCharacterById, realGroup = org._forTest.st.groups, toastr = globalThis.toastr, warned = [];
+    globalThis.toastr = { ...(toastr || {}), warning: m => warned.push(m), info() {}, error() {} };
+    ctx.selectCharacterById = async (at, opts) => { opened.push(['select-noop', at, opts?.switchMenu]); };   // is_send_press · isChatSaving 이면 그냥 돌아가요
+    org._forTest.st.groups = async () => ({ openGroupById: async g => { opened.push(['openGroup-noop', g]); } });
+    try {
+        click(rowEl('Bob shop').querySelector('[data-co-act="open"]')); await settle();
+        assert.ok(!opened.some(x => x[0] === 'open' && x[1] === 'Bob shop' && opened.indexOf(x) > opened.findIndex(y => y[0] === 'select-noop')), '지금 캐릭터(Ann)에 Bob 채팅을 열었어요');
+        click(rowEl('g chat').querySelector('[data-co-act="open"]')); await settle();
+        assert.ok(!opened.slice(opened.findIndex(y => y[0] === 'openGroup-noop')).some(x => x[0] === 'group'), '그룹이 안 바뀌었는데 그룹 채팅을 열었어요');
+        assert.equal(warned.length, 2, warned.join(' / '));
+    } finally { ctx.selectCharacterById = real; org._forTest.st.groups = realGroup; globalThis.toastr = toastr; current = 'Ann now'; ctx.groupId = null; ctx.characterId = 0; }
+});
 await test('여러 개 지우기: 지금 채팅은 못 고름 · 확인 두 번 · 실리태번 삭제 함수로 하나씩 · 고정 · 폴더에서도 빠짐', async () => {
     click(tabBtn('recent')); await settle();
     click(pane().querySelector('[data-co-act="pick"]')); await settle();

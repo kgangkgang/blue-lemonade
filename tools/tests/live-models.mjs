@@ -818,9 +818,9 @@ await test('fillSelect: 저장된 모델은 맨 앞에 골라 둠 (이전 목록
     globalThis.document = { createDocumentFragment: () => ({ children: [], append(...n) { this.children.push(...n); } }), createElement: mk };
     try {
         const sel = { dataset: {}, children: [], replaceChildren(f) { this.children = f.children; this.n = (this.n || 0) + 1; } };
-        assert.equal(LM.fillSelect(sel, ['a', 'b'], { saved: 'old', customValue: 'custom', customLabel: '⚙️ 커스텀 모델 입력' }), true);
-        assert.deepEqual(sel.children.map(o => [o.value, o.textContent, o.selected]), [['old', 'old (이전 목록)', true], ['a', 'a', false], ['b', 'b', false], ['custom', '⚙️ 커스텀 모델 입력', false]]);
-        assert.equal(LM.fillSelect(sel, ['a', 'b'], { saved: 'old', customValue: 'custom', customLabel: '⚙️ 커스텀 모델 입력' }), false, '같으면 그대로');
+        assert.equal(LM.fillSelect(sel, ['a', 'b'], { saved: 'old', customValue: 'custom', customLabel: '커스텀 모델 입력' }), true);
+        assert.deepEqual(sel.children.map(o => [o.value, o.textContent, o.selected]), [['old', 'old (이전 목록)', true], ['a', 'a', false], ['b', 'b', false], ['custom', '커스텀 모델 입력', false]]);
+        assert.equal(LM.fillSelect(sel, ['a', 'b'], { saved: 'old', customValue: 'custom', customLabel: '커스텀 모델 입력' }), false, '같으면 그대로');
         assert.equal(sel.n, 1);
         LM.fillSelect(sel, ['a', 'b'], { saved: 'b', missingSuffix: ' (이 주소 목록에 없음)' });
         assert.deepEqual(sel.children.map(o => [o.value, o.selected]), [['a', false], ['b', true]]);

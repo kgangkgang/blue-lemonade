@@ -41,6 +41,7 @@ import { mineOrder, removeMine, restoreMine, countLine, infoLabel, MINE_MAX } fr
 import { attachUndo } from './ask.js';
 import { isBasicShape, BASIC_INFO, BASIC_HEIGHT, BASIC_INFO_LABEL, BASIC_HEIGHT_LABEL } from './log-copy-basic.js';   // 1.1.3 「기본 글꾸」 새 틀 18 — 밝기만 · 정보 칸(끔 · 칩 · 탭) · 높이(자동 · 작게 · 중간 · 크게)   // 1.1.3 붙일 곳 흉내(바탕 · 코멘트 자리) · 복사 직전 점검
 import { createSelectBar } from './log-copy-select-bar.js';   // 11-12 고른 글 옆 막대(눌러야 보이게 · 숨김 풀기)
+import { emojiMark } from './emoji-icon.js';   // 1.5.0 틀의 그림 글자(emoji 칸)는 화면에서 선 아이콘으로
 import { wrapHtml, wrapModel, wrapMode } from './log-copy-wrap.js';   // 11-13 본문 줄바꿈 글자 단위(기본) · 단어 단위 — 마트 mart/word-wrap.js 와 같은 사본
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -212,7 +213,7 @@ export async function openLogSheet(model) {
             <div class="bl-lc-pick" data-lc-pick hidden><span>로그 넣을 곳을 눌러요</span><button type="button" class="salty-btn" data-lc="auto">자동으로</button></div>
             <div class="bl-lc-stk" data-lc-stk>
             <div class="bl-lc-bar" data-lc-bar><b class="bl-lc-ph">미리보기</b><span class="bl-lc-ph bl-lc-bar-name" data-lc-stage-name></span><span class="bl-lc-note"><i class="fa-solid fa-pen" aria-hidden="true"></i> 미리보기 글씨를 눌러 바로 고쳐요</span><button type="button" class="salty-btn bl-lc-icon bl-lc-edit" data-lc="edit" aria-pressed="false" aria-label="글 고치기" title="글 고치기 — 고칠 수 있는 글을 점선 칸으로 보여요(소품 안 글자까지)" hidden><i class="fa-solid fa-i-cursor" aria-hidden="true"></i><span>글 고치기</span></button><button type="button" class="salty-btn bl-lc-icon" data-lc="undo" aria-label="되돌리기" title="되돌리기 (지운 블록도 돌아와요)" disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon" data-lc="redo" aria-label="다시하기" title="다시하기" disabled><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-size" aria-pressed="false" aria-label="미리보기 크게" title="미리보기 크게"><i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i></button><button type="button" class="salty-btn bl-lc-icon bl-lc-ph" data-lc="stage-fold" aria-expanded="true" aria-label="미리보기 접기" title="미리보기 접기"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button></div>
-            <div class="bl-lc-stage" data-lc-stage><div class="bl-lc-egg" data-lc-egg hidden>✨ 장식을 눌러 보세요</div><iframe sandbox="allow-same-origin" title="미리보기 — 글자를 눌러 바로 고쳐요" data-lc-frame></iframe></div>
+            <div class="bl-lc-stage" data-lc-stage><div class="bl-lc-egg" data-lc-egg hidden><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> 장식을 눌러 보세요</div><iframe sandbox="allow-same-origin" title="미리보기 — 글자를 눌러 바로 고쳐요" data-lc-frame></iframe></div>
             </div>
             <div class="bl-lc-paste" data-lc-paste hidden><p class="bl-lc-note">글꾸 마트에서 틀을 크게 보고 <b>테마용 복사</b>를 누른 뒤 여기에 붙여 넣고 <b>받기</b>를 눌러요. 공유받은 글꾸 HTML 도 돼요.</p><div class="bl-lc-row"><a class="salty-btn" href="${esc(MART_GEULKKU)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-store" aria-hidden="true"></i><span>글꾸 마트 열기</span></a><button type="button" class="salty-btn bl-lc-mart" data-lc="mart"><i class="fa-solid fa-file-import" aria-hidden="true"></i><span>파일로 받기</span></button></div><textarea rows="8" placeholder="글꾸 마트에서 「테마용 복사」한 글이나 공유받은 글꾸 HTML 을 붙여 넣어요" aria-label="글꾸 HTML"></textarea><div class="bl-lc-msg" role="status" aria-live="polite" data-lc-paste-msg hidden></div><div class="bl-lc-row"><button type="button" class="salty-btn" data-lc="paste-cancel">취소</button><button type="button" class="salty-btn bl-tool-primary" data-lc="paste-save">받기</button></div></div>
             ${CODE_HTML}
@@ -548,6 +549,8 @@ export async function openLogSheet(model) {
         const a = document.createElement('a');
         a.href = p.src; a.download = `그림-${String(p.n).padStart(2, '0')}${(p.src.match(/\.(png|jpe?g|gif|webp|avif)(?:[?#]|$)/i)?.[0].replace(/[?#].*$/, '') ?? '.png').toLowerCase()}`;
         a.rel = 'noopener';
+        // 1.5.0: 다른 곳(http · 내부망 · IP) 그림은 download 이름이 안 먹고 그 탭이 그림 주소로 넘어가요 — 새 탭으로 열어요
+        try { const at = new URL(p.src, location.href); if (/^https?:$/.test(at.protocol) && at.origin !== location.origin) a.target = '_blank'; } catch { /* 이상한 주소는 그대로 */ }
         document.body.append(a); a.click(); a.remove();
     };
     /** 11-14 「그림 받기」 — 올릴 그림을 번호 차례대로 받기 시작해요(그림-01.png …).
@@ -572,7 +575,7 @@ export async function openLogSheet(model) {
             chip.setAttribute('aria-pressed', String(info ? s3.basicInfo !== 'off' : !s3[key]));
             chip.disabled = (raw && key !== 'namesOff') || ((tn || sn) && key !== 'titleOff' && key !== 'namesOff') || (bn && (key === 'topOff' || key === 'bottomOff'));
             chip.querySelector('span').textContent = info ? `정보 · ${BASIC_INFO_LABEL[s3.basicInfo] ?? '끔'}` : label;
-            chip.title = info ? '모델 · 프롬프트 칸 — 누를 때마다 끔 · 칩(LOG · 모델 · 프롬프트) · 탭(LOG · 프롬프트). 칩 · 탭 글자는 미리보기에서 눌러 고쳐요(♥ · ★ 도 돼요)' : title;
+            chip.title = info ? '모델 · 프롬프트 칸 — 누를 때마다 끔 · 칩(LOG · 모델 · 프롬프트) · 탭(LOG · 프롬프트). 칩 · 탭 글자는 미리보기에서 눌러 고쳐요(기호도 돼요)' : title;
         }
         { const chip = $('[data-lc-height]'); chip.hidden = !bn; chip.style.display = bn ? '' : 'none'; chip.setAttribute('aria-pressed', String(!!s3.basicHeight)); chip.querySelector('span').textContent = `높이 · ${BASIC_HEIGHT_LABEL[s3.basicHeight] ?? '자동'}`; }
         { const chip = $('[data-lc-lemon]'), at = $('[data-lc-lemon-at]'), atOn = s3.lemonLink && !bn && !sn; chip.setAttribute('aria-pressed', String(!!s3.lemonLink)); at.hidden = !atOn; at.style.display = atOn ? "" : "none"; at.querySelector('span').textContent = `레몬 · ${CORNER_LABEL[normCorner(s3.lemonAt)]}`; }   // 1.1.2 레몬 바로가기(1.1.3 기본 글꾸 새 틀은 레몬이 틀 안 제자리라 자리 칩이 없어요)
@@ -628,9 +631,10 @@ export async function openLogSheet(model) {
         box.innerHTML = rows.map((rule, i) => `<div class="bl-lc-rule" data-rule="${i}"><input type="text" maxlength="100" placeholder="찾을 말" aria-label="찾을 말 ${i + 1}" data-rule-from value="${esc(rule.from)}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><input type="text" maxlength="100" placeholder="바꿀 말" aria-label="바꿀 말 ${i + 1}" data-rule-to value="${esc(rule.to)}"><button type="button" class="salty-btn bl-lc-icon" data-lc-rule-remove="${i}" aria-label="${i + 1}번 줄 지우기"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>`).join('');
     });
     let ruleTimer = 0;
-    const readRules = () => {
+    // without: 지울 줄(✕) — 저장 번호는 빈 줄이 걸러지며 당겨지니 화면 줄로 골라요
+    const readRules = (without = null) => {
         const ct = tools();
-        const rows = [...dialog.querySelectorAll('.bl-lc-rule')].map(row => ({ from: row.querySelector('[data-rule-from]').value.slice(0, 100), to: row.querySelector('[data-rule-to]').value.slice(0, 100) }));
+        const rows = [...dialog.querySelectorAll('.bl-lc-rule')].filter(row => row !== without).map(row => ({ from: row.querySelector('[data-rule-from]').value.slice(0, 100), to: row.querySelector('[data-rule-to]').value.slice(0, 100) }));
         ct.replaceRules = rows.filter(r => r.from || r.to).slice(0, 50);
         saveSettings();
     };
@@ -646,13 +650,13 @@ export async function openLogSheet(model) {
         const presetChips = order.map((id) => {
             const p = PRESETS.find(x => x.id === id);
             const on = state.shape === id;
-            const mark = p.emoji ? `<span class="bl-lc-emoji" aria-hidden="true">${p.emoji}</span>` : `<i class="fa-solid ${p.icon}" aria-hidden="true"></i>`;
+            const mark = p.emoji ? emojiMark(p.emoji) : `<i class="fa-solid ${p.icon}" aria-hidden="true"></i>`;
             return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${on}" data-shape="${id}">${mark}<span>${esc(p.label)}</span>${s2.fav.includes(id) ? '<i class="fa-solid fa-star bl-lc-fav" aria-label="즐겨찾기"></i>' : ''}</button>`;
         }).join('');
         // 1.1.8 「블루레몬 추천」: 묶음마다 칩 하나 · 같은 이름 판이 여럿이면 옆 둥근 꺾쇠로 판 고르기(펼치면 판 칩이 칩 바로 뒤에) · 접힌 줄에서는 지금 고른 추천 칩만
         const pickRow = !pk.mod ? '' : pk.mod.pickChips(pk.picks, s2.custom, s2.pickVar).filter(g => (less ? g.ids.includes(state.shape) : state.category === pk.mod.PICK_CATEGORY.id)).map((g) => {
             const cur = g.ids.includes(state.shape) ? state.shape : g.current, label = g.labels[g.ids.indexOf(cur)], many = g.ids.length > 1, open = many && state.pickOpen === g.group;
-            return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${state.shape === cur}" data-shape="${esc(cur)}"><span class="bl-lc-emoji" aria-hidden="true">${esc(g.emoji)}</span><span>${esc(g.name)}</span>${many && label !== g.name ? `<small>${esc(label)}</small>` : ''}</button>`
+            return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${state.shape === cur}" data-shape="${esc(cur)}">${emojiMark(g.emoji)}<span>${esc(g.name)}</span>${many && label !== g.name ? `<small>${esc(label)}</small>` : ''}</button>`
                 + (many ? `<button type="button" class="bl-lc-chip bl-lc-pv" data-lc-pv="${esc(g.group)}" aria-expanded="${open}" aria-label="${esc(g.name)} 판 고르기 — ${g.ids.length}가지" title="판 고르기"><i class="bl-lc-chev" aria-hidden="true"></i></button>` : '')
                 + (open ? g.ids.map((id, i) => `<button type="button" class="bl-lc-chip bl-lc-pvi" aria-pressed="${id === cur}" data-lc-pvar="${esc(id)}">${esc(g.labels[i])}</button>`).join('') : '');
         }).join('');
@@ -660,8 +664,8 @@ export async function openLogSheet(model) {
         const customChips = mineOrder(s2.custom, s2.fav, s2.recent).filter(c => shown.has(c.id)).map((c) => {
             const on = state.shape === c.id;
             // 1.0.1: 마트에서 받은 글꾸(template)는 🛒 표시
-            const mart = c.template || c.frame ? '<span class="bl-lc-mart" aria-label="마트에서 받음" title="마트에서 받음">🛒</span>' : '';
-            return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${on}" data-shape="${esc(c.id)}">${c.emoji ? `<span class="bl-lc-emoji" aria-hidden="true">${esc(c.emoji)}</span>` : '<i class="fa-solid fa-shapes" aria-hidden="true"></i>'}<span>${esc(c.name)}</span>${mart}${s2.fav.includes(c.id) ? '<i class="fa-solid fa-star bl-lc-fav" aria-label="즐겨찾기"></i>' : ''}</button>`
+            const mart = c.template || c.frame ? '<i class="fa-solid fa-cart-shopping bl-lc-mart" role="img" aria-label="마트에서 받음" title="마트에서 받음"></i>' : '';
+            return `<button type="button" class="bl-lc-chip" role="radio" aria-checked="${on}" data-shape="${esc(c.id)}">${emojiMark(c.emoji)}<span>${esc(c.name)}</span>${mart}${s2.fav.includes(c.id) ? '<i class="fa-solid fa-star bl-lc-fav" aria-label="즐겨찾기"></i>' : ''}</button>`
                 + `<button type="button" class="bl-lc-chip bl-lc-x" data-lc-del="${esc(c.id)}" aria-label="${esc(c.name)} 지우기" title="지우기 — 지운 뒤 알림의 ↶ 로 되돌려요"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`;
         }).join('');
         // 1.1.8 접힌 줄에도 내 글꾸 입구 — 받은 것이 없으면 붙여 넣기 칸(안내 · 마트 열기)으로 · 있으면 펼쳐 「내 글꾸」 분류로(전엔 접힌 줄에 글꾸를 얻는 길이 없었어요)
@@ -862,16 +866,19 @@ export async function openLogSheet(model) {
                 if (slot) { slot.innerHTML = logHtml(shown.model, { frameless: false, names: !s3.namesOff }); slot.setAttribute('data-bl-slot', ''); }
                 if (state.picking) {
                     doc.body.style.cursor = 'crosshair';
-                    doc.addEventListener('click', (event) => {
+                    // 1.5.0: once 를 빼요 — 첫 누름이 여백(body · html)이면 그냥 돌아가는데 once 라 리스너가 떨어져 고르기가 멈췄어요
+                    const onPick = (event) => {
                         event.preventDefault();
                         const target = event.target.nodeType === 1 ? event.target : event.target.parentElement;
-                        if (!target || target === doc.body) return;
+                        if (!target || target === doc.body || !doc.body.contains(target)) return;
+                        doc.removeEventListener('click', onPick);
                         const live = custom();   // 설정을 다시 읽으면 새 객체 — 지금 것에 적는다
                         if (live) live.slot = slotPath(target, doc.body);
                         state.picking = false;
                         saveSettings();
                         draw();
-                    }, { once: true });
+                    };
+                    doc.addEventListener('click', onPick);
                     return;
                 }
             }
@@ -1330,7 +1337,7 @@ export async function openLogSheet(model) {
                 else if (target.dataset.lcShow) { const s2 = store(), key = target.dataset.lcShow; s2[key] = !s2[key]; saveSettings(); draw(); }   // 1.0.7 「보일 것」 칩
                 else if (target.dataset.lcLemon !== undefined) { const s2 = store(); s2.lemonLink = !s2.lemonLink; saveSettings(); draw(); }   // 1.1.2 레몬 바로가기 켜기 · 끄기
                 else if (target.dataset.lcLemonAt !== undefined) { const s2 = store(), order = ['auto', 'tl', 'tr', 'bl', 'br']; s2.lemonAt = order[(order.indexOf(normCorner(s2.lemonAt)) + 1) % order.length]; saveSettings(); draw(); }   // 1.1.2 레몬 자리 돌리기
-                else if (target.dataset.lcRuleRemove !== undefined) { const i = Number(target.dataset.lcRuleRemove); const ct = tools(); ct.replaceRules = ct.replaceRules.filter((_, n) => n !== i); saveSettings(); drawTools(); draw(); }
+                else if (target.dataset.lcRuleRemove !== undefined) { clearTimeout(ruleTimer); readRules(target.closest('.bl-lc-rule')); drawTools(); draw(); }   // 1.5.0: 저장 번호가 아니라 누른 줄을 빼요
                 else if (target.dataset.lcNameRemove !== undefined) { const i = Number(target.dataset.lcNameRemove); const ct = tools(); ct.names = ct.names.filter((_, n) => n !== i); saveSettings(); drawTools(); draw(); }
                 break;
         }
@@ -1505,7 +1512,7 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
 .bl-lc-chips, .bl-lc-pals { display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; padding:5px 16px; scroll-padding:0 16px; }
 .bl-lc-chip { position:relative; flex:none; box-sizing:border-box; display:inline-flex; align-items:center; gap:4px; min-height:var(--bl-ui-chip, 34px); margin:0; padding:0 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-surface); color:var(--salty-text); font:inherit; font-size:13px; line-height:1.2; letter-spacing:inherit; white-space:nowrap; box-shadow:none; cursor:pointer; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
 .bl-lc-chip > i { font-size:12px; color:var(--salty-muted); }
-.bl-lc-chip > .bl-lc-emoji { font-size:14px; line-height:1; }
+.bl-lc-chip > .bl-lc-mart { color:var(--salty-muted); }
 .bl-lc-chip:is([aria-checked="true"], [aria-pressed="true"]) { background:var(--salty-accent-10, var(--salty-raised)); font-weight:650; }
 .bl-lc-chip[aria-pressed="true"] > i:first-child { color:var(--salty-accent-ink, var(--salty-accent)); }
 .bl-lc-chip small { font-size:12px; color:var(--salty-muted); }

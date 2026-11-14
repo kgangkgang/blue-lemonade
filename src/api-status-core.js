@@ -210,9 +210,9 @@ export function sentence(id, level) {
     switch (level) {
         case 'ok': return '정상이에요';
         case 'slow': return `${who} 쪽이 조금 느리대요`;
-        case 'maint': return `${who} 쪽이 점검 중이에요 🛠️`;
-        case 'partial': return `지금 ${who} 쪽이 아파요 🤒 (부분 장애)`;
-        case 'major': return `지금 ${who} 쪽이 많이 아파요 🤒 (큰 장애)`;
+        case 'maint': return `${who} 쪽이 점검 중이에요`;
+        case 'partial': return `지금 ${who} 쪽이 아파요 (부분 장애)`;
+        case 'major': return `지금 ${who} 쪽이 많이 아파요 (큰 장애)`;
         default: return '아직 확인하지 못했어요';
     }
 }

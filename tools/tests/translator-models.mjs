@@ -7,7 +7,7 @@
 //      번역 요청 본문(JSON 글자)이 같음. 새 세대 이름(o5 · gpt-7 · claude-opus-6 …)만 가장 새 세대처럼 바뀜
 //   2) Custom 목록 요청 본문 · 헤더가 2.2.7 과 글자까지 같음 · settings.json(custom_model_lists)에 더 쓰지 않음 (옛 목록은 읽기만)
 //   3) 고르기: 받은 목록 → 새것 먼저 · 없으면 모델 등록 → KNOWN(gpt-6.1-sol · claude-sonnet-5-5 …) · 저장된 모델은 '(이전 목록)' /
-//      '(이 주소 목록에 없음)' 으로 그대로 고름 · ⚙️ 커스텀 모델 입력 · 자동완성 목록은 모든 공급자 · 같은 내용이면 다시 쓰지 않음
+//      '(이 주소 목록에 없음)' 으로 그대로 고름 · 커스텀 모델 입력 · 자동완성 목록은 모든 공급자 · 같은 내용이면 다시 쓰지 않음
 //   4) 받는 때: 모델 칸이 보일 때 · 공급자를 바꿀 때만 (없거나 하루 지났을 때 · 키가 있을 때 · 새로 친 주소 X) · 쓰는 중엔 다시 그리지 않음
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -354,14 +354,14 @@ await test('index.js: 자기 규칙 함수는 없고 공용 함수를 부름 · 
 });
 
 // ---------- 2) 고르기
-await test('목록을 받기 전: 모델 등록 → KNOWN(새것 먼저, gpt-6.1-sol) · 저장된 모델 그대로 고름 · ⚙️ 커스텀 모델 입력 · 자동완성 · ↻ 보임', () => {
+await test('목록을 받기 전: 모델 등록 → KNOWN(새것 먼저, gpt-6.1-sol) · 저장된 모델 그대로 고름 · 커스텀 모델 입력 · 자동완성 · ↻ 보임', () => {
     reset({ provider: 'openai', ext: { model_register: { sources: { openai: ['my-gpt'] }, picks: {} } }, page: { model_openai_select: ['gpt-3.5-turbo', 'gpt-6-astra'] } });
     A.updateModelList();
     const values = optionValues();
     assert.deepEqual(values.slice(0, 3), ['my-gpt', 'gpt-6.1-sol', 'gpt-6.1-terra']);   // 11-10 Terra 는 Sol 바로 다음
     assert.equal(values.includes('gpt-3.5-turbo'), false, '목록을 받을 수 있는 공급자는 실리태번의 긴 고정 목록을 붙이지 않음');
     assert.equal(values.at(-1), 'custom');
-    assert.equal(doc.byId.llm_model.children.at(-1).textContent, '⚙️ 커스텀 모델 입력');
+    assert.equal(doc.byId.llm_model.children.at(-1).textContent, '커스텀 모델 입력');
     assert.equal(doc.byId.llm_model.value, 'gpt-5.4-mini');
     assert.equal(settings.llm_model, 'gpt-5.4-mini');
     assert.deepEqual(doc.byId.llm_custom_model_datalist.children.map(o => o.value), values.slice(0, -1), 'OpenAI 도 자동완성');
@@ -406,7 +406,7 @@ await test('Google AI → 실리태번 makersuite 목록 · Claude / Vertex AI (
     assert.equal(A.modelListRequest('claude'), null);
     assert.equal(A.modelListRequest('vertexai'), null);
 });
-await test('⚙️ 커스텀 모델 입력을 고른 채면 그대로 · 같은 내용이면 다시 쓰지 않음 (폰에서 깜빡이지 않게)', () => {
+await test('커스텀 모델 입력을 고른 채면 그대로 · 같은 내용이면 다시 쓰지 않음 (폰에서 깜빡이지 않게)', () => {
     reset({ provider: 'deepseek', s: { llm_model: 'custom', provider_model_history: { deepseek: 'custom' }, custom_models: { deepseek: 'deepseek-v5-preview' } } });
     A.updateModelList();
     assert.equal(doc.byId.llm_model.value, 'custom');

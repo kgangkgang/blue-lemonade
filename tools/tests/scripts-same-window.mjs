@@ -244,6 +244,20 @@ await test('여덟 스크립트를 실행기 길로 켜면: 진짜 setInterval �
     assert.equal(doc.listeners.length, 0, '문서 리스너 0');
 });
 
+await test('1.5.0 버그 사냥: 청과 → 과일의 마음 차례로 confirm 을 감싸도 실행기는 켠 거꾸로 꺼서 원래 confirm 으로 돌아와요', async () => {
+    scheduler.resetScheduler();
+    const { doc } = fakePage({ bodyChildren: 3 }); const fake = fakeWindow(doc);
+    const original = fake.win.confirm;
+    const extra = { koreanDictionary: () => Promise.resolve({ exact: [], htmlExact: [], PATTERNS: [] }) };
+    const runs = [];
+    for (const id of ['qingguo', 'fruit-heart']) runs.push(await start(id, null, fake, extra));   // 서랍을 연 뒤 켜면 받는 차례대로 이렇게 감싸요
+    assert.notEqual(fake.win.confirm, original, '둘 다 감쌌어요');
+    // 실행기 syncScripts 와 같은 차례: 켜 둔 것(running 넣은 차례)의 거꾸로
+    for (const run of runs.reverse()) run.stop();
+    assert.equal(fake.win.confirm, original, '감싸기가 남았어요');
+    assert.match(read('src/scripts/runtime.js'), /for\(const id of \[\.\.\.running\.keys\(\)\]\.reverse\(\)\) if\(!on\|\|!state\.enabled\[id\]\)stop\(id\);/, '실행기가 켠 거꾸로 꺼요');
+});
+
 await test('CI 등록', () => {
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/scripts-same-window\.mjs \./);
 });

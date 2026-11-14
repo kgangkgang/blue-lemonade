@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build a63d2b609f80) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 60d1838e96a1) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
-:root{--bl-release:"1.4.9";}
+:root{--bl-release:"1.5.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -11788,7 +11788,7 @@ body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b 
 .bl-credits-dialog{margin:auto;width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--salty-line, var(--bl-fb-cdd9e8));border-radius:12px;background:var(--salty-surface, var(--bl-fb-fff));color:var(--salty-text, var(--bl-fb-24354c));overflow:hidden}
 .bl-credits-dialog[open]{display:flex;flex-direction:column}.bl-credits-dialog::backdrop{background:var(--bl-scrim)}
 .bl-credits-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;flex:none;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}
-.bl-credits-dialog h2{font-size:var(--bl-ts-head);margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;background:transparent;color:inherit;font:400 var(--bl-deco-glyph-26)/1 system-ui;cursor:pointer}
+.bl-credits-dialog h2{font-size:var(--bl-ts-head);margin:0}.bl-credits-dialog header button{width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:inherit;font:400 var(--bl-deco-glyph-26)/1 system-ui;cursor:pointer}
 .bl-credits-body{overflow:auto;min-height:0;padding:4px 16px 16px;font-size:13px;line-height:1.8;word-break:keep-all;overflow-wrap:anywhere}.bl-credits-body section{padding:10px 0;border-bottom:1px solid var(--salty-line, var(--bl-fb-cdd9e8))}.bl-credits-body h3{font-size:var(--bl-fs-body);margin:8px 0}.bl-credits-body a{color:var(--salty-accent, var(--bl-fb-3975b8));text-decoration:underline}
 html body.salty :where(.llmt-settings):is(#bl-s, *),
 html body.salty :where(.llmt-gl-expanded):is(#bl-s, *),
@@ -13412,6 +13412,7 @@ body.salty-dark .salty-shapes button.on {
 .salty-panel .bl-frame-library > button { padding-inline: 6px; }
 .salty-panel .bl-frame-item { position: relative; display: grid; min-width: 0; }
 .salty-panel .bl-frame-item > .bl-pick-card { padding-inline: 6px; }
+.salty-panel .bl-frame-item > .bl-pick-card > .bl-frame-mart { position: absolute; top: 7px; left: 8px; font-size: 11px; line-height: 1; color: var(--salty-muted); pointer-events: none; }
 .salty-panel .bl-frame-x { position: absolute; top: 4px; left: 4px; z-index: 1; box-sizing: border-box; min-width: 32px; height: 32px; margin: 0; padding: 0 8px; border: 1px solid var(--salty-line); border-radius: 16px; background: var(--salty-surface); color: var(--salty-muted); font: inherit; font-size: 13px; line-height: 30px; cursor: pointer; }
 .salty-panel .bl-frame-x.is-armed { border-color: var(--salty-danger, currentColor); color: var(--salty-danger, inherit); font-weight: 650; }
 .salty-panel .bl-prompt-tools{min-width:0}
@@ -15559,6 +15560,30 @@ html body .salty-panel.bl-editor .bl-backup-actions > .salty-row { align-self:st
 }
 
 
+
+
+
+@container bl-controls (min-width: 22em) {
+  .salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo {
+    display: inline-block;
+    vertical-align: top;
+    box-sizing: border-box;
+    width: calc((min(100%, 1120px) - 16px) / 2);
+    max-width: none;
+    margin-inline: 0;
+  }
+  }
+@container bl-controls (min-width: 22em) {
+  .salty-panel.bl-editor .bl-changes-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-items: stretch; }
+  .salty-panel.bl-editor .bl-changes-list > .bl-setting-change { min-width: 0; padding-block: 12px; }
+  .salty-panel.bl-editor .bl-changes-list > .bl-setting-change > div { margin-top: auto; }
+}
+@container bl-controls (min-width: 60em) {
+  .salty-panel.bl-editor .bl-changes-list { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; }
+}
+.salty-panel.bl-editor .bl-changes-groups { margin-top: 8px; }
+.salty-panel.bl-editor .bl-changes-group > .bl-changes-list { padding: 0 12px 4px; }
+.salty-panel.bl-editor .bl-changes-group .bl-setting-change { border-bottom: 0; border-top: 1px solid var(--salty-line); }
 /* css/34-color-pick.css */
 body.salty .bl-cp-layer {
 position:fixed;
@@ -16672,7 +16697,7 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
   min-width: 0;
   margin: 0;
 }
-.salty-panel .bl-roleicon-group {
+.salty-panel .bl-md-group.bl-roleicon-group {
   margin-top: 8px;
 }
 .salty-panel .bl-roleicon-group > .bl-roleicon-rows,
@@ -17182,6 +17207,10 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 .bl-capture-options [data-redact-options] > [data-capture-add] { justify-self:start; }
 .bl-capture-options [data-redact-options][hidden] { display:none; }
 .bl-capture-options .bl-tool-grid > .bl-addon-toggle { align-self:end; }
+@media (max-width: 520px) {
+  .bl-tool-grid:has(> .bl-tool-field > input[type=number]):has(> .bl-tool-field > select) { --bl-tool-min: 8em; }
+  .bl-tool-grid > .bl-tool-pick { grid-column: 1 / -1; }
+}
 /* css/53-script-tools.css */
 .salty-panel .bl-script-list,.salty-panel .bl-script-editor,.salty-panel .bl-theme-update { min-width:0; }
 .salty-panel .bl-script-actions { display:flex;flex-wrap:wrap;gap:10px;margin:12px 0; }
@@ -19561,7 +19590,13 @@ body.salty .bl-pbind-list { min-height:0; }
   .salty-panel .bl-md-tuning > .bl-control-grid > .salty-stack, .salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider:not(.salty-slider + .salty-slider):where(.salty-panel .bl-md-tuning > .bl-control-grid > .salty-slider):not(:has(+ .salty-slider)) { grid-column:1 / -1; }
 }
 .salty-panel .bl-md-general { margin-block:8px; }
-@media (max-width:760px) { .salty-panel .bl-md-groups { grid-template-columns:1fr; gap:6px; } }
+@media (max-width:760px) { .salty-panel .bl-md-groups { gap:6px; } .salty-panel .bl-md-groups > .bl-md-group > summary { gap:.4em; padding-inline:.7em; } }
+.salty-panel .bl-md-groups > .bl-md-group[open] { grid-column:1 / -1; }
+@container bl-controls (width < 22em) { .salty-panel .bl-md-groups { grid-template-columns:1fr; } }
+.salty-panel .bl-md-groups { align-items:stretch; }
+.salty-panel .bl-md-groups > .bl-md-group > summary { flex-wrap:nowrap; align-items:flex-start; padding-block:max(.6em, calc((44px - 1.4em) / 2)); }
+.salty-panel .bl-md-groups > .bl-md-group > summary > span { flex:1 1 0; align-self:flex-start; min-width:0; word-break:keep-all; overflow-wrap:anywhere; }
+.salty-panel .bl-md-groups > .bl-md-group > summary > small { flex:none; align-self:flex-start; white-space:nowrap; line-height:1.75; }
 /* css/68-cutout-edge.css */
 body.salty.salty-cutedge :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview) :is(.mes_text, .mes_media_wrapper, .mes_img_container) :where(.custom-cac-img):is(.salty-alpha :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, img[data-autopic-id], img.mes_img)),
 body.salty.salty-cutedge :is(:is(#chat,.bl-chat-like), #salty-nochat, .salty-preview) :is(.mes_text, .mes_media_wrapper, .mes_img_container) :where(.character-asset-rendered):is(.salty-alpha :is(.custom-cac-img, img.character-asset-rendered, img.eh-img, img[data-autopic-id], img.mes_img)),
@@ -20560,7 +20595,7 @@ html body.salty :where(.po-item):is(dialog.popup:not(.bl-settings-dialog) .po-di
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw {
   position: relative; flex: none;
   width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
-  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; transition: none;
+  border: 1px solid var(--salty-faint, var(--line)); border-radius: 5px; background: transparent; box-shadow: none; transition: none;
 }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sw::after {
   content: ""; position: absolute; inset: -1px; margin: auto; box-sizing: border-box; font-size: var(--bl-check-face); width: 1em; height: 1em;
@@ -20615,7 +20650,7 @@ html body.salty :where(.po-item):is(dialog.popup:not(.bl-settings-dialog) .po-di
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=checkbox] {
   -webkit-appearance: none; appearance: none; display: inline-grid; place-content: center; flex: none; box-sizing: border-box;
   width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0;
-  border: 1px solid var(--line); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, var(--bl-fb-fff)); cursor: pointer; vertical-align: middle;
+  border: 1px solid var(--salty-faint, var(--line)); border-radius: 5px; background: transparent; box-shadow: none; color: var(--on-acc, var(--bl-fb-fff)); cursor: pointer; vertical-align: middle;
 }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=checkbox]::after {
   content: ""; display: block; box-sizing: border-box; font-size: var(--bl-check-face); width: 1em; height: 1em; border: 0;
@@ -20655,7 +20690,7 @@ html body.salty #bl-deus-popover .dq-toggle > .dq-toggle-control > input[type="c
 html body.salty #bl-deus-popover .dq-toggle > input[type="checkbox"] {
   appearance: none !important; -webkit-appearance: none !important; display: grid !important; place-content: center; box-sizing: border-box;
   width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; margin: 0 !important; padding: 0 !important;
-  border: 1px solid var(--salty-line) !important; border-radius: 5px !important; background: transparent !important; background-image: none !important;
+  border: 1px solid var(--salty-faint, var(--salty-line)) !important; border-radius: 5px !important; background: transparent !important; background-image: none !important;
   color: var(--salty-on-accent, var(--bl-fb-fff)) !important; box-shadow: none !important; filter: none !important; cursor: pointer;
 }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::before { content: none !important; display: none !important; }
@@ -20664,7 +20699,7 @@ html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]::after {
   border: 0 !important; border-radius: 0 !important; background: currentColor !important; -webkit-mask: var(--bl-check-mask) !important; mask: var(--bl-check-mask) !important;
   box-shadow: none !important; transform: none !important; opacity: 0 !important;
 }
-html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: var(--salty-accent) !important; }
+html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked { background: var(--salty-accent) !important; border-color: transparent !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:checked::after { opacity: 1 !important; }
 html body.salty #bl-deus-popover .dq-toggle input[type="checkbox"]:disabled { opacity: .5 !important; }
 html body.salty #bl-deus-popover .dq-row select { height: var(--bl-h-ctl, 36px) !important; min-height: var(--bl-h-ctl, 36px) !important; padding-top: 2px !important; padding-bottom: 0 !important; }

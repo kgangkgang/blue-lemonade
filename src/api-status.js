@@ -232,7 +232,8 @@ function onErrorToast(toast, message, title) {
         if (!line || !el?.isConnected || el.querySelector?.('.bl-apistatus-toastline')) return;
         const add = document.createElement('div');
         add.className = 'bl-apistatus-toastline';
-        add.textContent = `🤒 ${line}`;
+        const mark = document.createElement('i'); mark.className = 'fa-solid fa-triangle-exclamation'; mark.setAttribute('aria-hidden', 'true');
+        add.append(mark, ` ${line}`);
         (el.querySelector('.toast-message') || el).append(add);
     }).catch(() => {});
 }

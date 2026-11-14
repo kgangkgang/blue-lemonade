@@ -229,7 +229,13 @@ await t('내 파일: 읽히면 파일 목소리(노드 2) · 못 읽으면 합�
     st = sceneSoundState();
     assert.equal(st.kind, 'water'); assert.equal(st.file, ''); assert.equal(st.nodes, 13, '합성 물결');
     assert.deepEqual(st.outgoing.map(o => o.kind), ['water'], '파일 물결이 나간다 (앞 시험의 소리는 이미 걷힘)');
+    // 1.5.0 버그 사냥: 못 읽은 파일 그대로 설정만 다시 맞춰도(슬라이더 · 다른 설정) 소리를 새로 갈아 끼우지 않아요
+    const since = st.since;
     clock += 2000; runFakeTimers();
+    await syncSceneSound(true, { on: true, volume: 90, files: { water: '/user/files/missing.mp3' } }, { weather: 'water', weather2: 'off' }, true); await settle();
+    st = sceneSoundState();
+    assert.equal(st.since, since, '같은 소리인데 다시 시작했어요');
+    assert.equal(st.outgoing.length, 0, '나가는 목소리가 또 생겼어요');
 });
 await t('숨은 탭: 기본(계속)은 소리를 두고 천둥 타이머만 쉰다 · background 끄면 0.6초 페이드아웃 뒤 잠들고 돌아오면 이어진다', async () => {
     await syncSceneSound(true, { on: true, volume: 100 }, { weather: 'rain', weather2: 'off' }, true); await settle();

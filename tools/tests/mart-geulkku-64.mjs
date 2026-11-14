@@ -206,7 +206,7 @@ await test('컨셉 30(옛 내장 · 마트 일러스트) · 할로윈 31 도 장
     // 대기 힌트(제 움직임 없는 반응 장식) · 미리보기 머리 · 마트 카드 한 줄
     const css = motionCss();
     assert.match(css, /@keyframes bl-egg-hint\{/); assert.match(css, /\[data-bl-egg\]:not\(\[style\*="animation"\]\):not\(\[style\*="transform"\]\)\{animation:bl-egg-hint 6s ease-in-out 1s 3\}/);   // 1.0.1 대개편: 6초에 한 번 · 세 번만 · 엇갈려
-    assert.match(read('src/log-copy-sheet.js'), /data-lc-egg hidden>✨ 장식을 눌러 보세요</);
+    assert.match(read('src/log-copy-sheet.js'), /data-lc-egg hidden><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"><\/i> 장식을 눌러 보세요</);
     assert.match(motionStyleFor('<span data-bl-egg="spin">x</span>'), /@keyframes bl-egg-hint/);
     // 표본 글: 대사 · 속마음 · 강조 · 형광펜 · 취소선 · 기울임 · 작은 글 · 소제목 · 구분선 · 상태 줄 + 표본 화면 색으로 그려요
     for (const want of ["say('", "think('", "bold('", "marker('", "del('", "lean('", "small('【", "heading('", 'rule,']) assert.ok(read('tools/mart/sample.mjs').includes(want), `표본 ${want}`);   // 표본은 tools/mart/sample.mjs(부품 고르기 도구와 같이 써요)

@@ -809,6 +809,9 @@ export function applyAll() {
     // 미트볼 「추억 앨범」 메시지 단추: 보이기로 둔 때만 속성 — 숨김(기본)은 맞춤 시트(ext-status.css)가 그 확장이 있을 때만 걸어요
     const mbAlbum = want.has('salty') && s.chat.mbAlbumBtn === true;
     if (document.body.hasAttribute('data-bl-mb-album') !== mbAlbum) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-album', mbAlbum); }
+    // 미트볼 상태창 편의 기능(설정 찾기 · 맨 위로): 끈 때만 속성 — 맞춤 시트(ext-status.css)와 맞춤 모듈(ext-compat.js)이 이 표식을 보고 숨기고 멈춰요
+    const mbPlain = want.has('salty') && s.chat.mbHelpers === false;
+    if (document.body.hasAttribute('data-bl-mb-plain') !== mbPlain) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-plain', mbPlain); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
     // 5.3.7: html 바탕색은 클래스로 — 예전 html:has(> body.salty:not(.salty-bgimg)) 는 인라인 style 이 바뀔 때마다 html 까지 :has 를 다시 따지게 한다 (리뷰 측정: 설정 창을 연 뒤 스트리밍이 크게 느려짐)
     // 조건은 body 의 salty · salty-bgimg 와 똑같이 (테마를 끄면 둘 다 빠지듯 이것도 빠짐)

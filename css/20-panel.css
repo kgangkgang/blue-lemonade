@@ -1418,6 +1418,8 @@ body.salty-dark .salty-shapes button.on {
 /* 1.0.1 보관함 카드마다 보이는 ✕ (누르면 「지우기」로 바뀌고 한 번 더 누르면 지워요) — 고른 표시(오른쪽 위)와 안 겹치게 왼쪽 위 */
 .salty-panel .bl-frame-item { position: relative; display: grid; min-width: 0; }
 .salty-panel .bl-frame-item > .bl-pick-card { padding-inline: 6px; }
+/* 1.5.0: 마트에서 받은 액자 표시 — 이름 앞 그림 글자 대신 카드 왼쪽 위 선 아이콘(지우기 ✕ 는 오른쪽 위) */
+.salty-panel .bl-frame-item > .bl-pick-card > .bl-frame-mart { position: absolute; top: 7px; left: 8px; font-size: 11px; line-height: 1; color: var(--salty-muted); pointer-events: none; }
 .salty-panel .bl-frame-x { position: absolute; top: 4px; left: 4px; z-index: 1; box-sizing: border-box; min-width: 32px; height: 32px; margin: 0; padding: 0 8px; border: 1px solid var(--salty-line); border-radius: 16px; background: var(--salty-surface); color: var(--salty-muted); font: inherit; font-size: 13px; line-height: 30px; cursor: pointer; }
 .salty-panel .bl-frame-x.is-armed { border-color: var(--salty-danger, currentColor); color: var(--salty-danger, inherit); font-weight: 650; }
 

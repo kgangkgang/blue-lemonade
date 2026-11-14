@@ -134,3 +134,64 @@ html body .salty-panel.bl-editor .salty-sec .salty-group[data-bl-row~="sl2"]:is(
     grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(min-content,1fr) auto;
   }
 }
+
+/* ===== 1.5.0 두 열 넓히기 (「가능한 부분은 다 세로 2열로 · 세로 스크롤이 길어지지 않게」) =====
+   (1) 짧은 줄 짝: 스위치 · 아이콘 단추 하나만 가진 짧은 줄이 둘 이상 이어지면 폰에서도 두 열.
+       표시는 src/settings-advanced.js pairShortRows(.bl-pairs · data-pair="1"). 긴 이름 · 설명이 남은 줄 · 짝 없는 끝 줄은 전체 폭.
+       PC 팝업은 위 규칙(3.3.0)이 이미 두 열이라 그대로 둬요.
+       슬라이더가 든 묶음은 97-param-inline 이 줄을 전체 폭으로 펴요(:not(#bl-param-off) 무게) — 짝 줄만 같은 무게로 반 칸에 둬요. */
+@media (max-width: 1000px) {
+  html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs:not(.bl-control-grid) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+  html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs:not(.bl-control-grid) > :is(:not(.salty-slider, .salty-row[data-pair="1"]), .salty-slider[data-pair-wide]) { grid-column: 1 / -1; }
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group.bl-pairs:not(.bl-control-grid) > .salty-row[data-pair="1"] { grid-column: auto; min-width: 0; gap: 8px; }
+}
+/* 「짧은 값 나란히」 격자(.bl-control-grid)는 넓을 때(34em~) 제 규칙으로 두 열 — 그보다 좁을 때만 짧은 줄 짝을 두 열로 */
+@container bl-controls (22em <= width < 34em) {
+  html body .salty-panel.bl-editor .salty-sec .salty-group.bl-control-grid.bl-pairs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+  html body .salty-panel.bl-editor .salty-sec .salty-group.bl-control-grid.bl-pairs > :is(:not(.salty-slider, .salty-row[data-pair="1"]), .salty-slider[data-pair-wide]) { grid-column: 1 / -1; }
+  html body .salty-panel.bl-editor:not(#bl-param-off) .salty-sec .salty-group.bl-control-grid.bl-pairs > .salty-row[data-pair="1"] { grid-column: auto; min-width: 0; gap: 8px; }
+}
+/* 반 칸의 이름은 두 줄까지 접혀요(스위치 밑으로 흘러 겹치지 않게) — 낱말 가운데서는 안 끊고, 한 낱말이 칸보다 길 때만 끊어요 */
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs > .salty-row[data-pair="1"] > span,
+html body .salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo .salty-row > span {
+  flex: 1 1 0; min-width: 0; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3;
+}
+html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs > .salty-row[data-pair="1"] > :not(span),
+html body .salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo .salty-row > :not(span) { flex: none; }
+/* 큰 글씨 · 폰 320: 반 칸이 너무 좁으면 한 열로 (슬라이더 짝과 같은 문턱) */
+@container bl-controls (width < 22em) {
+  html body .salty-panel.bl-editor .salty-sec .salty-group.bl-pairs { display: block; }
+}
+/* (2) 제목 + 짧은 줄 하나뿐인 묶음이 이어지면 묶음끼리 나란히 (.bl-solo · data-solo="a|b") */
+@container bl-controls (min-width: 22em) {
+  .salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo {
+    display: inline-block;
+    vertical-align: top;
+    box-sizing: border-box;
+    width: calc((min(100%, 1120px) - 16px) / 2);
+    max-width: none;
+    margin-inline: 0;
+  }
+  .salty-panel.bl-editor .salty-sec > .bl-editor-group.bl-solo[data-solo="a"] { margin-inline: calc((100% - min(100%, 1120px)) / 2) 16px; }
+}
+/* (3) 변경한 설정 목록: 카드 두 열(넓으면 세 열) — 한 열로 16,000px 까지 늘어나던 화면 */
+@container bl-controls (min-width: 22em) {
+  .salty-panel.bl-editor .bl-changes-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-items: stretch; }
+  .salty-panel.bl-editor .bl-changes-list > .bl-setting-change { min-width: 0; padding-block: 12px; }
+  .salty-panel.bl-editor .bl-changes-list > .bl-setting-change > div { margin-top: auto; }
+}
+@container bl-controls (min-width: 60em) {
+  .salty-panel.bl-editor .bl-changes-list { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; }
+}
+/* (4) 변경한 설정: 9개부터는 화면별 접는 묶음(.bl-md-group 과 같은 부품) — 묶음 안 카드도 위 두 열 */
+.salty-panel.bl-editor .bl-changes-groups { margin-top: 8px; }
+.salty-panel.bl-editor .bl-changes-group > .bl-changes-list { padding: 0 12px 4px; }
+.salty-panel.bl-editor .bl-changes-group .bl-setting-change { border-bottom: 0; border-top: 1px solid var(--salty-line); }

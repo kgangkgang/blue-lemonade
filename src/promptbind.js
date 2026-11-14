@@ -429,6 +429,8 @@ function promptName(id) {
 function block() {
     const form = document.getElementById(POPUP_FORM);
     if (!form) return null;
+    // 1.5.0: 테마를 끄면(새로고침 전) 「자동 켜기」 줄을 붙이지 않고 떼요 — syncPromptBinds 가 아무것도 안 해서 눌러도 동작하지 않는 줄이었어요
+    if (!themeEnabled(getSettings())) { form.querySelector('#bl_prompt_bind')?.remove(); return null; }
     let box = form.querySelector('#bl_prompt_bind');
     if (box) return box;
     box = document.createElement('div');

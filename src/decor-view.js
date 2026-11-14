@@ -89,7 +89,8 @@ function changed(records) {
     if (!frame && (dirty.size || toggled.size || records.some(rec => [...rec.removedNodes].some(hasImage)))) frame = requestAnimationFrame(flush);
 }
 function listen() { unwatch = roots.map(root => watchDom(root, { childList: true, subtree: true, attributes: ['is_system'], name: '장식 액자' }, changed)); }
-function quiet(fn) { let run = fn; for (const off of unwatch) { const next = run; run = () => off.quiet(next); } run(); }
+// 내가 DOM 을 바꾼 뒤 그 기록만 버려요 — off.quiet() 는 인자를 받지 않아요(콜백을 넘기면 본문이 안 돌아요 · 1.0.0 ~ 1.4.9)
+function quiet(fn) { try { fn(); } finally { for (const off of unwatch) off.quiet(); } }
 
 function note(records) {
     for (const rec of records) {

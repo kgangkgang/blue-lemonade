@@ -9,6 +9,7 @@
 //   ⑤ 정리한 보기(src/ext-organize.js): 탭을 만든 뒤 한 번 — 탭 한 줄 설명 · 접는 갈래(지금 값) · 숫자 2열 · 긴 설명 「자세히」 · 비용 표시 · 길잡이 · 서랍 머리의 「정리한 보기 ↔ 원작 그대로」.
 //      모르는 구조면 조용히 원래 모습 그대로예요(표가 맞는 줄만 건드려요).
 //   ⑥ 원작 표식(mark)이 있는 칸만: 같은 id · 클래스 이름을 쓰는 다른 확장이 있어도 원작의 표식이 든 설정 칸에만 시트 · 표식(data-bl-ext) · 안내 줄을 붙여요. 설정이 이미 탭으로 나뉜 확장은 분류 탭을 만들지 않아요.
+//   ⑦ 미트볼 상태창 창 안(11-15 검수): 얼굴 바꾸기 창에 선 아이콘 고르개(fillAvaPicker) · 긴 상태창 「맨 위로」(armTop) · 설정 찾기(ext-organize renderFound) — 뒤 둘은 테마 설정 「미트볼 상태창 편의 기능」을 끄면 멈춰요.
 //   감시자 · 타이머 없음: 불릴 때마다 한 번(index.js) + 문서 누름 받기 하나(잡는 단계 — 실리태번이 서랍을 펼치며 높이를 재기 전에 탭을 만들고, 확장 서랍 단추를 누르면 칸을 다시 봐요).
 //   받는 조건(index.js): 확인한 확장의 설정 칸이 화면에 있을 때만. 있었던 칸 id 를 이 기기에 표시(localStorage 'bl-ext-compat')해 두고 다음 시작에는 바로 받아 첫 화면부터 시트가 붙어요 —
 //     그 확장을 지우면 그다음 시작에 표시가 지워지고, 그 뒤로는 모듈도 시트도 받지 않아요. 일찍 붙이는 시트는 원작 표식을 안 보는 갈래(mark 없음)이면서 지난번에 그 칸이 있었던 것만이에요.
@@ -18,7 +19,7 @@
 
 import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { armGuard } from './cheap-guards.js';
-import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey } from './ext-organize.js';
+import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
  *  mark: 원작만 가진 요소(이것이 든 설정 칸에만 맞춰요 — 있으면 분류 탭 대신 표식 · 안내 줄만) · sheet: 판 번호를 화면에 안 적는 확장의 제 시트 첫 규칙(그 시트 옆 manifest.json 에서 판을 읽어요) */
@@ -64,6 +65,7 @@ function recall(root) { try { return localStorage.getItem(keyOf(root)) || ''; } 
 /** 고른 탭을 탭 줄 안으로 — 시작 덮개 동안이면 걷힌 뒤 한 번(그때도 고른 탭이면) */
 const revealWaiting = new Set();
 const SCROLL = { block: 'nearest', inline: 'nearest' };
+const CENTER = { block: 'center', inline: 'nearest' };
 function revealLater() {
     const list = [...revealWaiting];
     revealWaiting.clear();
@@ -71,7 +73,7 @@ function revealLater() {
 }
 function revealTab(tab) {
     if (booting(tab.ownerDocument)) { revealWaiting.add(tab); afterBoot(revealLater); return; }
-    tab.scrollIntoView?.(SCROLL);
+    tab.scrollIntoView?.('blHit' in (tab.dataset || {}) ? CENTER : SCROLL);   // 설정 찾기가 찾은 줄(data-bl-hit)은 화면 가운데로 — 굴리기는 이 한 곳
 }
 
 /** 고른 묶음만 보이게 (index: 0 = 머리 없는 앞머리) */
@@ -125,6 +127,67 @@ export function buildTabs(root, set) {
     const saved = labels.indexOf(recall(root));
     showGroup(root, saved > 0 ? saved : 0);
     return true;
+}
+
+/** 얼굴 고르개(11-15 검수 · 미트볼 상태창 2.7.21): 그 확장의 「얼굴 바꾸기」 창은 고르개 자리에 글자(「[object …]」)만 나와요 — 그 자리에 테마 선 아이콘 고르개를 놓아요.
+ *  고른 값은 그 확장의 입력칸에 그 그림 글자를 적을 뿐이에요(저장 · 그리기는 그 확장 것 그대로 · 얼굴 동그라미는 맞춤 시트의 선 아이콘 글꼴이 그려요).
+ *  표: [코드 포인트, 읽어 주는 이름] — 전부 선 아이콘 글꼴 표(src/ext-status-icons.json)에 있는 그림이에요. 동물 열여섯은 그 확장이 이름으로 정해 주는 얼굴과 같은 글자예요. */
+export const AVA_PICKS = [
+    [0x1F431, '고양이'], [0x1F436, '강아지'], [0x1F98A, '여우'], [0x1F43B, '곰'], [0x1F430, '토끼'], [0x1F43C, '판다'], [0x1F438, '개구리'], [0x1F427, '펭귄'],
+    [0x1F981, '사자'], [0x1F42F, '호랑이'], [0x1F428, '코알라'], [0x1F439, '햄스터'], [0x1F989, '부엉이'], [0x1F43A, '늑대'], [0x1F99D, '너구리'], [0x1F42E, '소'],
+    [0x1F432, '용'], [0x1F988, '상어'], [0x1F419, '문어'], [0x1F98B, '나비'], [0x1F338, '꽃'], [0x1F340, '네잎클로버'], [0x2B50, '별'], [0x1F319, '달'],
+    [0x1F525, '불꽃'], [0x2744, '눈꽃'], [0x2615, '찻잔'], [0x2693, '닻'], [0x1F451, '왕관'], [0x1F3A9, '모자'], [0x1F5E1, '단검'], [0x1F380, '리본'],
+];
+/** 얼굴 바꾸기 창에 고르개를 놓아요 — input: 그 창의 입력칸(.popup-input). 놓았으면(또는 원작 고르개가 있어 표식만 달았으면) true */
+export function fillAvaPicker(input, who = '') {
+    const dlg = input?.closest?.('dialog.popup'), box = dlg?.querySelector('.popup-content');
+    if (!dlg || !box || dlg.classList.contains('ss-dlg') || box.querySelector('.bl-ext-avapick')) return false;
+    dlg.classList.add('bl-ext-avadlg');
+    if (box.querySelector('.ss-emopick')) return true;   // 원작이 제 고르개를 그리는 판 — 시트가 같은 꼴로 맞춰요
+    const doc = dlg.ownerDocument, hint = doc.createElement('p'), grid = doc.createElement('div');
+    hint.className = 'bl-ext-avahint'; hint.textContent = `${who ? `${who}의 ` : ''}얼굴로 쓸 그림을 골라요. 칸을 비우고 저장하면 이름에 따라 정해져요.`;
+    grid.className = 'bl-ext-avapick'; grid.setAttribute('role', 'listbox'); grid.setAttribute('aria-label', '얼굴 그림');
+    const now = String(input.value || '').replace(/\uFE0F/g, '');
+    for (const [cp, name] of AVA_PICKS) {
+        const ch = String.fromCodePoint(cp), b = doc.createElement('button');
+        b.type = 'button'; b.dataset.blAva = ch; b.textContent = ch; b.title = name; b.setAttribute('aria-label', name); b.setAttribute('role', 'option');
+        if (now === ch) b.classList.add('on');
+        grid.append(b);
+    }
+    // 창에 글자로 찍힌 「[object …]」 줄(그 확장의 요소가 아니라 글자 덩이)이 있으면 그 자리에, 없으면 내용 칸 끝에
+    const junk = [...box.childNodes].find(node => node.nodeType === 3 && /\[object \w+\]/.test(node.nodeValue));
+    if (junk) { junk.before(hint, grid); junk.data = ''; } else box.append(hint, grid);
+    return true;
+}
+/** 긴 상태창 「맨 위로」(편의 기능): 그 창의 내용 칸에 스크롤 받기 하나 — 한 화면 넘게 내렸을 때만 표식(data-bl-top)을 달고, 단추는 그때 한 번 만들어요 */
+export function armTop(dlg) {
+    const pane = dlg.querySelector('.popup-content');
+    if (!pane || dlg.dataset.blTopArmed) return false;
+    dlg.dataset.blTopArmed = '1';
+    pane.addEventListener('scroll', () => {
+        const on = pane.scrollTop > pane.clientHeight;
+        if (on === dlg.hasAttribute('data-bl-top')) return;
+        dlg.toggleAttribute('data-bl-top', on);
+        if (on && !dlg.querySelector(':scope > .bl-ext-top')) { const b = dlg.ownerDocument.createElement('button'); b.type = 'button'; b.className = 'bl-ext-top'; b.title = '맨 위로'; b.setAttribute('aria-label', '맨 위로'); dlg.append(b); }
+    }, { passive: true });
+    return true;
+}
+const plain = doc => !!doc.body?.hasAttribute?.('data-bl-mb-plain');   // 테마 설정 「미트볼 상태창 편의 기능」을 끈 때(src/apply.js 가 달아요)
+
+/** 탭을 만든 뒤에 끼어든 줄은 첫 탭 것으로(11-15 검수): 테마의 「확장 탭에 보이기」 줄(src/headswitch.js)은 내용 칸 맨 앞에 끼워져요 — 탭보다 먼저 끼워지면 첫 탭 번호를 받지만,
+ *  탭보다 늦게 끼워지면 번호가 없어 모든 탭 위에 보였어요(탭마다 세로로 35 · 리그 사진 — 시작 차례에 따라 달라지던 것). 번호 없는 줄에 첫 탭 번호를 달고, 지금 다른 탭이면 가려요.
+ *  분류 탭 줄 · 정리한 보기가 끼운 것(bl-ext-*)은 그대로 둬요(늘 보이거나 제 번호가 있어요). 돌려줌: 번호를 단 줄 수 */
+export function adoptStray(root) {
+    const nav = root.querySelector(`.${NAV}`);
+    if (!nav) return 0;
+    let n = 0;
+    for (const child of nav.parentElement.children) {
+        if ('blTabG' in child.dataset || /(^|\s)bl-ext-/.test(String(child.className || ''))) continue;
+        child.dataset.blTabG = '0';
+        if ((root.dataset.blTabs || '0') !== '0') child.dataset.blTabOff = '';
+        n++;
+    }
+    return n;
 }
 
 const installed = new Map();   // 판을 화면에 안 적는 확장: manifest.json 에서 읽은 판(한 번)
@@ -208,7 +271,7 @@ export function buildAll(doc) {
         const root = doc.querySelector(set.root);
         if (!root) continue;
         if (!set.mark) {
-            attachSheet(doc, set); buildTabs(root, set);
+            attachSheet(doc, set); buildTabs(root, set); adoptStray(root);
             // 정리한 보기: 탭이 있을 때만 · 한 번만. 구조를 모르면(다른 판 · 시험 DOM) 아무것도 안 하고 원래 모습 그대로
             try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }
             continue;
@@ -248,8 +311,34 @@ export function startExtCompat(doc = globalThis.document) {
                 ensureStrip(doc);
                 return;
             }
+            // 미트볼 상태창 창 안: 얼굴 고르개 · 「맨 위로」 — 창(dialog)에서 난 누름일 때만 봐요
+            const dlg = target.closest('dialog');
+            if (dlg) {
+                const pick = target.closest('.bl-ext-avapick > button');
+                if (pick) {   // 고른 그림 글자를 그 창의 입력칸에 적어요(저장은 그 확장의 「저장」 단추가 해요)
+                    const input = dlg.querySelector('.popup-input');
+                    if (input) { input.value = pick.dataset.blAva || ''; for (const other of pick.parentElement.children) other.classList.toggle('on', other === pick); }
+                    return;
+                }
+                if (target.closest('.bl-ext-top')) { const pane = dlg.querySelector('.popup-content'); if (pane) pane.scrollTop = 0; return; }
+                if (dlg.classList.contains('ss-dlg')) {
+                    if (!plain(doc)) armTop(dlg);
+                    const ava = target.closest('.ss-ava-btn');
+                    if (ava && !doc.body.hasAttribute('data-bl-ext-raw')) {   // 얼굴 바꾸기 창은 입력칸에 초점이 올 때 열린 것을 알아요(타이머 없이) — 그때 한 번 고르개를 놓고 받기를 떼요
+                        const who = ava.dataset.arg || '', since = Date.now();
+                        const onFocus = e => {
+                            const input = e.target;
+                            if (Date.now() - since > 4000) { doc.removeEventListener('focusin', onFocus, true); return; }
+                            if (!input?.classList?.contains('popup-input')) return;
+                            doc.removeEventListener('focusin', onFocus, true);
+                            try { fillAvaPicker(input, who); } catch { /* 원래 창 그대로 */ }
+                        };
+                        doc.addEventListener('focusin', onFocus, true);
+                    }
+                }
+            }
             // 정리한 보기의 단추들: 갈래 펼침 · 자세히 · 보기 스위치 · 길잡이
-            const own = target.closest('.bl-ext-fold') || target.closest('.bl-ext-more') || target.closest('.bl-ext-view') || target.closest('.bl-ext-jump') || target.closest('.bl-ext-start-x');
+            const own = target.closest('.bl-ext-fold') || target.closest('.bl-ext-more') || target.closest('.bl-ext-view') || target.closest('.bl-ext-jump') || target.closest('.bl-ext-start-x') || target.closest('.bl-ext-hit') || target.closest('.bl-ext-findbtn');
             if (own) {
                 const root = SETS.map(set => own.closest(set.root)).find(Boolean);
                 const has = name => own.classList.contains(name);
@@ -258,12 +347,23 @@ export function startExtCompat(doc = globalThis.document) {
                 else if (has('bl-ext-more')) toggleMore(root, own);
                 else if (has('bl-ext-start-x')) dismissStart(root);
                 else if (has('bl-ext-jump')) { const group = groupOfKey(root, own.dataset.blJump); if (group >= 0) showGroup(root, group); }
-                else { setView(root, root.dataset.blView !== 'raw'); event.stopPropagation?.(); event.preventDefault?.(); }   // 머리줄 안의 단추 — 서랍이 같이 접히지 않게 이 누름만 멈춰요
+                else if (has('bl-ext-hit')) { const group = gotoHit(root, own); if (group >= 0) { showGroup(root, group); const row = root.querySelector('[data-bl-hit]'); if (row) revealTab(row); } }   // 설정 찾기: 그 탭으로 가서 그 줄을 보여요
+                else {   // 머리줄 안의 단추(보기 스위치 · 설정 찾기) — 서랍이 같이 접히지 않게 이 누름만 멈춰요. 설정 찾기는 서랍이 접혀 있으면 그대로 흘려 서랍이 펼쳐지게 해요
+                    let stay = true;
+                    if (has('bl-ext-findbtn')) {
+                        const box = root.querySelector('.bl-ext-find'), open = toggleFind(root, own);
+                        stay = !!root.querySelector('.inline-drawer-content')?.getClientRects?.().length;
+                        if (box) { if (open) box.focus?.(); else { box.value = ''; renderFound(root, ''); } }
+                    } else setView(root, root.dataset.blView !== 'raw');
+                    if (stay) { event.stopPropagation?.(); event.preventDefault?.(); }
+                }
                 return;
             }
             if (target.closest('.inline-drawer-header') || target.closest('.drawer-toggle')?.parentElement?.id === 'extensions-settings-button') { buildAll(doc); ensureStrip(doc); }
         }, true);
         // 값이 바뀌면 접힌 줄의 「지금 값」을 다시 적어요(그 확장 칸 안의 바뀜만)
+        // 설정 찾기 칸에 적을 때만 목록을 다시 그려요(다른 칸의 입력은 첫 줄에서 돌아가요)
+        doc.addEventListener('input', event => { const box = event.target; if (!box?.classList?.contains('bl-ext-find')) return; const root = SETS.map(set => box.closest(set.root)).find(Boolean); if (root) renderFound(root, box.value); }, true);
         doc.addEventListener('change', event => { const root = SETS.map(set => event.target?.closest?.(set.root)).find(Boolean); if (root?.dataset?.blOrg) refreshSummaries(root); }, true);
     }
     buildAll(doc);

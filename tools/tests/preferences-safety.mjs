@@ -29,6 +29,12 @@ const {recheckInstalled,staleMessage,readHashesFresh}=await import(new URL('../i
 const installed=await recheckInstalled({hashes:FILE_HASHES,reloadHashes:()=>readHashesFresh(fs.readFileSync(new URL('src/build-info.js',root),'utf8')),verify:h=>verifyFiles(h,p=>fs.readFileSync(new URL(p,root)),fileFingerprint)});
 const stale=installed.failures.length?staleMessage(installed.failures):'';
 assert.notEqual(fileFingerprint(new TextEncoder().encode('blue')),fileFingerprint(new TextEncoder().encode('bluf')));
+// 1.5.0 버그 사냥: 소개 사이트(docs/)는 8.3.0 에 저장소에서 내렸어요 — 그 부분(놀이터 저장 · 개인 미리보기)은 docs/ 가 있을 때만 봐요
+if(!fs.existsSync('docs/playground-state.js')){
+if(stale){console.error(stale);process.exitCode=1;}
+console.log(`PASS style/preset locks, file mismatch detection${stale?' — only the integrity manifest is stale':''} (docs/ 없음 — 놀이터 · 개인 미리보기 건너뜀)`);
+process.exit(process.exitCode||0);
+}
 const stateSource=fs.readFileSync('docs/playground-state.js','utf8');
 let saved=JSON.stringify({version:1,reading:{dialogue:{font:{ko:'ridibatang',en:'auto',ja:'auto',zh:'auto'}},size:21},palette:{selected:'peach'}});
 function context(){const events={};const ctx=vm.createContext({structuredClone,setTimeout:()=>1,clearTimeout(){},localStorage:{getItem:()=>saved,setItem:(k,v)=>{saved=v;}},document:{addEventListener(){},querySelector:()=>null},window:{addEventListener:(k,f)=>events[k]=f}});vm.runInContext(stateSource,ctx);return {api:ctx.window.BLPlayground,events};}

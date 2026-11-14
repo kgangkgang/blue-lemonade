@@ -291,7 +291,7 @@ await test('받은 뒤: 받은 목록(새것 먼저) + 모델 등록만 · 공�
     assert.equal(RW.modelChoices('openrouter', 'custom').savedMissing, false, "'custom' 은 직접 입력");
     assert.equal(RW.modelChoices('openrouter', 'openai/gpt-6.1-sol').savedMissing, false);
 });
-await test('화면의 select: 저장된 모델은 맨 앞에 골라 둠 (이전 목록 · 이 주소 목록에 없음) · 맨 끝 ⚙️ 커스텀 모델 입력', () => {
+await test('화면의 select: 저장된 모델은 맨 앞에 골라 둠 (이전 목록 · 이 주소 목록에 없음) · 맨 끝 커스텀 모델 입력', () => {
     reset();
     const mk = (tag) => ({ tag, value: '', textContent: '', selected: false });
     globalThis.document = { createDocumentFragment: () => ({ children: [], append(...n) { this.children.push(...n); } }), createElement: mk };
@@ -299,14 +299,14 @@ await test('화면의 select: 저장된 모델은 맨 앞에 골라 둠 (이전 
     // index.js renderModels 와 같은 옵션
     const fill = (provider, saved, ids) => {
         const picked = RW.pickModel(saved, ids);
-        LM.fillSelect(sel, ids, { saved: picked, missingSuffix: ` (${RW.missingNote(provider, ids)})`, customValue: 'custom', customLabel: '⚙️ 커스텀 모델 입력', customSelected: picked === 'custom' });
+        LM.fillSelect(sel, ids, { saved: picked, missingSuffix: ` (${RW.missingNote(provider, ids)})`, customValue: 'custom', customLabel: '커스텀 모델 입력', customSelected: picked === 'custom' });
         return sel.children.map(o => [o.value, o.textContent, o.selected]);
     };
-    assert.deepEqual(fill('openai', 'gpt-old', ['gpt-6.1-sol']), [['gpt-old', 'gpt-old (이전 목록)', true], ['gpt-6.1-sol', 'gpt-6.1-sol', false], ['custom', '⚙️ 커스텀 모델 입력', false]]);
-    assert.deepEqual(fill('custom', 'relay-old', ['relay-new']), [['relay-old', 'relay-old (이 주소 목록에 없음)', true], ['relay-new', 'relay-new', false], ['custom', '⚙️ 커스텀 모델 입력', false]]);
-    assert.deepEqual(fill('custom', 'relay-old', []), [['relay-old', 'relay-old (이전 목록)', true], ['custom', '⚙️ 커스텀 모델 입력', false]], '목록이 없으면 이전 목록');
-    assert.deepEqual(fill('custom', 'custom', ['relay-new']), [['relay-new', 'relay-new', false], ['custom', '⚙️ 커스텀 모델 입력', true]]);
-    assert.deepEqual(fill('custom', '', []), [['custom', '⚙️ 커스텀 모델 입력', true]], '아무것도 없으면 직접 입력');
+    assert.deepEqual(fill('openai', 'gpt-old', ['gpt-6.1-sol']), [['gpt-old', 'gpt-old (이전 목록)', true], ['gpt-6.1-sol', 'gpt-6.1-sol', false], ['custom', '커스텀 모델 입력', false]]);
+    assert.deepEqual(fill('custom', 'relay-old', ['relay-new']), [['relay-old', 'relay-old (이 주소 목록에 없음)', true], ['relay-new', 'relay-new', false], ['custom', '커스텀 모델 입력', false]]);
+    assert.deepEqual(fill('custom', 'relay-old', []), [['relay-old', 'relay-old (이전 목록)', true], ['custom', '커스텀 모델 입력', false]], '목록이 없으면 이전 목록');
+    assert.deepEqual(fill('custom', 'custom', ['relay-new']), [['relay-new', 'relay-new', false], ['custom', '커스텀 모델 입력', true]]);
+    assert.deepEqual(fill('custom', '', []), [['custom', '커스텀 모델 입력', true]], '아무것도 없으면 직접 입력');
     assert.deepEqual(fill('openai', '', ['gpt-6.1-sol', 'gpt-6-sol']).map(x => x[2]), [true, false, false], '저장된 것이 없으면 목록의 첫 모델');
 });
 await test('resolveModel: 저장된 모델 → 목록의 첫 모델 → (직접 입력) → \'\' — 고정된 첫 모델로 가지 않음', () => {
@@ -444,7 +444,7 @@ await test('index.js 연결: 화면을 열 때 · 공급자를 바꿀 때만 조
     assert.match(INDEX, /\$\('#bwr_model, #bwr_custom_model'\)\.on\('blur', renderPendingModels\)/);
     assert.match(INDEX, /\$\('#bwr_provider'\)\.on\('change', function \(\) \{\s*settings\.provider = String\(this\.value\);\s*renderModels\(\);\s*autoFetchModels\(\);/);
     assert.match(INDEX, /'모델 목록': \(\) => \(EMBEDDED \? autoFetchModels\(\) : /, '단독 서랍은 페이지를 열 때 묻지 않음');
-    assert.match(INDEX, /customLabel: '⚙️ 커스텀 모델 입력'/);
+    assert.match(INDEX, /customLabel: '커스텀 모델 입력'/);
     assert.match(INDEX, /missingSuffix: ` \(\$\{missingNote\(provider, ids\)\}\)`/);
 });
 

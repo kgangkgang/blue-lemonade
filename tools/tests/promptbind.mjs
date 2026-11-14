@@ -394,4 +394,18 @@ await test('1.0.1 정규식 창에서 직접 바꾼 정규식(regex_link.manual)
     ctx.extensionSettings.salty.promptBinds = {}; ctx.extensionSettings.salty.promptLink = { on: false, rows: [] }; invalidateSettings(); B.setPromptManager(pm); delete ctx.extensionSettings.regex_link;
 });
 
+await test('1.5.0 버그 사냥: 테마를 끄면(새로고침 전) 편집 창에 「자동 켜기」 줄을 붙이지 않고 떼요', () => {
+    let removed = 0, made = 0;
+    const old = { remove() { removed++; } };
+    const form = { querySelector: sel => (sel === '#bl_prompt_bind' ? old : null) };
+    const realDoc = globalThis.document;
+    globalThis.document = { getElementById: id => (id === 'completion_prompt_manager_popup_edit' ? form : null), createElement() { made++; throw Error('붙이면 안 돼요'); } };
+    const s = ctx.extensionSettings.salty, was = s.enabled;
+    try {
+        s.enabled = false; invalidateSettings();
+        assert.equal(B._forTest.block(), null);
+        assert.equal(removed, 1, '남은 줄을 떼요'); assert.equal(made, 0);
+    } finally { s.enabled = was; invalidateSettings(); globalThis.document = realDoc; }
+});
+
 console.log(`\npromptbind: ${passed} passed, 0 failed`);

@@ -146,6 +146,7 @@ class FakeContext {
 }
 const timers = []; let clock = 1_000_000, timerSeq = 0;
 const fetched = [];
+let hold = null;   // 1.5.0: 곡 받기를 붙잡아 두는 시험용
 let media = [];
 const doc = Object.assign(new EventTarget(), { hidden: false, querySelectorAll: sel => sel === 'audio, video' ? media : sel === '[data-bl-music-now]' ? marks : [] });
 const marks = [{ textContent: '', dataset: {} }];
@@ -154,7 +155,7 @@ const st = { chat: [], chatId: 'chat-a' };
 const fakeHost = {
     AudioContext: () => FakeContext,
     doc: () => doc, now: () => clock, random: () => 0.5,
-    fetch: async url => { fetched.push(String(url)); return { ok: !/missing/.test(url), status: 404, arrayBuffer: async () => new ArrayBuffer(32) }; },
+    fetch: async url => { fetched.push(String(url)); if (hold) await hold; return { ok: !/missing/.test(url), status: 404, arrayBuffer: async () => new ArrayBuffer(32) }; },
     setTimeout: (fn, ms) => { const id = ++timerSeq; timers.push({ id, fn, due: clock + ms }); return id; },
     clearTimeout: id => { const i = timers.findIndex(x => x.id === id); if (i >= 0) timers.splice(i, 1); },
     weather: async () => ({ weatherState: () => ({ current: null }) }),
@@ -280,6 +281,24 @@ await t('숨은 탭: 「화면 밖에서도」 켬(기본)이면 계속 · 끄�
     clock += 1000; runFakeTimers(); assert.equal(ctx.state, 'suspended', '다 걷히면 소리판도 잠든다');
     doc.hidden = false; doc.dispatchEvent(new Event('visibilitychange')); await settle();
     assert.equal(mstate().resting, false); assert.equal(mstate().mood, 'festive'); assert.ok(mstate().track); assert.equal(ctx.state, 'running');
+});
+await t('1.5.0 버그 사냥: 곡을 받는 중에 탭이 숨어도(「화면 밖에서도」 끔) 받은 곡을 숨은 탭에서 틀지 않아요 · 돌아오면 이어져요', async () => {
+    await syncSceneSound(false, SS({}, { background: false }), NO_WEATHER, false); await settle();
+    clock += 5000; runFakeTimers(); await settle();
+    assert.equal(mstate().track, null);
+    let release; hold = new Promise(r => { release = r; });
+    try {
+        await syncSceneSound(true, SS({ files: { festive: '/user/files/held-festive.mp3' } }, { background: false }), NO_WEATHER, false);
+        await settle();
+        assert.equal(fetched.at(-1), '/user/files/held-festive.mp3', '받는 중');
+        doc.hidden = true; doc.dispatchEvent(new Event('visibilitychange'));
+        release(); hold = null; await settle();
+        assert.equal(mstate().track, null, '숨은 탭에서 곡이 시작됐어요');
+        assert.equal(mstate().resting, true);
+    } finally { hold = null; release?.(); }
+    doc.hidden = false; doc.dispatchEvent(new Event('visibilitychange')); await settle();
+    assert.equal(mstate().resting, false); assert.ok(mstate().track, '돌아오면 이어져요');
+    clock += 5000; runFakeTimers();
 });
 await t('장면 소리를 끄면 음악도 페이드아웃 · 다리 비움', async () => {
     await syncSceneSound(false, SS({}), NO_WEATHER, false); await settle();

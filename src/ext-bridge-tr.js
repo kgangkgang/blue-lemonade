@@ -106,7 +106,8 @@ async function loadTarget(doc) {
     return { tr, core, busy: typeof prompts.mainBusy === 'function' ? prompts.mainBusy : () => false };
 }
 
-export function createTrFill(mb, { doc = globalThis.document, toast = globalThis.toastr, now = () => Date.now(), timers = globalThis } = {}) {
+const stChatId = () => { try { return globalThis.SillyTavern?.getContext?.()?.getCurrentChatId?.() ?? null; } catch { return null; } };
+export function createTrFill(mb, { doc = globalThis.document, toast = globalThis.toastr, now = () => Date.now(), timers = globalThis, chatId = stChatId } = {}) {
     const { tr, core } = mb;
     const tried = new Set();
     let filling = false, watch = null, autoTimer = 0;
@@ -147,10 +148,13 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         if (!list.length) return 0;
         filling = true;
         let done = 0;
+        const chat = chatId();
         try {
             for (let i = 0; i < list.length; i += BATCH) {
                 const src = { list: list.slice(i, i + BATCH) };
                 const out = await tr.trJSON(src);
+                // 1.5.0: 번역을 기다리는 사이 채팅을 바꾸면 addPairs 가 새 채팅 사전(getMeta)에 넣어요 — 그 채팅 것이 아니니 멈춰요
+                if (chatId() !== chat) break;
                 if (out === src || !Array.isArray(out?.list) || out.list.length !== src.list.length) continue;   // 실패 · 개수 어긋남 → 다음에 다시
                 const pairs = [];
                 src.list.forEach((part, k) => { const got = pairsFor(part, out.list[k], owners); if (got.length) { pairs.push(...got); done++; } else tried.add(part); });

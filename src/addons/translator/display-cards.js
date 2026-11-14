@@ -483,7 +483,9 @@ export function withDisplayCardsProtected(text, transform) {
  * 규칙 앞에 「카드 꼴이면 여기서 시작하지 않음」 조건만 붙인다 — 같은 규칙 글자 · 순서라 다른 보호 블록 번호는 그대로예요. */
 export function cardAwareUserRule(regex) {
     if (!(regex instanceof RegExp) || !/^\^?<tracker(?:\b|>|\\b)/i.test(regex.source)) return regex;
-    return new RegExp(String.raw`(?!<tracker\b[^>\x60]{0,200}>[^<\x60]*?\|[^<\x60]*?\|[^<\x60]*?<\/tracker\s*>)` + regex.source, regex.flags);
+    // 1.5.0: 게으른 구간 셋이 칸(|)을 나눠 갖던 꼴은 실패할 때 칸 수의 세제곱으로 되돌아갔어요(칸 2000 · 태그 하나에 1초) —
+    //   칸 앞 구간은 칸을 못 먹게 해 갈림길을 없앴어요(맞는 글은 같아요: 칸 둘 이상 · < · 백틱 없이 </tracker> 까지)
+    return new RegExp(String.raw`(?!<tracker\b[^>\x60]{0,200}>[^<\x60|]*\|[^<\x60|]*\|[^<\x60]*<\/tracker\s*>)` + regex.source, regex.flags);
 }
 
 /** Exact blocks for display isolation; callers can escape these for their own regex registry. */

@@ -77,7 +77,7 @@ const settings = (version, heads, icon = '') => {
 };
 globalThis.localStorage = { store: {}, getItem(k) { return this.store[k] ?? null; }, setItem(k, v) { this.store[k] = String(v); } };
 
-const { SETS, FIRST_TAB, buildTabs, showGroup, headLabel, versionOf, compatText, attachSheet, startExtCompat, ensureStrip } = await import(pathToFileURL(path.join(root, 'src/ext-compat.js')).href);
+const { SETS, FIRST_TAB, buildTabs, showGroup, headLabel, versionOf, compatText, attachSheet, startExtCompat, ensureStrip, adoptStray } = await import(pathToFileURL(path.join(root, 'src/ext-compat.js')).href);
 const SET = SETS[0];
 const tabsOf = box => box.querySelector('.bl-ext-tabs').children;
 const shown = content => content.children.filter(k => 'blTabG' in k.dataset && !('blTabOff' in k.dataset));
@@ -222,5 +222,19 @@ test('⑨ 그 확장이 칸을 다시 그려도 확장 서랍 단추를 누르�
     assert.equal(fresh.box.querySelector('.bl-ext-tabs'), null);
     const mod = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8');
     assert.ok(!/blExtIcon|data-bl-ext-icon|markIcon/.test(mod));
+});
+test('⑫ 탭을 만든 뒤에 끼어든 줄(번호 없음)은 첫 탭 것으로 — 「확장 탭에 보이기」 줄이 모든 탭 위에 보이지 않게(11-15 검수)', () => {
+    const src = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8');
+    const mk = (cls, data = {}) => ({ className: cls, dataset: { ...data } });
+    const nav = mk('bl-ext-tabs'), late = mk('bl-hs-row'), row = mk('', { blTabG: '2' }), find = mk('bl-ext-find'), early = mk('bl-hs-row', { blTabG: '0' });
+    const content = { children: [late, nav, find, early, row] }; nav.parentElement = content;
+    const fake = tab => ({ dataset: { blTabs: tab }, querySelector: sel => (sel === '.bl-ext-tabs' ? nav : null) });
+    assert.equal(adoptStray(fake('2')), 1, '번호 없는 줄 하나만');
+    assert.deepEqual(late.dataset, { blTabG: '0', blTabOff: '' }, '첫 탭 번호 · 지금 다른 탭이면 가려요');
+    assert.deepEqual([nav.dataset, find.dataset, early.dataset, row.dataset], [{}, {}, { blTabG: '0' }, { blTabG: '2' }], '탭 줄 · 테마가 끼운 것 · 번호 있는 줄은 그대로');
+    const again = mk('bl-hs-row'); content.children.unshift(again);
+    assert.equal(adoptStray(fake('0')), 1); assert.deepEqual(again.dataset, { blTabG: '0' }, '첫 탭을 보고 있으면 가리지 않아요');
+    assert.equal(adoptStray({ dataset: {}, querySelector: () => null }), 0, '탭이 없으면 아무것도 안 해요');
+    assert.ok(src.includes('attachSheet(doc, set); buildTabs(root, set); adoptStray(root);'), '칸을 볼 때마다 한 번(감시자 없음)');
 });
 console.log(`ext-settings-tabs: ${passed}개 통과`);

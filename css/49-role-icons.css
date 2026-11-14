@@ -93,7 +93,8 @@
   margin: 0;
 }
 /* ---------- 묶음(창 도구 · 상단 서랍 · 입력줄 · 애드온 단추 · 내 단추) — 마크다운 설정의 접는 묶음(.bl-md-group, 67-markdown-controls)과 같은 모양 ---------- */
-.salty-panel .bl-roleicon-group {
+/* 1.5.0: 뒤에 오는 .bl-md-group { margin:0 } 에 져서 카드가 2px 로 붙어 있었어요 → 같은 무게로 한 번 더 */
+.salty-panel .bl-md-group.bl-roleicon-group {
   margin-top: 8px;
 }
 /* 묶음 안 줄은 카드 안이라 면을 또 깔지 않는다(한 겹). 줄 자체 규칙(.salty-row)은 20-panel 그대로 */

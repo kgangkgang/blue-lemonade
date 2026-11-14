@@ -14,6 +14,7 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { badgeTextHit } from '../../badge-hit.js';
 // 7.7.4 시작 덮개 동안은 테마 색을 읽지 않는다
 import { afterBoot } from '../../boot-gate.js';
+import { setRootVar } from '../../root-var-seed.js';
 import { onThemeLook } from '../../shared/theme-look.js';
 // 8.0.7 페르소나 위치 · 캐릭터 설명 위치 — 작가 노트와 같은 공용 틀
 import { registerAnchorSource, anchorAvailable } from '../../prompt-anchors.js';
@@ -429,11 +430,11 @@ function applyOnColor() {
     const onInk = contrastInk(effectiveOnColor(style)), base = dark ? '#141318' : '#fbf9f6';
     onColorSignature = colorSignature(style);
     const rootStyle = document.documentElement.style;
-    if (settings().onColor) rootStyle.setProperty('--jj-on-color', settings().onColor);
-    else rootStyle.removeProperty('--jj-on-color');
-    rootStyle.setProperty('--jj-on-ink', onInk);
-    rootStyle.setProperty('--jj-base', base);
-    rootStyle.setProperty('--jj-stroke', dark ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
+    // 1.4.8 opt: 같은 값이면 쓰지 않아요 — 시작 덮개 아래에서 지난번 값을 먼저 써 둬서(root-var-seed.js) 덮개 뒤 문서 전체 재계산 한 번이 빠져요
+    setRootVar('--jj-on-color', settings().onColor || '');
+    setRootVar('--jj-on-ink', onInk);
+    setRootVar('--jj-base', base);
+    setRootVar('--jj-stroke', dark ? 'var(--jj-on)' : 'color-mix(in srgb, var(--jj-on) 80%, #b08000)');   // 1.3.1 테두리 단계 (밝은 테마는 조금 진하게)
     rootStyle.removeProperty('--jj-grad-a');   // 1.3.1 그라데이션은 없앴다 (예전 판이 남긴 값 치우기)
     rootStyle.removeProperty('--jj-grad-b');
     // 1.1.5 설정 카드가 열려 있으면(팔레트 · 에이드를 바꾼 때) 색 견본도 다시 — 닫혀 있으면(부팅 포함) 계산 스타일을 더 읽지 않아요

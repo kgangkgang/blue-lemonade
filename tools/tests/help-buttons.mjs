@@ -51,7 +51,7 @@ ok(/help\.html \? `<div class="bl-help-html">\$\{help\.html\}<\/div>`/.test(read
 
 // ⑥ 설정창 간단화 연결
 const adv = read('src/settings-advanced.js'), ed = read('src/settings-editor.js'), panel = read('src/panel.js');
-ok(/import \{ applyAdvanced, moveLongNotes \} from '\.\/settings-advanced\.js'/.test(ed) && /applyAdvanced\(section, groups, route, chipped\)/.test(ed) && /moveLongNotes\(root, section, route, title/.test(ed), '편집기가 고급 접힘 · 긴 설명 ? 를 써요');
+ok(/import \{ applyAdvanced, moveLongNotes(?:, \w+)* \} from '\.\/settings-advanced\.js'/.test(ed) && /applyAdvanced\(section, groups, route, chipped\)/.test(ed) && /moveLongNotes\(root, section, route, title/.test(ed), '편집기가 고급 접힘 · 긴 설명 ? 를 써요');
 ok(/fold\.className = 'bl-md-group bl-advanced';/.test(adv) && /fold\.dataset\.mdFold = `adv:/.test(adv), '고급은 data-md-fold 접힘(다시 그려도 상태 유지 · 검색이 펼침)');
 ok(/button\.className = 'bl-help-btn'; button\.dataset\.act = 'group-help'/.test(adv), '긴 설명은 묶음 제목 옆 H3 ? 하나');
 ok(/openFoldsFor\(root, entry\.words\)/.test(panel), '키 없는 검색 항목도 고급 안 줄이면 펼쳐요');

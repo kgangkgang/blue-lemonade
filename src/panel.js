@@ -258,7 +258,19 @@ async function stepHistory(redo) {
 
 function settingsChanges(s) {
     const changes = changedSettings(s);
-    return `<p class="salty-note">기본값에서 바뀐 설정 ${changes.length}개예요. 저장한 액자·글꼴·스타일 보관함은 유지해요. 복원도 상단 화살표로 되돌릴 수 있어요.</p><div class="bl-changes-list">${changes.map(({path,before,value}) => `<article class="bl-setting-change"><b>${esc(historyLabel(path))}</b><small>기본 ${esc(historyValue(before,path))} → 현재 ${esc(historyValue(value,path))}</small><div><button type="button" class="salty-btn" data-act="setting-jump" data-setting="${esc(path)}">설정으로</button>${path === 'usageMode' ? '' : `<button type="button" class="salty-btn" data-act="setting-reset" data-setting="${esc(path)}">기본값</button>`}</div></article>`).join('') || '<p class="salty-note">모두 기본값을 사용하고 있어요.</p>'}</div>`;
+    const card = ({path,before,value}) => `<article class="bl-setting-change"><b>${esc(historyLabel(path))}</b><small>기본 ${esc(historyValue(before,path))} → 현재 ${esc(historyValue(value,path))}</small><div><button type="button" class="salty-btn" data-act="setting-jump" data-setting="${esc(path)}">설정으로</button>${path === 'usageMode' ? '' : `<button type="button" class="salty-btn" data-act="setting-reset" data-setting="${esc(path)}">기본값</button>`}</div></article>`;
+    const note = `<p class="salty-note">기본값에서 바뀐 설정 ${changes.length}개예요. 저장한 액자·글꼴·스타일 보관함은 유지해요. 복원도 상단 화살표로 되돌릴 수 있어요.</p>`;
+    if (!changes.length) return `${note}<div class="bl-changes-list"><p class="salty-note">모두 기본값을 사용하고 있어요.</p></div>`;
+    // 1.5.0: 바꾼 설정이 많으면 화면별로 접어 둬요(한 줄로 늘어놓으면 100개에 16,000px) — 접힘은 다른 접는 묶음과 같은 부품 · 여닫은 것은 창이 열려 있는 동안 기억
+    if (changes.length <= 8) return `${note}<div class="bl-changes-list">${changes.map(card).join('')}</div>`;
+    const tabName = Object.fromEntries(TABS), groups = new Map();
+    for (const change of changes) {
+        const r = settingRoute(change.path);
+        const key = r && tabName[r.tab] ? `${tabName[r.tab]} › ${screenTitle(r.tab, r.sub, SUBS) || r.sub}` : '그 밖';
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(change);
+    }
+    return `${note}<div class="bl-md-groups bl-changes-groups">${[...groups].map(([key, list]) => `<details class="bl-md-group bl-changes-group" data-md-fold="changes:${esc(key)}"><summary><span>${esc(key)}</span><small>${list.length}개</small></summary><div class="bl-md-group-body bl-changes-list">${list.map(card).join('')}</div></details>`).join('')}</div>`;
 }
 function installSettingResets(root) {
     const settings = getSettings();
@@ -1541,7 +1553,7 @@ function decorControls(prefix, o) {
         <span class="bl-frame-label">내 액자 ${settings.frameLibrary.length} / ${FRAME_LIMIT}</span>
         <div class="bl-frame-upload-row"><button type="button" class="salty-btn" data-act="mart-import"><i class="fa-solid fa-store" aria-hidden="true"></i><span>마트에서 가져오기</span></button></div>
         <p class="salty-note">불러온 액자는 보관함에 저장돼요. 프로필과 에셋에서 함께 골라 쓸 수 있어요. 그림 액자 · 색을 바꾼 심플 액자는 액자 마트에서 받아요.</p>
-        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => { const armed = frameArmed === item.id; return `<div class="bl-frame-item"><button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" class="bl-pick-card ${d.libraryId === item.id ? 'on' : ''}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, (fromMart(item.id) ? '🛒 ' : '') + item.name, frameFilter(item.decor))}</button><button type="button" class="bl-frame-x${armed ? ' is-armed' : ''}" data-act="frame-x" data-id="${esc(item.id)}" aria-label="${esc(item.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 보관함에서 지워요' : '보관함에서 지우기'}">${armed ? '지우기' : '✕'}</button></div>`; }).join('')}</div>` : ''}
+        ${settings.frameLibrary.length ? `<div class="bl-frame-library" role="group" aria-label="저장한 액자">${settings.frameLibrary.map(item => { const armed = frameArmed === item.id; return `<div class="bl-frame-item"><button type="button" data-act="frame-use" data-owner="${prefix}" data-id="${esc(item.id)}" class="bl-pick-card ${d.libraryId === item.id ? 'on' : ''}" aria-pressed="${d.libraryId === item.id}">${thumb(item.decor.art, item.name, frameFilter(item.decor))}${fromMart(item.id) ? '<i class="fa-solid fa-cart-shopping bl-frame-mart" role="img" aria-label="마트에서 받음" title="마트에서 받음"></i>' : ''}</button><button type="button" class="bl-frame-x${armed ? ' is-armed' : ''}" data-act="frame-x" data-id="${esc(item.id)}" aria-label="${esc(item.name)} ${armed ? '정말 지우기' : '지우기'}" title="${armed ? '한 번 더 누르면 보관함에서 지워요' : '보관함에서 지우기'}">${armed ? '지우기' : '✕'}</button></div>`; }).join('')}</div>` : ''}
         ${selected ? `<div class="bl-frame-actions"><button type="button" class="salty-btn" data-act="frame-rename" data-owner="${prefix}" data-id="${esc(selected.id)}">이름 바꾸기</button><button type="button" class="salty-btn" data-act="frame-delete" data-id="${esc(selected.id)}">보관함에서 삭제</button></div>` : ''}
     </div>`;
 }
@@ -1738,6 +1750,7 @@ function tabChat(s, sub) {
         ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
             ${mesPinPicker(s)}
             ${row('미트볼 추억 앨범 단추', toggle('chat.mbAlbumBtn', s.chat.mbAlbumBtn === true), '미트볼 상태창이 답마다 이름 줄에 붙이는 「추억 앨범에 담기」 단추를 보여요 · 끄면(기본) 숨겨서 폰 이름 줄이 한 줄에 들어가요 · 앨범 기능 · 상태창의 앨범 탭은 그대로예요')}
+            ${row('미트볼 상태창 편의 기능', toggle('chat.mbHelpers', s.chat.mbHelpers !== false), '미트볼 상태창 설정 칸의 「설정 찾기」와 긴 상태창의 「맨 위로」 단추를 보여요 · 끄면 둘 다 사라지고 나머지 맞춤 화면은 그대로예요')}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true, s)}</div>

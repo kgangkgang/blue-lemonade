@@ -157,7 +157,9 @@ export async function openCleanup() {
     if (!await ask(`${lines}\n\n서버에서 지울까요? 되돌릴 수 없어요. 지금 쓰는 캐릭터의 사진은 건드리지 않아요.`, { ok: plan.total ? `${plan.total}장 지우기` : '항목 정리', cancel: '취소', danger: true, title: '남은 파일 정리' })) return;
     let removed = 0, failed = 0;
     for (const path of [...plan.goneFiles, ...plan.orphanFiles]) { try { await deleteImage(path); removed++; } catch { failed++; } }
-    for (const avatar of plan.gone) delete s.chars[avatar];
+    // 1.5.0: 확인 창 · 서버 요청을 기다리는 사이 설정을 다시 읽으면(저장 · 탭 복귀 합치기) multiAvatar 가 새 객체로 바뀌어요 — 지금 것에서 지워요
+    const chars = getSettings().multiAvatar.chars;
+    for (const avatar of plan.gone) delete chars[avatar];
     persist();
     toast(failed ? 'warning' : 'success', `사진 ${removed}장을 지웠어요.${failed ? ` ${failed}장은 지우지 못했어요.` : ''}${plan.gone.length ? ` 지운 캐릭터 ${plan.gone.length}명의 항목도 정리했어요.` : ''}`);
 }

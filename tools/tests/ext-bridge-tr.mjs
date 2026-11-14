@@ -153,4 +153,21 @@ await test('⑥ 자동: 그 확장 자동 번역이 지금 번역 담당에 켜�
     assert.equal(T.createTrFill(fakeTarget({ auto: 'off', engine: 'st' }).mb).autoOn(), false);
 });
 
+await test('⑦ 1.5.0 버그 사냥: 번역을 기다리는 사이 채팅을 바꾸면 그 결과를 새 채팅 사전에 넣지 않아요', async () => {
+    const f = fakeTarget({ ko: { 'Honey Lemon Drop': '꿀레몬 사탕' } });
+    let chat = 'A';
+    const added = [];
+    const real = f.mb.tr.trJSON;
+    f.mb.tr.trJSON = async src => { const out = await real(src); chat = 'B'; return out; };   // 번역하는 동안 다른 채팅으로
+    f.mb.tr.addPairs = pairs => { added.push([chat, ...pairs]); return pairs.length; };
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => chat });
+    const done = await fill.fill('click');
+    assert.equal(done, 0);
+    assert.deepEqual(added, [], JSON.stringify(added));
+    chat = 'A';
+    f.mb.tr.trJSON = real;
+    assert.equal(await T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => chat }).fill('click'), 1, '그대로면 넣어요');
+    assert.equal(added.length, 1);
+});
+
 console.log(`ext-bridge-tr: ${passed} 통과`);

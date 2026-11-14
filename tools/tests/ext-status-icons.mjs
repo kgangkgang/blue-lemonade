@@ -87,7 +87,7 @@ check('③ 글꼴은 그 확장 뿌리에만 · 채팅 본문 · 입력칸 · �
     assert.ok(uses.length >= 4, `글꼴을 쓰는 규칙 ${uses.length}`);
     for (const r of uses) {
         assert.ok(!/#chat|\.mes_text|\.mes\b/.test(r.sel), `채팅 본문에 걸면 안 돼요: ${r.sel}`);
-        for (const s of r.sel.split(/,\s*(?![^()]*\))/)) assert.match(s.trim(), /^body\.salty(:not\(\[data-bl-ext-raw\]\))? .*(\.ss-|#ss-)/, `그 확장 뿌리 밖: ${s}`);   // :not(…) 은 채팅방 고양이(「원작 그대로 보기」면 원래 아이콘)
+        for (const s of r.sel.split(/,\s*(?![^()]*\))/)) assert.match(s.trim(), /^body\.salty(:not\(\[data-bl-ext-raw\]\))? .*(\.ss-|#ss-|dialog\.bl-ext-avadlg )/, `그 확장 뿌리 밖: ${s}`);   // :not(…) 은 채팅방 고양이(「원작 그대로 보기」면 원래 아이콘) · dialog.bl-ext-avadlg 는 맞춤 모듈이 표식을 단 그 확장의 「얼굴 바꾸기」 창(실리태번 팝업이라 .ss- 이름이 없어요)
         assert.match(r.body, /'bl-mb-icons',\s*var\(--salty-font-ui\)/, '테마 UI 글꼴 앞에만 끼워요(글꼴이 없으면 원래 글꼴)');
     }
     const all = uses.map(r => r.sel).join(',');
@@ -105,7 +105,28 @@ check('④ 그 확장이 없는 사람은 0 — 늘 붙는 시트 · 시작 묶�
 check('⑤ 저장 · 프롬프트 · 본문 글은 안 건드려요 — 맞춤 모듈이 글자 노드를 고치지 않아요', () => {
     const mod = read('src/ext-compat.js').replace(/\/\/[^\n]*/g, '');
     assert.ok(!/createTreeWalker|NodeFilter|splitText|\.nodeValue\s*=|\.normalize\(|replaceChildren|textContent\s*=\s*[^;]*\.(replace|split)/.test(mod), '글자 노드를 바꾸는 코드가 생겼어요');
-    assert.ok(!/1F[0-9A-F]{3}|\\u\{1F(?!63C)/i.test(mod.replace(/icon: \['\\u\{1F63C\}', 'cat'\]/, '')), '그림 글자 바꾸기는 글꼴로만(모듈에 그림 글자 표를 두지 않아요)');
+    // 얼굴 고르개의 고를 그림 표(AVA_PICKS — 사람이 고르는 목록이지 글자를 바꾸는 표가 아니에요)만 빼고 봐요. 그 표의 그림은 전부 선 아이콘 글꼴에 있어야 해요(없으면 고른 얼굴이 색 그림 글자로 떠요)
+    const picks = /export const AVA_PICKS = \[[\s\S]*?\n\];/.exec(mod)?.[0] || '';
+    assert.ok(picks, '얼굴 고르개 표');
+    const list = [...picks.matchAll(/\[0x([0-9A-F]+), '([^']+)'\]/g)].map(m => [m[1], m[2]]);
+    assert.ok(list.length >= 16 && list.length % 8 === 0, `고를 그림 ${list.length}개 — 8열 격자를 꽉 채워요`);
+    for (const [hex, name] of list) assert.ok(META.map[hex], `얼굴 고르개의 ${name}(U+${hex})가 선 아이콘 글꼴 표에 없어요`);
+    assert.equal(new Set(list.map(x => x[0])).size, list.length, '같은 그림이 두 번 없어요');
+    for (const hex of ['1F431', '1F436', '1F98A', '1F43B', '1F430', '1F43C', '1F438', '1F427', '1F981', '1F42F', '1F428', '1F439', '1F989', '1F43A', '1F99D', '1F42E']) assert.ok(META.map[hex] && list.some(x => x[0] === hex), `이름으로 정해지는 동물 얼굴 U+${hex}`);
+    assert.ok(!/1F[0-9A-F]{3}|\\u\{1F(?!63C)/i.test(mod.replace(picks, '').replace(/icon: \['\\u\{1F63C\}', 'cat'\]/, '')), '그림 글자 바꾸기는 글꼴로만(모듈에 그림 글자를 바꾸는 표를 두지 않아요)');
+    // 얼굴 바꾸기 창: 고른 그림은 그 확장의 입력칸에 적기만 하고(저장은 그 확장), 창에 글자로 찍힌 「[object …]」 한 덩이만 비워요
+    assert.ok(mod.includes("input.value = pick.dataset.blAva || '';") && mod.includes("if (junk) { junk.before(hint, grid); junk.data = ''; } else box.append(hint, grid);"));
+    assert.ok(mod.includes("if (ava && !doc.body.hasAttribute('data-bl-ext-raw'))"), '「원작 그대로 보기」면 고르개를 놓지 않아요');
+});
+check('⑤-2 남은 그림 글자 0 — 미트볼 상태창 2.7.21 화면 문자열에서 모은 그림 글자(210종)가 전부 선 아이콘 글꼴 표 · 시트의 unicode-range 에 있어요', () => {
+    // 2.7.21 원작 사본의 화면 문자열(index.js · style.css · src/*.js)을 \\p{Extended_Pictographic} 로 훑어 모은 코드 포인트(11-15 검수 · 숫자만 적어요 — 원작 글 · 코드는 싣지 않아요).
+    // 새 판에서 그림 글자가 늘면 허브 점검 대본(리그 사진 대본의 「남은 그림 글자」 세기)이 먼저 잡고, 이 표와 글꼴 표에 같이 더해요.
+    const SEEN = '2194 2197 21A9 231B 23EA 23F3 23F8 25B6 2600 2601 2615 2620 2665 267B 2692 2693 2694 2696 2699 26A0 26A1 26C5 26C8 26D3 26EA 26F0 26F2 26F5 2702 2705 2709 270D 270F 2714 2728 2744 274C 2753 2754 2764 2B50 1F0CF 1F193 1F300 1F309 1F30A 1F310 1F319 1F31F 1F327 1F328 1F32B 1F331 1F332 1F333 1F338 1F33C 1F33E 1F340 1F342 1F353 1F356 1F377 1F37A 1F37D 1F380 1F381 1F382 1F389 1F392 1F3A9 1F3AC 1F3AD 1F3B2 1F3C6 1F3CE 1F3D6 1F3D8 1F3D9 1F3E0 1F3E2 1F3E5 1F3E6 1F3EA 1F3EB 1F3F0 1F3F7 1F40E 1F415 1F419 1F41E 1F426 1F427 1F428 1F42E 1F42F 1F430 1F431 1F432 1F436 1F438 1F439 1F43A 1F43B 1F43C 1F43E 1F441 1F449 1F44D 1F451 1F464 1F465 1F489 1F48C 1F48D 1F494 1F495 1F496 1F497 1F49E 1F4A1 1F4A2 1F4A4 1F4A5 1F4A8 1F4AC 1F4AD 1F4B0 1F4B1 1F4B8 1F4BE 1F4C5 1F4CA 1F4CB 1F4CC 1F4CD 1F4D6 1F4DA 1F4DC 1F4DD 1F4E3 1F4E6 1F4EC 1F4F0 1F4F1 1F4F7 1F500 1F501 1F504 1F507 1F50D 1F50E 1F512 1F513 1F514 1F524 1F525 1F527 1F52C 1F52E 1F534 1F54A 1F550 1F573 1F5B1 1F5BC 1F5D1 1F5E1 1F5E8 1F5FA 1F5FC 1F602 1F605 1F622 1F62D 1F62E 1F63C 1F63F 1F648 1F689 1F693 1F6A6 1F6AA 1F6AB 1F6B2 1F6B6 1F6CF 1F6D2 1F6DF 1F6E0 1F6E1 1F6E3 1F6F0 1F916 1F91D 1F976 1F981 1F988 1F989 1F98A 1F98B 1F99D 1F9E9 1F9ED 1F9F0 1F9F1 1F9F9 1FA91 1FAB4 1FAB6'.split(' ');
+    const missing = SEEN.filter(hex => !META.map[hex]);
+    assert.deepEqual(missing, [], `글꼴 표에 없는 그림 글자 ${missing.length}개(0 이어야 해요): ${missing.join(' ')}`);
+    const range = new Set((/unicode-range:\s*([^;]+);/.exec(sheet)?.[1] || '').split(',').map(x => x.trim().replace(/^U\+/, '')));
+    const out = SEEN.filter(hex => !range.has(hex));
+    assert.deepEqual(out, [], `시트의 unicode-range 밖 ${out.length}개: ${out.join(' ')}`);
 });
 check('⑥ 세로 가운데: 그림 잉크 가운데 = 옆 글자 잉크 가운데(±0.005em) · 줄 상자 값은 테마 글꼴과 같아요', () => {
     const m = META.metrics, ref = META.ref;

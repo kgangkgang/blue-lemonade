@@ -180,7 +180,8 @@ export function missingFile(url, text) {
 async function play(kind, level = '') {
     const url = kind ? cfg.files[kind] || '' : '';
     level = kind === 'rain' ? level || 'medium' : '';   // 6.9.9 빗소리 세기 (가볍게 · 보통 · 쏟아짐) — 바뀌면 크로스페이드로 갈아 낀다
-    if (active && active.kind === kind && active.url === url && (active.level || '') === level) { resumeContext(); return; }
+    // 1.5.0: 고른 경로(want)와 견줘요 — 파일을 못 읽어 합성으로 대신한 목소리는 url 이 비어, 설정이 바뀔 때마다 다시 받고 갈아 끼웠어요
+    if (active && active.kind === kind && active.want === url && (active.level || '') === level) { resumeContext(); return; }
     if (!kind) {
         const token = ++loading;
         if (active) { fadeOut(active, FADE.out); active = null; stopThunder(); signal(); }
@@ -196,7 +197,7 @@ async function play(kind, level = '') {
     let voice;
     try { voice = buildVoice(ctx, kind, { buffer, level: level || undefined }); } catch (error) { console.warn('[Blue Lemonade] 장면 소리', error); return; }
     voice.gain.connect(master);
-    const entry = { voice, kind, level, url: buffer ? url : '', since: host.now() };
+    const entry = { voice, kind, level, url: buffer ? url : '', want: url, since: host.now() };
     const swap = !!active;
     if (active) fadeOut(active, FADE.swap);
     active = entry;
@@ -237,7 +238,8 @@ function onVisibility() {
         // 1.1.3 숨는 순간 들리는 소리가 없었어도 쉼 표시를 세운다 — 예전에는 안 서서, 숨은 탭에서 날씨가 바뀌면(트래커 답 · 다른 기기 설정) 소리가 새로 시작됐다
         if (!cfg.background) resting = true;
         if (!cfg.background && active) { fadeOut(active, FADE.hide); active = null; signal(); }
-        if (!cfg.background && musicApi?.musicBusy?.()) { resting = true; musicApi.restMusic(true); }   // 7.0.1 분위기 음악도 같이 쉰다
+        // 7.0.1 분위기 음악도 같이 쉰다 — 1.5.0: 곡을 받는 중(아직 들리는 곡 없음)이어도 쉬게 해요(전엔 받은 곡이 숨은 탭에서 시작됐어요)
+        if (!cfg.background && musicApi) { resting = true; musicApi.restMusic(true); }
         stopThunder();   // 계속 둘 때도 천둥 타이머는 쉰다 — 숨은 탭의 처리 줄이기
         signal();        // 천둥이 「들리는 종류」에서 빠졌다고 알린다
         return;

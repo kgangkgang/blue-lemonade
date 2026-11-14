@@ -164,7 +164,7 @@
                         <label class="checkbox_label llmt-check" for="llm_send_translate">
                             <input type="checkbox" id="llm_send_translate"><span>보내는 메시지를 번역해서 보내기</span>
                         </label>
-                        <small class="llmt-desc">입력창 옆 💬 버튼으로도 켜고 끕니다. 켜면 내가 보내는 글이 아래 언어로 번역돼 AI 에게 가고, 내 화면에는 입력한 글이 그대로 보여요. 💬 를 길게 누르면 입력창의 글을 지금 바로 번역합니다.</small>
+                        <small class="llmt-desc">입력창 옆 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 버튼으로도 켜고 끕니다. 켜면 내가 보내는 글이 아래 언어로 번역돼 AI 에게 가고, 내 화면에는 입력한 글이 그대로 보여요. 그 버튼을 길게 누르면 입력창의 글을 지금 바로 번역합니다.</small>
                         <div class="llmt-field">
                             <label for="llm_send_target_language" class="llmt-label">번역할 언어 (서술)</label>
                             <input type="text" id="llm_send_target_language" class="text_pole" placeholder="English">
@@ -204,7 +204,7 @@
                                 <input type="checkbox" id="llm_send_ctx_history"><span>최근 대화</span>
                             </label>
                         </div>
-                        <small class="llmt-desc">최근 대화 개수는 프롬프트 탭의 {{llmContext}} 메시지 수를 따릅니다. 번역 지시문은 프롬프트 탭 › ⚙️ 보내기 번역 프롬프트에서 고쳐요 ({{targetLang}} = 위 언어).</small>
+                        <small class="llmt-desc">최근 대화 개수는 프롬프트 탭의 {{llmContext}} 메시지 수를 따릅니다. 번역 지시문은 프롬프트 탭 › 「보조 · 보내기 번역 프롬프트」에서 고쳐요 ({{targetLang}} = 위 언어).</small>
                     </div>
                 </section>
 
@@ -345,9 +345,9 @@
                                 <small id="llm_custom_models_status" class="llmt-desc"></small>
                             </div>
                             <small class="llmt-desc">
-                                💡 주소를 넣고 '모델 목록 불러오기'를 누르면 그 서버가 제공하는 모델이 아래 목록에 뜹니다. 받은 목록은 이 기기에 하루 동안 두고, 설정을 열 때 하루가 지났으면 저장된 주소로 다시 받아옵니다.<br>
-                                💡 비워두면 SillyTavern 본체의 <b>Custom (OpenAI-compatible)</b> 접속 설정(주소/추가 헤더/Body)을 그대로 사용합니다.<br>
-                                🔑 API 키는 본체의 <b>Custom (OpenAI-compatible)</b> 키를 공유합니다. (키가 필요 없는 로컬 서버는 비워두셔도 됩니다.)
+                                주소를 넣고 '모델 목록 불러오기'를 누르면 그 서버가 제공하는 모델이 아래 목록에 뜹니다. 받은 목록은 이 기기에 하루 동안 두고, 설정을 열 때 하루가 지났으면 저장된 주소로 다시 받아옵니다.<br>
+                                비워두면 SillyTavern 본체의 <b>Custom (OpenAI-compatible)</b> 접속 설정(주소/추가 헤더/Body)을 그대로 사용합니다.<br>
+                                API 키는 본체의 <b>Custom (OpenAI-compatible)</b> 키를 공유합니다. (키가 필요 없는 로컬 서버는 비워두셔도 됩니다.)
                             </small>
                         </div>
 
@@ -624,12 +624,12 @@
                                 <select id="prompt_select" class="text_pole">
                                     <option value="llm_prompt_chat">채팅 번역 프롬프트</option>
                                     <option disabled>─────────────────</option>
-                                    <option value="llm_prompt_retranslate_correction">⚙️ 재번역 (교정) 프롬프트</option>
-                                    <option value="llm_prompt_retranslate_guidance">⚙️ 재번역 (지침교정) 프롬프트</option>
-                                    <option value="llm_prompt_retranslate_paragraph">⚙️ 재번역 (문단 수 맞추기) 프롬프트</option>
-                                    <option value="llm_prompt_input">⚙️ 입력 번역 프롬프트</option>
-                                    <option value="llm_prompt_send">⚙️ 보내기 번역 프롬프트</option>
-                                    <option value="llm_prefill_content">⚙️ 프리필</option>
+                                    <option value="llm_prompt_retranslate_correction">보조 · 재번역 (교정) 프롬프트</option>
+                                    <option value="llm_prompt_retranslate_guidance">보조 · 재번역 (지침교정) 프롬프트</option>
+                                    <option value="llm_prompt_retranslate_paragraph">보조 · 재번역 (문단 수 맞추기) 프롬프트</option>
+                                    <option value="llm_prompt_input">보조 · 입력 번역 프롬프트</option>
+                                    <option value="llm_prompt_send">보조 · 보내기 번역 프롬프트</option>
+                                    <option value="llm_prefill_content">보조 · 프리필</option>
                                 </select>
                                 <button id="prompt_save_button" class="menu_button small-button" title="프롬프트 저장">
                                     <i class="fa-solid fa-floppy-disk"></i>
@@ -645,8 +645,8 @@
                                 </button>
                             </div>
                             <small class="llmt-desc">
-                                💡 <strong>채팅 번역 프롬프트</strong> 또는 <strong>커스텀 프롬프트</strong>를 선택하면 메시지 번역 시 적용됩니다.<br>
-                                ⚙️ 유틸리티 프롬프트(재번역, 입력 번역, 프리필)는 수정만 가능하며 선택시 메시지 번역에는 채팅 번역 프롬프트가 사용됩니다.
+                                <strong>채팅 번역 프롬프트</strong> 또는 <strong>커스텀 프롬프트</strong>를 선택하면 메시지 번역 시 적용됩니다.<br>
+                                이름 앞에 「보조」가 붙은 프롬프트(재번역, 입력 번역, 보내기 번역, 프리필)는 수정만 가능하며 선택시 메시지 번역에는 채팅 번역 프롬프트가 사용됩니다.
                             </small>
                         </div>
                         <!-- 통합 프롬프트 편집 영역 -->
@@ -707,7 +707,7 @@
                         <label class="checkbox_label llmt-check" for="llm_prefill_toggle">
                             <input type="checkbox" id="llm_prefill_toggle"><span>프리필 사용</span>
                         </label>
-                        <small class="llmt-desc">프롬프트 목록의 ⚙️ 프리필 내용을 AI 응답 앞에 미리 채워서 보냅니다.</small>
+                        <small class="llmt-desc">프롬프트 목록의 「보조 · 프리필」 내용을 AI 응답 앞에 미리 채워서 보냅니다.</small>
 
                         <div class="llmt-divider"></div>
 
@@ -735,7 +735,7 @@
                         </label>
                         <small class="llmt-desc">
                             프롬프트의 <code>{{llmContext}}</code>와 보내기 번역의 최근 대화 참고에 함께 적용돼요. 자동은 기본 지시와 응답 길이를 빼고 대화 전체 단위로 골라요.<br>
-                            ⚙️ "마지막 메시지 제외"는 채팅 번역에만 적용됩니다 (번역 대상과 중복 방지).
+                            "마지막 메시지 제외"는 채팅 번역에만 적용됩니다 (번역 대상과 중복 방지).
                         </small>
                     </div>
                 </section>

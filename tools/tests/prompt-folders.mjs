@@ -427,6 +427,71 @@ await test('프리셋 파일의 폴더: 내 폴더가 없으면 초깃값 · 없
     delete settings.promptFolders.presets.P3;
     pmStub.serviceSettings.extensions = {}; preset = 'P1'; await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle();
 });
+// 원작 1.4.4 와 같은 꼴(11-15 원작 따라가기): 폴더가 하나도 없는 프리셋 · 프리셋 파일 폴더만 있는 프리셋에서 창을 연 채 실리태번이 목록을 다시 그려도
+//   저장이 설정에 남아야 해요. 테마는 창 안에서 사본만 고치고 저장할 때 그 프리셋 칸에 새로 써서, 그 사이 칸이 바뀌어도 잃지 않아요.
+await test('창을 연 채 목록이 다시 그려져도 저장이 남아요: 폴더 없는 프리셋의 새 폴더 · 프리셋 파일 폴더만 있는 프리셋 고치기', async () => {
+    const editor = () => document.querySelector('dialog.bl-pf-editor');
+    const tools = () => { footer.querySelector('.bl-pf-tools').dispatchEvent(new Event('click', { bubbles: true })); return [...document.querySelectorAll('.bl-pf-layer button')]; };
+    const press = (buttons, label) => buttons.find(b => b.textContent === label).dispatchEvent(new Event('click', { bubbles: true }));
+    preset = 'P4'; await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle();
+    assert.equal(heads().length, 0); assert.equal(settings.promptFolders.presets.P4, undefined);
+    press(tools(), '새 폴더');
+    assert.ok(editor()?.open, '새 폴더 창');
+    editor().querySelector('[data-pf-name]').value = '새 묶음';
+    editor().querySelector('[data-pf-name]').dispatchEvent(new Event('input', { bubbles: true }));
+    for (const id of ['p40', 'p41']) editor().querySelector(`.bl-pf-right .bl-prompt-card-choice[data-id="${id}"]`).dispatchEvent(new Event('click', { bubbles: true }));
+    drawList(); await settle();   // 창이 열린 동안 실리태번이 목록을 다시 그림(입히기가 그 프리셋 칸을 다시 읽음)
+    editor().querySelector('[data-card-done]').dispatchEvent(new Event('click', { bubbles: true })); await settle();
+    assert.ok(!editor(), '닫혀요');
+    assert.deepEqual(settings.promptFolders.presets.P4?.folders?.map(f => [f.name, f.ids]), [['새 묶음', ['p40', 'p41']]], '설정에 남아요');
+    assert.deepEqual(heads().map(h => h.querySelector('.bl-pf-title').textContent), ['새 묶음']);
+    preset = 'P5'; pmStub.serviceSettings.extensions = { blPromptFolders: { version: 1, folders: [{ id: 's5', name: '파일 폴더', ids: ['p50', 'p51'], open: true }] } };
+    await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle();
+    assert.equal(settings.promptFolders.presets.P5, undefined, '보기만 하면 설정에 안 적어요');
+    press(tools(), '모든 폴더 고치기');
+    editor().querySelector('[data-pf-name]').value = '고친 이름';
+    editor().querySelector('[data-pf-name]').dispatchEvent(new Event('input', { bubbles: true }));
+    drawList(); await settle();
+    editor().querySelector('[data-card-done]').dispatchEvent(new Event('click', { bubbles: true })); await settle();
+    assert.equal(settings.promptFolders.presets.P5?.folders?.[0]?.name, '고친 이름', '프리셋 파일 폴더를 고친 것도 설정에 남아요');
+    assert.equal(heads()[0]?.querySelector('.bl-pf-title').textContent, '고친 이름');
+    assert.equal(pmStub.serviceSettings.extensions.blPromptFolders.folders[0].name, '파일 폴더', '프리셋 파일은 그대로');
+    delete settings.promptFolders.presets.P4; delete settings.promptFolders.presets.P5;
+    pmStub.serviceSettings.extensions = {}; preset = 'P1'; await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle();
+    assert.equal(heads().length, 4);
+});
+// 원작 1.4.3 과 같은 꼴(11-15 원작 따라가기): 테마가 프롬프트 줄에 display 를 !important 로 걸면 숨긴 줄이 다시 보일 수 있어요.
+//   테마 폴더는 줄을 복제하지 않고 제자리에 둔 채 클래스로만 숨겨서, 숨김 규칙이 줄 display 규칙보다 늘 이겨야 해요.
+await test('접힌 폴더 숨김이 테마의 줄 display 규칙(!important)보다 이겨요 · 줄은 복제하지 않아요', () => {
+    const strip = s => s.replace(/\/\*[\s\S]*?\*\//g, '');
+    const splitTop = s => { const out = []; let depth = 0, cur = ''; for (const ch of s) { if (ch === '(') depth++; else if (ch === ')') depth--; if (ch === ',' && !depth) { out.push(cur.trim()); cur = ''; } else cur += ch; } if (cur.trim()) out.push(cur.trim()); return out; };
+    // 단순 선택자 특이도 [id, class, type] — :is · :not · :has 는 안쪽 가장 큰 것, :where 와 가상 요소 글자는 0
+    const spec = sel => {
+        const n = [0, 0, 0];
+        let s = sel.replace(/::[\w-]+/g, '');
+        s = s.replace(/:(is|not|has|where)\(((?:[^()]|\([^()]*\))*)\)/g, (_, fn, inner) => {
+            if (fn !== 'where') { const best = splitTop(inner).map(spec).sort((a, b) => b[0] - a[0] || b[1] - a[1] || b[2] - a[2])[0]; n[0] += best[0]; n[1] += best[1]; n[2] += best[2]; }
+            return ' ';
+        });
+        n[0] += (s.match(/#[\w-]+/g) || []).length;
+        n[1] += (s.match(/\.[\w-]+|\[[^\]]*\]|:[\w-]+/g) || []).length;
+        n[2] += (s.replace(/#[\w-]+|\.[\w-]+|\[[^\]]*\]|:[\w-]+/g, ' ').match(/(^|[\s>+~])[a-z][\w-]*/gi) || []).length;
+        return n;
+    };
+    const beats = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+    const rules = file => [...strip(fs.readFileSync(file, 'utf8')).matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sels: splitTop(m[1].trim()), body: m[2], file: path.basename(file) }));
+    const hide = rules(path.join(root, 'src/prompt-folders.css')).find(r => r.sels.some(s => s.endsWith('.bl-pf-hide')) && /display:\s*none\s*!important/.test(r.body));
+    assert.ok(hide, '숨김 규칙(display: none !important)');
+    const hideSpec = hide.sels.map(spec).sort((a, b) => beats(a, b))[0];
+    const cssDir = path.join(root, 'css');
+    const rivals = fs.readdirSync(cssDir).filter(f => f.endsWith('.css')).flatMap(f => rules(path.join(cssDir, f)))
+        .filter(r => /(^|;)\s*display:\s*(?!none)[\w-]+\s*!important/.test(r.body))
+        .flatMap(r => r.sels.filter(s => /completion_prompt_manager_prompt\b/.test(s.split(/[\s>+~]+/).pop() || '')).map(s => ({ s, file: r.file, n: spec(s) })));
+    assert.ok(rivals.length >= 1, '테마의 줄 display 규칙을 찾아요(css/14)');
+    for (const r of rivals) assert.ok(beats(hideSpec, r.n) > 0, `${r.file}: ${r.s} [${r.n}] 보다 숨김 [${hideSpec}] 이 세야 해요`);
+    const js = fs.readFileSync(path.join(root, 'src/prompt-folders.js'), 'utf8');
+    assert.ok(!/cloneNode\(/.test(js), '프롬프트 줄을 복제하지 않아요(실리태번 단추 · 다른 확장 표시가 그대로)');
+});
 // 1.0.2: 순서를 바꿔 쓰는 동작(한곳에 모으기 · 폴더째 옮기기)을 실제로 반영하는 가짜
 pmStub.addPromptOrderForCharacter = (_, next) => { order.splice(0, order.length, ...next); };
 const toastOf = () => {

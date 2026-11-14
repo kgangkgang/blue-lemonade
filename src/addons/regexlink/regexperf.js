@@ -1598,7 +1598,7 @@ function warnings(r, badges = false) {
         r.redos.severity === 'poly' && (badges ? badge('a*a*', t`Polynomial backtracking: ${redosReason(r.redos)}. ${redosSuggestion(r.redos)}`) : t`polynomial backtracking (${redosReason(r.redos)})`),
         r.fused > 0 && (badges ? badge('fuse', t`${r.fused} inputs over ${settings.fuseLen} characters were skipped by the fuse`) : t`fused`),
         r.tripped && (badges ? badge('off', t`Turned off by the circuit breaker: ${r.slowRuns} runs took over ${settings.breakerMs} ms. Click to turn it back on.`, 'rpk-undo', ` data-trip="${r.tripId}"`) : t`breaker`),
-        r.maxMs > SPIKE_MS && (badges ? badge('⚡', t`One run took ${fmtMs(r.maxMs)} ms (more than ${SPIKE_MS} ms)` + (r.spike ? '\n' + spikeText(r.spike) + spikeHistory(r) : ''), 'rpk-spike', r.spike?.messageId != null ? ` data-mesid="${r.spike.messageId}"` : '') : t`spike`),
+        r.maxMs > SPIKE_MS && (badges ? badge("<i class='fa-solid fa-bolt' aria-hidden='true'></i>", t`One run took ${fmtMs(r.maxMs)} ms (more than ${SPIKE_MS} ms)` + (r.spike ? '\n' + spikeText(r.spike) + spikeHistory(r) : ''), 'rpk-spike', r.spike?.messageId != null ? ` data-mesid="${r.spike.messageId}"` : '') : t`spike`),
         conflicted.length > 0 && (badges ? badge('⇅', conflicted.map(conflictText).join('\n')) : t`order conflict`),
         ineffective(r) && (badges ? badge('∅', t`Ran ${r.calls} times without ever matching: consider turning it off`) : t`no match`),
     ].filter(Boolean);
@@ -1918,7 +1918,7 @@ function chipText(r, total) {
     if (total > 0 && r.calls) parts.push(`${Math.round(r.totalMs / total * 100)}%`);
     if (ineffective(r)) parts.push('∅');
     if (r.redos.severity === 'exp') parts.push('(a+)+');
-    if (r.maxMs > SPIKE_MS) parts.push('⚡');
+    if (r.maxMs > SPIKE_MS) parts.push(t`spike`);
     if (r.tripped) parts.push('off');
     return parts.join(' · ');
 }
@@ -2179,7 +2179,7 @@ const settingsHtml = () => `
           <li>${t`Rows are sorted by total time. A highlighted row takes half or more of all regex time: fixing or turning it off helps the most.`}</li>
           <li>${t`<b>Runs</b> are real regex executions; <b>Skips</b> and <b>Hits</b> are runs avoided by ② and ③. A script with 0 runs and many skips never had to run at all.`}</li>
           <li>${t`<b>Replacer</b> is the part of Total ms spent in the replacement; if it is large, the replacement (macros) is slow, not the pattern.`}</li>
-          <li>${t`Marks after a name: <code>(a+)+</code> exponential backtracking (a nested quantifier or an alternation whose branches overlap; hover for the reason and a rewrite), <code>a*a*</code> polynomial backtracking (adjacent overlapping quantifiers), <code>⚡</code> one run over ${SPIKE_MS} ms, <code>∅</code> ran ${INEFFECTIVE_RUNS}+ times without ever matching, <code>⇅</code> an earlier script removes what this one looks for (order conflict), <code>fuse</code> long inputs skipped by ⑦, <code>off</code> turned off by ⑧ (click to turn it back on).`}</li>
+          <li>${t`Marks after a name: <code>(a+)+</code> exponential backtracking (a nested quantifier or an alternation whose branches overlap; hover for the reason and a rewrite), <code>a*a*</code> polynomial backtracking (adjacent overlapping quantifiers), <code><i class='fa-solid fa-bolt' aria-hidden='true'></i></code> one run over ${SPIKE_MS} ms, <code>∅</code> ran ${INEFFECTIVE_RUNS}+ times without ever matching, <code>⇅</code> an earlier script removes what this one looks for (order conflict), <code>fuse</code> long inputs skipped by ⑦, <code>off</code> turned off by ⑧ (click to turn it back on).`}</li>
           <li>${t`Click a row to open the script in the Regex extension; the stopwatch re-renders this chat without the script and shows the time it costs, the power icon turns it off.`}</li>
         </ul>
       </details>
@@ -2251,9 +2251,9 @@ function renderPanel() {
     if (s.invalid.length) {
         lines.push(`<span class="rpk-warn">${t`Invalid patterns (${s.invalid.length}), doing nothing: ${s.invalid.map(i => `<b>${esc(i.name)}</b> (${esc(i.error)})`).join('; ')}`}</span>`);
     }
-    if (!patched) lines.push(`<span class="rpk-warn">${t`⚠ Could not patch the regex engine — this SillyTavern version is not supported.`}</span>`);
+    if (!patched) lines.push(`<span class="rpk-warn"><i class='fa-solid fa-triangle-exclamation' aria-hidden='true'></i> ${t`Could not patch the regex engine — this SillyTavern version is not supported.`}</span>`);
     checkWrapper();
-    if (wrapperWarning) lines.push(`<span class="rpk-warn">⚠ ${esc(wrapperWarning)}</span>`);
+    if (wrapperWarning) lines.push(`<span class="rpk-warn"><i class='fa-solid fa-triangle-exclamation' aria-hidden='true'></i> ${esc(wrapperWarning)}</span>`);
     lines.push(`<span class="rpk-dim rpk-since">${t`Since ${new Date(statsSince).toLocaleTimeString()}`}</span>`);
     const summary = lines.map(l => `<p>${l}</p>`).join('');
     setContent(ui.summary, summary);

@@ -111,7 +111,7 @@ await t('③ 장면 소리: 날씨 양 → 세기(55 가볍게 · 100 보통 · 
     assert.equal(SY.buildVoice(ctx, 'rain', { level: 'light' }).level, 'light');
     assert.equal(SY.buildVoice(ctx, 'wind').level, '');
     const scene = read('src/scene-sound.js');
-    assert.match(scene, /active\.url === url && \(active\.level \|\| ''\) === level\)/);
+    assert.match(scene, /active\.want === url && \(active\.level \|\| ''\) === level\)/);   // 1.5.0: 고른 경로(want)로 견줘요(못 읽은 파일도 같은 소리)
     assert.match(scene, /return play\(kind, kind === 'rain' \? rainLevel\(now\?\.amount\) : ''\);/);
     assert.match(scene, /amount: weatherAmount\(weatherChat\.weatherAmount, weatherChat\.weatherLevel\)/);
 });

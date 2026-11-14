@@ -31,7 +31,7 @@ const ALL = {   // querySelectorAll 이 돌려줄 요소 (그 밖은 빈 목록)
 };
 class El {
     constructor(tag = 'div', data = {}) {
-        Object.assign(this, { tagName: tag.toUpperCase(), dataset: { ...data }, classList: new FakeClassList(), style: { setProperty() {}, removeProperty() {} },
+        Object.assign(this, { tagName: tag.toUpperCase(), dataset: { ...data }, classList: new FakeClassList(), style: { setProperty() {}, removeProperty() {}, getPropertyValue() { return ''; } },
             attrs: {}, listeners: {}, children: [], found: new Map(), all: new Map(), hidden: false, disabled: false, value: '', textContent: '', innerHTML: '',
             offsetLeft: 0, offsetWidth: 0, scrollLeft: 0, parentElement: null, nextElementSibling: null });
     }
@@ -75,10 +75,11 @@ globalThis.toastr = Object.fromEntries(['info', 'success', 'warning', 'error'].m
 const { insertInstructions } = await import(pathToFileURL(src('src/addons/direction/prompt.js')).href);
 globalThis.__dirPlace=(await import(pathToFileURL(src('src/addons/direction/prompt.js')).href)).placeInstructions;   // 1.4.0 넣는 곳마다
 globalThis.__dirTyping=(await import(pathToFileURL(src('src/addons/direction/typing.js')).href)).attachTypingRefresh;   // (10-29) 입력칸 타이핑(조합 중 미루기) — 진짜 모듈
+globalThis.__dirRootVar=(await import(pathToFileURL(src('src/root-var-seed.js')).href)).setRootVar;   // 1.5.0 opt: :root 색 변수 쓰기(같은 값 건너뛰기) — 진짜 모듈
 const ext = {};
 const P = globalThis.__directionListTest = { ext, insertInstructions, saves: 0, confirm: true, popups: [], context: { substituteParams: text => String(text) } };
 const source = (await fs.readFile(src('src/addons/direction/index.js'), 'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm, '');
-const prelude = 'const addonRunning=()=>true;const placeInstructions=globalThis.__dirPlace;const attachTypingRefresh=globalThis.__dirTyping;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const P = globalThis.__directionListTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
+const prelude = 'const addonRunning=()=>true;const setRootVar=globalThis.__dirRootVar;const placeInstructions=globalThis.__dirPlace;const attachTypingRefresh=globalThis.__dirTyping;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const P = globalThis.__directionListTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
     + 'const getContext = () => P.context; const saveSettingsDebounced = () => { P.saves++; }; const eventSource = { on() {}, once() {} }; const event_types = {};'
     + 'const POPUP_TYPE = { TEXT: 1, CONFIRM: 2 }; const callGenericPopup = async (...args) => { P.popups.push(args); return P.confirm; };'
     + 'const oai_settings = {}; const getChatCompletionModel = () => ""; const verifyAddonCss = () => {}; const badgeTextHit = () => true; const showThemeModal = () => {};';

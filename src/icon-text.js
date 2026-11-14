@@ -1,6 +1,7 @@
 import { refreshPopupMarks } from './popup-marks.js';
 import { watchDom } from './dom-watch.js';
 import { addMessageDecorator } from './message-decor.js';
+import { afterBoot } from './boot-gate.js';
 // 아이콘 단추 표식 — CSS :has() 대신 JS 가 .menu_button · 체크 줄 label 에 표식을 단다
 // 1) data-bl-icon-text: css/02-controls.css 의 '아이콘만 있는 버튼' 규칙은 `> i` 하나뿐인 .menu_button 을 면 없는 아이콘으로 칠한다.
 //    CSS 는 글자 노드를 못 봐서 `<i class="fa-…"></i> 독서 패널 열기` 같은 다른 확장의 글자 버튼도 거기 걸려
@@ -250,6 +251,32 @@ function scan(node) {
     if (node.matches?.(CLOSED_DRAWER)) { deferredDrawers.add(node); return; }
     const skip = node === document.body || node.querySelector?.(CLOSED_DRAWER) ? inClosedDrawer : null;
     if (skip) for (const d of node.querySelectorAll(CLOSED_DRAWER)) deferredDrawers.add(d);
+    scanBody(node, skip);
+}
+// 1.4.8 opt: 미뤄 둔 닫힌 서랍 하나를 지금 훑어요(열린 것처럼 — 그 안에 또 닫힌 서랍이 있으면 그것만 다시 미뤄요). 표식은 DOM 모양만 보니 열린 뒤 훑은 것과 같아요
+function scanClosedDrawer(drawer) {
+    const nested = drawer.querySelector(CLOSED_DRAWER) ? el => { const c = el.closest(CLOSED_DRAWER); return !!c && c !== drawer; } : null;
+    if (nested) for (const d of drawer.querySelectorAll(CLOSED_DRAWER)) deferredDrawers.add(d);
+    scanBody(drawer, nested);
+}
+// 1.4.8 opt: 처음 여는 서랍이 표식 쓰기(+ 그 다시 계산)를 떠안지 않게, 덮개가 걷힌 뒤 쉴 때 미뤄 둔 서랍을 하나씩 미리 훑어요.
+//   닫힌 서랍은 display:none 이라 그 안 표식 쓰기는 지금 그릴 것이 없어요. 훑은 뒤 바뀌는 것은 지금처럼 감시 콜백이 맞춰요(닫힌 서랍 안 변화도 원래 바로 봐요).
+//   한가한 틈(timeRemaining)만 쓰고, 그사이 열린 서랍은 원래대로 열릴 때 훑어요(scanOpenedDrawers)
+function prescanDeferredDrawers() {
+    if (typeof globalThis.requestIdleCallback !== 'function') return;
+    const queue = [...document.querySelectorAll(CLOSED_DRAWER)].filter(d => deferredDrawers.has(d));
+    const step = deadline => {
+        while (queue.length && deadline.timeRemaining() > 8) {
+            const d = queue.shift();
+            if (!d.isConnected || !deferredDrawers.has(d) || !d.matches(CLOSED_DRAWER)) continue;
+            deferredDrawers.delete(d);
+            scanClosedDrawer(d);
+        }
+        if (queue.length) globalThis.requestIdleCallback(step, { timeout: 5000 });
+    };
+    if (queue.length) globalThis.requestIdleCallback(step, { timeout: 5000 });
+}
+function scanBody(node, skip) {
     if (node.classList?.contains('menu_button')) check(node);
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
@@ -367,6 +394,7 @@ export function startIconTextMark() {
     if (started || !document.body) return;
     started = true;
     scan(document.body);
+    afterBoot(prescanDeferredDrawers);
     refreshPopupMarks(null, document.body);
     // 붙은 요소 속 .menu_button · label · .mes 와, 자식(글자 · 아이콘 · 편집칸 · 타이머 글자)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
     // 9.0.4: 공용 감시 허브 구독 — 채팅(#chat) 밖만(body 구역 · 채팅 가지는 감시도 안 걸어요). 콜백은 예전처럼 그리기 전(when 'now')

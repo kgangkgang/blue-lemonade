@@ -1221,7 +1221,7 @@ function updateModelList() {
         saved: customSelected ? '' : lastUsedModel,
         missingSuffix,
         customValue: 'custom',
-        customLabel: '⚙️ 커스텀 모델 입력', // 맨 아래 custom 옵션
+        customLabel: '커스텀 모델 입력', // 맨 아래 custom 옵션
         customSelected,
     });
     modelSelect.value = lastUsedModel;
@@ -2590,8 +2590,8 @@ async function translate(text, options = {}) {
                 const fixedMatches = translatedText.match(/\[\[__VAR_\d+__\]\]/g);
                 const fixedMaskCount = fixedMatches ? fixedMatches.length : 0;
                 
-                const statusIcon = expectedMaskCount === fixedMaskCount ? '✅' : '⚠️';
-                const recoverIcon = rawMaskCount !== fixedMaskCount ? '🛠️Fixed' : '-';
+                const statusIcon = expectedMaskCount === fixedMaskCount ? 'OK' : 'CHECK';
+                const recoverIcon = rawMaskCount !== fixedMaskCount ? 'Fixed' : '-';
 
                 console.groupCollapsed(`[LLM Translator Mask Debug] ${statusIcon} Match: ${fixedMaskCount}/${expectedMaskCount}`);
                 console.log(`Original(Expected): ${expectedMaskCount}`);
@@ -9506,12 +9506,12 @@ class PromptManager {
 
         // 4. 유틸리티 프롬프트들 (맨 아래)
         const utilityPrompts = [
-            { value: 'llm_prompt_retranslate_correction', text: '⚙️ 재번역 (교정) 프롬프트' },
-            { value: 'llm_prompt_retranslate_guidance', text: '⚙️ 재번역 (지침교정) 프롬프트' },
-            { value: 'llm_prompt_retranslate_paragraph', text: '⚙️ 재번역 (문단 수 맞추기) 프롬프트' },
-            { value: 'llm_prompt_input', text: '⚙️ 입력 번역 프롬프트' },
-            { value: 'llm_prompt_send', text: '⚙️ 보내기 번역 프롬프트' },
-            { value: 'llm_prefill_content', text: '⚙️ 프리필' }
+            { value: 'llm_prompt_retranslate_correction', text: '보조 · 재번역 (교정) 프롬프트' },
+            { value: 'llm_prompt_retranslate_guidance', text: '보조 · 재번역 (지침교정) 프롬프트' },
+            { value: 'llm_prompt_retranslate_paragraph', text: '보조 · 재번역 (문단 수 맞추기) 프롬프트' },
+            { value: 'llm_prompt_input', text: '보조 · 입력 번역 프롬프트' },
+            { value: 'llm_prompt_send', text: '보조 · 보내기 번역 프롬프트' },
+            { value: 'llm_prefill_content', text: '보조 · 프리필' }
         ];
 
         utilityPrompts.forEach(prompt => {
@@ -9599,7 +9599,7 @@ class PromptManager {
         const select = document.getElementById('prompt_select');
         const key = select?.value;
         if (!canResetPrompt(key, defaultSettings) || this.customPrompts.some(p => p.id === key)) return;
-        const name = (select.selectedOptions?.[0]?.textContent || '이 프롬프트').replace(/^⚙️\s*/, '').trim();
+        const name = (select.selectedOptions?.[0]?.textContent || '이 프롬프트').replace(/^보조 · /, '').trim();
         if (!await ask(`「${name}」을 처음 기본값으로 되돌릴까요?\n지금 내용은 알림의 되돌리기 단추로 한 번 살릴 수 있어요.`, { ok: '기본값으로', cancel: '취소' })) return;
         const undo = resetPrompt(extensionSettings, key, defaultSettings);
         if (!undo) { this.loadPromptToEditor(); return; }

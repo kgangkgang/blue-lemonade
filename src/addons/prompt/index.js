@@ -15,7 +15,7 @@ function controlsHelp(kind) {
             ['중단', '진행 중인 번역을 멈춰요. 이미 끝난 항목의 결과는 남아요.'],
             ['비우기', '이 자료의 번역 캐시를 지워요(체크한 항목이 있으면 그 항목만). 원본은 그대로예요.'],
             ['번역본 · 원문 (눈)', '목록에 보이는 항목 제목을 번역 제목 ↔ 원문 제목으로 바꿔 보여 줘요. 화면 표시만 바뀌고 캐시 · 원본은 그대로예요.'],
-            ['⚡ 원본 적용', '번역 결과를 실제 ' + what + ' 파일에 덮어써요. 덮어쓰기 직전 원본을 자동으로 하나 백업해 두니, 알림의 ↶ 이나 더보기 「원본으로 되돌리기」로 돌아갈 수 있어요.'],
+            ['원본 적용', '번역 결과를 실제 ' + what + ' 파일에 덮어써요. 덮어쓰기 직전 원본을 자동으로 하나 백업해 두니, 알림의 ↶ 이나 더보기 「원본으로 되돌리기」로 돌아갈 수 있어요.'],
             ['더보기', '복사 · TXT · JSON 내보내기, 번역 기록(번역 메모리) 저장 · 가져오기.'],
             ['체크 · 숫자 칩', '맨 앞 체크는 보이는 항목 모두 선택이에요. 칩은 항목 수와 토큰 추정치예요.'],
         ].concat(kind === 'wi' ? [['ON · OFF', '월드인포 항목이 켜져 있는지예요(실리태번 월드인포의 항목 스위치와 같아요). 옆 숫자는 그 항목의 토큰 추정치.']] : []),
@@ -1753,7 +1753,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
             <span class="pt-block-name" tabindex="0" role="button" aria-expanded="false" title="${esc(block.name)}">${esc(block.name)}</span>
             ${clipBadge}${regexBadge}${groupBadge}${runnerBadge}
             <span class="pt-token-count" data-tokens="${esc(tokens)}">${Number.isFinite(Number(tokens)) && tokens !== '' ? Number(tokens).toLocaleString('en-US') : esc(tokens)}</span>
-            <span class="pt-block-chevron">▶</span>
+            <span class="pt-block-chevron"><i class="fa-solid fa-caret-right" aria-hidden="true"></i></span>
         </div>
         <div class="pt-block-body">
             ${metaHtml}
@@ -4826,7 +4826,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         if (!name) { if (typeof toastr!=='undefined') toastr.warning('먼저 자료를 불러오세요'); return; }
         let record = null;
         try { record = await fileGetJSON(backupFileName(kind, name)); } catch (err) { console.warn(`[${EXT}] backup read failed`, err); }
-        if (!validBackup(record, kind, name)) { if (typeof toastr!=='undefined') toastr.info('이 자료의 원본 백업이 없어요. 「⚡ 원본 적용」을 할 때 만들어져요.'); return; }
+        if (!validBackup(record, kind, name)) { if (typeof toastr!=='undefined') toastr.info('이 자료의 원본 백업이 없어요. 「원본 적용」을 할 때 만들어져요.'); return; }
         // 7.0.2 처음 원본(기본) · 마지막 적용 전 — 둘이 다르면 고르게
         let which = 'first';
         if (hasTwoBackups(record)) {

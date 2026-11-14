@@ -1,5 +1,6 @@
 // 북마크 — 설정, 색, 테마, 모듈 사이 연결
 import { syncAltPalette } from './alt-palette.js';
+import { setRootVar } from '../../root-var-seed.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { saveSettingsDebounced } from '../../../../../../../script.js';
 
@@ -189,11 +190,11 @@ export function contrastInk(hex) {
 
 /** :root 변수로 넣어서 패널, 창, 채팅의 아이콘이 함께 따라가게 한다. */
 export function applyColors(colors) {
-    const rootStyle = document.documentElement.style;
-    rootStyle.setProperty('--cg-accent', colors.accent);
-    rootStyle.setProperty('--cg-user', colors.user);
-    rootStyle.setProperty('--cg-icon', colors.icon);
-    rootStyle.setProperty('--cg-accent-ink', contrastInk(colors.accent));
+    // 1.4.8 opt: 같은 값이면 쓰지 않아요 — 시작 덮개 아래에서 지난번 값을 먼저 써 둬서(root-var-seed.js) 덮개 뒤 문서 전체 재계산 한 번이 빠져요
+    setRootVar('--cg-accent', colors.accent);
+    setRootVar('--cg-user', colors.user);
+    setRootVar('--cg-icon', colors.icon);
+    setRootVar('--cg-accent-ink', contrastInk(colors.accent));
 }
 
 // 모바일 색 선택기로는 정확한 색을 고르기 어려우므로 색 코드를 기준으로 삼는다.

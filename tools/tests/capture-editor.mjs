@@ -125,4 +125,14 @@ test('the draft keeps the off-screen marker out of its own copy only (live messa
     M.captureDraft([8]);
     assert.equal(messages[0].querySelectorAll('[data-bl-fx-off]').length, 1);
 });
+test('1.5.0 버그 사냥: HTML 주석(<!-- 상태 -->)은 편집 문단이 아니에요 — 보이지도 않고 고쳐도 터지지 않아요', () => {
+    class CommentNode { constructor(data) { this.nodeType = 8; this.data = data; this.parentNode = null; } get textContent() { return this.data; } set textContent(v) { this.data = String(v); } cloneNode() { return new CommentNode(this.data); } get html() { return `<!--${this.data}-->`; } }
+    const live = h('div', { class: 'mes', mesid: '9' }, h('div', { class: 'mes_text' }, new CommentNode(' 상태: 비 '), h('p', null, '본문이에요.')));
+    messages = [live];
+    const [draft] = M.captureDraft([9]);
+    assert.deepEqual(draft.blocks.map(b => b.kind), ['P'], JSON.stringify(draft.blocks));
+    const edited = structuredClone(draft); edited.blocks[0].text = '고친 본문';
+    const out = apply(edited, live);
+    assert.equal(out.querySelector('.mes_text').textContent, '고친 본문');
+});
 console.log(`${passed} checks passed`);

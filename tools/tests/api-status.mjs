@@ -148,7 +148,7 @@ await test('캐시: 이유별 나이 · 못 읽었을 때 5분 쉼 · 저장값 
 
 await test('한국어 문구: 상태 한 줄 · 생성 실패 줄(나쁠 때만) · n분 전', () => {
     assert.equal(core.sentence('anthropic', 'ok'), '정상이에요');
-    assert.match(core.sentence('anthropic', 'partial'), /지금 Claude 쪽이 아파요 🤒/);
+    assert.match(core.sentence('anthropic', 'partial'), /지금 Claude 쪽이 아파요 \(부분 장애\)/);
     assert.match(core.sentence('anthropic', 'major'), /큰 장애/);
     assert.match(core.sentence('deepseek', 'unknown'), /공식 페이지에서만/);
     assert.equal(core.failureLine('anthropic', 'ok'), '');

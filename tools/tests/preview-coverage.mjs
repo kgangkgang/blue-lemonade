@@ -49,6 +49,7 @@ const COVERAGE = [
     ['chat.weather*', '날씨 미리보기'], ['chat.weather2*', '날씨 미리보기'],
     ['chat.weatherAutoRest', NONE, '생성 · 편집 중 쉬기는 움직임 시점만 바꿔요'],
     ['chat.mbAlbumBtn', NONE, '미트볼 상태창(확장)의 추억 앨범 단추라 미리보기 무대에 확장 이름 줄이 없어요'],
+    ['chat.mbHelpers', NONE, '미트볼 상태창(확장)의 설정 칸 · 상태창 창에 끼우는 편의 단추라 미리보기 무대에 그 확장 화면이 없어요'],
     // 글자 — 글꼴 견본(.salty-sample) + 채팅 무대가 같은 변수로
     ['fonts.*', '글꼴 견본'], ['type.*', '글꼴 견본'], ['dialogue.*', '글꼴 견본'], ['em.*', '글꼴 견본'], ['strong.*', '글꼴 견본'],
     ['strike.*', '글꼴 견본'], ['code.*', '글꼴 견본'], ['shadow.*', '글꼴 견본'], ['outline.*', '글꼴 견본'],

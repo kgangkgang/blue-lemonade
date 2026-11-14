@@ -99,6 +99,17 @@ await test('사용자 <tracker> 보호 줄: 칸(|) 둘 이상인 상태창만 �
     assert.match(src, /if \(regex\) specialBlockRegexes\.push\(cardAwareUserRule\(regex\)\);/);
 });
 
+await test('1.5.0 버그 사냥: 칸이 많고 태그(<br>)가 낀 <tracker> 도 앞 조건이 크게 되돌아가지 않아요 · 판정은 그대로', async () => {
+    const rule = cardAwareUserRule(/<tracker>[\s\S]*?<\/tracker>/gi);
+    assert.equal('<tracker>a | b</tracker>'.replace(rule, 'X'), 'X', '칸 하나는 보호');
+    assert.equal('<tracker>a | b | c</tracker>'.replace(rule, 'X'), '<tracker>a | b | c</tracker>', '칸 둘은 비킴');
+    assert.equal('<tracker>a | b | c<br>d</tracker>'.replace(rule, 'X'), 'X', '태그가 끼면 상태창 꼴이 아니라 보호');
+    const big = '<tracker>' + 'ab|'.repeat(2000) + '<br>x</tracker>';
+    const t0 = performance.now(); const out = big.replace(rule, 'X'); const ms = performance.now() - t0;
+    assert.equal(out, 'X');
+    assert.ok(ms < 200, `${ms.toFixed(0)}ms`);
+});
+
 await test('v3-modules: 스위치 낱말 · 제목 · was · [표지] · 동료 이름 · 단계 사전 · data-stage 되돌리기', async () => {
     for (const v of ['Relationships', 'Status', 'Story Threads', "Phi's Scratchpad", 'None', 'N/A', 'unknown', 'Off-scene', 'Departed', 'was 50', 'was 45/100', 'see Relationships', 'see @Relationships'])
         assert.ok(mod.moduleKeepsLocal(v), v);

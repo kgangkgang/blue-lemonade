@@ -11,6 +11,7 @@
 //   ⑪ 상태창 큰 탭(홈 · 나 · 세계 · 사람 · 관리): 아이콘은 글 왼쪽에 · 테마 선 아이콘 꼴 · 글과 같은 크기
 //   ⑩ 채팅방 고양이: 그 확장의 계기판 아이콘 네 곳(띠 카드 머리 · 뜬 단추 · 설정의 「상태창 열기」 · 가장자리 손잡이)만 선 고양이로 — 「원작 그대로 보기」면 원래 아이콘 · 손잡이는 칸 안 빼꼼
 //   ⑬ 2.7.21 타일 판과 겹치는 이름(.ss-t-x · .ss-t-tip)은 알림 것만 · 설정 줄의 글 단추 · 체크 격자는 네모 아이콘 단추 규칙에서 비켜요
+//   ⑭ 검수(11-15): 얼굴 동그라미는 토큰만 · 「원작 그대로 보기」면 선 아이콘 글꼴을 빼요 · 세로 2열 격자(단추 · 쓸 기능 카드 · 편집 목록) · 편의 기능(설정 찾기 · 맨 위로)은 표식 하나로 숨겨요
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -209,5 +210,33 @@ check('⑬ 2.7.21 타일 판과 이름이 겹치는 알림 단추는 좁혀 걸�
     assert.ok(rules.some(r => r.selectors.includes('body.salty #ss-settings .ss-set-inline > .menu_button:not(.ss-set-btn)') && /width: var\(--bl-ui-ctl, 36px\)/.test(r.body)), '네모 아이콘 단추(새로고침)만 36 칸');
     assert.ok(rules.some(r => r.selectors.includes('body.salty #ss-settings .ss-set-inline > .ss-set-btn') && /padding: 0 10px/.test(r.body)), '글 단추는 단추 줄과 같은 꼴');
     assert.ok(rules.some(r => r.selectors.some(s => /#ss-hud \.ss-t\.ic\.open/.test(s))), '2.7.21 띠의 여는 아이콘도 같은 고양이');
+});
+check('⑭ 검수(11-15): 얼굴 동그라미는 토큰만 · 「원작 그대로 보기」면 선 아이콘 글꼴을 빼요 · 세로 2열 격자 · 편의 기능은 표식 하나로 숨겨요', () => {
+    const at = sel => rules.filter(r => r.selectors.includes(sel)).map(r => r.body).join(' ');   // 같은 갈래의 규칙이 여럿이면 이어서 봐요
+    // 얼굴: 고른 면 + 강조 글자색(색 섞기 없음) · 원작 그대로 보기에서는 손대지 않아요
+    assert.match(at('body.salty:not([data-bl-ext-raw]) .ss-scope .ss-ava'), /background: var\(--bl-ui-pick-face\); color: var\(--bl-ui-pick-ink\);/);
+    assert.ok(!rules.some(r => r.selectors.some(sel => /\.ss-ava(?![\w-])/.test(sel) && !/:not\(\[data-bl-ext-raw\]\)|focus-visible/.test(sel))), '얼굴 규칙은 「원작 그대로 보기」에서 비켜요');
+    assert.ok(!rules.some(r => r.selectors.some(sel => /\.ss-ava\.emo::before/.test(sel))), '얼굴을 한 가지 그림으로 덮어 그리지 않아요(고른 그림이 글꼴로 그대로 떠요)');
+    const raw = rules.find(r => r.selectors.some(sel => sel.startsWith('body.salty:is([data-bl-ext-raw]) :is(#ss-settings,')));
+    assert.ok(raw && /^\s*font-family: var\(--salty-font-ui\);\s*$/.test(raw.body), '원작 그대로 보기: 선 아이콘 글꼴을 뺀 테마 글꼴 하나');
+    for (const root of ['#ss-settings', '.ss-toasts', '.ss-root', '.ss-hud', '.ss-side', '.ss-float', '.ss-msgcard', 'dialog.ss-dlg .popup-content']) assert.ok(raw.selectors.join(',').includes(root), `원작 그대로 보기 글꼴 뿌리 ${root}`);
+    // 세로 2열: 칸 최소 폭을 줄여 좁은 창(안쪽 폭 330 · 306)에서 둘씩 — 넓은 창은 auto-fill 그대로 더 들어가요
+    assert.match(at('body.salty .ss-scope .ss-grid-btns'), /grid-template-columns: repeat\(auto-fill, minmax\(min\(100%, 136px\), 1fr\)\);/);
+    assert.match(at('body.salty .ss-scope .ss-mods'), /grid-template-columns: repeat\(auto-fill, minmax\(min\(100%, 140px\), 1fr\)\);/);
+    assert.match(at('body.salty .ss-scope .ss-list'), /display: grid; grid-template-columns: repeat\(auto-fill, minmax\(min\(100%, 132px\), 1fr\)\);/);
+    for (const [min, name] of [[136, '단추 격자'], [140, '쓸 기능 카드'], [132, '편집 목록']]) assert.ok(min * 2 + 8 <= 306 - 22 || min * 2 + 8 <= 306, `${name}: 폰 360(안쪽 폭 306)에서도 두 칸`);
+    assert.match(at('body.salty .ss-scope .ss-list > .ss-erow[open]'), /grid-column: 1 \/ -1;/, '펼친 줄은 두 칸을 다 써요');
+    assert.match(at('body.salty .ss-scope .ss-erow > summary > span:first-child'), /-webkit-line-clamp: 2; white-space: normal;/, '이름은 자르지 않고 두 줄까지');
+    assert.match(at('body.salty .ss-scope :is(.ss-editor, .ss-erow-body) > label.ss-f.n'), /flex: 1 1 88px; width: auto; margin-inline-end: 0;/, '편집기의 숫자 칸은 줄 틈과 겹치지 않게');
+    assert.match(at('body.salty .ss-scope .ss-grid-btns .ss-btn'), /white-space: normal;/, '긴 단추 이름은 줄바꿈(자르지 않아요)');
+    // 편의 기능: 끈 표식(body[data-bl-mb-plain])이면 찾기 칸 · 목록을 숨기고, 맨 위로 단추는 표식이 없을 때 + 내려간 창에서만
+    for (const sel of rules.flatMap(r => r.selectors).filter(sel => /\.bl-ext-(findbtn|find|found)\b/.test(sel) && rules.some(r => r.selectors.includes(sel) && /display: (inline-flex|block|grid) !important/.test(r.body)))) assert.ok(sel.startsWith('body.salty:not([data-bl-mb-plain]) #ss-settings[data-bl-view="org"]'), `보이는 규칙은 편의 기능을 끈 표식에서 걸리지 않아야 해요(숨기는 규칙을 따로 두면 약해서 못 이겨요): ${sel}`);
+    assert.ok(rules.filter(r => r.selectors.some(sel => /\.bl-ext-(findbtn|find|found)\b/.test(sel)) && /display: (inline-flex|block|grid) !important/.test(r.body)).length >= 3, '돋보기 · 찾기 칸 · 목록의 보이는 규칙 셋');
+    assert.match(at('body.salty dialog.popup.ss-dlg > .bl-ext-top'), /display: none;/);
+    assert.match(at('body.salty:not([data-bl-mb-plain]) dialog.popup.ss-dlg[data-bl-top] > .bl-ext-top'), /display: inline-flex;/);
+    assert.ok(!/transition|animation/.test(rules.filter(r => r.selectors.some(sel => /bl-ext-(top|find|findbtn|found|hit|ava)/.test(sel))).map(r => r.body).join(';')), '새로 끼운 것에는 움직임이 없어요');
+    const apply = read('src/apply.js');
+    assert.ok(apply.includes("const mbPlain = want.has('salty') && s.chat.mbHelpers === false;") && apply.includes("document.body.toggleAttribute('data-bl-mb-plain', mbPlain);"), '표식은 테마 설정을 끈 때만');
+    assert.ok(!/bl-ext-(top|find|avadlg)|data-bl-mb-plain/.test(read('style.css')), '늘 붙는 시트에는 없어요');
 });
 console.log(`status-ext-css: ${passed}개 통과`);

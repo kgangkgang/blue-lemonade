@@ -107,7 +107,10 @@ async function startOne(item,current){
         install(apiFor(id,cleanups),realm.window);
         if(id==='korean')basicPromptNames(cleanups);
         if(running.has(id))status(id,'사용 중');
-    }catch(error){stop(id);failedAt.set(id,Date.now());status(id,`실행 오류: ${error?.message||error}`);}
+    }catch(error){
+        // 1.5.0: 다시 받는 사이 껐다 켜서 낡은 요청이 늦게 실패하면 — 새 요청이 이미 켠 같은 스크립트를 끄지 않아요(새 요청이 맡아요)
+        if(current!==revision)return;
+        stop(id);failedAt.set(id,Date.now());status(id,`실행 오류: ${error?.message||error}`);}
 }
 // 5.3.4: 켤 것 · 끌 것이 이미 그대로면 아무것도 안 한다 — applyAll 마다(슬라이더를 끄는 프레임마다) 불린다.
 const settled=(state,on)=>SCRIPT_CATALOG.every(item=>{
@@ -120,6 +123,8 @@ export async function syncScripts(on){
     on=on && addonsEnabled(getSettings());
     if(!!on===wanted&&settled(scriptSettings(),!!on))return;
     const current=++revision,state=scriptSettings();wanted=!!on;
+    // 1.5.0: 끌 것은 켠 차례의 거꾸로 — 같은 창 함수(confirm 등)를 차례로 감싼 스크립트(청과 · 과일의 마음)가 서로의 감싸기를 남기지 않게
+    for(const id of [...running.keys()].reverse()) if(!on||!state.enabled[id])stop(id);
     for(const item of SCRIPT_CATALOG) if(!on||!state.enabled[item.id]){stop(item.id);failedAt.delete(item.id);status(item.id,'꺼짐');}
     if(!on)return;
     const now=[],late=[];
