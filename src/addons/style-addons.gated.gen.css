@@ -779,8 +779,13 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
 :where(html.bl-asc-0) .pa-hub .pa-hub-storage { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; padding: 0 0 6px; border-bottom: 1px solid var(--salty-line, var(--pa-hub-line)); font-size: var(--bl-ts-meta, 12.5px); }
 :where(html.bl-asc-0) .pa-hub .pa-hub-storage > span { min-width: 0; color: var(--salty-muted, inherit); }
 :where(html.bl-asc-0) .pa-hub .pa-hub-storage > .menu_button { flex: none; margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-:where(html.bl-asc-0) .pa-hub-pane :is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer) { padding: 0; }
-:where(html.bl-asc-0) .pa-hub-pane :is(p, small):is(.sw-hint, .sv-hint, .rl-hint, .lt-note) { margin: 0; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; color: var(--salty-muted, var(--rl-muted, inherit)); opacity: 1; }
+:where(html.bl-asc-0) .pa-hub-pane :where(.sw-body):is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer),
+:where(html.bl-asc-0) .pa-hub-pane :where(.pa-body):is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer),
+:where(html.bl-asc-0) .pa-hub-pane :where(.sv-body):is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer),
+:where(html.bl-asc-0) .pa-hub-pane :where(.rl-body):is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer),
+:where(html.bl-asc-0) .pa-hub-pane :where(.lt-drawer):is(.sw-body, .pa-body, .sv-body, .rl-body, .lt-drawer) { padding: 0; }
+:where(html.bl-asc-0) .pa-hub-pane :where(p):is(p, small):is(.sw-hint, .sv-hint, .rl-hint, .lt-note),
+:where(html.bl-asc-0) .pa-hub-pane :where(small):is(p, small):is(.sw-hint, .sv-hint, .rl-hint, .lt-note) { margin: 0; font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; color: var(--salty-muted, var(--rl-muted, inherit)); opacity: 1; }
 :where(html.bl-asc-0) .pa-hub-pane .pa-note { font-size: var(--bl-ts-meta, 12.5px); color: var(--salty-muted, inherit); }
 :where(html.bl-asc-0) .pa-hub-pane .menu_button { margin: 0; }
 :where(html.bl-asc-0) .pa-hub .pa-hub-title { font-size: var(--bl-ts-ui, 14px); }
@@ -1048,7 +1053,9 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
   :where(html.bl-asc-2) .mr-handle { padding-top: 2px; }
 }
 :where(html.bl-asc-2) #model_register_settings .mr-body { gap: 10px; padding: 4px 0 6px; }
-:where(html.bl-asc-2) #model_register_settings :is(.mr-hint, .mr-count, .mr-empty) { color: var(--salty-muted, inherit); font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; opacity: 1; }
+:where(html.bl-asc-2) #model_register_settings :where(.mr-hint):is(.mr-hint, .mr-count, .mr-empty),
+:where(html.bl-asc-2) #model_register_settings :where(.mr-count):is(.mr-hint, .mr-count, .mr-empty),
+:where(html.bl-asc-2) #model_register_settings :where(.mr-empty):is(.mr-hint, .mr-count, .mr-empty) { color: var(--salty-muted, inherit); font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; opacity: 1; }
 :where(html.bl-asc-2) #model_register_settings .mr-version { font-size: var(--bl-fs-micro, 11px); }
 :where(html.bl-asc-2) #model_register_settings .mr-empty { padding: 6px; }
 :where(html.bl-asc-2) #model_register_settings .mr-row > .menu_button { min-height: var(--bl-h-ctl, 36px); }
@@ -1068,7 +1075,8 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
 :where(html.bl-asc-3) .ms-chip b,:where(html.bl-asc-3) .ms-chip small {max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit}
 :where(html.bl-asc-3) .ms-chip small {opacity:.7}
 :where(html.bl-asc-3) .ms-chip.on {background:var(--salty-accent,var(--SmartThemeQuoteColor,#2774cb));color:var(--salty-on-accent,#fff)}
-:where(html.bl-asc-3) #model-switch-settings .ms-chip.on:not(#salty-none) :is(b, small):not(#salty-none) {color:var(--salty-on-accent,#fff)!important}
+:where(html.bl-asc-3) #model-switch-settings .ms-chip.on:not(#salty-none) :where(b):is(b, small):not(#salty-none),
+:where(html.bl-asc-3) #model-switch-settings .ms-chip.on:not(#salty-none) :where(small):is(b, small):not(#salty-none) {color:var(--salty-on-accent,#fff)!important}
 :where(html.bl-asc-3) .ms-chip.on small {opacity:.9}
 :where(html.bl-asc-3) .ms-chip-add {justify-content:center;align-items:center;min-height:44px;opacity:.75}
 :where(html.bl-asc-3) .ms-form {display:flex;flex-direction:column;gap:8px}
@@ -1113,7 +1121,18 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
 :where(html.bl-asc-3) .ms-lock span {display:flex;flex-direction:column;min-width:0}
 :where(html.bl-asc-3) .ms-lock b {font-weight:600}
 :where(html.bl-asc-3) .ms-lock small {opacity:.7}
-:where(html.bl-asc-3) body.bl-ms-lock-translator :is(#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models),:where(html.bl-asc-3) body.bl-ms-lock-rewrite :is(#bwr_connection .bwr_seg, #bwr_provider, #bwr_model, #bwr_custom_model, #bwr_custom_url, #bwr_fetch_models, #bwr_import_translator),:where(html.bl-asc-3) body.bl-ms-lock-memory .lm-root :is([data-set-radio="apiMode"], [data-set="direct.source"], [data-set^="direct.models."], [data-set^="direct.customModels."], [data-set="direct.customUrl"]) {opacity:.42;cursor:not-allowed;caret-color:transparent}
+:where(html.bl-asc-3) body.bl-ms-lock-translator :where(#llm_connection_mode):is(#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models),
+:where(html.bl-asc-3) body.bl-ms-lock-translator :where(#llm_provider):is(#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models),
+:where(html.bl-asc-3) body.bl-ms-lock-translator :where(#llm_model):is(#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models),
+:where(html.bl-asc-3) body.bl-ms-lock-translator :where(#llm_custom_model):is(#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models),
+:where(html.bl-asc-3) body.bl-ms-lock-translator :where(#llm_custom_url):is(#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models),
+:where(html.bl-asc-3) body.bl-ms-lock-translator :where(#llm_custom_fetch_models):is(#llm_connection_mode, #llm_provider, #llm_model, #llm_custom_model, #llm_custom_url, #llm_custom_fetch_models),
+:where(html.bl-asc-3) body.bl-ms-lock-rewrite :is(#bwr_connection .bwr_seg, #bwr_provider, #bwr_model, #bwr_custom_model, #bwr_custom_url, #bwr_fetch_models, #bwr_import_translator),
+:where(html.bl-asc-3) body.bl-ms-lock-memory .lm-root :where([data-set-radio="apiMode"]):is([data-set-radio="apiMode"], [data-set="direct.source"], [data-set^="direct.models."], [data-set^="direct.customModels."], [data-set="direct.customUrl"]),
+:where(html.bl-asc-3) body.bl-ms-lock-memory .lm-root :where([data-set="direct.source"]):is([data-set-radio="apiMode"], [data-set="direct.source"], [data-set^="direct.models."], [data-set^="direct.customModels."], [data-set="direct.customUrl"]),
+:where(html.bl-asc-3) body.bl-ms-lock-memory .lm-root :where([data-set^="direct.models."]):is([data-set-radio="apiMode"], [data-set="direct.source"], [data-set^="direct.models."], [data-set^="direct.customModels."], [data-set="direct.customUrl"]),
+:where(html.bl-asc-3) body.bl-ms-lock-memory .lm-root :where([data-set^="direct.customModels."]):is([data-set-radio="apiMode"], [data-set="direct.source"], [data-set^="direct.models."], [data-set^="direct.customModels."], [data-set="direct.customUrl"]),
+:where(html.bl-asc-3) body.bl-ms-lock-memory .lm-root :where([data-set="direct.customUrl"]):is([data-set-radio="apiMode"], [data-set="direct.source"], [data-set^="direct.models."], [data-set^="direct.customModels."], [data-set="direct.customUrl"]) {opacity:.42;cursor:not-allowed;caret-color:transparent}
 :where(html.bl-asc-3) body.bl-ms-lock-prompt :is(#pt-connection-mode, #pt-provider, #pt-model-select, #pt-model-custom, #pt-custom-url, #pt-fetch-models, #pt-import-llm) {opacity:.42;cursor:not-allowed;caret-color:transparent}
 :where(html.bl-asc-3) #model-switch-settings .ms-actions {flex-wrap:wrap;gap:8px 10px}
 :where(html.bl-asc-3) #model-switch-settings .ms-actions .ms-apply {width:auto;flex:1 1 auto;min-width:min(100%,7em);max-width:100%;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
@@ -1125,7 +1144,8 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
 :where(html.bl-asc-3) #model-switch-settings .ms-option {min-height:var(--bl-h-icon,34px);padding:6px 10px}
 :where(html.bl-asc-3) #model-switch-settings .ms-targets {gap:0;padding:0 10px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#5555));border-radius:var(--bl-r-md,12px);background:var(--salty-fill-surface,var(--salty-surface,transparent))}
 :where(html.bl-asc-3) #model-switch-settings .ms-targets:empty {display:none}
-:where(html.bl-asc-3) #model-switch-settings :is(.ms-target, .ms-lock) {min-height:var(--bl-h-ctl,36px);padding:1px 0;border-radius:0;background:none;box-shadow:none;gap:8px}
+:where(html.bl-asc-3) #model-switch-settings :where(.ms-target):is(.ms-target, .ms-lock),
+:where(html.bl-asc-3) #model-switch-settings :where(.ms-lock):is(.ms-target, .ms-lock) {min-height:var(--bl-h-ctl,36px);padding:1px 0;border-radius:0;background:none;box-shadow:none;gap:8px}
 :where(html.bl-asc-3) #model-switch-settings .ms-target + .ms-target {border-top:1px solid var(--salty-line,var(--SmartThemeBorderColor,#5555))}
 :where(html.bl-asc-3) #model-switch-settings .ms-lock {padding:1px 10px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#5555));border-radius:var(--bl-r-md,12px);background:var(--salty-fill-surface,var(--salty-surface,transparent))}
 :where(html.bl-asc-3) #model-switch-settings :is(.ms-target, .ms-lock) span {flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}
@@ -1136,7 +1156,8 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
 :where(html.bl-asc-3) #model-switch-settings .ms-status:empty {display:none}
 :where(html.bl-asc-3) dialog.popup #model-switch-settings > .inline-drawer-header {min-height:0;padding:0 2px 2px!important;pointer-events:none}
 :where(html.bl-asc-3) dialog.popup #model-switch-settings > .inline-drawer-header .inline-drawer-icon {display:none}
-html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .ms-row) { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :where(label):is(label, .ms-row),
+html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :where(.ms-row):is(label, .ms-row) { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 :where(html.bl-asc-3) dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }
 :where(html.bl-asc-3) dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .inline-drawer-header { min-height:var(--bl-h-ctl,36px); }
 :where(html.bl-asc-3) dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:42px; z-index:1; }
@@ -1149,9 +1170,12 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .m
 :where(html.bl-asc-3) .ms-state-go {display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1 1 auto;min-width:0;padding:6px 2px 6px 10px;border:0;border-radius:inherit;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 :where(html.bl-asc-3) .ms-state-x {flex:none;width:var(--bl-h-icon,34px);padding:0;border:0;border-radius:inherit;background:none;color:inherit;opacity:.6;cursor:pointer}
 :where(html.bl-asc-3) #model-switch-settings .ms-states small {max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-:where(html.bl-asc-3) .ms-states :is(.fa-layer-group, .fa-rotate-left) {opacity:.75}
+:where(html.bl-asc-3) .ms-states :where(.fa-layer-group):is(.fa-layer-group, .fa-rotate-left),
+:where(html.bl-asc-3) .ms-states :where(.fa-rotate-left):is(.fa-layer-group, .fa-rotate-left) {opacity:.75}
 :where(html.bl-asc-3) .ms-part {margin-left:6px;font-size:.85em;opacity:.75}
-:where(html.bl-asc-3) .ms-states :is(.ms-state-go, .ms-state-x, .ms-last):disabled {cursor:default;opacity:.5}
+:where(html.bl-asc-3) .ms-states :where(.ms-state-go):is(.ms-state-go, .ms-state-x, .ms-last):disabled,
+:where(html.bl-asc-3) .ms-states :where(.ms-state-x):is(.ms-state-go, .ms-state-x, .ms-last):disabled,
+:where(html.bl-asc-3) .ms-states :where(.ms-last):is(.ms-state-go, .ms-state-x, .ms-last):disabled {cursor:default;opacity:.5}
 :where(html.bl-asc-3) .ms-actions .ms-snap[hidden] {display:none}
 :where(html.bl-asc-3) #model-switch-settings .ms-groups {display:flex;gap:8px;flex-wrap:nowrap}
 :where(html.bl-asc-3) #model-switch-settings .ms-groups button {flex:1 1 0;min-width:0;margin:0;white-space:nowrap}
@@ -1722,12 +1746,14 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .m
     font-weight: var(--salty-ui-weight, normal);
     letter-spacing: var(--salty-ui-ls, normal);
 }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_tabs, .bwr_segment) {
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_tabs):is(.bwr_tabs, .bwr_segment),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_segment):is(.bwr_tabs, .bwr_segment) {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5em), 1fr));
     gap: 8px max(10px, .6em);
     border-radius: var(--bl-r-md, 12px);
 }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_tab, .bwr_seg) {
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_tab):is(.bwr_tab, .bwr_seg),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_seg):is(.bwr_tab, .bwr_seg) {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 8px max(10px, .6em);
@@ -1742,8 +1768,11 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .m
 }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_tab > span:not(.bwr_badge) { min-width: 0; overflow: visible; text-overflow: clip; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_tab .bwr_badge { position: static; min-width: 0; flex: none; }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) { font-weight: bolder; }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.menu_button, .text_pole, .bwr_chip) {
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_tab):is(.bwr_tab, .bwr_seg):is(.active, .is-active),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_seg):is(.bwr_tab, .bwr_seg):is(.active, .is-active) { font-weight: bolder; }
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.menu_button):is(.menu_button, .text_pole, .bwr_chip),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.text_pole):is(.menu_button, .text_pole, .bwr_chip),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_chip):is(.menu_button, .text_pole, .bwr_chip) {
     height: auto;
     min-height: max(34px, 1.5em + 12px);
     gap: 8px max(10px, .6em);
@@ -1759,10 +1788,15 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .m
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_card > .bwr_card_title { grid-column: 1 / -1; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_switch_row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_switch::after,:where(html.bl-asc-5) body.salty .bwr_settings input:checked + .bwr_switch::after { background: #fff; }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_card, .bwr_editor, .bwr_status, .bwr_guide) { border-radius: var(--bl-r-md, 12px); }
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_card):is(.bwr_card, .bwr_editor, .bwr_status, .bwr_guide),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_editor):is(.bwr_card, .bwr_editor, .bwr_status, .bwr_guide),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_status):is(.bwr_card, .bwr_editor, .bwr_status, .bwr_guide),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_guide):is(.bwr_card, .bwr_editor, .bwr_status, .bwr_guide) { border-radius: var(--bl-r-md, 12px); }
 :where(html.bl-asc-5) body.salty dialog.popup.bwr_dialog { border-radius: var(--bl-r-lg, 16px) !important; }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_tab, .bwr_seg) { color: var(--salty-muted, var(--bwr-text)); opacity: 1; }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) {
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_tab):is(.bwr_tab, .bwr_seg),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_seg):is(.bwr_tab, .bwr_seg) { color: var(--salty-muted, var(--bwr-text)); opacity: 1; }
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_tab):is(.bwr_tab, .bwr_seg):is(.active, .is-active),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_seg):is(.bwr_tab, .bwr_seg):is(.active, .is-active) {
     background: var(--salty-fill-accent-10, var(--salty-accent-10));
     color: var(--bwr-accent-ink);
     box-shadow: inset 0 0 0 1px var(--salty-accent);
@@ -1796,20 +1830,25 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .m
     :where(html.bl-asc-5) body.salty .bwr_settings .bwr_tab { flex-direction: row; gap: 8px; min-height: var(--bl-h-ctl, 36px); padding-block: 4px; }
     :where(html.bl-asc-5) body.salty .bwr_settings .bwr_tab .bwr_badge { position: static; }
 }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.menu_button, .text_pole) { min-height: var(--bl-h-ctl, 36px); }
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.menu_button):is(.menu_button, .text_pole),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.text_pole):is(.menu_button, .text_pole) { min-height: var(--bl-h-ctl, 36px); }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_chip { min-height: 32px; padding-inline: 12px; font-size: var(--bl-fs-ctl, 13.5px); }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_editor_head .bwr_delete { min-width: var(--bl-h-icon, 34px); min-height: var(--bl-h-icon, 34px); padding: 0; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_field { gap: 6px; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_field > span { color: var(--salty-text); font-weight: inherit; line-height: 1.35; opacity: 1; }
 :where(html.bl-asc-5) body.salty .bwr_settings.bwr_settings .bwr_field > span { font-size: var(--bl-ts-ui, 14px) !important; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_hint { color: var(--salty-muted); font-size: var(--bl-ts-meta, 12.5px); line-height: 1.5; opacity: 1; }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_card, .bwr_editor) { border: 1px solid var(--salty-line); background: var(--salty-fill-surface, var(--salty-surface)); }
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_card):is(.bwr_card, .bwr_editor),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_editor):is(.bwr_card, .bwr_editor) { border: 1px solid var(--salty-line); background: var(--salty-fill-surface, var(--salty-surface)); }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_editor { padding: 10px; }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_card, .bwr_editor) :is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus) { background-color: var(--salty-fill-field, var(--salty-field, var(--bl-well))) !important; }
+:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_card, .bwr_editor) :where(input):is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus),
+:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_card, .bwr_editor) :where(textarea):is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus),
+:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_card, .bwr_editor) :where(select):is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus) { background-color: var(--salty-fill-field, var(--salty-field, var(--bl-well))) !important; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_compact > span:first-child { font-size: var(--bl-ts-meta, 12.5px); }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_tabs { gap: 4px; padding: 0; background: none; }
 :where(html.bl-asc-5) body.salty .bwr_settings .bwr_tab { border-radius: var(--bl-r-sm, 8px); background: var(--salty-shade); }
-:where(html.bl-asc-5) body.salty .bwr_settings :is(.bwr_tab, .bwr_seg):is(.active, .is-active) { background: var(--salty-accent-13, var(--salty-shade)); box-shadow: none; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: inherit; }
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_tab):is(.bwr_tab, .bwr_seg):is(.active, .is-active),
+:where(html.bl-asc-5) body.salty .bwr_settings :where(.bwr_seg):is(.bwr_tab, .bwr_seg):is(.active, .is-active) { background: var(--salty-accent-13, var(--salty-shade)); box-shadow: none; color: var(--salty-accent-ink, var(--salty-accent)); font-weight: inherit; }
 :where(html.bl-asc-5) .bwr_settings .bwr_card_title { display: flex; align-items: center; gap: 8px; min-height: 37px; margin: 0 -10px; padding: 8px 12px; border-bottom: 1px solid var(--salty-line, rgba(127, 127, 127, .25)); border-radius: calc(var(--bl-r-md, 12px) - 1px) calc(var(--bl-r-md, 12px) - 1px) 0 0; background: var(--salty-shade, rgba(127, 127, 127, .12)); color: var(--salty-text, inherit); font-size: var(--bl-ts-ui, 14px); font-weight: 600; line-height: 20px; }
 :where(html.bl-asc-5) .bwr_settings .bwr_card_title > i { width: 1.2em; text-align: center; color: var(--salty-accent, currentColor); }
 @container (max-width: 56em) {
@@ -2255,7 +2294,8 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .m
     :where(html.bl-asc-6) #jj-popup .jj-pbtn::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
 }
 :where(html.bl-asc-6) .jj-pedit { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
-:where(html.bl-asc-6) #jj-popup :is(.jj-ptitle-input, .jj-pcontent-input) {
+:where(html.bl-asc-6) #jj-popup :where(.jj-ptitle-input):is(.jj-ptitle-input, .jj-pcontent-input),
+:where(html.bl-asc-6) #jj-popup :where(.jj-pcontent-input):is(.jj-ptitle-input, .jj-pcontent-input) {
     display: block;
     width: 100%;
     margin: 0;
@@ -2272,7 +2312,8 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :is(label, .m
 }
 :where(html.bl-asc-6) #jj-popup .jj-ptitle-input { min-height: 44px; font-weight: 600; }
 :where(html.bl-asc-6) #jj-popup .jj-pcontent-input { min-height: calc(4lh + 18px); max-height: 30vh; resize: vertical; field-sizing: content; }
-:where(html.bl-asc-6) #jj-popup :is(.jj-ptitle-input, .jj-pcontent-input):focus { border-color: color-mix(in srgb, var(--jj-on) 60%, transparent); }
+:where(html.bl-asc-6) #jj-popup :where(.jj-ptitle-input):is(.jj-ptitle-input, .jj-pcontent-input):focus,
+:where(html.bl-asc-6) #jj-popup :where(.jj-pcontent-input):is(.jj-ptitle-input, .jj-pcontent-input):focus { border-color: color-mix(in srgb, var(--jj-on) 60%, transparent); }
 :where(html.bl-asc-6) .jj-pempty {
     display: flex;
     flex-direction: column;
@@ -2376,7 +2417,8 @@ html:where(.bl-asc-6)[data-bl-puffy="dark"] .jj-pitem.is-dragging { --jj-lift-de
 :where(html.bl-asc-6) .jj-row-label { flex: 1 1 8em; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
 :where(html.bl-asc-6) .jj-row-label b { font-size: .92em; font-weight: 600; word-break: keep-all; overflow-wrap: anywhere; }
 :where(html.bl-asc-6) .jj-row-label small { font-size: .76em; color: var(--jj-muted); }
-:where(html.bl-asc-6) .jj-row > :is(.jj-switch, .jj-stepper) { margin-inline-start: auto; }
+:where(html.bl-asc-6) .jj-row > :where(.jj-switch):is(.jj-switch, .jj-stepper),
+:where(html.bl-asc-6) .jj-row > :where(.jj-stepper):is(.jj-switch, .jj-stepper) { margin-inline-start: auto; }
 :where(html.bl-asc-6) .jj-switch:disabled { opacity: .4; cursor: default; }
 :where(html.bl-asc-6) .jj-settings .jj-color-row {
     display: flex;
@@ -2688,8 +2730,10 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     --SmartThemeShadowColor: transparent;
     --SmartThemeBlurTintColor: #17151c;
 }
-:where(html.bl-asc-7) .cg-root[data-cg-theme="dark"] :is(.cg-card, .cg-bubble-row) { --SmartThemeQuoteColor: var(--cg-role); }
-:where(html.bl-asc-7) .cg-root[data-cg-theme="light"] :is(.cg-card, .cg-bubble-row) { --SmartThemeQuoteColor: color-mix(in srgb, var(--cg-role) 72%, #2b2733); }
+:where(html.bl-asc-7) .cg-root[data-cg-theme="dark"] :where(.cg-card):is(.cg-card, .cg-bubble-row),
+:where(html.bl-asc-7) .cg-root[data-cg-theme="dark"] :where(.cg-bubble-row):is(.cg-card, .cg-bubble-row) { --SmartThemeQuoteColor: var(--cg-role); }
+:where(html.bl-asc-7) .cg-root[data-cg-theme="light"] :where(.cg-card):is(.cg-card, .cg-bubble-row),
+:where(html.bl-asc-7) .cg-root[data-cg-theme="light"] :where(.cg-bubble-row):is(.cg-card, .cg-bubble-row) { --SmartThemeQuoteColor: color-mix(in srgb, var(--cg-role) 72%, #2b2733); }
 :where(html.bl-asc-7) .cg-root[data-cg-tone="light"] {
     --cg-base: #fbf9f6;
     --cg-card: rgba(255, 255, 255, .8);
@@ -2723,7 +2767,10 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-7) .cg-root ::-webkit-scrollbar-thumb { background: var(--cg-line-strong); border-radius: 8px; }
 :where(html.bl-asc-7) .cg-root ::-webkit-scrollbar-track { background: transparent; }
 :where(html.bl-asc-7) .cg-root { --cg-sbw: 8px; }
-:where(html.bl-asc-7) :is(.cg-list, .cg-chat-list, .cg-sheet-body, .cg-page-scroll) { scrollbar-gutter: stable both-edges; }
+:where(html.bl-asc-7) :where(.cg-list):is(.cg-list, .cg-chat-list, .cg-sheet-body, .cg-page-scroll),
+:where(html.bl-asc-7) :where(.cg-chat-list):is(.cg-list, .cg-chat-list, .cg-sheet-body, .cg-page-scroll),
+:where(html.bl-asc-7) :where(.cg-sheet-body):is(.cg-list, .cg-chat-list, .cg-sheet-body, .cg-page-scroll),
+:where(html.bl-asc-7) :where(.cg-page-scroll):is(.cg-list, .cg-chat-list, .cg-sheet-body, .cg-page-scroll) { scrollbar-gutter: stable both-edges; }
 :where(html.bl-asc-7) .cg-window,:where(html.bl-asc-7) .cg-sheet,:where(html.bl-asc-7) .cg-settings-page {
     background:
         linear-gradient(var(--cg-tint), var(--cg-tint)),
@@ -3138,7 +3185,8 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     mask-image: linear-gradient(to bottom, #000 calc(100% - 6em), transparent);
 }
 :where(html.bl-asc-7) .cg-mes.mes_text { overflow-wrap: anywhere; }
-:where(html.bl-asc-7) .cg-root .mes_text .custom-tt :is(em, i):not([style*="color"]) {
+:where(html.bl-asc-7) .cg-root .mes_text .custom-tt :where(em):is(em, i):not([style*="color"]),
+:where(html.bl-asc-7) .cg-root .mes_text .custom-tt :where(i):is(em, i):not([style*="color"]) {
     color: inherit !important;
     -webkit-text-fill-color: inherit;
 }
@@ -3979,15 +4027,22 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-7) .cg-root .cg-icon-btn { border: 0; border-radius: 14px; background: transparent; }
 :where(html.bl-asc-7) .cg-root .cg-icon-btn:hover,:where(html.bl-asc-7) .cg-root .cg-icon-btn:focus-visible { background: var(--salty-shade, rgba(127, 127, 127, .12)); }
 :where(html.bl-asc-7) .cg-root .cg-toolbar { padding: 8px 20px 12px; }
-:where(html.bl-asc-7) .cg-root :is(.cg-chip, .cg-badge, .cg-preview-chip) { border: 0; border-radius: 999px; background: var(--salty-shade, rgba(127, 127, 127, .12)); }
+:where(html.bl-asc-7) .cg-root :where(.cg-chip):is(.cg-chip, .cg-badge, .cg-preview-chip),
+:where(html.bl-asc-7) .cg-root :where(.cg-badge):is(.cg-chip, .cg-badge, .cg-preview-chip),
+:where(html.bl-asc-7) .cg-root :where(.cg-preview-chip):is(.cg-chip, .cg-badge, .cg-preview-chip) { border: 0; border-radius: 999px; background: var(--salty-shade, rgba(127, 127, 127, .12)); }
 :where(html.bl-asc-7) .cg-root .cg-badge { color: color-mix(in srgb, var(--salty-accent-ink, var(--cg-accent, var(--cg-accent-fallback))) 70%, var(--cg-text)); }
 :where(html.bl-asc-7) .cg-root .cg-chip.is-on,:where(html.bl-asc-7) .cg-root .cg-chip[aria-pressed="true"] { background: var(--salty-accent, var(--cg-accent, var(--cg-accent-fallback))); color: var(--salty-on-accent, #fff) !important; }
-:where(html.bl-asc-7) .cg-root :is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn) { border: 0; border-radius: 14px; background: var(--salty-shade, rgba(127, 127, 127, .12)); }
+:where(html.bl-asc-7) .cg-root :where(.cg-btn):is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn),
+:where(html.bl-asc-7) .cg-root :where(.cg-sub-btn):is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn),
+:where(html.bl-asc-7) .cg-root :where(.cg-page-btn):is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn),
+:where(html.bl-asc-7) .cg-root :where(.cg-preview-btn):is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn) { border: 0; border-radius: 14px; background: var(--salty-shade, rgba(127, 127, 127, .12)); }
 :where(html.bl-asc-7) .cg-root .cg-btn--primary { background: var(--salty-accent, var(--cg-accent, var(--cg-accent-fallback))); color: var(--salty-on-accent, #fff) !important; }
 :where(html.bl-asc-7) .cg-root .cg-btn--danger { background: transparent; color: #e5484d !important; }
 :where(html.bl-asc-7) .cg-root .cg-search-field { border: 0; border-radius: 16px; background: var(--bl-well, var(--salty-shade, rgba(127, 127, 127, .12))); box-shadow: var(--bl-well-in, none); }
-:where(html.bl-asc-7) .cg-root :is(.cg-input, .cg-textarea) { border: 0; border-radius: 14px; background: var(--bl-well, var(--salty-shade, rgba(127, 127, 127, .12))); box-shadow: var(--bl-well-in, none); }
-:where(html.bl-asc-7) .cg-root :is(.cg-input, .cg-textarea):focus { box-shadow: 0 0 0 1.5px var(--salty-accent-40, var(--salty-accent, var(--cg-accent, var(--cg-accent-fallback)))); outline: 0; }
+:where(html.bl-asc-7) .cg-root :where(.cg-input):is(.cg-input, .cg-textarea),
+:where(html.bl-asc-7) .cg-root :where(.cg-textarea):is(.cg-input, .cg-textarea) { border: 0; border-radius: 14px; background: var(--bl-well, var(--salty-shade, rgba(127, 127, 127, .12))); box-shadow: var(--bl-well-in, none); }
+:where(html.bl-asc-7) .cg-root :where(.cg-input):is(.cg-input, .cg-textarea):focus,
+:where(html.bl-asc-7) .cg-root :where(.cg-textarea):is(.cg-input, .cg-textarea):focus { box-shadow: 0 0 0 1.5px var(--salty-accent-40, var(--salty-accent, var(--cg-accent, var(--cg-accent-fallback)))); outline: 0; }
 :where(html.bl-asc-7) .cg-root .cg-list { gap: 0; padding: 12px calc(28px - var(--cg-sbw)) 28px; }
 :where(html.bl-asc-7) .cg-root .cg-card { border: 0; border-radius: 0; padding: 0 0 22px 26px; background: transparent; box-shadow: none; animation: none; min-width: 0; }
 :where(html.bl-asc-7) .cg-root .cg-card::before { content: ''; position: absolute; left: 4px; top: 14px; bottom: -14px; width: 1px; background: color-mix(in srgb, var(--cg-text) 16%, transparent); pointer-events: none; }
@@ -4048,13 +4103,16 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     :where(html.bl-asc-7) .cg-root .cg-scrim { background: rgba(8, 12, 20, .55); }
 }
 :where(html.bl-asc-7) .cg-root .cg-sheet { border: 0; border-radius: 24px; background: var(--salty-bg, var(--cg-base)); box-shadow: var(--bl-e4, 0 18px 50px -18px rgba(10, 30, 60, .45)); }
-:where(html.bl-asc-7) .cg-root :is(.cg-sheet-head, .cg-sheet-foot, .cg-page-head) { border: 0; }
+:where(html.bl-asc-7) .cg-root :where(.cg-sheet-head):is(.cg-sheet-head, .cg-sheet-foot, .cg-page-head),
+:where(html.bl-asc-7) .cg-root :where(.cg-sheet-foot):is(.cg-sheet-head, .cg-sheet-foot, .cg-page-head),
+:where(html.bl-asc-7) .cg-root :where(.cg-page-head):is(.cg-sheet-head, .cg-sheet-foot, .cg-page-head) { border: 0; }
 :where(html.bl-asc-7) .cg-root .cg-section { border: 0; border-radius: 0; padding: 0 6px; margin-top: 22px; background: none; box-shadow: none; }
 :where(html.bl-asc-7) .cg-root .cg-section:first-child { margin-top: 6px; }
 :where(html.bl-asc-7) .cg-root .cg-guide { border: 0; border-radius: 18px; padding: 14px 16px; background: var(--salty-shade, rgba(127, 127, 127, .12)); }
 :where(html.bl-asc-7) .cg-root .cg-section-title { margin: 0 0 2px; font-size: var(--bl-ts-meta, .82rem); font-weight: 700; color: var(--salty-muted, inherit); }
 :where(html.bl-asc-7) .cg-root .cg-section-title i { color: var(--salty-faint, inherit); font-size: .9em; }
-:where(html.bl-asc-7) .cg-root :is(.cg-setting, .cg-color-row) { border: 0; border-radius: 0; background: none; padding: 12px 0; gap: 14px; }
+:where(html.bl-asc-7) .cg-root :where(.cg-setting):is(.cg-setting, .cg-color-row),
+:where(html.bl-asc-7) .cg-root :where(.cg-color-row):is(.cg-setting, .cg-color-row) { border: 0; border-radius: 0; background: none; padding: 12px 0; gap: 14px; }
 :where(html.bl-asc-7) .cg-root .cg-setting-text { gap: 3px; }
 :where(html.bl-asc-7) .cg-root .cg-setting-text small { color: var(--salty-faint, inherit); }
 :where(html.bl-asc-7) .cg-root .cg-switch { width: 38px; height: 22px; background: color-mix(in srgb, var(--salty-text, var(--cg-text)) 18%, transparent); }
@@ -4101,7 +4159,8 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     font-weight: var(--salty-ui-weight, normal);
     letter-spacing: var(--salty-ui-ls, normal);
 }
-:where(html.bl-asc-7) body.salty .cg-root :is(.cg-window, .cg-sheet) { border-radius: var(--bl-r-lg, 16px); }
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-window):is(.cg-window, .cg-sheet),
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-sheet):is(.cg-window, .cg-sheet) { border-radius: var(--bl-r-lg, 16px); }
 :where(html.bl-asc-7) body.salty .cg-root :is(.cg-btn, .cg-sub-btn, .cg-page-btn, .cg-preview-btn, .cg-icon-btn, .cg-action, .cg-chip, .cg-expand) {
     height: auto;
     min-height: max(34px, 1.5em + 12px);
@@ -4111,9 +4170,15 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     line-height: 1.5;
     white-space: normal;
 }
-:where(html.bl-asc-7) body.salty .cg-root :is(.cg-input, .cg-textarea, .cg-search-field) { border-radius: var(--bl-r-sm, 8px); }
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-input):is(.cg-input, .cg-textarea, .cg-search-field),
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-textarea):is(.cg-input, .cg-textarea, .cg-search-field),
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-search-field):is(.cg-input, .cg-textarea, .cg-search-field) { border-radius: var(--bl-r-sm, 8px); }
 :where(html.bl-asc-7) body.salty .cg-root .cg-input { height: auto; min-height: max(38px, 1.5em + 12px); padding-block: 6px; }
-:where(html.bl-asc-7) body.salty .cg-root :is(.cg-title, .cg-sheet-title, .cg-page-title, .cg-setting-text b, .cg-section-title) { font-weight: bolder; letter-spacing: inherit; }
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-title):is(.cg-title, .cg-sheet-title, .cg-page-title, .cg-setting-text b, .cg-section-title),
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-sheet-title):is(.cg-title, .cg-sheet-title, .cg-page-title, .cg-setting-text b, .cg-section-title),
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-page-title):is(.cg-title, .cg-sheet-title, .cg-page-title, .cg-setting-text b, .cg-section-title),
+:where(html.bl-asc-7) body.salty .cg-root :where(b):is(.cg-title, .cg-sheet-title, .cg-page-title, .cg-setting-text b, .cg-section-title),
+:where(html.bl-asc-7) body.salty .cg-root :where(.cg-section-title):is(.cg-title, .cg-sheet-title, .cg-page-title, .cg-setting-text b, .cg-section-title) { font-weight: bolder; letter-spacing: inherit; }
 :where(html.bl-asc-7) body.salty .cg-root .cg-setting { flex-direction: row; flex-wrap: wrap; column-gap: max(12px, .7em); row-gap: 8px; }
 :where(html.bl-asc-7) body.salty .cg-root .cg-setting-text { flex: 1 1 12em; overflow-wrap: anywhere; }
 :where(html.bl-asc-7) body.salty .cg-root .cg-segmented {
@@ -4140,7 +4205,8 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 }
 :where(html.bl-asc-7) body.salty .cg-root .cg-segmented button:is(.is-on, .is-active, [aria-pressed="true"], [aria-checked="true"]) { border-radius: var(--bl-r-sm, 8px); font-weight: bolder; }
 :where(html.bl-asc-7) body.salty .cg-root .cg-stepper { max-width: 100%; border-radius: var(--bl-r-md, 12px); }
-:where(html.bl-asc-7) body.salty .cg-root .cg-stepper :is(button, input) {
+:where(html.bl-asc-7) body.salty .cg-root .cg-stepper :where(button):is(button, input),
+:where(html.bl-asc-7) body.salty .cg-root .cg-stepper :where(input):is(button, input) {
     height: auto;
     min-height: max(34px, 1.5em + 12px);
     font-size: var(--bl-ts-ctl, 1em);
@@ -4504,10 +4570,14 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-7) .cg-root .cg-section-title { display: flex; align-items: center; gap: 8px; margin: -2px -10px 2px; padding: 10px 12px; border-bottom: 1px solid var(--salty-line, var(--cg-line)); background: var(--salty-shade, var(--cg-hover)); color: var(--salty-text, var(--cg-text)); font-size: var(--bl-ts-ui, .9rem); line-height: 1.2; }
 :where(html.bl-asc-7) .cg-root .cg-section-title i { width: 1.2em; text-align: center; color: var(--salty-accent, var(--cg-accent-text)); font-size: 1em; }
 :where(html.bl-asc-7) body.salty .cg-root .cg-section .cg-section-title { font-weight: 600; }
-:where(html.bl-asc-7) .cg-root :is(.cg-setting, .cg-color-row) { padding: 8px 0; gap: 10px; }
+:where(html.bl-asc-7) .cg-root :where(.cg-setting):is(.cg-setting, .cg-color-row),
+:where(html.bl-asc-7) .cg-root :where(.cg-color-row):is(.cg-setting, .cg-color-row) { padding: 8px 0; gap: 10px; }
 :where(html.bl-asc-7) .cg-root .cg-setting-text { gap: 2px; }
 :where(html.bl-asc-7) body.salty .cg-root .cg-setting-text b { font-size: var(--bl-ts-ui, .9rem); font-weight: var(--salty-ui-weight, 400); line-height: 1.4; }
-:where(html.bl-asc-7) body.salty .cg-root .cg-setting-text small,:where(html.bl-asc-7) .cg-root :is(.cg-section-desc, .cg-scope-note, .cg-color-text small) { font-size: var(--bl-ts-meta, .8rem); line-height: 1.5; color: var(--salty-muted, var(--cg-muted)); opacity: 1; }
+:where(html.bl-asc-7) body.salty .cg-root .cg-setting-text small,
+:where(html.bl-asc-7) .cg-root :where(.cg-section-desc):is(.cg-section-desc, .cg-scope-note, .cg-color-text small),
+:where(html.bl-asc-7) .cg-root :where(.cg-scope-note):is(.cg-section-desc, .cg-scope-note, .cg-color-text small),
+:where(html.bl-asc-7) .cg-root :where(small):is(.cg-section-desc, .cg-scope-note, .cg-color-text small) { font-size: var(--bl-ts-meta, .8rem); line-height: 1.5; color: var(--salty-muted, var(--cg-muted)); opacity: 1; }
 :where(html.bl-asc-7) .cg-root .cg-section-desc { margin: 0 0 8px; }
 :where(html.bl-asc-7) .cg-root .cg-scope-note { margin: 8px 0 0; }
 :where(html.bl-asc-7) .cg-root .cg-scope-note:empty { display: none; }
@@ -4694,9 +4764,14 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 }
 :where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-notes-view) .mes .mes_text > :first-child { margin-top: 0 !important; }
 :where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-notes-view) .mes .mes_text > :last-child { margin-bottom: 0 !important; }
-:where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-notes-view.salty-preview) { background: transparent !important; background-image: none !important; padding: 2px 6px !important; margin: 0 !important; box-shadow: none !important; border: 0 !important; }
-:where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-notes-view.salty-preview):hover { background: var(--bl-notes-hover) !important; }
-:where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-look-sample.salty-preview),:where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-look-sample.salty-preview):hover { background: var(--bl-notes-card) !important; padding: 8px 10px !important; margin: 8px 4px 2px !important; }
+:where(html.bl-asc-8) body.salty :where(#salty-nochat):is(#salty-nochat, .bl-notes-view.salty-preview),
+:where(html.bl-asc-8) body.salty :where(.bl-notes-view):is(#salty-nochat, .bl-notes-view.salty-preview) { background: transparent !important; background-image: none !important; padding: 2px 6px !important; margin: 0 !important; box-shadow: none !important; border: 0 !important; }
+:where(html.bl-asc-8) body.salty :where(#salty-nochat):is(#salty-nochat, .bl-notes-view.salty-preview):hover,
+:where(html.bl-asc-8) body.salty :where(.bl-notes-view):is(#salty-nochat, .bl-notes-view.salty-preview):hover { background: var(--bl-notes-hover) !important; }
+:where(html.bl-asc-8) body.salty :where(#salty-nochat):is(#salty-nochat, .bl-look-sample.salty-preview),
+:where(html.bl-asc-8) body.salty :where(.bl-look-sample):is(#salty-nochat, .bl-look-sample.salty-preview),
+:where(html.bl-asc-8) body.salty :where(#salty-nochat):is(#salty-nochat, .bl-look-sample.salty-preview):hover,
+:where(html.bl-asc-8) body.salty :where(.bl-look-sample):is(#salty-nochat, .bl-look-sample.salty-preview):hover { background: var(--bl-notes-card) !important; padding: 8px 10px !important; margin: 8px 4px 2px !important; }
 :where(html.bl-asc-8) .bl-notes-dialog .bl-note .bl-note-body,:where(html.bl-asc-8) .bl-notes-mini .bl-note .bl-note-body { min-height: 2.6em !important; }
 :where(html.bl-asc-8) .bl-notes-peek.bl-notes-peek .bl-notes-peek-body { min-height: 2.6em !important; }
 :where(html.bl-asc-8) .bl-sticky.bl-sticky .bl-sticky-body { min-height: 5em !important; }
@@ -4766,7 +4841,8 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-8) .bl-note-tools { align-items: center; }
 :where(html.bl-asc-8) .bl-note-tools .bl-note-time { margin: 0 auto 0 4px; padding: 0; order: 0; font-size: 11px; }
 :where(html.bl-asc-8) .bl-notes-look .bl-look-sample { position: sticky; top: 44px; z-index: 1; margin: 0 0 8px !important; box-shadow: 0 6px 12px -8px rgba(0, 0, 0, .5) !important; }
-:where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !important; }
+:where(html.bl-asc-8) body.salty :where(#salty-nochat):is(#salty-nochat, .bl-look-sample.salty-preview),
+:where(html.bl-asc-8) body.salty :where(.bl-look-sample):is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !important; }
 :where(html.bl-asc-8) .bl-look-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
 :where(html.bl-asc-8) .bl-look-grid .bl-look-item { padding: 6px 2px; min-width: 0; }
 :where(html.bl-asc-8) .bl-look-grid .bl-look-head { font-size: 12px; margin-bottom: 2px; }
@@ -4781,7 +4857,9 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-8) .bl-notes-mini .bl-notes-list > .bl-note { padding: 7px 8px !important; }
 :where(html.bl-asc-8) .bl-notes-list > .bl-note > .bl-note-tools { margin: 0 !important; min-height: 26px; }
 :where(html.bl-asc-8) .bl-notes-list > .bl-note > .bl-note-head { min-height: 26px; align-items: center; }
-:where(html.bl-asc-8) .bl-notes-look .bl-look-sample,:where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { position: static !important; box-shadow: none !important; margin: 0 0 6px !important; }
+:where(html.bl-asc-8) .bl-notes-look .bl-look-sample,
+:where(html.bl-asc-8) body.salty :where(#salty-nochat):is(#salty-nochat, .bl-look-sample.salty-preview),
+:where(html.bl-asc-8) body.salty :where(.bl-look-sample):is(#salty-nochat, .bl-look-sample.salty-preview) { position: static !important; box-shadow: none !important; margin: 0 0 6px !important; }
 :where(html.bl-asc-8) .bl-look-grid .bl-look-head { min-height: 20px; margin-bottom: 6px; }
 :where(html.bl-asc-8) .bl-look-grid .bl-look-same { line-height: 1; }
 :where(html.bl-asc-8) .bl-look-grid .bl-look-same input[type="checkbox"] { appearance: auto !important; -webkit-appearance: checkbox !important; flex: none; width: 14px !important; height: 14px !important; min-width: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; transform: none !important; box-shadow: none !important; filter: none !important; }
@@ -5089,7 +5167,9 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-8) .bl-look-sec:last-child { margin-bottom: 0; }
 :where(html.bl-asc-8) .bl-look-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 -10px 10px; padding: 10px 12px; border-bottom: 1px solid var(--salty-line, color-mix(in srgb, var(--bl-notes-text) 10%, transparent)); background: var(--salty-shade, var(--bl-notes-card)); color: var(--bl-notes-text); font-size: 14px; font-weight: 600; line-height: 1.2; }
 :where(html.bl-asc-8) .bl-look-title small { color: var(--bl-notes-muted); font-size: 11px; font-weight: 400; }
-:where(html.bl-asc-8) .bl-notes-look .bl-look-sample,:where(html.bl-asc-8) body.salty :is(#salty-nochat, .bl-notes-look .bl-look-sample.salty-preview) { margin: 0 !important; padding: 10px 12px !important; border-radius: 12px !important; }
+:where(html.bl-asc-8) .bl-notes-look .bl-look-sample,
+:where(html.bl-asc-8) body.salty :where(#salty-nochat):is(#salty-nochat, .bl-notes-look .bl-look-sample.salty-preview),
+:where(html.bl-asc-8) body.salty :where(.bl-look-sample):is(#salty-nochat, .bl-notes-look .bl-look-sample.salty-preview) { margin: 0 !important; padding: 10px 12px !important; border-radius: 12px !important; }
 :where(html.bl-asc-8) .bl-look-note { margin: 6px 2px 0; color: var(--bl-notes-muted); font-size: 12px; line-height: 1.5; }
 :where(html.bl-asc-8) .bl-notes-look .bl-look-item { padding: 0 !important; }
 :where(html.bl-asc-8) .bl-notes-look .bl-look-item[data-param="font"] { margin-bottom: 10px; }
@@ -5128,14 +5208,20 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-8) .bl-notes-mini > .bl-notes-peek-head:has(.bl-notes-find:not([hidden])) .bl-notes-count { display: none; }
 :where(html.bl-asc-8) .bl-notes-dialog > header b { flex: 0 1 auto; min-width: 0; white-space: nowrap; }
 :where(html.bl-asc-8) .bl-notes-dialog > header .bl-notes-head-tools { flex: 1 1 auto; flex-wrap: nowrap; justify-content: flex-end; min-width: 0; }
-@media (max-width: 480px) { :where(html.bl-asc-8) .bl-notes-dialog > header:has(.bl-notes-find:not([hidden])) :is(.bl-notes-ver, .bl-notes-count) { display: none; } :where(html.bl-asc-8) .bl-notes-dialog > header { gap: 6px; } }
-:where(html.bl-asc-8) body.salty :is(.bl-notes-dialog, .bl-notes-help, .bl-notes-mini, .bl-notes-peek, .bl-sticky) {
+@media (max-width: 480px) { :where(html.bl-asc-8) .bl-notes-dialog > header:has(.bl-notes-find:not([hidden])) :where(.bl-notes-ver):is(.bl-notes-ver, .bl-notes-count),
+:where(html.bl-asc-8) .bl-notes-dialog > header:has(.bl-notes-find:not([hidden])) :where(.bl-notes-count):is(.bl-notes-ver, .bl-notes-count) { display: none; } :where(html.bl-asc-8) .bl-notes-dialog > header { gap: 6px; } }
+:where(html.bl-asc-8) body.salty :where(.bl-notes-dialog):is(.bl-notes-dialog, .bl-notes-help, .bl-notes-mini, .bl-notes-peek, .bl-sticky),
+:where(html.bl-asc-8) body.salty :where(.bl-notes-help):is(.bl-notes-dialog, .bl-notes-help, .bl-notes-mini, .bl-notes-peek, .bl-sticky),
+:where(html.bl-asc-8) body.salty :where(.bl-notes-mini):is(.bl-notes-dialog, .bl-notes-help, .bl-notes-mini, .bl-notes-peek, .bl-sticky),
+:where(html.bl-asc-8) body.salty :where(.bl-notes-peek):is(.bl-notes-dialog, .bl-notes-help, .bl-notes-mini, .bl-notes-peek, .bl-sticky),
+:where(html.bl-asc-8) body.salty :where(.bl-sticky):is(.bl-notes-dialog, .bl-notes-help, .bl-notes-mini, .bl-notes-peek, .bl-sticky) {
     font-family: var(--salty-font-ui, inherit);
     font-size: var(--bl-ts-ui, var(--mainFontSize, 15px));
     font-weight: var(--salty-ui-weight, normal);
     letter-spacing: var(--salty-ui-ls, normal);
 }
-:where(html.bl-asc-8) body.salty :is(.bl-notes-dialog, .bl-notes-help) { border-radius: var(--bl-r-lg, 16px) !important; }
+:where(html.bl-asc-8) body.salty :where(.bl-notes-dialog):is(.bl-notes-dialog, .bl-notes-help),
+:where(html.bl-asc-8) body.salty :where(.bl-notes-help):is(.bl-notes-dialog, .bl-notes-help) { border-radius: var(--bl-r-lg, 16px) !important; }
 :where(html.bl-asc-8) body.salty :is(.bl-note-btn, .bl-look-fontbtn, .bl-look-fontfind, .bl-look-fonttag, .bl-fontitem, .bl-look-segbtn, .bl-notes-sortbtn, .bl-notes-help-open) {
     border-radius: var(--bl-r-sm, 8px);
     height: auto;
@@ -5148,7 +5234,9 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-8) body.salty .bl-note-btn { min-width: 32px; padding-block: 4px; }
 :where(html.bl-asc-8) body.salty .bl-notes-dialog > header .bl-note-btn { min-width: var(--bl-h-icon, 34px); min-height: var(--bl-h-icon, 34px); }
 :where(html.bl-asc-8) body.salty .bl-notes-dialog > header,:where(html.bl-asc-8) body.salty .bl-notes-dialog > header .bl-notes-head-tools,:where(html.bl-asc-8) body.salty .bl-notes-mini > .bl-notes-peek-head { flex-wrap: wrap !important; row-gap: 8px; }
-:where(html.bl-asc-8) body.salty :is(.bl-notes-dialog > header b, .bl-notes-help h2, .bl-look-title) {
+:where(html.bl-asc-8) body.salty :where(b):is(.bl-notes-dialog > header b, .bl-notes-help h2, .bl-look-title),
+:where(html.bl-asc-8) body.salty :where(h2):is(.bl-notes-dialog > header b, .bl-notes-help h2, .bl-look-title),
+:where(html.bl-asc-8) body.salty :where(.bl-look-title):is(.bl-notes-dialog > header b, .bl-notes-help h2, .bl-look-title) {
     font-size: var(--bl-ts-ui, 1em);
     font-weight: bolder;
     letter-spacing: inherit;
@@ -5201,7 +5289,10 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-8) body.salty .bl-notes-look .bl-look-fmtname { white-space: normal; overflow-wrap: anywhere; }
 :where(html.bl-asc-8) body.salty .bl-notes-look .bl-look-seg { grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.5em), 1fr)); border-radius: var(--bl-r-md, 12px); }
 :where(html.bl-asc-8) body.salty .bl-notes-look .bl-look-segbtn { min-width: 0; padding: calc(5px + var(--bl-text-nudge, 0px)) 10px calc(5px - var(--bl-text-nudge, 0px)) ; white-space: normal; }
-:where(html.bl-asc-8) body.salty .bl-notes-help :is(nav button, summary, details > div, .bl-notes-help-lead) { font-size: var(--bl-ts-ui, 1em); font-weight: inherit; letter-spacing: inherit; }
+:where(html.bl-asc-8) body.salty .bl-notes-help :where(button):is(nav button, summary, details > div, .bl-notes-help-lead),
+:where(html.bl-asc-8) body.salty .bl-notes-help :where(summary):is(nav button, summary, details > div, .bl-notes-help-lead),
+:where(html.bl-asc-8) body.salty .bl-notes-help :where(div):is(nav button, summary, details > div, .bl-notes-help-lead),
+:where(html.bl-asc-8) body.salty .bl-notes-help :where(.bl-notes-help-lead):is(nav button, summary, details > div, .bl-notes-help-lead) { font-size: var(--bl-ts-ui, 1em); font-weight: inherit; letter-spacing: inherit; }
 :where(html.bl-asc-8) body.salty .bl-notes-help nav { grid-template-columns: repeat(auto-fit, minmax(min(100%, 6em), 1fr)); }
 :where(html.bl-asc-8) body.salty .bl-notes-help nav button { border-radius: var(--bl-r-sm, 8px); }
 :where(html.bl-asc-8) body.salty .bl-notes-help code { background: var(--bl-notes-hover); }
@@ -5211,7 +5302,8 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     color: var(--bl-notes-muted) !important;
     background: var(--bl-notes-hover) !important;
 }
-:where(html.bl-asc-8) body.salty .bl-notes-look .bl-look-fmtrow.is-off :is(.bl-look-fmticon, .bl-look-fmtname) {
+:where(html.bl-asc-8) body.salty .bl-notes-look .bl-look-fmtrow.is-off :where(.bl-look-fmticon):is(.bl-look-fmticon, .bl-look-fmtname),
+:where(html.bl-asc-8) body.salty .bl-notes-look .bl-look-fmtrow.is-off :where(.bl-look-fmtname):is(.bl-look-fmticon, .bl-look-fmtname) {
     opacity: 1;
     color: var(--bl-notes-muted);
 }
@@ -5239,7 +5331,8 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     font-weight: bolder;
     letter-spacing: inherit;
 }
-:where(html.bl-asc-8) body.salty .bl-notes-look :is(.bl-fontgroup small, .bl-look-fonttag span) {
+:where(html.bl-asc-8) body.salty .bl-notes-look :where(small):is(.bl-fontgroup small, .bl-look-fonttag span),
+:where(html.bl-asc-8) body.salty .bl-notes-look :where(span):is(.bl-fontgroup small, .bl-look-fonttag span) {
     font-size: var(--bl-ts-meta, .9em);
     color: inherit;
     opacity: 1;
@@ -5269,7 +5362,9 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
     :where(html.bl-asc-8) body.salty .bl-notes-dialog .bl-notes-ver::after { content: ''; position: absolute; inset: min(0px, 50% - 22px) 0; }
 }
 :where(html.bl-asc-8) body.salty .bl-sticky .bl-sticky-head,:where(html.bl-asc-8) body.salty .bl-notes-peek > .bl-notes-peek-head { column-gap: 4px; padding-right: 6px; }
-:where(html.bl-asc-8) body.salty .bl-sticky-head > :is([data-sticky], .bl-note-colorwrap),:where(html.bl-asc-8) body.salty .bl-notes-peek > .bl-notes-peek-head > [data-bar] { position: static; flex: 0 0 auto; }
+:where(html.bl-asc-8) body.salty .bl-sticky-head > :where([data-sticky]):is([data-sticky], .bl-note-colorwrap),
+:where(html.bl-asc-8) body.salty .bl-sticky-head > :where(.bl-note-colorwrap):is([data-sticky], .bl-note-colorwrap),
+:where(html.bl-asc-8) body.salty .bl-notes-peek > .bl-notes-peek-head > [data-bar] { position: static; flex: 0 0 auto; }
 :where(html.bl-asc-8) body.salty .bl-sticky .bl-sticky-head .bl-sticky-title { flex: 1 1 0; min-width: 0 !important; max-width: 100% !important; width: 0 !important; }
 :where(html.bl-asc-8) body.salty .bl-sticky .bl-sticky-head .bl-note-fmt { order: 5; flex: 0 0 100% !important; }
 :where(html.bl-asc-8) body.salty .bl-notes-peek > .bl-notes-peek-head > b { flex: 1 1 0; min-width: 0; }
@@ -6136,7 +6231,8 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
 :where(html.bl-asc-10) .eh-root .eh-pick-body[hidden] { display: none; }
 :where(html.bl-asc-10) .eh-root .eh-pick-row { display: grid; gap: 6px; min-width: 0; }
 :where(html.bl-asc-10) .eh-root .eh-pick-row > span { font-size: .9em; color: var(--eh-muted); }
-:where(html.bl-asc-10) .eh-root .eh-pick-row :is(select, input) { width: 100%; min-width: 0; min-height: 36px; margin: 0; }
+:where(html.bl-asc-10) .eh-root .eh-pick-row :where(select):is(select, input),
+:where(html.bl-asc-10) .eh-root .eh-pick-row :where(input):is(select, input) { width: 100%; min-width: 0; min-height: 36px; margin: 0; }
 :where(html.bl-asc-10) .eh-root .eh-pick-model { display: flex; align-items: center; gap: 8px; min-width: 0; }
 :where(html.bl-asc-10) .eh-root .eh-pick-model select { flex: 1 1 auto; }
 :where(html.bl-asc-10) .eh-root .eh-pick-hint,:where(html.bl-asc-10) .eh-root .eh-pick-problem,:where(html.bl-asc-10) .eh-root .eh-pick-models-status { margin: 0; font-size: .85em; line-height: 1.5; color: var(--eh-muted); }
@@ -6643,7 +6739,12 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
  font-size:inherit; font-family:inherit; font-weight:inherit; letter-spacing:inherit;
  line-height:1.45;
 }
-:where(html.bl-asc-11) body.salty #pt-panel :is(.pt-btn, .pt-ui-button, .pt-search, .pt-combo-input, #pt-panel-refresh, .pt-export-group>.pt-btn-icon) {
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-btn):is(.pt-btn, .pt-ui-button, .pt-search, .pt-combo-input, #pt-panel-refresh, .pt-export-group>.pt-btn-icon),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-ui-button):is(.pt-btn, .pt-ui-button, .pt-search, .pt-combo-input, #pt-panel-refresh, .pt-export-group>.pt-btn-icon),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-search):is(.pt-btn, .pt-ui-button, .pt-search, .pt-combo-input, #pt-panel-refresh, .pt-export-group>.pt-btn-icon),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-combo-input):is(.pt-btn, .pt-ui-button, .pt-search, .pt-combo-input, #pt-panel-refresh, .pt-export-group>.pt-btn-icon),
+:where(html.bl-asc-11) body.salty #pt-panel :where(#pt-panel-refresh):is(.pt-btn, .pt-ui-button, .pt-search, .pt-combo-input, #pt-panel-refresh, .pt-export-group>.pt-btn-icon),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-btn-icon):is(.pt-btn, .pt-ui-button, .pt-search, .pt-combo-input, #pt-panel-refresh, .pt-export-group>.pt-btn-icon) {
  height:auto; min-height:36px; padding:6px 10px; max-width:100%; white-space:normal;
  border-radius:var(--bl-r-sm,8px);
 }
@@ -6651,15 +6752,23 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
 :where(html.bl-asc-11) body.salty #pt-panel .pt-card h4 { font-size:1em!important; font-weight:inherit; gap:10px; margin-bottom:10px; }
 :where(html.bl-asc-11) body.salty #pt-panel :is(.pt-bl-help, .pt-param-label, .pt-block-meta, .pt-token-count, .pt-status-badge, .pt-info-chip, .pt-selected-chip, .pt-original-label, .pt-translated-label, #pt-statusbar, .pt-localization-list small) { font-size:.85em; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-params-reset { font-size:.85em!important; }
-:where(html.bl-asc-11) body.salty #pt-panel :is(.pt-toolbar, .pt-controls, .pt-controls-scroll, .pt-select-row, .pt-export-group) { gap:8px 10px; flex-wrap:wrap; }
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-toolbar):is(.pt-toolbar, .pt-controls, .pt-controls-scroll, .pt-select-row, .pt-export-group),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-controls):is(.pt-toolbar, .pt-controls, .pt-controls-scroll, .pt-select-row, .pt-export-group),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-controls-scroll):is(.pt-toolbar, .pt-controls, .pt-controls-scroll, .pt-select-row, .pt-export-group),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-select-row):is(.pt-toolbar, .pt-controls, .pt-controls-scroll, .pt-select-row, .pt-export-group),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-export-group):is(.pt-toolbar, .pt-controls, .pt-controls-scroll, .pt-select-row, .pt-export-group) { gap:8px 10px; flex-wrap:wrap; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-tabs { grid-template-columns:repeat(auto-fit,minmax(min(100%,7em),1fr)); gap:8px 10px; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-tabs .pt-tab { gap:10px; font-size:.9em; --bl-pt-nudge:var(--bl-text-nudge,0px); padding:calc(6px + var(--bl-pt-nudge)) 8px calc(6px - var(--bl-pt-nudge)); border-radius:var(--bl-r-sm,8px); }
-:where(html.bl-asc-11) body.salty #pt-panel :is(#pt-params-wrap, .pt-regex-toolbar, .pt-more-actions-body, .pt-localization-list) {
+:where(html.bl-asc-11) body.salty #pt-panel :where(#pt-params-wrap):is(#pt-params-wrap, .pt-regex-toolbar, .pt-more-actions-body, .pt-localization-list),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-regex-toolbar):is(#pt-params-wrap, .pt-regex-toolbar, .pt-more-actions-body, .pt-localization-list),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-more-actions-body):is(#pt-params-wrap, .pt-regex-toolbar, .pt-more-actions-body, .pt-localization-list),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-localization-list):is(#pt-params-wrap, .pt-regex-toolbar, .pt-more-actions-body, .pt-localization-list) {
  grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 10px)/2))),1fr)); gap:8px 10px;
 }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form #pt-params-wrap { grid-template-columns:repeat(auto-fit,minmax(min(100%,max(8.5em,calc((100% - 12px)/2))),1fr)); }
 :where(html.bl-asc-11) body.salty #pt-panel .pt-info-chip,:where(html.bl-asc-11) body.salty #pt-panel .pt-selected-chip { white-space:normal; }
-:where(html.bl-asc-11) body.salty #pt-panel[data-pt-theme="lemonade"] :is(.pt-selected-chip, .pt-status-on) {
+:where(html.bl-asc-11) body.salty #pt-panel[data-pt-theme="lemonade"] :where(.pt-selected-chip):is(.pt-selected-chip, .pt-status-on),
+:where(html.bl-asc-11) body.salty #pt-panel[data-pt-theme="lemonade"] :where(.pt-status-on):is(.pt-selected-chip, .pt-status-on) {
  background:var(--salty-accent-13,var(--salty-shade)); border-color:var(--salty-accent-28); color:var(--pt-ok);
 }
 :where(html.bl-asc-11) body.salty #pt-panel[data-pt-theme="lemonade"] .pt-btn-stop { background:var(--bl-warn-bg); border-color:var(--salty-line); }
@@ -6671,13 +6780,18 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
  border-radius:var(--bl-r-lg,16px);
 }
 :where(html.bl-asc-11) body.salty .pt-help-dialog::backdrop { background:var(--bl-scrim); -webkit-backdrop-filter:none; backdrop-filter:none; }
-:where(html.bl-asc-11) body.salty .pt-help-dialog :is(.pt-help-body, .pt-help-chapter summary, nav button, header small, h2) {
+:where(html.bl-asc-11) body.salty .pt-help-dialog :where(.pt-help-body):is(.pt-help-body, .pt-help-chapter summary, nav button, header small, h2),
+:where(html.bl-asc-11) body.salty .pt-help-dialog :where(summary):is(.pt-help-body, .pt-help-chapter summary, nav button, header small, h2),
+:where(html.bl-asc-11) body.salty .pt-help-dialog :where(button):is(.pt-help-body, .pt-help-chapter summary, nav button, header small, h2),
+:where(html.bl-asc-11) body.salty .pt-help-dialog :where(small):is(.pt-help-body, .pt-help-chapter summary, nav button, header small, h2),
+:where(html.bl-asc-11) body.salty .pt-help-dialog :where(h2):is(.pt-help-body, .pt-help-chapter summary, nav button, header small, h2) {
  font:inherit; letter-spacing:inherit; line-height:1.55;
 }
 :where(html.bl-asc-11) body.salty .pt-help-dialog h2 { font-size:1.1em; }
 :where(html.bl-asc-11) body.salty .pt-help-dialog header small { font-size:.8em; color:var(--salty-muted); }
 :where(html.bl-asc-11) body.salty .pt-help-dialog .pt-help-body { font-size:.9em; }
-:where(html.bl-asc-11) body.salty .pt-help-dialog :is(header, footer) { gap:8px 10px; padding:10px 12px; }
+:where(html.bl-asc-11) body.salty .pt-help-dialog :where(header):is(header, footer),
+:where(html.bl-asc-11) body.salty .pt-help-dialog :where(footer):is(header, footer) { gap:8px 10px; padding:10px 12px; }
 :where(html.bl-asc-11) body.salty .pt-help-dialog header > div { min-width:0; }
 :where(html.bl-asc-11) body.salty #pt-panel .pt-settings-nav,:where(html.bl-asc-11) body.salty .pt-help-dialog nav {
  grid-template-columns:repeat(auto-fit,minmax(min(100%,6em),1fr)); gap:8px 10px; padding:8px 10px;
@@ -6697,7 +6811,9 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
  line-height:1.45!important; letter-spacing:inherit; border-radius:var(--bl-r-sm,8px);
 }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header h3 { min-width:0; font-size:1.1em; font-weight:inherit; gap:8px 10px; }
-:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :is(input, select, textarea):not([type=checkbox]):not([type=range]) {
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(input):is(input, select, textarea):not([type=checkbox]):not([type=range]),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(select):is(input, select, textarea):not([type=checkbox]):not([type=range]),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(textarea):is(input, select, textarea):not([type=checkbox]):not([type=range]) {
  font-family:inherit; font-size:inherit; font-weight:inherit; letter-spacing:inherit; line-height:1.5;
 }
 :where(html.bl-asc-11) body.salty #pt-panel .pt-localization-list small[data-locale-state] { opacity:1; }
@@ -6728,7 +6844,8 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
 :where(html.bl-asc-11) body.salty dialog.pt-choice-backdrop { border-radius:0!important; font-family:var(--salty-font-ui,inherit); font-size:var(--salty-ui-size,14px); }
 :where(html.bl-asc-11) body.salty dialog.pt-choice-backdrop::backdrop { background:transparent; }
 :where(html.bl-asc-11) body.salty .pt-choice-backdrop .pt-choice-box { min-width:0; width:min(100%,26em); max-width:100%; max-height:100%; overflow:auto; border-radius:var(--bl-r-lg,16px); }
-:where(html.bl-asc-11) body.salty .pt-choice-backdrop :is(.pt-choice-title, .pt-choice-btns button, .pt-choice-cancel button) { font:inherit; line-height:1.5; white-space:normal; overflow-wrap:anywhere; }
+:where(html.bl-asc-11) body.salty .pt-choice-backdrop :where(.pt-choice-title):is(.pt-choice-title, .pt-choice-btns button, .pt-choice-cancel button),
+:where(html.bl-asc-11) body.salty .pt-choice-backdrop :where(button):is(.pt-choice-title, .pt-choice-btns button, .pt-choice-cancel button) { font:inherit; line-height:1.5; white-space:normal; overflow-wrap:anywhere; }
 :where(html.bl-asc-11) body.salty .pt-choice-backdrop button { min-height:36px; border-radius:var(--bl-r-sm,8px); }
 :where(html.bl-asc-11) body.salty .pt-choice-backdrop .pt-choice-btns { gap:8px; }
 :where(html.bl-asc-11) #pt-panel .pt-locale-override {grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 10px;margin-block:0 8px}
@@ -6788,12 +6905,14 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
 :where(html.bl-asc-11) #pt-panel.pt-in-drawer { --pt-pad-x:0px; overflow:visible; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header { gap:8px; min-height:0; padding:6px 6px 6px 12px; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header > div { gap:2px!important; }
-:where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header :is(#pt-panel-refresh, #pt-panel-close) {
+:where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header :where(#pt-panel-refresh):is(#pt-panel-refresh, #pt-panel-close),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header :where(#pt-panel-close):is(#pt-panel-refresh, #pt-panel-close) {
  flex:0 0 auto; width:var(--bl-h-icon,34px); min-width:0; max-width:none; height:var(--bl-h-icon,34px); min-height:0;
  padding:0; border:0; border-radius:var(--bl-r-sm,8px); background:transparent; box-shadow:none;
  color:var(--pt-text-dim); font-size:16px; line-height:1; justify-content:center;
 }
-:where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header :is(#pt-panel-refresh, #pt-panel-close):hover { background:var(--pt-accent-soft); color:var(--pt-text); }
+:where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header :where(#pt-panel-refresh):is(#pt-panel-refresh, #pt-panel-close):hover,
+:where(html.bl-asc-11) body.salty #pt-panel #pt-panel-header :where(#pt-panel-close):is(#pt-panel-refresh, #pt-panel-close):hover { background:var(--pt-accent-soft); color:var(--pt-text); }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-panel-refresh > span { display:none; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-panel-refresh > i { font-size:15px; }
 :where(html.bl-asc-11) body.salty #pt-panel .pt-version { min-height:0; padding:1px 8px!important; }
@@ -6829,8 +6948,10 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
 :where(html.bl-asc-11) body.salty #pt-panel .pt-block-list { gap:6px; }
 :where(html.bl-asc-11) body.salty #pt-panel .pt-block-header { gap:8px; min-height:36px; padding:6px 10px; }
 :where(html.bl-asc-11) body.salty #pt-panel .pt-block-body { padding:10px; }
-:where(html.bl-asc-11) body.salty #pt-panel :is(.pt-original-label, .pt-translated-label) { margin-bottom:4px; }
-:where(html.bl-asc-11) body.salty #pt-panel :is(.pt-original-text, .pt-translated-text) { padding:8px 10px; }
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-original-label):is(.pt-original-label, .pt-translated-label),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-translated-label):is(.pt-original-label, .pt-translated-label) { margin-bottom:4px; }
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-original-text):is(.pt-original-text, .pt-translated-text),
+:where(html.bl-asc-11) body.salty #pt-panel :where(.pt-translated-text):is(.pt-original-text, .pt-translated-text) { padding:8px 10px; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-panel-content [role="status"] { font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-statusbar { min-height:0; padding:6px var(--pt-pad-x); font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
 :where(html.bl-asc-11) body.salty #pt-panel:not(.pt-in-drawer) #pt-statusbar { padding-inline:12px; }
@@ -6875,7 +6996,7 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
  font-size:1em!important; font-weight:600!important; line-height:1.2; color:var(--pt-text)!important; text-align:left;
 }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form .pt-card > h4::before { height:14px; }
-:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :is(.pt-card > p, .pt-field > p) { margin:0; }
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(p):is(.pt-card > p, .pt-field > p) { margin:0; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-setting-display .pt-card:has(> .pt-field + .pt-field) { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(10em,calc((100% - 12px) / 2))),1fr)); gap:0 12px; align-items:start; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-setting-display .pt-card > * { grid-column:1 / -1; min-width:0; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-setting-display .pt-card > .pt-field + .pt-field,:where(html.bl-asc-11) body.salty #pt-panel #pt-setting-display .pt-card > .pt-field:has(+ .pt-field) { grid-column:auto; }
@@ -6884,11 +7005,14 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form #pt-proxy-wrap { display:flex; flex-direction:column; gap:10px; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form .pt-card > .pt-ui-button { align-self:flex-start; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form .pt-check { gap:6px; min-height:36px; margin:0; }
-:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :is(input, select):not([type=checkbox]):not([type=range]) {
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(input):is(input, select):not([type=checkbox]):not([type=range]),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(select):is(input, select):not([type=checkbox]):not([type=range]) {
  height:var(--bl-h-ctl,36px); min-height:var(--bl-h-ctl,36px); padding-block:0; border-radius:var(--bl-r-sm,8px); line-height:normal;
 }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form input:not([type=checkbox]):not([type=range]) { padding-inline:12px; }
-:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :is(input, select, textarea):not([type=checkbox]):not([type=range]):not(:focus) { background-color:var(--salty-fill-field,var(--salty-field,var(--pt-bg-alt)))!important; }
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(input):is(input, select, textarea):not([type=checkbox]):not([type=range]):not(:focus),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(select):is(input, select, textarea):not([type=checkbox]):not([type=range]):not(:focus),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form :where(textarea):is(input, select, textarea):not([type=checkbox]):not([type=range]):not(:focus) { background-color:var(--salty-fill-field,var(--salty-field,var(--pt-bg-alt)))!important; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form input[type=range] { min-height:0; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form #pt-fetch-models { flex:0 0 var(--bl-h-icon,34px)!important; width:var(--bl-h-icon,34px); min-width:0; height:var(--bl-h-icon,34px)!important; min-height:0; padding:0; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-settings-form #pt-params-wrap { gap:4px 12px; }
@@ -6914,21 +7038,34 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
   :where(html.bl-asc-11) body.salty #pt-panel #pt-tabs .pt-tab { padding-inline: 0; }
 }
 :where(html.bl-asc-11) #pt-panel .pt-localization-list .pt-check > span { word-break: keep-all; }
-html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) {
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :where(#pt-tabs):is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav),
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :where(.pt-settings-nav):is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav),
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :where(nav):is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) {
   display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important;
   min-width:0; max-width:100%; overflow-x:auto !important; overflow-y:hidden !important;
   overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;
 }
-html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :is(button, a, li, [role="tab"], [role="button"]) {
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :where(button):is(button, a, li, [role="tab"], [role="button"]),
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :where(a):is(button, a, li, [role="tab"], [role="button"]),
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :where(li):is(button, a, li, [role="tab"], [role="button"]),
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :where([role="tab"]):is(button, a, li, [role="tab"], [role="button"]),
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :where([role="button"]):is(button, a, li, [role="tab"], [role="button"]) {
   flex:1 0 auto !important; width:auto !important; min-width:max-content !important;
   white-space:nowrap !important; overflow-wrap:normal !important;
 }
-html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :is(button, a, li, [role="tab"], [role="button"]) > :is(span, a) { white-space:nowrap !important; overflow-wrap:normal !important; }
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :is(button, a, li, [role="tab"], [role="button"]) > :where(span):is(span, a),
+html:where(.bl-asc-11):not(#bl-tab-scroll-off) :is(#pt-panel > #pt-tabs, #pt-panel .pt-settings-nav, .pt-help-dialog > nav) > :is(button, a, li, [role="tab"], [role="button"]) > :where(a):is(span, a) { white-space:nowrap !important; overflow-wrap:normal !important; }
 html:where(.bl-asc-11) body.salty #pt-panel #pt-tabs,:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-act-row,:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar,:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > .pt-export-group { gap:8px!important; }
-:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > :is(.pt-combo, .pt-btn, .pt-export-group),:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > .pt-export-group > :is(.pt-btn-icon, .pt-more-actions) { margin:0!important; }
+:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > :where(.pt-combo):is(.pt-combo, .pt-btn, .pt-export-group),
+:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > :where(.pt-btn):is(.pt-combo, .pt-btn, .pt-export-group),
+:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > :where(.pt-export-group):is(.pt-combo, .pt-btn, .pt-export-group),
+:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > .pt-export-group > :where(.pt-btn-icon):is(.pt-btn-icon, .pt-more-actions),
+:where(html.bl-asc-11) body.salty #pt-panel .pt-page-fixed .pt-toolbar > .pt-export-group > :where(.pt-more-actions):is(.pt-btn-icon, .pt-more-actions) { margin:0!important; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi .pt-block-header { align-items:center; gap:8px; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi .pt-block-name { flex:1 1 8em; min-width:0; font-size:inherit; line-height:1.45; word-break:keep-all; }
-:where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi :is(.pt-block-meta, .pt-token-count, .pt-status-badge) { font-size:13px; line-height:1.4; }
+:where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi :where(.pt-block-meta):is(.pt-block-meta, .pt-token-count, .pt-status-badge),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi :where(.pt-token-count):is(.pt-block-meta, .pt-token-count, .pt-status-badge),
+:where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi :where(.pt-status-badge):is(.pt-block-meta, .pt-token-count, .pt-status-badge) { font-size:13px; line-height:1.4; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi .pt-block-meta { gap:8px; margin-bottom:8px; }
 :where(html.bl-asc-11) body.salty #pt-panel #pt-page-wi .pt-meta-sep { margin:0; }
 :where(html.bl-asc-11) body .jj-tr-btn.bl-kt-btn {
@@ -6969,7 +7106,9 @@ html:where(.bl-asc-11) body.salty #pt-panel #pt-tabs,:where(html.bl-asc-11) body
 :where(html.bl-asc-11) .jj-tr.bl-kt > * + * { margin-top: 8px; }
 :where(html.bl-asc-11) .jj-tr.bl-kt > .jj-tr-orig { margin-top: 12px; }
 :where(html.bl-asc-11) .bl-kt .jj-tr-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
-:where(html.bl-asc-11) .bl-kt :is(.jj-tr-label, .jj-tr-stale, .pt-progress-label) { font-size: var(--kt-sub); line-height: 1.4; }
+:where(html.bl-asc-11) .bl-kt :where(.jj-tr-label):is(.jj-tr-label, .jj-tr-stale, .pt-progress-label),
+:where(html.bl-asc-11) .bl-kt :where(.jj-tr-stale):is(.jj-tr-label, .jj-tr-stale, .pt-progress-label),
+:where(html.bl-asc-11) .bl-kt :where(.pt-progress-label):is(.jj-tr-label, .jj-tr-stale, .pt-progress-label) { font-size: var(--kt-sub); line-height: 1.4; }
 :where(html.bl-asc-11) .bl-kt .jj-tr-label { font-weight: 600; color: var(--jj-tr-muted); }
 :where(html.bl-asc-11) .bl-kt .jj-tr-head > .jj-tr-label { color: var(--salty-accent-ink, var(--bl-jj-fg, var(--salty-accent, var(--SmartThemeQuoteColor)))); }
 :where(html.bl-asc-11) .bl-kt .jj-tr-note { font-weight: 400; }
@@ -7034,15 +7173,18 @@ html:where(.bl-asc-12) body .blpt .blpt-btn:focus-visible { outline:2px solid va
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog > p {margin:6px 0 12px;font-size:var(--bl-ts-meta,12.5px);line-height:1.5;color:var(--salty-muted,inherit)}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog > small {display:block;margin-top:10px;font-size:var(--bl-ts-cap,12px);line-height:1.5;color:var(--salty-muted,inherit)}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content .ctsi-flex-container,html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content .ctsi-flex-container > div {flex-wrap:nowrap;gap:10px}
-html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :is(div, label):not(.checkbox_label) {display:grid;grid-template-columns:minmax(0,min(12em,46%)) minmax(0,1fr);align-items:center;gap:8px 10px;min-height:var(--bl-h-ctl,36px);margin:0}
+html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :where(div):is(div, label):not(.checkbox_label),
+html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :where(label):is(div, label):not(.checkbox_label) {display:grid;grid-template-columns:minmax(0,min(12em,46%)) minmax(0,1fr);align-items:center;gap:8px 10px;min-height:var(--bl-h-ctl,36px);margin:0}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :is(div, label) > br {display:none}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :is(div, label) > span {line-height:1.4}
-html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) :is(select, .text_pole) {width:100%!important;margin:0}
+html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) :where(select):is(select, .text_pole),
+html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) :where(.text_pole):is(select, .text_pole) {width:100%!important;margin:0}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content .flex-container:has(>.neo-range-slider) {flex-flow:row nowrap;align-items:center;gap:8px;min-width:0}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content .neo-range-slider {flex:1 1 auto;min-width:0;margin:0}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content .neo-range-input {flex:0 0 4.5em;width:4.5em}
 html:where(.bl-asc-13) body.salty .bl-ctsi-dialog toolcool-color-picker {justify-self:start;line-height:0;border-radius:var(--bl-r-sm,8px);--tool-cool-color-picker-btn-bg:transparent;--tool-cool-color-picker-btn-border-color:var(--salty-line,#ccd7e4);--tool-cool-color-picker-btn-border-radius:var(--bl-r-sm,8px);--tool-cool-color-picker-btn-border-radius-inner:var(--bl-r-xs,6px);--tool-cool-color-picker-btn-border-color-inner:transparent}
-html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :is(div, label):not(.checkbox_label) {grid-template-columns:minmax(0,min(13em,52%)) minmax(0,1fr)}
+html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :where(div):is(div, label):not(.checkbox_label),
+html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-row-1, #cts-row-2) > :where(label):is(div, label):not(.checkbox_label) {grid-template-columns:minmax(0,min(13em,52%)) minmax(0,1fr)}
 :where(html.bl-asc-14) .bl-mermaid-status {display:flex;align-items:center;gap:12px;min-width:0}
 :where(html.bl-asc-14) .bl-mermaid-status p {flex:1;min-width:0;overflow-wrap:anywhere}
 :where(html.bl-asc-14) .bl-mermaid-again {flex:none}
@@ -7061,7 +7203,8 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 :where(html.bl-asc-15) #lv_settings .lv-settings-credits summary { cursor: pointer; font-weight: 600; }
 :where(html.bl-asc-15) #lv_settings .lv-credits p { margin: 10px 0 0; }
 :where(html.bl-asc-15) #lv_settings .lv-credits a { color: var(--salty-accent-ink, var(--lv-accent)); text-decoration: underline; text-underline-offset: .15em; }
-:where(html.bl-asc-15) #lv_settings .lv-settings-credits :is(summary, a):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 3px; }
+:where(html.bl-asc-15) #lv_settings .lv-settings-credits :where(summary):is(summary, a):focus-visible,
+:where(html.bl-asc-15) #lv_settings .lv-settings-credits :where(a):is(summary, a):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 3px; }
 :where(html.bl-asc-15) .lv-settings,:where(html.bl-asc-15) .lv-editor,:where(html.bl-asc-15) .lv-bar,:where(html.bl-asc-15) .lv-namevoice {
   --lv-css-version: "2.0.6";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
@@ -7392,7 +7535,9 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 @container lveditor (min-width: 22em) {
   :where(html.bl-asc-15) .lv-editor .lv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :is(.extraMesButtons > .lv_play, .extraMesButtons > .lv_script, .bl-pinned.lv_play, .bl-pinned.lv_script)::before {
+:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :where(.lv_play):is(.extraMesButtons > .lv_play, .extraMesButtons > .lv_script, .bl-pinned.lv_play, .bl-pinned.lv_script)::before,
+:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :where(.lv_script):is(.extraMesButtons > .lv_play, .extraMesButtons > .lv_script, .bl-pinned.lv_play, .bl-pinned.lv_script)::before,
+:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :where(.bl-pinned):is(.extraMesButtons > .lv_play, .extraMesButtons > .lv_script, .bl-pinned.lv_play, .bl-pinned.lv_script)::before {
   content: "" !important;
   display: inline-block;
   width: 1em;
@@ -7402,8 +7547,10 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
   -webkit-mask: var(--salty-mi) center / contain no-repeat;
   mask: var(--salty-mi) center / contain no-repeat;
 }
-:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :is(.extraMesButtons > .lv_play, .bl-pinned.lv_play) { --salty-mi: var(--salty-mi-volume); }
-:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :is(.extraMesButtons > .lv_script, .bl-pinned.lv_script) { --salty-mi: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M13.5%203.5h-6a2%202%200%200%200-2%202v13a2%202%200%200%200%202%202h9a2%202%200%200%200%202-2v-10z%22%2F%3E%3Cpath%20d%3D%22M13.5%203.5v5h5M8.4%2013.4h1.6l2.4-2v6.4l-2.4-2H8.4zM14.9%2012.5a3%203%200%200%201%200%204.2%22%2F%3E%3C%2Fsvg%3E"); }
+:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :where(.lv_play):is(.extraMesButtons > .lv_play, .bl-pinned.lv_play),
+:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :where(.bl-pinned):is(.extraMesButtons > .lv_play, .bl-pinned.lv_play) { --salty-mi: var(--salty-mi-volume); }
+:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :where(.lv_script):is(.extraMesButtons > .lv_script, .bl-pinned.lv_script),
+:where(html.bl-asc-15) body.salty.salty-icons-line #chat .mes :where(.bl-pinned):is(.extraMesButtons > .lv_script, .bl-pinned.lv_script) { --salty-mi: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M13.5%203.5h-6a2%202%200%200%200-2%202v13a2%202%200%200%200%202%202h9a2%202%200%200%200%202-2v-10z%22%2F%3E%3Cpath%20d%3D%22M13.5%203.5v5h5M8.4%2013.4h1.6l2.4-2v6.4l-2.4-2H8.4zM14.9%2012.5a3%203%200%200%201%200%204.2%22%2F%3E%3C%2Fsvg%3E"); }
 :where(html.bl-asc-15) #chat .mes .extraMesButtons > .lv_play { font-size: 1em; }
 :where(html.bl-asc-15) .lv-settings .lv-on,:where(html.bl-asc-15) .lv-bar .lv-on { color: var(--lv-accent, var(--SmartThemeQuoteColor, #51a0de)); filter: drop-shadow(0 0 5px var(--lv-accent, var(--SmartThemeQuoteColor, #51a0de))); }
 :where(html.bl-asc-15) .lv-icon.lv-on { border-color: color-mix(in srgb, var(--lv-accent) 60%, transparent); }
@@ -7528,12 +7675,16 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 :where(html.bl-asc-15) .lv-bar .lv-bar-details { position: absolute; bottom: calc(100% + 8px); inset-inline: 0; box-sizing: border-box; width: 100%; min-width: 0; max-width: calc(100vw - 16px); max-height: min(55dvh,360px); padding: 12px; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--lv-border); border-radius: var(--lv-r-md); background: var(--SmartThemeBlurTintColor, #171717); color: var(--lv-text); box-shadow: 0 6px 22px #0004; font-size: .9em; line-height: 1.55; text-align: start; overflow-wrap: anywhere; }
 :where(html.bl-asc-15) .lv-bar .lv-bar-details[hidden],:where(html.bl-asc-15) .lv-bar .lv-bar-details-btn[hidden] { display: none; }
 :where(html.bl-asc-15) .lv-bar .lv-bar-original { min-width: 0; margin: 0 0 10px; }
-:where(html.bl-asc-15) .lv-bar .lv-bar-original :is(p, div) { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-:where(html.bl-asc-15) .lv-bar .lv-bar-details :is(h3, h4, strong) { color: inherit; font-size: 1em; margin: 0; }
+:where(html.bl-asc-15) .lv-bar .lv-bar-original :where(p):is(p, div),
+:where(html.bl-asc-15) .lv-bar .lv-bar-original :where(div):is(p, div) { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+:where(html.bl-asc-15) .lv-bar .lv-bar-details :where(h3):is(h3, h4, strong),
+:where(html.bl-asc-15) .lv-bar .lv-bar-details :where(h4):is(h3, h4, strong),
+:where(html.bl-asc-15) .lv-bar .lv-bar-details :where(strong):is(h3, h4, strong) { color: inherit; font-size: 1em; margin: 0; }
 :where(html.bl-asc-15) .lv-bar .lv-bar-sfx-list { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 :where(html.bl-asc-15) .lv-bar .lv-bar-sfx-list button { display: block; width: 100%; min-width: 0; max-width: 100%; min-height: 34px; margin: 0; padding: 7px 10px; border: 1px solid var(--lv-border); border-radius: var(--lv-r-sm); background: var(--lv-fill); color: inherit; font: inherit; line-height: 1.5; text-align: start; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
 :where(html.bl-asc-15) .lv-bar .lv-bar-sfx-list button:hover { background: var(--lv-fill-hover); }
-:where(html.bl-asc-15) .lv-bar :is(.lv-bar-details-btn, .lv-bar-sfx-list button):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 2px; }
+:where(html.bl-asc-15) .lv-bar :where(.lv-bar-details-btn):is(.lv-bar-details-btn, .lv-bar-sfx-list button):focus-visible,
+:where(html.bl-asc-15) .lv-bar :where(button):is(.lv-bar-details-btn, .lv-bar-sfx-list button):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 2px; }
 @media (max-width: 600px) {
   :where(html.bl-asc-15) .lv-bar { left: 8px; width: calc(100vw - 16px); padding: 8px 10px; border-radius: var(--lv-r-md); }
   :where(html.bl-asc-15) .lv-bar.lv-bar-on { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 8px; }
@@ -7612,7 +7763,11 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 :where(html.bl-asc-15) #lv_settings .lv-label { color:var(--salty-text,var(--lv-text)); font-size:var(--bl-ts-ui,14px); line-height:1.35; }
 :where(html.bl-asc-15) #lv_settings .lv-row-label { color:var(--salty-text,var(--lv-text)); font-size:var(--bl-ts-ui,14px); }
 :where(html.bl-asc-15) #lv_settings :is(.lv-desc, .lv-empty, .lv-key-state, .lv-balance, .lv-test-result, .lv-help-note, .lv-warn-note) { font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }
-:where(html.bl-asc-15) #lv_settings :is(.lv-desc, .lv-empty, .lv-key-state, .lv-sub, .lv-grp) { color:var(--salty-muted,var(--lv-dim)); }
+:where(html.bl-asc-15) #lv_settings :where(.lv-desc):is(.lv-desc, .lv-empty, .lv-key-state, .lv-sub, .lv-grp),
+:where(html.bl-asc-15) #lv_settings :where(.lv-empty):is(.lv-desc, .lv-empty, .lv-key-state, .lv-sub, .lv-grp),
+:where(html.bl-asc-15) #lv_settings :where(.lv-key-state):is(.lv-desc, .lv-empty, .lv-key-state, .lv-sub, .lv-grp),
+:where(html.bl-asc-15) #lv_settings :where(.lv-sub):is(.lv-desc, .lv-empty, .lv-key-state, .lv-sub, .lv-grp),
+:where(html.bl-asc-15) #lv_settings :where(.lv-grp):is(.lv-desc, .lv-empty, .lv-key-state, .lv-sub, .lv-grp) { color:var(--salty-muted,var(--lv-dim)); }
 :where(html.bl-asc-15) #lv_settings .lv-body .menu_button { min-height:var(--bl-h-ctl,36px); padding-inline:12px; font-size:var(--bl-fs-ctl,13.5px); }
 :where(html.bl-asc-15) #lv_settings .lv-actions { display:flex; flex-wrap:wrap; gap:8px; max-width:none; }
 :where(html.bl-asc-15) #lv_settings .lv-actions .menu_button { flex:0 1 auto; }
@@ -7623,13 +7778,18 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 :where(html.bl-asc-15) #lv_settings > .inline-drawer > .inline-drawer-content { flex-direction:column; }
 :where(html.bl-asc-15) #lv_settings .lv-body { text-align:start; }
 :where(html.bl-asc-15) dialog.popup #lv_settings > .inline-drawer > .inline-drawer-header .inline-drawer-icon { display:none; }
-:where(html.bl-asc-15) body.salty #lv_settings .lv-card :is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus) { background-color:var(--salty-fill-field,var(--salty-field,var(--bl-well)))!important; }
+:where(html.bl-asc-15) body.salty #lv_settings .lv-card :where(input):is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus),
+:where(html.bl-asc-15) body.salty #lv_settings .lv-card :where(textarea):is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus),
+:where(html.bl-asc-15) body.salty #lv_settings .lv-card :where(select):is(input:is([type=text], [type=number], [type=password], [type=url], [type=search], :not([type])), textarea, select):not(:focus) { background-color:var(--salty-fill-field,var(--salty-field,var(--bl-well)))!important; }
 @container lvcard (min-width: 18em) {
   :where(html.bl-asc-15) #lv_settings .lv-grid { display:flex; flex-wrap:wrap; align-items:flex-start; }
   :where(html.bl-asc-15) #lv_settings .lv-grid > * { flex:1 1 calc(50% - 8px); min-width:fit-content; max-width:100%; box-sizing:border-box; }
-  :where(html.bl-asc-15) #lv_settings .lv-grid > :is(.lv-wide, .lv-has-desc) { flex-basis:100%; }
-  :where(html.bl-asc-15) #lv_settings .lv-grid > .lv-field > :is(.text_pole, input[type=range]) { width:0; min-width:100%; }
-  :where(html.bl-asc-15) #lv_settings .lv-grid :is(.lv-help-note, .lv-warn-note) { contain:inline-size; }
+  :where(html.bl-asc-15) #lv_settings .lv-grid > :where(.lv-wide):is(.lv-wide, .lv-has-desc),
+:where(html.bl-asc-15) #lv_settings .lv-grid > :where(.lv-has-desc):is(.lv-wide, .lv-has-desc) { flex-basis:100%; }
+  :where(html.bl-asc-15) #lv_settings .lv-grid > .lv-field > :where(.text_pole):is(.text_pole, input[type=range]),
+:where(html.bl-asc-15) #lv_settings .lv-grid > .lv-field > :where([type=range]):is(.text_pole, input[type=range]) { width:0; min-width:100%; }
+  :where(html.bl-asc-15) #lv_settings .lv-grid :where(.lv-help-note):is(.lv-help-note, .lv-warn-note),
+:where(html.bl-asc-15) #lv_settings .lv-grid :where(.lv-warn-note):is(.lv-help-note, .lv-warn-note) { contain:inline-size; }
 }
 :where(html.bl-asc-15) body.salty dialog #lv_settings .bl-hs-row { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:3px 0 7px; font-size:var(--bl-fs-cap, 12.5px); line-height:1.45; color:var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor, #888) 62%, transparent)); }
 :where(html.bl-asc-15) body.salty dialog #lv_settings .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }

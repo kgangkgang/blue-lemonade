@@ -254,40 +254,53 @@ function scan(node) {
     scanBody(node, skip);
 }
 // 1.4.8 opt: 미뤄 둔 닫힌 서랍 하나를 지금 훑어요(열린 것처럼 — 그 안에 또 닫힌 서랍이 있으면 그것만 다시 미뤄요). 표식은 DOM 모양만 보니 열린 뒤 훑은 것과 같아요
-function scanClosedDrawer(drawer) {
+//   1.5.1 opt-boot: 조각으로 훑어요(요소 하나마다 한 박자 — 아래 prescanDeferredDrawers). 한 번에 훑던 것과 차례 · 검사가 같아요
+function* closedDrawerSteps(drawer, sliced) {
     const nested = drawer.querySelector(CLOSED_DRAWER) ? el => { const c = el.closest(CLOSED_DRAWER); return !!c && c !== drawer; } : null;
     if (nested) for (const d of drawer.querySelectorAll(CLOSED_DRAWER)) deferredDrawers.add(d);
-    scanBody(drawer, nested);
+    yield* scanBodySteps(drawer, nested, sliced);
 }
+const drain = steps => { for (let r = steps.next(); !r.done; r = steps.next()); };
 // 1.4.8 opt: 처음 여는 서랍이 표식 쓰기(+ 그 다시 계산)를 떠안지 않게, 덮개가 걷힌 뒤 쉴 때 미뤄 둔 서랍을 하나씩 미리 훑어요.
 //   닫힌 서랍은 display:none 이라 그 안 표식 쓰기는 지금 그릴 것이 없어요. 훑은 뒤 바뀌는 것은 지금처럼 감시 콜백이 맞춰요(닫힌 서랍 안 변화도 원래 바로 봐요).
 //   한가한 틈(timeRemaining)만 쓰고, 그사이 열린 서랍은 원래대로 열릴 때 훑어요(scanOpenedDrawers)
-function prescanDeferredDrawers() {
-    if (typeof globalThis.requestIdleCallback !== 'function') return;
+// 1.5.1 opt-boot: 예전엔 서랍 하나(요소 수천 개인 확장 · 응답 설정 서랍)를 한 콜백에서 다 훑어 폰에서 긴 작업이 되었어요(쉴 때 콜백도 한가한 틈 50ms 를 넘겨 돌았어요).
+//   이제 한가한 틈 안에서 요소 16개마다 남은 시간을 보고(입력이 기다리면 바로) 멈췄다가 다음 쉴 때 이어 훑어요 — 한 조각이 그 틈을 넘지 않아요.
+//   다 훑을 때까지 그 서랍은 「미뤄 둔 서랍」으로 남아요: 그사이 열리면 원래대로 열릴 때 통째로 훑고(scanOpenedDrawers) 하던 조각은 버려요. 훑은 칸을 또 훑어도 같은 표식이에요
+const prescanJobs = new Map();
+const inputWaiting = () => { try { return !!globalThis.navigator?.scheduling?.isInputPending?.(); } catch { return false; } };
+export function prescanDeferredDrawers(ric = globalThis.requestIdleCallback, now = () => performance.now()) {
+    if (typeof ric !== 'function') return;
     const queue = [...document.querySelectorAll(CLOSED_DRAWER)].filter(d => deferredDrawers.has(d));
     const step = deadline => {
-        while (queue.length && deadline.timeRemaining() > 8) {
-            const d = queue.shift();
-            if (!d.isConnected || !deferredDrawers.has(d) || !d.matches(CLOSED_DRAWER)) continue;
-            deferredDrawers.delete(d);
-            scanClosedDrawer(d);
+        const end = now() + (deadline.didTimeout ? 8 : Math.min(45, deadline.timeRemaining()));
+        for (let n = 0; queue.length; n++) {
+            if (!(n & 15) && (now() >= end - 2 || inputWaiting())) break;
+            const d = queue[0];
+            if (!d.isConnected || !deferredDrawers.has(d) || (!prescanJobs.has(d) && !d.matches(CLOSED_DRAWER))) { prescanJobs.delete(d); queue.shift(); continue; }
+            let job = prescanJobs.get(d);
+            if (!job) prescanJobs.set(d, job = closedDrawerSteps(d, true));
+            if (job.next().done) { prescanJobs.delete(d); deferredDrawers.delete(d); queue.shift(); }
         }
-        if (queue.length) globalThis.requestIdleCallback(step, { timeout: 5000 });
+        if (queue.length) ric(step, { timeout: 5000 });
     };
-    if (queue.length) globalThis.requestIdleCallback(step, { timeout: 5000 });
+    if (queue.length) ric(step, { timeout: 5000 });
 }
-function scanBody(node, skip) {
+// sliced: 조각으로 훑을 때 — 모은 목록을 먼저 떠 두고(살아 있는 목록은 그사이 DOM 이 바뀌면 칸을 건너뛸 수 있어요) 떨어진 요소는 건너뛰고, 줄 그릇은 하나씩 정확히 따져요
+function* scanBodySteps(node, skip, sliced = false) {
     if (node.classList?.contains('menu_button')) check(node);
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
     if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
     if (!node.firstElementChild) { if (node.hasAttribute(ROW) && isRowHost(node) && !inMessage(node)) checkRow(node); return; }
-    for (const el of node.getElementsByClassName('menu_button')) if (!skip || !skip(el)) check(el);
-    for (const el of node.getElementsByTagName('label')) if (!skip || !skip(el)) checkLabel(el);
-    for (const el of node.getElementsByClassName('mes')) checkMes(el);
-    for (const el of node.getElementsByClassName('mes_reasoning_details')) checkReasoning(el);
-    scanRows(node, skip);
+    const list = c => sliced ? Array.from(c) : c, gone = el => sliced && !el.isConnected;
+    for (const el of list(node.getElementsByClassName('menu_button'))) { if (!gone(el) && (!skip || !skip(el))) check(el); yield; }
+    for (const el of list(node.getElementsByTagName('label'))) { if (!gone(el) && (!skip || !skip(el))) checkLabel(el); yield; }
+    for (const el of list(node.getElementsByClassName('mes'))) { if (!gone(el)) checkMes(el); yield; }
+    for (const el of list(node.getElementsByClassName('mes_reasoning_details'))) { if (!gone(el)) checkReasoning(el); yield; }
+    yield* scanRowsSteps(node, skip, sliced);
 }
+function scanBody(node, skip) { drain(scanBodySteps(node, skip)); }
 // 8.0.5: 서랍 줄 표식은 채팅 메시지(.mes) 안을 보지 않아요 — 표식을 쓰는 CSS 는 전부 설정 서랍 · 확장 창 쪽이라 메시지 안 요소엔 맞는 규칙이 없고,
 //   메시지를 그릴 때마다 모든 자손에 35가지 검사를 돌던 것이 폰 메시지 5개 그리기 감시자를 76 → 1,070ms 로 늘렸어요(성능 판별 10-27).
 //   .mes 가지는 통째로 건너뛰어요(그 안의 단추 · 체크 줄 · 메시지 표식은 위에서 따로 봐요).
@@ -310,13 +323,19 @@ export function rowHosts(root) {
 }
 // 1.2.1 opt: 후보마다 closest('svg') · closest('#chat, .mes') 로 문서 꼭대기까지 오르던 것을 뿌리에서 한 번 물어요 —
 //   뿌리 자신 · 조상이 svg · 메시지가 아니고 뿌리 아래에도 없으면 뿌리 안 후보는 모두 거짓이에요(있으면 예전처럼 후보마다). 판정은 같아요(tools/tests/icon-text-row-bits.mjs)
-export function scanRows(root, skip = null) {
+export function scanRows(root, skip = null) { drain(scanRowsSteps(root, skip)); }
+// 1.5.1 opt-boot: 조각으로 훑을 때(sliced)는 그사이 svg · 메시지가 붙을 수 있어 뿌리에서 한 번 물은 답 대신 그릇마다 예전 판정(isRowHost · inMessage)으로 — 끝 표식은 같아요
+function* scanRowsSteps(root, skip = null, sliced = false) {
     if (inMessage(root)) return;
     const hosts = rowHosts(root);
     if (!hosts.size) return;
-    const noSvg = !root.closest('svg') && !root.querySelector('svg');
-    const noMes = !root.querySelector('#chat, .mes');
-    for (const el of hosts) if ((noSvg ? !NOT_HOST.has(el.localName) : isRowHost(el)) && (noMes || !inMessage(el)) && !(skip && skip(el))) checkRow(el);
+    const noSvg = !sliced && !root.closest('svg') && !root.querySelector('svg');
+    const noMes = !sliced && !root.querySelector('#chat, .mes');
+    for (const el of hosts) {
+        if (sliced && !el.isConnected) { yield; continue; }
+        if ((noSvg ? !NOT_HOST.has(el.localName) : isRowHost(el)) && (noMes || !inMessage(el)) && !(skip && skip(el))) checkRow(el);
+        yield;
+    }
 }
 
 // 바뀐 요소들 — .menu_button 이면 단추 표식, label 이면 체크 줄 표식, input 이 바뀌었으면 그 부모 label
@@ -394,7 +413,7 @@ export function startIconTextMark() {
     if (started || !document.body) return;
     started = true;
     scan(document.body);
-    afterBoot(prescanDeferredDrawers);
+    afterBoot(() => prescanDeferredDrawers());
     refreshPopupMarks(null, document.body);
     // 붙은 요소 속 .menu_button · label · .mes 와, 자식(글자 · 아이콘 · 편집칸 · 타이머 글자)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
     // 9.0.4: 공용 감시 허브 구독 — 채팅(#chat) 밖만(body 구역 · 채팅 가지는 감시도 안 걸어요). 콜백은 예전처럼 그리기 전(when 'now')

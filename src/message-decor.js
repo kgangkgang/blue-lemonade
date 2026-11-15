@@ -7,11 +7,12 @@
 //     실리태번 1.19 는 메시지를 다 그린 뒤 같은 작업 안에서 이 이벤트를 내요(script.js updateMessageBlock · addOneMessage · printMessages 뒤 CHAT_CHANGED).
 //   · 이벤트가 없는 변화(번역이 본문을 갈아 끼움 · 편집칸 열기 · 다른 확장이 고침 · 채팅 열기 중 붙은 메시지): #chat 자식 목록(childList · subtree) 구독 하나가
 //     바뀐 메시지를 적어 두고, 꾸미기마다 정한 조용한 시간(settle — 조판 120ms · 색/데우스 400ms, 예전 각자의 묶음 시간) 뒤에 그 메시지만.
-//   · 답이 오는 동안(body[data-generating])은 이벤트 밖 변화를 미뤘다가 끝나면 한 번에(예전 조판 · 색 · 데우스가 각자 하던 것). live 꾸미기(표식)만 바로.
+//   · 답이 오는 동안(body[data-generating] · 1.5.1 표식 없이 토큰만 오는 스트림도 — stream-window.js)은 이벤트 밖 변화를 미뤘다가 끝나면 한 번에(예전 조판 · 색 · 데우스가 각자 하던 것). live 꾸미기(표식)만 바로.
 //   · 번역 진행 표시(.llmt-progress) 안의 1초마다 바뀌는 글은 메시지 변화로 치지 않아요(조판 · 색이 하던 거르기).
 //   · 한 번 꾸민 뒤 그 꾸미기가 만든 변화는 이 구독만 버려요(off.quiet — 예전 각자의 takeRecords). 다른 감시(네모 단추 · 에셋 · 애드온)는 그대로 봐요.
 // 쓰는 법: const off = addMessageDecorator('조판', list => typesetRoots(list), { settle: 120, kinds: ['event', 'chat', 'dom'], order: 20 });
 import { watchDom } from './dom-watch.js';
+import { streamingNow, onStreamQuiet } from './stream-window.js';
 
 const ALL = ['event', 'chat', 'dom'];
 const EVENT_IDS = ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'MESSAGE_UPDATED', 'MESSAGE_SWIPED', 'MESSAGE_EDITED', 'MESSAGE_FILE_EMBEDDED', 'MESSAGE_REASONING_EDITED'];
@@ -21,7 +22,8 @@ let frame = 0, frameTimer = 0;
 const queued = new Map();   // mes → 'event' | 'chat' (다음 프레임)
 let chatAll = false;
 
-const generating = () => document.body?.dataset?.generating === 'true';
+// 1.5.1 opt-stream: 답이 오는 동안 = body[data-generating] 또는 최근 답장 토큰(stream-window.js) — 표식 없이 토큰만 흘리는 스트림도 끝날 때 한 번
+const generating = () => streamingNow();
 const NOWHERE = Object.freeze({ skip: false, mes: null });
 /**
  * 1.2.1 기록 묶음 하나를 나눠 받는 동안 「번역 진행 표시(.llmt-progress) 안인가 · 어느 메시지(.mes) 안인가」를 요소마다 한 번만 정해요.
@@ -168,10 +170,13 @@ function start() {
     started = { chat, events: [] };
     started.off = watchDom(chat, { childList: true, subtree: true, name: '메시지 꾸미기 (이벤트 밖 변화)' }, onRecords);
     // 답이 끝나면(body[data-generating] 이 빠지면) 미뤄 둔 이벤트 밖 변화를 꾸며요
-    started.offGen = watchDom(document.body, { attributes: ['data-generating'], name: '메시지 꾸미기 (답 끝)' }, () => {
+    const atEnd = () => {
         if (generating()) return;
         for (const d of decorators) if (d.pending.size && !d.timer) settleLater(d);
-    });
+    };
+    const offGenAttr = watchDom(document.body, { attributes: ['data-generating'], name: '메시지 꾸미기 (답 끝)' }, atEnd);
+    const offQuiet = onStreamQuiet(atEnd);   // 표식 없는 스트림은 토큰이 끊긴 뒤
+    started.offGen = () => { offGenAttr(); offQuiet(); };
     try {
         const { eventSource, event_types: t } = SillyTavern.getContext();
         const on = (name, fn) => { if (!name) return; eventSource.on(name, fn); started.events.push([name, fn]); };

@@ -165,13 +165,19 @@ export function cardValues({ scope = '', remember = true, storage } = {}) {
             const known = load(storage).get(key(value));
             return typeof known === 'string' && known.trim() ? known : null;
         },
+        /** learn(원문, 번역) 하나 또는 learn([[원문, 번역], …]) 묶음 — 묶음은 한 번만 저장(카드 하나의 칸 수만큼 400쌍 전체를 다시 쓰지 않게) · 바뀐 것이 없으면 저장하지 않는다 */
         learn(text, translated) {
-            const value = String(text ?? '').trim(), result = String(translated ?? '').trim();
-            // 덜 옮겨진 값(한자 · 가나가 남음) · 원문 그대로 · 줄바꿈 · 자리표시자는 기억하지 않는다
-            if (!value || !result || result === value || value.length > MAX_TEXT || result.length > MAX_TEXT || /[\r\n]|\[\[__/.test(result) || CJK_LEFT.test(result) || ruleValue(value)) return;
-            const map = load(storage), k = key(value);
-            if (map.get(k) === result) return;
-            map.delete(k); map.set(k, result);
+            const pairs = Array.isArray(text) ? text : [[text, translated]];
+            let map = null, changed = false;
+            for (const [source, answer] of pairs) {
+                const value = String(source ?? '').trim(), result = String(answer ?? '').trim();
+                // 덜 옮겨진 값(한자 · 가나가 남음) · 원문 그대로 · 줄바꿈 · 자리표시자는 기억하지 않는다
+                if (!value || !result || result === value || value.length > MAX_TEXT || result.length > MAX_TEXT || /[\r\n]|\[\[__/.test(result) || CJK_LEFT.test(result) || ruleValue(value)) continue;
+                map ||= load(storage); const k = key(value);
+                if (map.get(k) === result) continue;
+                map.delete(k); map.set(k, result); changed = true;
+            }
+            if (!changed) return;
             while (map.size > LIMIT) map.delete(map.keys().next().value);
             save(storage);
         }

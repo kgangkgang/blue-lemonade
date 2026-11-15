@@ -5,6 +5,7 @@
 //   ④ CHAT_CHANGED 는 채팅 전체 · MORE_MESSAGES_LOADED 는 새로 붙은 메시지만
 //   ⑤ 꾸미기가 만든 변화로 다시 꾸미지 않아요(quiet) · 차례(order) · filter · kinds
 //   ⑥ 다 끊으면 #chat 감시 · 이벤트 리스너가 남지 않아요
+//   ⑦ 1.5.1 표식 없이 토큰(STREAM_TOKEN_RECEIVED)만 오는 스트림도 미뤘다가 토큰이 끊긴 뒤 한 번 · 표식 있는 생성은 끝 신호 + 표식 빠짐에 바로(예전과 같은 때)
 //   node tools/tests/message-decor.mjs <테마 루트>   (가짜 브라우저 tools/tests/leak-dom.mjs)
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -105,6 +106,28 @@ await test('⑤ 꾸미기가 만든 변화로 다시 꾸미지 않아요 · 차�
     await dom.clock.advance(20);
     assert.ok(order.includes('통째'), '본문이 통째로 바뀌면');
     offA(); offB(); offC();
+});
+
+await test('⑦ 표식 없는 토큰 스트림도 미뤘다 끊긴 뒤 한 번 · 표식 있는 생성은 끝에 바로', async () => {
+    const slow = [], live = [];
+    const offS = addMessageDecorator('느린', list => slow.push(ids(list)), { settle: 120 });
+    const offL = addMessageDecorator('바로', list => live.push(ids(list)), { settle: 0, live: true });
+    // 표식 없이: 관문 장면처럼 본문을 바꾸고 토큰을 내요(200ms 간격 — 조용한 시간 120ms 보다 길어요)
+    for (let i = 0; i < 5; i++) { msgs[2].querySelector('.mes_text').innerHTML = `<p>토막 ${i}</p>`; await eventSource.emit(T.STREAM_TOKEN_RECEIVED, 'x'.repeat(i)); await dom.clock.advance(200); }
+    assert.deepEqual(slow, [], '토큰이 오는 동안 느린 꾸미기는 미뤄요(예전: 토막마다)');
+    assert.ok(live.length >= 4 && live.every(x => x === '2'), `live 는 바로(${live.length}번)`);
+    await dom.clock.advance(1200);
+    assert.deepEqual(slow, ['2'], '토큰이 끊긴 뒤 한 번');
+    // 표식 있는 생성: 끝 신호(GENERATION_ENDED) 뒤 표식이 빠지면 바로 — 최근 토큰 때문에 늦지 않아요
+    slow.length = 0;
+    document.body.setAttribute('data-generating', 'true');
+    for (let i = 0; i < 3; i++) { msgs[2].querySelector('.mes_text').innerHTML = `<p>조각 ${i}</p>`; await eventSource.emit(T.STREAM_TOKEN_RECEIVED, 'y'); await dom.clock.advance(200); }
+    assert.deepEqual(slow, []);
+    await eventSource.emit(T.GENERATION_ENDED, 3);
+    document.body.removeAttribute('data-generating');
+    await dom.clock.advance(200);
+    assert.deepEqual(slow, ['2'], '끝나면 조용한 시간(120ms) 안에 한 번');
+    offS(); offL();
 });
 
 await test('⑥ 다 끊으면 #chat 감시 · 이벤트 리스너가 남지 않아요', async () => {

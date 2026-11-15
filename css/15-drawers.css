@@ -1735,6 +1735,6 @@ body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_scri
   body.salty:not(#salty-none) :has(+ .editor_maximize):not(#salty-none) { align-self: baseline !important; }
   body.salty:not(#salty-none) .editor_maximize:not(#salty-none) { align-self: baseline !important; font-size: calc(var(--bl-ink-cap) / .75) !important; line-height: 1 !important; }
   body.salty:not(#salty-none) :is(#right-nav-panel, #character_popup) .editor_maximize ~ .jj-tr-btn.bl-kt-btn { margin-block: -4px; }
-  body.salty:not(#salty-none) #PersonaManagement .editor_maximize ~ .jj-tr-btn.bl-kt-btn { margin-block: -8px; }
+  body.salty:not(#salty-none) #PersonaManagement .editor_maximize ~ .jj-tr-btn.bl-kt-btn { margin-block: -8px; margin-left: -4px; }   /* 1.5.7: 줄 간격 6 − 4 = 아이콘 누를 칸(32) 끝에서 2px — 캐릭터 편집 칸 짝과 같은 틈 · 창 폭에 따라 JS 가 적는 --kt-ml 에 안 흔들려요 */
   /* 프리셋 편집 창의 「프롬프트」 이름표 줄은 css/59-prompt-ux.css 끝(둘째 장 · 그 창이 있는 서랍을 열 때 받아요)으로 — 첫 장 :has( 상한 149 를 넘지 않게(1.5.2 통합) */
 }

@@ -16,10 +16,11 @@
       #top-settings-holder 가 다시 계산되고 그때마다 가상 요소 스타일도 새로 맞춰, 월드인포 서랍을 한 번 연 뒤 프롬프트 토글 · 토큰 세기 · 서랍 열기가 느려졌다
       (폰 4배 리그 · 같은 판에서 가상 요소만 끄면 토글 1,462 → 694ms · 실리태번 설정 서랍 987 → 483ms. 앵커 함수 · 앵커 이름 · fixed 를 바꿔도 그대로 느렸고 가상 요소가 있다는 것 자체가 비용).
       같은 규칙을 실제 요소에 걸면 가상 요소 없음과 같다(토글 799 · 서랍 435ms ↔ 없음 839 · 513ms). 그래서 #top-settings-holder 에는 가상 요소를 두지 않는다. ===== */
-html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y] { --bl-fade-y: 28px; }
-html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); }
-html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); }
-html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); }
+/* 1.5.x 껍데기 CSS 무게: 흐림 폭(28px)은 값으로 바로 적어요. 예전엔 넘친 칸에 사용자 속성(--bl-fade-y)으로 달았는데, 사용자 속성은 아래로 물려져서
+   서랍을 열어 넘침 표시(data-bl-fade-y)가 붙는 순간 서랍 안 요소 전부(설정 서랍 790개)를 한 번 더 다시 계산했어요(추적: 서랍 열기의 큰 재계산 2번 중 1번). */
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28px); mask-image: linear-gradient(to bottom, transparent, #000 28px); }
+html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 /* 1.5.2 받침이 없는 서랍 꼴 창은 흐림을 걸지 않아요(사용자 「이야기 리듬 투명하게 보인다」 — 프롬프트 편집 창을 내리면 맨 위로 뒤의 프롬프트 목록 줄이 비쳤어요):
    .drawer-content 는 제 바탕을 칠하는 면이라 mask 가 바탕까지 투명하게 만들어요. 아래 ② 의 받침은 위 막대 묶음(#top-settings-holder) 안 서랍에만 깔리는데,
    프롬프트 편집 창(#completion_prompt_manager_popup)과 이동 UI 로 옮긴 창(#movingDivs)은 그 밖이라 받침 없이 mask 만 걸려 뒤가 그대로 비쳤어요. 묶음 밖의 서랍 꼴 창은 mask 없이(불투명 그대로). */

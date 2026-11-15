@@ -35,7 +35,6 @@ export const ADDON_BOOT_CSS = Object.freeze({
 });
 /** 첫 장 파일 이름(src/addons/ 아래) */
 export const bootSheetOf = (id, sheet = 'style.css') => `${id}/${sheet.replace(/\.css$/, '')}.boot.gen.css`;
-export const ADDON_BOOT_BUNDLE = 'style-addons.boot.gen.css';
 export const ADDON_CSS_SENTINEL = 'bl-addon-css';
 // 처음 쓸 때 시작하는 애드온(addons.js LATE_ADDONS)은 첫 장이 없어요 — 본체를 시작할 때 전체 시트를 붙여요
 export const LATE_STYLE_IDS = Object.freeze(['rewrite', 'prompt', 'modelswitch']);

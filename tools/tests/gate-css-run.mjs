@@ -85,7 +85,10 @@ await test('④ 접두사 클래스(고른 마크다운 모양)만 켜도 미루
     const held = L.syncGateCss(['salty', 'salty-md-size-small', 'salty-indent', 'salty-outline'], coolFor('salty-md-size-small'));
     assert.deepEqual([...held].sort(), ['salty-indent', 'salty-md-size-small'], '못 받은 시트의 클래스만 미뤄요(외곽선 시트는 ① 에서 이미 받았어요)');
     const order = [...document.head.querySelectorAll('link')].map(l => l.id).filter(Boolean);
-    assert.deepEqual(order, GATE_SHEETS.map(s => `salty-gate-${s.id}`), '표 차례(md → outline → type)');
+    // 켠 클래스의 시트만 붙어요(1.5.x: 글자 그림자 시트는 이 장면에서 안 켰어요) — 붙은 것끼리는 표 차례
+    const wanted = ['salty-md-size-small', 'salty-indent', 'salty-outline'];
+    assert.deepEqual(order, GATE_SHEETS.filter(s => wanted.some(c => s.classes.includes(c) || s.prefixes.some(p => c.startsWith(p)))).map(s => `salty-gate-${s.id}`), '표 차례(md → outline → type)');
+    assert.ok(!order.includes('salty-gate-shadow'), '안 켠 설정의 시트는 안 붙어요');
     assert.equal(main.nextElementSibling, gate(GATE_SHEETS[0].id), '테마 시트 바로 뒤 줄');
     await fire(gate('md'), 'load');
     assert.ok(has('salty-md-size-small') && !has('salty-indent'), '받은 시트의 클래스만 달려요');
@@ -101,7 +104,7 @@ await test('⑤ 설정 창 시트: panelCssReady 는 시트를 다 받은 뒤에
     const link = await until(() => gate('panel'), '설정 창 시트 붙음');
     await turn(); await turn();
     assert.equal(done, null, '받기 전에는 안 풀려요 — 창을 꾸밈 없이 그리지 않아요');
-    assert.equal(link.previousElementSibling, gate(GATE_SHEETS.at(-1).id), '켜짐 시트들 뒤(99)');
+    assert.equal(link.previousElementSibling, [...document.head.querySelectorAll('link')].filter(l => /^salty-gate-/.test(l.id) && l !== link).at(-1), '붙어 있는 켜짐 시트들 뒤(99)');
     await fire(link, 'load');
     await wait;
     assert.equal(done, true);

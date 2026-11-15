@@ -1,0 +1,54 @@
+{
+  "_": "세는 값 상한(1.5.1 최적화 캠페인). 장면마다 스타일 재계산 횟수 · 재계산 요소 합 · 선택자 견줌 수 · 50ms 넘는 긴 작업 수 · (부팅) 첫 화면 전 테마 모듈 수 · 바이트. 값 = v1.5.0 을 리그(폰 384 · CPU 4배 · 추적 켬)에서 4 ~ 5회 잰 가장 큰 값 × 1.03 올림(11-15 · 측정 폴더 opt-score count). 줄이기만 해요 — 올리려면 까닭을 이 칸에 적고 사람이 정해요. mode warn = 알림만 · block = 실패. 검사: node tools/tests/perf-count-budget.mjs [--from count.json].",
+  "mode": "warn",
+  "measuredFrom": "v1.5.0 (e15a28822) · opt-score count · 폰 · 11-15 09:29 ~ 10:25",
+  "conds": {
+    "phone": {
+      "boot": {
+        "_": "11-15 저녁 다시 잡음: 부팅 끝을 고정 창(테마 자원 받기 멈춤 + 글꼴 + 긴 작업 없는 3초)으로 바꿨고 프로파일러 끔 — 옛 창은 쉴 때 차례를 회차마다 다르게 먹어 v1.5.0 도 갈렸어요(통합-재계산-분석). 정의가 바뀐 다시 잡기라 올라간 값이에요(조정자 지시). 측정: opt-score count --scene boot --no-prof(기본 고정 창)",
+        "recalc.count": 523,
+        "recalc.elements": 6507,
+        "selector.attempts": 2157946,
+        "longTasks.count": 185,
+        "longTasks.ms": 53297,
+        "startup.modulesBeforeFirst": 93,
+        "startup.bytesBeforeFirst": 1621787
+      },
+      "chatShort": {
+        "recalc.count": 78,
+        "recalc.elements": 2723,
+        "selector.attempts": 1490699,
+        "longTasks.count": 65,
+        "longTasks.ms": 44899
+      },
+      "chatLong300": {
+        "recalc.count": 32,
+        "recalc.elements": 3458,
+        "selector.attempts": 1879598,
+        "longTasks.count": 39,
+        "longTasks.ms": 53340
+      },
+      "settingsST": {
+        "recalc.count": 13,
+        "recalc.elements": 1138,
+        "selector.attempts": 825627,
+        "longTasks.count": 12,
+        "longTasks.ms": 18333
+      },
+      "stream": {
+        "recalc.count": 28,
+        "recalc.elements": 784,
+        "selector.attempts": 375524,
+        "longTasks.count": 29,
+        "longTasks.ms": 7892
+      },
+      "typing": {
+        "recalc.count": 44,
+        "recalc.elements": 510,
+        "selector.attempts": 310087,
+        "longTasks.count": 20,
+        "longTasks.ms": 5114
+      }
+    }
+  }
+}

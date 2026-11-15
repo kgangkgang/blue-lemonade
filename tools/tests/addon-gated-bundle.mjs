@@ -39,11 +39,14 @@ test('활성 표식은 html을 스위치·토글 조상으로 오인하게 하�
     assert.equal(new Set(Object.values(MARKS)).size, IDS.length);
     for (const id of IDS) { assert.match(MARKS[id], /^bl-asc-\d+$/); assert.doesNotMatch(MARKS[id], /switch|toggle|button|checkbox|radio/); }
 });
+const { keyize } = require('../css-key.cjs');
+const unmark = selector => selector.replace(/:where\((?:html)?\.bl-asc-\d+\)/, '').trim();
 const signature = (rule, selector = rule.selector) => JSON.stringify({ ctx: rule.ctx, selector: lib.cleanSel(selector), declarations: rule.decls.map(d => [d.lname, d.value, d.important]) });
 const expected = [];
 const t = await tables(root);
 for (const id of IDS) for (const sheet of expandSheet(root, t.sheetOf(id))) for (const node of sheet.nodes) {
-    for (const rule of lib.flatRules(lib.parse(node.text))) expected.push({ id, signature: signature(rule) });
+    // 묶음은 열쇠 달기(tools/css-key.cjs · 뜻 · 특이도 그대로 — tools/tests/css-key.mjs)를 거쳐요. 기대값도 같은 열쇠를 단 뒤 표식을 걷어 견줘요
+    for (const rule of lib.flatRules(lib.parse(keyize(gateCss(node.text, addonStyleMark(id))).text))) expected.push({ id, signature: signature(rule, lib.topSplit(rule.selector, ',').map(unmark).join(',')) });
 }
 function readGated(file) {
     const errors = [], tree = lib.parse(fs.readFileSync(path.join(root, 'src/addons', file), 'utf8'), errors);

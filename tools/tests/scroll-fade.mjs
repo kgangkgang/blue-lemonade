@@ -150,7 +150,9 @@ await test('CSS: 세로 흐림은 data-bl-fade-y 로(가로 data-bl-fade 와 따
     for (const line of rules.filter(l => /::(before|after)/.test(l))) assert.fail('흐림 CSS 의 가상 요소 금지: ' + line.slice(0, 90));
     for (const line of rules.filter(l => /background:/.test(l))) assert.doesNotMatch(line, /#[0-9a-f]{3,8}|rgb|hsl/i, '바탕은 팔레트 변수만: ' + line.slice(0, 80));
     assert.doesNotMatch(css, /scrollbar/);
-    assert.ok(css.includes('html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y]'));
+    assert.ok(css.includes('html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"]'));
+    // 1.5.x 껍데기 CSS 무게: 흐림 폭을 넘친 칸의 사용자 속성으로 달지 않아요 — 사용자 속성은 물려져서 표시가 붙는 순간 칸 안 요소 전부(설정 서랍 790개)를 다시 계산했어요
+    assert.ok(!rules.some(l => l.includes('--bl-fade-y')), '넘친 칸에 물려지는 사용자 속성을 달지 않아요');
     const built = fs.readFileSync(path.join(root, 'style.css'), 'utf8'); assert.ok(built.includes('[data-bl-fade-y="both"]'), 'style.css 에 들어감');
     const lazy = fs.existsSync(path.join(root, 'src/style-lazy.gen.css')) ? fs.readFileSync(path.join(root, 'src/style-lazy.gen.css'), 'utf8') : '';
     assert.ok((built + lazy).includes('#top-settings-holder > .bl-drawer-backing') && (built + lazy).includes('anchor-name: --bl-drawer'), '만든 CSS 에 서랍 받침도 들어감');

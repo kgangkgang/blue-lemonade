@@ -129,3 +129,16 @@ test('without a local callback nothing changes (other target languages, input tr
     assert.equal(p.restore(p.text), src);
 });
 console.log(`translator-card-values: ${passed} groups passed`);
+test('a whole card is remembered with one write; an unchanged answer writes nothing', () => {
+    forgetCardValueMemory();
+    const box = storage(); let writes = 0; const set = box.setItem; box.setItem = (k, v) => { writes++; set(k, v); };
+    const card = '<status_bar>\n地点：Green hall\n题记：A new line\n天气：Rain later\n</status_bar>';
+    const p = prepare(card, cardValues({ scope: 's', storage: box }));
+    p.restore(answer(p.text, { 'Green hall': '초록 홀', 'A new line': '새 줄', 'Rain later': '나중에 비' }));
+    assert.equal(writes, 1, 'three new values, one write');
+    assert.equal(JSON.parse(box.data.get('llmt-card-values-v1')).length, 3);
+    const values = cardValues({ scope: 's', storage: box, remember: false });
+    const again = prepare(card, values);
+    again.restore(answer(again.text, { 'Green hall': '초록 홀', 'A new line': '새 줄', 'Rain later': '나중에 비' }));
+    assert.equal(writes, 1, 'same answers again: no write');
+});

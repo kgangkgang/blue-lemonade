@@ -127,8 +127,8 @@ export async function bootSheets(root = ROOT, sheets = null) {
         const body = expandSheet(root, rel).flatMap(sheet => sheet.nodes.map(n => n.text)).join('\n');
         out.push({ target: path.join(root, BUNDLE_DIR, t.bootSheetOf(id)), text: `/* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 ${path.posix.basename(rel)}) */\n${filter(id, body).replace(/\n{2,}/g, '\n')}\n${sentinel([id])}` });
     }
-    const parts = (sheets || []).filter(sheet => !t.LATE_STYLE_IDS.includes(sheet.id)).map(sheet => filter(sheet.id, sheet.nodes.filter(n => !n.drop).map(n => n.text).join('\n')));
-    out.push({ target: path.join(root, BUNDLE_DIR, t.ADDON_BOOT_BUNDLE), text: `/* 생성 파일 — tools/build-addon-css.mjs (애드온 CSS 한 장의 첫 장 · 전체는 style-addons.css) */\n${parts.join('\n').replace(/\n{2,}/g, '\n')}\n${sentinel(t.ADDON_STYLE_IDS)}` });
+    // 1.5.x 크기(갈래 사): 지킴 없는 한 장의 첫 장(style-addons.boot.gen.css · 75KB)은 실행 코드가 받지 않아요(addons.js 는 지킴 판
+    //   style-addons.gated.boot.gen.css 만 붙여요) — 만들지 않고 저장소 · 설치 ZIP 에서도 뺐어요
     return out;
 }
 
@@ -186,9 +186,12 @@ export async function gatedSheets(root, sheets) {
     const sentinels = t.ADDON_STYLE_IDS.flatMap(id => (t.ADDON_BOOT_CSS[id]?.roots || []).map(sel =>
         gateCss(`${sel}{animation:${t.ADDON_CSS_SENTINEL} 1ms}`, t.addonStyleMark(id))));
     const head = '/* 생성 파일 — 켜진 애드온만 적용해요. tools/build-addon-css.mjs에서 만들어요. */\n';
+    // 껍데기 CSS 무게(1.5.x): 맨 오른쪽 칸이 여러 갈래 `:is(.a, .b)` 뿐인 갈래는 크롬이 「모든 요소와 견주는」 바구니에 넣어요 — 그 애드온 창이 닫혀 있어도 문서의 요소마다 견줘요.
+    //   본체 시트와 같은 열쇠 달기(tools/css-key.cjs — 뜻 · 특이도 · 규칙 수 · 선언이 같은지 스스로 확인)로 이름 바구니에 넣어요. 손으로 쓰는 애드온 시트는 그대로예요.
+    const { keyize } = require('./css-key.cjs');
     return [
-        { target: path.join(root, BUNDLE_DIR, t.ADDON_GATED_BUNDLE), text: head + full.join('\n') + '\n' },
-        { target: path.join(root, BUNDLE_DIR, t.ADDON_GATED_BOOT_BUNDLE), text: head + boot.join('\n') + `\n@keyframes ${t.ADDON_CSS_SENTINEL}{from{--bl-addon-css:0}to{--bl-addon-css:1}}\n` + sentinels.join('\n') + '\n' },
+        { target: path.join(root, BUNDLE_DIR, t.ADDON_GATED_BUNDLE), text: head + keyize(full.join('\n') + '\n').text },
+        { target: path.join(root, BUNDLE_DIR, t.ADDON_GATED_BOOT_BUNDLE), text: head + keyize(boot.join('\n') + `\n@keyframes ${t.ADDON_CSS_SENTINEL}{from{--bl-addon-css:0}to{--bl-addon-css:1}}\n` + sentinels.join('\n') + '\n').text },
     ];
 }
 

@@ -110,7 +110,7 @@ await check('체크박스: 스위치 빼기는 부모 표시 두 갈래(13 · 13
     const b = src.split('@container (not style(--bl-q-sw: 1)) and style(--bl-q-tg: 1) {').length - 1;
     assert.equal(a, 13); assert.equal(b, 13);
     // 둘째 갈래는 X(.lv-toggle · .bl-addon-toggle · .po-visible-toggle 안)를 :where 로(특이도 0) 더한 것
-    const xs = src.match(/input\[type="checkbox"\]:where\(\.lv-toggle input,\.bl-addon-toggle input,\.po-visible-toggle input\):where\(:not\(/g) || [];
+    const xs = src.match(/input\[type="checkbox"\](?::[\w-]+(?:\([^()]*\))?)*:where\(\.lv-toggle input,\.bl-addon-toggle input,\.po-visible-toggle input\):where\(:not\(/g) || [];
     assert.ok(xs.length >= 13, `X 갈래 ${xs.length}`);
     assert.match(src, /label\[class\*="switch"\] \{ --bl-q-rsw: 1; \}\n@container not style\(--bl-q-rsw: 1\) \{\n html:not\(#bl-checkrow-off\) body\.salty [^\n]*label\[data-bl-row-check\]:is\(bl-s, \*\):not\(\.salty-switch, \[role=switch\], \.menu_button, \.po-visible-toggle\) > input\[type="checkbox"\] \{ margin-inline: 0 !important; \}\n\}/);
     assert.equal(L.spec(':not(.salty-switch, [role=switch], .menu_button, .po-visible-toggle)').join('.'), L.spec(':not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle)').join('.'), ':not 특이도');

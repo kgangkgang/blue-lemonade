@@ -379,7 +379,7 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             // the original card order as well as the order of the values inside each card.
             if (replacements.some((r,i)=>i>0 && r.start < replacements[i-1].end)) throw fail();
             for (let i=replacements.length-1;i>=0;i--) { const r=replacements[i]; output=output.slice(0,r.start)+r.text+output.slice(r.end); }
-            if (typeof learn === 'function' && !quiet) for (const [source,heardValue] of heard) learn(source,heardValue);
+            if (typeof learn === 'function' && !quiet && heard.length) learn(heard);   // 한 번에 묶어 저장 한 번
             if (!quiet) lastFallback = fallback;
             return output;
         }

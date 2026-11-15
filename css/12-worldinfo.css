@@ -1571,7 +1571,8 @@ body.salty #PersonaManagement #persona_controls .persona_controls_buttons_block 
 body.salty #PersonaManagement .persona_management_current_persona > h4 {
   gap: 6px !important;
 }
-/* 아이콘 그림은 13px 그대로, 누를 칸만 32px (음수 여백으로 제목 줄 높이는 안 건드림) */
+/* 아이콘 그림은 13px 그대로, 누를 칸만 32px (음수 여백으로 제목 줄 높이는 안 건드림)
+   1.5.7: 오른쪽 음수 여백(-8px)은 뺐어요 — 뒤에 오는 제자리 번역 단추가 그만큼 아이콘 누를 칸 위로 겹쳤어요(간격은 css/15-drawers.css 의 번역 단추 줄) */
 body.salty #PersonaManagement .persona_management_current_persona > h4 .editor_maximize {
   display: inline-flex;
   align-items: center;
@@ -1579,7 +1580,7 @@ body.salty #PersonaManagement .persona_management_current_persona > h4 .editor_m
   align-self: center;
   width: 32px;
   height: 32px;
-  margin: -8px -8px -8px -6px !important;
+  margin: -8px 0 -8px -6px !important;
   border-radius: var(--bl-r-xs);
   font-size: 13px;
 }

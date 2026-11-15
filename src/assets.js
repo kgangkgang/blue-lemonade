@@ -6,6 +6,7 @@
 // 6.1.6 투명 판정은 '투명 그림도 똑같이'와 상관없이 .salty-alpha 로도 남긴다 — 외곽선 · 그림자(cutedge.js)는 두 경우 다 건다
 import { paintCutEdge } from './cutedge.js';
 import { watchDom } from './dom-watch.js';
+import { streamingNow } from './stream-window.js';
 const ASSET_IMG = '.custom-cac-img, img.character-asset-rendered, img.eh-img, [class*="custom-imageWrapper"] img, img[data-autopic-id], .autopic-media-owner img.mes_img';
 const HOST = '.custom-cac-wrap, [class*="custom-imageWrapper"], .autopic-tag-img-wrapper, .autopic-media-owner .mes_img_container';
 // 7.3.0 투명 그림 외곽선은 채팅의 모든 그림에 — 다른 확장이 글 속 · 그림 칸에 넣은 그림도 (에셋 모양 · 배치는 입히지 않고 .salty-alpha 만).
@@ -522,7 +523,7 @@ const tidyLater = new Set();
 let tidyTimer = 0;
 function tidyFlush() {
     tidyTimer = 0;
-    if (document.body.dataset.generating === 'true') { tidyTimer = setTimeout(tidyFlush, 500); return; }
+    if (streamingNow()) { tidyTimer = setTimeout(tidyFlush, 500); return; }   // 1.5.1 opt-stream: 표식 없이 토큰만 오는 스트림도
     for (const mes of tidyLater) if (mes.isConnected) tidyLeadingBreaks(mes);
     tidyLater.clear();
 }
@@ -562,7 +563,8 @@ export function startAssetWatcher() {
             });
         }
         // 4.7.8: 답이 오는 동안 걸음마다 그 메시지의 <p> 를 전부 훑지 않는다 — 답이 끝난 뒤(생성 표시가 사라진 뒤) 한 번
-        for (const mes of tidy) { if (document.body.dataset.generating === 'true' && mes.matches?.('.mes:last-of-type, .mes:last-of-type *')) tidyLater.add(mes); else tidyLeadingBreaks(mes); }
+        const streaming = streamingNow();
+        for (const mes of tidy) { if (streaming && mes.matches?.('.mes:last-of-type, .mes:last-of-type *')) tidyLater.add(mes); else tidyLeadingBreaks(mes); }
         if (tidyLater.size && !tidyTimer) tidyTimer = setTimeout(tidyFlush, 500);
     });
     // 7.3.0 채팅 밖(크게 보기 · 모아 보기 · 다른 확장의 <dialog>)에 붙는 그림과 data-salty-cutout 표시 — 채팅 안 변화는 위 관찰자 몫이라 건너뛴다

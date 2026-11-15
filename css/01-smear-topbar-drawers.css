@@ -34,7 +34,9 @@ body.salty .hljs ::selection {
   background-color: var(--salty-accent-28);
 }
 /* 5.3.7: 입력칸은 폰(안드로이드 엣지)에서 body 의 선택 색을 물려받지 않아 선택이 안 보였다 — 입력칸에만 직접 (맨 끝이 textarea · input 이라 다른 요소는 안 맞춰 봄) */
-body.salty :is(textarea, input)::selection {
+/* 1.5.x 껍데기 CSS 무게: 글자를 고를 수 없는 입력칸(체크박스 · 라디오 · 슬라이더)은 빼요 — ::selection 규칙이 하나라도 맞는 요소는 크롬이 선택 강조 스타일을 따로 한 번 더 계산해요
+   (그 요소 바구니의 규칙 전부를 다시 견줌 · 설정 서랍의 체크박스 58개가 요소마다 3번씩 견줘졌어요). 고를 글자가 없으니 보이는 것은 같아요. :where 라 특이도 그대로 */
+body.salty :is(textarea, input:where(:not([type="checkbox"], [type="radio"], [type="range"])))::selection {
   background-color: var(--salty-accent-28);
 }
 body.salty ::-webkit-scrollbar {

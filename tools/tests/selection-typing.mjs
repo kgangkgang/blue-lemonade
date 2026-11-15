@@ -118,6 +118,25 @@ test('끈 상태(setQuickBanEnabled(false))에서는 아무것도 하지 않는�
     setQuickBanEnabled(true);
 });
 
+test('1.5.1 프레임이 있으면 250ms 타이머에서는 읽지 않고 그다음 프레임 맨 앞에서 읽는다 · 그 사이 입력칸으로 가면 프레임도 무른다', () => {
+    const frames = [];
+    globalThis.requestAnimationFrame = fn => { frames.push(fn); return frames.length; };
+    globalThis.cancelAnimationFrame = id => { frames[id - 1] = null; };
+    try {
+        active = body; selection = makeSelection({ collapsed: false, text: '낱말' }); reads.length = 0; body.appended && (body.appended.hidden = true);
+        fire(); tick(250);
+        assert.deepEqual(reads, [], '타이머에서는 Selection 을 안 읽어요');
+        assert.equal(chipShown(), false);
+        const run = frames.splice(0); for (const f of run) f?.(16);
+        assert.equal(chipShown(), true, '프레임 맨 앞에서 칩');
+        assert.ok(reads.includes('getRangeAt'));
+        // 프레임을 기다리는 사이 입력칸으로 가면 그 프레임은 아무것도 안 읽어요
+        reads.length = 0; fire(); tick(250); active = textarea; fire();
+        for (const f of frames.splice(0)) f?.(32);
+        assert.deepEqual(reads, []);
+    } finally { delete globalThis.requestAnimationFrame; delete globalThis.cancelAnimationFrame; active = body; }
+});
+
 test('번역 애드온 고른 글 도구: selectionSnapshot · selectionChanged 가 입력 중이면 Selection 을 읽기 전에 돌아간다', () => {
     const tr = read('src/addons/translator/selection/translation.js');
     assert.match(tr, /export function typingInField\(element = document\.activeElement\)/);

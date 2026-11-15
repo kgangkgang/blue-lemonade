@@ -3,6 +3,7 @@
 // Switches, dots, badges, progress bars, avatars and icon-only round buttons keep their shape.
 import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { watchWith } from './dom-watch.js';
+import { streamingNow, onStreamQuiet } from './stream-window.js';
 import { hiddenQueue, mayHide } from './hidden-details.js';
 
 const ATTR = 'data-bl-squared';
@@ -293,7 +294,8 @@ export function watchSquaredButtons(doc, host) {
     }
     const queueMany = nodes => {
         const ready = new Set();
-        const generating = doc.body.dataset.generating;   // 1.2.1: 이 고리는 DOM 을 바꾸지 않아요 — 노드마다 body 속성을 다시 읽지 않게 한 번
+        // 1.2.1: 이 고리는 DOM 을 바꾸지 않아요 — 노드마다 body 속성을 다시 읽지 않게 한 번. 1.5.1 opt-stream: 표식 없이 토큰만 오는 스트림도(stream-window.js · 진짜 문서만)
+        const generating = doc.body.dataset.generating || (doc === globalThis.document && streamingNow(doc));
         for (const node of nodes) {
             const el = node?.nodeType === 1 ? node : node?.parentElement;
             if (!el || !el.isConnected || el.closest?.('style,script')) continue;
@@ -336,6 +338,8 @@ export function watchSquaredButtons(doc, host) {
         [doc.body, { childList: true, subtree: true, attributes: ['class', 'style', 'hidden', 'open', 'data-generating', COVER_ATTR], attributeOldValue: true, name: '네모 단추' }],
         [htmlEl, { attributes: ['class'], attributeOldValue: true, name: '네모 단추 (html class)' }],
     ], onRecords);
+    // 1.5.1 opt-stream: 표식 없는 스트림이 끝나면(토큰이 끊김) 미뤄 둔 메시지를 한 번에 — 표식이 있는 생성은 예전처럼 'gen' 기록(표식 빠짐)에서
+    const offQuiet = doc === globalThis.document ? onStreamQuiet(() => { if (stopped || doc.body.dataset.generating || !waiting.size) return; const p = new Set(waiting); waiting.clear(); queueMany(p); }) : () => {};
     const resize = () => queue(doc.body);
     host.addEventListener('resize', resize);
     const onLightState = event => {
@@ -349,7 +353,7 @@ export function watchSquaredButtons(doc, host) {
     doc.addEventListener?.('contentvisibilityautostatechange', onLightState, true);
     queue(doc.body);
     return () => {
-        stopped = true; hidden.dispose(); unwatch(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); if (idle) host.cancelIdleCallback?.(idle); host.removeEventListener('resize', resize);
+        stopped = true; hidden.dispose(); unwatch(); offQuiet(); host.clearTimeout(timer); if (frame) host.cancelAnimationFrame?.(frame); if (idle) host.cancelIdleCallback?.(idle); host.removeEventListener('resize', resize);
         doc.removeEventListener?.('contentvisibilityautostatechange', onLightState, true); skippedMes.clear();
         for (const el of doc.querySelectorAll(`[${ATTR}]`)) el.removeAttribute(ATTR);
         style.remove();

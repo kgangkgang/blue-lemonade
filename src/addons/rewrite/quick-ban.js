@@ -3,7 +3,8 @@ import { booting } from '../../boot-gate.js';
 // 설정 창을 열지 않고도 "이 말 그만"을 그 자리에서 — 규칙 이름 · 낱말은 고른 글 그대로, 설명은 core 가 프롬프트에 쓸 한 줄.
 // 선택은 브라우저에 맡긴다(폰은 길게 누르면 낱말이 골라진다): 우리는 selectionchange 만 듣고, 칩은 선택 아래에 둔다(안드로이드 선택 메뉴는 위에 뜬다).
 const MAX = 40;
-let chip = null, timer = 0, current = '', onAdd = null, enabled = true, bound = false, canSelect = () => true;
+let chip = null, timer = 0, frame = 0, current = '', onAdd = null, enabled = true, bound = false, canSelect = () => true;
+const cancelFrame = () => { if (frame && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame); frame = 0; };
 
 // 8.2.5 입력칸(textarea · input · contenteditable)에 글자를 칠 때마다 selectionchange 가 오는데, 그때 Selection 을 읽으면(isCollapsed ·
 // toString · getClientRects) 문서 전체 스타일 · 배치를 강제로 계산한다 — 페르소나 설명 50자에 2~3초(PC). 입력칸 안의 선택은 채팅 글이
@@ -102,11 +103,18 @@ export function startQuickBan(add, allowSelection = () => true) {
     if (bound) return;
     bound = true;
     document.addEventListener('selectionchange', () => {
-        clearTimeout(timer);
+        clearTimeout(timer); cancelFrame();
         if (!enabled) return;
         // 8.2.5 입력칸에 글을 치는 중 — 칩이 떠 있지 않으면 Selection 을 읽지 않고 끝 (떠 있으면 숨기기만)
         if (typingInField()) { if (current) hide(); return; }
-        timer = setTimeout(check, 250);
+        // 1.5.1 opt-boot: 250ms 뒤 바로 읽지 않고 그다음 프레임 맨 앞에서 읽어요 — Selection 을 읽으면(getRangeAt) 쌓인 스타일 · 배치를 그 자리에서 강제로 계산해요.
+        //   타이머에서 읽으면 부팅 뒤 시트 · 서랍이 막 바뀐 때 문서 전체 재계산을 따로 한 번 더 쳤어요(폰 4배 추적: 첫 화면 뒤 56ms). 프레임 맨 앞이면 그 프레임이 어차피 할 계산이에요.
+        //   프레임이 안 오면(숨은 탭 · 시험의 가짜 창) 예전처럼 바로 읽어요
+        timer = setTimeout(() => {
+            timer = 0;
+            if (typeof requestAnimationFrame !== 'function' || document.hidden) { check(); return; }
+            frame = requestAnimationFrame(() => { frame = 0; check(); });
+        }, 250);
     });
     // 스크롤하면 위치가 어긋나므로 숨긴다 (다시 고르면 다시 뜬다)
     document.getElementById('chat')?.addEventListener('scroll', hide, { passive: true });
@@ -115,6 +123,6 @@ export function startQuickBan(add, allowSelection = () => true) {
 
 export function setQuickBanEnabled(value) {
     enabled = value !== false;
-    clearTimeout(timer);
+    clearTimeout(timer); cancelFrame();
     if (!enabled) hide();
 }

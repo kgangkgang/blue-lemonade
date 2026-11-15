@@ -770,6 +770,7 @@ jobs:
           node tools/tests/icon-text-scope.mjs .
           node tools/tests/icon-text-hosts.mjs .
           node tools/tests/icon-text-row-bits.mjs .
+          node tools/tests/icon-text-prescan-slices.mjs . tools
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .

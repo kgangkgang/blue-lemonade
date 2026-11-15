@@ -115,6 +115,145 @@
           "if \\(userRow !== 'left'\\) want\\.add\\(`salty-user-namerow-\\$\\{userRow\\}`\\);"
         ]
       ]
+    },
+    {
+      "class": "salty-demink-shadow",
+      "setting": "deus.on + deus.ink.shadow.on (데우스 대사 그림자)",
+      "proof": [
+        [
+          "src/settings.js",
+          "shadow: \\{ on: false, color: '#000000', alpha: 60, angle: 135, distance: 1\\.5, blur: 2 \\}"
+        ],
+        [
+          "src/apply.js",
+          "if \\(deus && s\\.deus\\?\\.ink\\?\\.shadow\\?\\.on\\) want\\.add\\('salty-demink-shadow'\\);"
+        ]
+      ]
+    },
+    {
+      "class": "salty-shadow-text",
+      "setting": "shadow.on + shadow.targets (글자 그림자 · 기본 끔)",
+      "proof": [
+        [
+          "src/settings.js",
+          "shadow: \\{ on: false, targets: \\{ text: false, dialogue: true, em: false, strong: false, code: false \\}"
+        ],
+        [
+          "src/apply.js",
+          "if \\(!sh\\?\\.on\\) return \\[\\];"
+        ],
+        [
+          "src/apply.js",
+          "map\\(\\(\\[key\\]\\) => `salty-shadow-\\$\\{key\\}`\\);"
+        ],
+        [
+          "src/apply.js",
+          "shadowClasses\\(s\\)\\.forEach\\(c => want\\.add\\(c\\)\\);"
+        ]
+      ],
+      "alsoOn": [
+        "src/apply.js syncSamples: 설정 창 표본 .salty-sample 에도 같은 shadowClasses(s) 로 붙어요(규칙도 body.salty 를 요구해요)"
+      ]
+    },
+    {
+      "class": "salty-shadow-dialogue",
+      "setting": "shadow.on + shadow.targets (글자 그림자 · 기본 끔)",
+      "proof": [
+        [
+          "src/settings.js",
+          "shadow: \\{ on: false, targets: \\{ text: false, dialogue: true, em: false, strong: false, code: false \\}"
+        ],
+        [
+          "src/apply.js",
+          "if \\(!sh\\?\\.on\\) return \\[\\];"
+        ],
+        [
+          "src/apply.js",
+          "map\\(\\(\\[key\\]\\) => `salty-shadow-\\$\\{key\\}`\\);"
+        ],
+        [
+          "src/apply.js",
+          "shadowClasses\\(s\\)\\.forEach\\(c => want\\.add\\(c\\)\\);"
+        ]
+      ],
+      "alsoOn": [
+        "src/apply.js syncSamples: 설정 창 표본 .salty-sample 에도 같은 shadowClasses(s) 로 붙어요(규칙도 body.salty 를 요구해요)"
+      ]
+    },
+    {
+      "class": "salty-shadow-em",
+      "setting": "shadow.on + shadow.targets (글자 그림자 · 기본 끔)",
+      "proof": [
+        [
+          "src/settings.js",
+          "shadow: \\{ on: false, targets: \\{ text: false, dialogue: true, em: false, strong: false, code: false \\}"
+        ],
+        [
+          "src/apply.js",
+          "if \\(!sh\\?\\.on\\) return \\[\\];"
+        ],
+        [
+          "src/apply.js",
+          "map\\(\\(\\[key\\]\\) => `salty-shadow-\\$\\{key\\}`\\);"
+        ],
+        [
+          "src/apply.js",
+          "shadowClasses\\(s\\)\\.forEach\\(c => want\\.add\\(c\\)\\);"
+        ]
+      ],
+      "alsoOn": [
+        "src/apply.js syncSamples: 설정 창 표본 .salty-sample 에도 같은 shadowClasses(s) 로 붙어요(규칙도 body.salty 를 요구해요)"
+      ]
+    },
+    {
+      "class": "salty-shadow-strong",
+      "setting": "shadow.on + shadow.targets (글자 그림자 · 기본 끔)",
+      "proof": [
+        [
+          "src/settings.js",
+          "shadow: \\{ on: false, targets: \\{ text: false, dialogue: true, em: false, strong: false, code: false \\}"
+        ],
+        [
+          "src/apply.js",
+          "if \\(!sh\\?\\.on\\) return \\[\\];"
+        ],
+        [
+          "src/apply.js",
+          "map\\(\\(\\[key\\]\\) => `salty-shadow-\\$\\{key\\}`\\);"
+        ],
+        [
+          "src/apply.js",
+          "shadowClasses\\(s\\)\\.forEach\\(c => want\\.add\\(c\\)\\);"
+        ]
+      ],
+      "alsoOn": [
+        "src/apply.js syncSamples: 설정 창 표본 .salty-sample 에도 같은 shadowClasses(s) 로 붙어요(규칙도 body.salty 를 요구해요)"
+      ]
+    },
+    {
+      "class": "salty-shadow-code",
+      "setting": "shadow.on + shadow.targets (글자 그림자 · 기본 끔)",
+      "proof": [
+        [
+          "src/settings.js",
+          "shadow: \\{ on: false, targets: \\{ text: false, dialogue: true, em: false, strong: false, code: false \\}"
+        ],
+        [
+          "src/apply.js",
+          "if \\(!sh\\?\\.on\\) return \\[\\];"
+        ],
+        [
+          "src/apply.js",
+          "map\\(\\(\\[key\\]\\) => `salty-shadow-\\$\\{key\\}`\\);"
+        ],
+        [
+          "src/apply.js",
+          "shadowClasses\\(s\\)\\.forEach\\(c => want\\.add\\(c\\)\\);"
+        ]
+      ],
+      "alsoOn": [
+        "src/apply.js syncSamples: 설정 창 표본 .salty-sample 에도 같은 shadowClasses(s) 로 붙어요(규칙도 body.salty 를 요구해요)"
+      ]
     }
   ],
   "sheets": [
@@ -149,6 +288,20 @@
         "salty-user-namerow-right"
       ],
       "what": "첫 줄 들여쓰기 · 정보 정렬(가운데 · 오른쪽)"
+    },
+    {
+      "id": "shadow",
+      "out": "src/gate-shadow.gen.css",
+      "prefixes": [],
+      "classes": [
+        "salty-shadow-text",
+        "salty-shadow-dialogue",
+        "salty-shadow-em",
+        "salty-shadow-strong",
+        "salty-shadow-code",
+        "salty-demink-shadow"
+      ],
+      "what": "글자 그림자(본문 · 대사 · 강조 · 굵게 · 코드) · 데우스 대사 그림자 — 기본 끔이라 켠 사람만 받아요"
     },
     {
       "id": "mixed",
