@@ -227,6 +227,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     }
     // 6.0.4 프롬프트 귀속: 프롬프트 편집 창에 「자동 켜기」 줄을 붙이고 채팅이 바뀌면 묶인 항목을 켜고 끈다 (테마가 켜져 있으면 늘)
     if (on || modules.promptbind) load('promptbind', './promptbind.js').then(m => m?.startPromptBinds());
+    // 1.5.5 프리셋 인물 색: 지금 프리셋 · 켜진 정규식에 정해 둔 「이름 → 색」 을 인물표의 공급자로(TTS 뒤 · 대사가 없어도 색)
+    if (on || modules.presetcolors) load('presetcolors', './preset-colors.js').then(m => m?.syncPresetColors(on));
     // 6.0.4 확장 위 스위치: 확장 창 안의 켜기·끄기를 제목 줄에도 (창 안 「확장 탭에 보이기」로 고른 창만 · 테마를 끄면 뗀다)
     // 6.8.8 「확장 탭에 보이기」 줄을 끄고(설정) 꺼내 둔 스위치도 없으면 모듈을 아예 쉬게 한다 (확장 칸 관찰 · 2초 맞추기 없음)
     // 1.4.6 검토 3: 옮기기를 끝낸 옛 열쇠(headSwitchMove.done — 되돌리기용으로 남김)는 꺼낸 스위치로 치지 않아요

@@ -48,8 +48,30 @@ ok('②-2 (1.5.4) 「자세히」 칸이 펼쳐져도 같은 표식 — 눌렀�
     assert.equal(shut.attrs['data-bl-acts'], 'row'); assert.equal(open.attrs['data-bl-acts'], 'row');
     assert.equal(open.vars['--bl-tcols'], '2');
     const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
-    assert.match(css, /\.ss-tb\.hud\[data-bl-acts="row"\] > \.ss-tb-row \{ flex-wrap: nowrap;/);
-    assert.match(css, /\.ss-tb\.hud\[data-bl-acts="row"\] > \.ss-tb-row > \.ss-tg \{ flex: 1 1 0; min-width: 0; grid-template-columns: repeat\(var\(--bl-tcols, 2\), minmax\(0, 1fr\)\); \}/);
+    assert.match(css, /#ss-hud\[data-bl-acts="row"\] \.ss-tb\.hud:not\(\.editing\) > \.ss-tb-row \{ flex-wrap: nowrap;/);
+    assert.match(css, /#ss-hud\[data-bl-acts="row"\] \.ss-tb\.hud:not\(\.editing\) > \.ss-tb-row > \.ss-tg \{ flex: 1 1 0; min-width: 0; grid-template-columns: repeat\(var\(--bl-tcols, 2\), minmax\(0, 1fr\)\); \}/);
+});
+ok('②-3 (1.5.5) 「지글지글」 지킴이: 판단 표식 · 열 수는 띠를 새로 그려도 남는 바깥 틀(#ss-hud)에 — 새 띠가 첫 화면부터 같은 배치 · 판단 입력은 칸 자리 · 열 수 · 단추 수뿐(펼침 · 높이 · 폭을 안 읽어요)', () => {
+    const host = { attrs: {}, vars: {}, style: { getPropertyValue: k => host.vars[k] || '', setProperty: (k, v) => { host.vars[k] = v; } }, getAttribute: k => host.attrs[k] ?? null, setAttribute: (k, v) => { host.attrs[k] = v; }, hasAttribute: k => k in host.attrs, removeAttribute: k => { delete host.attrs[k]; } };
+    let reads = 0;
+    const band = (det, editing = false) => {
+        const tile = (c, r) => ({ style: { gridColumn: `${c} / span 2`, gridRow: `${r} / span 1` }, getBoundingClientRect: () => { reads++; return {}; } });
+        const tg = { style: { getPropertyValue: k => (k === '--cols' ? '4' : '') }, querySelectorAll: () => [tile(1, 1), tile(3, 1)] };
+        const tb = { attrs: {}, classList: { contains: k => k === 'editing' && editing }, style: { getPropertyValue: () => '', setProperty: () => { throw Error('띠(새로 그려지는 요소)에는 안 적어요'); } },
+            getAttribute: () => null, setAttribute: () => { throw Error('띠에는 안 적어요'); }, removeAttribute: () => { throw Error('띠에는 안 적어요'); },
+            closest: sel => (sel === '#ss-hud' ? host : null), getBoundingClientRect: () => { reads++; return {}; },
+            querySelector: sel => (sel === '.ss-tg' ? tg : sel === '.ss-tb-acts' ? { children: { length: 4 } } : sel === '.ss-t-det' ? det : null) };
+        return tb;
+    };
+    // 접힘 → 펼침 → 접힘 → 다른 칸 펼침: 새 띠마다 같은 판단 · 바깥 틀 값이 한 번 정해진 뒤 안 바뀌어요
+    const seen = [];
+    for (const det of [null, {}, null, {}, {}, null]) { assert.equal(m.fitActs(band(det)), 'row'); seen.push(host.attrs['data-bl-acts'] + ':' + host.vars['--bl-tcols']); }
+    assert.deepEqual([...new Set(seen)], ['row:4'], '펼침 여부와 상관없이 같은 값');
+    assert.equal(reads, 0, '배치(크기)를 읽지 않아요 — 판단이 제 결과에 기대지 않아요');
+    m.fitActs(band(null, true)); assert.equal('data-bl-acts' in host.attrs, false, '칸 편집 중엔 떼요');
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.ok(!/\.ss-tb\.hud\[data-bl-acts/.test(css), '띠 자신의 표식을 보는 규칙이 남지 않아요(새 띠 첫 화면이 표식 없이 그려져요)');
+    for (const v of ['in', 'row']) assert.ok(css.includes(`#ss-hud[data-bl-acts="${v}"] .ss-tb.hud:not(.editing)`), v);
 });
 ok('③ (1.5.4) 이름표 → 값 두 열 격자: 칸을 두 열에 차례로 · 마흔 자 넘거나 줄바꿈인 값만 두 열 통째 · 이름표(dt)도 같은 칸 · 짧아지면 떼요', () => {
     const el = (tag, text) => { const vars = {}; return { tagName: tag, textContent: text, attrs: new Set(), vars, previousElementSibling: null, style: { setProperty: (k, v) => { vars[k] = v; } }, setAttribute(k) { this.attrs.add(k); }, removeAttribute(k) { this.attrs.delete(k); } }; };
@@ -73,8 +95,8 @@ ok('④ 감시자 · 타이머 없이 — 다시 그려진 것은 animationstart
     assert.match(js, /addEventListener\('animationstart'/);
     assert.match(css, /:is\(#ss-hud \.ss-tb\.hud, \.ss-scope \.ss-dl, \.ss-scope\.ss-tw > \.ss-wz-head\) \{ animation: ss-pulse \.001s 1 !important; \}/, '움직임 줄이기를 켠 기기에서도 도는 신호(그 확장의 animation:none !important 를 이겨요)');
     assert.ok(!/@keyframes/.test(css.replace(/\/\*[\s\S]*?\*\//g, '')));
-    assert.match(css, /\.ss-tb\.hud\[data-bl-acts="in"\] > \.ss-tb-row > \.ss-tb-acts \{[^}]*margin-top: -26px; align-items: center; height: 26px;/, '타일 줄 높이만큼만 올리고 그 높이 안에서 가운데');
-    assert.match(css, /\.ss-tb\.hud\[data-bl-acts="in"\] > \.ss-tb-row \{ row-gap: 0; \}/, '줄 사이 틈이 남으면 아래 여백만 커져요');
+    assert.match(css, /#ss-hud\[data-bl-acts="in"\] \.ss-tb\.hud:not\(\.editing\) > \.ss-tb-row > \.ss-tb-acts \{[^}]*margin-top: -26px; align-items: center; height: 26px;/, '타일 줄 높이만큼만 올리고 그 높이 안에서 가운데');
+    assert.match(css, /#ss-hud\[data-bl-acts="in"\] \.ss-tb\.hud:not\(\.editing\) > \.ss-tb-row \{ row-gap: 0; \}/, '줄 사이 틈이 남으면 아래 여백만 커져요');
     assert.match(css, /body\.salty #ss-hud \.ss-tg \{ grid-auto-rows: 26px;/, '폰 타일 줄 높이 26 — 위 값과 한 벌');
 });
 ok('⑤ 이름 첫 글자: 한글 한 음절 · 영문 대문자 · 그림 글자 · 기호 · 괄호 별칭은 건너뛰고 · (1.5.4) 겹쳐도 늘 한 글자', () => {
@@ -101,23 +123,28 @@ ok('⑥ 얼굴 표시 설정: 기본 = 아이콘(표식 없음) · 「이름 첫
     assert.equal(m.paintFaces({ body: { hasAttribute: () => true }, querySelectorAll: () => els }), 3);
     assert.deepEqual(els.map(e => e.a['data-bl-ini']), ['도', '도', '릴'], '1.5.4 늘 한 글자');
 });
-ok('⑥-1 (1.5.4) 얼굴 바탕 = 인물표의 그 사람 색(원문 · 화면 이름 둘 다로 물어요) · 면 바닥과 섞어 글자 4.5 : 1 · 모르면 표식 없음 · 이름 · 색을 코드에 안 적어요', () => {
+ok('⑥-1 (1.5.5) 얼굴 바탕 = 인물표의 그 사람 색 그대로(섞지 않아요 — 1.5.4 는 밤에 적갈색이 됐어요) · 글자는 흰색 / 짙은 색 중 또렷한 쪽 4.5 : 1 · 모르면 표식 없음', () => {
     const people = { version: 1, get: n => ({ Leon: { color: '#E0567F' }, '미라': { color: '#ffe23c' } }[n] ?? null), onChange: () => () => {} };
     assert.equal(m.personColor(people, 'Leon'), '#e0567f');
     assert.equal(m.personColor(people, 'Mira', '미라'), '#ffe23c', '화면 이름으로도');
     assert.equal(m.personColor(people, 'Nobody'), null); assert.equal(m.personColor(null, 'Leon'), null);
-    for (const [c, ink] of [['#ffe23c', [225, 225, 229]], ['#e0567f', [225, 225, 229]], ['#1f2a6b', [30, 30, 35]], ['#ffe23c', [30, 30, 35]]]) {
-        const f = m.faceFill(c, ink); assert.match(f, /^#[0-9a-f]{6}$/);
-        const rgb = [1, 3, 5].map(i => parseInt(f.slice(i, i + 2), 16)); assert.ok(m.contrastOf(rgb, ink) >= 4.5, `${c} → ${f}`);
+    const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const dist = (a, b) => Math.hypot(...rgb(a).map((v, i) => v - rgb(b)[i]));
+    for (const c of ['#ffe23c', '#e0567f', '#1f2a6b', '#e63946', '#ff5a3c', '#b799e8', '#424c59', '#118ab2', '#777777']) {
+        const f = m.faceColors(c); assert.match(f.bg, /^#[0-9a-f]{6}$/); assert.match(f.ink, /^#[0-9a-f]{6}$/);
+        assert.ok(m.contrastOf(rgb(f.bg), rgb(f.ink)) >= 4.5, `${c} → ${f.bg} / ${f.ink}`);
+        assert.ok(dist(f.bg, c) < 40, `${c} → ${f.bg} 색이 거의 그대로 남아요`);
     }
+    assert.equal(m.faceColors('#ff5a3c').bg, '#ff5a3c', '또렷한 색은 손대지 않아요'); assert.equal(m.faceFill('#b799e8'), '#b799e8');
+    assert.ok(dist(m.faceColors('#e63946').bg, m.faceColors('#ff5a3c').bg) > 20, '빨강 · 주황이 구분돼요');
     const face = name => { const a = { title: name }; const vars = {}; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty: (k, v) => { vars[k] = v; }, removeProperty: k => { delete vars[k]; } }, a, vars }; };
     const els = ['Leon', 'Nobody'].map(face);
     const win = { [Symbol.for('blue-lemonade.names')]: { people }, getComputedStyle: () => ({ color: 'rgb(225, 225, 229)' }) };
     m.paintFaces({ body: { hasAttribute: () => true }, querySelectorAll: () => els, defaultView: win });
-    assert.match(els[0].a['data-bl-pc'], /^#[0-9a-f]{6}$/); assert.equal(els[0].vars['--bl-face'], els[0].a['data-bl-pc']);
+    assert.equal(els[0].a['data-bl-pc'], '#e0567f'); assert.equal(els[0].vars['--bl-face'], '#e0567f'); assert.match(els[0].vars['--bl-face-ink'], /^#[0-9a-f]{6}$/);
     assert.equal('data-bl-pc' in els[1].a, false);
     const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
-    assert.match(css, /\.ss-ava\.emo\[data-bl-pc\][^{]*\{ background: var\(--bl-face\); color: var\(--salty-text\); \}/);
+    assert.match(css, /\.ss-ava\.emo\[data-bl-pc\][^{]*\{ background: var\(--bl-face\); color: var\(--bl-face-ink, var\(--salty-text\)\); \}/);
 });
 ok('⑥-2 (1.5.4) 대사가 없어도 TTS 카드별 색 기억(lemon_voice.card_colors)에서 — 지금 카드 · 그룹 구성원 · 전체 이름 · 첫 낱말', () => {
     const ctx = { characterId: 0, characters: [{ avatar: 'a.png' }], extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#E0567F': 'Mina Park', '#3a8ee6': '레온', 'bad': '누구' }, 'b.png': { '#ffe23c': '다른 카드' } } } } };
@@ -127,6 +154,9 @@ ok('⑥-2 (1.5.4) 대사가 없어도 TTS 카드별 색 기억(lemon_voice.card_
     const g = m.cardColorTable({ groupId: 'g', groups: [{ id: 'g', members: ['a.png', 'b.png'] }], extensionSettings: ctx.extensionSettings });
     assert.equal(m.tableColor(g, '다른 카드'), '#ffe23c', '그룹이면 구성원 카드 전부');
     assert.equal(m.cardColorTable({}).size, 0);
+    const u = m.cardColorTable({ characterId: 0, name1: '하나', name2: 'Corvin', characters: [{ avatar: 'c.png' }], extensionSettings: { lemon_voice: { card_colors: { 'c.png': { '#424c59': '{{user}}', '#b799e8': '{{char}}' } } } } });
+    assert.equal(m.tableColor(u, '하나'), '#424c59', '1.5.5 {{user}} = 지금 페르소나'); assert.equal(m.tableColor(u, 'corvin'), '#b799e8', '{{char}} = 카드 이름');
+    assert.equal(m.tableColor(u, '{{user}}'), null);
     const face = name => { const a = { title: name }; const vars = {}; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty: (k, v) => { vars[k] = v; }, removeProperty: k => { delete vars[k]; } }, a, vars }; };
     const els = ['Mina Park', '모름'].map(face);
     const win = { [Symbol.for('blue-lemonade.names')]: { people: { version: 1, get: () => null, onChange: () => () => {} } }, SillyTavern: { getContext: () => ctx }, getComputedStyle: () => ({ color: 'rgb(225, 225, 229)' }) };
@@ -172,8 +202,8 @@ ok('⑨ 면 안 아이콘 가운데 · 종 숫자 배지 · 서랍 줄 간격: �
 await (async () => {
     // ⑩ 미트볼 꾸미기 창에 끼우는 테마 칸: 지금 값은 테마 표식에서 · 누르면 테마 설정만 바꿔요(그 확장 설정에는 안 써요) · 글꼴은 테마 설정 창을 그 칸만 보이게 · 「원작 그대로 보기」에서는 안 끼워요
     const mk = (face, font) => ({ body: { getAttribute: k => (k === 'data-bl-mb-face' ? face : null), hasAttribute: () => false }, documentElement: {}, defaultView: { getComputedStyle: () => ({ getPropertyValue: () => font }) } });
-    assert.deepEqual(m.decoState(mk(null, '')), { face: 'icon', tone: false, font: '' });
-    assert.deepEqual(m.decoState(mk('tone', "'Salty MB', 'Some Font', sans-serif")), { face: 'initial', tone: true, font: 'Some Font' });
+    assert.deepEqual(m.decoState(mk(null, '')), { face: 'icon', tone: false, look: 'letter', font: '' });
+    assert.deepEqual(m.decoState(mk('tone', "'Salty MB', 'Some Font', sans-serif")), { face: 'initial', tone: true, look: 'letter', font: 'Some Font' });
     assert.equal(m.decoState(mk('one', 'initial')).font, '', '비운 변수(initial)는 따라가기');
     const calls = []; const st = { chat: {} };
     const panel = { updateSettings: fn => { fn(st); calls.push({ ...st.chat }); return true; } };
@@ -223,5 +253,45 @@ ok('⑬ 얼굴 첫 글자는 보이는 이름으로(1.5.2): 화면만 번역이�
     const tr = fs.readFileSync(path.join(root, 'src/ext-bridge-tr.js'), 'utf8');
     assert.match(tr, /m\.setFaceName\(name => \(fill\.view\(\) \? mb\.tr\.trString\(name\) : name\)\)/);
     assert.match(tr, /try \{ faces\(\); \} catch/);
+});
+ok('⑱ (1.5.5) 시간 칩 요일 · 칩 글자 맞춤: 칸 설명 맨 앞 「월/일(요일)」 을 읽어 같은 「월/일」 로 끝나는 작은 글에 표식만 — 번역 · 넓은 칸 · 판타지 달력 · 요일 없음은 안 붙여요 · 장소 칩은 줄이지 않고 말줄임', () => {
+    const host = () => { const a = {}, v = {}; return { a, v, getAttribute: k => a[k] ?? null, setAttribute: (k, x) => { a[k] = x; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty: (k, x) => { v[k] = x; }, removeProperty: k => { delete v[k]; } } }; };
+    const band = (title, smalls, L = false) => { const h = host(); const tile = { classList: { contains: k => k === 'L' && L }, getAttribute: k => (k === 'title' ? title : null), querySelector: () => (smalls.length ? { textContent: smalls[0] } : null) };
+        return { h, tb: { closest: s => (s === '#ss-hud' ? h : null), querySelector: () => tile } }; };
+    const run = (...args) => { const x = band(...args); const r = m.markWeekday(x.tb); return { r, ...x.h }; };
+    let x = run('4/1(월) 아침 · 맑음', ['4/1']); assert.equal(x.r, '월'); assert.equal(x.a['data-bl-wd'], '월'); assert.equal(x.v['--bl-wd'], '"(월)"', '바깥 틀에');
+    assert.equal(run('4/1(Mon) Morning', ['Morning 4/1']).v['--bl-wd'], '"(Mon)"', '번역 채팅도');
+    for (const [title, sm, L] of [['4/1(월) 아침', ['4/1(월)'], true], ['3/12(별빛의날) 새벽', ['3/12']], ['4/1() 아침', ['4/1']], ['4/1(월) 아침', ['14/1']], ['4/1(월) 아침', ['4/2']], ['4/1(월)', []]])
+        assert.equal('data-bl-wd' in run(title, sm, L).a, false, `${title} · ${sm}`);
+    const b2 = band('4/1(월) 아침', ['4/1']); m.markWeekday(b2.tb); b2.tb.querySelector = () => ({ classList: { contains: () => false }, getAttribute: () => '4/2(화) 아침', querySelector: () => ({ textContent: '4/1' }) });
+    m.markWeekday(b2.tb); assert.equal('data-bl-wd' in b2.h.a, false, '설명과 칩 날이 다르면 떼요'); assert.equal('--bl-wd' in b2.h.v, false);
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.match(css, /\.ss-t:is\(\.t-date, \.t-loc\) > \.c > \.ci \{ zoom: 1 !important;/);
+    assert.match(css, /\.ss-t\.t-loc > \.c > \.ci > span \{ min-width: 0; overflow: hidden !important; text-overflow: ellipsis !important; \}/);
+    assert.match(css, /#ss-hud\[data-bl-wd\] \.ss-tb\.hud \.ss-t\.t-date:not\(\.L\) > \.c > \.ci > small:first-of-type::after \{ content: var\(--bl-wd, ""\); \}/);
+    assert.ok(!/--bl-o|--bl-w/.test(css), '칸마다 값을 적지 않아요(새로 그릴 때 흔들림)');
+    const src = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8');
+    assert.match(src, /fitActs\(el\); markBadge\(el\); markWeekday\(el\);/);
+});
+ok('⑲ (1.5.6) 프로필 얼굴 「색만」(기본) / 「글자」: 설정 기본 color · body 표식 하나 · 지정색 있는 프로필 동그라미만 글자를 숨겨요 · 꾸미기 칸 누름 · 이름은 aria-label 로', async () => {
+    const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+    assert.match(read('src/settings.js'), /mbFaceLook: 'color'/); assert.match(read('src/settings.js'), /if \(!\['color', 'letter'\]\.includes\(s\.chat\.mbFaceLook\)\) s\.chat\.mbFaceLook = 'color';/);
+    assert.match(read('src/apply.js'), /const mbColorOnly = !!mbFace && s\.chat\.mbFaceLook !== 'letter';/);
+    for (const f of ['src/settings.js', 'src/styles.js']) assert.ok(read(f).includes("'mbFace', 'mbFaceTone', 'mbFaceLook'"), f);
+    for (const f of ['src/settings-labels.js', 'src/settings-search.js', 'src/panel.js']) assert.ok(read(f).includes('chat.mbFaceLook'), f);
+    const css = read('src/ext-status.css');
+    assert.ok(css.includes('[data-bl-mb-face][data-bl-mb-color-only] .ss-scope .ss-ava.emo[data-bl-pc][data-bl-ini]::before { content: none; }'), '지정색 있는 프로필 동그라미만');
+    let st = { chat: {} }; const panel = { updateSettings: fn => fn(st) };
+    const el = act => ({ getAttribute: () => act, ownerDocument: {}, closest: () => null });
+    await m.decoAct(el('look:letter'), async () => panel); assert.equal(st.chat.mbFaceLook, 'letter');
+    await m.decoAct(el('look:color'), async () => panel); assert.equal(st.chat.mbFaceLook, 'color');
+    const a = { title: '미라' }; const face = { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty() {}, removeProperty() {} } };
+    m.paintFaces({ body: { hasAttribute: () => true }, querySelectorAll: () => [face], defaultView: {} });
+    assert.equal(a.role, 'img'); assert.equal(a['aria-label'], '미라');
+});
+ok('⑳ (1.5.6) 펼친 칸 줄 아이콘: 상자는 제 폭 · 글자와 6px · 세로 0.04em — 띠 안 펼친 칸에만(옆 미니창 줄은 그대로)', () => {
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.ok(css.includes('body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det .ss-mini-line { gap: 6px; }'));
+    assert.ok(css.includes('body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det .ss-mini-line > i { width: auto; text-align: start; position: relative; top: .04em; }'));
 });
 console.log(`ext-compat-band: ${n}개 통과`);

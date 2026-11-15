@@ -14,6 +14,8 @@ const NAMES_EVENT = 'bl:names-changed';
 
 const fold = s => String(s ?? '').normalize('NFKC').trim().toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ');
 const sources = new Map();   // id → { person(names) → { names?, color?, voice? } | null, names() → string[], stamp?() → 값 | 배열 }
+const ranks = new Map();     // 1.5.5 id → 차례(작을수록 먼저 · 기본 0). 같은 차례는 등록 차례 — 프리셋 색(preset)은 TTS 뒤
+const ordered = () => [...sources.entries()].sort((a, b) => (ranks.get(a[0]) || 0) - (ranks.get(b[0]) || 0));
 let host = globalThis, doc = () => globalThis.document, timer = 0, listening = false;
 
 // 7.2.8 get() 기억: 다른 확장이 이름마다 부른다(채팅 열기 · 답마다 수백 번). 같은 판 안에서는 같은 이름에 같은 (얼린) 객체를 돌려준다.
@@ -58,7 +60,7 @@ const sameKeys = (a, b) => a && a.length === b.length && a.every((x, i) => Array
 function memoReady() {
     if (!memoOn) return false;
     const keys = [stamp, host[NAMES_KEY]];
-    for (const source of sources.values()) {
+    for (const [, source] of ordered()) {
         if (typeof source.stamp !== 'function') return false;
         let k;
         try { k = source.stamp(); } catch { return false; }
@@ -78,21 +80,22 @@ function get(name) {
 }
 function lookup(n) {
     const names = addNames([n], aliasesOf(n));
-    let c = null, v = null;
-    for (const source of sources.values()) {
+    let c = null, v = null, from = null;
+    for (const [id, source] of ordered()) {
         let part = null;
         try { part = source.person?.(names.slice()); } catch (error) { console.warn('[Blue Lemonade] 인물표', error); }
         if (!part || typeof part !== 'object') continue;
         if (Array.isArray(part.names)) addNames(names, part.names);
-        c ??= color(part.color);
+        if (!c && color(part.color)) { c = color(part.color); from = id; }
         v ??= voice(part.voice);
     }
     if (names.length === 1 && !c && !v) return null;
-    return Object.freeze({ name: n, names: Object.freeze(names), color: c, voice: v });
+    // 1.5.5 colorFrom = 색을 준 공급자 id('tts' · 'preset' …) — 셀 수 없는 칸이라 예전 모양({ name, names, color, voice })은 그대로
+    return Object.freeze(Object.defineProperty({ name: n, names: Object.freeze(names), color: c, voice: v }, 'colorFrom', { value: from, enumerable: false }));
 }
 function list() {
     const out = [], taken = new Set();
-    for (const source of sources.values()) {
+    for (const [, source] of ordered()) {
         let names = [];
         try { names = source.names?.() || []; } catch (error) { console.warn('[Blue Lemonade] 인물표', error); }
         for (const name of Array.isArray(names) ? names : []) {
@@ -151,13 +154,15 @@ function ensureBridge() {
     host[NAMES_KEY] = Object.freeze(api);
 }
 
-/** 공급자 등록 — source = { person(names: string[]) → { names?, color?, voice? } | null, names() → string[] }. 되돌려 주는 함수로 뺀다 */
-export function registerPeopleSource(id, source) {
+/** 공급자 등록 — source = { person(names: string[]) → { names?, color?, voice? } | null, names() → string[] }. 되돌려 주는 함수로 뺀다
+ *  options.rank (1.5.5) — 색 · 목소리를 고르는 차례(작을수록 먼저, 기본 0). 프리셋 색 공급자는 100(다른 공급자 뒤) */
+export function registerPeopleSource(id, source, options = {}) {
     if (!id || !source || typeof source !== 'object') return () => {};
     sources.set(String(id), source);
+    ranks.set(String(id), Number.isFinite(options?.rank) ? options.rank : 0);
     invalidatePeople();
     ensureBridge();
     listenNames();
     peopleChanged();
-    return () => { if (sources.get(String(id)) === source) { sources.delete(String(id)); invalidatePeople(); peopleChanged(); } };
+    return () => { if (sources.get(String(id)) === source) { sources.delete(String(id)); ranks.delete(String(id)); invalidatePeople(); peopleChanged(); } };
 }

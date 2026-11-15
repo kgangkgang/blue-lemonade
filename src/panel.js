@@ -294,7 +294,7 @@ function syncSettingResets() {
 function jumpToSetting(root, path) {
     if (!settingDefault(getSettings(),path).allowed) return;
     const route = settingRoute(path);
-    root._catalogOpen = false; ui.tab = route.tab; ui.subs[route.tab] = route.sub; ui.picker = null; ui.mbOnly = /^(chat\.mbFace(Tone)?|fonts\.mb(\..+)?)$/.test(path);   // 미트볼 꾸미기 칸은 그 세 칸만 보이는 보기로
+    root._catalogOpen = false; ui.tab = route.tab; ui.subs[route.tab] = route.sub; ui.picker = null; ui.mbOnly = /^(chat\.mbFace(Tone|Look)?|fonts\.mb(\..+)?)$/.test(path);   // 미트볼 꾸미기 칸은 그 세 칸만 보이는 보기로
     // Inspecting an override for another palette should not silently change the active theme.
     if ((path.startsWith('colorOverrides.') && path.split('.')[1] !== getSettings().palette) || (path.startsWith('gradients.overrides.') && path.split('.')[2] !== getSettings().palette)) {
         toastr.info('이 색은 다른 테마에 저장돼 있어요. 색 목록에서 해당 테마를 선택해 주세요.', '저장된 테마 색');
@@ -359,7 +359,7 @@ export function mountPanel(container, { popup = false, onFullscreen = null, init
         if (GONE_SUBS[entry.tab]?.[entry.sub]) entry = { ...entry, sub: GONE_SUBS[entry.tab][entry.sub] };   // 1.0.0 걷은 화면 id(옛 즐겨찾기 · 검색) → 남은 화면
         if (!SUBS[entry.tab]?.some(([sub])=>sub===entry.sub) && !(entry.tab==='theme'&&entry.sub==='custom')) return;
         root._catalogOpen = false;
-        ui.tab = entry.tab; ui.subs[entry.tab] = entry.sub; ui.picker = null; ui.mbOnly = /^(chat\.mbFace(Tone)?|fonts\.mb(\..+)?)$/.test(entry.path || '');   // 1.5.2 통합: 검색에서 미트볼 꾸미기 세 칸을 고르면 그 칸이 그려지는 보기로(jumpToSetting 과 같은 판정 — 전엔 화면 맨 위로 떨어졌어요)
+        ui.tab = entry.tab; ui.subs[entry.tab] = entry.sub; ui.picker = null; ui.mbOnly = /^(chat\.mbFace(Tone|Look)?|fonts\.mb(\..+)?)$/.test(entry.path || '');   // 1.5.2 통합: 검색에서 미트볼 꾸미기 세 칸을 고르면 그 칸이 그려지는 보기로(jumpToSetting 과 같은 판정 — 전엔 화면 맨 위로 떨어졌어요)
         store('salty_tab', ui.tab); store('salty_subs', JSON.stringify(ui.subs));
         refreshPanels();
         const path = entry.path ? root.querySelector(`[data-toggle="${entry.path}"], [data-path="${entry.path}"], [data-range="${entry.path}"], [data-num="${entry.path}"], [data-color-path="${entry.path}"]`) : null;
@@ -1721,6 +1721,7 @@ function tabChat(s, sub) {
         if (ui.mbOnly) return `${cap('미트볼 꾸미기', '미트볼 상태창에만 걸리는 칸이에요 · 미트볼 상태창 › 꾸미기에서도 바꿀 수 있어요')}<div class="salty-group">
             ${stack('미트볼 얼굴 표시', seg('chat.mbFace', [['icon', '아이콘'], ['initial', '이름 첫 글자']], 'icon'), '미트볼 상태창에서 사람 얼굴이 나오는 자리(프로필 · 관계 · 띠의 속마음 …)를 동물 아이콘 대신 이름 첫 글자로 보여요 · 첫 글자가 같은 사람끼리는 두 글자 · 사람마다 고른 아이콘은 그대로 남아 있어 되돌리면 돌아와요')}
             ${fontBlock(s, 'mb')}
+            ${s.chat.mbFace === 'initial' ? stack('프로필 얼굴', seg('chat.mbFaceLook', [['color', '색만'], ['letter', '글자']], 'color'), '사람마다 정해 둔 색(TTS · 프리셋)이 있는 동그라미를 색만으로(디스코드 프로필처럼 · 이름은 옆에 그대로) 또는 색 위에 첫 글자로 보여요 · 정해 둔 색이 없는 사람은 어느 쪽이든 첫 글자예요') : ''}
             ${s.chat.mbFace === 'initial' ? row('사람마다 색 톤', toggle('chat.mbFaceTone', s.chat.mbFaceTone === true), '이름 첫 글자 동그라미의 면 색을 사람마다 팔레트 안 네 가지 톤으로 달리해요 · 끄면(기본) 같은 톤 하나') : ''}
         </div>`;
         const stFade = !!SillyTavern.getContext().powerUserSettings?.stream_fade_in; // 실리태번 쪽 페이드 인 (무거움) — 켜져 있으면 끄는 줄을 같이 보여 줌

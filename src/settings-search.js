@@ -85,6 +85,7 @@ const rows = [
  ['chat','screen','미트볼 글꼴','미트볼 상태창 글꼴 폰트 서체 전용 따로 고르기 테마 글꼴 따라가기 손글씨 meatball font','','fonts.mb'],
  ['chat','screen','미트볼 얼굴 표시','미트볼 상태창 얼굴 표시 아이콘 이름 첫 글자 머리글자 이니셜 동물 누가 누구 속마음 프로필 관계 동그라미 meatball face initial','','chat.mbFace'],
  ['chat','screen','미트볼 얼굴: 사람마다 색 톤','미트볼 얼굴 첫 글자 사람마다 색 톤 색깔 구분 meatball face tone','','chat.mbFaceTone'],
+ ['chat','screen','미트볼 프로필 얼굴: 색만 / 글자','미트볼 프로필 얼굴 동그라미 색만 글자 디스코드 지정색 이름 첫 글자 meatball face color only letter','','chat.mbFaceLook'],
  ['chat','screen','미트볼 상태창 편의 기능','미트볼 상태창 편의 기능 설정 찾기 검색 맨 위로 단추 끄기 meatball helpers find top','','chat.mbHelpers'],
  ['chat','screen','날씨 따라가기: 미트볼 상태창','미트볼 상태창 달력 오늘 날씨 따라가기 트래커 따라 비 눈 맑음 날씨 효과 연결 meatball weather','','chat.weatherFollowMeatball'],
  ['chat','screen','날씨 · 내 메시지 비침','날씨 내 메시지 농도 비침 비치기 내 말 위 날씨','','chat.weatherBubble'],

@@ -198,9 +198,19 @@ const shownName = name => { try { const out = faceName(name); return typeof out 
  *  이름은 원문(title) · 화면 이름(번역) 둘 다. 모르면 예전처럼 톤(사람마다 색 톤 설정) 또는 기본 면. 이름 · 색을 코드에 적지 않아요. */
 const PEOPLE_KEY = Symbol.for('blue-lemonade.names');
 const peopleOf = doc => { try { const p = (doc?.defaultView ?? globalThis)[PEOPLE_KEY]?.people; return p?.version === 1 ? p : null; } catch { return null; } };
-export function personColor(people, ...names) {
+/** 1.5.5 from = 'preset' 이면 프리셋 색만, 'other' 면 프리셋이 준 색은 빼고(TTS 등), 없으면 아무 공급자나 (people.get 의 colorFrom · 셀 수 없는 칸) */
+export function personColor(people, ...args) {
     if (!people) return null;
-    for (const n of names) { if (!n) continue; let c = null; try { c = people.get(String(n))?.color; } catch { c = null; } if (/^#[0-9a-f]{6}$/i.test(String(c || ''))) return String(c).toLowerCase(); }
+    const from = args[0] && typeof args[0] === 'object' && !Array.isArray(args[0]) ? args.shift().from : null;
+    for (const n of args) {
+        if (!n) continue;
+        let p = null; try { p = people.get(String(n)); } catch { p = null; }
+        const c = p?.color;
+        if (!/^#[0-9a-f]{6}$/i.test(String(c || ''))) continue;
+        const isPreset = p.colorFrom === 'preset';
+        if (from === 'preset' ? !isPreset : from === 'other' ? isPreset : false) continue;
+        return String(c).toLowerCase();
+    }
     return null;
 }
 /** 1.5.4 사용자 「대사 없어도 TTS 랑 프리셋에 정해 둔 색」: 인물표의 색은 이 채팅 대사에서 이름이 붙은 색이라 대사가 나오기 전엔 비어요.
@@ -216,7 +226,9 @@ export function cardColorTable(ctx) {
         for (const av of avatars) {
             const m = av && all[av];
             if (!m || typeof m !== 'object') continue;
-            for (const [col, name] of Object.entries(m)) {
+            for (const [col, raw] of Object.entries(m)) {
+                // 1.5.5 TTS 는 사용자 · 카드 인물을 {{user}} · {{char}} 로 기억해요(사용자 실제 설정) — 지금 페르소나 · 카드 이름으로 바꿔 맞춰요
+                const name = String(raw ?? '').replace(/\{\{user\}\}/gi, ctx.name1 || '').replace(/\{\{char\}\}/gi, ctx.name2 || '');
                 const c = String(col || '').trim().toLowerCase(), n = foldName(name);
                 if (!/^#[0-9a-f]{6}$/.test(c) || !n) continue;
                 if (!out.has(n)) out.set(n, c);
@@ -231,18 +243,23 @@ export function tableColor(table, ...names) {
     return null;
 }
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-const rgbOf = css => { const m = String(css || '').match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/); return m ? [+m[1], +m[2], +m[3]] : null; };
 const lumOf = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
 export const contrastOf = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-/** 인물 색을 면 바닥(밤 짙게 · 낮 밝게)과 섞어 그 위 글자(ink)가 4.5 : 1 이 되는 가장 진한 바탕 — 색이 가장 많이 남는 비율(45%)부터 10% 까지 */
-export function faceFill(color, ink) {
-    const c = hexRgb(color), dark = lumOf(ink) > 0.4, base = dark ? [30, 32, 36] : [250, 251, 253];
-    for (let f = 0.45; f >= 0.099; f -= 0.05) {
-        const m = c.map((v, i) => Math.round(v * f + base[i] * (1 - f)));
-        if (contrastOf(m, ink) >= 4.5) return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('');
-    }
-    return null;
+/** 1.5.5 사용자 「프로필 색깔 안 바뀌는데」: 1.5.4 는 인물 색을 면 바닥과 섞어 그 위 글자(테마 글자색)가 4.5 : 1 이 되게 했더니, 밤 화면에서 빨강 · 주황 · 분홍이
+ *  모두 어두운 적갈색이 돼 예전 톤과 구분이 안 됐어요. → 바탕은 인물 색 그대로, 글자를 흰색 · 짙은 색 가운데 더 또렷한 쪽으로.
+ *  둘 다 4.5 : 1 이 안 되는 가운데 밝기 색만 그 쪽으로 조금씩(5% 씩) 밀어 맞춰요. 돌려주는 값: { bg, ink } */
+const WHITE = [255, 255, 255], INK_DARK = [20, 22, 26];
+const toHex = c => '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+export function faceColors(color) {
+    let c = hexRgb(color);
+    const pick = col => (contrastOf(col, WHITE) >= contrastOf(col, INK_DARK) ? WHITE : INK_DARK);
+    let ink = pick(c);
+    const to = ink === WHITE ? 0 : 255; // 흰 글자면 바탕을 조금 어둡게, 짙은 글자면 조금 밝게
+    for (let i = 0; i < 12 && contrastOf(c, ink) < 4.5; i++) c = c.map(v => v + (to - v) * 0.05);
+    return { bg: toHex(c), ink: toHex(ink) };
 }
+/** 옛 이름(1.5.4 시험 · 다른 곳이 부를 수 있어요): 바탕만 */
+export const faceFill = color => faceColors(color).bg;
 let peopleHooked = false;
 /** 화면의 얼굴 요소 전부에 첫 글자 · 톤 · 인물 색 표식 — 설정이 「아이콘」이면 아무것도 안 해요(표식이 남아 있어도 시트가 안 봐요) */
 export function paintFaces(doc) {
@@ -254,11 +271,14 @@ export function paintFaces(doc) {
     if (people && !peopleHooked) { peopleHooked = true; try { people.onChange(() => { try { paintFaces(doc); } catch { /* 다음 그리기 때 */ } }); } catch { peopleHooked = false; } }
     els.forEach((el, k) => {
         const ini = map.get(String(shown[k])); if (el.getAttribute('data-bl-ini') !== ini) el.setAttribute('data-bl-ini', ini);
+        // 1.5.6 얼굴 그림 글자 · 첫 글자를 숨기면(색만) 화면 읽기에 남는 게 없어요 — 이름을 그림 이름으로(role=img · aria-label · 화면 이름)
+        const label = String(shown[k] || names[k] || ''); if (label && el.getAttribute('aria-label') !== label) { el.setAttribute('role', 'img'); el.setAttribute('aria-label', label); }
         const tone = String(toneOf(names[k])); if (el.getAttribute('data-bl-tone') !== tone) el.setAttribute('data-bl-tone', tone);
-        const color = personColor(people, names[k], shown[k]) || tableColor(cardsOf(), names[k], shown[k]);   // 이 채팅 대사 색 → 없으면 TTS 카드별 색 기억
-        let fill = null; if (color) { const ink = rgbOf(doc.defaultView?.getComputedStyle?.(el)?.color) || [230, 230, 232]; fill = faceFill(color, ink); }
-        if (fill) { if (el.getAttribute('data-bl-pc') !== fill) { el.setAttribute('data-bl-pc', fill); el.style?.setProperty?.('--bl-face', fill); } }
-        else if (el.hasAttribute?.('data-bl-pc')) { el.removeAttribute('data-bl-pc'); el.style?.removeProperty?.('--bl-face'); }
+        // 차례(1.5.6): 이 채팅 대사 색(TTS 색 표) → TTS 카드별 색 기억 → 프리셋에 정해 둔 색(프리셋 인물 색 공급자)
+        const color = personColor(people, { from: 'other' }, names[k], shown[k]) || tableColor(cardsOf(), names[k], shown[k]) || personColor(people, { from: 'preset' }, names[k], shown[k]);
+        const fc = color ? faceColors(color) : null;
+        if (fc) { if (el.getAttribute('data-bl-pc') !== fc.bg) { el.setAttribute('data-bl-pc', fc.bg); el.style?.setProperty?.('--bl-face', fc.bg); el.style?.setProperty?.('--bl-face-ink', fc.ink); } }
+        else if (el.hasAttribute?.('data-bl-pc')) { el.removeAttribute('data-bl-pc'); el.style?.removeProperty?.('--bl-face'); el.style?.removeProperty?.('--bl-face-ink'); }
     });
     return els.length;
 }
@@ -269,7 +289,7 @@ export function decoState(doc) {
     const face = doc.body?.getAttribute?.('data-bl-mb-face');
     let font = ''; try { font = String(doc.defaultView.getComputedStyle(doc.documentElement).getPropertyValue('--salty-font-mb') || '').trim(); } catch { /* 따라가기로 */ }
     const own = !!font && font !== 'initial';
-    return { face: face ? 'initial' : 'icon', tone: face === 'tone', font: own ? (font.split(',')[1] || font).replace(/['"]/g, '').trim() : '' };
+    return { face: face ? 'initial' : 'icon', tone: face === 'tone', look: doc.body?.hasAttribute?.('data-bl-mb-color-only') ? 'color' : 'letter', font: own ? (font.split(',')[1] || font).replace(/['"]/g, '').trim() : '' };
 }
 export function decoTheme(tw) {
     const doc = tw?.ownerDocument; if (!doc || doc.body?.hasAttribute?.('data-bl-ext-raw')) return false;
@@ -287,9 +307,10 @@ export function decoTheme(tw) {
     const head = kids(h('div', 'ss-sec-h'), kids(h('h4'), h('i', 'bl-ext-lemon', '', { 'aria-hidden': 'true' }), doc.createTextNode('블루레몬 꾸미기 '), h('small', '', '테마가 더한 칸 · 미트볼 상태창에만 걸려요')));
     const font = kids(h('div', 'ss-f wide'), h('span', '', '글꼴'), h('button', 'ss-btn sm bl-ext-deco-act', `${st.font ? '따로 고른 글꼴' : '테마 글꼴 따라가기'} · 고르기`, { type: 'button', 'data-bl-deco': 'font' }));
     const face = kids(h('div', 'ss-f wide'), h('span', '', '얼굴 표시'), kids(h('div', 'ss-seg'), h('button', st.face === 'icon' ? 'bl-ext-deco-act on' : 'bl-ext-deco-act', '아이콘', { type: 'button', 'data-bl-deco': 'face:icon' }), h('button', st.face === 'initial' ? 'bl-ext-deco-act on' : 'bl-ext-deco-act', '이름 첫 글자', { type: 'button', 'data-bl-deco': 'face:initial' })));
-    let tone = null;
+    let tone = null, look = null;
+    if (st.face === 'initial') look = kids(h('div', 'ss-f wide'), h('span', '', '프로필 얼굴'), kids(h('div', 'ss-seg'), h('button', st.look === 'color' ? 'bl-ext-deco-act on' : 'bl-ext-deco-act', '색만', { type: 'button', 'data-bl-deco': 'look:color' }), h('button', st.look === 'letter' ? 'bl-ext-deco-act on' : 'bl-ext-deco-act', '글자', { type: 'button', 'data-bl-deco': 'look:letter' })));
     if (st.face === 'initial') { const input = h('input', 'ss-switch bl-ext-deco-act', '', { type: 'checkbox', 'data-bl-deco': 'tone' }); input.checked = st.tone; tone = kids(h('div', 'ss-pills'), kids(h('label', 'ss-tog'), input, h('span', '', '사람마다 색 톤'))); }
-    box.textContent = ''; box.append(head, font, face, ...(tone ? [tone] : []));   // 테마가 끼운 묶음 안만 비우고 다시 채워요
+    box.textContent = ''; box.append(head, font, face, ...(look ? [look] : []), ...(tone ? [tone] : []));   // 테마가 끼운 묶음 안만 비우고 다시 채워요
     if (st.font) fontLabel().then(name => { const b = box.querySelector('[data-bl-deco="font"]'); if (b && name) b.textContent = `${name} · 바꾸기`; }).catch(() => { /* 「따로 고른 글꼴」 그대로 */ });
     return true;
 }
@@ -308,6 +329,7 @@ export async function decoAct(el, load = () => import('./panel.js')) {
     const panel = await load();
     if (act === 'tone') panel.updateSettings(st => { st.chat.mbFaceTone = !!el.checked; });
     else if (act.startsWith('face:')) panel.updateSettings(st => { st.chat.mbFace = act.slice(5) === 'initial' ? 'initial' : 'icon'; });
+    else if (act.startsWith('look:')) panel.updateSettings(st => { st.chat.mbFaceLook = act.slice(5) === 'letter' ? 'letter' : 'color'; });
     const tw = el.closest('.ss-tw'); if (tw) decoTheme(tw);
     return true;
 }
@@ -330,6 +352,9 @@ export function rowCols(tiles, cols = 4) {
     return cols > 4 || tiles.length <= 3 ? n : 0;
 }
 export function fitActs(tb) {
+    // 1.5.5 「지글지글」: 판단은 띠 바깥 틀(#ss-hud — 그 확장이 띠를 새로 그려도 그대로 있는 요소)에 달아요. 새 띠는 처음 그려질 때부터 앞 판단으로 배치되고,
+    //   여기서는 칸 자리(그 확장이 적은 인라인 값) · 열 수 · 단추 수만 봐요 — 펼친 「자세히」 · 띠 높이 · 칩 폭은 안 봐서 판단이 제 입력을 바꾸지 않아요(되먹임 없음)
+    const host = tb.closest?.('#ss-hud') || tb;
     const tg = tb.querySelector?.('.ss-tg'), acts = tb.querySelector?.('.ss-tb-acts');
     let fit = false;
     if (tg && acts && !tb.classList.contains('editing') && Number(tg.style.getPropertyValue('--cols')) >= 4) {
@@ -337,11 +362,26 @@ export function fitActs(tb) {
         for (const t of tg.querySelectorAll(':scope > .ss-t')) { const c = SPAN.exec(t.style.gridColumn || t.style.gridColumnStart + ' / ' + t.style.gridColumnEnd), r = SPAN.exec(t.style.gridRow || t.style.gridRowStart + ' / ' + t.style.gridRowEnd); if (!c || !r) { tiles.length = 0; break; } tiles.push({ c: +c[1], w: +c[2], r: +r[1], h: +r[2] }); }
         const cols = Number(tg.style.getPropertyValue('--cols'));
         const n = rowCols(tiles, cols);
-        if (n) { fit = 'row'; if (tb.style.getPropertyValue('--bl-tcols') !== String(n)) tb.style.setProperty('--bl-tcols', String(n)); }
+        if (n) { fit = 'row'; if (host.style.getPropertyValue('--bl-tcols') !== String(n)) host.style.setProperty('--bl-tcols', String(n)); }
         else if (cols === 4 && actsFit(tiles, 4, acts.children.length > 5 ? 3 : 2)) fit = 'in';
     }
-    if (fit) { if (tb.getAttribute('data-bl-acts') !== fit) tb.setAttribute('data-bl-acts', fit); } else tb.removeAttribute('data-bl-acts');
+    if (fit) { if (host.getAttribute('data-bl-acts') !== fit) host.setAttribute('data-bl-acts', fit); } else if (host.hasAttribute?.('data-bl-acts') ?? true) host.removeAttribute('data-bl-acts');
     return fit;
+}
+/** 1.5.5 사용자 「아침 4/1 뒤에 (화)(월) 이런 식으로 요일」: 그 확장의 날짜 칸은 칩에 「때 + 월/일」만 적고, 칸 설명(title)엔 「월/일(요일) 때 …」 를 적어요.
+ *  설명 맨 앞의 「월/일(요일)」 을 읽어, 칩의 작은 글이 같은 「월/일」 로 끝나면 바깥 틀에 표식(data-bl-wd · 변수 --bl-wd)만 달아요 — 시트가 그 뒤에 「(요일)」 을 그려요(글 · 저장 자료는 안 바꿔요).
+ *  요일이 없거나(빈 괄호) 세 글자 넘는 이름(판타지 달력 등) · 이미 요일이 붙은 칩(넓은 칸)은 아무것도 안 붙여요. 띠가 다시 그려질 때마다 다시 달아요(번역은 글만 바꿔 표식이 남아요). */
+const WEEKDAY = /^\s*(\d{1,2})\/(\d{1,2})\(([^()\s]{1,3})\)/;
+export function markWeekday(tb) {
+    // 표식은 띠 바깥 틀(#ss-hud)에 — 그 확장이 칩을 누를 때마다 띠를 새로 그려도 첫 화면부터 요일이 그대로예요(칩마다 달면 한 화면씩 깜빡여요 · 1.5.5 「지글지글」)
+    const host = tb.closest?.('#ss-hud') || tb;
+    const t = tb.querySelector?.('.ss-tg > .ss-t.t-date'), sm = t && !t.classList?.contains?.('L') ? t.querySelector?.('small') : null;
+    const m = sm ? WEEKDAY.exec(t.getAttribute?.('title') || '') : null, md = m ? `${+m[1]}/${+m[2]}` : '';
+    const text = String(sm?.textContent || '').trim();
+    const wd = md && text.endsWith(md) && /(^|[^\d/])$/.test(text.slice(0, -md.length)) ? m[3].replace(/["\\]/g, '') : '';
+    if (wd) { if (host.getAttribute('data-bl-wd') !== wd) { host.setAttribute('data-bl-wd', wd); host.style?.setProperty?.('--bl-wd', `"(${wd})"`); } }
+    else if (host.hasAttribute?.('data-bl-wd')) { host.removeAttribute('data-bl-wd'); host.style?.removeProperty?.('--bl-wd'); }
+    return wd;
 }
 /** 띠 종(알림함)의 숫자 배지(1.5.2 사용자 결정): 10 이상은 화면에서만 「9+」 — 배지가 늘 한 자리 크기라 종을 덜 가려요. 그 확장이 적은 글자(실제 숫자)는 그대로 두고
  *  표시용 글자를 표식(data-bl-n)에 적어 시트가 그려요(한 자리 숫자도 — 시트가 글자 잉크를 배지 가운데에 놓으려면 제 상자가 있는 글자여야 해요). 정확한 숫자는 배지의 설명(title)에 남겨요. 띠가 다시 그려질 때마다 다시 맞춰요. */
@@ -572,7 +612,7 @@ export function startExtCompat(doc = globalThis.document) {
             if (event.animationName !== 'ss-pulse') return;   // 맞춤 시트가 띠 · 이름표 목록에 0.001초로 거는 그 확장의 키프레임 — 지도의 깜빡이는 고리도 같은 이름이라 아래에서 요소로 가려요
             const el = event.target;
             try {
-                if (el?.classList?.contains('ss-tb')) { fitActs(el); markBadge(el); } else if (el?.tagName === 'DL') markLong(el);
+                if (el?.classList?.contains('ss-tb')) { fitActs(el); markBadge(el); markWeekday(el); } else if (el?.tagName === 'DL') markLong(el);
                 else if (el?.classList?.contains('ss-wz-head') && el.parentElement?.classList?.contains('ss-tw')) decoTheme(el.parentElement);
                 else if (el?.matches?.(FACES) && !facesQueued) { facesQueued = true; queueMicrotask(() => { facesQueued = false; try { paintFaces(doc); } catch { /* 아이콘 그대로 */ } }); }   // 얼굴 여럿이 한꺼번에 그려져도 한 번만 훑어요
             } catch { /* 원래 배치 그대로 */ }

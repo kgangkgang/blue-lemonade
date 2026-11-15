@@ -236,8 +236,8 @@ export const SELF_ROWS = [
 ["id","bl-deus-popover","src/scripts/plain/deus-qr.js",614,"","",0],
 ["id","bl-deus-quick","src/scripts/plain/deus-qr.js",313,"","",0],
 ["id","bl-eb-css","src/geulkku-mart/edit-blocks.js",71,"","guarded",0],
-["id","bl-enabled-drawer","src/panel.js",2271,"","",0],
-["id","bl-enabled-popup","src/panel.js",2269,"","",0],
+["id","bl-enabled-drawer","src/panel.js",2272,"","",0],
+["id","bl-enabled-popup","src/panel.js",2270,"","",0],
 ["id","bl-flow","src/capture-resources.js",15,"","svg",0],
 ["id","bl-fr-title","src/first-run.js",174,"","",0],
 ["id","bl-frame-motion","src/frame-motion.js",128,"","",0],
@@ -251,7 +251,7 @@ export const SELF_ROWS = [
 ["id","bl-lt-style","src/log-copy-sheet.js",263,"","guarded",0],
 ["id","bl-mart-style","src/mart-import-ui.js",143,"","guarded",0],
 ["id","bl-mart-title","src/mart-import-ui.js",74,"","",0],
-["id","bl-mav-button","src/features.js",248,"","guarded",0],
+["id","bl-mav-button","src/features.js",250,"","guarded",0],
 ["id","bl-mav-title","src/multi-avatar/dialog.js",41,"","",0],
 ["id","bl-natural-slash","src/natural-slash.js",198,"","",0],
 ["id","bl-note-keep-style","src/an-keep.js",356,"","",0],
@@ -732,5 +732,5 @@ export const SELF_ROWS = [
 ["settingsKey","regex_link","src/addons/regexlink/index.js",36,"regexlink","??=",0],
 ["settingsKey","regex_perf_kit","src/addons/regexlink/regexperf.js",62,"regexlink","||=",0],
 ["settingsKey","request_log","src/addons/perf/state.js",125,"perf","=",0],
-["settingsKey","salty","src/panel.js",3088,"","=",0]
+["settingsKey","salty","src/panel.js",3089,"","=",0]
 ];

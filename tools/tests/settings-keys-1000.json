@@ -155,6 +155,7 @@
   "chat.weatherFollowMeatball",
   "chat.mbFace",
   "chat.mbFaceTone",
+  "chat.mbFaceLook",
   "chat.weatherBubble",
   "chat.weatherColor",
   "chat.weatherColorMode",

@@ -818,6 +818,9 @@ export function applyAll() {
     // 1.5.1 미트볼 얼굴 표시: 「이름 첫 글자」를 고른 때만 속성(값 = 색 톤을 켰으면 tone) — 맞춤 시트 · 맞춤 모듈(ext-compat.js)이 이 표식을 보고 얼굴 자리를 글자로 바꿔요. 기본(아이콘)은 속성 없음
     const mbFace = want.has('salty') && s.chat.mbFace === 'initial' ? (s.chat.mbFaceTone === true ? 'tone' : 'one') : null;
     if (document.body.getAttribute('data-bl-mb-face') !== mbFace) { restyleAhead(); if (mbFace) document.body.setAttribute('data-bl-mb-face', mbFace); else document.body.removeAttribute('data-bl-mb-face'); }
+    // 1.5.6 프로필 얼굴 「색만」(기본): 지정색이 있는 동그라미는 글자 없이 색만 — 표식 하나로 시트가 글자만 숨겨요(다시 그리기 없음 · 지정색이 없는 사람은 첫 글자 그대로)
+    const mbColorOnly = !!mbFace && s.chat.mbFaceLook !== 'letter';
+    if (document.body.hasAttribute('data-bl-mb-color-only') !== mbColorOnly) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-color-only', mbColorOnly); }
     const mbPlain = want.has('salty') && s.chat.mbHelpers === false;
     if (document.body.hasAttribute('data-bl-mb-plain') !== mbPlain) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-plain', mbPlain); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
