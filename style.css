@@ -1,7 +1,7 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build da8791be2552) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3d9e1013ab22) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
-:root{--bl-release:"1.5.1";}
+:root{--bl-release:"1.5.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -135,6 +135,11 @@ box-shadow:var(--bl-open-halo);
 }
 body.salty.salty-icons-line #top-settings-holder .drawer-icon {
   font-size: 21px !important;
+}
+@media (max-width: 1000px) {
+  body.salty.salty-icons-line #top-settings-holder .drawer-icon {
+    font-size: 24px !important;
+  }
 }
 body.salty .drawer-content h3:not(.salty-panel:not(*)):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))),
 body.salty .popup h3:not(.salty-panel:not(*)):where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))),
@@ -1636,6 +1641,7 @@ body.salty.salty-icons-line #jj-popup[data-jj-level] .jj-popup-title > i::before
   mask-image: none;
   font-size: 0.8em;
 }
+body.salty.salty-icons-line #jj-button[data-jj-level] > i { translate: -.4px 1px; }
 body.salty.salty-icons-line :where(i):is(#jj-button[data-jj-level="1"] > i):is(.bl-s, *)::before,
 body.salty.salty-icons-line #jj-popup[data-jj-level="1"] .jj-popup-title > i::before {
   -webkit-text-stroke-width: 1.3px;
@@ -2354,7 +2360,18 @@ body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes .extraMesBut
   cursor: pointer;
 }
 body.salty:not(.expandMessageActions).salty-icons-line :is(#chat,.bl-chat-like) .mes .extraMesButtons > * {
-  font-size: 19px !important;
+  font-size: 20px !important;
+}
+body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .mes_buttons {
+  font-size: 20px !important;
+}
+body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes :is(.mes_buttons, .extraMesButtons) > .mes_button {
+  position: relative;
+}
+body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes :is(.mes_buttons, .extraMesButtons) > .mes_button::before {
+  position: absolute;
+  inset: 0;
+  margin: auto;
 }
 body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes .extraMesButtons > .mes_delete_translation {
   order: 2;
@@ -4012,11 +4029,11 @@ body.salty {
   --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
 }
 body.salty.salty-icons-line {
-  --salty-mi-brain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%205.6a2.9%202.9%200%200%200-5.6-.9A2.9%202.9%200%200%200%204.2%209a3.2%203.2%200%200%200%20.2%205.6%203.1%203.1%200%200%200%203.4%204.3A2.9%202.9%200%200%200%2012%2019.4M12%205.6a2.9%202.9%200%200%201%205.6-.9A2.9%202.9%200%200%201%2019.8%209a3.2%203.2%200%200%201-.2%205.6%203.1%203.1%200%200%201-3.4%204.3%202.9%202.9%200%200%201-4.2.5M12%205.6v13.8M8.6%209.6c1.1.2%202%20.9%202.4%201.9M15.4%209.6c-1.1.2-2%20.9-2.4%201.9%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-brain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(12%2012)%20scale(.88)%20translate(-12%20-11.45)%22%20stroke-width%3D%222.05%22%3E%3Cpath%20d%3D%22M12%205.6a2.9%202.9%200%200%200-5.6-.9A2.9%202.9%200%200%200%204.2%209a3.2%203.2%200%200%200%20.2%205.6%203.1%203.1%200%200%200%203.4%204.3A2.9%202.9%200%200%200%2012%2019.4M12%205.6a2.9%202.9%200%200%201%205.6-.9A2.9%202.9%200%200%201%2019.8%209a3.2%203.2%200%200%201-.2%205.6%203.1%203.1%200%200%201-3.4%204.3%202.9%202.9%200%200%201-4.2.5M12%205.6v13.8M8.6%209.6c1.1.2%202%20.9%202.4%201.9M15.4%209.6c-1.1.2-2%20.9-2.4%201.9%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-swap: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204%204.5%207.5%208%2011M4.5%207.5h14M16%2013l3.5%203.5L16%2020M19.5%2016.5h-14%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-search: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2210.8%22%20cy%3D%2210.8%22%20r%3D%226.3%22%2F%3E%3Cpath%20d%3D%22m15.5%2015.5%204.5%204.5%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-squarepen: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M11.5%204.5H6.5a2%202%200%200%200-2%202v11a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2v-5%22%2F%3E%3Cpath%20d%3D%22M17.9%203.9a2%202%200%200%201%202.9%202.9l-8%208-3.6.8.8-3.6z%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-wrench: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14.6%206.4a4.3%204.3%200%200%200-5.7%205.2l-5%205a1.9%201.9%200%200%200%202.7%202.7l5-5a4.3%204.3%200%200%200%205.2-5.7l-2.6%202.6-2.3-.3-.3-2.3z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-squarepen: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(-0.95%200.65)%22%3E%3Cpath%20d%3D%22M11.5%204.5H6.5a2%202%200%200%200-2%202v11a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2v-5%22%2F%3E%3Cpath%20d%3D%22M17.9%203.9a2%202%200%200%201%202.9%202.9l-8%208-3.6.8.8-3.6z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  --salty-mi-wrench: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(1.8%20-0.95)%22%3E%3Cpath%20d%3D%22M14.6%206.4a4.3%204.3%200%200%200-5.7%205.2l-5%205a1.9%201.9%200%200%200%202.7%202.7l5-5a4.3%204.3%200%200%200%205.2-5.7l-2.6%202.6-2.3-.3-.3-2.3z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-trash: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.5%207h15M10%2011v5.5M14%2011v5.5M6.5%207l.8%2011.2a2%202%200%200%200%202%201.8h5.4a2%202%200%200%200%202-1.8L17.5%207M9.5%207V5a1.5%201.5%200%200%201%201.5-1.5h2A1.5%201.5%200%200%201%2014.5%205v2%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-languages: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%205.5h9M8.5%203.5v2M11.2%205.5c-.9%203.8-3.3%206.5-6.7%208M6.6%209.2c1%201.8%202.6%203.2%204.6%204.2%22%2F%3E%3Cpath%20d%3D%22m12.5%2020.5%204-9%204%209M13.9%2017.3h5.2%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-brush: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M19.8%204.2c-3.4%201.2-7.3%204.7-9.5%207.8l1.7%201.7c3.1-2.2%206.6-6.1%207.8-9.5z%22%2F%3E%3Cpath%20d%3D%22M9.2%2013.4c-2-.2-3.7%201.3-3.7%203.4%200%201.1-.6%202-1.8%202.5%201%20.6%202.1.9%203.3.9%202.6%200%204.4-1.8%204.1-4.2%22%2F%3E%3C%2Fsvg%3E");
@@ -4026,15 +4043,15 @@ body.salty.salty-icons-line {
   --salty-mi-eyeoff: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10.4%205.6a9.8%209.8%200%200%201%201.6-.1c4%200%207.5%202.5%209.1%206.2a.8.8%200%200%201%200%20.6%2010.4%2010.4%200%200%201-1.9%202.9M14%2014.1A2.8%202.8%200%200%201%209.9%2010M17.3%2017.3a9.6%209.6%200%200%201-5.3%201.2c-4%200-7.5-2.5-9.1-6.2a.8.8%200%200%201%200-.6%2010.5%2010.5%200%200%201%203.8-4.9M3.5%203.5l17%2017%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-gallery: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%227.5%22%20y%3D%223.5%22%20width%3D%2213%22%20height%3D%2213%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M16.5%2020.5H6a2.5%202.5%200%200%201-2.5-2.5V7.5M7.8%2013.8l3.2-2.9%202.6%202.2%201.9-1.4%204.7%203.6%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-cells: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%224%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2213%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2213%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-clip: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m19.6%2011.4-7.8%207.8a4.9%204.9%200%200%201-6.9-6.9l8.2-8.2a3.2%203.2%200%200%201%204.6%204.6l-8.2%208.2a1.6%201.6%200%200%201-2.3-2.3l7.5-7.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-clip: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0.3%200.25)%22%3E%3Cpath%20d%3D%22m19.6%2011.4-7.8%207.8a4.9%204.9%200%200%201-6.9-6.9l8.2-8.2a3.2%203.2%200%200%201%204.6%204.6l-8.2%208.2a1.6%201.6%200%200%201-2.3-2.3l7.5-7.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-history: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012a8%208%200%201%200%202.3-5.7L4%208.6%22%2F%3E%3Cpath%20d%3D%22M4%204.3v4.3h4.3M12%208v4.2l2.9%201.8%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-flag: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5.5%2020.5v-16M5.5%204.5c4.2-2.2%206.6%201.9%2012.5.2v8.6c-5.9%201.7-8.3-2.4-12.5-.2%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-branch: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%226.5%22%20cy%3D%225.5%22%20r%3D%222.2%22%2F%3E%3Ccircle%20cx%3D%226.5%22%20cy%3D%2218.5%22%20r%3D%222.2%22%2F%3E%3Ccircle%20cx%3D%2217.5%22%20cy%3D%226.5%22%20r%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M6.5%207.7v8.6M17.5%208.7c0%204.6-4.4%205.4-9.2%208%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-copy: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%228.5%22%20y%3D%228.5%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M15.5%208.5V6a2.5%202.5%200%200%200-2.5-2.5H6A2.5%202.5%200%200%200%203.5%206v7A2.5%202.5%200%200%200%206%2015.5h2.5%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-camera: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m8.8%205.5%201.1-1.6c.2-.3.5-.4.8-.4h2.6c.3%200%20.6.1.8.4l1.1%201.6H19a2%202%200%200%201%202%202v10a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-10a2%202%200%200%201%202-2z%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212.5%22%20r%3D%223.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-camera: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.5)%22%3E%3Cpath%20d%3D%22m8.8%205.5%201.1-1.6c.2-.3.5-.4.8-.4h2.6c.3%200%20.6.1.8.4l1.1%201.6H19a2%202%200%200%201%202%202v10a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-10a2%202%200%200%201%202-2z%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212.5%22%20r%3D%223.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-flagfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5.5%2020.5v-16%22%2F%3E%3Cpath%20d%3D%22M5.5%204.5c4.2-2.2%206.6%201.9%2012.5.2v8.6c-5.9%201.7-8.3-2.4-12.5-.2z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-star: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-starfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-star: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  --salty-mi-starfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-bookmark: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7.5%203.5h9a1%201%200%200%201%201%201v16l-5.5-3.7-5.5%203.7v-16a1%201%200%200%201%201-1z%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-bookmarkfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7.5%203.5h9a1%201%200%200%201%201%201v16l-5.5-3.7-5.5%203.7v-16a1%201%200%200%201%201-1z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-chevup: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6.5%2014.5%205.5-5.5%205.5%205.5%22%2F%3E%3C%2Fsvg%3E");
@@ -4049,9 +4066,9 @@ body.salty.salty-icons-line {
   --salty-mi-chevcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m8.6%2010.6%203.4%203.4%203.4-3.4%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-gear: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.2%22%2F%3E%3Cpath%20d%3D%22M12%203.5v2.3M12%2018.2v2.3M3.5%2012h2.3M18.2%2012h2.3M6%206l1.6%201.6M16.4%2016.4%2018%2018M6%2018l1.6-1.6M16.4%207.6%2018%206%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-xcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m9.3%209.3%205.4%205.4M14.7%209.3l-5.4%205.4%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-chatdots: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3Cpath%20d%3D%22M8.4%2011.8h.01M12%2011.8h.01M15.6%2011.8h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chatdots: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3Cpath%20d%3D%22M8.4%2011.8h.01M12%2011.8h.01M15.6%2011.8h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-pin: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2016v4.5M8.5%203.5h7M9.8%203.5v5.3l-2.9%203.5a.9.9%200%200%200%20.7%201.5h8.8a.9.9%200%200%200%20.7-1.5l-2.9-3.5V3.5%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-chat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .extraMesButtons > .mes_legacy_translate::before,
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .extraMesButtons > .mes_llm_translate::before,
@@ -6235,6 +6252,7 @@ body.salty #right-nav-panel:is(bl-s, *) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+.salty-mode-switch button > i { translate: 0 -.8px; }
 body.salty .welcomePanel .welcomeHeaderTitle { align-items: center; gap: 6px; }
 body.salty .welcomePanel .welcomeHeaderVersionDisplay { overflow: visible; white-space: normal; text-overflow: clip; line-height: 1.5; font-size: 12px; }
 body.salty .welcomePanel .welcomeHeaderVersionDisplay > span { display: block; overflow-wrap: anywhere; }
@@ -7162,7 +7180,7 @@ body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned:is(.mes_leg
   mask: var(--salty-mi) center / contain no-repeat;
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned {
-  font-size: 16px !important;
+  font-size: 20px !important;
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned.mes_legacy_translate { --salty-mi: var(--salty-mi-brain); }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned.mes_llm_translate { --salty-mi: var(--salty-mi-swap); }
@@ -7512,7 +7530,10 @@ html body.salty :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *), ht
 html body.salty :where(h3):is(#WorldInfo > .flex-container > h3):is(bl-s, *), html body.salty :where(h3):is(#PersonaManagement h3):is(.bl-s, *):is(bl-s, *), html body.salty #user-settings-block h3:where(html body.salty #user-settings-block h3):has(> a.notes-link), html body.salty #AdvancedFormatting h3:where(html body.salty #AdvancedFormatting h3):has(> a.notes-link), html body.salty #character_popup h4:where(html body.salty #character_popup h4):has(> a.notes-link) { display:flex; }
 html body.salty #selectChatPopupHeaderText > a { margin-left:6px!important; }
 html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link:where(html body.salty :is(#extensions_settings, #extensions_settings2) a.notes-link):has(> .note-link-span) { font-size:var(--bl-fs-body)!important; margin:0 0 0 6px!important; }
-.bl-editor .bl-editor-actions svg { display:block; }
+.bl-editor .bl-editor-actions svg { display:block; width:20px; height:20px; margin:-2px; }
+.bl-editor .bl-editor-actions [data-act^="history-"] svg { translate:0 -1.2px; }
+.bl-editor .bl-editor-actions [data-act="history-redo"] svg { translate:-.9px -1.2px; }
+.bl-editor .bl-editor-actions .bl-editor-search-button svg { translate:-.5px -.2px; }
 @supports (width: mod(3px, 2px)) and (width: round(1.5px, 1px)) and (width: 1lh) {
   html body, .salty-panel, .bl-capture-dialog, .bl-tool-dialog, .bl-credits-dialog { --bl-text-nudge: round(calc(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px) - (round(calc(var(--bl-font-asc) * 1em), 1px) - var(--bl-font-asc) * 1em - round(calc(var(--bl-font-desc) * 1em), 1px) + var(--bl-font-desc) * 1em) * var(--bl-ink-k) / 2), 0.015625px);
     --bl-text-nudge-frac: round(mod(calc((1lh - round(calc(var(--bl-font-asc) * 1em), 1px) - round(calc(var(--bl-font-desc) * 1em), 1px)) / 2), 1px), 0.015625px); }
@@ -8377,7 +8398,7 @@ html body:is(.salty, *) :where(dialog) .bl-hs-switch:is(#bl-s, *)::before {
   --bl-ui-chip: 34px;
   --bl-ui-touch: 44px;
   --bl-ui-radius: var(--bl-r-sm, 8px);
-  --bl-ui-ink-fa: 12.5px;
+  --bl-ui-ink-fa: 15px;
   --bl-ui-ink-mask: 16px;
   --bl-ui-tab-fs: var(--bl-ts-meta, 13px);
   --bl-ui-btn-fs: var(--bl-ts-ctl, 14px);
@@ -8586,8 +8607,8 @@ html:not(#bl-ui-parts-off) body :where(.po-pin):where(.po-dialog :is(.po-pin, .p
   box-sizing: border-box !important; width: var(--bl-ui-icon) !important; height: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; min-height: var(--bl-ui-icon) !important;
   padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius) !important; background: transparent !important; box-shadow: none !important;
 }
-html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) > i { font-size: var(--bl-ui-ink-fa) !important; line-height: 1 !important; translate: 0 .06em; }
-html:not(#bl-ui-parts-off) body :is(.bl-notes-dialog .bl-note-btn, .salty-panel .bl-view-toggle, .blpt .blpt-btn) > i:not(.fa-chevron-down, .fa-chevron-up, .fa-chevron-left, .fa-chevron-right, .fa-angle-down, .fa-angle-up, .fa-caret-down, .fa-caret-up, .fa-caret-right) { translate: 0 .06em; }
+html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) > i { font-size: var(--bl-ui-ink-fa) !important; line-height: 1 !important; translate: 0 -.02em; }
+html:not(#bl-ui-parts-off) body :where(.bl-note-btn):is(.bl-notes-dialog .bl-note-btn) > i:not(.fa-chevron-down, .fa-chevron-up, .fa-chevron-left, .fa-chevron-right, .fa-angle-down, .fa-angle-up, .fa-caret-down, .fa-caret-up, .fa-caret-right) { translate: 0 .06em; }
 html:not(#bl-ui-parts-off) body :where(.salty-btn):where(.salty-panel .salty-btn:not(.salty-btn-icon, .primary, .salty-primary)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *),
 html:not(#bl-ui-parts-off) body :where(.bl-editor-choose):is(.salty-panel .bl-editor-choose):is(#bl-s, *),
 html:not(#bl-ui-parts-off) body :where(.bl-link-mini):is(.salty-panel .bl-link-mini):is(#bl-s, *),
@@ -8759,10 +8780,36 @@ html:not(#bl-ui-parts-off) body #bl-deus-popover .dq-row > select:is(.bl-s, *) {
   height: var(--bl-ui-ctl) !important; min-height: var(--bl-ui-ctl) !important; box-sizing: border-box !important; padding-block: 0 !important;
 }
 html:not(#bl-ui-parts-off) body .eh-pchip { font-size: var(--bl-ui-tab-fs) !important; min-height: var(--bl-ui-ctl) !important; height: var(--bl-ui-ctl) !important; }
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(button):focus-visible,
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(a[href]):focus-visible,
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(summary):focus-visible,
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where([tabindex]:not([tabindex="-1"])):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(button):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(a[href]):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(summary):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where([tabindex]:not([tabindex="-1"])):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(.rl-root .rl-tabs, #lv_settings .lv-tabs, .llmt-settings .llmt-tabs, .po-dialog > .po-menu-tabs, .bwr_settings .bwr_tabs, .pa-hub > .pa-hub-tabs, .lvs-tabs, .ppt-ta-tabs, .jj-seg[role="tablist"], .dq-tabs, .pt-help-dialog > nav, .bl-notes-help > nav) > :where(button):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(.rl-root .rl-tabs, #lv_settings .lv-tabs, .llmt-settings .llmt-tabs, .po-dialog > .po-menu-tabs, .bwr_settings .bwr_tabs, .pa-hub > .pa-hub-tabs, .lvs-tabs, .ppt-ta-tabs, .jj-seg[role="tablist"], .dq-tabs, .pt-help-dialog > nav, .bl-notes-help > nav) > :where(a[href]):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(.rl-root .rl-tabs, #lv_settings .lv-tabs, .llmt-settings .llmt-tabs, .po-dialog > .po-menu-tabs, .bwr_settings .bwr_tabs, .pa-hub > .pa-hub-tabs, .lvs-tabs, .ppt-ta-tabs, .jj-seg[role="tablist"], .dq-tabs, .pt-help-dialog > nav, .bl-notes-help > nav) > :where([role="tab"]):focus-visible { outline-offset: -2px; }
+@supports (text-box: trim-both cap alphabetic) {
+  html:not(#bl-ui-parts-off) body.salty :where(.bl-hs-text):where(.bl-hs-row > .bl-hs-text):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(label.pt-check > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.rl-tab > span:not(.rl-tab-sub)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.llmt-tab > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.llmt-card-head > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.lv-tab > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(label.lv-toggle > span:not(.lv-desc)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.lv-card-head > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.jj-card-title > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-chip > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(b):where(.bl-lc-fd-h > :is(b, span)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-fd-h > :is(b, span)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-foot > .salty-btn > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-done > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty #bl-lc-title > span,
+html:not(#bl-ui-parts-off) body.salty :where(.bl-lc-np-h):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(label.pa-hub-load > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.salty-notice-toggle > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(.bl-ext-fold-t):where(.bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(.bl-ext-fold-v):where(.bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)):is(#bl-s, *):is(bl-s, *) { text-box: trim-both cap alphabetic; padding-block: calc((1lh - 1cap) / 2); }
+}
+@property --bl-ink-cap { syntax: '<length>'; inherits: true; initial-value: 0px; }
 /* css/89-form-metrics.css */
 :where(.salty-panel),
 :where(.bl-ft-dialog),

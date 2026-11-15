@@ -12,6 +12,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+// 1.5.3 번역 보기 공용 부품(src/inline-translate.js) — 아래에서 import 줄을 떼므로 이름을 앞에 붙여 줘요
+globalThis.__blInl = await import(pathToFileURL(path.resolve(process.argv[2] || '.') + '/src/inline-translate.js').href); globalThis.__blInlHead = 'const {createInlineTranslate,TR_ICON,TR_FAIL,trBoxInner:sharedTrBoxInner,trIconHtml}=globalThis.__blInl;';
 
 const root = path.resolve(process.argv[2] || '.');
 const src = rel => path.join(root, rel);
@@ -78,7 +80,7 @@ globalThis.__dirTyping=(await import(pathToFileURL(src('src/addons/direction/typ
 globalThis.__dirRootVar=(await import(pathToFileURL(src('src/root-var-seed.js')).href)).setRootVar;   // 1.5.0 opt: :root 색 변수 쓰기(같은 값 건너뛰기) — 진짜 모듈
 const ext = {};
 const P = globalThis.__directionListTest = { ext, insertInstructions, saves: 0, confirm: true, popups: [], context: { substituteParams: text => String(text) } };
-const source = (await fs.readFile(src('src/addons/direction/index.js'), 'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm, '');
+const source = (await fs.readFile(src('src/addons/direction/index.js'), 'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm, '').replace(/^/, globalThis.__blInlHead);
 const prelude = 'const addonRunning=()=>true;const setRootVar=globalThis.__dirRootVar;const placeInstructions=globalThis.__dirPlace;const attachTypingRefresh=globalThis.__dirTyping;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const P = globalThis.__directionListTest; const extension_settings = P.ext; const insertInstructions = P.insertInstructions;'
     + 'const getContext = () => P.context; const saveSettingsDebounced = () => { P.saves++; }; const eventSource = { on() {}, once() {} }; const event_types = {};'
     + 'const POPUP_TYPE = { TEXT: 1, CONFIRM: 2 }; const callGenericPopup = async (...args) => { P.popups.push(args); return P.confirm; };'

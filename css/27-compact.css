@@ -63,13 +63,13 @@ body.salty #completion_prompt_manager .completion_prompt_manager_footer > select
   min-width: 0 !important;
   margin: 0 4px 0 0 !important;
 }
-/* 1.0.1: 도구줄 아이콘 = 공용 아이콘만 단추(88 토큰 34 · 잉크 12.5) — 프롬프트 폴더 단추와 같은 줄이라 한 꼴 */
+/* 1.0.1: 도구줄 아이콘 = 공용 아이콘만 단추(88 토큰 34 · 잉크 15) — 프롬프트 폴더 단추와 같은 줄이라 한 꼴 */
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button {
   width: var(--bl-ui-icon, 34px) !important;
   height: var(--bl-ui-icon, 34px) !important;
   min-width: 0 !important;
   padding: 0 !important;
-  font-size: var(--bl-ui-ink-fa, 12.5px) !important;
+  font-size: var(--bl-ui-ink-fa, 15px) !important;
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button:last-child {
   margin-right: -4px !important;

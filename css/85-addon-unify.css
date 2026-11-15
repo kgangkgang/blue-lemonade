@@ -26,6 +26,23 @@ html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settin
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body > .popup-content { padding-top: 0 !important; margin-top: 0 !important; }
 html body.salty dialog:is(.bl-assets-dialog, .bl-ctsi-dialog, .blpt-dialog, .bl-direction-dialog, .bl-mermaid-dialog) { padding: 12px 10px 12px 12px !important; }
 html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog) > header { padding: 12px 10px 0 12px !important; }
+/* ---------- 1.5.1 폰 창 여백(사용자 「옆에 불필요한 여백이 두 겹이나 있어서 화면이 더 작아 보임」) ----------
+   폰에서 애드온 창은 화면 가장자리 6 → 창 테 1 → 창 안쪽 12 → 카드 테 1 → 카드 안쪽 10 = 내용까지 30px(양쪽 60 · 가로의 16%)였어요.
+   창 안쪽을 4(카드를 품은 창) · 8(내용이 바로 놓인 창)로, 카드 안쪽을 8 로 — 내용까지 20px 안쪽. PC 는 그대로. 값은 여기 한 곳. */
+@media (max-width: 600px) {
+  html body.salty dialog:is(.bl-assets-dialog, .bl-direction-dialog, .blpt-dialog) { padding-inline: 4px !important; }
+  html body.salty dialog:is(.bl-ctsi-dialog, .bl-mermaid-dialog) { padding-inline: 8px !important; }
+  html body.salty dialog:is(.bl-assets-dialog, .bl-direction-dialog) > header { padding-inline: 6px 2px; }
+  html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog) > header { padding-inline: 10px 6px !important; }
+  html body.salty :is(dialog.bl-translator-dialog > .bl-translator-dialog-body, dialog.blzi-dialog > :not(header), .bls-panel > .bls-panel-body) { padding-inline: 4px !important; }
+  html body.salty :is(dialog.bl-translator-dialog :is(.llmt-card-body, .llmt-card--accent), dialog.blzi-dialog .blzi-card, dialog.bl-assets-dialog .eh-card, .bls-panel .bls-card, dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-card, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_card) { padding-inline: 8px !important; }
+  /* 실리태번 팝업에 든 애드온(TTS · 다시 쓰기): 팝업 여백 10 은 두고 카드 묶음만 6 바깥으로 */
+  html body.salty dialog.popup:not(.bl-settings-dialog) :is(#lv_settings, .bwr_settings) { margin-inline: -6px !important; }
+  html body.salty dialog.bl-notice-dialog .bl-notice-body { padding-inline: 12px; }
+  /* 로그 복사 · 출처 창: 화면 가장자리 12 → 다른 창과 같은 6 (안쪽 16 은 그 창의 한 벌 값이라 그대로) */
+  html body dialog:is(.bl-tool-dialog.bl-lc, .bl-credits-dialog) { width: calc(100vw - 12px); max-width: calc(100vw - 12px); }
+  html body dialog.bl-credits-dialog > :not(header) { padding-inline: 12px; }
+}
 
 /* ---------- 머리 줄 ---------- */
 html body.salty :is(
@@ -126,7 +143,7 @@ html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-sett
   width: var(--bl-h-ctl, 36px) !important; height: var(--bl-h-ctl, 36px) !important; min-width: 0 !important; min-height: 0 !important;
   margin: 0 !important; padding: 0 !important; border-radius: var(--bl-r-sm, 8px) !important; font-size: var(--bl-ic, 15px) !important; line-height: 1 !important;
 }
-html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > :is(button, .menu_button, .small-button) > i { font-size: inherit !important; line-height: 1 !important; }
+html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > :is(button, .menu_button, .small-button) > i { font-size: inherit !important; line-height: 1 !important; translate: 0 -.05em; }   /* 1.5.2 면 안 가운데: 잉크가 단추 가운데보다 0.7px 아래였어요 */
 /* 번역 창의 두 카드(설정 프리셋 · 프롬프트)는 같은 테두리 — 프리셋만 파란 테두리 · 빛이었다 */
 html body.salty .llmt-settings .llmt-card--accent { border-color: var(--llmt-border, var(--salty-line)) !important; box-shadow: none !important; }
 
@@ -154,7 +171,7 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-tabs,
   background: none !important; border: 0 !important; border-radius: 0 !important;
 }
 /* 탭 한 칸 모양(면 · 선 · 높이 · 글자 · 고름)은 1.0.0 부터 88-ui-parts 의 글자 탭 하나 — 여기는 줄 배치만 */
-html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: var(--bl-ui-ink-fa, 12.5px) !important; line-height: 1 !important; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: var(--bl-ui-ink-fa, 15px) !important; line-height: 1 !important; }
 /* 글자만 있던 탭에 아이콘 (확장 순서: 확장 설정 · 요술봉 · 채팅 메뉴) */
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { font-family: "Font Awesome 6 Free"; font-weight: 900; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(1)::before { content: "\f12e"; }

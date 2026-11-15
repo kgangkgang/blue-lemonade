@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+// 1.5.3 번역 보기 공용 부품(src/inline-translate.js) — 아래에서 import 줄을 떼므로 이름을 앞에 붙여 줘요
+globalThis.__blInl = await import(pathToFileURL(path.resolve(process.argv[2] || '.') + '/src/inline-translate.js').href); globalThis.__blInlHead = 'const {createInlineTranslate,TR_ICON,TR_FAIL,trBoxInner:sharedTrBoxInner,trIconHtml}=globalThis.__blInl;';
 const root = path.resolve(process.argv[2] || '.'), url = pathToFileURL(root + '/');
 const P = await import(new URL('src/addons/direction/prompt.js', url));
 const U = await import(new URL('src/usage-mode.js', url));
@@ -11,7 +13,7 @@ const ext = { salty: { enabled: true, usageMode: 'both', addons: { direction: tr
 globalThis.__directionTest = { ext, insertInstructions: P.insertInstructions, saves: 0, context: { substituteParams: text => String(text), mainApi: 'openai' } };
 globalThis.window = { matchMedia: () => ({ matches: false }) };
 const js = await fs.readFile(path.join(root, 'src/addons/direction/index.js'), 'utf8');
-const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
+const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '').replace(/^/, globalThis.__blInlHead);
 const head = 'const addonRunning=globalThis.__usage.addonRunning;const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=()=>{};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>"";const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};const anchorAvailable=()=>false;';
 const m = await import('data:text/javascript;base64,' + Buffer.from(head + source + '\nexport {initSettings,settings,injectDirection,trackGeneration,alwaysActive,isActive,sendLevel};').toString('base64'));
 m.initSettings();

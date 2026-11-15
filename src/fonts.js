@@ -15,7 +15,7 @@ export const SAMPLES = {
     ja: '月夜に海の塩がきらめいた。あいうえお カキクケコ',
     zh: '月光下的海盐闪闪发光。你好，世界',
 };
-export const SLOT_FAMILY = { text: "'Salty Text'", dialogue: "'Salty Dialogue'", ui: "'Salty UI'", em: "'Salty Em'", strong: "'Salty Strong'", code: "'Salty Code'", name: "'Salty Name'", userName: "'Salty UserName'" };
+export const SLOT_FAMILY = { text: "'Salty Text'", dialogue: "'Salty Dialogue'", ui: "'Salty UI'", em: "'Salty Em'", strong: "'Salty Strong'", code: "'Salty Code'", name: "'Salty Name'", userName: "'Salty UserName'", mb: "'Salty MB'" };
 /** 칸·언어별 가족 이름: 'Salty Text' / 'Salty Text EN' … (언어마다 가족을 따로 둬야 굵기 descriptor 가 달라도 글자별로 넘어감) */
 export const langFamily = (slot, lang) => lang === 'ko' ? SLOT_FAMILY[slot] : `'${SLOT_FAMILY[slot].slice(1, -1)} ${lang.toUpperCase()}'`;
 

@@ -18,6 +18,8 @@ import { setRootVar } from '../../root-var-seed.js';
 import { onThemeLook } from '../../shared/theme-look.js';
 // 8.0.7 페르소나 위치 · 캐릭터 설명 위치 — 작가 노트와 같은 공용 틀
 import { registerAnchorSource, anchorAvailable } from '../../prompt-anchors.js';
+// 1.5.3 칸 옆 번역 보기 공용 부품
+import { createInlineTranslate, TR_ICON, TR_FAIL, trBoxInner as sharedTrBoxInner, trIconHtml } from '../../inline-translate.js';
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
@@ -1056,11 +1058,7 @@ function promptButton(act, className, icon, label, { text = '', disabled = false
 // 번역 엔진 · 캐시는 한글화 패널(prompt 애드온)의 translatePlainText · cachedTextTranslation 을 그대로 부른다(새 번역 길 없음).
 // 요청은 사람이 단추를 눌렀을 때만 · 같은 글은 캐시에서 바로(이번 접속의 표 → 패널의 파일 캐시). 원문은 그대로 고칠 수 있고, 번역한 글과 달라지면 「원문이 바뀌었어요 · 다시 번역」.
 // 칸마다 상태 하나(trStates — 'p:<줄 id>' · 'p:new' · 's:prompt'): 펼침 · 번역한 원문 · 번역문 · 진행 · 실패. 목록을 다시 그려도(펼치기 · 고치기) 남는다.
-const TR_ICON = 'fa-solid fa-language';   // 한글화 패널 「번역」 단추와 같은 아이콘
-const TR_FAIL = '번역하지 못했어요. 번역 연결을 확인해 주세요.';
 const TR_MEMO_MAX = 50;
-const trStates = new Map();
-const trMemo = new Map();   // 원문 → 번역문 (이번 접속)
 let trEngine = null;        // { cached(text), translate(text) } — 처음 누를 때 한글화 패널에서 가져온다
 
 /** 시험 · 화면 확인에서 가짜 번역으로 바꿔 끼운다 (실제 요청을 보내지 않게). 평소에는 부르지 않는다 */
@@ -1076,11 +1074,6 @@ async function translateEngine() {
     return trEngine;
 }
 
-const trNorm = text => String(text ?? '').trim();
-function trState(key) {
-    if (!trStates.has(key)) trStates.set(key, { open: false, source: '', text: '', busy: false, error: '' });
-    return trStates.get(key);
-}
 /** 그 칸의 지금 원문: 고치는 중이면 고치는 글 */
 function trSourceOf(key) {
     if (key === 's:prompt') return settings().directionPrompt;
@@ -1089,11 +1082,14 @@ function trSourceOf(key) {
     return settings().promptList.find(item => item.id === id)?.content ?? '';
 }
 const trRoot = key => (key === 's:prompt' ? settingsRoot : popup);
+// 1.5.3 상태 · 칠하기 · 번역 · 펼침은 공용 부품(src/inline-translate.js) — 한글화 패널의 제자리 번역(월드인포 · 프리셋 …)도 같은 것을 써요
+const inlineTr = createInlineTranslate({ sourceOf: trSourceOf, rootOf: key => trRoot(key), engine: translateEngine, memoMax: TR_MEMO_MAX, tag: '[전개 지시] 번역', iconHtml: trIconHtml });   // 1.5.3 그림은 같은 모양의 SVG(면 안 잉크 가운데)
+const trStates = inlineTr.states;
+const trMemo = inlineTr.memo;
+const paintTranslation = inlineTr.paint;
+const onTranslateAct = inlineTr.onAct;
+const trBoxInner = redoClass => sharedTrBoxInner(redoClass);
 
-function trBoxInner(redoClass) {
-    return `<div class="jj-tr-head"><span class="jj-tr-label">번역</span><span class="jj-tr-stale" hidden>원문이 바뀌었어요</span><button type="button" class="${redoClass} jj-tr-redo" data-pact="translate-redo" hidden><span>다시 번역</span></button></div>`
-        + '<div class="jj-tr-text" aria-live="polite"></div><div class="jj-tr-label jj-tr-orig">원문</div>';
-}
 function translateBox(key) {
     const box = makeEl('div', 'jj-tr');
     box.dataset.tr = key;
@@ -1106,78 +1102,6 @@ function translateButton(key) {
     button.dataset.tr = key;
     button.setAttribute('aria-expanded', 'false');
     return button;
-}
-
-/** 상태대로 번역 단추 · 번역본 상자를 칠한다. root 를 주면 그 안(막 만든 줄)만 */
-function paintTranslation(key, root = trRoot(key)) {
-    if (!root?.querySelectorAll) return;
-    const state = trState(key);
-    for (const button of root.querySelectorAll('.jj-tr-btn')) {
-        if (button.dataset.tr !== key) continue;
-        const label = state.open ? '번역 접기' : '번역 보기';
-        button.setAttribute('aria-label', label);
-        button.title = label;
-        button.setAttribute('aria-expanded', String(state.open));
-        button.setAttribute('aria-busy', String(state.busy));
-        button.innerHTML = `<i class="${state.busy ? 'fa-solid fa-spinner fa-spin' : TR_ICON}" aria-hidden="true"></i>`;
-    }
-    for (const box of root.querySelectorAll('.jj-tr')) {
-        if (box.dataset.tr !== key) continue;
-        box.hidden = !state.open;
-        if (!state.open) continue;
-        const stale = !state.busy && !state.error && !!state.source && trNorm(trSourceOf(key)) !== state.source;
-        box.classList.toggle('is-stale', stale);
-        box.querySelector('.jj-tr-stale').hidden = !stale;
-        const redo = box.querySelector('.jj-tr-redo');
-        redo.hidden = state.busy || !(stale || state.error);
-        redo.querySelector('span').textContent = state.error ? '다시 시도' : '다시 번역';
-        const text = box.querySelector('.jj-tr-text');
-        text.classList.toggle('is-muted', state.busy || !!state.error || !state.text);
-        text.textContent = state.busy ? '번역하는 중…' : state.error || state.text || '번역할 글이 없어요.';
-    }
-}
-
-async function runTranslation(key) {
-    const state = trState(key);
-    if (state.busy) return;
-    const source = trNorm(trSourceOf(key));
-    Object.assign(state, { source, error: '', text: '' });
-    const memo = source && trMemo.get(source);
-    if (!source || memo) {
-        state.text = memo || '';
-        paintTranslation(key);
-        return;
-    }
-    state.busy = true;
-    paintTranslation(key);
-    try {
-        const engine = await translateEngine();
-        const text = engine.cached?.(source) || await engine.translate(source);
-        if (!trNorm(text)) throw new Error('빈 번역');
-        if (trMemo.size >= TR_MEMO_MAX) trMemo.delete(trMemo.keys().next().value);
-        trMemo.set(source, text);
-        state.text = text;
-    } catch (error) {
-        console.warn('[전개 지시] 번역', error);
-        state.error = error?.userMessage ? error.message : TR_FAIL;
-    } finally {
-        state.busy = false;
-        paintTranslation(key);
-    }
-}
-
-/** 번역 단추: 펼치면 그 칸의 지금 원문을 번역(캐시에 있으면 바로) · 다시 누르면 접는다 */
-function toggleTranslation(key) {
-    const state = trState(key);
-    state.open = !state.open;
-    if (state.open && !state.busy && (!state.source || trNorm(trSourceOf(key)) !== state.source || state.error)) return runTranslation(key);
-    paintTranslation(key);
-}
-
-function onTranslateAct(act, key) {
-    if (!key) return;
-    if (act === 'translate') return toggleTranslation(key);
-    if (act === 'translate-redo' && trState(key).open) return runTranslation(key);
 }
 
 function promptEditor(item) {

@@ -1,4 +1,4 @@
-/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 711개(덩어리 51개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build da8791be2552) */
+/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 714개(덩어리 51개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build 3d9e1013ab22) */
 .salty-sample q::before,
 .salty-sample q::after {
   content: none;
@@ -470,6 +470,17 @@ body.salty :where(.salty-preview):is(#salty-nochat, *) .mes :is(.mes_buttons, .m
 body.salty :where(.salty-preview):is(#salty-nochat, *) .mes :is(.mes_buttons, .mes_reasoning_actions, .extraMesButtons) .interactable:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 1px var(--salty-accent);
+}
+body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .mes_buttons {
+  font-size: 20px !important;
+}
+body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes :is(.mes_buttons, .extraMesButtons) > .mes_button {
+  position: relative;
+}
+body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes :is(.mes_buttons, .extraMesButtons) > .mes_button::before {
+  position: absolute;
+  inset: 0;
+  margin: auto;
 }
 body.salty:not(.expandMessageActions) :where(.salty-preview):is(#salty-nochat, *) .mes.bl-menu-open {
   z-index: 45;
@@ -2566,7 +2577,7 @@ body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .bl
   mask: var(--salty-mi) center / contain no-repeat;
 }
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .bl-pinned {
-  font-size: 16px !important;
+  font-size: 20px !important;
 }
 body.salty.salty-icons-line :where(.salty-preview):is(#salty-nochat, *) .mes .bl-pinned.mes_legacy_translate {
   --salty-mi: var(--salty-mi-brain);

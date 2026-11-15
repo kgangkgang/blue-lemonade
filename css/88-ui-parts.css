@@ -7,7 +7,7 @@
      · 라디오 = 체크 A3 짝(빈칸 1px 선 · 고름 강조색 점)
      · 탭 = 글자 탭 하나(36 · 메타 글자 · 1px 선 · 면 --bl-hover), 아이콘은 글자 옆(위아래 두 줄 탭 없음)
      · 닫기 ✕ = 설정 창 닫기와 같은 선 그림(마스크 16) · 상자 없음 · 34 칸
-     · 아이콘만 단추 = 34 · 모서리 8 · 상자 없음 · 잉크 FA 12.5(마스크 16 과 같은 잉크)
+     · 아이콘만 단추 = 34 · 모서리 8 · 상자 없음 · 잉크 FA 15(1.5.1 — 닫기 ✕ 선 그림 마스크 16 은 가는 기호라 그대로)
      · 글자 단추 = 글자 --bl-ts-ctl 하나 · 굵기 400(주요 650)
      · 접힘 머리 = 36 · 화살표 하나(오른쪽 chevron 12.5 · 보조색)
    화면마다 따로 고치지 않고 여기 목록에 그 화면의 부품 이름을 더해요(호환성 — 한 곳을 고치면 다 같이 바뀜).
@@ -25,7 +25,7 @@
   --bl-ui-chip: 34px;                                 /* 칩 · 고르기 묶음 */
   --bl-ui-touch: 44px;                                /* 누르는 넓이(투명 상자) */
   --bl-ui-radius: var(--bl-r-sm, 8px);
-  --bl-ui-ink-fa: 12.5px;                             /* 아이콘 글꼴 잉크 */
+  --bl-ui-ink-fa: 15px;                               /* 아이콘 글꼴 잉크(1.5.1 아이콘 전수조사: 12.5 → 15 — 34 칸의 37% 라 폰에서 잘 안 보였어요 · 칸의 45%) */
   --bl-ui-ink-mask: 16px;                             /* 선 그림 마스크 상자(잉크 ≈ 12.5) */
   --bl-ui-tab-fs: var(--bl-ts-meta, 13px);
   --bl-ui-btn-fs: var(--bl-ts-ctl, 14px);
@@ -208,12 +208,17 @@ html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-
   box-sizing: border-box !important; width: var(--bl-ui-icon) !important; height: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; min-height: var(--bl-ui-icon) !important;
   padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius) !important; background: transparent !important; box-shadow: none !important;
 }
-html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) > i { font-size: var(--bl-ui-ink-fa) !important; line-height: 1 !important; translate: 0 .06em; }
+html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) > i { font-size: var(--bl-ui-ink-fa) !important; line-height: 1 !important; translate: 0 -.02em; }
 
 /* 1.0.0 아이콘 잉크 가운데: 크롬은 Font Awesome 의 위 · 아래 높이(459/75 · 512)를 정수 화소로 반올림해 줄 높이 1 상자 안 글리프를 0.06em(12.5px 에서 약 0.75px) 위에 그려요
    — 상자는 가운데인데 아이콘만 떠 보이던 것(모델 전환 · TTS · 캐릭터 에셋 · 다시 쓰기 · 설정 즐겨찾기 아이콘 −0.95~−1.5px). 아래로 0.06em 만 옮겨요(상자 · 크기 그대로).
-   공용 목록 단추는 위 「> i」 규칙에 같이 두고(:has 든 목록을 다시 쓰지 않으려고), 부품 목록 밖 아이콘만 단추(메모 창 · 미리보기 돋보기 · 프롬프트 템플릿)는 여기서. 꺾쇠 · 화살촉은 글리프가 원래 아래로 치우쳐 빼요. */
-html:not(#bl-ui-parts-off) body :is(.bl-notes-dialog .bl-note-btn, .salty-panel .bl-view-toggle, .blpt .blpt-btn) > i:not(.fa-chevron-down, .fa-chevron-up, .fa-chevron-left, .fa-chevron-right, .fa-angle-down, .fa-angle-up, .fa-caret-down, .fa-caret-up, .fa-caret-right) { translate: 0 .06em; }
+   공용 목록 단추는 위 「> i」 규칙에 같이 두고(:has 든 목록을 다시 쓰지 않으려고), 부품 목록 밖 아이콘만 단추(메모 창 · 미리보기 돋보기 · 프롬프트 템플릿)는 여기서. 꺾쇠 · 화살촉은 글리프가 원래 아래로 치우쳐 빼요.
+   1.5.1 아이콘 전수조사: 공용 목록 단추의 잉크를 15px 로 올리니 반올림이 달라져 같은 0.06em 이 거꾸로 1.2 ~ 1.6px 아래로 밀었어요(폰 384 화소 측정) — 공용 목록 · 미리보기 돋보기(15px)에서는 옮기지 않아요. 12.5 ~ 14px 인 아래 단추만 그대로.
+   1.5.2 면 안 가운데(잉크 가운데 = 단추 가운데 · 0.5px 안): 15px 에서 공용 목록 단추의 잉크가 창에 따라 −0.1 ~ +0.8px 이라 0.02em(0.3px)만 올려요(전부 0.55 안). 꺾쇠는 글리프가 치우쳐 있어 따로(「위로」 −0.7 · 「아래로」 +1.1 을 거꾸로 — 공용 목록 규칙보다 특이도를 한 단 높여요) · 미리보기 돋보기 +0.6 → 0.5 올림. */
+html:not(#bl-ui-parts-off):not(#bl-ui-center-off) body .po-dialog .po-move > i.fa-chevron-down { translate: 0 -1.1px; }
+html:not(#bl-ui-parts-off):not(#bl-ui-center-off) body .po-dialog .po-move > i.fa-chevron-up { translate: 0 .7px; }
+html:not(#bl-ui-parts-off) body .salty-panel .bl-view-toggle > i { translate: 0 -.5px; }
+html:not(#bl-ui-parts-off) body :is(.bl-notes-dialog .bl-note-btn) > i:not(.fa-chevron-down, .fa-chevron-up, .fa-chevron-left, .fa-chevron-right, .fa-angle-down, .fa-angle-up, .fa-caret-down, .fa-caret-up, .fa-caret-right) { translate: 0 .06em; }
 
 /* ---------- 글자 단추: 글자 한 단계 · 굵기 400 ---------- */
 html:not(#bl-ui-parts-off) body :is(.salty-panel .salty-btn:not(.salty-btn-icon, .primary, .salty-primary), .salty-panel .bl-editor-choose, .salty-panel .bl-link-mini, .bl-translator-dialog :is(.llmt-gl-extract, .llmt-gl-sort), .bl-assets-dialog .eh-btn:not(.eh-btn--primary), #char_assets_settings .eh-btn:not(.eh-btn--primary),
@@ -359,5 +364,35 @@ html:not(#bl-ui-parts-off) body :is(.bl-tool-field, .bl-mask-number-head, #bl-de
 /* 캐릭터 에셋 프리셋 칩(role=tab)도 글자 탭 글자 */
 html:not(#bl-ui-parts-off) body .eh-pchip { font-size: var(--bl-ui-tab-fs) !important; min-height: var(--bl-ui-ctl) !important; height: var(--bl-ui-ctl) !important; }
 /* 1.4.7 감사 표6: 테마 창(dialog.bl-tool-dialog — 로그 복사 · 월드인포 도움말 등 · 출처 창 .bl-credits-dialog)의 단추 · 링크는 제 초점 규칙이 없어
-   브라우저 기본 검정 테가 나왔어요 — 다른 테마 창과 같은 포인트 2px 테 하나로. 특이도는 :focus-visible 하나(0,1,0)라 제 규칙이 있는 칸은 그대로예요 */
-:where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(button, a[href], summary, [tabindex]:not([tabindex="-1"])):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+   브라우저 기본 검정 테가 나왔어요 — 다른 테마 창과 같은 포인트 2px 테 하나로. 특이도는 :focus-visible 하나(0,1,0)라 제 규칙이 있는 칸은 그대로예요
+   1.5.1: 창마다 검정(브라우저 기본) · 파랑(포인트)으로 갈리던 것을 한 벌로 — 애드온 창(번역 · 에셋 · 전개 · 노트 · 요청 로그 · ZIP 설치 …)을 하나씩 적지 않고 창(dialog) 전부에 걸어요 */
+:where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(button, a[href], summary, [tabindex]:not([tabindex="-1"])):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+/* 1.5.2 통합: 가로로 넘기는 탭 줄(css/98-tab-strips.css — overflow-x:auto)은 바깥 2px 테가 잘려 좌우 끝만 남았어요(요청 로그 「로그」 탭 · 창을 열 때 첫 탭에 초점).
+   그 줄의 탭만 테를 안쪽으로 그려요(색 · 굵기 같음 · 특이도 같고 뒤에 와서 이겨요) */
+:where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(.rl-root .rl-tabs, #lv_settings .lv-tabs, .llmt-settings .llmt-tabs, .po-dialog > .po-menu-tabs, .bwr_settings .bwr_tabs, .pa-hub > .pa-hub-tabs, .lvs-tabs, .ppt-ta-tabs, .jj-seg[role="tablist"], .dq-tabs, .pt-help-dialog > nav, .bl-notes-help > nav) > :where(button, a[href], [role="tab"]):focus-visible { outline-offset: -2px; }
+/* 1.5.2 글자 잉크 가운데(11-15 사용자 「중.앙.정.렬」 · 디자인 관문 가운데 검사): 아이콘 · 스위치 · 체크 칸과 한 줄(flex 가운데)에 놓인 글자는 「줄 상자 가운데」가 아니라 「글자 몸통 가운데」가 맞아야 해요.
+   줄 상자 가운데는 글꼴마다 달라요(기본 글꼴은 글자가 0.3 ~ 0.8px 위, 세리프는 1 ~ 2px 아래 — 반행간을 브라우저가 온 화소로 내리는 몫까지). 그래서 글꼴에 매인 px · em 밀기 대신
+   글자 상자를 「대문자 높이 ~ 기준선」으로 다듬고(text-box) 위아래에 같은 여백을 돌려줘요 → 상자 키는 그대로 · 상자 가운데 = 글자 몸통 가운데. 어느 글꼴에서도 같아요.
+   이 기능을 모르는 브라우저에서는 전과 같아요. 대상은 제 여백이 없는 글자 칸만(알약 · 배지는 빼요). */
+@supports (text-box: trim-both cap alphabetic) {
+  html:not(#bl-ui-parts-off) body.salty :is(
+    .bl-hs-row > .bl-hs-text,
+    label.pt-check > span,
+    .rl-tab > span:not(.rl-tab-sub),
+    .llmt-tab > span, .llmt-card-head > span,
+    .lv-tab > span, label.lv-toggle > span:not(.lv-desc), .lv-card-head > span,
+    .jj-card-title > span,
+    .bl-lc-chip > span, .bl-lc-fd-h > :is(b, span), .bl-lc-foot > .salty-btn > span, .bl-lc-done > span, #bl-lc-title > span, .bl-lc-np-h,
+    label.pa-hub-load > span,
+    .salty-notice-toggle > span,
+    .bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)
+  ) { text-box: trim-both cap alphabetic; padding-block: calc((1lh - 1cap) / 2); }
+}
+/* 1.5.2 「이름표 글자 + 크게 보기 아이콘」 줄(11-15 사용자 「중.앙.정.렬」): 실리태번의 크게 보기 아이콘(.editor_maximize — 월드인포 「내용」 · 봇카드 설명 · 첫 메시지 · 고급 정의 · 페르소나 설명 · 추가 인사말 ·
+   고급 서식 · 사용자 CSS …)이 이름표 글자보다 폰에서 최대 2 ~ 7px · PC 에서 0.7 ~ 3px 떠 있었어요(줄 상자 가운데끼리 맞추면 글꼴 · 화소 반올림마다 달라져요).
+   구조로 풀어요: 이름표와 아이콘을 같은 「기준선」에 놓고(둘의 기준선이 한 화소에 같이 붙어요), 아이콘 글자 크기를 이름표 대문자 높이의 4/3 으로 잡아요 —
+   Font Awesome 그림의 잉크 가운데는 기준선 위 0.375em 이라 0.375 × (대문자 높이 ÷ 0.75) = 대문자 높이의 반, 곧 이름표 글자 몸통 가운데예요. 글꼴 · 배율이 바뀌어도 같아요(px 밀기 없음).
+   --bl-ink-cap 은 줄(이름표의 글꼴)에서 길이로 풀어 아이콘에 물려줘요. 이름표가 <small> 인 줄(고급 서식)은 그 글자 크기(5/6)만큼 줄여요.
+   옆 번역 단추는 제 여백을 아이콘과 같이 접어 줄 높이를 아이콘 상자에 맞춰요(줄이 더 크면 기준선 묶음이 위로 붙어요). --bl-ink-row 는 「이 줄은 CSS 가 세로를 맞춘다」는 표식이에요. */
+@property --bl-ink-cap { syntax: '<length>'; inherits: true; initial-value: 0px; }
+/* 이 묶음의 규칙(크게 보기 아이콘 줄)은 css/15-drawers.css 끝(둘째 장 — 서랍 · 창을 열 때 받아요)에 있어요 · 프리셋 편집 창 줄은 css/59-prompt-ux.css — 첫 장 :has( 상한 149 를 넘지 않게(1.5.2 통합). @property 는 여기 첫 장에 */

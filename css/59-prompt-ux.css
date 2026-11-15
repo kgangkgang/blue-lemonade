@@ -381,3 +381,11 @@ body.salty #AdvancedFormatting :is([name="tokenPaddingBlock"] > input,#reasoning
   height:auto!important;
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
 }
+/* 1.5.2 통합: css/88-ui-parts.css 의 「이름표 글자 + 크게 보기 아이콘」 묶음에서 옮겨 온 프리셋 편집 창 줄(--bl-ink-cap 의 @property 는 첫 장에 그대로) */
+@supports (height: 1cap) {
+  /* 프리셋 편집 창의 「프롬프트」 이름표 줄: 크게 보기 아이콘이 없고 이름표 글자 바로 뒤에 번역 단추만 있어요. 단추 상자(높이 --kt-h)는 제 기준선이 없어 상자 아래가 기준선에 놓이니,
+     (상자 높이 − 대문자 높이) ÷ 2 만큼 내려 상자 가운데를 글자 몸통 가운데에 둬요. 줄 높이가 늘지 않게 위 여백을 그만큼 접어요. 그림의 글자 잉크 보정값(--kt-dy)은 0 으로 눌러요 — 여기는 CSS 가 맞춰요 */
+  body.salty:not(#salty-none) #completion_prompt_manager_popup label:has(> .jj-tr-btn.bl-kt-btn) { --bl-ink-cap: 1cap; --bl-ink-row: 1; align-items: baseline; }
+  body.salty:not(#salty-none) #completion_prompt_manager_popup label > .jj-tr-btn.bl-kt-btn:not(#salty-none) { align-self: baseline !important; top: calc((var(--kt-h, 16px) - var(--bl-ink-cap)) / 2) !important; margin-top: calc(var(--bl-ink-cap) - var(--kt-h, 16px)); }
+  body.salty:not(#salty-none) #completion_prompt_manager_popup label > .jj-tr-btn.bl-kt-btn > .jj-tr-svg { --kt-dy: 0px; }
+}

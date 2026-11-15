@@ -26,7 +26,7 @@ const stacks = s => Object.fromEntries(FONT_SLOTS.map(slot => [slot, s.fonts[slo
 const s = load(fixture.salty);
 const before = await (async () => stacks(s))();
 await t('설정 정리가 글꼴 칸 · 팔레트를 그대로 둬요 (저장값이 바뀌지 않음)', () => {
-    assert.deepEqual(s.fonts, fixture.salty.fonts);
+    { const { mb, ...rest } = s.fonts; assert.equal(mb, 'same', '1.5.1 미트볼 글꼴 자리는 예전 설정에 없으니 「테마 글꼴 따라가기」로 채워요'); assert.deepEqual(rest, fixture.salty.fonts); }
     assert.equal(s.palette, 'night');
 });
 await t('전체 목록을 받기 전에도 세 글꼴을 다 찾아요 — 처음 열 때 전체 목록(163KB)을 받으러 가지 않아요', () => {

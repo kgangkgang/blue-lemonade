@@ -925,6 +925,10 @@ html body.salty #jj-settings label.jj-swatch > input[type="color"] { width: 100%
     -webkit-tap-highlight-color: transparent;
 }
 :is(#jj-popup, #jj-settings) .jj-tr-btn:not(.jj-pbtn) > i { font-size: 12.5px; line-height: 1; }
+/* 1.5.3 그림 = 글자 아이콘과 같은 모양의 SVG(잉크 상자 그대로라 면 가운데) · 누를 자리 40px 넘게(마우스에서도) */
+:is(#jj-popup, #jj-settings) .jj-tr-btn > .jj-tr-svg { display: block; width: 1.25em; height: .75em; font-size: 12.5px; }
+:is(#jj-popup, #jj-settings) .jj-tr-btn { position: relative; }
+:is(#jj-popup, #jj-settings) .jj-tr-btn::after { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
 :is(#jj-popup, #jj-settings) .jj-tr-btn:not(.jj-pbtn)[aria-busy="true"] { cursor: progress; }
 @media (hover: hover) {
     :is(#jj-popup, #jj-settings) .jj-tr-btn:not(.jj-pbtn):hover { background: var(--bl-fill-hover, var(--bl-hover, color-mix(in srgb, var(--SmartThemeBodyColor) 8%, transparent))); }
@@ -936,24 +940,28 @@ html body.salty #jj-settings label.jj-swatch > input[type="color"] { width: 100%
     --jj-tr-muted: var(--salty-muted, color-mix(in srgb, var(--SmartThemeBodyColor) 65%, transparent));
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0;
     min-width: 0;
+    margin: var(--kt-mt, 0) 0 var(--kt-mb, 0);   /* 1.5.3 위 · 아래 형제와 눈금 8 — 공용 부품 fitBox 가 재서 적어요 */
 }
+/* 1.5.3 상자 안 세로 눈금(제자리 번역과 같은 부품): 「번역」 8 → 번역 글 12 → 「원문」 */
+.jj-tr > * { margin: 0; }
+.jj-tr > * + * { margin-top: 8px; }
+.jj-tr > .jj-tr-orig { margin-top: 12px; }
 .jj-tr[hidden] { display: none !important; }
-.jj-tr-head { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 20px; }
-.jj-tr-label { font-size: .78em; font-weight: 600; line-height: 20px; color: var(--jj-tr-muted); }
-.jj-tr-head > .jj-tr-label { color: var(--salty-accent, var(--jj-on)); }
+.jj-tr-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.jj-tr-label { font-size: var(--bl-fs-sub, .78em); font-weight: 600; line-height: 1.4; color: var(--jj-tr-muted); }
+.jj-tr-head > .jj-tr-label { color: var(--salty-accent-ink, var(--salty-accent, var(--jj-on))); }   /* 1.5.3 글자용 포인트색(낮 바탕에서도 4.5:1) */
 #jj-popup .jj-tr-head > .jj-tr-label { color: var(--bl-jj-fg, var(--salty-accent, var(--jj-on))); }   /* 깃털 창은 제목 줄 상태 글자와 같은 포인트색 (나이트 = 레몬) */
-.jj-tr-stale { min-width: 0; font-size: .78em; line-height: 20px; color: var(--jj-tr-muted); }
+.jj-tr-stale { min-width: 0; font-size: var(--bl-fs-sub, .78em); line-height: 1.4; color: var(--jj-tr-muted); }
 .jj-tr-stale[hidden], .jj-tr-redo[hidden] { display: none !important; }
-:is(#jj-popup, #jj-settings) .jj-tr-redo { flex: 0 0 auto; margin-left: auto !important; }
+:is(#jj-popup, #jj-settings) .jj-tr-redo { flex: 0 0 auto; margin-left: auto !important; min-width: max-content; white-space: nowrap; }
 .jj-tr-text {
     max-height: 40vh;
-    margin: 0;
-    padding: 8px 10px;
+    padding: var(--kt-pad, 8px 10px);
     box-sizing: border-box;
     border: 1px solid var(--salty-line, var(--SmartThemeBorderColor));
-    border-radius: 9px;
+    border-radius: var(--kt-radius, 9px);
     background: transparent;
     box-shadow: none;
     font-size: .86em;
@@ -968,7 +976,6 @@ html body.salty #jj-settings label.jj-swatch > input[type="color"] { width: 100%
 .jj-tr-text::-webkit-scrollbar { display: none; }
 .jj-tr-text.is-muted { color: var(--jj-tr-muted); }
 .jj-tr.is-stale .jj-tr-text { color: var(--jj-tr-muted); }
-.jj-tr-orig { margin-top: 4px; }
 .jj-prompt-actions { align-items: center; gap: 8px; }
 #jj-settings .jj-prompt-actions > .jj-tr-btn { margin: 0 auto 0 0; }
 

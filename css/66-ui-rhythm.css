@@ -5,10 +5,14 @@
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) {
   display:flex; align-items:center; flex-wrap:wrap; column-gap:8px; row-gap:4px; min-width:0;
 }
+/* 1.5.2 일렬(사용자 「번역이랑 아이콘 간격만 좀 좁은 거 같다 · 다 일렬로 보이게」): 아이콘 칸이 1.2em(18.6px)이라 가로로 넓은 그림(번역 · 한글화의 「A文」 19.4px)이
+   칸을 넘쳐 이름과의 사이가 좁고, 그림마다 왼쪽 끝이 달랐어요. 칸을 24px 고정으로(기준.md 「줄 안 아이콘 칸」) — 그림은 칸 한가운데 · 이름은 모든 줄에서 같은 자리(칸 24 + 사이 8).
+   가로로 넓은 글리프(폭 1.25em)는 0.88배로 줄여 다른 그림과 눈 크기를 맞춰요. 줄 머리 구조로 잡아 남의 확장 아이콘에도 걸려요. */
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i {
-  display:inline-flex; align-items:center; justify-content:center; flex:0 0 1.2em;
-  width:1.2em; height:1.2em; line-height:1; margin:0;
+  display:inline-flex; align-items:center; justify-content:center; flex:0 0 24px;
+  width:24px; height:24px; line-height:1; margin:0;
 }
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer-header > :is(b,strong) > i:is(.fa-language, .fa-users, .fa-comments, .fa-gamepad, .fa-people-group, .fa-user-group, .fa-photo-film) { font-size:.88em; }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > .ext-version { margin-inline:0; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { padding:4px 0 8px; gap:8px; line-height:1.45; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }

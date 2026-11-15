@@ -29,7 +29,7 @@ function setup({items=rows(3),lanes=1,reply=async()=> 'Translated body',titleRep
         getCached:(_ns,id)=>cache.get(id),getTranslatedTitle:(_ns,id)=>titles.get(id),setCache:(_ns,id,value)=>cache.set(id,value),setCacheTitle:(_ns,id,value)=>titles.set(id,value),
         setBlockHTML:(_list,id,html)=>rendered.set(id,html),esc:text=>String(text).replaceAll('<','&lt;'),translateText:(...args)=>reply(...args),
         translateTitleBatch:(...args)=>titleReply(...args),concurrency:()=>lanes,requestDelayMs:()=>0,titleBatchSize:()=>4,
-        updateCacheStatsUI(){},confirm:()=>true,isRetryableError:e=>!!e.timeout,EXT:'test',
+        updateCacheStatsUI(){},announceChange(){},confirm:()=>true,isRetryableError:e=>!!e.timeout,EXT:'test',
     };
     vm.createContext(ctx);
     vm.runInContext(section('let isBusy=false, stopReq=false', '// Each tab registers')+

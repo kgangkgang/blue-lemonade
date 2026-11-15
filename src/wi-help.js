@@ -65,6 +65,18 @@ function onPress(event) {
     openWorldInfoHelp(button.dataset.blWiHelp);
 }
 
+/** 1.5.1 상태 기호: 본체 틀이 그리는 색 그림 글자(상시 · 일반 · 벡터 칸)를 글로 바꿔요 — 펼친 목록에서 글로 읽혀요.
+ *  닫힌 칸의 표시(찬 점 · 빈 고리 · 사슬)는 CSS(css/12-worldinfo.css)가 고른 값으로 그려요. 틀에 한 번이라 항목마다 JS 가 돌지 않아요. 바꾼 개수 */
+export const WI_STATE_LABEL = { constant: '상시', normal: '일반', vectorized: '벡터' };
+export function labelStateOptions(root) {
+    let changed = 0;
+    for (const option of root?.querySelectorAll?.('select[name="entryStateSelector"] > option') || []) {
+        const label = WI_STATE_LABEL[option.value];
+        if (label && option.textContent !== label) { option.textContent = label; changed++; }
+    }
+    return changed;
+}
+
 export function startWorldInfoHelp() {
     if (started) return;
     started = true;
@@ -72,6 +84,8 @@ export function startWorldInfoHelp() {
         placeHelpButtons(document.getElementById('WorldInfo') || document.body, GLOBAL_ANCHORS);
         const template = document.getElementById('entry_edit_template');
         placeHelpButtons(template, ENTRY_ANCHORS);
+        labelStateOptions(template);
+        labelStateOptions(document.getElementById('world_popup_entries_list'));
         // 이미 그려져 있던 항목(시작할 때 월드인포 창이 열려 있던 경우)에도 한 번
         for (const entry of document.querySelectorAll('#world_popup_entries_list .world_entry')) placeHelpButtons(entry, ENTRY_ANCHORS.map(([s, id, how]) => [s.replace(/^\.world_entry(?:_edit)? /, ''), id, how]));
     };

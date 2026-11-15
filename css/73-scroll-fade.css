@@ -20,6 +20,10 @@ html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y] { --bl-fade-y: 28px; }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); }
+/* 1.5.2 받침이 없는 서랍 꼴 창은 흐림을 걸지 않아요(사용자 「이야기 리듬 투명하게 보인다」 — 프롬프트 편집 창을 내리면 맨 위로 뒤의 프롬프트 목록 줄이 비쳤어요):
+   .drawer-content 는 제 바탕을 칠하는 면이라 mask 가 바탕까지 투명하게 만들어요. 아래 ② 의 받침은 위 막대 묶음(#top-settings-holder) 안 서랍에만 깔리는데,
+   프롬프트 편집 창(#completion_prompt_manager_popup)과 이동 UI 로 옮긴 창(#movingDivs)은 그 밖이라 받침 없이 mask 만 걸려 뒤가 그대로 비쳤어요. 묶음 밖의 서랍 꼴 창은 mask 없이(불투명 그대로). */
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]:not(#top-settings-holder .drawer-content) { -webkit-mask-image: none; mask-image: none; }
 /* ② 서랍 받침 — 위 막대 묶음 안의 서랍만(이동 UI 로 #movingDivs 에 옮긴 서랍은 다른 쌓임 맥락이라 받침이 위로 올라올 수 있어 제외) */
 @supports (anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)) {
   html:not(#bl-tab-scroll-off) body.salty #top-settings-holder .drawer-content:is([data-bl-fade-y="top"], [data-bl-fade-y="bottom"], [data-bl-fade-y="both"]) { anchor-name: --bl-drawer; }

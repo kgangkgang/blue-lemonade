@@ -202,4 +202,10 @@ await test('index.js: 팝업 감시자(onPopupAdded)에 얹고, 바이바이 감
     assert.match(index, /installScrollFade\(document/); assert.match(index, /onPopupAdded\(dialog => \{ fade\.scan\(dialog\)/); assert.match(index, /presence\.onChange\(\(\) => fade\.refreshResting\(\)\)/);
     const guard = fs.readFileSync(path.join(root, 'src/popup-guard.js'), 'utf8'); assert.match(guard, /export function onPopupAdded/);
 });
+await test('1.5.2 받침이 없는 서랍 꼴 창(프롬프트 편집 창 · 이동 UI 로 옮긴 창)은 흐림을 걸지 않아요 — mask 가 제 바탕까지 투명하게 만들어 뒤가 비쳐요', () => {
+    const css = fs.readFileSync(path.join(root, 'css/73-scroll-fade.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.ok(css.includes('html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]:not(#top-settings-holder .drawer-content) { -webkit-mask-image: none; mask-image: none; }'));
+    assert.ok(css.indexOf(':not(#top-settings-holder .drawer-content)') > css.indexOf('[data-bl-fade-y="both"]'), '흐림 규칙 뒤에 와야 이겨요');
+    assert.match(css, /#top-settings-holder > \.bl-drawer-backing/, '받침은 위 막대 묶음 안 서랍에만');
+});
 console.log(`스크롤 흐림: ${pass}개 통과했어요.`);

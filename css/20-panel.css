@@ -272,15 +272,12 @@ body.salty dialog.bl-notice-dialog .bl-notice-close:not(:focus-visible) { outlin
   height: 8px;
   border-right: 2px solid var(--salty-muted);
   border-bottom: 2px solid var(--salty-muted);
-  transform: rotate(45deg) translateY(-2px);
+  transform: rotate(45deg) translate(calc(-25% + .5px), calc(-25% + .5px));   /* 1.5.2 꺾쇠 잉크(마름모의 아래 반)의 가운데를 상자 가운데로 — 돌린 좌표에서 두 축을 같은 만큼 옮기면 화면에서는 세로로만 움직여요(마름모 키의 1/4 − 선 두께 2px 의 끝 모서리 몫 0.7px). 전에는 −2px 한 축이라 1.4 ~ 1.7px 떠 있었어요 */
 }
 .salty-notice-item.open .salty-notice-toggle i {
-  transform: rotate(-135deg) translateY(-2px);
+  transform: rotate(-135deg) translate(calc(-25% + .5px), calc(-25% + .5px));
 }
-/* 5.6.6 공지 머리줄(날짜 + 꺾쇠 묶음)이 PC 1440 에서 0.6~1.4px 위 → 위 1 · 아래 −1. 폰은 그대로(390 은 0.2 라 옮기면 −1.2) */
-@media (hover: hover) and (pointer: fine) {
-  .salty-notice-toggle { padding-top: calc(10px + var(--bl-notice-ink-nudge, .5px)); padding-bottom: calc(10px - var(--bl-notice-ink-nudge, .5px)); } /* 1px 은 기본 글꼴의 다른 줄(+0.11)을 −0.89 로 보냈다 → 0.5 */
-}
+/* 1.5.2: 5.6.6 의 PC 전용 위아래 여백 밀기(기본 글꼴에 맞춘 0.5px)는 걷었어요 — 글자 칸을 몸통 가운데로 다듬는 88-ui-parts 의 규칙이 어느 글꼴에서도 맞춰요 */
 .salty-notice-item ul {
   display: none;
   margin: 0;

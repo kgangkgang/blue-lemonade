@@ -125,9 +125,9 @@ await check('translateSegments reports finished/batch after every group; the lab
     assert.equal(progressLabel({ stage: 'segments', reused: 40, resumed: 40, pending: 49, batch: 49, finished: 2, translated: 0 }, started), '남은 문단 49개 이어서 번역 · 2/49 · 캐시 40개 · 17초');
     const startNotice = new Function(`return (${cut('startNotice')});`)();
     assert.equal(startNotice({ stage: 'segments', reused: 88, resumed: 0, pending: 1, edited: true }, 12), '바뀐 문단 1개만 다시 번역해요 #12');
-    assert.equal(startNotice({ stage: 'segments', reused: 1, resumed: 0, pending: 47 }, 12), '번역을 시작합니다 #12', '3.0.0 first translation with a cached line keeps the old toast');
+    assert.equal(startNotice({ stage: 'segments', reused: 1, resumed: 0, pending: 47 }, 12), '번역을 시작해요 #12', '3.0.0 first translation with a cached line keeps the old toast');
     assert.equal(startNotice({ stage: 'segments', reused: 40, resumed: 40, pending: 49 }, 12), '남은 문단 49개를 이어서 번역해요 #12');
-    assert.equal(startNotice({ stage: 'segments', reused: 0, pending: 89 }, 12), '번역을 시작합니다 #12', 'first translation keeps the old toast');
+    assert.equal(startNotice({ stage: 'segments', reused: 0, pending: 89 }, 12), '번역을 시작해요 #12', 'first translation keeps the old toast');
     assert.match(source, /const edited = Boolean\(message\.extra\.display_text\);/, '3.0.0 wiring: edited = the message already had a translation');
     assert.match(source, /\{ \.\.\.stage, edited \}/, '3.0.0 wiring: progress stages carry edited');
     assert.match(source, /\{ \.\.\.stage, edited: true \}/, '3.0.0 wiring: the retranslate path is always edited');
@@ -135,8 +135,8 @@ await check('translateSegments reports finished/batch after every group; the lab
     assert.match(source, /\{ \.\.\.stage, edited \}/, '3.0.0 wiring: progress stages carry edited');
     assert.match(source, /\{ \.\.\.stage, edited: true \}/, '3.0.0 wiring: the retranslate path is always edited');
     assert.equal(startNotice({ stage: 'segments', reused: 89, pending: 0 }, 12), null, 'nothing to send: no start toast (the cache toast follows)');
-    assert.equal(startNotice({ stage: 'whole' }, 12), '번역을 시작합니다 #12');
-    assert.equal(startNotice({ stage: 'chunks', done: 0, total: 3 }, 12), '번역을 시작합니다 #12');
+    assert.equal(startNotice({ stage: 'whole' }, 12), '번역을 시작해요 #12');
+    assert.equal(startNotice({ stage: 'chunks', done: 0, total: 3 }, 12), '번역을 시작해요 #12');
     assert.equal(progressLabel({ stage: 'segments', reused: 3, pending: 0, translated: 74 }, started), '캐시 3개 · 새 번역 74개 · 17초');
     assert.equal(progressLabel({ stage: 'segments', reused: 0, pending: 5, translated: 0 }, started), '캐시 0개 · 수정 문단 0/5 묶음 번역 중 · 17초', 'older callers without batch');
 });

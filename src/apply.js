@@ -141,7 +141,8 @@ function fontVars(s) {
     for (const [slot, set] of Object.entries(sets)) {
         if (!set) {
             // 메뉴는 본문 글꼴, 대사 · 속마음 · 강조는 둘레 글꼴 그대로 (대사 안의 속마음이면 대사 글꼴)
-            vars[`--salty-font-${slot}`] = (slot === 'ui' || slot === 'name' || slot === 'userName') ? 'var(--salty-font-text)' : 'inherit';
+            // 미트볼 글꼴(mb)을 안 골랐으면 변수를 비워요(initial) — 맞춤 시트의 var(--salty-font-mb, 메뉴 글꼴) 이 메뉴 글꼴로 떨어져 지금 모습 그대로 · 글꼴 요청 0
+            vars[`--salty-font-${slot}`] = slot === 'mb' ? 'initial' : (slot === 'ui' || slot === 'name' || slot === 'userName') ? 'var(--salty-font-text)' : 'inherit';
             continue;
         }
         vars[`--salty-font-${slot}`] = slotStack(slot, set);
@@ -467,9 +468,6 @@ export function applyAll() {
     const pop = pal.pop || pal.accent;
     const onPop = onColor(pop);
     vars['--salty-pop'] = pop;
-    vars['--salty-danger'] = pal.danger;
-    vars['--salty-danger-ink'] = mode === 'dark' ? pal.bg : '#FFFFFF';
-    vars['--salty-danger-soft'] = alpha(pal.danger, mode === 'dark' ? 0.16 : 0.12);
     vars['--salty-on-pop'] = mode === 'dark' && onPop !== '#FFFFFF' ? pal.bg : onPop;
     // 4.1.2: 켜짐 빛(전개지시 깃털 등)도 팔레트의 포인트색으로 — 예전엔 CSS 에 레몬색 rgba 가 박혀 있어 다른 에이드에서도 노랗게 빛났다
     vars['--salty-pop-glow'] = mode === 'dark'
@@ -481,6 +479,13 @@ export function applyAll() {
     //   (이미 넘는 색 · 나이트는 그대로, 믹스 · 그라데이션이면 그 색들 위에서도). 흰 종이에서 3 : 1 도 안 되는 파스텔 pop(멜론 · 레몬 · 피치 · 자몽)은 포인트색에서 만든다
     const shaded = mix(pal.text, pal.bg, 0.06);
     const inkBacks = [...tones('bg'), ...tones('surface'), ...tones('accent').flatMap(c => [mix(c, pal.surface, 0.18), mix(c, shaded, 0.13)])];
+    // 1.5.1 위험색: 지우기 단추 글 · 경고 줄처럼 글자로도 써요. 화이트 기본 빨강은 흰 면 4.2 · 떠 있는 면 3.7 : 1 이라 모자랐어요 —
+    //   바탕 · 면 · 떠 있는 면 위에서 4.5 : 1 이 될 때까지만 본문색 쪽으로 섞어요(화이트 약 15% · 색상은 그대로 · 나이트와 이미 넘는 내 테마는 그 색 그대로).
+    //   면으로 쓸 때(지우기 확인 단추)의 흰 글자도 같이 4.5 : 1 을 넘어요
+    const danger = readableInk(pal.danger, pal.text, [...tones('bg'), ...tones('surface'), ...tones('raised')]);
+    vars['--salty-danger'] = danger;
+    vars['--salty-danger-ink'] = mode === 'dark' ? pal.bg : '#FFFFFF';
+    vars['--salty-danger-soft'] = alpha(danger, mode === 'dark' ? 0.16 : 0.12);
     vars['--salty-accent-ink'] = mode === 'dark' ? pal.accent : readableInk(pal.accent, pal.text, inkBacks);
     vars['--salty-pop-ink'] = mode === 'dark' ? pop : readableInk(luminance(pop) <= 0.3 ? pop : pal.accent, pal.text, inkBacks);
     // 1.4.8 보조 글자 잉크: 단추 묶음(.salty-seg) 안 고른 칸 글자. 묶음 면은 음영 두 겹(묶음 카드 · 묶음 판)이라 보조색이 화이트에서 4.3 : 1 —
@@ -810,6 +815,9 @@ export function applyAll() {
     const mbAlbum = want.has('salty') && s.chat.mbAlbumBtn === true;
     if (document.body.hasAttribute('data-bl-mb-album') !== mbAlbum) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-album', mbAlbum); }
     // 미트볼 상태창 편의 기능(설정 찾기 · 맨 위로): 끈 때만 속성 — 맞춤 시트(ext-status.css)와 맞춤 모듈(ext-compat.js)이 이 표식을 보고 숨기고 멈춰요
+    // 1.5.1 미트볼 얼굴 표시: 「이름 첫 글자」를 고른 때만 속성(값 = 색 톤을 켰으면 tone) — 맞춤 시트 · 맞춤 모듈(ext-compat.js)이 이 표식을 보고 얼굴 자리를 글자로 바꿔요. 기본(아이콘)은 속성 없음
+    const mbFace = want.has('salty') && s.chat.mbFace === 'initial' ? (s.chat.mbFaceTone === true ? 'tone' : 'one') : null;
+    if (document.body.getAttribute('data-bl-mb-face') !== mbFace) { restyleAhead(); if (mbFace) document.body.setAttribute('data-bl-mb-face', mbFace); else document.body.removeAttribute('data-bl-mb-face'); }
     const mbPlain = want.has('salty') && s.chat.mbHelpers === false;
     if (document.body.hasAttribute('data-bl-mb-plain') !== mbPlain) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-plain', mbPlain); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }

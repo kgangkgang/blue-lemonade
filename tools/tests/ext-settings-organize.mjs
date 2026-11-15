@@ -118,7 +118,7 @@ test('⑧ 보기 스위치는 문서 몸통에 표식 하나(data-bl-ext-raw)를
     setView(withBtn, false); assert.equal(btn.attrs['aria-pressed'], 'true'); assert.equal(btn.title, '블루레몬 맞춤 화면 켬 — 끄면 원작 화면 그대로');
     assert.match(code, /if \(was && was !== now && recall\(root, 'viewtip'\) !== '1'\)/, '처음 바꿀 때 한 번만 알려요(처음 그릴 때는 안 알려요)');
     assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view::after \{[^}]*mask: var\(--salty-logo\) center \/ contain no-repeat;/, '아이콘은 테마 레몬 표식(단색)');
-    assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view\[aria-pressed="true"\] \{ background: var\(--bl-ui-pick-face\); color: var\(--bl-ui-pick-ink\); \}/, '켜짐은 고른 면 + 테마 파랑');
+    assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view\[aria-pressed="true"\] \{ color: var\(--bl-ui-pick-ink\); \}/, '켜짐은 면 없이 테마 파랑 아이콘만(옆 아이콘과 같은 크기)');
     assert.ok(!/document\.body|documentElement/.test(code), '칸의 문서를 거쳐서만(전역 문서를 직접 잡지 않아요)');
 });
 test('⑨ 설정 찾기(11-15 검수): 줄 이름으로만 찾고(고르기 선택지 · 글 상자 · 덧글은 빼요) · 탭 이름과 함께 돌려줘요 · 찾기 칸은 숨긴 채 끼우고 사건은 맞춤 모듈이 받아요', () => {

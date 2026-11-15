@@ -1920,7 +1920,7 @@ function setBlockHTML(list, id, htmlContent) {
 // {{// ... }} 주석 instead. A run only ever produces one of the two; whichever
 // half already exists is carried over untouched, so running both modes in turn
 // merges into the canonical "본문\n{{// 주석}}" shape.
-async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, forceRetranslate, mode, targetIds, onRetry }) {
+async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, forceRetranslate, mode, targetIds, onRetry, pStatus }) {
     if (isBusy) { if (typeof toastr !== 'undefined') toastr.info('다른 번역이 진행 중이에요. 완료 후 다시 시도해 주세요.'); return; }
     clearTimeout(statusResetTimer);
     const runMode = mode === 'note' ? 'note' : 'body';
@@ -1952,6 +1952,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
     const progress = createTranslationProgress({ targets, ns, part: runMode === 'note' ? '주석' : '본문', isStopped: () => stopReq,
         write: (text, result) => {
             if (stTxt) stTxt.textContent = text;
+            if (pStatus) pStatus.textContent = text;   // 1.5.3 제자리 번역: 패널 머리의 상태 글과 같은 글을 그 칸 아래에도
             const done = result.success + result.cached + result.failed + result.skipped;
             pBar.style.width = Math.round(done / result.total * 100) + '%';
             pLabel.textContent = translationSummary(result);
@@ -2099,6 +2100,7 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
     activeTranslationProgress = null;
     renderTranslationResult(PDOC, pWrap, result, onRetry && (ids => onRetry(ids, runMode, forceRetranslate)));
     if (btnStop) btnStop.disabled=true;
+    announceChange(ns);   // 1.5.3 펼쳐 둔 제자리 번역(월드인포 · 프리셋 칸 옆)이 새 번역을 다시 읽어요
     if (skipped && typeof toastr!=='undefined') {
         toastr.info(`제목 전용 항목 ${skipped}개는 본문 번역에서 제외됨 ( 제목으로 이름만 번역 가능)`);
     }
@@ -3962,6 +3964,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     const empty=page.querySelector(`#${idPfx}-empty`), emptyP=page.querySelector(`#${idPfx}-emptymsg`);
     const btnStop=page.querySelector(`#${idPfx}-stop`), searchEl=page.querySelector(`#${idPfx}-search`);
     const eyeBtn = page.querySelector(`#${idPfx}-eye`);
+    PAGE_VIEWS.add({ ns: () => ns, list, items: () => items });   // 1.5.3 제자리 번역이 끝나면 이 쪽 목록에도 바로 보이게
 
     // ──  Toggle title language (display-only, does not modify cache) ──
     // When ON: each block's name shows the translated title (if available).
@@ -4935,6 +4938,84 @@ export async function translatePlainText(text) {
     } finally { isBusy = false; releaseIdlePages(); }
 }
 
+// ── 1.5.3 제자리 번역 (월드인포 · 프리셋 프롬프트 · 봇카드 칸 · 페르소나 설명 옆 번역 단추) ─────────────
+// 11-15 사용자 「한글화패널로 한글화한거 바로 월드인포나 프리셋에서 한글화버전 볼수있게 · 채팅처럼 번역버튼 누르면 번역본 다시누르면 원문 · 번역 진행사항도 밑에똑같이」
+// 저장 · 진행 · 순서는 이 패널 것 그대로예요: 같은 캐시 열쇠(ns · 항목 id) · 같은 runTranslation(같은 isBusy 줄 · 같은 진행 부품 createTranslationProgress) · 같은 원문 기록(::src).
+// 그래서 패널에서 번역한 것이 제자리에서 보이고, 제자리에서 번역한 것이 패널에도 보여요. 원본 칸의 값은 읽기만 해요(번역본은 따로 그린 읽기 전용 상자).
+const PAGE_VIEWS = new Set();
+function announceChange(ns) { try { PDOC.dispatchEvent(new CustomEvent('bl-kt:changed', { detail: { ns } })); } catch (e) { /* 그대로 */ } }
+const INLINE_NS = { wi: name => `pt-wi::${name}`, preset: name => presetNs(name), char: id => `pt-char::${id}`, persona: id => `pt-persona::${id}` };
+/** 칸 하나를 패널 항목 꼴로: 패널이 불러올 때와 같은 손질(머리줄 · 우리 주석 떼기). liveText = 지금 칸의 글(아직 저장 안 한 고침 포함) */
+async function inlineBlock(kind, target, id, liveText) {
+    if (duplicate || !INLINE_NS[kind] || !target) return null;
+    const list = kind === 'wi' ? await readWorldInfo(target) : kind === 'preset' ? readPresetBlocks(target) : kind === 'char' ? await readCharCard(target) : readPersonaFields(target);
+    const found = (list || []).find(b => String(b.id) === String(id));
+    if (!found || found.titleOnly) return null;
+    const block = { ...found };
+    if (typeof liveText === 'string') {
+        // 월드인포는 패널처럼 키워드 · 필터 머리줄을 앞에 붙여 둔 글이 원문이에요 (칸에는 본문만)
+        const head = kind === 'wi' ? splitKeysAndBody(found.content) : null;
+        const lines = head ? [head.keys && `${KEYS_MARKER} ${head.keys.join(', ')}`, head.filters && `${FILTERS_MARKER} ${head.filters.join(', ')}`].filter(Boolean) : [];
+        block.content = lines.length ? `${lines.join('\n')}\n\n${liveText}` : liveText;
+    }
+    const { source, note } = extractOwnNote(block.content || '');
+    if (note) { block.content = source; block.injectedNote = note; }
+    return { ns: INLINE_NS[kind](target), block, kind };
+}
+/** 캐시의 번역을 칸 위에 보일 글로: 제목 줄 · 월드인포 키워드 머리줄은 떼요. stale = 번역할 때의 원문(::src)과 지금 원문이 달라요 */
+function inlineView({ ns, block, kind }) {
+    const full = getCached(ns, block.id);
+    if (!full) return null;
+    const prev = splitBodyAndNote(splitTitleAndBody(full).body);
+    const orig = (block.content || '').trim();
+    if (!prev.body || (prev.note && prev.body === orig)) return null;   // 주석만 있는 번역 — 본문 번역은 아직
+    let body = joinBodyAndNote(prev.body, prev.note);
+    if (kind === 'wi') body = splitKeysAndBody(body).body;
+    const was = getSource(ns, block.id);
+    return { text: body.trim(), stale: was !== null && was !== orig && orig !== prev.body };
+}
+function inlineProgress() {
+    const wrap = PDOC.createElement('div');
+    wrap.className = 'pt-progress-wrap bl-kt-prog';
+    // 한 줄 글 + 막대. 패널은 「무엇을 번역 중」을 머리 상태 줄에, 같은 숫자 요약을 막대 아래에 두 번 쓰는데, 칸 위에서는 둘이 붙어 겹쳐 보여서
+    // 상태 줄(요약 숫자까지 든 글) 하나만 보여요. 막대 아래 요약 자리(pLabel)는 runTranslation 이 쓰도록 남기되 숨겨요
+    wrap.innerHTML = '<div class="pt-progress-label bl-kt-status"></div><div class="pt-progress-bar-outer"><div class="pt-progress-bar-inner"></div></div><div class="pt-progress-label bl-kt-sum" hidden></div>';
+    const [status, , label] = wrap.children;
+    return { wrap, status, label, bar: wrap.querySelector('.pt-progress-bar-inner') };
+}
+async function inlineTranslate(found, ui) {
+    if (duplicate) throw Object.assign(new Error('따로 설치한 한글화 패널이 켜져 있어 여기서는 번역할 수 없어요.'), { userMessage: true });
+    if (isBusy) throw Object.assign(new Error('한글화 패널에서 다른 번역이 진행 중이에요. 끝난 뒤 다시 눌러 주세요.'), { userMessage: true });
+    ensureUi();   // 번역 길(연결 · 모델 칸)이 패널을 읽어요
+    const { ns, block } = found;
+    const prog = inlineProgress();
+    ui.state.prog = prog.wrap;
+    ui.paint();
+    const list = PDOC.createElement('div');   // 패널 목록 대신 — 칸 위 상자가 결과를 그려요
+    const result = await runTranslation({ items: [block], list, ns, pBar: prog.bar, pLabel: prog.label, pWrap: prog.wrap, pStatus: prog.status, btnStop: null,
+        forceRetranslate: false, mode: 'body', targetIds: [block.id] });
+    // 끝나면 막대를 접고 「… 번역 완료 — 처리 1/1 · 성공 1 …」 한 줄 요약(실패면 그 목록도)만 남겨요
+    prog.bar.parentElement.hidden = true;
+    if (!result) throw Object.assign(new Error('한글화 패널에서 다른 번역이 진행 중이에요. 끝난 뒤 다시 눌러 주세요.'), { userMessage: true });
+    if (result.failed) throw Object.assign(new Error(`번역하지 못했어요 — ${result.failures[0]?.reason || '이유를 모르는 오류'}`), { userMessage: true });
+    if (result.stopped) throw Object.assign(new Error('번역을 멈췄어요.'), { userMessage: true });
+    for (const view of PAGE_VIEWS) {   // 패널에 같은 자료가 불러와져 있으면 그 줄도 바로
+        if (view.ns() !== ns) continue;
+        const row = view.items().find(b => String(b.id) === String(block.id));
+        const full = getCached(ns, block.id);
+        if (row && full) setBlockHTML(view.list, block.id, esc(translationForReading(full, row.content)));
+    }
+    return inlineView(found)?.text || '';
+}
+/** 제자리 번역 단추가 쓰는 길 (inline-targets.js). 패널이 꺼져 있으면(따로 설치한 패널) 아무것도 하지 않아요 */
+export const inlineTranslation = {
+    get available() { return !duplicate; },
+    currentPreset: () => getCurrentPresetName(),
+    block: inlineBlock,
+    view: inlineView,
+    translate: inlineTranslate,
+};
+
 export function openPanel() {
     ensureUi();
     const panel = PDOC.getElementById('pt-panel');
@@ -5219,11 +5300,25 @@ export const ready = new Promise((resolve,reject)=>{ jQuery(async()=>{ try {
         // mountUi 가 같은 머리에 거는 보통(bubble) 리스너는 이 누름의 bubble 단계에서 불려요(리스너 목록은 단계마다 그때 복사) —
         //   그 리스너가 패널을 서랍에 붙이고 pt:opened 를 한 번 내요. 여기서 또 하면 두 번이 돼요(검토 C 5번)
     }, { capture: true });
+    installInline();   // 1.5.3 제자리 번역 단추 (창 요소 몇 개의 class · style 만 봐요 — 모듈은 나중에 받아요)
     console.log(`[${EXT}] loaded`);
     resolve();
     } catch(error) {reject(error);}
 });});
 
+// 1.5.3 제자리 번역: 부팅 그래프 밖에서 받아요(첫 화면 뒤). 캐릭터 · 페르소나가 바뀌면 열린 칸의 열쇠만 다시
+let inlineTargets = null;
+function installInline() {
+    if (duplicate) return;
+    const start = () => import('./inline-targets.js').then(m => {
+        inlineTargets = m.installInlineTargets(inlineTranslation, { doc: PDOC, host: {
+            currentCharacter: () => { try { const ctx = getContext(); return ctx.groupId ? '' : (ctx.characters?.[ctx.characterId]?.avatar || ''); } catch (e) { return ''; } },
+            currentPersona: () => { try { return currentPersona() || ''; } catch (e) { return ''; } },
+        } });
+        try { eventSource.on(event_types.CHAT_CHANGED, () => inlineTargets?.refresh()); } catch (e) { /* 그대로 */ }
+    }).catch(e => console.warn(`[${EXT}] 제자리 번역을 켜지 못했어요`, e));
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(start, { timeout: 4000 }); else setTimeout(start, 1500);
+}
 const SETTINGS_FORM_MARK = '<div id="pt-settings-form">';
 let lazyUi = true, uiBuilt = false, bootDone = false;
 /** 설정 칸 · 패널을 아직 안 만들었으면 지금 만들어요(부팅이 끝난 뒤 · 따로 설치한 패널이 돌면 쉬어요) */

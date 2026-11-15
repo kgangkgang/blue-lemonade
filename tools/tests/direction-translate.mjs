@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+// 1.5.3 번역 보기 공용 부품(src/inline-translate.js) — 아래에서 import 줄을 떼므로 이름을 앞에 붙여 줘요
+globalThis.__blInl = await import(pathToFileURL(path.resolve(process.argv[2] || '.') + '/src/inline-translate.js').href); globalThis.__blInlHead = 'const {createInlineTranslate,TR_ICON,TR_FAIL,trBoxInner:sharedTrBoxInner,trIconHtml}=globalThis.__blInl;';
 const root = path.resolve(process.argv[2] || '.'), url = pathToFileURL(root + '/');
 const read = rel => fs.readFile(path.join(root, rel), 'utf8');
 
@@ -91,7 +93,7 @@ globalThis.__dirPlace=(await import(new URL('src/addons/direction/prompt.js', ur
 const ext = { salty: { addons: { prompt: true } } };
 globalThis.__directionTest = { ext, insertInstructions, saves: 0, context: { substituteParams: text => String(text) } };
 const js = await read('src/addons/direction/index.js');
-const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
+const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '').replace(/^/, globalThis.__blInlHead);
 const prelude = 'const addonRunning=()=>true;const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>"example-model";const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
 const hooks = '\nexport function __state(p,e,o,s){popup=p;promptEdit=e;openPromptId=o;settingsRoot=s;}\nexport {initSettings,settings,promptRow,promptEditor,onPromptsInput,onTranslateAct,trStates,trMemo,TR_FAIL};';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + hooks).toString('base64'));
@@ -153,7 +155,7 @@ await test('펼친 줄: 번역본 상자가 내용 위 · 원문 라벨은 상�
     assert.deepEqual(acts, ['up', 'down', 'translate', 'jj-pspacer', 'edit', 'delete']);
     assert.equal(button().getAttribute('aria-label'), '번역 보기');
     assert.equal(button().getAttribute('aria-expanded'), 'false');
-    assert.match(button().innerHTML, /fa-solid fa-language/);
+    assert.match(button().innerHTML, /class="jj-tr-svg"/, '1.5.3 같은 모양 SVG');
 });
 
 await test('누르면 번역본이 열리고(진행 표시 → 번역문) · 다시 누르면 접힘 · 또 누르면 요청 없이 바로', async () => {
@@ -169,7 +171,7 @@ await test('누르면 번역본이 열리고(진행 표시 → 번역문) · 다
     pending.release(); pending = null; await tick(); await tick();
     assert.equal(text(), '[ko] Polish the prose.');
     assert.equal(button().getAttribute('aria-busy'), 'false');
-    assert.match(button().innerHTML, /fa-language/);
+    assert.match(button().innerHTML, /jj-tr-svg/);
     assert.equal(button().getAttribute('aria-expanded'), 'true');
     assert.equal(box().querySelector('.jj-tr-stale').hidden, true);
     assert.equal(box().querySelector('.jj-tr-redo').hidden, true);
@@ -317,7 +319,8 @@ await test('엔진 재사용 · 아이콘 · 모양(아이콘 단추 규격 · 1
     assert.match(js, /trEngine = \{ cached: text => panel\.cachedTextTranslation\(text\), translate: text => panel\.translatePlainText\(text\) \};/);
     assert.doesNotMatch(js, /fetch\(|\/api\/backends|chat-completions|runCompletion/, 'no translation path of its own');
     assert.match(panel, /<button class="pt-btn pt-btn-primary pt-act"\s+id="\$\{idPfx\}-trans"><i class="fa-solid fa-language"/, 'panel 번역 button icon');
-    assert.match(js, /const TR_ICON = 'fa-solid fa-language';/, 'same icon');
+    assert.match(await read('src/inline-translate.js'), /export const TR_ICON = 'fa-solid fa-language';/, 'same icon (1.5.3 공용 부품)');
+    assert.ok(js.includes("import { createInlineTranslate, TR_ICON, TR_FAIL, trBoxInner as sharedTrBoxInner, trIconHtml } from '../../inline-translate.js';"), '공용 부품을 씀');
     const css = await read('src/addons/direction/style.css');
     const rule = sel => { const at = css.indexOf(`${sel} {`); assert.ok(at >= 0, sel); return css.slice(at, css.indexOf('}', at)); };
     const btn = rule(':is(#jj-popup, #jj-settings) .jj-tr-btn:not(.jj-pbtn)');   // 깃털 창 줄 안에서는 옆 ↑ ↓ 와 같은 jj-pbtn 모양

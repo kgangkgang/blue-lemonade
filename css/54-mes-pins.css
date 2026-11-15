@@ -48,7 +48,7 @@ body.salty.salty-icons-line #chat .mes .bl-pinned:is(.mes_legacy_translate, .mes
   mask: var(--salty-mi) center / contain no-repeat;
 }
 body.salty.salty-icons-line #chat .mes .bl-pinned {
-  font-size: 16px !important; /* 7.9.1: 18 → 16 — 이름 줄 다른 아이콘(FA 12.5)과 같은 글리프 칸(선 그림 마스크 16). 18 이라 꺼낸 🧠 · 🔍 만 커 보였다 */
+  font-size: 20px !important; /* 1.5.1 아이콘 전수조사: 16 → 20 — 이름 줄 단추 전부(css/05-chat.css) · ⋯ 메뉴 안과 같은 칸(그림 ≈ 15). 16 은 그림이 12px 라 폰에서 잘 안 보였어요 (7.9.1: 18 → 16 은 이름 줄 다른 아이콘과 맞추려던 것) */
 }
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_legacy_translate { --salty-mi: var(--salty-mi-brain); }
 body.salty.salty-icons-line #chat .mes .bl-pinned.mes_llm_translate { --salty-mi: var(--salty-mi-swap); }

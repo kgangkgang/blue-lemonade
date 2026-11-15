@@ -68,6 +68,7 @@ body.bl-ms-lock-prompt :is(#pt-connection-mode, #pt-provider, #pt-model-select, 
 #model-switch-settings .ms-presets{display:flex;flex-wrap:wrap;gap:8px}
 #model-switch-settings .ms-chip{flex:1 1 10em;padding:6px 10px}
 #model-switch-settings .ms-chip-add{flex:0 0 auto;width:var(--bl-h-ctl,36px);min-height:var(--bl-h-ctl,36px);padding:0;align-items:center}
+#model-switch-settings .ms-chip-add>i{translate:0 .8px}/* 1.5.2 면 안 가운데: 더하기 잉크가 단추 가운데보다 0.87px 위 */
 #model-switch-settings .ms-icon{width:var(--bl-h-icon,34px);height:var(--bl-h-icon,34px);min-width:var(--bl-h-icon,34px);min-height:var(--bl-h-icon,34px);border-radius:var(--bl-r-sm,8px)}
 #model-switch-settings .ms-option{min-height:var(--bl-h-icon,34px);padding:6px 10px}
 #model-switch-settings .ms-targets{gap:0;padding:0 10px;border:1px solid var(--salty-line,var(--SmartThemeBorderColor,#5555));border-radius:var(--bl-r-md,12px);background:var(--salty-fill-surface,var(--salty-surface,transparent))}

@@ -168,7 +168,10 @@ html body .salty-panel.bl-editor .bl-settings-toprow button {
   border-radius: var(--bl-settings-radius);
 }
 html body .salty-panel.bl-editor .bl-editor-actions button { display:inline-flex; align-items:center; justify-content:center; }
-.bl-editor .bl-editor-actions svg { display:block; }
+.bl-editor .bl-editor-actions svg { display:block; width:20px; height:20px; margin:-2px; }   /* 1.5.1 아이콘 전수조사: 16 → 20(1.5.2: 19 → 20 — 32 칸 안에서 홀수 19 는 PC 에서 반 화소가 남아 0.8px 치우쳤어요) — 되돌리기 · 다시 실행 · 검색의 그림이 12px(32 칸의 4할 · 선 1.28px)라 폰에서 흐렸어요. 그림 ≈ 16 · 선 1.6px. 칸 폭 32 는 그대로(여백 −2) */
+.bl-editor .bl-editor-actions [data-act^="history-"] svg { translate:0 -1.2px; }
+.bl-editor .bl-editor-actions [data-act="history-redo"] svg { translate:-.9px -1.2px; }
+.bl-editor .bl-editor-actions .bl-editor-search-button svg { translate:-.5px -.2px; }   /* 1.5.2 면 안 가운데: 그림의 잉크 가운데를 단추 가운데로(다시 실행은 오른쪽 0.9 · 검색은 손잡이 쪽 0.5 치우침) */   /* 되돌리기 · 다시 실행 그림은 20칸 안에서 아래로 치우쳐 있어요(폰 384 화소 측정 +1.4px → +0.4) */
 html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   width: var(--bl-settings-control);
 }
@@ -426,6 +429,9 @@ html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world
 html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > :is(span, small, strong, b):not(.bl-wi-help):has(~ .bl-wi-help) { flex:0 1 auto!important; }   /* :has 는 고를 칸에(has-invalidation-scope) */
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > .bl-wi-help:not(:has(~ .bl-wi-help)) { margin-right:auto!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .world_entry_form_control > .bl-wi-help { margin-left:calc(var(--bl-help-gap) - 2px)!important; }
+/* 1.5.2 월드인포 칸 ? 의 세로: 공용 올림값(--bl-help-y −0.085em — 줄 높이가 큰 제목 줄에서 글자가 위로 붙는 몫)은 여기서 넘쳤어요. 월드인포의 칸 이름은 줄 높이가 낮은 작은 글자라 글자가 줄 가운데에 거의 그대로 있어서,
+   ? 만 1.05 ~ 1.33px 위에 떴어요(디자인 관문 가운데 검사 · 열두 곳 넘게 같은 값). 올림을 걷어 줄 가운데에 둬요 */
+html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .bl-wi-help { --bl-help-y: 0em; }
 /* 1.1.5 (11-12 폰 사진 「삽입 방스?」「이름 포힘?」): 전역 설정 체크 줄 이름 · 「삽입 방식」 이름은 flex 가 아니라 글 줄이라 위 column-gap 8 이 안 생겨요 — 거기서 8 을 빼면 ? 가 -2.6px 로 마지막 글자를 덮었어요(한국어는 뒤 공백도 없음). 글 줄 칸은 간격 그대로 */
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(#wiCheckboxes label.checkbox_label > small, #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) > small) > .bl-wi-help { margin-left:var(--bl-help-gap)!important; }
 /* 실리태번 서랍의 맨 아이콘 ? · ⓘ: 부모 flex gap 만큼 */

@@ -1728,3 +1728,13 @@ body.salty #rm_extensions_block .regex-script-label label.menu_button.regex_scri
   }
 }
 /* ===== /surfaces:sweep ===== */
+/* 1.5.2 통합: css/88-ui-parts.css 의 「이름표 글자 + 크게 보기 아이콘」 줄 규칙(설명은 그 자리 주석) — 크게 보기 아이콘은 서랍 · 창 안에만 있어 둘째 장으로 옮겼어요(첫 장 :has( 상한) */
+@supports (height: 1cap) {
+  body.salty:not(#salty-none) :has(> .editor_maximize) { --bl-ink-cap: 1cap; --bl-ink-row: 1; }
+  body.salty:not(#salty-none) [data-bl-row~="smax"]:is(bl-s, *) { --bl-ink-cap: calc(1cap * 5 / 6); }   /* 표식 smax = 「<small> 이름표 + 크게 보기」 줄(src/icon-text.js 가 붙여요) */
+  body.salty:not(#salty-none) :has(+ .editor_maximize):not(#salty-none) { align-self: baseline !important; }
+  body.salty:not(#salty-none) .editor_maximize:not(#salty-none) { align-self: baseline !important; font-size: calc(var(--bl-ink-cap) / .75) !important; line-height: 1 !important; }
+  body.salty:not(#salty-none) :is(#right-nav-panel, #character_popup) .editor_maximize ~ .jj-tr-btn.bl-kt-btn { margin-block: -4px; }
+  body.salty:not(#salty-none) #PersonaManagement .editor_maximize ~ .jj-tr-btn.bl-kt-btn { margin-block: -8px; }
+  /* 프리셋 편집 창의 「프롬프트」 이름표 줄은 css/59-prompt-ux.css 끝(둘째 장 · 그 창이 있는 서랍을 열 때 받아요)으로 — 첫 장 :has( 상한 149 를 넘지 않게(1.5.2 통합) */
+}

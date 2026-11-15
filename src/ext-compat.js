@@ -32,8 +32,9 @@ export const SETS = [
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   1.9.61(2026-11-14 점검 대본 대조): 바뀐 것은 백그라운드 답장의 반쪽 답을 건너뛰는 사건 처리뿐 — 화면 · CSS · 선택자 39개 · 구조 표식 8개 그대로라 맞춤도 그대로예요.
     //   1.9.64(2026-11-14 저녁 점검 대본 대조): 주요 단추 색이 갈색(제 색 변수) · 설정 숫자 칸 셋 · 움직임 줄이기 규칙 — 깨진 선택자 0 · 새 AI 요청 길 0 이라 맞춤 그대로예요.
+    //   1.9.66(2026-11-15 점검 대본 대조 · 1.9.65 를 덮는 판): 요약 언어를 요청 끝에 다시 알림 · 기억을 요약 언어로 맞추기(더보기 메뉴 한 줄) · 되감은 요약은 회상에서 뺌(보관함 칩 하나) — 원작 CSS 안 바뀜 · 선택자 39 · 구조 표식 8/8 그대로예요.
     //   「색 두기」 안: 그 확장의 제 색 · 글꼴은 그대로 — 설정 내용 칸(native)에 「원래 색 유지」 표식을 붙여 테마 색 규칙이 비켜 가게 하고, 낮밤 표식(mode)을 테마 밝기에 다시 맞춰요.
-    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60', '1.9.61', '1.9.64'] },
+    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60', '1.9.61', '1.9.64', '1.9.66'] },
     // Memoria — 2.0.4 화면에서 확인(2026-11-13). 원작이 실리태번 색 변수를 따라가서 선 · 머리줄만 맞춰요.
     //   2.1.0(2026-11-14 점검 대본 대조): 설정 「기본」에 같은 꼴의 숫자 칸 하나(묶어 기록 · .memoria__field) — 선택자 9개 · 구조 표식 3개 · CSS 그대로라 맞춤도 그대로예요. 리그 사진은 아직.
     { root: '#memoria_settings', mark: '.memoria__version', css: './ext-memoria.css', version: '.memoria__version', name: 'Memoria', verified: ['2.0.4', '2.1.0'] },
@@ -172,6 +173,127 @@ export function armTop(dlg) {
     }, { passive: true });
     return true;
 }
+/** 얼굴을 이름 첫 글자로(1.5.1 사용자 「아이콘으로 뜨니까 누가 누군지 알 수가 없다」 · 테마 설정 「미트볼 얼굴 표시」): 그 확장은 얼굴 요소의 title 에 이름을 적어요.
+ *  첫 글자 = 괄호 안 별칭을 떼고, 맨 앞의 글자 아닌 것(그림 글자 · 기호 · 공백)을 건너뛴 첫 글자(영문은 대문자). 첫 글자가 같은 사람이 둘 이상이면 그 사람들만 둘째 글자까지. */
+const LETTERS = name => [...String(name || '').replace(/^\s*[(（\[【][^)）\]】]*[)）\]】]\s*/u, '').replace(/\s*[(（\[【].*$/u, '')].filter(ch => /[\p{L}\p{N}]/u.test(ch));
+export function initialOf(name, n = 1) {
+    const ls = LETTERS(name).length ? LETTERS(name) : [...String(name || '')].filter(ch => /[\p{L}\p{N}]/u.test(ch));
+    return ls.slice(0, n).map(ch => /[a-z]/i.test(ch) ? ch.toUpperCase() : ch).join('') || '?';
+}
+export function initialsFor(names) {
+    const uniq = [...new Set(names.map(String))], count = new Map();
+    for (const name of uniq) { const k = initialOf(name); count.set(k, (count.get(k) || 0) + 1); }
+    return new Map(uniq.map(name => [name, count.get(initialOf(name)) > 1 ? initialOf(name, 2) : initialOf(name)]));
+}
+export const FACE_TONES = 4;
+export const toneOf = name => { let h = 0; for (const ch of String(name)) h = (h * 31 + ch.codePointAt(0)) % 9973; return h % FACE_TONES; };
+const FACES = ':is(.ss-ava.emo, .ss-tf)[title]';
+/** 1.5.2 보이는 이름으로: 그 확장의 「화면만 번역」은 글자 마디만 바꾸고 얼굴 title 은 영어 원문이에요 — 번역 메우기(ext-bridge-tr.js)가 그 확장의 사전 바꾸기를 여기 걸어
+ *  첫 글자가 화면의 한국어 이름을 따라가요. 톤은 원문 이름으로(번역이 바뀌어도 사람 색이 그대로). 걸린 게 없으면 원문 그대로. */
+let faceName = name => name;
+export function setFaceName(fn) { faceName = typeof fn === 'function' ? fn : (name => name); }
+const shownName = name => { try { const out = faceName(name); return typeof out === 'string' && out.trim() ? out : name; } catch { return name; } };
+/** 화면의 얼굴 요소 전부에 첫 글자 · 톤 표식 — 설정이 「아이콘」이면 아무것도 안 해요(표식이 남아 있어도 시트가 안 봐요) */
+export function paintFaces(doc) {
+    if (!doc?.body?.hasAttribute?.('data-bl-mb-face')) return 0;
+    const els = [...doc.querySelectorAll(FACES)];
+    const names = els.map(el => el.getAttribute('title')), shown = names.map(shownName);
+    const map = initialsFor(shown);
+    els.forEach((el, k) => { const ini = map.get(String(shown[k])); if (el.getAttribute('data-bl-ini') !== ini) el.setAttribute('data-bl-ini', ini); const tone = String(toneOf(names[k])); if (el.getAttribute('data-bl-tone') !== tone) el.setAttribute('data-bl-tone', tone); });
+    return els.length;
+}
+/** 미트볼 「꾸미기」 창에 테마 칸 끼우기(1.5.2 사용자 「블루레몬에 넣지 말고 미트볼 꾸미기 쪽에」): 「크기 · 모양」 묶음 바로 아래에 「블루레몬 꾸미기」 묶음 하나 —
+ *  글꼴(누르면 테마 글꼴 고르개가 열려요) · 얼굴 표시(아이콘 / 이름 첫 글자) · 사람마다 색 톤. 그 확장의 묶음 · 줄 · 고르기 · 스위치 class 를 그대로 써요.
+ *  값은 테마 설정에만 저장해요(그 확장 설정에는 안 써요). 그 확장이 창을 다시 그릴 때마다 다시 끼워요(같은 0.001초 신호 · 감시자 없음). 지금 값은 테마가 body · 문서에 걸어 둔 표식에서 읽어요. */
+export function decoState(doc) {
+    const face = doc.body?.getAttribute?.('data-bl-mb-face');
+    let font = ''; try { font = String(doc.defaultView.getComputedStyle(doc.documentElement).getPropertyValue('--salty-font-mb') || '').trim(); } catch { /* 따라가기로 */ }
+    const own = !!font && font !== 'initial';
+    return { face: face ? 'initial' : 'icon', tone: face === 'tone', font: own ? (font.split(',')[1] || font).replace(/['"]/g, '').trim() : '' };
+}
+export function decoTheme(tw) {
+    const doc = tw?.ownerDocument; if (!doc || doc.body?.hasAttribute?.('data-bl-ext-raw')) return false;
+    let box = tw.querySelector(':scope > .bl-ext-deco');
+    if (!box) {
+        const after = [...tw.querySelectorAll(':scope > .ss-sec')].find(sec => /^크기/.test(sec.querySelector('h4')?.textContent || '')) || [...tw.querySelectorAll(':scope > .ss-sec')].at(-1);
+        if (!after) return false;
+        box = doc.createElement('section'); box.className = 'ss-sec bl-ext-deco';
+        after.after(box);
+    }
+    const st = decoState(doc);
+    // 테마가 끼운 묶음 안만 새로 그려요(그 확장의 요소는 그대로) — 글자열로 끼우지 않고 요소를 하나씩 만들어요
+    const h = (tag, cls, text, attrs) => { const el = doc.createElement(tag); if (cls) el.className = cls; if (text) el.textContent = text; for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, v); return el; };
+    const kids = (el, ...list) => { for (const k of list) if (k) el.append(k); return el; };
+    const head = kids(h('div', 'ss-sec-h'), kids(h('h4'), h('i', 'bl-ext-lemon', '', { 'aria-hidden': 'true' }), doc.createTextNode('블루레몬 꾸미기 '), h('small', '', '테마가 더한 칸 · 미트볼 상태창에만 걸려요')));
+    const font = kids(h('div', 'ss-f wide'), h('span', '', '글꼴'), h('button', 'ss-btn sm bl-ext-deco-act', `${st.font ? '따로 고른 글꼴' : '테마 글꼴 따라가기'} · 고르기`, { type: 'button', 'data-bl-deco': 'font' }));
+    const face = kids(h('div', 'ss-f wide'), h('span', '', '얼굴 표시'), kids(h('div', 'ss-seg'), h('button', st.face === 'icon' ? 'bl-ext-deco-act on' : 'bl-ext-deco-act', '아이콘', { type: 'button', 'data-bl-deco': 'face:icon' }), h('button', st.face === 'initial' ? 'bl-ext-deco-act on' : 'bl-ext-deco-act', '이름 첫 글자', { type: 'button', 'data-bl-deco': 'face:initial' })));
+    let tone = null;
+    if (st.face === 'initial') { const input = h('input', 'ss-switch bl-ext-deco-act', '', { type: 'checkbox', 'data-bl-deco': 'tone' }); input.checked = st.tone; tone = kids(h('div', 'ss-pills'), kids(h('label', 'ss-tog'), input, h('span', '', '사람마다 색 톤'))); }
+    box.textContent = ''; box.append(head, font, face, ...(tone ? [tone] : []));   // 테마가 끼운 묶음 안만 비우고 다시 채워요
+    if (st.font) fontLabel().then(name => { const b = box.querySelector('[data-bl-deco="font"]'); if (b && name) b.textContent = `${name} · 바꾸기`; }).catch(() => { /* 「따로 고른 글꼴」 그대로 */ });
+    return true;
+}
+/** 고른 미트볼 글꼴의 이름(테마 설정 · 글꼴 목록에서 — 꾸미기 창을 그릴 때만 받아요) */
+export async function fontLabel(load = () => Promise.all([import('./settings.js'), import('./fonts.js')])) {
+    const [settings, fonts] = await load();
+    const set = settings.getSettings()?.fonts?.mb;
+    if (!set || set === 'same') return '';
+    const id = typeof set === 'string' ? set : set.ko;
+    return fonts.findFont(id)?.label || String(id || '');
+}
+/** 끼운 칸 누름: 테마 설정을 바꿔요(설정 창 모듈의 updateSettings — 누를 때만 받아요) · 글꼴은 테마 설정 창을 그 칸만 보이게 열어요 */
+export async function decoAct(el, load = () => import('./panel.js')) {
+    const act = el?.getAttribute?.('data-bl-deco'); const doc = el?.ownerDocument; if (!act || !doc) return false;
+    if (act === 'font') { doc.defaultView?.Salty?.openPopup?.(false, 'mb-deco'); return true; }
+    const panel = await load();
+    if (act === 'tone') panel.updateSettings(st => { st.chat.mbFaceTone = !!el.checked; });
+    else if (act.startsWith('face:')) panel.updateSettings(st => { st.chat.mbFace = act.slice(5) === 'initial' ? 'initial' : 'icon'; });
+    const tw = el.closest('.ss-tw'); if (tw) decoTheme(tw);
+    return true;
+}
+let facesQueued = false;
+/** 띠 한 줄(1.5.1 사용자 「줄이면 알아서 한 줄」): 폰 타일 판(네 칸)에서 마지막 줄의 오른쪽 need 칸이 비어 있는지 — 타일 자리는 그 확장이 인라인 style 에 적어요(배치를 재지 않아요).
+ *  tiles: [{ c, r, w, h }](1 부터) */
+export function actsFit(tiles, cols = 4, need = 2) {
+    if (!tiles.length || need > cols) return false;
+    const last = Math.max(...tiles.map(t => t.r + t.h - 1));
+    return !tiles.some(t => t.r <= last && t.r + t.h - 1 >= last && t.c + t.w - 1 > cols - need);
+}
+const SPAN = /^\s*(\d+)\s*\/\s*span\s+(\d+)/;
+export function fitActs(tb) {
+    const tg = tb.querySelector?.('.ss-tg'), acts = tb.querySelector?.('.ss-tb-acts');
+    let fit = false;
+    if (tg && acts && !tb.classList.contains('editing') && Number(tg.style.getPropertyValue('--cols')) === 4 && !tb.querySelector('.ss-t-det')) {
+        const tiles = [];
+        for (const t of tg.querySelectorAll(':scope > .ss-t')) { const c = SPAN.exec(t.style.gridColumn || t.style.gridColumnStart + ' / ' + t.style.gridColumnEnd), r = SPAN.exec(t.style.gridRow || t.style.gridRowStart + ' / ' + t.style.gridRowEnd); if (!c || !r) { tiles.length = 0; break; } tiles.push({ c: +c[1], w: +c[2], r: +r[1], h: +r[2] }); }
+        fit = actsFit(tiles, 4, acts.children.length > 5 ? 3 : 2);
+    }
+    if (fit) tb.setAttribute('data-bl-acts', 'in'); else tb.removeAttribute('data-bl-acts');
+    return fit;
+}
+/** 띠 종(알림함)의 숫자 배지(1.5.2 사용자 결정): 10 이상은 화면에서만 「9+」 — 배지가 늘 한 자리 크기라 종을 덜 가려요. 그 확장이 적은 글자(실제 숫자)는 그대로 두고
+ *  표시용 글자를 표식(data-bl-n)에 적어 시트가 그려요(한 자리 숫자도 — 시트가 글자 잉크를 배지 가운데에 놓으려면 제 상자가 있는 글자여야 해요). 정확한 숫자는 배지의 설명(title)에 남겨요. 띠가 다시 그려질 때마다 다시 맞춰요. */
+export const badgeLabel = text => { const s = String(text || '').trim(); const n = parseInt(s, 10); return !Number.isFinite(n) || n < 1 ? '' : (n >= 10 || /\+$/.test(s)) ? '9+' : String(n); };   // 1 ~ 9 는 그 숫자 · 10 이상과 「99+」는 「9+」 · 숫자가 아니면 표식 없음
+export function markBadge(tb) {
+    let n = 0;
+    for (const b of tb.querySelectorAll?.('.ss-tb-acts .ss-t.ic > b.al') || []) {
+        const label = badgeLabel(b.textContent);
+        if (label) { b.setAttribute('data-bl-n', label); if (label === '9+') { b.setAttribute('title', `알림 ${String(b.textContent).trim()}개`); n++; } else if (b.hasAttribute?.('title')) b.removeAttribute('title'); } else if (b.hasAttribute?.('data-bl-n')) { b.removeAttribute('data-bl-n'); b.removeAttribute('title'); }
+    }
+    return n;
+}
+/** 이름표 → 값 목록(프로필 · 관계 · 장소): 값이 긴 칸(열세 자 넘거나 줄바꿈 — 폰 반 폭에 한 줄로 안 들어가는 길이)에 표식 — 두 단을 가로질러 통째 한 줄(src/ext-status.css). 글자 수만 봐요(배치를 재지 않아요) */
+export const LONG_VALUE = 13;
+export function markLong(dl) {
+    let n = 0;
+    for (const dd of dl.querySelectorAll?.(':scope > dd') || []) {
+        const text = (dd.textContent || '').trim(), long = text.length > LONG_VALUE || /[\r\n]/.test(text);
+        const dt = dd.previousElementSibling?.tagName === 'DT' ? dd.previousElementSibling : null;
+        for (const el of [dd, dt]) if (el) { if (long) el.setAttribute('data-bl-long', ''); else el.removeAttribute('data-bl-long'); }
+        if (long) n++;
+    }
+    return n;
+}
 const plain = doc => !!doc.body?.hasAttribute?.('data-bl-mb-plain');   // 테마 설정 「미트볼 상태창 편의 기능」을 끈 때(src/apply.js 가 달아요)
 
 /** 탭을 만든 뒤에 끼어든 줄은 첫 탭 것으로(11-15 검수): 테마의 「확장 탭에 보이기」 줄(src/headswitch.js)은 내용 칸 맨 앞에 끼워져요 — 탭보다 먼저 끼워지면 첫 탭 번호를 받지만,
@@ -304,6 +426,7 @@ export function startExtCompat(doc = globalThis.document) {
             const target = event.target;
             if (!strip) ensureStrip(doc);   // 그 확장의 판(안쪽 탭 줄)은 설정 서랍을 거치지 않고도 열려요 — 등록부가 생긴 뒤 첫 누름에 넣어요(넣은 뒤로는 안 봐요)
             if (!target?.closest) return;
+            { const deco = target.closest('.bl-ext-deco-act'); if (deco && deco.tagName !== 'INPUT') decoAct(deco).catch(() => { /* 설정 창 모듈을 못 받으면 그대로 */ }); }   // 미트볼 꾸미기 창에 끼운 테마 칸
             const tab = target.closest(`.${TAB}`);
             if (tab) {
                 const root = SETS.map(set => tab.closest(set.root)).find(Boolean);
@@ -363,8 +486,18 @@ export function startExtCompat(doc = globalThis.document) {
         }, true);
         // 값이 바뀌면 접힌 줄의 「지금 값」을 다시 적어요(그 확장 칸 안의 바뀜만)
         // 설정 찾기 칸에 적을 때만 목록을 다시 그려요(다른 칸의 입력은 첫 줄에서 돌아가요)
+        // 1.5.1 다시 그려진 띠 · 이름표 목록: 맞춤 시트가 새 요소에 거는 애니메이션의 시작 하나로 알아채요 — 감시자 · 타이머 없음
+        doc.addEventListener('animationstart', event => {
+            if (event.animationName !== 'ss-pulse') return;   // 맞춤 시트가 띠 · 이름표 목록에 0.001초로 거는 그 확장의 키프레임 — 지도의 깜빡이는 고리도 같은 이름이라 아래에서 요소로 가려요
+            const el = event.target;
+            try {
+                if (el?.classList?.contains('ss-tb')) { fitActs(el); markBadge(el); } else if (el?.tagName === 'DL') markLong(el);
+                else if (el?.classList?.contains('ss-wz-head') && el.parentElement?.classList?.contains('ss-tw')) decoTheme(el.parentElement);
+                else if (el?.matches?.(FACES) && !facesQueued) { facesQueued = true; queueMicrotask(() => { facesQueued = false; try { paintFaces(doc); } catch { /* 아이콘 그대로 */ } }); }   // 얼굴 여럿이 한꺼번에 그려져도 한 번만 훑어요
+            } catch { /* 원래 배치 그대로 */ }
+        }, true);
         doc.addEventListener('input', event => { const box = event.target; if (!box?.classList?.contains('bl-ext-find')) return; const root = SETS.map(set => box.closest(set.root)).find(Boolean); if (root) renderFound(root, box.value); }, true);
-        doc.addEventListener('change', event => { const root = SETS.map(set => event.target?.closest?.(set.root)).find(Boolean); if (root?.dataset?.blOrg) refreshSummaries(root); }, true);
+        doc.addEventListener('change', event => { if (event.target?.tagName === 'INPUT' && event.target.classList?.contains('bl-ext-deco-act')) { decoAct(event.target).catch(() => { }); return; } const root = SETS.map(set => event.target?.closest?.(set.root)).find(Boolean); if (root?.dataset?.blOrg) refreshSummaries(root); }, true);
     }
     buildAll(doc);
     ensureStrip(doc);

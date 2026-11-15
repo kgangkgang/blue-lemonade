@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build da8791be2552) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 3d9e1013ab22) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
-:root{--bl-release:"1.5.1";}
+:root{--bl-release:"1.5.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -135,6 +135,11 @@ box-shadow:var(--bl-open-halo);
 }
 body.salty.salty-icons-line #top-settings-holder .drawer-icon {
   font-size: 21px !important;
+}
+@media (max-width: 1000px) {
+  body.salty.salty-icons-line #top-settings-holder .drawer-icon {
+    font-size: 24px !important;
+  }
 }
 body.salty .drawer-content:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
 background:var(--bl-fill-page, var(--bl-page)) !important;
@@ -1669,6 +1674,7 @@ body.salty.salty-icons-line #jj-popup[data-jj-level] .jj-popup-title > i::before
   mask-image: none;
   font-size: 0.8em;
 }
+body.salty.salty-icons-line #jj-button[data-jj-level] > i { translate: -.4px 1px; }
 body.salty.salty-icons-line :where(i):is(#jj-button[data-jj-level="1"] > i):is(.bl-s, *)::before,
 body.salty.salty-icons-line #jj-popup[data-jj-level="1"] .jj-popup-title > i::before {
   -webkit-text-stroke-width: 1.3px;
@@ -2387,7 +2393,18 @@ body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes .extraMesBut
   cursor: pointer;
 }
 body.salty:not(.expandMessageActions).salty-icons-line :is(#chat,.bl-chat-like) .mes .extraMesButtons > * {
-  font-size: 19px !important;
+  font-size: 20px !important;
+}
+body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .mes_buttons {
+  font-size: 20px !important;
+}
+body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes :is(.mes_buttons, .extraMesButtons) > .mes_button {
+  position: relative;
+}
+body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes :is(.mes_buttons, .extraMesButtons) > .mes_button::before {
+  position: absolute;
+  inset: 0;
+  margin: auto;
 }
 body.salty:not(.expandMessageActions) :is(#chat,.bl-chat-like) .mes .extraMesButtons > .mes_delete_translation {
   order: 2;
@@ -4106,11 +4123,11 @@ body.salty {
   --salty-mi-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M9.6%209.4a2.5%202.5%200%200%201%204.9.8c0%201.7-2.5%202.3-2.5%202.3%22%2F%3E%3Cpath%20d%3D%22M12%2016.3h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
 }
 body.salty.salty-icons-line {
-  --salty-mi-brain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%205.6a2.9%202.9%200%200%200-5.6-.9A2.9%202.9%200%200%200%204.2%209a3.2%203.2%200%200%200%20.2%205.6%203.1%203.1%200%200%200%203.4%204.3A2.9%202.9%200%200%200%2012%2019.4M12%205.6a2.9%202.9%200%200%201%205.6-.9A2.9%202.9%200%200%201%2019.8%209a3.2%203.2%200%200%201-.2%205.6%203.1%203.1%200%200%201-3.4%204.3%202.9%202.9%200%200%201-4.2.5M12%205.6v13.8M8.6%209.6c1.1.2%202%20.9%202.4%201.9M15.4%209.6c-1.1.2-2%20.9-2.4%201.9%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-brain: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(12%2012)%20scale(.88)%20translate(-12%20-11.45)%22%20stroke-width%3D%222.05%22%3E%3Cpath%20d%3D%22M12%205.6a2.9%202.9%200%200%200-5.6-.9A2.9%202.9%200%200%200%204.2%209a3.2%203.2%200%200%200%20.2%205.6%203.1%203.1%200%200%200%203.4%204.3A2.9%202.9%200%200%200%2012%2019.4M12%205.6a2.9%202.9%200%200%201%205.6-.9A2.9%202.9%200%200%201%2019.8%209a3.2%203.2%200%200%201-.2%205.6%203.1%203.1%200%200%201-3.4%204.3%202.9%202.9%200%200%201-4.2.5M12%205.6v13.8M8.6%209.6c1.1.2%202%20.9%202.4%201.9M15.4%209.6c-1.1.2-2%20.9-2.4%201.9%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-swap: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%204%204.5%207.5%208%2011M4.5%207.5h14M16%2013l3.5%203.5L16%2020M19.5%2016.5h-14%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-search: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2210.8%22%20cy%3D%2210.8%22%20r%3D%226.3%22%2F%3E%3Cpath%20d%3D%22m15.5%2015.5%204.5%204.5%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-squarepen: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M11.5%204.5H6.5a2%202%200%200%200-2%202v11a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2v-5%22%2F%3E%3Cpath%20d%3D%22M17.9%203.9a2%202%200%200%201%202.9%202.9l-8%208-3.6.8.8-3.6z%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-wrench: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14.6%206.4a4.3%204.3%200%200%200-5.7%205.2l-5%205a1.9%201.9%200%200%200%202.7%202.7l5-5a4.3%204.3%200%200%200%205.2-5.7l-2.6%202.6-2.3-.3-.3-2.3z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-squarepen: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(-0.95%200.65)%22%3E%3Cpath%20d%3D%22M11.5%204.5H6.5a2%202%200%200%200-2%202v11a2%202%200%200%200%202%202h11a2%202%200%200%200%202-2v-5%22%2F%3E%3Cpath%20d%3D%22M17.9%203.9a2%202%200%200%201%202.9%202.9l-8%208-3.6.8.8-3.6z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  --salty-mi-wrench: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(1.8%20-0.95)%22%3E%3Cpath%20d%3D%22M14.6%206.4a4.3%204.3%200%200%200-5.7%205.2l-5%205a1.9%201.9%200%200%200%202.7%202.7l5-5a4.3%204.3%200%200%200%205.2-5.7l-2.6%202.6-2.3-.3-.3-2.3z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-trash: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.5%207h15M10%2011v5.5M14%2011v5.5M6.5%207l.8%2011.2a2%202%200%200%200%202%201.8h5.4a2%202%200%200%200%202-1.8L17.5%207M9.5%207V5a1.5%201.5%200%200%201%201.5-1.5h2A1.5%201.5%200%200%201%2014.5%205v2%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-languages: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%205.5h9M8.5%203.5v2M11.2%205.5c-.9%203.8-3.3%206.5-6.7%208M6.6%209.2c1%201.8%202.6%203.2%204.6%204.2%22%2F%3E%3Cpath%20d%3D%22m12.5%2020.5%204-9%204%209M13.9%2017.3h5.2%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-brush: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M19.8%204.2c-3.4%201.2-7.3%204.7-9.5%207.8l1.7%201.7c3.1-2.2%206.6-6.1%207.8-9.5z%22%2F%3E%3Cpath%20d%3D%22M9.2%2013.4c-2-.2-3.7%201.3-3.7%203.4%200%201.1-.6%202-1.8%202.5%201%20.6%202.1.9%203.3.9%202.6%200%204.4-1.8%204.1-4.2%22%2F%3E%3C%2Fsvg%3E");
@@ -4120,15 +4137,15 @@ body.salty.salty-icons-line {
   --salty-mi-eyeoff: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10.4%205.6a9.8%209.8%200%200%201%201.6-.1c4%200%207.5%202.5%209.1%206.2a.8.8%200%200%201%200%20.6%2010.4%2010.4%200%200%201-1.9%202.9M14%2014.1A2.8%202.8%200%200%201%209.9%2010M17.3%2017.3a9.6%209.6%200%200%201-5.3%201.2c-4%200-7.5-2.5-9.1-6.2a.8.8%200%200%201%200-.6%2010.5%2010.5%200%200%201%203.8-4.9M3.5%203.5l17%2017%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-gallery: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%227.5%22%20y%3D%223.5%22%20width%3D%2213%22%20height%3D%2213%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M16.5%2020.5H6a2.5%202.5%200%200%201-2.5-2.5V7.5M7.8%2013.8l3.2-2.9%202.6%202.2%201.9-1.4%204.7%203.6%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-cells: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%224%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2213%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2213%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221.6%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-clip: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m19.6%2011.4-7.8%207.8a4.9%204.9%200%200%201-6.9-6.9l8.2-8.2a3.2%203.2%200%200%201%204.6%204.6l-8.2%208.2a1.6%201.6%200%200%201-2.3-2.3l7.5-7.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-clip: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0.3%200.25)%22%3E%3Cpath%20d%3D%22m19.6%2011.4-7.8%207.8a4.9%204.9%200%200%201-6.9-6.9l8.2-8.2a3.2%203.2%200%200%201%204.6%204.6l-8.2%208.2a1.6%201.6%200%200%201-2.3-2.3l7.5-7.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-history: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012a8%208%200%201%200%202.3-5.7L4%208.6%22%2F%3E%3Cpath%20d%3D%22M4%204.3v4.3h4.3M12%208v4.2l2.9%201.8%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-flag: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5.5%2020.5v-16M5.5%204.5c4.2-2.2%206.6%201.9%2012.5.2v8.6c-5.9%201.7-8.3-2.4-12.5-.2%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-branch: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%226.5%22%20cy%3D%225.5%22%20r%3D%222.2%22%2F%3E%3Ccircle%20cx%3D%226.5%22%20cy%3D%2218.5%22%20r%3D%222.2%22%2F%3E%3Ccircle%20cx%3D%2217.5%22%20cy%3D%226.5%22%20r%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M6.5%207.7v8.6M17.5%208.7c0%204.6-4.4%205.4-9.2%208%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-copy: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%228.5%22%20y%3D%228.5%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%222.2%22%2F%3E%3Cpath%20d%3D%22M15.5%208.5V6a2.5%202.5%200%200%200-2.5-2.5H6A2.5%202.5%200%200%200%203.5%206v7A2.5%202.5%200%200%200%206%2015.5h2.5%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-camera: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m8.8%205.5%201.1-1.6c.2-.3.5-.4.8-.4h2.6c.3%200%20.6.1.8.4l1.1%201.6H19a2%202%200%200%201%202%202v10a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-10a2%202%200%200%201%202-2z%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212.5%22%20r%3D%223.5%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-camera: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.5)%22%3E%3Cpath%20d%3D%22m8.8%205.5%201.1-1.6c.2-.3.5-.4.8-.4h2.6c.3%200%20.6.1.8.4l1.1%201.6H19a2%202%200%200%201%202%202v10a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-10a2%202%200%200%201%202-2z%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212.5%22%20r%3D%223.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-flagfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5.5%2020.5v-16%22%2F%3E%3Cpath%20d%3D%22M5.5%204.5c4.2-2.2%206.6%201.9%2012.5.2v8.6c-5.9%201.7-8.3-2.4-12.5-.2z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-star: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-starfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-star: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  --salty-mi-starfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22m12%203.8%202.5%205.1%205.6.8-4.1%204%201%205.6-5-2.6-5%202.6%201-5.6-4.1-4%205.6-.8z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-bookmark: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7.5%203.5h9a1%201%200%200%201%201%201v16l-5.5-3.7-5.5%203.7v-16a1%201%200%200%201%201-1z%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-bookmarkfill: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7.5%203.5h9a1%201%200%200%201%201%201v16l-5.5-3.7-5.5%203.7v-16a1%201%200%200%201%201-1z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-chevup: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6.5%2014.5%205.5-5.5%205.5%205.5%22%2F%3E%3C%2Fsvg%3E");
@@ -4143,9 +4160,9 @@ body.salty.salty-icons-line {
   --salty-mi-chevcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m8.6%2010.6%203.4%203.4%203.4-3.4%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-gear: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.2%22%2F%3E%3Cpath%20d%3D%22M12%203.5v2.3M12%2018.2v2.3M3.5%2012h2.3M18.2%2012h2.3M6%206l1.6%201.6M16.4%2016.4%2018%2018M6%2018l1.6-1.6M16.4%207.6%2018%206%22%2F%3E%3C%2Fsvg%3E");
   --salty-mi-xcircle: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22m9.3%209.3%205.4%205.4M14.7%209.3l-5.4%205.4%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-chatdots: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3Cpath%20d%3D%22M8.4%2011.8h.01M12%2011.8h.01M15.6%2011.8h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chatdots: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3Cpath%20d%3D%22M8.4%2011.8h.01M12%2011.8h.01M15.6%2011.8h.01%22%20stroke-width%3D%222.6%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   --salty-mi-pin: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2016v4.5M8.5%203.5h7M9.8%203.5v5.3l-2.9%203.5a.9.9%200%200%200%20.7%201.5h8.8a.9.9%200%200%200%20.7-1.5l-2.9-3.5V3.5%22%2F%3E%3C%2Fsvg%3E");
-  --salty-mi-chat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3C%2Fsvg%3E");
+  --salty-mi-chat: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cg%20transform%3D%22translate(0%200.45)%22%3E%3Cpath%20d%3D%22M20.5%2011.6a8.4%208.4%200%200%201-12.4%207.4L3.5%2020.5%205%2016a8.5%208.5%200%201%201%2015.5-4.4z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .extraMesButtons > .mes_legacy_translate::before,
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .extraMesButtons > .mes_llm_translate::before,
@@ -5629,6 +5646,22 @@ body.salty #WorldInfo .world_entry.disabledWIEntry textarea[name="comment"] {
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
   flex: none;
 }
+html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]:not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c) {
+  --bl-wi-state: radial-gradient(circle closest-side, transparent 0 52%, var(--salty-muted) 58% calc(100% - 1px), transparent 100%);
+  color: transparent !important;
+  background-image: var(--bl-wi-state), var(--bl-select-arrow) !important;
+  background-position: left 9px center, right 10px center !important;
+  background-size: 12px 12px, 15px 15px !important;
+}
+html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]:not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c):where(html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]):has(> option[value="constant"]:checked) {
+  --bl-wi-state: radial-gradient(circle closest-side, var(--salty-accent) 0 calc(100% - 1px), transparent 100%);
+}
+html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]:not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c):where(html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]):has(> option[value="vectorized"]:checked) {
+  --bl-wi-state: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7'/%3E%3C/svg%3E");
+  background-size: 14px 14px, 15px 15px !important;
+  background-position: left 8px center, right 10px center !important;
+}
+body.salty #WorldInfo .world_entry select[name="entryStateSelector"] > option { color: var(--salty-text); }
 body.salty #WorldInfo .world_entry .WIEnteryHeaderControls > .world_entry_form_control {
   display: flex;
   flex: 0 1 auto;
@@ -10658,6 +10691,14 @@ color:var(--salty-muted) !important;
 background:var(--bl-fill-press-bg, var(--bl-press-bg)) !important;
 }
 }
+@supports (height: 1cap) {
+  body.salty:not(#salty-none) :has(> .editor_maximize) { --bl-ink-cap: 1cap; --bl-ink-row: 1; }
+  body.salty:not(#salty-none) [data-bl-row~="smax"]:is(bl-s, *) { --bl-ink-cap: calc(1cap * 5 / 6); }
+  body.salty:not(#salty-none) :has(+ .editor_maximize):not(#salty-none) { align-self: baseline !important; }
+  body.salty:not(#salty-none) .editor_maximize:not(#salty-none) { align-self: baseline !important; font-size: calc(var(--bl-ink-cap) / .75) !important; line-height: 1 !important; }
+  body.salty:not(#salty-none) :is(#right-nav-panel, #character_popup) .editor_maximize ~ .jj-tr-btn.bl-kt-btn { margin-block: -4px; }
+  body.salty:not(#salty-none) #PersonaManagement .editor_maximize ~ .jj-tr-btn.bl-kt-btn { margin-block: -8px; }
+}
 /* css/16-typescale.css */
 body.salty {
   --bl-ts-read: var(--salty-size, var(--mainFontSize, 15px));
@@ -12403,13 +12444,10 @@ body.salty dialog.bl-notice-dialog .bl-notice-close:not(:focus-visible) { outlin
   height: 8px;
   border-right: 2px solid var(--salty-muted);
   border-bottom: 2px solid var(--salty-muted);
-  transform: rotate(45deg) translateY(-2px);
+  transform: rotate(45deg) translate(calc(-25% + .5px), calc(-25% + .5px));
 }
 .salty-notice-item.open .salty-notice-toggle i {
-  transform: rotate(-135deg) translateY(-2px);
-}
-@media (hover: hover) and (pointer: fine) {
-  .salty-notice-toggle { padding-top: calc(10px + var(--bl-notice-ink-nudge, .5px)); padding-bottom: calc(10px - var(--bl-notice-ink-nudge, .5px)); }
+  transform: rotate(-135deg) translate(calc(-25% + .5px), calc(-25% + .5px));
 }
 .salty-notice-item ul {
   display: none;
@@ -13946,6 +13984,7 @@ body.salty #right-nav-panel:is(bl-s, *) {
 .salty-panel .salty-palette-toolbar > span { font-size: 12px; color: var(--salty-muted); }
 .salty-panel .salty-mode-switch { display: flex; flex: none; gap: 4px; padding: 4px; border-radius: 12px; background: var(--salty-fill-shade, var(--salty-shade)); }
 .salty-panel .salty-mode-switch button { display: grid; place-items: center; width: 38px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--salty-muted); font-size: var(--bl-deco-glyph-17); cursor: pointer; }
+.salty-mode-switch button > i { translate: 0 -.8px; }
 .salty-panel .salty-mode-switch button[aria-pressed="true"] { background: var(--salty-fill-surface, var(--salty-surface)); color: var(--salty-accent); box-shadow: 0 0 0 1px var(--salty-shade); }
 .salty-panel .salty-mode-switch button:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
 .salty-panel .salty-pal { min-width: 0; gap: 8px; padding: 8px; transition: box-shadow .15s ease; }
@@ -14373,7 +14412,7 @@ body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_
   height: var(--bl-ui-icon, 34px) !important;
   min-width: 0 !important;
   padding: 0 !important;
-  font-size: var(--bl-ui-ink-fa, 12.5px) !important;
+  font-size: var(--bl-ui-ink-fa, 15px) !important;
 }
 body.salty #completion_prompt_manager .completion_prompt_manager_footer > .menu_button:last-child {
   margin-right: -4px !important;
@@ -16450,7 +16489,7 @@ body.salty .mes .mes_block > .input-feedback.inline-drawer {
 .bl-view-tools[hidden] { display:none !important; }
 .salty-panel .bl-view-toggle { width:32px; height:34px; min-height:0; padding:0; margin:0; border:0; border-radius:8px; background:transparent; color:var(--salty-muted); font-size:13px; cursor:pointer; }
 .salty-panel .bl-view-toggle[aria-expanded="true"] { color:var(--salty-accent); }
-.salty-panel .bl-view-resize > .bl-view-toggle { grid-column:1; grid-row:1; font-size:var(--bl-deco-glyph-12p5); }
+.salty-panel .bl-view-resize > .bl-view-toggle { grid-column:1; grid-row:1; font-size:var(--bl-ui-ink-fa, 15px); }
 .bl-view-float { position:relative; }
 .salty-panel .bl-view-float > .bl-view-toggle { position:absolute; top:2px; right:4px; z-index:2; background:var(--salty-fill-surface, var(--salty-surface)); opacity:.85; }
 
@@ -16563,6 +16602,9 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 @container bl-editor (max-width:480px) {
   .bl-editor .bl-settings-toprow .bl-editor-choose { flex:1 1 auto; }
   html body .bl-editor .salty-sec { scrollbar-gutter:auto; scrollbar-width:none; }
+  .bl-editor .bl-editor-workspace { --bl-editor-gutter:6px; }
+  .salty-panel.bl-editor .salty-sec .salty-group { padding-inline:8px; }
+  .salty-panel.bl-editor .bl-md-group-body { padding-inline:8px; }
   .bl-editor-stage { padding-top:6px; }
   html body .bl-editor .bl-editor-stage .salty-prevbox { padding-bottom:20px; }
   html body .bl-editor .bl-settings-toprow .bl-settings-expand { position:relative; width:34px; padding:0; font-size:0; }
@@ -17261,7 +17303,7 @@ body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned:is(.mes_leg
   mask: var(--salty-mi) center / contain no-repeat;
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned {
-  font-size: 16px !important;
+  font-size: 20px !important;
 }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned.mes_legacy_translate { --salty-mi: var(--salty-mi-brain); }
 body.salty.salty-icons-line :is(#chat,.bl-chat-like) .mes .bl-pinned.mes_llm_translate { --salty-mi: var(--salty-mi-swap); }
@@ -17735,7 +17777,10 @@ html body .salty-panel.bl-editor .bl-settings-toprow button {
   border-radius: var(--bl-settings-radius);
 }
 html body .salty-panel.bl-editor .bl-editor-actions button { display:inline-flex; align-items:center; justify-content:center; }
-.bl-editor .bl-editor-actions svg { display:block; }
+.bl-editor .bl-editor-actions svg { display:block; width:20px; height:20px; margin:-2px; }
+.bl-editor .bl-editor-actions [data-act^="history-"] svg { translate:0 -1.2px; }
+.bl-editor .bl-editor-actions [data-act="history-redo"] svg { translate:-.9px -1.2px; }
+.bl-editor .bl-editor-actions .bl-editor-search-button svg { translate:-.5px -.2px; }
 html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   width: var(--bl-settings-control);
 }
@@ -18135,6 +18180,7 @@ html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world
 html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > span:not(.bl-wi-help):where(html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > span):has(~ .bl-wi-help), html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > small:not(.bl-wi-help):where(html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > small):has(~ .bl-wi-help), html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > strong:not(.bl-wi-help):where(html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > strong):has(~ .bl-wi-help), html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > b:not(.bl-wi-help):where(html body.salty #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > b):has(~ .bl-wi-help) { flex:0 1 auto!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > .bl-wi-help:where(html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world_entry, #wiCheckboxes) :is(label, .inline-drawer-toggle) > .bl-wi-help):not(:has(~ .bl-wi-help)) { margin-right:auto!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .world_entry_form_control > .bl-wi-help { margin-left:calc(var(--bl-help-gap) - 2px)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .bl-wi-help { --bl-help-y: 0em; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :where(small):is(#wiCheckboxes label.checkbox_label > small, #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) > small) > .bl-wi-help { margin-left:var(--bl-help-gap)!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #left-nav-panel .flex-container > .fa-circle-info,
 html body.salty:not(#bl-h1):not(#bl-h2) #left-nav-panel .flex-container > .fa-info-circle,
@@ -18968,6 +19014,11 @@ body.salty #AdvancedFormatting #reasoning_max_additions {
   height:auto!important;
   min-height:max(var(--bl-prompt-control-height),calc(1.45em + 8px))!important;
 }
+@supports (height: 1cap) {
+  body.salty:not(#salty-none) #completion_prompt_manager_popup label:where(body.salty:not(#salty-none) #completion_prompt_manager_popup label):has(> .jj-tr-btn.bl-kt-btn) { --bl-ink-cap: 1cap; --bl-ink-row: 1; align-items: baseline; }
+  body.salty:not(#salty-none) #completion_prompt_manager_popup label > .jj-tr-btn.bl-kt-btn:not(#salty-none) { align-self: baseline !important; top: calc((var(--kt-h, 16px) - var(--bl-ink-cap)) / 2) !important; margin-top: calc(var(--bl-ink-cap) - var(--kt-h, 16px)); }
+  body.salty:not(#salty-none) #completion_prompt_manager_popup label > .jj-tr-btn.bl-kt-btn > .jj-tr-svg { --kt-dy: 0px; }
+}
 /* css/60-chat-graph.css */
 .bl-chat-library { display:none; }
 body.salty #select_chat_popup.bl-chat-library-on #select_chat_div,
@@ -19534,9 +19585,10 @@ body.salty #rm_extensions_block .inline-drawer-header > strong {
   display:flex; align-items:center; flex-wrap:wrap; column-gap:8px; row-gap:4px; min-width:0;
 }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i {
-  display:inline-flex; align-items:center; justify-content:center; flex:0 0 1.2em;
-  width:1.2em; height:1.2em; line-height:1; margin:0;
+  display:inline-flex; align-items:center; justify-content:center; flex:0 0 24px;
+  width:24px; height:24px; line-height:1; margin:0;
 }
+body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer-header > :is(b,strong) > i:is(.fa-language, .fa-users, .fa-comments, .fa-gamepad, .fa-people-group, .fa-user-group, .fa-photo-film) { font-size:.88em; }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > .ext-version { margin-inline:0; }
 body.salty #rm_extensions_block .bl-hs-row,
 body.salty :where(.bl-assets-dialog) .bl-hs-row:is(#bl-s, *),
@@ -19829,6 +19881,7 @@ html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y] { --bl-fade-y: 28px; }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="bottom"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - var(--bl-fade-y)), transparent); }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="top"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y)); }
 html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); mask-image: linear-gradient(to bottom, transparent, #000 var(--bl-fade-y), #000 calc(100% - var(--bl-fade-y)), transparent); }
+html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]:not(#top-settings-holder .drawer-content) { -webkit-mask-image: none; mask-image: none; }
 @supports (anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)) {
   html:not(#bl-tab-scroll-off) body.salty #top-settings-holder .drawer-content:is([data-bl-fade-y="top"], [data-bl-fade-y="bottom"], [data-bl-fade-y="both"]) { anchor-name: --bl-drawer; }
   html:not(#bl-tab-scroll-off) body.salty #top-settings-holder > .bl-drawer-backing { display: block; position: fixed; z-index: -1; pointer-events: none; top: anchor(--bl-drawer top, 0px); left: anchor(--bl-drawer left, 0px); width: anchor-size(--bl-drawer width, 0px); height: anchor-size(--bl-drawer height, 0px); background: var(--bl-fill-page, var(--bl-page)); border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg); }
@@ -19985,6 +20038,8 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_set
   font-size: 0 !important; line-height: 0 !important; display: block !important; width: var(--bl-help-glyph) !important; height: var(--bl-help-glyph) !important; background: currentColor !important; -webkit-mask: var(--bl-help-mask) center/contain no-repeat !important; mask: var(--bl-help-mask) center/contain no-repeat !important;
 }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help, .bl-wi-help, #bl-deus-popover .dq-help-button) > i::before { content: none !important; }
+html body.salty:not(#bl-h1):not(#bl-h2) .bl-help-btn > i,
+html body.salty:not(#bl-h1):not(#bl-h2) .bl-wi-help > i { translate: -.1px -.35px; }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help, .bl-wi-help, #bl-deus-popover .dq-help-button) > span { display: none !important; }
 @media (hover: hover) {
   html body.salty:not(#bl-h1):not(#bl-h2) .bl-help-btn:is(#bl-s, *):hover,
@@ -20142,7 +20197,7 @@ html body .bl-ft-group-toggle{display:flex;align-items:center;gap:12px;width:100
 .bl-ft-dialog .bl-view-tools button{min-width:36px;min-height:32px;margin:0;padding:4px 8px;border:0;border-radius:8px;background:var(--salty-fill-shade,var(--salty-shade, var(--bl-fb-8882)));color:var(--salty-text,inherit);font:inherit;font-size:13px;cursor:pointer}
 .bl-ft-dialog .bl-view-tools button:disabled{opacity:.4;cursor:default}
 .bl-ft-dialog .bl-view-resize>button{width:32px;height:28px;min-height:0;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--salty-muted,inherit);font:13px/1 sans-serif;cursor:pointer}
-.bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1;font-size:var(--bl-deco-glyph-12p5)}
+.bl-ft-dialog .bl-view-resize>.bl-view-toggle{grid-column:1;grid-row:1;font-size:var(--bl-ui-ink-fa, 15px)}
 .bl-ft-dialog .bl-view-toggle[aria-expanded="true"]{color:var(--salty-accent,currentColor)}
 .bl-ft-dialog small{opacity:1}
 .bl-ft-shortcut{font:inherit!important;font-size:.8em!important;min-height:32px!important;padding:4px 10px!important;border-radius:8px!important;white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important}
@@ -20453,6 +20508,27 @@ html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settin
 html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-body > .popup-content { padding-top: 0 !important; margin-top: 0 !important; }
 html body.salty dialog:is(.bl-assets-dialog, .bl-ctsi-dialog, .blpt-dialog, .bl-direction-dialog, .bl-mermaid-dialog) { padding: 12px 10px 12px 12px !important; }
 html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog) > header { padding: 12px 10px 0 12px !important; }
+@media (max-width: 600px) {
+  html body.salty dialog:is(.bl-assets-dialog, .bl-direction-dialog, .blpt-dialog) { padding-inline: 4px !important; }
+  html body.salty dialog:is(.bl-ctsi-dialog, .bl-mermaid-dialog) { padding-inline: 8px !important; }
+  html body.salty dialog:is(.bl-assets-dialog, .bl-direction-dialog) > header { padding-inline: 6px 2px; }
+  html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog) > header { padding-inline: 10px 6px !important; }
+  html body.salty dialog.bl-translator-dialog > .bl-translator-dialog-body,
+html body.salty :where(dialog.blzi-dialog > :not(header)):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty :where(.bls-panel-body):is(.bls-panel > .bls-panel-body):is(bl-s, *) { padding-inline: 4px !important; }
+  html body.salty :where(.llmt-card-body):is(dialog.bl-translator-dialog :is(.llmt-card-body, .llmt-card--accent)):is(#bl-s, *):is(.bl-s, *),
+html body.salty :where(.llmt-card--accent):is(dialog.bl-translator-dialog :is(.llmt-card-body, .llmt-card--accent)):is(#bl-s, *):is(.bl-s, *),
+html body.salty :where(.blzi-card):is(dialog.blzi-dialog .blzi-card):is(#bl-s, *):is(.bl-s, *),
+html body.salty :where(.eh-card):is(dialog.bl-assets-dialog .eh-card):is(#bl-s, *):is(.bl-s, *),
+html body.salty :where(.bls-card):is(.bls-panel .bls-card):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
+html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-card,
+html body.salty :where(.bwr_card):where(dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_card):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { padding-inline: 8px !important; }
+  html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings,
+html body.salty dialog.popup:not(.bl-settings-dialog) :where(.bwr_settings):is(#bl-s, *) { margin-inline: -6px !important; }
+  html body.salty dialog.bl-notice-dialog .bl-notice-body { padding-inline: 12px; }
+  html body dialog:is(.bl-tool-dialog.bl-lc, .bl-credits-dialog) { width: calc(100vw - 12px); max-width: calc(100vw - 12px); }
+  html body dialog.bl-credits-dialog > :not(header) { padding-inline: 12px; }
+}
 html body.salty dialog.popup > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings) > .inline-drawer > .inline-drawer-header,
 html body.salty :where(.inline-drawer-header):is(dialog.popup > .popup-body > .popup-content > :is(#model-switch-settings, #regex-link-settings) > .inline-drawer-header):is(.bl-s, *),
 html body.salty :where(.po-title):is(dialog.popup > .popup-body > .popup-content > .po-dialog > .po-title):is(#bl-s, *),
@@ -20528,7 +20604,7 @@ html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-sett
 }
 html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > :where(button) > i:is(.bl-s, *),
 html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > .menu_button > i,
-html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > .small-button > i { font-size: inherit !important; line-height: 1 !important; }
+html body.salty:not(#bl-row-off) :is(.llmt-settings .preset-controls, .llmt-settings .prompt-select-container, #pt-panel .pt-select-row) > .small-button > i { font-size: inherit !important; line-height: 1 !important; translate: 0 -.05em; }
 html body.salty .llmt-settings .llmt-card--accent { border-color: var(--llmt-border, var(--salty-line)) !important; box-shadow: none !important; }
 html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings > .inline-drawer > .inline-drawer-content,
 html body.salty dialog.bl-translator-dialog .llmt-settings .inline-drawer-content { display: flex !important; flex-direction: column !important; }
@@ -20551,7 +20627,7 @@ html body.salty #pt-panel > #pt-tabs {
   gap: 4px !important; width: auto !important; margin: 0 0 10px !important; padding: 0 !important;
   background: none !important; border: 0 !important; border-radius: 0 !important;
 }
-html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: var(--bl-ui-ink-fa, 12.5px) !important; line-height: 1 !important; }
+html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { margin: 0 !important; font-size: var(--bl-ui-ink-fa, 15px) !important; line-height: 1 !important; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button::before { font-family: "Font Awesome 6 Free"; font-weight: 900; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(1)::before { content: "\f12e"; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .po-dialog > .po-menu-tabs > button:nth-child(2)::before { content: "\e2ca"; }
@@ -20951,7 +21027,7 @@ dialog > .popup-button-close:is(#bl-s, *):is(bl-s, *)::after,
   --bl-ui-chip: 34px;
   --bl-ui-touch: 44px;
   --bl-ui-radius: var(--bl-r-sm, 8px);
-  --bl-ui-ink-fa: 12.5px;
+  --bl-ui-ink-fa: 15px;
   --bl-ui-ink-mask: 16px;
   --bl-ui-tab-fs: var(--bl-ts-meta, 13px);
   --bl-ui-btn-fs: var(--bl-ts-ctl, 14px);
@@ -21163,8 +21239,10 @@ html:not(#bl-ui-parts-off) body :where(.po-pin):where(.po-dialog :is(.po-pin, .p
   box-sizing: border-box !important; width: var(--bl-ui-icon) !important; height: var(--bl-ui-icon) !important; min-width: var(--bl-ui-icon) !important; min-height: var(--bl-ui-icon) !important;
   padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius) !important; background: transparent !important; box-shadow: none !important;
 }
-html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) > i { font-size: var(--bl-ui-ink-fa) !important; line-height: 1 !important; translate: 0 .06em; }
-html:not(#bl-ui-parts-off) body :is(.bl-notes-dialog .bl-note-btn, .salty-panel .bl-view-toggle, .blpt .blpt-btn) > i:not(.fa-chevron-down, .fa-chevron-up, .fa-chevron-left, .fa-chevron-right, .fa-angle-down, .fa-angle-up, .fa-caret-down, .fa-caret-up, .fa-caret-right) { translate: 0 .06em; }
+html:not(#bl-ui-parts-off) body :is(.po-dialog :is(.po-pin, .po-move, button.po-hide), .llmt-card-head :is(.llmt-head-action, .rule-prompt-editor-button), .llmt-settings .menu_button.small-button:not(:has(> span)), .llmt-gl-icon:not(.llmt-gl-chip .llmt-gl-icon), .jj-stepper > button, .cg-stepper > button, .jj-prompt-actions > .jj-pbtn-icon, :is(#jj-popup, #jj-settings) .jj-tr-btn, #cg-panel .cg-icon-btn:not([data-act="close"]), .cg-root .cg-icon-btn:not([data-act="close"]), .pa-hub-open, #lv_settings .lv-icon, #model-switch-settings :is(.ms-pull, .ms-icon), .eh-icon-btn:not(.eh-icon-btn--labeled), .bwr_settings .bwr_delete, .salty-panel .bl-favorite-toggle, .salty-panel .salty-btn.salty-btn-icon:not([data-health-check]), .bl-mermaid-again, .salty-panel .bl-ss-btn, #model-switch-settings .ms-actions > :is(.ms-invert, .ms-snap)) > i { font-size: var(--bl-ui-ink-fa) !important; line-height: 1 !important; translate: 0 -.02em; }
+html:not(#bl-ui-parts-off):not(#bl-ui-center-off) body .po-dialog .po-move > i.fa-chevron-down { translate: 0 -1.1px; }
+html:not(#bl-ui-parts-off):not(#bl-ui-center-off) body .po-dialog .po-move > i.fa-chevron-up { translate: 0 .7px; }
+html:not(#bl-ui-parts-off) body :where(.bl-note-btn):is(.bl-notes-dialog .bl-note-btn) > i:not(.fa-chevron-down, .fa-chevron-up, .fa-chevron-left, .fa-chevron-right, .fa-angle-down, .fa-angle-up, .fa-caret-down, .fa-caret-up, .fa-caret-right) { translate: 0 .06em; }
 html:not(#bl-ui-parts-off) body :where(.salty-btn):where(.salty-panel .salty-btn:not(.salty-btn-icon, .primary, .salty-primary)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *),
 html:not(#bl-ui-parts-off) body :where(.bl-editor-choose):is(.salty-panel .bl-editor-choose):is(#bl-s, *),
 html:not(#bl-ui-parts-off) body :where(.bl-link-mini):is(.salty-panel .bl-link-mini):is(#bl-s, *),
@@ -21346,10 +21424,36 @@ html:not(#bl-ui-parts-off) body #bl-deus-popover .dq-row > select:is(.bl-s, *) {
   height: var(--bl-ui-ctl) !important; min-height: var(--bl-ui-ctl) !important; box-sizing: border-box !important; padding-block: 0 !important;
 }
 html:not(#bl-ui-parts-off) body .eh-pchip { font-size: var(--bl-ui-tab-fs) !important; min-height: var(--bl-ui-ctl) !important; height: var(--bl-ui-ctl) !important; }
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(button):focus-visible,
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(a[href]):focus-visible,
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where(summary):focus-visible,
-:where(body):where(html:not(#bl-ui-parts-off) body) :where(dialog.bl-tool-dialog, dialog.bl-credits-dialog) :where([tabindex]:not([tabindex="-1"])):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(button):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(a[href]):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(summary):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where([tabindex]:not([tabindex="-1"])):focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 2px; }
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(.rl-root .rl-tabs, #lv_settings .lv-tabs, .llmt-settings .llmt-tabs, .po-dialog > .po-menu-tabs, .bwr_settings .bwr_tabs, .pa-hub > .pa-hub-tabs, .lvs-tabs, .ppt-ta-tabs, .jj-seg[role="tablist"], .dq-tabs, .pt-help-dialog > nav, .bl-notes-help > nav) > :where(button):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(.rl-root .rl-tabs, #lv_settings .lv-tabs, .llmt-settings .llmt-tabs, .po-dialog > .po-menu-tabs, .bwr_settings .bwr_tabs, .pa-hub > .pa-hub-tabs, .lvs-tabs, .ppt-ta-tabs, .jj-seg[role="tablist"], .dq-tabs, .pt-help-dialog > nav, .bl-notes-help > nav) > :where(a[href]):focus-visible,
+:where(.salty):where(html:not(#bl-ui-parts-off) body.salty) :where(dialog) :where(.rl-root .rl-tabs, #lv_settings .lv-tabs, .llmt-settings .llmt-tabs, .po-dialog > .po-menu-tabs, .bwr_settings .bwr_tabs, .pa-hub > .pa-hub-tabs, .lvs-tabs, .ppt-ta-tabs, .jj-seg[role="tablist"], .dq-tabs, .pt-help-dialog > nav, .bl-notes-help > nav) > :where([role="tab"]):focus-visible { outline-offset: -2px; }
+@supports (text-box: trim-both cap alphabetic) {
+  html:not(#bl-ui-parts-off) body.salty :where(.bl-hs-text):where(.bl-hs-row > .bl-hs-text):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(label.pt-check > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.rl-tab > span:not(.rl-tab-sub)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.llmt-tab > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.llmt-card-head > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.lv-tab > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(label.lv-toggle > span:not(.lv-desc)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.lv-card-head > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.jj-card-title > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-chip > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(b):where(.bl-lc-fd-h > :is(b, span)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-fd-h > :is(b, span)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-foot > .salty-btn > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-done > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty #bl-lc-title > span,
+html:not(#bl-ui-parts-off) body.salty :where(.bl-lc-np-h):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(label.pa-hub-load > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.salty-notice-toggle > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(.bl-ext-fold-t):where(.bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(.bl-ext-fold-v):where(.bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)):is(#bl-s, *):is(bl-s, *) { text-box: trim-both cap alphabetic; padding-block: calc((1lh - 1cap) / 2); }
+}
+@property --bl-ink-cap { syntax: '<length>'; inherits: true; initial-value: 0px; }
 /* css/89-form-metrics.css */
 :where(.salty-panel),
 :where(.bl-ft-dialog),

@@ -20,6 +20,8 @@ const { SCRIPT_CATALOG } = await load('src/scripts/catalog.js');
 const code = await scriptCode(root, 'sola');
 const plain = read('src/scripts/plain/sola.js');
 const names = JSON.parse(read('tools/tests/sola-v4-names.json'));
+// 1.5.2 분량 토글 넷만 사용자 전달본 항목을 사전에 둬요(데우스 bl-deus-length-* 와 같은 꼴) — 이 밖의 bl-sola- 항목은 여전히 금지
+const EXTRA_IDS = ['bl-sola-length-flexible', 'bl-sola-length-medium', 'bl-sola-length-long', 'bl-sola-length-saga'];
 const hangul = /[가-힣]/;
 const decorative = name => !/[\p{L}\p{N}]/u.test(name);
 // 한글 제목으로 치는 것: 한글이 있거나, 장식 기호만이거나, 「BDSM ⛓️」 처럼 머리글자만 남는 이름(우리말 표기도 같은 머리글자예요)
@@ -56,7 +58,7 @@ await t('형식: 항목마다 id · 이름 · 한글 제목 · 설명이 있고 
 });
 await t('공개 프리셋 프롬프트 137개가 누락 없이 모두 한글 제목으로 보여요', () => {
     assert.equal(names.prompts.length, 137);
-    assert.equal(dict.prompts.length, 137);
+    assert.equal(dict.prompts.filter(e => !EXTRA_IDS.includes(e.id)).length, 137);
     const missing = names.prompts.filter(([id, name]) => !decorative(name) && !korean(engine.title('prompts', id, name) || ''));
     assert.deepEqual(missing, []);
     // 원문 이름이 그대로 열쇠예요(공백 · 기호까지) — 이름이 바뀌면 화면에서 번역이 떨어져요.
@@ -100,8 +102,16 @@ await t('카탈로그 항목이 데우스 다음에 있고, 판 번호가 사전
     assert.equal(code.match(/사전 판 (\d+\.\d\.\d)/)?.[1], item.version, '사전을 고치면 머리의 판과 카탈로그 판을 함께 올려요');
     assert.ok(fs.existsSync(path.join(root, 'src/scripts/plain/sola.js')));
 });
+await t('1.5.2 데우스와 같은 7단계 분량 토글 넷(사용자 전달본에 더한 것 · 이름은 일반 길이 이름뿐): 이 넷만 사전에 있고 한글 제목 · 설명 · 구역 머리 설명도 기본 길이를 알려요', () => {
+    // 이름이 영어(1차 전달본)인 줄과 한국어(2차 전달본 — 파일 이름 자체가 한국어)인 줄 둘씩 · 제목은 같은 말
+    assert.deepEqual(dict.prompts.filter(e => EXTRA_IDS.includes(e.id)).map(e => e.id).sort(), [...EXTRA_IDS, ...EXTRA_IDS].sort());
+    for (const id of EXTRA_IDS) { const two = dict.prompts.filter(e => e.id === id); assert.equal(two[0].title, two[1].title, id); assert.ok(two.some(e => /^[A-Z]/.test(e.name)) && two.some(e => e.name === e.title), id); }
+    assert.deepEqual(dict.prompts.filter(e => EXTRA_IDS.includes(e.id) && e.name === e.title).map(e => e.title), ['유연한 턴 (200~550 단어)', '중간 턴 (250~450 단어)', '긴 턴 (500~800 단어)', '대서사 (2800~4000 단어)']);
+    for (const e of dict.prompts.filter(x => EXTRA_IDS.includes(x.id))) { assert.ok(korean(e.title) && /단어\)$/.test(e.title), e.title); assert.ok(/길이는 하나만 켭니다\.$/.test(e.desc), e.desc); }
+    assert.ok(dict.prompts.find(e => e.id === '01a0debb-b416-7029-a7ee-fc529b30d25a').desc.includes('기본 길이(약 400~500 단어'));
+});
 await t('공개 금지: 사용자 전달본 전용 항목 · 금지어가 사전에 없어요', () => {
-    const text = JSON.stringify(dict);
+    const text = JSON.stringify({ ...dict, prompts: dict.prompts.filter(e => !EXTRA_IDS.includes(e.id)) });
     // 금지 낱말은 글자를 나눠 적어요 — 공개 정적 검사가 이 시험 파일 자체를 금지어로 잡지 않게(README 의 fromCharCode 방식과 같은 뜻)
     const banned = ['bl-sola-', ['찐', '빠'].join(''), String.fromCharCode(0xAC24) + ' ', ['버그', ' 없음'].join(''), ['Cla', 'ude'].join(''), ['yunzhu', 'hub'].join('')];
     for (const word of banned) assert.ok(!text.includes(word), word);

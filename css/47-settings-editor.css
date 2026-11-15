@@ -89,6 +89,10 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 @container bl-editor (max-width:480px) {
   .bl-editor .bl-settings-toprow .bl-editor-choose { flex:1 1 auto; }
   html body .bl-editor .salty-sec { scrollbar-gutter:auto; scrollbar-width:none; }
+  /* 1.5.1 폰 창 여백: 창 가장자리 6 → 화면 여백 10 → 묶음 안쪽 10 = 내용까지 26px 였어요. 화면 여백 6 · 묶음 안쪽 8 로(내용까지 20) */
+  .bl-editor .bl-editor-workspace { --bl-editor-gutter:6px; }
+  .salty-panel.bl-editor .salty-sec .salty-group { padding-inline:8px; }
+  .salty-panel.bl-editor .bl-md-group-body { padding-inline:8px; }
   .bl-editor-stage { padding-top:6px; }
   html body .bl-editor .bl-editor-stage .salty-prevbox { padding-bottom:20px; } /* 5.6.4 6 → 20: 접기 꺾쇠(20px)가 확대 · ↺ 줄 아래 14px 를 덮어 폰에서 ↺ 아래쪽을 누르면 미리보기가 접혔다 */
   html body .bl-editor .bl-settings-toprow .bl-settings-expand { position:relative; width:34px; padding:0; font-size:0; }

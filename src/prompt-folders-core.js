@@ -55,6 +55,72 @@ export function readPresetFolders(extensions) {
     return value?.version === 1 && Array.isArray(value.folders) ? tidyFolders(value.folders) : [];
 }
 
+// ───────── 프리셋 파일 폴더 따라가기 (1.5.2) ─────────
+// 테마 설정의 프리셋 칸 = { v: 2, open: { 폴더 id: 펼침 }, folders?: 사용자가 고친 폴더 목록, base?: { ids, prints } 고칠 때의 프리셋 파일 폴더 }.
+//   · 접기 · 펼치기는 open 칸에만 — 식구를 굳히지 않아요(1.5.1 까지는 한 번 접으면 그때 폴더를 통째로 굳혀, 새 판이 더한 항목이 폴더 밖이 됐어요)
+//   · folders 가 없으면 프리셋 파일 폴더 그대로. 있으면 폴더마다: 고칠 때 파일과 같은 폴더(손 안 댐)는 지금 파일을 따라가고,
+//     손댄 폴더는 사용자 것 + 새 판이 새로 더한 항목(고칠 때 파일에 없던 id). 고칠 때 파일에 있었는데 사용자 폴더에 없는 id 는 사용자가 뺀 것이라 밖에 둬요.
+const folderPrint = f => JSON.stringify([f.name, [...f.ids].sort(), f.parent || '', !!f.pick]);
+/** 프리셋 파일 폴더의 짧은 지문(1.1.3 빈 칸 · 옛 설정 옮김에만) */
+export function seedPrint(seed) {
+    let h = 5381;
+    for (const ch of JSON.stringify(seed)) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0;
+    return `${seed.length}:${h.toString(36)}`;
+}
+/** 사용자가 폴더를 고칠 때의 프리셋 파일 폴더 기억: 그때 파일에 있던 항목 id · 폴더별 지문(펼침 빼고) */
+export function seedBase(seed) {
+    return { ids: [...new Set(seed.flatMap(f => f.ids))], prints: Object.fromEntries(seed.map(f => [f.id, folderPrint(f)])) };
+}
+/** 1.5.1 까지의 칸(접기만 해도 식구가 굳은 것)을 v2 로 한 번 옮겨요. 같은 입력이면 같은 결과 · v2 칸은 그대로 돌려줘요.
+ *  굳은 목록이 지금 파일 정의와 같으면 「손 안 댐」(펼침만 남김) · 가릴 수 없으면 굳은 목록 ∪ 파일 정의(어느 폴더에도 없는 파일 항목만 같은 id, 없으면 같은 이름 폴더로) —
+ *  다른 폴더로 옮긴 항목 · 사용자가 푼 폴더는 그대로 둬요 */
+export function migrateFolderSlot(slot, seed = []) {
+    if (!isObj(slot) || slot.v === 2) return slot;
+    const frozen = tidyFolders(slot.folders), open = {};
+    for (const f of frozen) { open[f.id] = f.open; delete f.open; }   // 펼침은 open 칸에만
+    if (!seed.length) return { v: 2, open, folders: frozen, base: seedBase([]) };
+    if (!frozen.length) {
+        // 1.1.3 다 푼 칸: 그때 지문이 지금 파일과 다르면 새 판 폴더를 받아요(손 안 댐) · 같거나 지문 없는 옛 칸은 다 푼 채로
+        if (typeof slot.seed === 'string' && slot.seed !== seedPrint(seed)) return { v: 2, open };
+        return { v: 2, open, folders: [], base: seedBase(seed) };
+    }
+    const prints = seedBase(seed).prints;
+    if (frozen.length === seed.length && frozen.every(f => prints[f.id] === folderPrint(f))) return { v: 2, open };
+    const claimed = new Set(frozen.flatMap(f => f.ids));
+    for (const s of seed) {
+        const host = frozen.find(f => f.id === s.id) || frozen.find(f => f.name === s.name);
+        if (!host) continue;
+        for (const id of s.ids) if (!claimed.has(id) && host.ids.length < LIMITS.ids) { host.ids.push(id); claimed.add(id); }
+    }
+    return { v: 2, open, folders: frozen, base: seedBase(seed) };
+}
+/** 지금 보일 폴더 = 프리셋 파일 폴더(seed) + 테마 설정 칸(slot, v2). 새 객체를 돌려줘요(고쳐도 칸 · 파일은 그대로) */
+export function mergeFolders(seed = [], slot = null) {
+    const open = isObj(slot?.open) ? slot.open : {};
+    const shown = f => ({ ...f, ids: [...f.ids], open: typeof open[f.id] === 'boolean' ? open[f.id] : f.open });
+    if (!Array.isArray(slot?.folders)) return seed.map(shown);
+    const base = isObj(slot.base) ? slot.base : {}, prints = isObj(base.prints) ? base.prints : {};
+    const known = new Set(Array.isArray(base.ids) ? base.ids : []), bySeed = new Map(seed.map(f => [f.id, f]));
+    const out = [], edited = new Set();
+    for (const f of tidyFolders(slot.folders)) {
+        const untouched = Object.hasOwn(prints, f.id) && prints[f.id] === folderPrint(f);
+        if (!untouched) { out.push({ ...f, ids: [...f.ids] }); edited.add(f.id); continue; }
+        const s = bySeed.get(f.id);
+        if (s) out.push({ ...s, ids: [...s.ids] });   // 손 안 댄 폴더 → 지금 파일 정의(파일에서 사라졌으면 함께 사라져요)
+    }
+    // 고칠 때 파일에 없던 폴더(새 판이 더한 폴더)는 받아요 — 고칠 때 있던 폴더가 사용자 목록에 없으면 사용자가 푼 것
+    for (const s of seed) if (!Object.hasOwn(prints, s.id) && !out.some(f => f.id === s.id)) out.push({ ...s, ids: [...s.ids] });
+    const claimed = new Set(out.filter(f => edited.has(f.id)).flatMap(f => f.ids));
+    for (const s of seed) for (const id of s.ids) {
+        if (known.has(id) || claimed.has(id)) continue;
+        const host = out.find(f => f.id === s.id && edited.has(f.id)) || out.find(f => edited.has(f.id) && f.name === s.name);
+        if (host && host.ids.length < LIMITS.ids) { host.ids.push(id); claimed.add(id); }
+    }
+    // 손댄 폴더가 가진 항목은 파일을 따라가는 폴더에서 빼요(옮긴 자리가 이겨요)
+    for (const f of out) if (!edited.has(f.id)) f.ids = f.ids.filter(id => !claimed.has(id));
+    return tidyFolders(out.map(shown));
+}
+
 /** 다른 도구가 프리셋에 저장한 그룹을 현재 항목 순서로 읽어요. 원본 프리셋은 바꾸지 않아요. */
 export function readBoxPresetFolders(extensions, order = []) {
     const value = extensions?.baibaiToolkit?.presetPromptGroups;

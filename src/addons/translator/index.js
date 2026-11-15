@@ -145,7 +145,7 @@ export function clickButton(kind, messageId) {
     if (kind === 'toggle') return toggleOriginalText(messageId);
     if (kind === 'edit') return editTranslation(messageId);
     if (kind === 'paragraph') return retranslateMessage(messageId, 'paragraph', true);
-    if (kind === 'delete') return deleteTranslationById(messageId).catch(error => { console.error('Delete translation error:', error); toastr.error('번역문 삭제 중 오류가 발생했습니다.'); });
+    if (kind === 'delete') return deleteTranslationById(messageId).catch(error => { console.error('Delete translation error:', error); toastr.error('번역문 삭제 중 오류가 발생했어요.'); });
     return undefined;
 }
 const guards = createGuards(getContext);
@@ -823,12 +823,12 @@ function customListBody(config) {
 // 받기 실패 문구 (Custom 은 2.2.7 문구 그대로)
 function modelListErrorMessage(error, custom = false) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
-        return `응답 시간이 초과되었습니다. (${MODEL_LIST_TIMEOUT_MS / 1000}초)`;
+        return `응답 시간이 초과됐어요. (${MODEL_LIST_TIMEOUT_MS / 1000}초)`;
     }
     if (error?.empty) {
         return custom
-            ? '엔드포인트가 모델 목록을 돌려주지 않았습니다. (서버 연결 실패, 주소 끝의 /v1, API 키를 확인해주세요)'
-            : '모델 목록을 돌려주지 않았습니다. (API 키를 확인해주세요)';
+            ? '엔드포인트가 모델 목록을 돌려주지 않았어요. (서버 연결 실패, 주소 끝의 /v1, API 키를 확인해주세요)'
+            : '모델 목록을 돌려주지 않았어요. (API 키를 확인해주세요)';
     }
     return String(error?.message || error || '알 수 없는 오류');
 }
@@ -843,13 +843,13 @@ function updateCustomModelsStatus(message) {
     const config = getCustomEndpointConfig();
     const url = config.url;
     if (!url) {
-        status.text('주소를 입력하면 그 서버가 제공하는 모델을 아래 목록에 채웁니다.');
+        status.text('주소를 입력하면 그 서버가 제공하는 모델을 아래 목록에 채워요.');
         return;
     }
     const entry = LiveModels.cached(LiveModels.cacheKey('custom', url));
     const source = config.inheritExtras ? '본체 설정 주소' : '위 주소';
     if (!entry.ids.length) {
-        status.text(`아직 불러오지 않았습니다. '모델 목록 불러오기'를 누르세요. (${source}: ${url})`);
+        status.text(`아직 불러오지 않았어요. '모델 목록 불러오기'를 누르세요. (${source}: ${url})`);
         return;
     }
     const when = entry.at ? new Date(entry.at).toLocaleString() : '';
@@ -914,7 +914,7 @@ async function fetchCustomModelList({ silent = false } = {}) {
     const req = modelListRequest('custom');
     const url = req.url;
     if (!url || !isValidHttpUrl(url)) {
-        updateCustomModelsStatus(url ? `올바른 주소가 아닙니다: ${url}` : '커스텀 엔드포인트 주소가 비어 있습니다.');
+        updateCustomModelsStatus(url ? `올바른 주소가 아니에요: ${url}` : '커스텀 엔드포인트 주소가 비어 있어요.');
         if (!silent) {
             toastr.warning('커스텀 엔드포인트 주소를 먼저 입력해주세요. (예: http://127.0.0.1:5001/v1)');
         }
@@ -971,14 +971,14 @@ async function fetchCustomModelList({ silent = false } = {}) {
 
     if (!silent) {
         if (!result.ok) {
-            toastr.error(`모델 목록을 불러오지 못했습니다: ${message}`);
+            toastr.error(`모델 목록을 불러오지 못했어요: ${message}`);
         } else if (!result.ids?.length) {
-            toastr.warning('엔드포인트가 빈 모델 목록을 돌려줬습니다.');
+            toastr.warning('엔드포인트가 빈 모델 목록을 돌려줬어요.');
         } else {
-            toastr.success(`모델 ${result.ids.length}개를 불러왔습니다.`);
+            toastr.success(`모델 ${result.ids.length}개를 불러왔어요.`);
             const selected = extensionSettings.provider_model_history.custom;
             if (isCurrentUrl() && selected && selected !== 'custom' && !result.ids.includes(selected)) {
-                toastr.warning(`지금 선택된 모델 '${selected}'은(는) 이 주소의 목록에 없습니다. 목록에서 다시 골라주세요.`);
+                toastr.warning(`지금 선택된 모델 '${selected}'은(는) 이 주소의 목록에 없어요. 목록에서 다시 골라주세요.`);
             }
         }
     }
@@ -996,12 +996,12 @@ async function refreshProviderModelList(provider) {
     try {
         const ids = await LiveModels.refresh(req.source, req.opts);
         renderModelListWhenIdle();
-        if (ids.length) toastr.success(`모델 ${ids.length}개를 불러왔습니다.`);
-        else toastr.warning('빈 모델 목록을 돌려줬습니다.');
+        if (ids.length) toastr.success(`모델 ${ids.length}개를 불러왔어요.`);
+        else toastr.warning('빈 모델 목록을 돌려줬어요.');
         return ids;
     } catch (error) {
         console.warn('[LLM Translator] 모델 목록 불러오기 실패:', req.source, error?.status ?? '', error?.message || '');
-        toastr.error(`모델 목록을 불러오지 못했습니다: ${modelListErrorMessage(error)}`);
+        toastr.error(`모델 목록을 불러오지 못했어요: ${modelListErrorMessage(error)}`);
         return [];
     } finally {
         manualModelRefreshes.delete(req.source);
@@ -1675,12 +1675,12 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             chatCompletionSource = 'custom';
             break;
         default:
-            throw new Error('지원되지 않는 공급자입니다.');
+            throw new Error('지원되지 않는 공급자예요.');
     }
 
     // [추가] 커스텀 모델 입력을 골라놓고 모델명이 비어 있으면 API가 엉뚱한 오류를 뱉으므로 먼저 막는다.
     if (!via && extensionSettings.llm_model === 'custom' && !model) {
-        throw new Error(`커스텀 모델명이 비어 있습니다. ${provider} 공급자에 사용할 모델명을 입력해주세요.`);
+        throw new Error(`커스텀 모델명이 비어 있어요. ${provider} 공급자에 사용할 모델명을 입력해주세요.`);
     }
 
     // [추가] Custom은 API 키 없이 동작하는 서버(로컬 등)가 많으므로 키 대신 주소를 검증한다.
@@ -1689,7 +1689,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             throw new Error('커스텀 엔드포인트 주소가 설정되어 있지 않습니다. (예: http://127.0.0.1:5001/v1)');
         }
     } else if (!apiKey && (via || !extensionSettings.use_reverse_proxy)) {
-        throw new Error(`${provider.toUpperCase()} API 키가 설정되어 있지 않습니다.`);
+        throw new Error(`${provider.toUpperCase()} API 키가 설정되어 있지 않아요.`);
     }
 
     const parameters = {
@@ -1783,7 +1783,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         }
         // 네트워크 에러 처리
         if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
-            throw Object.assign(new Error('네트워크 연결에 실패했습니다. 인터넷 연결을 확인해주세요.'), { transient: true });
+            throw Object.assign(new Error('네트워크 연결에 실패했어요. 인터넷 연결을 확인해주세요.'), { transient: true });
         }
         throw Object.assign(new Error(`요청 실패: ${fetchError.message}`), { transient: fetchError?.name === 'TypeError' });
     } finally {
@@ -1811,15 +1811,15 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         const flags = response.status === 524 ? { timeout: true } : { transient: response.status === 429 || response.status >= 500 };
         switch (response.status) {
             case 401:
-                throw new Error('API 키가 잘못되었거나 권한이 없습니다.');
+                throw new Error('API 키가 잘못되었거나 권한이 없어요.');
             case 403:
-                throw new Error('API 접근이 거부되었습니다. API 키 권한을 확인해주세요.');
+                throw new Error('API 접근이 거부됐어요. API 키 권한을 확인해주세요.');
             case 429:
-                throw Object.assign(new Error('API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.'), flags);
+                throw Object.assign(new Error('API 호출 한도를 초과했어요. 잠시 후 다시 시도해주세요.'), flags);
             case 500:
-                throw Object.assign(new Error('서버 내부 오류가 발생했습니다.'), flags);
+                throw Object.assign(new Error('서버 내부 오류가 발생했어요.'), flags);
             case 503:
-                throw Object.assign(new Error('서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.'), flags);
+                throw Object.assign(new Error('서비스를 사용할 수 없어요. 잠시 후 다시 시도해주세요.'), flags);
             default:
                 throw Object.assign(new Error(errorMessage), flags);
         }
@@ -1907,7 +1907,7 @@ function extractTranslationResult(data, provider) {
             throw error;
         }
         if (data?.error?.message) throw new Error(`API 오류: ${String(data.error.message).slice(0, 200)}`);
-        throw new Error(`번역 응답이 비어있습니다. ${provider.toUpperCase()} API에서 올바른 응답을 받지 못했습니다.`);
+        throw new Error(`번역 응답이 비어있어요. ${provider.toUpperCase()} API에서 올바른 응답을 받지 못했어요.`);
     }
     return result;
 }
@@ -2734,7 +2734,7 @@ function progressLabel(stage, started, note = null) {
 function startNotice(stage, messageId) {
     if (stage?.stage === 'segments' && !stage.pending) return null;
     if (stage?.stage === 'segments' && stage.reused > 0 && (stage.resumed || stage.edited)) return stage.resumed ? `남은 문단 ${stage.pending}개를 이어서 번역해요 #${messageId}` : `바뀐 문단 ${stage.pending}개만 다시 번역해요 #${messageId}`;   // 3.0.0 첫 번역은 아래 예전 문구
-    return `번역을 시작합니다 #${messageId}`;
+    return `번역을 시작해요 #${messageId}`;
 }
 // 2.9.0 guard(번역 표의 것)를 주면 그것으로 대상을 찾는다 — 같은 채팅을 제자리에서 다시 불러오면(정규식 켜고 끔 · 캐릭터 이름 연동의 다시 그리기 …)
 //   메시지가 새 객체가 되어 chat.indexOf(옛 객체) 가 -1 → 표시를 떼고 다시 붙이지 않았다. 번역은 guard 로 새 객체에 옮겨 타 계속 돌아
@@ -2783,8 +2783,9 @@ function progressBadge(messageId, message = null, sourceMes = message?.mes, chat
 const PREVIEW_GAP_MS = 250;
 const livePreviews = new Set();   // 6.9.6 그려 둔 미리 보기 (previewText) — 끝나면(done) · 되돌리면(revert) 뺀다
 const isProgressBadge = node => node.nodeType === 1 && node.classList.contains('llmt-progress');
-/** 미리 보기가 건드리지 않고 그 자리에 둘 노드 — 진행 표시 · 미트볼 상태창이 글 끝에 단 칩 칸(.ss-slot · 지우면 그 확장이 80ms 뒤 다시 붙여 칩이 깜빡였다) */
-const keepInPreview = node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot'));
+/** 미리 보기가 건드리지 않고 그 자리에 둘 노드 — 진행 표시 · 미트볼 상태창이 글 끝에 단 칩 칸(.ss-slot · 지우면 그 확장이 80ms 뒤 다시 붙여 칩이 깜빡였다)
+ *  상태 블록이 본문에 남은 옛 답은 칩 칸이 정규식이 넣은 div 라 실리태번이 class 앞에 custom- 를 붙여요(.custom-ss-slot) — 그 확장은 이 칸에도 칩을 넣어서 같이 둬요 */
+const keepInPreview = node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot') || node.classList.contains('custom-ss-slot'));
 /** 6.9.6 미리 보기 · 끝 그림이 넣은 문단을 그 자리에서 조판하고 감정 대사 칸을 입힌다 — 테마가 0.12 · 0.4초 뒤에 하면 넣은 문단이 한 번 더 움직였다 (이미 한 문단은 건너뛴다) */
 function dressPainted(host, message) {
     try { dressBody(host, message); } catch { /* 감정 대사 효과가 꺼져 있으면 아무것도 안 한다 */ }
@@ -2932,9 +2933,9 @@ function endTranslation(messageId, token) {
 function inProgressNotice(messageId) {
     const message = getContext().chat?.[messageId];
     const token = message ? Object.values(translationInProgress).find(t => t && t.message === message && t.guard.valid()) : null;
-    if (!token) return '번역이 이미 진행 중입니다.';
+    if (!token) return '번역이 이미 진행 중이에요.';
     const index = token.guard.index(), sec = Math.max(0, Math.round((Date.now() - (token.started || Date.now())) / 1000));
-    return `번역이 이미 진행 중입니다 · #${index >= 0 ? index : messageId} 메시지 ${sec}초째`;
+    return `번역이 이미 진행 중이에요 · #${index >= 0 ? index : messageId} 메시지 ${sec}초째`;
 }
 function isTranslationInProgress(messageId) {
     const message = getContext().chat?.[messageId];
@@ -3032,7 +3033,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
     // promptType 검증
     const validPromptTypes = ['correction', 'guidance', 'paragraph'];
     if (!validPromptTypes.includes(promptType)) {
-        toastr.error('유효하지 않은 재번역 타입입니다.');
+        toastr.error('유효하지 않은 재번역 타입이에요.');
         return;
     }
 
@@ -3049,18 +3050,18 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         );
 
         if (additionalGuidance === false || additionalGuidance === null) {
-            toastr.info('지침교정이 취소되었습니다.');
+            toastr.info('지침교정을 취소했어요.');
             return;
         }
 
         if (!additionalGuidance.trim()) {
-            toastr.warning('추가 지침이 입력되지 않았습니다. 일반 교정으로 진행합니다.');
+            toastr.warning('추가 지침이 입력되지 않았어요. 일반 교정으로 진행해요.');
             promptType = 'correction';
         }
     }
 
     if (!pendingGuard.valid()) { toastr.info('메시지가 바뀌어 지침교정을 취소했어요.'); return; }
-    toastr.info(`재번역(${promptTypeKorean})을 시작합니다 #${messageId}`);
+    toastr.info(`재번역(${promptTypeKorean})을 시작해요 #${messageId}`);
     const runToken = beginTranslation(messageId, message); // [1.9.2] · [1.9.5] 메시지를 단다
 
     try {
@@ -3094,7 +3095,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
             }
         } else {
             // 기존 번역이 없는 경우 - 새 번역 수행
-            toastr.warning(`기존 번역문이 없습니다. 새로 번역합니다.`);
+            toastr.warning(`기존 번역문이 없어요. 새로 번역해요.`);
             textToRetranslate = originalText;
 
             // 채팅 번역 프롬프트도 텍스트필드 값 실시간 반영
@@ -3195,7 +3196,7 @@ async function retranslateMessage(messageId, promptType, forceRetranslate = fals
         console.error('Retranslation error:', error);
 
         // 구체적인 에러 메시지 표시
-        let errorMessage = '재번역에 실패했습니다.';
+        let errorMessage = '재번역에 실패했어요.';
         if (error.message) {
             errorMessage = error.message;
         }
@@ -3566,7 +3567,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
 
         // 7.3.1 시작 알림은 번역의 첫 진행 알림을 본 뒤에 고른다 (아래 translate 의 onProgress · startNotice) — 문단 캐시가 대부분을 채우면
         //   「바뀐 문단 n개만 다시 번역해요」, 보낼 문단이 없으면 알리지 않는다. 번역문 캐시 · 번역하지 않는 길이거나 1.5초 안에 진행 알림이 없으면 예전 문구
-        let startToast = showStartToast ? (text = `번역을 시작합니다 #${messageId}`) => { startToast = null; if (text) toastr.info(text); } : null;
+        let startToast = showStartToast ? (text = `번역을 시작해요 #${messageId}`) => { startToast = null; if (text) toastr.info(text); } : null;
 
         // 강제 번역이거나 번역문이 없는 경우, 또는 자동 번역시 원문이 바뀐 경우
         // 5.3.4: 전체 번역은 실패 표시가 남은 메시지도 다시 보낸다 (된 문단은 문단 캐시에서, 실패한 문단만 요청)
@@ -3619,7 +3620,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 if (report.partial) toastr.warning(`문단 ${report.blockedChunks}/${report.chunks}덩이는 차단돼 원문으로 남겼어요. 다시 번역하면 다시 시도해요.`, '번역', { timeOut: 8000 });
                 else if (!report.restoredBlocks && !report.cardFallback) { await storeTranslationQuietly(originalText, translation, report); cacheReport = report; } // 6.1.8 빠진 보호 블록을 되돌린 답 · 1.0.0 칸 몇 개를 원문으로 둔 상태 카드 답은 캐시하지 않는다
                 // 5.4.2: 문단이 모두 캐시에서 왔으면(요청 0) 알린다 — 전엔 '번역을 시작합니다' 뒤 같은 글만 조용히 다시 붙었다
-                if (source !== 'auto' && source !== 'batch' && !report.partial && report.reusedParagraphs > 0 && !report.translatedParagraphs) toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
+                if (source !== 'auto' && source !== 'batch' && !report.partial && report.reusedParagraphs > 0 && !report.translatedParagraphs) toastr.info('IndexedDB에서 번역문을 가져왔어요.');
             }
 
             // [1.9.2] 번역하는 동안 채팅을 바꾸거나 · 스와이프 · 수정 · 앞 메시지 삭제로 그 자리 글이 바뀌었으면 붙이지 않는다 (캐시에는 남음)
@@ -3648,7 +3649,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             target.extra.display_text = processTranslationText(shownOriginal, translation);
             runToken.guard.acceptDisplay();
             if (cachedTranslation && source !== 'auto') {
-                toastr.info('IndexedDB에서 번역문을 가져왔습니다.');
+                toastr.info('IndexedDB에서 번역문을 가져왔어요.');
             }
 
             // 현재 원문의 해시를 저장 (메시지 수정 감지용, 1.7.1)
@@ -3719,7 +3720,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         (error?.refused ? console.warn : console.error)('Translation error:', error);
 
         // 구체적인 에러 메시지 표시
-        let errorMessage = '번역에 실패했습니다.';
+        let errorMessage = '번역에 실패했어요.';
         if (error.message) {
             errorMessage = error.message;
         }
@@ -3893,7 +3894,7 @@ async function handleTranslateButtonClick(messageId) {
     if (isShowingTranslation) {
         // 번역문이 표시되고 있는 경우 → 원문 표시
         await showOriginalText(messageId);
-        toastr.info(`원문으로 전환했습니다 #${messageId}`);
+        toastr.info(`원문으로 전환했어요 #${messageId}`);
     } else {
         // 원문이 표시되고 있는 경우 → 백업된 번역문 복원
 
@@ -3911,7 +3912,7 @@ async function handleTranslateButtonClick(messageId) {
                 textBlock.data('showing-original', false);
             }, 100);
 
-            toastr.info(`번역문으로 전환했습니다 #${messageId}`);
+            toastr.info(`번역문으로 전환했어요 #${messageId}`);
         } else {
             // 백업이 없으면 재번역
             const messageBlock = $(`#chat .mes[mesid="${messageId}"]`);
@@ -3960,7 +3961,7 @@ const emitBatch = run => { try { document.dispatchEvent(new CustomEvent('llm-tra
 async function onTranslateChatClick() {
     if (batchRun) { batchRun.stopped = true; toastr.info('현재 메시지 뒤에 전체 번역을 멈춰요.'); emitBatch(batchRun); return; }
     const guard = guards.capture(), messages = [...(getContext().chat || [])];
-    if (!messages.length) { toastr.warning('번역할 채팅이 없습니다.'); return; }
+    if (!messages.length) { toastr.warning('번역할 채팅이 없어요.'); return; }
     const pending = new Set(messages.filter(batchNeeded));
     if (!pending.size) { toastr.info('이 채팅은 이미 모두 번역돼 있어요.'); return; }
     // Reserve while the confirmation is open as well.
@@ -3995,7 +3996,7 @@ async function onTranslateChatClick() {
             if (delay && !run.stopped) await new Promise(resolve => setTimeout(resolve, delay));
         }
         guard.assert();
-        if (!run.stopped) refusedCount ? toastr.warning(`채팅 번역 완료 — 모델이 거절한 메시지 ${refusedCount}개는 원문으로 남겼어요.`) : toastr.success('채팅 번역이 완료되었습니다.');
+        if (!run.stopped) refusedCount ? toastr.warning(`채팅 번역 완료 — 모델이 거절한 메시지 ${refusedCount}개는 원문으로 남겼어요.`) : toastr.success('채팅 번역이 완료됐어요.');
     } catch (error) {
         if (error?.cancelled) toastr.info(error.message);
         else toastr.error(error?.message || '다시 전체 번역을 누르면 완료한 메시지는 건너뛰어요.', '전체 번역 중단', { timeOut: 10000 });
@@ -4063,7 +4064,7 @@ async function onTranslateInputMessageClick() {
         console.error('Input translation error:', error);
 
         // 구체적인 에러 메시지 표시
-        let errorMessage = '입력 번역에 실패했습니다.';
+        let errorMessage = '입력 번역에 실패했어요.';
         if (error.message) {
             errorMessage = error.message;
         }
@@ -4078,7 +4079,7 @@ async function onTranslateInputMessageClick() {
 // 모든 번역문 삭제
 async function onTranslationsClearClick() {
     const confirm = await callGenericPopup(
-        '번역된 내용을 모두 삭제하시겠습니까?',
+        '번역된 내용을 모두 삭제할까요?',
         POPUP_TYPE.CONFIRM
     );
 
@@ -4105,7 +4106,7 @@ async function onTranslationsClearClick() {
 
     await context.saveChat();
     await reloadCurrentChat();
-    toastr.success('번역된 내용이 삭제되었습니다.');
+    toastr.success('번역된 내용을 삭제했어요.');
 }
 
 // 메세지 블록에 번역 버튼 생성
@@ -4163,7 +4164,7 @@ async function editTranslation(messageId) {
 
     // 0. 메시지 객체 및 display_text 유효성 검사
     if (!message?.extra?.display_text) {
-        toastr.warning('수정할 번역문이 없습니다.');
+        toastr.warning('수정할 번역문이 없어요.');
         return;
     }
 
@@ -4178,12 +4179,12 @@ async function editTranslation(messageId) {
     try {
         originalDbTranslation = await localOrDisplayedTranslation(message, originalMessageText);
         if (originalDbTranslation === null) {
-            toastr.error('오류: 화면에는 번역문이 있으나 DB에서 원본을 찾을 수 없습니다.');
+            toastr.error('오류: 화면에는 번역문이 있으나 DB에서 원본을 찾을 수 없어요.');
             return;
         }
     } catch (error) {
         console.error("편집용 원본 번역문 DB 조회 실패:", error);
-        toastr.error("편집을 위해 원본 번역문을 가져오는 데 실패했습니다.");
+        toastr.error("편집을 위해 원본 번역문을 가져오는 데 실패했어요.");
         return;
     }
 
@@ -4263,9 +4264,9 @@ async function editTranslation(messageId) {
                 forgetSource(message.extra); // 6.9.5
                 await refreshMessageBlock(messageId, message);
                 await context.saveChat();
-                toastr.success('번역문이 삭제되었습니다.');
+                toastr.success('번역문을 삭제했어요.');
             } catch (e) {
-                toastr.error('번역문 삭제(DB)에 실패했습니다.');
+                toastr.error('번역문 삭제(DB)에 실패했어요.');
                 console.error(e);
             }
         }
@@ -4288,7 +4289,7 @@ async function editTranslation(messageId) {
                 
                 // UI 이벤트 발송
                 emitTranslationUIUpdate(messageId, 'edit_save');
-                toastr.success('번역문이 수정되었습니다.');
+                toastr.success('번역문을 수정했어요.');
 
                 // [요청하신 핵심 수정 사항] 
                 // updateMessageBlock으로 DOM이 재생성되었으므로, 다시 요소를 찾아 플래그 설정
@@ -4301,11 +4302,11 @@ async function editTranslation(messageId) {
                 }, 100);
 
             } catch (e) {
-                toastr.error('번역문 수정 중 오류가 발생했습니다.');
+                toastr.error('번역문 수정 중 오류가 발생했어요.');
                 console.error('번역문 수정 오류:', e);
             }
         } else {
-            toastr.info('번역 내용이 변경되지 않았습니다.');
+            toastr.info('번역 내용이 변경되지 않았어요.');
         }
     });
 
@@ -5056,21 +5057,21 @@ function createEventHandler(translateFunction, shouldTranslateFunction) {
 
                 try {
                     const confirm = await callGenericPopup(
-                        `<b>${currentBatch.length}개</b>의 메시지 번역 요청이 감지되었습니다.<br><br>` +
-                        `채팅방 입장 직후라면 과거 대화일 수 있습니다.<br>` +
-                        `<b>모두 번역하시겠습니까?</b>`,
+                        `<b>${currentBatch.length}개</b>의 메시지 번역 요청이 감지됐어요.<br><br>` +
+                        `채팅방 입장 직후라면 과거 대화일 수 있어요.<br>` +
+                        `<b>모두 번역할까요?</b>`,
                         POPUP_TYPE.CONFIRM
                     );
 
                     if (confirm) {
-                        toastr.info(`${currentBatch.length}개의 메시지 번역을 시작합니다.`);
+                        toastr.info(`${currentBatch.length}개의 메시지 번역을 시작해요.`);
                         // 일괄 처리
                         for (const task of currentBatch) {
                             // 큐에 저장된 함수와 인자를 꺼내서 실행
                             await runTask(task);
                         }
                     } else {
-                        toastr.info('대량 번역 요청이 취소되었습니다.');
+                        toastr.info('대량 번역 요청을 취소했어요.');
                     }
                 } catch (e) {
                     console.error(e);
@@ -6697,7 +6698,7 @@ function initializeEventHandlers() {
             const messageId = $(this).closest('.mes').attr('mesid');
             deleteTranslationById(messageId).catch(error => {
                 console.error('Delete translation error:', error);
-                toastr.error('번역문 삭제 중 오류가 발생했습니다.');
+                toastr.error('번역문 삭제 중 오류가 발생했어요.');
             });
         });
 
@@ -6790,7 +6791,7 @@ function initializeEventHandlers() {
         // textarea를 찾았는지 확인
         if (!rulePromptTextarea.length) {
             console.error('[LLM Translator] Could not find rule prompt textarea');
-            toastr.error('규칙 프롬프트 텍스트 영역을 찾을 수 없습니다.');
+            toastr.error('규칙 프롬프트 텍스트 영역을 찾을 수 없어요.');
             return;
         }
 
@@ -6828,11 +6829,11 @@ function initializeEventHandlers() {
                 $(this).focus();
             } else {
                 console.error('[LLM Translator] callGenericPopup or POPUP_TYPE.TEXT is not available.');
-                toastr.error('SillyTavern의 팝업 기능을 사용할 수 없습니다.');
+                toastr.error('SillyTavern의 팝업 기능을 사용할 수 없어요.');
             }
         } catch (error) {
             console.error('[LLM Translator] Error calling callGenericPopup:', error);
-            toastr.error('팝업을 여는 중 오류가 발생했습니다.');
+            toastr.error('팝업을 여는 중 오류가 발생했어요.');
         }
     });
 
@@ -6978,7 +6979,7 @@ async function downloadDB() {
         a.click();
         URL.revokeObjectURL(url);
     } else {
-        toastr.error('저장된 데이터가 없습니다.');
+        toastr.error('저장된 데이터가 없어요.');
     }
 }
 
@@ -7011,9 +7012,9 @@ async function restoreDB(file) {
         if (!Array.isArray(rows)) throw new TypeError('올바르지 않은 파일형식입니다.');
         db = await openDB();
         await restoreTranslationRows(db, STORE_NAME, rows);
-        toastr.success('데이터를 복원했습니다.');
+        toastr.success('데이터를 복원했어요.');
     } catch (error) {
-        toastr.error(error instanceof SyntaxError || error instanceof TypeError ? '올바르지 않은 파일형식입니다.' : '번역 데이터를 복원하지 못했어요.');
+        toastr.error(error instanceof SyntaxError || error instanceof TypeError ? '올바르지 않은 파일형식이에요.' : '번역 데이터를 복원하지 못했어요.');
     } finally { db?.close(); }
 }
 
@@ -7293,7 +7294,7 @@ async function getTranslationFromDB(originalText) {
 // IndexedDB 삭제 함수
 async function deleteDB() {
     const confirm = await callGenericPopup(
-        '모든 번역 데이터를 삭제하시겠습니까?',
+        '모든 번역 데이터를 삭제할까요?',
         POPUP_TYPE.CONFIRM
     );
 
@@ -7307,12 +7308,12 @@ async function deleteDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.deleteDatabase(DB_NAME);
         request.onsuccess = () => {
-            toastr.success('모든 번역 데이터가 삭제되었습니다.');
+            toastr.success('모든 번역 데이터를 삭제했어요.');
             publishTranslatorAPI();
         resolve();
         };
         request.onerror = (event) => {
-            toastr.error('데이터 삭제에 실패했습니다.');
+            toastr.error('데이터 삭제에 실패했어요.');
             reject(new Error("db delete error"));
         };
     });
@@ -7375,7 +7376,7 @@ let dbMetadataTaskRunning = false;
 async function backupTranslationsToMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Backup]`;
     if (dbMetadataTaskRunning) {
-        toastr.warning('이미 백업 작업이 진행 중입니다.');
+        toastr.warning('이미 백업 작업이 진행 중이에요.');
         logDebug('Backup already in progress. Exiting.');
         return;
     }
@@ -7390,12 +7391,12 @@ async function backupTranslationsToMetadata() {
 
     try {
         dbMetadataTaskRunning = true;
-        toastr.info('번역 캐시 백업 시작... (데이터 양에 따라 시간이 걸릴 수 있습니다)');
+        toastr.info('번역 캐시 백업 시작... (데이터 양에 따라 시간이 걸릴 수 있어요)');
         logDebug('Starting backup to metadata...');
 
         const context = getContext(); // 이미 import 되어 있음
         if (!context || !context.chatMetadata) {
-            throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없습니다.');
+            throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없어요.');
         }
 
         logDebug('Context and metadata found.');
@@ -7404,7 +7405,7 @@ async function backupTranslationsToMetadata() {
         const allTranslations = await getAllTranslationsFromDB();
 
         if (!allTranslations || allTranslations.length === 0) {
-            toastr.info('백업할 번역 데이터가 없습니다.');
+            toastr.info('백업할 번역 데이터가 없어요.');
             logDebug('No translation data found in IndexedDB to back up.');
             return; // 작업 종료
         }
@@ -7448,7 +7449,7 @@ async function backupTranslationsToMetadata() {
 async function restoreTranslationsFromMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Restore AddOnly Progress]`;
     if (dbMetadataTaskRunning) {
-        toastr.warning('이미 복원 작업이 진행 중입니다.');
+        toastr.warning('이미 복원 작업이 진행 중이에요.');
         logDebug('Restore already in progress. Exiting.');
         return;
     }
@@ -7468,14 +7469,14 @@ async function restoreTranslationsFromMetadata() {
 
         const context = getContext();
         if (!context || !context.chatMetadata) {
-            throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없습니다.');
+            throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없어요.');
         }
         logDebug('Context and metadata found.');
 
         // 1. 메타데이터에서 백업 데이터 가져오기
         const backupDataString = context.chatMetadata[METADATA_BACKUP_KEY];
         if (!backupDataString || typeof backupDataString !== 'string') {
-            toastr.warning('현재 채팅에 저장된 번역 백업 데이터가 없습니다.');
+            toastr.warning('현재 채팅에 저장된 번역 백업 데이터가 없어요.');
             logDebug(`No backup data found in metadata for key: ${METADATA_BACKUP_KEY}`);
             return; // 복원할 데이터 없으면 종료
         }
@@ -7486,16 +7487,16 @@ async function restoreTranslationsFromMetadata() {
         let backupData;
         try {
             backupData = JSON.parse(backupDataString);
-            if (!Array.isArray(backupData)) throw new Error('백업 데이터 형식이 올바르지 않습니다 (배열이 아님).');
+            if (!Array.isArray(backupData)) throw new Error('백업 데이터 형식이 올바르지 않아요 (배열이 아님).');
             logDebug(`Backup data parsed successfully. Items: ${backupData.length}`);
         } catch (parseError) {
             console.error(`${DEBUG_PREFIX} Error parsing backup data:`, parseError);
-            throw new Error('백업 데이터를 파싱하는 중 오류가 발생했습니다.');
+            throw new Error('백업 데이터를 파싱하는 중 오류가 발생했어요.');
         }
 
         const totalItems = backupData.length;
         if (totalItems === 0) {
-            toastr.info('백업 데이터에 복원할 항목이 없습니다.');
+            toastr.info('백업 데이터에 복원할 항목이 없어요.');
             logDebug('Backup data array is empty. Nothing to restore.');
             return; // 복원할 항목 없으면 종료
         }
@@ -7650,7 +7651,7 @@ async function restoreTranslationsFromMetadata() {
 async function clearBackupFromMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Cleanup]`;
     if (dbMetadataTaskRunning) {
-        toastr.warning('이미 정리 작업이 진행 중입니다.');
+        toastr.warning('이미 정리 작업이 진행 중이에요.');
         logDebug('Cleanup already in progress. Exiting.');
         return;
     }
@@ -7659,13 +7660,13 @@ async function clearBackupFromMetadata() {
 
     logDebug('Requesting metadata backup cleanup...');
     const confirm = await callGenericPopup(
-        '현재 채팅에 저장된 번역 캐시 백업을 삭제하시겠습니까?\n(주의: 복구할 수 없습니다!)',
+        '현재 채팅에 저장된 번역 캐시 백업을 삭제할까요?\n(주의: 복구할 수 없어요!)',
         POPUP_TYPE.CONFIRM
     );
 
     if (!confirm) {
         logDebug('Metadata cleanup cancelled by user.');
-        toastr.info('백업 데이터 삭제가 취소되었습니다.');
+        toastr.info('백업 데이터 삭제를 취소했어요.');
         return;
     }
     logDebug('User confirmed metadata cleanup.');
@@ -7677,7 +7678,7 @@ async function clearBackupFromMetadata() {
 
         const context = getContext();
         if (!context || !context.chatMetadata) {
-            throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없습니다.');
+            throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없어요.');
         }
         logDebug('Context and metadata found.');
 
@@ -7686,10 +7687,10 @@ async function clearBackupFromMetadata() {
             delete context.chatMetadata[METADATA_BACKUP_KEY]; // 메타데이터에서 키 삭제
             saveMetadataDebounced(); // 변경사항 저장 요청
             logDebug('saveMetadataDebounced() called to trigger server save.');
-            toastr.success('채팅에 저장된 번역 캐시 백업이 삭제되었습니다.');
+            toastr.success('채팅에 저장된 번역 캐시 백업을 삭제했어요.');
         } else {
             logDebug(`No backup data found under key: ${METADATA_BACKUP_KEY}. Nothing to delete.`);
-            toastr.info('현재 채팅에 삭제할 번역 캐시 백업이 없습니다.');
+            toastr.info('현재 채팅에 삭제할 번역 캐시 백업이 없어요.');
         }
         logDebug('Cleanup completed successfully.');
 
@@ -7722,18 +7723,18 @@ async function getTranslationById(messageIdStr) {
     // 2. 컨텍스트 및 대상 메시지 가져오기
     const context = getContext();
     if (!context || !context.chat) {
-        const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없습니다.';
+        const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
         logDebug(errorMsg);
         return `오류: ${errorMsg}`;
     }
     if (messageId >= context.chat.length) {
-        const errorMsg = `메시지 ID ${messageId}를 찾을 수 없습니다. (채팅 길이: ${context.chat.length})`;
+        const errorMsg = `메시지 ID ${messageId}를 찾을 수 없어요. (채팅 길이: ${context.chat.length})`;
         logDebug(errorMsg);
         return errorMsg;
     }
     const message = context.chat[messageId];
     if (!message) {
-        const errorMsg = `메시지 ID ${messageId}에 대한 데이터를 가져올 수 없습니다.`;
+        const errorMsg = `메시지 ID ${messageId}에 대한 데이터를 가져올 수 없어요.`;
         logDebug(errorMsg);
         return `오류: ${errorMsg}`;
     }
@@ -7741,7 +7742,7 @@ async function getTranslationById(messageIdStr) {
     // 3. 원본 텍스트 가져오기 (DB 검색 키)
     const originalText = substituteParams(message.mes, context.name1, message.name);
     if (!originalText) {
-        const errorMsg = `메시지 ID ${messageId}의 원본 텍스트를 가져올 수 없습니다.`;
+        const errorMsg = `메시지 ID ${messageId}의 원본 텍스트를 가져올 수 없어요.`;
         logDebug(errorMsg);
         return errorMsg;
     }
@@ -7755,13 +7756,13 @@ async function getTranslationById(messageIdStr) {
             logDebug(`Translation found for message ID ${messageId}`);
             return translation; // 번역문 반환
         } else {
-            const noTranslationMsg = `메시지 ID ${messageId}에 대한 번역문이 DB에 없습니다.`;
+            const noTranslationMsg = `메시지 ID ${messageId}에 대한 번역문이 DB에 없어요.`;
             logDebug(noTranslationMsg);
             return noTranslationMsg;
         }
 
     } catch (error) {
-        const errorMsg = `메시지 ID ${messageId}의 번역문 조회 중 오류가 발생했습니다.`;
+        const errorMsg = `메시지 ID ${messageId}의 번역문 조회 중 오류가 발생했어요.`;
         console.error(`${DEBUG_PREFIX} Error getting translation for message ID ${messageId}:`, error);
         return `오류: ${errorMsg}`;
     }
@@ -7812,14 +7813,14 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
     // 2. 컨텍스트 및 채팅 데이터 확인
     const context = getContext();
     if (!context || !context.chat) {
-        const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없습니다.';
+        const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
         logDebug(errorMsg);
         return `오류: ${errorMsg}`;
     }
 
     const chatLength = context.chat.length;
     if (startId >= chatLength) {
-        const errorMsg = `시작 메시지 ID ${startId}를 찾을 수 없습니다. (채팅 길이: ${chatLength})`;
+        const errorMsg = `시작 메시지 ID ${startId}를 찾을 수 없어요. (채팅 길이: ${chatLength})`;
         logDebug(errorMsg);
         return errorMsg;
     }
@@ -7896,7 +7897,7 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
 
     // 4. 결과 반환
     if (results.length === 0) {
-        const noResultMsg = `메시지 ID ${startId}~${endId} 범위에서 ${includeOriginal ? '텍스트' : '번역문'}를 찾을 수 없습니다.`;
+        const noResultMsg = `메시지 ID ${startId}~${endId} 범위에서 ${includeOriginal ? '텍스트' : '번역문'}를 찾을 수 없어요.`;
         logDebug(`${DEBUG_PREFIX} ${noResultMsg}`);
         return noResultMsg;
     }
@@ -7927,7 +7928,7 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
     if (messageIdStr === 'last') {
         const context = getContext();
         if (!context || !context.chat || context.chat.length === 0) {
-            const errorMsg = '채팅 메시지가 없습니다.';
+            const errorMsg = '채팅 메시지가 없어요.';
             logDebug(errorMsg);
             toastr.error(errorMsg);
             return errorMsg;
@@ -7948,20 +7949,20 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
     // 2. 컨텍스트 및 대상 메시지 가져오기
     const context = getContext();
     if (!context || !context.chat) {
-        const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없습니다.';
+        const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
         logDebug(errorMsg);
         toastr.error(errorMsg);
         return `오류: ${errorMsg}`;
     }
     if (messageId >= context.chat.length) {
-        const errorMsg = `메시지 ID ${messageId}를 찾을 수 없습니다. (채팅 길이: ${context.chat.length})`;
+        const errorMsg = `메시지 ID ${messageId}를 찾을 수 없어요. (채팅 길이: ${context.chat.length})`;
         logDebug(errorMsg);
         toastr.error(errorMsg);
         return errorMsg;
     }
     const message = context.chat[messageId];
     if (!message) {
-        const errorMsg = `메시지 ID ${messageId}에 대한 데이터를 가져올 수 없습니다.`;
+        const errorMsg = `메시지 ID ${messageId}에 대한 데이터를 가져올 수 없어요.`;
         logDebug(errorMsg);
         toastr.error(errorMsg);
         return `오류: ${errorMsg}`;
@@ -7971,7 +7972,7 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
     // substituteParams를 사용하여 변수 치환된 최종 원본 텍스트를 얻음
     const originalText = substituteParams(message.mes, context.name1, message.name);
     if (!originalText) {
-        const errorMsg = `메시지 ID ${messageId}의 원본 텍스트를 가져올 수 없습니다.`;
+        const errorMsg = `메시지 ID ${messageId}의 원본 텍스트를 가져올 수 없어요.`;
         logDebug(errorMsg);
         toastr.warning(errorMsg); // 원본이 비어있을 수도 있으니 경고로 처리
         return errorMsg;
@@ -7983,7 +7984,7 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
         const swipeNumber = parseInt(swipeNumberStr, 10);
         if (!isNaN(swipeNumber) && swipeNumber > 0) {
             logDebug(`Swipe number ${swipeNumber} was provided, but swipe-specific deletion is not implemented yet.`);
-            toastr.warning(`스와이프 번호 ${swipeNumber}가 지정되었지만, 현재는 해당 메시지의 모든 번역 데이터를 삭제합니다.`);
+            toastr.warning(`스와이프 번호 ${swipeNumber}가 지정되었지만, 현재는 해당 메시지의 모든 번역 데이터를 삭제해요.`);
         } else {
             logDebug(`Invalid swipe number: "${swipeNumberStr}". Ignoring and proceeding with full message deletion.`);
         }
@@ -8015,16 +8016,16 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
             logDebug(`No display_text found in message ${messageId} extra data to remove from UI.`);
         }
 
-        const successMsg = `메시지 ID ${messageId}의 번역 데이터가 삭제되었습니다.`;
+        const successMsg = `메시지 ID ${messageId}의 번역 데이터를 삭제했어요.`;
         logDebug(successMsg);
         toastr.success(successMsg);
         return successMsg; // 슬래시 커맨드 결과
 
     } catch (error) {
         // deleteTranslationByOriginalText 함수에서 reject('no matching data') 할 경우 포함
-        let userErrorMessage = `메시지 ID ${messageId}의 번역 데이터 삭제 중 오류가 발생했습니다.`;
+        let userErrorMessage = `메시지 ID ${messageId}의 번역 데이터 삭제 중 오류가 발생했어요.`;
         if (error && error.message && error.message.includes('no matching data')) {
-            userErrorMessage = `메시지 ID ${messageId}에 해당하는 번역 데이터가 DB에 없습니다.`;
+            userErrorMessage = `메시지 ID ${messageId}에 해당하는 번역 데이터가 DB에 없어요.`;
             logDebug(userErrorMessage);
             toastr.info(userErrorMessage); // 정보성으로 변경
         } else {
@@ -8117,7 +8118,7 @@ async function createSillyTavernCharacter(characterName, firstMessage) {
             await context.getCharacters();
         }
 
-        if (window.toastr) toastr.success(`캐릭터 "${characterName}"이(가) 성공적으로 생성되었습니다!`);
+        if (window.toastr) toastr.success(`캐릭터 "${characterName}"이(가) 성공적으로 생성됐어요!`);
         return true;
 
     } catch (error) {
@@ -8134,7 +8135,7 @@ async function createSillyTavernCharacter(characterName, firstMessage) {
 function getQuickReplyApi() {
     if (!window.quickReplyApi) {
         console.error(`DB_TOOL_SETUP QuickReply API를 찾을 수 없습니다. QuickReply 확장이 설치 및 활성화되어 있는지 확인해주세요.`);
-        if (window.toastr) toastr.error('QuickReply API를 사용할 수 없습니다. 관련 확장을 확인해주세요.');
+        if (window.toastr) toastr.error('QuickReply API를 사용할 수 없어요. 관련 확장을 확인해주세요.');
         return null;
     }
     return window.quickReplyApi;
@@ -8156,8 +8157,8 @@ function getFirstActiveGlobalQuickReplySetName() {
     if (firstActiveSetItem && firstActiveSetItem.set && typeof firstActiveSetItem.set.name === 'string' && firstActiveSetItem.set.name.trim() !== '') {
         return firstActiveSetItem.set.name;
     } else {
-        if (window.toastr && !firstActiveSetItem) toastr.info("활성화된 전역 Quick Reply 세트가 없습니다. QR 생성을 위해 먼저 세트를 활성화해주세요.");
-        else if (window.toastr) toastr.warning("활성 QR 세트는 찾았으나, 유효한 이름이 없습니다.");
+        if (window.toastr && !firstActiveSetItem) toastr.info("활성화된 전역 Quick Reply 세트가 없어요. QR 생성을 위해 먼저 세트를 활성화해주세요.");
+        else if (window.toastr) toastr.warning("활성 QR 세트는 찾았으나, 유효한 이름이 없어요.");
         return null;
     }
 }
@@ -8197,11 +8198,11 @@ async function ensureQuickReplyExists(setName, qrLabel, qrCommandString, qrTitle
 
     try {
         quickReplyApi.createQuickReply(setName, qrLabel, qrProperties);
-        if (window.toastr) toastr.info(`QR '${qrLabel}'이(가) 세트 '${setName}'에 생성되었습니다.`);
+        if (window.toastr) toastr.info(`QR '${qrLabel}'이(가) 세트 '${setName}'에 생성됐어요.`);
         return true;
     } catch (error) {
         console.error(`DB_TOOL_SETUP QR '${qrLabel}' 생성 중 오류:`, error);
-        if (window.toastr) toastr.error(`QR '${qrLabel}' 생성 중 오류가 발생했습니다: ${error.message}`);
+        if (window.toastr) toastr.error(`QR '${qrLabel}' 생성 중 오류가 발생했어요: ${error.message}`);
         return false;
     }
 }
@@ -8219,7 +8220,7 @@ async function ensureCharacterExists(characterName, firstMessage) {
         return true;
     }
 
-    if (window.toastr) toastr.info(`필요한 캐릭터 '${characterName}'을(를) 찾을 수 없습니다. 생성을 시도합니다...`);
+    if (window.toastr) toastr.info(`필요한 캐릭터 '${characterName}'을(를) 찾을 수 없어요. 생성을 시도해요...`);
 
     const creationSuccess = await createSillyTavernCharacter(characterName, firstMessage);
     if (creationSuccess) {
@@ -8271,7 +8272,7 @@ async function prepareDbToolOnce() {
     const qrTitle = 'LLM 번역 DB 관리';
     const qrCommandString = `
 /let mainMenu {:
-    /buttons labels=["(업로드)백업", "(다운로드)복원"] -LLM 번역 DB 관리-<br><br>어떤 작업을 하시겠습니까? |
+    /buttons labels=["(업로드)백업", "(다운로드)복원"] -LLM 번역 DB 관리-<br><br>어떤 작업을 할까요? |
     /let choice {{pipe}} |
 
     /if left={{var::choice}} right="(업로드)백업" rule=eq /:llmDBUpload |
@@ -8299,13 +8300,13 @@ async function prepareDbToolOnce() {
             if (window.quickReplyApi) applyDbQrVisibility(window.quickReplyApi, false, qrLabel);
             const hadChar = doesCharacterExist(targetCharName);
             const charOnly = await ensureCharacterExists(targetCharName, targetCharFirstMessage);
-            if (!charOnly) { if (window.toastr) toastr.error(`DB 관리 기능 설정 실패: 캐릭터 '${targetCharName}' 준비에 실패했습니다.`); return; }
+            if (!charOnly) { if (window.toastr) toastr.error(`DB 관리 기능 설정 실패: 캐릭터 '${targetCharName}' 준비에 실패했어요.`); return; }
             if (window.toastr) toastr.info(`캐릭터 '${targetCharName}'${hadChar ? '은 이미 준비돼 있어요' : '을 준비했어요'}. 「입력창에 DB 관리 단추 두기」가 꺼져 있어서 입력창 단추는 만들지 않았어요.`);
             return;
         }
         const activeQrSetName = getFirstActiveGlobalQuickReplySetName();
         if (!activeQrSetName) {
-            if (window.toastr) toastr.error("활성화된 전역 QR 세트를 찾을 수 없습니다. QR 관련 작업을 진행할 수 없습니다.");
+            if (window.toastr) toastr.error("활성화된 전역 QR 세트를 찾을 수 없어요. QR 관련 작업을 진행할 수 없어요.");
             return;
         }
 
@@ -8323,26 +8324,26 @@ async function prepareDbToolOnce() {
         if (qrReady && charReady) {
             if (actionTakenThisTime) {
                 let message = "DB 관리 기능 설정 진행: ";
-                if (qrCreatedThisTime && charCreatedThisTime) message += `QR '${qrLabel}' 및 캐릭터 '${targetCharName}'이(가) 준비되었습니다.`;
-                else if (qrCreatedThisTime) message += `QR '${qrLabel}'이(가) 준비되었습니다.`;
-                else if (charCreatedThisTime) message += `캐릭터 '${targetCharName}'이(가) 준비되었습니다.`;
+                if (qrCreatedThisTime && charCreatedThisTime) message += `QR '${qrLabel}' 및 캐릭터 '${targetCharName}'이(가) 준비됐어요.`;
+                else if (qrCreatedThisTime) message += `QR '${qrLabel}'이(가) 준비됐어요.`;
+                else if (charCreatedThisTime) message += `캐릭터 '${targetCharName}'이(가) 준비됐어요.`;
                 message += " 버튼을 다시 클릭하여 작업을 시작하세요.";
                 if (window.toastr) toastr.success(message);
             } else {
-                const readyMessage = `DB 관리 기능('${qrLabel}' QR, '${targetCharName}' 캐릭터) 사용 준비가 완료되었습니다. 버튼을 다시 클릭하여 작업을 시작하세요.`;
+                const readyMessage = `DB 관리 기능('${qrLabel}' QR, '${targetCharName}' 캐릭터) 사용 준비가 완료됐어요. 버튼을 다시 클릭하여 작업을 시작하세요.`;
                 if (window.toastr) toastr.info(readyMessage);
             }
         } else {
             let failMessage = "DB 관리 기능 설정 실패: ";
-            if (!qrReady) failMessage += `QR '${qrLabel}' 준비에 실패했습니다. `;
-            if (!charReady) failMessage += `캐릭터 '${targetCharName}' 준비에 실패했습니다.`;
+            if (!qrReady) failMessage += `QR '${qrLabel}' 준비에 실패했어요. `;
+            if (!charReady) failMessage += `캐릭터 '${targetCharName}' 준비에 실패했어요.`;
             if (window.toastr) toastr.error(failMessage);
             console.error(`DB_TOOL_SETUP ${failMessage}`);
         }
 
     } catch (ex) {
         console.error(`DB 관리 기능 준비 중 예외 발생 ('${qrLabel}'):`, ex);
-        if (window.toastr) toastr.error(`작업 중 오류가 발생했습니다: ${ex.message}`);
+        if (window.toastr) toastr.error(`작업 중 오류가 발생했어요: ${ex.message}`);
     }
 }
 
@@ -8593,7 +8594,7 @@ export function processTranslationText(originalText, translatedText, options = {
         console.error('[LLM Translator] Error in processTranslationText:', error);
         // ✅ 수정 4: toastr.error 추가
         if (window.toastr) {
-            toastr.error('번역문 처리 중 오류가 발생했습니다.');
+            toastr.error('번역문 처리 중 오류가 발생했어요.');
         }
         // 치명적 오류 발생 시 최소한 번역문이라도 보여줌 (안전장치)
         return correctBackticks(fallbackTranslation || '');
@@ -8750,7 +8751,7 @@ function renderTranslation(skeleton, transQueue, origQueue, displayMode, origDat
     // [전략 결정]
     // 강제 맞추기 옵션이 꺼져 있고, 문단 수가 다르면 -> '통짜 모드'로 안전하게 표시
     if (!forceSequential && isLengthMismatch) {
-        if (window.toastr) toastr.warning('문단 불일치: 전체를 하나로 표시합니다.');
+        if (window.toastr) toastr.warning('문단 불일치: 전체를 하나로 표시해요.');
         // ✅ 수정 1: maskedText 전달
         return renderAllInOne(
             transQueue, 
@@ -8946,15 +8947,15 @@ registerCommand(SlashCommand.fromProps({
             targetButton = lastMessage.querySelector('.mes_llm_translate');
             if (targetButton) {
                 targetButton.click();
-                return '마지막 메시지를 LLM으로 번역합니다.';
+                return '마지막 메시지를 LLM으로 번역해요.';
             } else {
-                return '마지막 메시지 LLM 번역 버튼을 찾을 수 없습니다.';
+                return '마지막 메시지 LLM 번역 버튼을 찾을 수 없어요.';
             }
         } else {
-            return '채팅 메시지가 없습니다.';
+            return '채팅 메시지가 없어요.';
         }
     },
-    helpString: '마지막 메시지를 LLM 번역기로 번역합니다.',
+    helpString: '마지막 메시지를 LLM 번역기로 번역해요.',
 }));
 
 registerCommand(SlashCommand.fromProps({
@@ -8967,7 +8968,7 @@ registerCommand(SlashCommand.fromProps({
         if (messageIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '채팅 메시지가 없습니다.';
+                return '채팅 메시지가 없어요.';
             }
             actualMessageId = context.chat.length - 1;
         }
@@ -8975,12 +8976,12 @@ registerCommand(SlashCommand.fromProps({
         // 백그라운드에서 재번역 실행 (UI 블로킹 방지)
         retranslateMessage(actualMessageId, 'correction', true).catch(error => {
             console.error('Retranslation error:', error);
-            toastr.error(`메시지 ID ${actualMessageId} 교정 재번역 중 오류가 발생했습니다.`);
+            toastr.error(`메시지 ID ${actualMessageId} 교정 재번역 중 오류가 발생했어요.`);
         });
 
-        return `메시지 ID ${actualMessageId} 교정 재번역을 시작했습니다.`;
+        return `메시지 ID ${actualMessageId} 교정 재번역을 시작했어요.`;
     },
-    helpString: '지정한 ID의 메시지를 교정 재번역합니다 (기존 번역문을 개선). messageId를 생략하면 마지막 메시지를 대상으로 합니다.\n사용법: /LlmRetranslateCorrection [messageId=<메시지ID>]',
+    helpString: '지정한 ID의 메시지를 교정 재번역해요 (기존 번역문을 개선). messageId를 생략하면 마지막 메시지를 대상으로 해요.\n사용법: /LlmRetranslateCorrection [messageId=<메시지ID>]',
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({
             name: 'messageId',
@@ -9002,7 +9003,7 @@ registerCommand(SlashCommand.fromProps({
         if (messageIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '채팅 메시지가 없습니다.';
+                return '채팅 메시지가 없어요.';
             }
             actualMessageId = context.chat.length - 1;
         }
@@ -9010,12 +9011,12 @@ registerCommand(SlashCommand.fromProps({
         // 백그라운드에서 재번역 실행 (UI 블로킹 방지)
         retranslateMessage(actualMessageId, 'guidance', true).catch(error => {
             console.error('Retranslation error:', error);
-            toastr.error(`메시지 ID ${actualMessageId} 지침교정 재번역 중 오류가 발생했습니다.`);
+            toastr.error(`메시지 ID ${actualMessageId} 지침교정 재번역 중 오류가 발생했어요.`);
         });
 
-        return `메시지 ID ${actualMessageId} 지침교정 재번역을 시작했습니다.`;
+        return `메시지 ID ${actualMessageId} 지침교정 재번역을 시작했어요.`;
     },
-    helpString: '지정한 ID의 메시지를 지침교정 재번역합니다 (추가 지침을 입력받아 번역문을 개선). messageId를 생략하면 마지막 메시지를 대상으로 합니다.\n사용법: /LlmRetranslateGuidance [messageId=<메시지ID>]',
+    helpString: '지정한 ID의 메시지를 지침교정 재번역해요 (추가 지침을 입력받아 번역문을 개선). messageId를 생략하면 마지막 메시지를 대상으로 해요.\n사용법: /LlmRetranslateGuidance [messageId=<메시지ID>]',
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({
             name: 'messageId',
@@ -9037,7 +9038,7 @@ registerCommand(SlashCommand.fromProps({
         if (messageIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '채팅 메시지가 없습니다.';
+                return '채팅 메시지가 없어요.';
             }
             actualMessageId = context.chat.length - 1;
         }
@@ -9045,12 +9046,12 @@ registerCommand(SlashCommand.fromProps({
         // 백그라운드에서 재번역 실행 (UI 블로킹 방지)
         retranslateMessage(actualMessageId, 'paragraph', true).catch(error => {
             console.error('Retranslation error:', error);
-            toastr.error(`메시지 ID ${actualMessageId} 문단 구조 맞추기 재번역 중 오류가 발생했습니다.`);
+            toastr.error(`메시지 ID ${actualMessageId} 문단 구조 맞추기 재번역 중 오류가 발생했어요.`);
         });
 
-        return `메시지 ID ${actualMessageId} 문단 구조 맞추기 재번역을 시작했습니다.`;
+        return `메시지 ID ${actualMessageId} 문단 구조 맞추기 재번역을 시작했어요.`;
     },
-    helpString: '지정한 ID의 메시지를 문단 구조 맞추기 재번역합니다 (원문 구조에 맞춰 재번역). messageId를 생략하면 마지막 메시지를 대상으로 합니다.\n사용법: /LlmRetranslateParagraph [messageId=<메시지ID>]',
+    helpString: '지정한 ID의 메시지를 문단 구조 맞추기 재번역해요 (원문 구조에 맞춰 재번역). messageId를 생략하면 마지막 메시지를 대상으로 해요.\n사용법: /LlmRetranslateParagraph [messageId=<메시지ID>]',
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({
             name: 'messageId',
@@ -9072,7 +9073,7 @@ registerCommand(SlashCommand.fromProps({
         if (messageIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '채팅 메시지가 없습니다.';
+                return '채팅 메시지가 없어요.';
             }
             actualMessageId = context.chat.length - 1;
         }
@@ -9084,22 +9085,22 @@ registerCommand(SlashCommand.fromProps({
 
         const context = getContext();
         if (!context || !context.chat) {
-            return '컨텍스트 또는 채팅 데이터를 찾을 수 없습니다.';
+            return '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
         }
         if (messageId >= context.chat.length) {
-            return `메시지 ID ${messageId}를 찾을 수 없습니다. (채팅 길이: ${context.chat.length})`;
+            return `메시지 ID ${messageId}를 찾을 수 없어요. (채팅 길이: ${context.chat.length})`;
         }
 
         // 백그라운드에서 번역 실행 (UI 블로킹 방지)
         translateMessage(messageId, true, 'LlmTranslateID_command').catch(error => {
             console.error('Translation error:', error);
-            toastr.error(`메시지 ID ${messageId} 번역 중 오류가 발생했습니다.`);
+            toastr.error(`메시지 ID ${messageId} 번역 중 오류가 발생했어요.`);
         });
 
         // 즉시 성공 메시지 반환 (UI 블로킹 없음)
-        return `메시지 ID ${messageId} 번역을 시작했습니다.`;
+        return `메시지 ID ${messageId} 번역을 시작했어요.`;
     },
-    helpString: '지정한 ID의 메시지를 LLM 번역기로 번역합니다. messageId를 생략하면 마지막 메시지를 대상으로 합니다.\n사용법: /LlmTranslateID [messageId=<메시지ID>]',
+    helpString: '지정한 ID의 메시지를 LLM 번역기로 번역해요. messageId를 생략하면 마지막 메시지를 대상으로 해요.\n사용법: /LlmTranslateID [messageId=<메시지ID>]',
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({
             name: 'messageId',
@@ -9117,21 +9118,21 @@ registerCommand(SlashCommand.fromProps({
 registerCommand(SlashCommand.fromProps({
     name: 'llmDBUploadBackup',
     callback: backupTranslationsToMetadata,
-    helpString: 'LLM 번역 캐시를 현재 채팅 메타데이터에 백업합니다. (백업용 채팅에서 실행 권장)',
+    helpString: 'LLM 번역 캐시를 현재 채팅 메타데이터에 백업해요. (백업용 채팅에서 실행 권장)',
     returns: '백업 진행 및 결과 알림 (toastr)',
 }));
 
 registerCommand(SlashCommand.fromProps({
     name: 'llmDBDownloadRestore',
     callback: restoreTranslationsFromMetadata, // Add-Only + Progress Bar 버전
-    helpString: '현재 채팅 메타데이터의 백업에서 번역 캐시를 복원/병합합니다 (없는 데이터만 추가).',
+    helpString: '현재 채팅 메타데이터의 백업에서 번역 캐시를 복원/병합해요 (없는 데이터만 추가).',
     returns: '복원 진행(프로그레스 바) 및 결과 알림 (toastr)',
 }));
 
 registerCommand(SlashCommand.fromProps({
     name: 'llmDBmetaClearBackup',
     callback: clearBackupFromMetadata,
-    helpString: '현재 채팅 메타데이터에서 LLM 번역 캐시 백업을 삭제합니다 (영구 삭제).',
+    helpString: '현재 채팅 메타데이터에서 LLM 번역 캐시 백업을 삭제해요 (영구 삭제).',
     returns: '삭제 확인 팝업 및 결과 알림 (toastr)',
 }));
 
@@ -9157,7 +9158,7 @@ registerCommand(SlashCommand.fromProps({
         if (messageIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '오류: 채팅 메시지가 없습니다.';
+                return '오류: 채팅 메시지가 없어요.';
             }
             messageIdStr = String(context.chat.length - 1); // 마지막 메시지 ID로 변환
             logDebug(`${DEBUG_PREFIX_CMD} 'last' converted to messageId: ${messageIdStr}`);
@@ -9169,7 +9170,7 @@ registerCommand(SlashCommand.fromProps({
     /**
      * 도움말: 사용자가 /help llmGetTranslation 을 입력했을 때 표시될 설명입니다.
      */
-    helpString: '지정한 메시지 ID의 LLM 번역문을 DB에서 가져옵니다. messageId를 생략하면 마지막 메시지를 대상으로 합니다.\n사용법: /llmGetTranslation [messageId=<메시지ID>]',
+    helpString: '지정한 메시지 ID의 LLM 번역문을 DB에서 가져와요. messageId를 생략하면 마지막 메시지를 대상으로 해요.\n사용법: /llmGetTranslation [messageId=<메시지ID>]',
     /**
      * 이름 기반 인수 정의: namedArgumentList 사용
      */
@@ -9216,7 +9217,7 @@ registerCommand(SlashCommand.fromProps({
      * 도움말: 사용자가 /help llmDBDeleteTranslation 을 입력했을 때 표시될 설명입니다.
      * 사용법 예시를 named argument 방식으로 수정합니다.
      */
-    helpString: '지정한 메시지 ID (및 선택적 스와이프 번호)의 LLM 번역 기록(DB) 및 화면 표시를 삭제합니다. messageId를 생략하면 마지막 메시지를 대상으로 합니다.\n사용법: /llmDBDeleteTranslation [messageId=<메시지ID>] [swipeNumber=<스와이프번호>]',
+    helpString: '지정한 메시지 ID (및 선택적 스와이프 번호)의 LLM 번역 기록(DB) 및 화면 표시를 삭제해요. messageId를 생략하면 마지막 메시지를 대상으로 해요.\n사용법: /llmDBDeleteTranslation [messageId=<메시지ID>] [swipeNumber=<스와이프번호>]',
     /**
      * 이름 기반 인수 정의: namedArgumentList 사용
      */
@@ -9244,7 +9245,7 @@ registerCommand(SlashCommand.fromProps({
 // 기존 llmTranslate 수정: prompt 인수 추가
 registerCommand(SlashCommand.fromProps({
     name: 'llmTranslate',
-    helpString: 'LLM을 사용하여 텍스트를 번역합니다. 기본적으로 채팅 번역 설정을 따르며, prompt 인수로 프롬프트를 직접 지정할 수 있습니다.\n사용법: /llmTranslate "텍스트" [prompt="프롬프트 내용"]',
+    helpString: 'LLM을 사용하여 텍스트를 번역해요. 기본적으로 채팅 번역 설정을 따르며, prompt 인수로 프롬프트를 직접 지정할 수 있어요.\n사용법: /llmTranslate "텍스트" [prompt="프롬프트 내용"]',
     unnamedArgumentList: [
         new SlashCommandArgument('번역할 텍스트', ARGUMENT_TYPE.STRING, true, false, ''),
     ],
@@ -9280,7 +9281,7 @@ registerCommand(SlashCommand.fromProps({
 // 신규 llmTranslateInput 추가: 입력 번역용
 registerCommand(SlashCommand.fromProps({
     name: 'llmTranslateInput',
-    helpString: 'LLM을 사용하여 텍스트를 입력용(주로 영어)으로 번역합니다. 기본적으로 입력 번역 설정을 따르며, prompt 인수로 프롬프트를 직접 지정할 수 있습니다.\n사용법: /llmTranslateInput "텍스트" [prompt="프롬프트 내용"]',
+    helpString: 'LLM을 사용하여 텍스트를 입력용(주로 영어)으로 번역해요. 기본적으로 입력 번역 설정을 따르며, prompt 인수로 프롬프트를 직접 지정할 수 있어요.\n사용법: /llmTranslateInput "텍스트" [prompt="프롬프트 내용"]',
     unnamedArgumentList: [
         new SlashCommandArgument('번역할 텍스트', ARGUMENT_TYPE.STRING, true, false, ''),
     ],
@@ -9333,7 +9334,7 @@ registerCommand(SlashCommand.fromProps({
         if (endIdStr === '{{lastMessageId}}' || endIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '오류: 채팅 메시지가 없습니다.';
+                return '오류: 채팅 메시지가 없어요.';
             }
             endIdStr = String(context.chat.length - 1);
             logDebug(`${DEBUG_PREFIX_CMD} 'last' converted to endId: ${endIdStr}`);
@@ -9342,7 +9343,7 @@ registerCommand(SlashCommand.fromProps({
         if (startIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '오류: 채팅 메시지가 없습니다.';
+                return '오류: 채팅 메시지가 없어요.';
             }
             startIdStr = String(context.chat.length - 1);
             logDebug(`${DEBUG_PREFIX_CMD} 'last' converted to startId: ${startIdStr}`);
@@ -9351,7 +9352,7 @@ registerCommand(SlashCommand.fromProps({
         // getTranslationsInRange 함수 호출
         return await getTranslationsInRange(startIdStr, endIdStr, includeOriginal, includeMessageId, excludeHidden);
     },
-    helpString: '지정한 범위의 메시지들의 번역문을 가져옵니다. 기본적으로 번역문만 ID 없이 출력하고 숨겨진 메시지는 제외합니다.\n사용법: /llmGetTranslations [startId=<시작ID>] [endId=<종료ID>] [includeOriginal=true/false] [includeMessageId=true/false] [excludeHidden=true/false]',
+    helpString: '지정한 범위의 메시지들의 번역문을 가져와요. 기본적으로 번역문만 ID 없이 출력하고 숨겨진 메시지는 제외해요.\n사용법: /llmGetTranslations [startId=<시작ID>] [endId=<종료ID>] [includeOriginal=true/false] [includeMessageId=true/false] [excludeHidden=true/false]',
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({
             name: 'startId',
@@ -9653,7 +9654,7 @@ class PromptManager {
         this.customPrompts.push(newPrompt);
         this.saveToSettings();
         this.updatePromptDropdown();
-        toastr.success('새 프롬프트가 추가되었습니다.');
+        toastr.success('새 프롬프트를 추가했어요.');
     }
 
 
@@ -9682,7 +9683,7 @@ class PromptManager {
             // 프롬프트 선택 드롭다운 업데이트 (기본 프롬프트로 변경)
             this.updatePromptDropdown();
 
-            toastr.success('프롬프트가 삭제되었습니다.');
+            toastr.success('프롬프트를 삭제했어요.');
         }
     }
 
@@ -9723,7 +9724,7 @@ class PromptManager {
                 saveSettingsDebounced();
             }
 
-            toastr.success(`프롬프트 "${customPrompt.title}"가 저장되었습니다.`);
+            toastr.success(`프롬프트 "${customPrompt.title}"가 저장됐어요.`);
         } else {
             // 기본 프롬프트인 경우
             const promptKey = selectedValue;
@@ -9731,7 +9732,7 @@ class PromptManager {
                 extensionSettings[promptKey] = newContent;
                 saveSettingsDebounced();
                 this.updatePromptButtons();   // 3.1.6
-                toastr.success('프롬프트가 저장되었습니다.');
+                toastr.success('프롬프트를 저장했어요.');
             }
         }
     }
@@ -9748,7 +9749,7 @@ registerCommand(SlashCommand.fromProps({
         if (messageIdStr === 'last') {
             const context = getContext();
             if (!context || !context.chat || context.chat.length === 0) {
-                return '채팅 메시지가 없습니다.';
+                return '채팅 메시지가 없어요.';
             }
             actualMessageId = context.chat.length - 1;
         }
@@ -9760,27 +9761,27 @@ registerCommand(SlashCommand.fromProps({
 
         const context = getContext();
         if (!context || !context.chat) {
-            return '컨텍스트 또는 채팅 데이터를 찾을 수 없습니다.';
+            return '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
         }
         if (messageId >= context.chat.length) {
-            return `메시지 ID ${messageId}를 찾을 수 없습니다. (채팅 길이: ${context.chat.length})`;
+            return `메시지 ID ${messageId}를 찾을 수 없어요. (채팅 길이: ${context.chat.length})`;
         }
 
         // 번역 진행 중 확인
         if (isTranslationInProgress(messageId)) { // [1.9.5] 번호가 아니라 그 메시지
             toastr.info(inProgressNotice(messageId));
-            return `메시지 ID ${messageId}는 이미 번역이 진행 중입니다.`;
+            return `메시지 ID ${messageId}는 이미 번역이 진행 중이에요.`;
         }
 
         // 백그라운드에서 토글 실행 (UI 블로킹 방지)
         handleTranslateButtonClick(messageId).catch(error => {
             console.error('Translation toggle error:', error);
-            toastr.error(`메시지 ID ${messageId} 번역/원문 전환 중 오류가 발생했습니다.`);
+            toastr.error(`메시지 ID ${messageId} 번역/원문 전환 중 오류가 발생했어요.`);
         });
 
-        return `메시지 ID ${messageId} 번역/원문 전환을 시작했습니다.`;
+        return `메시지 ID ${messageId} 번역/원문 전환을 시작했어요.`;
     },
-    helpString: '지정한 ID의 메시지에서 번역문과 원문을 전환합니다. 번역문이 없으면 번역을 실행하고, 번역문이 표시되어 있으면 원문을 표시하며, 원문이 표시되어 있으면 번역을 실행합니다. messageId를 생략하면 마지막 메시지를 대상으로 합니다.\n사용법: /LlmToggleTranslation [messageId=<메시지ID>]',
+    helpString: '지정한 ID의 메시지에서 번역문과 원문을 전환해요. 번역문이 없으면 번역을 실행하고, 번역문이 표시되어 있으면 원문을 표시하며, 원문이 표시되어 있으면 번역을 실행해요. messageId를 생략하면 마지막 메시지를 대상으로 해요.\n사용법: /LlmToggleTranslation [messageId=<메시지ID>]',
     namedArgumentList: [
         SlashCommandNamedArgument.fromProps({
             name: 'messageId',
@@ -9941,7 +9942,7 @@ class PresetManager {
 		);
 
 		if (!presetName || presetName.trim() === '') {
-			toastr.info('프리셋 저장이 취소되었습니다.');
+			toastr.info('프리셋 저장을 취소했어요.');
 			return;
 		}
 
@@ -9982,7 +9983,7 @@ class PresetManager {
 		this.saveToSettings();
 		this.updatePresetDropdown();
 		$('#llm_preset_select').val(newPreset.id);
-		toastr.success(`프리셋 "${presetName}"이(가) 저장되었습니다.`);
+		toastr.success(`프리셋 "${presetName}"이(가) 저장됐어요.`);
 		
 		// 저장/갱신 직전 확인
 		console.assert(
@@ -9995,7 +9996,7 @@ class PresetManager {
     applyPreset(selectedId) {
         const preset = this.presets.find(p => p.id === selectedId);
         if (!isPreset(preset) || !validSettings(preset.settings, defaultSettings)) {
-            toastr.error('선택한 프리셋을 찾을 수 없습니다.');
+            toastr.error('선택한 프리셋을 찾을 수 없어요.');
             return;
         }
 
@@ -10120,7 +10121,7 @@ class PresetManager {
 
 		const preset = this.presets.find(p => p.id === selectedId);
 		if (!preset) {
-			toastr.error('선택한 프리셋을 찾을 수 없습니다.');
+			toastr.error('선택한 프리셋을 찾을 수 없어요.');
 			return;
 		}
 
@@ -10138,12 +10139,12 @@ class PresetManager {
 
 		// 팝업 띄우기
 		const confirm = await callGenericPopup(
-			`"${escapeHtmlText(preset.name)}" 프리셋을 현재 설정으로 업데이트하시겠습니까?\n(기존 프리셋 내용이 덮어쓰기됩니다.)`,
+			`"${escapeHtmlText(preset.name)}" 프리셋을 현재 설정으로 업데이트할까요?\n(기존 프리셋 내용이 덮어쓰기돼요.)`,
 			POPUP_TYPE.CONFIRM
 		);
 
 		if (!confirm) {
-			toastr.info('프리셋 업데이트가 취소되었습니다.');
+			toastr.info('프리셋 업데이트를 취소했어요.');
 			return;
 		}
 
@@ -10167,7 +10168,7 @@ class PresetManager {
 		preset.customPrompts = customPromptsSnapshot;
 
 		this.saveToSettings();
-		toastr.success(`프리셋 "${preset.name}"을(를) 업데이트했습니다.`);
+		toastr.success(`프리셋 "${preset.name}"을(를) 업데이트했어요.`);
 		// 저장/갱신 직전 확인
 		console.assert(
 			extensionSettings.customPrompts === promptManager.customPrompts,
@@ -10184,17 +10185,17 @@ class PresetManager {
 
         const preset = this.presets.find(p => p.id === selectedId);
         if (!preset) {
-            toastr.error('선택한 프리셋을 찾을 수 없습니다.');
+            toastr.error('선택한 프리셋을 찾을 수 없어요.');
             return;
         }
 
         const confirm = await callGenericPopup(
-            `"${escapeHtmlText(preset.name)}" 프리셋을 삭제하시겠습니까?`,
+            `"${escapeHtmlText(preset.name)}" 프리셋을 삭제할까요?`,
             POPUP_TYPE.CONFIRM
         );
 
         if (!confirm) {
-            toastr.info('프리셋 삭제가 취소되었습니다.');
+            toastr.info('프리셋 삭제를 취소했어요.');
             return;
         }
 
@@ -10202,7 +10203,7 @@ class PresetManager {
         this.saveToSettings();
         this.updatePresetDropdown();
 
-        toastr.success(`프리셋 "${preset.name}"이(가) 삭제되었습니다.`);
+        toastr.success(`프리셋 "${preset.name}"이(가) 삭제됐어요.`);
 		
     }
 
@@ -10226,7 +10227,7 @@ class PresetManager {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        toastr.success('프롬프트 및 프리셋을 JSON으로 내보냈습니다.');
+        toastr.success('프롬프트 및 프리셋을 JSON으로 내보냈어요.');
     }
 
     async importFromJson(file) {
@@ -10236,7 +10237,7 @@ class PresetManager {
 
             // 버전 및 데이터 유효성 검사
             if (!validImport(data, defaultSettings)) {
-                toastr.error('유효하지 않은 JSON 파일입니다.');
+                toastr.error('유효하지 않은 JSON 파일이에요.');
                 return;
             }
 
@@ -10252,22 +10253,22 @@ class PresetManager {
                     { okButton: '주소 빼고 가져오기', cancelButton: '그대로 가져오기', customButtons: [{ text: '가져오기 취소', result: POPUP_RESULT.CANCELLED, appendAtEnd: true }] }
                 );
                 if (choice !== POPUP_RESULT.AFFIRMATIVE && choice !== POPUP_RESULT.NEGATIVE) {
-                    toastr.info('가져오기가 취소되었습니다.');
+                    toastr.info('가져오기를 취소했어요.');
                     return;
                 }
                 if (choice === POPUP_RESULT.AFFIRMATIVE) data.presets = withoutEndpoints(data.presets);
             }
 
             const confirm = await callGenericPopup(
-                `JSON 파일을 가져오시겠습니까?\n\n` +
+                `JSON 파일을 가져올까요?\n\n` +
                 `• 커스텀 프롬프트: ${Array.isArray(data.customPrompts) ? data.customPrompts.length : 0}개\n` +
                 `• 프리셋: ${Array.isArray(data.presets) ? data.presets.length : 0}개\n\n` +
-                `(기존 데이터는 덮어쓰기됩니다.)`,
+                `(기존 데이터는 덮어쓰기돼요.)`,
                 POPUP_TYPE.CONFIRM
             );
 
             if (!confirm) {
-                toastr.info('가져오기가 취소되었습니다.');
+                toastr.info('가져오기를 취소했어요.');
                 return;
             }
 
@@ -10287,11 +10288,11 @@ class PresetManager {
             }
 
             saveSettingsDebounced();
-            toastr.success('프롬프트 및 프리셋을 가져왔습니다.');
+            toastr.success('프롬프트 및 프리셋을 가져왔어요.');
 
         } catch (error) {
             console.error('Import error:', error);
-            toastr.error('JSON 파일을 읽는 중 오류가 발생했습니다.');
+            toastr.error('JSON 파일을 읽는 중 오류가 발생했어요.');
         }
     }
 }

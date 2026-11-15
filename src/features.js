@@ -157,6 +157,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (personaDefer || modules.personadefer) onGate('drawer', () => load('personadefer', './persona-defer.js').then(m => m?.syncPersonaDefer(personaDefer)), 'personadefer');
     // 7.9.9 단추를 손으로 누르면 불러온 메시지를 보여 준다 (show-more-tap.js, 자동 더 보기와 상관없이 · 테마가 켜져 있을 때)
     if (on || modules.showmoretap) load('showmoretap', './show-more-tap.js').then(m => (on ? m?.installShowMoreTap() : m?.uninstallShowMoreTap()));
+    // 1.5.1 단추 지키기 (show-more-keep.js, 테마가 켜져 있을 때) — 다른 확장이 화면 메시지를 줄이며 단추를 안 붙이거나 아래에 붙이면 맨 위로 되돌린다
+    if (on || modules.showmorekeep) load('showmorekeep', './show-more-keep.js').then(m => (on ? m?.installShowMoreKeep() : m?.uninstallShowMoreKeep()));
     // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다
     const lazyAvatars = on && s.chat?.lazyAvatars !== false && !restingFor('lazyAvatars');
     if (lazyAvatars || modules.lazyavatars) load('lazyavatars', './lazy-avatars.js').then(m => m?.syncLazyAvatars(lazyAvatars));

@@ -80,6 +80,12 @@ body.salty #top-settings-holder .drawer-icon.openIcon:not(.redOverlayGlow) {
 body.salty.salty-icons-line #top-settings-holder .drawer-icon {
   font-size: 21px !important;
 }
+/* 1.5.1 아이콘 전수조사: 폰에서 위 막대 선 아이콘의 그림이 14 ~ 17px(주 동작 기준 18 아래) — 24px 상자로(그림 16 ~ 20). 막대 높이 40 · 누르는 자리는 그대로 */
+@media (max-width: 1000px) {
+  body.salty.salty-icons-line #top-settings-holder .drawer-icon {
+    font-size: 24px !important;
+  }
+}
 
 /* ---------- 서랍 · 패널 ---------- */
 /* 서랍 = 종이 시트(e5), 폰은 바 밑에 붙은 시트 (surfaces:foundation 끝 폰 규칙) */

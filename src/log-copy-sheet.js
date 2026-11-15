@@ -1479,7 +1479,7 @@ const STYLE = `
 .bl-tool-dialog.bl-lc { width:min(560px, calc(100vw - 24px)); padding:0; overflow:hidden; display:flex; flex-direction:column; max-height:calc(100dvh - 24px); }
 .bl-lc-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 8px 8px 16px; border-bottom:1px solid var(--salty-line); }
 .bl-lc-head h3 { display:flex; align-items:center; gap:8px; margin:0; min-width:0; font-size:16px; font-weight:650; line-height:1.4; white-space:nowrap; overflow:hidden; }
-.bl-lc-head h3 i { flex:none; margin:0; color:var(--salty-accent-ink, var(--salty-accent)); translate:0 -.05em; }   /* 1.0.1 fa-copy 잉크가 제목 글자보다 0.81px(16px 의 0.05em) 아래 → 제 크기 비율로 올려요(뒤 0.01) */
+.bl-lc-head h3 i { flex:none; margin:0; color:var(--salty-accent-ink, var(--salty-accent)); }   /* 1.5.2: 1.0.1 의 −0.05em 올림은 걷었어요 — 그 0.81px 는 그림이 아니라 제목 글자가 줄 상자에서 위로 붙은 몫이었고(기본 글꼴만 · 세리프에서는 거꾸로 0.9px 떴어요), 이제 글자 칸을 몸통 가운데로 다듬어요(css/88-ui-parts) */
 .bl-lc-head h3 small { min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; color:var(--salty-muted); font-size:13px; font-weight:400; }
 .bl-lc .bl-lc-icon { position:relative; flex:none; width:34px; min-width:34px; height:34px; min-height:34px; padding:0; gap:0; border:0; background:transparent; }
 .bl-lc .bl-lc-icon::before { content:''; position:absolute; inset:-5px; }
@@ -1722,8 +1722,8 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
   .bl-lc-fd-h > mark { flex:none; padding:1px 8px; border-radius:999px; background:var(--salty-accent-10, var(--salty-raised)); color:var(--salty-accent-ink, var(--salty-accent)); font-size:12px; font-weight:650; }
   .bl-lc-fd-h > mark.is-on { background:var(--salty-accent); color:var(--salty-on-accent, var(--salty-bg)); }   /* 1.2.2 「켬」 = 스위치 켬과 같은 팔레트 강조색(테마 규칙: 켜짐에는 두 번째 포인트 · 팔레트 밖 노랑을 안 써요) */
   .bl-lc-fd-h > mark[hidden] { display:none; }
-  .bl-lc-fd-h > i { flex:none; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); transition:transform .15s; }   /* 1.2.2 테마의 다른 꺾쇠와 같은 꼴(12.5 · 글자색) */
-  .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); }
+  .bl-lc-fd-h > i { flex:none; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); translate:0 -.0625em; transition:transform .15s, translate .15s; }   /* 1.5.2 꺾쇠 그림은 제 글자 칸 가운데보다 32/512 = 0.0625em 아래에 그려져 있어요(Font Awesome chevron-down) — 그림 몫만 제 크기 비율로 올려요(이름표 글꼴과 무관) */   /* 1.2.2 테마의 다른 꺾쇠와 같은 꼴(12.5 · 글자색) */
+  .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); translate:0 .0625em; }
   .bl-lc-fd-h:focus-visible, .bl-lc-sw:focus-visible, .bl-lc-cr-more:focus-visible { outline:1px solid var(--salty-accent); outline-offset:-1px; }
   .bl-lc-fd > :is(.bl-lc-shows, .bl-lc-names, .bl-lc-words, .bl-lc-fields, .bl-lc-sw) { margin:0 12px; }
   .bl-lc-fd > .bl-lc-names { margin-top:-4px; }

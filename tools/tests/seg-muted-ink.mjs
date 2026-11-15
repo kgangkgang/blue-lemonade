@@ -41,6 +41,20 @@ test('내장 팔레트 전부: 음영 두 겹 위 잉크 4.5 : 1 이상 · 나�
         if (dark) assert.equal(c, pal.muted, `${id} 나이트는 그대로`);
     }
 });
+test('1.5.1 위험색: apply.js 가 readableInk(위험색 → 본문색)로 만들고, 내장 팔레트 전부 바탕 · 면 · 떠 있는 면 위 4.5 : 1 이상 · 나이트는 그 색 그대로', () => {
+    const src = read('src/apply.js');
+    assert.match(src, /const danger = readableInk\(pal\.danger, pal\.text, \[\.\.\.tones\('bg'\), \.\.\.tones\('surface'\), \.\.\.tones\('raised'\)\]\);/);
+    assert.match(src, /vars\['--salty-danger'\] = danger;/);
+    assert.match(src, /vars\['--salty-danger-soft'\] = alpha\(danger,/);
+    for (const id of Object.keys(P.PALETTES)) {
+        const pal = P.paletteColors({ palette: id, colorOverrides: {} });
+        const backs = [pal.bg, pal.surface, pal.raised];
+        const c = ink(pal.danger, pal.text, backs, 4.5);
+        for (const b of backs) assert.ok(cr(c, b) >= 4.5, `${id} ${c} on ${b} ${cr(c, b).toFixed(2)}`);
+        if (P.paletteMode(id) === 'dark') assert.equal(c, pal.danger, `${id} 나이트는 그대로`);
+        else assert.ok(cr('#FFFFFF', c) >= 4.5, `${id} 위험색 면 위 흰 글자 ${cr('#FFFFFF', c).toFixed(2)}`);
+    }
+});
 test('코끼리 창(색 변수를 바꿔 끼우는 곳)도 잉크를 그 확장의 보조색으로 맞춰요', () => {
     assert.match(read('src/ext-elephant.css'), /--salty-muted: var\(--lm-muted\);\s*--salty-muted-ink: var\(--lm-muted\);/);
 });

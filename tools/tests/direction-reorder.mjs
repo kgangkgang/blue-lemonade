@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+// 1.5.3 번역 보기 공용 부품(src/inline-translate.js) — 아래에서 import 줄을 떼므로 이름을 앞에 붙여 줘요
+globalThis.__blInl = await import(pathToFileURL(path.resolve(process.argv[2] || '.') + '/src/inline-translate.js').href); globalThis.__blInlHead = 'const {createInlineTranslate,TR_ICON,TR_FAIL,trBoxInner:sharedTrBoxInner,trIconHtml}=globalThis.__blInl;';
 const root = path.resolve(process.argv[2] || '.'), url = pathToFileURL(root + '/');
 const read = rel => fs.readFile(path.join(root, rel), 'utf8');
 const { insertInstructions } = await import(new URL('src/addons/direction/prompt.js', url));
@@ -14,7 +16,7 @@ const probe = { ext, insertInstructions, saves: 0, model: 'example-model', conte
 globalThis.__directionTest = probe; globalThis.window = { matchMedia: () => ({ matches: false }) };
 globalThis.CSS ??= { escape: value => String(value) };
 const js = await read('src/addons/direction/index.js');
-const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '');
+const source = js.split('// ── 시작')[0].replace(/^import .*;$/gm, '').replace(/^/, globalThis.__blInlHead);
 const prelude = 'const addonRunning=()=>true;const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const eventSource={on(){}};const event_types={};const POPUP_TYPE={};const callGenericPopup=async()=>true;const oai_settings={};const getChatCompletionModel=()=>globalThis.__directionTest.model;const verifyAddonCss=()=>{};const badgeTextHit=()=>true;const showThemeModal=()=>{};';
 const m = await import('data:text/javascript;base64,' + Buffer.from(prelude + source + '\nexport {initSettings,settings,injectDirection,trackGeneration,movePrompt,dropSlot,onPromptsReorderKey,onPromptsClick,HOLD_MS,HOLD_SLOP};').toString('base64'));
 

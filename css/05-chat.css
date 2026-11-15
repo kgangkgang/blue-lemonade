@@ -428,7 +428,22 @@ body.salty:not(.expandMessageActions) #chat .mes .extraMesButtons > * {
   cursor: pointer;
 }
 body.salty:not(.expandMessageActions).salty-icons-line #chat .mes .extraMesButtons > * {
-  font-size: 19px !important;
+  font-size: 20px !important;
+}
+/* 1.5.1 아이콘 전수조사: 이름 줄 단추(번역 · 돋보기 · ⋯ · 별 · 연필)도 선 아이콘일 땐 ⋯ 메뉴 안과 같은 20px(메뉴 안도 19 → 20) —
+   선 아이콘은 24칸 격자의 75 ~ 83% 만 그려져 16px 상자에서 그림이 12px 뿐이었어요(그림 ≈ 15 ~ 16 · 선 1.5px). 칸 32 · 줄 높이는 그대로 */
+body.salty.salty-icons-line #chat .mes .mes_buttons {
+  font-size: 20px !important;
+}
+/* 1.5.2 면 안 가운데(잉크 가운데 = 단추 가운데 · 0.5px 안): 선 그림을 줄 높이 · vertical-align 으로 맞추면 PC(배율 1)에서 반올림 때문에
+   0.6 ~ 0.7px 위로 떴어요. 그림 칸(1em)을 단추 안에서 위아래 · 좌우 한가운데에 직접 놓아요(단추 크기 · 여닫기 display 는 그대로). */
+body.salty.salty-icons-line #chat .mes :is(.mes_buttons, .extraMesButtons) > .mes_button {
+  position: relative;
+}
+body.salty.salty-icons-line #chat .mes :is(.mes_buttons, .extraMesButtons) > .mes_button::before {
+  position: absolute;
+  inset: 0;
+  margin: auto;
 }
 /* 지우기(번역문 삭제): 다른 칸과 똑같은 44x44 — 자리만 맨 끝으로 밀어 늘 마지막 칸
    (예전엔 메뉴 높이만큼 늘린 세로 키라 탭 자리가 옆 칸의 3배였고, 옆을 노린 손가락까지 삼켰음)

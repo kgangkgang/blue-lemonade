@@ -4,15 +4,15 @@ const ICONS = {
     sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
     plug: '<path d="M9 3v4M15 3v4M7 7h10v3.5a5 5 0 0 1-10 0V7zM12 15.5V21"/>',
     type: '<path d="M5 7V5h14v2M12 5v14M9 19h6"/>',
-    book: '<path d="M12 6.5C10 5 7 4.5 4 5v13.5c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5V20"/>',
+    book: '<g transform="translate(0 -0.45)"><path d="M12 6.5C10 5 7 4.5 4 5v13.5c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5V20"/></g>',
     gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.3M12 18.2v2.3M3.5 12h2.3M18.2 12h2.3M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/>',
     image: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4.5 17.5 4.5-4 3.5 3 3-2.5 4 3.5"/>',
     blocks: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
     smile: '<circle cx="12" cy="12" r="8.5"/><path d="M8.8 14.3c1.8 1.9 4.6 1.9 6.4 0M9.5 10h.01M14.5 10h.01"/>',
     card: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="11" r="2.1"/><path d="M6 16.3c.7-1.6 1.8-2.4 3-2.4s2.3.8 3 2.4M14.5 10h3.5M14.5 13.5h2.5"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h11"/>',
-    sparkle: '<path d="M11 4l1.7 4.8 4.8 1.7-4.8 1.7L11 17l-1.7-4.8-4.8-1.7 4.8-1.7z"/><path d="M18.5 15v4.5M16.25 17.25h4.5"/>',
-    send: '<path d="M19.3 4.7 3.7 10.9c-.8.3-.7 1.4.1 1.6l5.5 1.9 1.9 5.5c.2.8 1.3.9 1.6.1l6.5-15.3zM9.3 14.4l4.6-4.6"/>',
+    sparkle: '<g transform="translate(-0.6 0.25)"><path d="M11 4l1.7 4.8 4.8 1.7-4.8 1.7L11 17l-1.7-4.8-4.8-1.7 4.8-1.7z"/><path d="M18.5 15v4.5M16.25 17.25h4.5"/></g>',
+    send: '<g transform="translate(0.75 -0.6)"><path d="M19.3 4.7 3.7 10.9c-.8.3-.7 1.4.1 1.6l5.5 1.9 1.9 5.5c.2.8 1.3.9 1.6.1l6.5-15.3zM9.3 14.4l4.6-4.6"/></g>',
     next: '<path d="M5 12h13M13 6.5 18.5 12 13 17.5"/>',
     // 짧은 선의 둥근 끝에 기대지 않고 실제 면적으로 그린다 (모바일 마스크 렌더러 호환).
     more: '<g fill="#000" stroke="none"><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/></g>',
@@ -24,9 +24,9 @@ const ICONS = {
     pause: '<path d="M9.5 7.5v9M14.5 7.5v9"/>',
     play: '<path d="M9 7.2v9.6c0 .8.9 1.2 1.5.8l6.9-4.8c.6-.4.6-1.2 0-1.6l-6.9-4.8C9.9 6 9 6.4 9 7.2z"/>',
     halt: '<rect x="7.25" y="7.25" width="9.5" height="9.5" rx="2"/>',
-    userpen: '<circle cx="10" cy="8" r="3.4"/><path d="M4 19.5c.7-3.2 3-5 6-5 1 0 2 .2 2.8.6M15.3 20.2l.4-2.4 3.6-3.6a1.35 1.35 0 0 1 1.9 1.9l-3.6 3.6z"/>',
+    userpen: '<g transform="translate(-0.75 -0.35)"><circle cx="10" cy="8" r="3.4"/><path d="M4 19.5c.7-3.2 3-5 6-5 1 0 2 .2 2.8.6M15.3 20.2l.4-2.4 3.6-3.6a1.35 1.35 0 0 1 1.9 1.9l-3.6 3.6z"/></g>',
     // 단추 아이콘 역할(role-icons-core.js)의 기본 그림용 — 보내기 번역 말풍선(css/11-chrome.css 의 --salty-mi-chatdots 와 같은 그림)
-    bubble: '<path d="M20.5 11.6a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5 5 16a8.5 8.5 0 1 1 15.5-4.4z"/><path d="M8.4 11.8h.01M12 11.8h.01M15.6 11.8h.01" stroke-width="2.6"/>',
+    bubble: '<g transform="translate(0 0.45)"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5 5 16a8.5 8.5 0 1 1 15.5-4.4z"/><path d="M8.4 11.8h.01M12 11.8h.01M15.6 11.8h.01" stroke-width="2.6"/></g>',
 };
 const STROKE = { more: 3, send: 2, pause: 2.4, play: 2, halt: 2.1 };
 const BASE_STROKE = 1.8;

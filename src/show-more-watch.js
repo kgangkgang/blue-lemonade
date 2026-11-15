@@ -3,6 +3,7 @@
 // 새로 만든다 → ko-ui 의 한글 치환이 이벤트 한 번에 기대면 영어로 돌아왔다(번역 진행 중 「Show more messages」).
 // 같은 감시자를 여러 곳(ko-ui 치환 · show-more-auto 관찰)이 나눠 쓴다 — 부르는 쪽마다 콜백 하나.
 const callbacks = new Set();
+const anyCallbacks = new Set();   // 1.5.1 #chat 바로 아래 자식이 바뀔 때마다(단추 지키기 show-more-keep.js) — 같은 감시자를 나눠 써요(감시자 · 허브 구독을 늘리지 않게)
 let observer = null, watchedChat = null;
 
 function notify() { for (const cb of callbacks) { try { cb(); } catch (error) { console.error('[Blue Lemonade] show-more-watch', error); } } }
@@ -12,6 +13,8 @@ function attach(chat) {
     observer?.disconnect();
     watchedChat = chat;
     observer = new MutationObserver(records => {
+        for (const cb of anyCallbacks) { try { cb(records); } catch (error) { console.error('[Blue Lemonade] show-more-watch', error); } }
+        if (!callbacks.size) return;
         for (const r of records) for (const node of r.addedNodes) {
             if (node instanceof Element && (node.id === 'show_more_messages' || node.querySelector?.('#show_more_messages'))) { notify(); return; }
         }
@@ -24,5 +27,13 @@ export function onShowMoreButton(fix, chat = document.getElementById('chat')) {
     callbacks.add(fix);
     attach(chat);
     if (chat?.querySelector?.('#show_more_messages')) { try { fix(); } catch { /* 위 notify 와 같은 보호 */ } }
-    return () => { callbacks.delete(fix); if (!callbacks.size) { observer?.disconnect(); observer = null; watchedChat = null; } };
+    return () => { callbacks.delete(fix); stopIfIdle(); };
+}
+function stopIfIdle() { if (!callbacks.size && !anyCallbacks.size) { observer?.disconnect(); observer = null; watchedChat = null; } }
+
+/** 1.5.1 #chat 바로 아래 자식이 바뀔 때마다 fn(records) — 돌려주는 함수로 뗀다. 시험용 chat 요소를 받을 수 있다. */
+export function onChatChildren(fn, chat = document.getElementById('chat')) {
+    anyCallbacks.add(fn);
+    attach(chat);
+    return () => { anyCallbacks.delete(fn); stopIfIdle(); };
 }

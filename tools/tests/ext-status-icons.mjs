@@ -20,6 +20,9 @@ const META = JSON.parse(read('src/ext-status-icons.json'));
 const sheet = read('src/ext-status.css').replace(/\/\*[\s\S]*?\*\//g, '');
 const faces = sheet.match(/@font-face\s*\{[^}]*\}/g) || [];
 const want = new Set([...Object.keys(META.map), ...META.zeroWidth].map(h => parseInt(h, 16)));
+// 1.5.1 갈래 기본 아이콘: 표에 없는 그림 글자도 글꼴이 덮어요(이어진 구간 [시작, 끝])
+const FB = (META.fallback?.ranges || []).map(([a, b]) => [parseInt(a, 16), parseInt(b, 16)]);
+for (const [a, b] of FB) for (let c = a; c <= b; c++) want.add(c);
 
 check('① @font-face 하나 · 이름 · 주소 · unicode-range = 표', () => {
     assert.equal(faces.length, 1);
@@ -27,7 +30,7 @@ check('① @font-face 하나 · 이름 · 주소 · unicode-range = 표', () => 
     assert.match(f, /font-family:\s*'bl-mb-icons'/);
     assert.match(f, /src:\s*url\('\.\/ext-status-icons\.woff2'\)\s*format\('woff2'\)/);
     assert.match(f, /font-display:\s*block/);
-    const range = new Set((f.match(/unicode-range:\s*([^;]+);/)?.[1] || '').split(',').map(s => parseInt(s.trim().replace(/^U\+/i, ''), 16)));
+    const range = new Set((f.match(/unicode-range:\s*([^;]+);/)?.[1] || '').split(',').flatMap(s => { const [a, b = a] = s.trim().replace(/^U\+/i, '').split('-').map(h => parseInt(h, 16)); const out = []; for (let c = a; c <= b; c++) out.push(c); return out; }));
     assert.deepEqual([...range].sort((a, b) => a - b), [...want].sort((a, b) => a - b));
     assert.equal(META.family, 'bl-mb-icons');
     for (const [hex, name] of Object.entries(META.map)) assert.ok(/^[a-z0-9]+$/.test(name), `${hex} 아이콘 이름`);
@@ -79,7 +82,7 @@ check('② 글꼴 파일 = 표의 해시 · 40KB 안 · cmap 이 그림 글자�
     // 변형 선택자(U+FE0F): 표의 글자마다 「글자 + FE0F」 기본 변형이 있어야 해요 — 없으면 크롬이 「☀️ ⚠️ ❤️」처럼 FE0F 가 붙은 글자를 기기의 색 그림 글자로 그려요(11-13 리그 사진 「☀️ 맑음」)
     const fe0f = cps.uvs.get(0xFE0F) || new Set();
     for (const hex of Object.keys(META.map)) assert.ok(fe0f.has(parseInt(hex, 16)), `U+${hex} + FE0F 변형이 글꼴에 없어요`);
-    assert.equal(META.uvs?.selector, 'FE0F'); assert.equal(META.uvs?.count, Object.keys(META.map).length);
+    assert.equal(META.uvs?.selector, 'FE0F'); assert.ok(META.uvs?.count >= Object.keys(META.map).length);
 });
 check('③ 글꼴은 그 확장 뿌리에만 · 채팅 본문 · 입력칸 · 말풍선 글은 빼요', () => {
     const rules = [...sheet.replace(/@font-face\s*\{[^}]*\}/g, '').replace(/@media[^{]*\{([\s\S]*?\})\s*\}/g, '$1').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim(), body: m[2] }));
@@ -88,7 +91,7 @@ check('③ 글꼴은 그 확장 뿌리에만 · 채팅 본문 · 입력칸 · �
     for (const r of uses) {
         assert.ok(!/#chat|\.mes_text|\.mes\b/.test(r.sel), `채팅 본문에 걸면 안 돼요: ${r.sel}`);
         for (const s of r.sel.split(/,\s*(?![^()]*\))/)) assert.match(s.trim(), /^body\.salty(:not\(\[data-bl-ext-raw\]\))? .*(\.ss-|#ss-|dialog\.bl-ext-avadlg )/, `그 확장 뿌리 밖: ${s}`);   // :not(…) 은 채팅방 고양이(「원작 그대로 보기」면 원래 아이콘) · dialog.bl-ext-avadlg 는 맞춤 모듈이 표식을 단 그 확장의 「얼굴 바꾸기」 창(실리태번 팝업이라 .ss- 이름이 없어요)
-        assert.match(r.body, /'bl-mb-icons',\s*var\(--salty-font-ui\)/, '테마 UI 글꼴 앞에만 끼워요(글꼴이 없으면 원래 글꼴)');
+        assert.match(r.body, /'bl-mb-icons',\s*var\(--salty-font-(ui|mb, var\(--salty-font-ui\))\)/, '테마 UI 글꼴(1.5.1: 미트볼 글꼴을 골랐으면 그 글꼴 · 아니면 UI 글꼴) 앞에만 끼워요(글꼴이 없으면 원래 글꼴)');
     }
     const all = uses.map(r => r.sel).join(',');
     for (const root of ['#ss-settings', '.ss-root', '.ss-hud', '.ss-side', '.ss-msgcard', '.ss-toasts', 'dialog.ss-dlg .popup-content', 'dialog.popup.ss-dlg .popup-controls']) assert.ok(all.includes(root), `뿌리 ${root}`);
@@ -144,5 +147,21 @@ check('⑥ 세로 가운데: 그림 잉크 가운데 = 옆 글자 잉크 가운�
     assert.ok(fm && Math.abs(Number(fm[1]) - em(m.ascent)) <= 0.005 && Math.abs(Number(fm[2]) + em(m.descent)) <= 0.005, 'src/apply.js 의 줄 상자 비율');
     // 테마 글꼴에 없어 기기 글꼴 · 색 그림 글자로 떨어지던 글자 기호도 이 글꼴이 그려요
     for (const hex of ['2665', '2661', '2605', '266A', '2714', '2715', '267B', '21A9']) assert.ok(META.map[hex], `U+${hex}`);
+});
+check('⑦ 1.5.1 표에 없는 그림 글자도 새지 않아요 — 색 그림이 기본인 글자 · U+1F000 위 그림 글자는 전부 이 글꼴에 있어요(값이 자유인 자리: 지도 마디 · 장소 · 아이템 …)', () => {
+    // 11-15 사용자 「세계에 아직도 이모티콘이 보인다」: 1.5.0 은 그 확장 화면 문자열에서 모은 210종만 표에 넣어, AI · 사용자가 고르는 장소 그림(집 · 펜 · 노트북 · 도시락 · 사진기 · 성 · 밤 도시)이 기기의 색 그림으로 샜어요
+    const cps = woff2Cmap(fs.readFileSync(path.join(root, 'src', META.font)));
+    const miss = [];
+    for (let cp = 0x2300; cp <= 0x1FAFF; cp++) {
+        const ch = String.fromCodePoint(cp);
+        if (/\p{Emoji_Presentation}/u.test(ch) || (cp >= 0x1F000 && /\p{Extended_Pictographic}/u.test(ch) && /\p{Emoji}/u.test(ch))) if (!cps.has(cp)) miss.push(cp.toString(16).toUpperCase());
+    }
+    assert.deepEqual(miss, [], '글꼴에 없는 그림 글자');
+    for (const hex of ['1F3E1', '1F58A', '1F4BB', '1F371', '1F4F8', '1F3EF', '1F303']) assert.ok(META.map[hex], `사용자 사진의 그림 U+${hex} 는 표에(갈래 기본 아이콘이 아니라 제 그림)`);
+    assert.ok(META.fallback?.count > 1000 && META.fallback.by?.mappin && META.fallback.by?.dot, '갈래 기본 아이콘 표');
+    // 「글자 + FE0F」도 이 글꼴로: 표의 글자는 전부, 갈래 기본 글자는 구간을 끊느라 건너뛴 몇 자 말고 전부
+    const fe0f = cps.uvs.get(0xFE0F) || new Set(); let skipped = 0;
+    for (const [a, b] of FB) for (let c = a; c <= b; c++) if (!fe0f.has(c)) skipped++;
+    assert.ok(skipped <= 12, `FE0F 변형이 없는 갈래 기본 글자 ${skipped}`);
 });
 console.log(`ext-status-icons: ${passed}개 통과`);

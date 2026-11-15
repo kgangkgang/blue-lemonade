@@ -59,7 +59,7 @@ async function sendDirect({ ctx, pick, system, prompt, maxTokens }) {
     const limit = Core.timeoutFor(payload.max_completion_tokens ?? payload.max_tokens);
     const timer = setTimeout(() => { late = true; controller.abort(); }, limit);
     let release = null;
-    try { release = globalThis[LOG]?.begin?.({ caller: 'status-ext', purpose: 'other', label: '상태창 확장 AI', user: prompt.slice(0, 200) }); } catch { release = null; }
+    try { release = globalThis[LOG]?.begin?.({ caller: 'status-ext', purpose: 'other', label: '미트볼 상태창 AI', user: prompt.slice(0, 200) }); } catch { release = null; }
     try {
         const out = await service.processRequest(payload, {}, true, controller.signal);
         return typeof out === 'string' ? out : String(out?.content ?? '');

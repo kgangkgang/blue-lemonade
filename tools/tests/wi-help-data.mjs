@@ -26,4 +26,19 @@ for (const [id, h] of Object.entries(WI_HELP)) {
 }
 assert.equal(GLOBAL_ANCHORS.length, 15);
 assert.equal(ENTRY_ANCHORS.length, 24);   // 실리태번이 숨기는 선택적 · 확률 사용 · 메모 추가 칸은 뺐다
+// 1.5.1 상태 기호: 도움말 글에 색 그림 글자가 없고, 항목 틀의 상태 칸 글자를 글(상시 · 일반 · 벡터)로 적고, 닫힌 칸 표시는 CSS 가 고른 값으로 그려요
+{
+    const fs = await import('node:fs'); const read = rel => fs.readFileSync(new URL(rel, root), 'utf8');
+    assert.ok(!/\p{Emoji_Presentation}|.️/u.test(JSON.stringify(WI_HELP)), '도움말 글에 그림 글자가 남았어요');
+    const js = read('src/wi-help.js');
+    assert.match(js, /export const WI_STATE_LABEL = \{ constant: '상시', normal: '일반', vectorized: '벡터' \};/);
+    assert.match(js, /labelStateOptions\(template\);/, '항목 틀에 한 번');
+    assert.ok(!/MutationObserver|setInterval/.test(js), '감시자 · 타이머 없이');
+    const css = read('css/12-worldinfo.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    const base = 'html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]:not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c)';
+    assert.ok(css.includes(base + ' {'), '닫힌 칸 규칙');
+    assert.match(css, /color: transparent !important;\s*background-image: var\(--bl-wi-state\), var\(--bl-select-arrow\) !important;/, '글자는 숨기고 표시 + 꺾쇠 두 그림');
+    for (const v of ['constant', 'vectorized']) assert.ok(css.includes(`${base}:has(> option[value="${v}"]:checked) {`), `${v} 는 칸 자신의 :has(주어)`);
+    assert.ok(css.includes('select[name="entryStateSelector"] > option { color: var(--salty-text); }'), '펼친 목록 글자색은 그대로');
+}
 console.log(`PASS ${ids.length} World Info help anchors with texts`);

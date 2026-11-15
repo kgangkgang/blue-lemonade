@@ -153,8 +153,22 @@ await check('paintPreview: 글 끝의 미트볼 칩 칸(.ss-slot)은 같은 노�
     paintPreview(bare, P(KO[0], KO[1]), { keep: keepSlot });
     assert.equal(bare.innerHTML, P(KO[0], KO[1]));
 });
-await check('index.js: 미리 보기 keep 은 진행 표시 · 미트볼 칩 칸 둘만 (시험의 흉내와 같은 정의)', () => {
-    assert.match(source, /\nconst keepInPreview = node => node\.nodeType === 1 && \(node\.classList\.contains\('llmt-progress'\) \|\| node\.classList\.contains\('ss-slot'\)\);\n/);
+await check('paintPreview: 옛 답의 칩 칸(.custom-ss-slot — 정규식이 넣은 div 에 실리태번이 custom- 를 붙인 것)도 같은 노드로 맨 끝 그대로', () => {
+    const keepSlot = node => node.nodeType === 1 && (node.classList.contains('llmt-progress') || node.classList.contains('ss-slot') || node.classList.contains('custom-ss-slot'));
+    const host = new El('div', ' class="mes_text"', doc);
+    host.innerHTML = P(JA[0], JA[1]);
+    const slot = host.appendChild(new El('div', ' class="custom-ss-slot"', doc));
+    slot.appendChild(new El('span', ' class="chip"', doc));
+    paintPreview(host, P(KO[0], JA[1]), { keep: keepSlot });
+    moved.length = 0;
+    assert.equal(paintPreview(host, P(KO[0], KO[1], '덧붙은 문단'), { keep: keepSlot }), true);
+    assert.equal(host.childNodes.at(-1), slot, '칩 칸은 맨 끝 그대로');
+    assert.equal(slot.children.length, 1, '칩 칸 안의 칩도 그대로');
+    assert.ok(!moved.includes(slot), '칩 칸을 떼지 않음 (그 확장 2.7.22 는 떼인 칸을 다시 붙여 깜빡여요)');
+    assert.deepEqual(host.children.filter(x => x.tagName === 'P').map(x => x.textContent), [KO[0], KO[1], '덧붙은 문단']);
+});
+await check('index.js: 미리 보기 keep 은 진행 표시 · 미트볼 칩 칸(두 이름)만 (시험의 흉내와 같은 정의)', () => {
+    assert.match(source, /\nconst keepInPreview = node => node\.nodeType === 1 && \(node\.classList\.contains\('llmt-progress'\) \|\| node\.classList\.contains\('ss-slot'\) \|\| node\.classList\.contains\('custom-ss-slot'\)\);\n/);
     assert.equal((source.match(/\{ keep: isProgressBadge/g) ?? []).length, 0, '미리 보기 호출은 모두 keepInPreview');
 });
 

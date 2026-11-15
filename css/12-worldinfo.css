@@ -601,10 +601,29 @@ body.salty #WorldInfo .world_entry textarea[name="comment"] {
 body.salty #WorldInfo .world_entry.disabledWIEntry textarea[name="comment"] {
   color: var(--salty-muted) !important;
 }
-/* 상태(🔵 상수 · 🟢 보통 · 🔗 벡터): 작은 오목한 칸 */
+/* 상태(상시 · 일반 · 벡터): 작은 오목한 칸 */
 body.salty #WorldInfo .world_entry select[name="entryStateSelector"] {
   flex: none;
 }
+/* 1.5.1 상태 기호: 본체가 이 칸에 그리던 색 그림 글자 대신 테마 표시 하나 — 상시 = 포인트색 찬 점 · 일반 = 보조색 빈 고리 · 벡터 = 사슬.
+   펼친 목록의 글(상시 · 일반 · 벡터)은 src/wi-help.js 가 항목 틀에 한 번 적어요. 닫힌 칸은 그 글자를 숨기고(목록 글자색은 그대로) 고른 값으로 그림만 그려요.
+   고른 값은 칸 자신의 :has(자식 option:checked) 로 알아요 — 주어 :has 라 다시 따지는 범위가 그 칸 하나예요. ▾ 는 기준 자리 그대로(둘째 그림). */
+html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]:not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c) {
+  --bl-wi-state: radial-gradient(circle closest-side, transparent 0 52%, var(--salty-muted) 58% calc(100% - 1px), transparent 100%);
+  color: transparent !important;
+  background-image: var(--bl-wi-state), var(--bl-select-arrow) !important;
+  background-position: left 9px center, right 10px center !important;
+  background-size: 12px 12px, 15px 15px !important;
+}
+html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]:not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c):has(> option[value="constant"]:checked) {
+  --bl-wi-state: radial-gradient(circle closest-side, var(--salty-accent) 0 calc(100% - 1px), transparent 100%);
+}
+html body.salty #WorldInfo .world_entry select[name="entryStateSelector"]:not(#bl-arrow-a):not(#bl-arrow-b):not(#bl-arrow-c):has(> option[value="vectorized"]:checked) {
+  --bl-wi-state: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7'/%3E%3C/svg%3E");
+  background-size: 14px 14px, 15px 15px !important;
+  background-position: left 8px center, right 10px center !important;
+}
+body.salty #WorldInfo .world_entry select[name="entryStateSelector"] > option { color: var(--salty-text); }
 /* 위치 · 깊이 · 순서 · 확률: 칸 묶음을 다 풀어 머리의 두 줄로 흘림 (격자 대신)
    2줄 = 위치 (+ @D 이면 깊이) | 순서, 3줄 = 발동 확률 ··· 도구(옮기기 · 복제 · 지우기 · 켜기)
    전에는 네 칸 격자 두 줄이라 위치 줄 오른쪽 145px · 도구 줄 왼쪽 190px 이 늘 비어 있었음

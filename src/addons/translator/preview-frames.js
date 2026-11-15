@@ -63,7 +63,7 @@ export function paintPreview(host, html, { keep = () => false, final = false } =
     if (frames.length && (frames.length !== codes.length || frames.some(frame => frame.parentNode !== host) || codes.some(code => code.parentNode !== box))) return false;
     const raws = new Map(next.map(node => [node, rawOf(node)]));   // 넣기 전 모양 (테마가 손대기 전)
     const kids = [...host.childNodes], old = kids.filter(node => !keep(node));
-    // 끝에 남겨 둔 keep 노드(미트볼 칩 칸 .ss-slot)가 있으면 맨 끝에 붙일 새 문단은 그 앞에 — 칩이 글 아래에 그대로 남는다 (없으면 예전처럼 맨 끝)
+    // 끝에 남겨 둔 keep 노드(미트볼 칩 칸 .ss-slot · .custom-ss-slot)가 있으면 맨 끝에 붙일 새 문단은 그 앞에 — 칩이 글 아래에 그대로 남는다 (없으면 예전처럼 맨 끝)
     const lastOld = kids.lastIndexOf(old.at(-1)), tailKept = old.length && lastOld + 1 < kids.length ? kids[lastOld + 1] : null;
     const split = (list, marks) => list.reduce((parts, node) => { if (marks.includes(node)) parts.push([]); else parts.at(-1).push(node); return parts; }, [[]]);
     const before = split(old, frames), after = split(next, codes);

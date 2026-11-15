@@ -170,4 +170,155 @@ await test('⑦ 1.5.0 버그 사냥: 번역을 기다리는 사이 채팅을 바
     assert.equal(added.length, 1);
 });
 
+// ───── 1.5.1: 장르 한 줄 · 반쯤 번역 짝 · 이어진 글 조각 · 고정 낱말 (지어낸 글 · 사용자 채팅 글 아님) ─────
+await test('⑧ 반쯤 번역 짝 알아보기: 원문 영어 낱말 셋 이상이 이어 남음 · 고유 이름 · 줄임말 · 단위는 아님', () => {
+    assert.equal(T.halfValue('Robin is a archive staff member caught up in office chaos.', '로빈 is a archive staff member caught up in office chaos.'), true);
+    assert.equal(T.halfValue('Robin is a staff member.', '로빈은 직원이다.'), false);
+    assert.equal(T.halfValue('Works at Central Records Bureau daily', '매일 중앙 기록국(Central Records Bureau)에서 일함'), false);
+    assert.equal(T.halfValue('185cm, short black hair', '185cm, 짧은 검은 머리'), false);
+    assert.equal(T.latinWords('S.T.A.R 직원 · HP 30 · 185cm'), 0);
+    assert.equal(T.stillEnglish('아침:청장실, Day:청장실'), true);
+    assert.equal(T.stillEnglish('아침:청장실, 낮:청장실'), false);
+    assert.equal(T.stillEnglish('Afterlife workplace sitcom'), true);
+    assert.equal(T.stillEnglish('main', { soft: true }), false);
+    assert.equal(T.stillEnglish('main'), false);
+    assert.equal(T.stillEnglish('Courier'), true);
+});
+
+await test('⑨ 상태 칸 훑기: 코드 칸 · 꺼진 칸 빼고, 장르 같은 「코드로 보던 글 칸」도 모음', () => {
+    const state = { core: { title: 'Harbor Archive', genre: 'Afterlife office sitcom', id: 'w_1' }, data: { profile: { mode: 'detailed', list: [{ name: 'Mira', role: 'main', avatar: 'x.png', sched: 'Morning:Lobby, Day:Desk' }] }, news: { list: [{ title: 'Off mod headline' }] } } };
+    const texts = T.stateTexts(state, id => id !== 'news');
+    assert.deepEqual(texts.map(x => `${x.key}=${x.text}`), ['title=Harbor Archive', 'genre=Afterlife office sitcom', 'mode=detailed', 'name=Mira', 'role=main', 'sched=Morning:Lobby, Day:Desk']);
+});
+
+await test('⑩ 조각 짝(AI 0): 같은 나눔표면 조각끼리 · 표가 다르면 안 함 · 이미 있는 조각 그대로 · 고정 낱말은 빈 것만', () => {
+    const dict = { 'Morning:Front Desk, Day:Front Desk, Night:Dorm 2': '아침:안내 데스크, 낮:안내 데스크, 밤:기숙사 2동', Night: '밤', 'A long sentence, with a comma': '쉼표가 없는 번역' };
+    const got = Object.fromEntries(T.piecePairs(dict));
+    assert.deepEqual(got, { Morning: '아침', 'Front Desk': '안내 데스크', Day: '낮', 'Dorm 2': '기숙사 2동' });
+    assert.deepEqual(T.piecePairs(dict, new Set(['other'])), []);
+    assert.deepEqual(T.fixedPairs(['Morning:Lobby, Afternoon:Desk, Night:Dorm', 'Sunday'], { Night: '밤' }), [['Morning', '아침'], ['Afternoon', '오후'], ['Sunday', '일요일']]);
+    assert.deepEqual(T.batches(['a'.repeat(5000), 'b'.repeat(4000), 'c'], 60, 8000).map(b => b.length), [1, 2]);
+    assert.equal(T.batches(Array.from({ length: 130 }, (_, i) => `s${i}`)).length, 3);
+});
+
+await test('⑪ 누른 뒤 메우기: 장르 · 반쯤 번역 짝 · 영어 문장 칸을 한 번에 · 짝은 끝에 한 번(저장 한 번) · 데이터는 그대로 · 실리 번역 길은 잠깐 빼고 되돌림', async () => {
+    for (const engine of ['llm', 'st']) {
+        const f = fakeTarget({ engine, ko: { 'Afterlife office sitcom': '사후세계 직장 시트콤', 'Robin is a clerk caught up in daily chaos.': '로빈은 매일의 혼란에 휘말린 직원이다.', 'A quiet archive above the harbor.': '항구 위 조용한 기록관.' } });
+        const core = { title: 'Harbor Archive', genre: 'Afterlife office sitcom', userRole: 'Robin is a clerk caught up in daily chaos.', summary: 'A quiet archive above the harbor.' };
+        f.app.current.state = { core, data: { calendar: { times: ['Morning'] } }, recent: [] };
+        Object.assign(f.meta.tr, { 'Harbor Archive': '항구 기록관', Morning: '아침', 'Robin is a clerk caught up in daily chaos.': '로빈 is a clerk caught up in daily chaos.' });
+        let adds = 0;
+        const realAdd = f.mb.tr.addPairs; f.mb.tr.addPairs = p => { adds++; return realAdd(p); };
+        if (engine === 'st') { const real = f.mb.tr.trJSON; f.mb.tr.trJSON = async src => { assert.equal(Object.hasOwn(f.meta.tr, 'Robin is a clerk caught up in daily chaos.'), false, '실리 번역 길에는 반쯤 짝을 빼고 보냄'); return real(src); }; }
+        const before = JSON.stringify(core);
+        const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+        const done = await fill.fill('click');
+        assert.equal(done, 3, engine);   // 장르 · 요약 · 반쯤 짝(칩 「Honey Lemon Drop」은 번역기가 영어 그대로라 못 바꾼 것)
+        assert.equal(f.meta.tr['Afterlife office sitcom'], '사후세계 직장 시트콤');
+        assert.equal(f.meta.tr['Robin is a clerk caught up in daily chaos.'], '로빈은 매일의 혼란에 휘말린 직원이다.');
+        assert.equal(f.calls.json.length, 1, '한 번에');
+        assert.equal(adds, 2, '번역 짝은 한 번에(+ 1.5.2 사전에 이미 든 고정 낱말 「Morning」을 낱말 바꾸기에서 빼는 한 번)');
+        assert.equal(Object.keys(f.meta.tr).includes('Morning'), false, '고정 낱말은 셀 수 없는 칸');
+        assert.equal(f.meta.tr.Morning, '아침');
+        assert.equal(JSON.stringify(core), before, '데이터는 그대로');
+    }
+});
+
+await test('⑫ 번역기가 다시 반쯤 돌려주면 옛 짝을 되돌리고(실리 번역 길) 이번 접속엔 다시 안 보냄 · 조각 짝은 단추 없이', async () => {
+    const f = fakeTarget({ engine: 'st', ko: {} });
+    const half = 'Robin is a clerk caught up in daily chaos.';
+    f.app.current.state = { core: { userRole: half, sched: 'Morning:Front Desk, Day:Front Desk' }, data: {}, recent: [] };
+    f.app.current.snaps = new Map();
+    Object.assign(f.meta.tr, { [half]: '로빈 is a clerk caught up in daily chaos.', 'Morning:Front Desk, Day:Front Desk': '아침:안내 데스크, 낮:안내 데스크' });
+    const tm = fakeTimers();
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A', now: tm.now, timers: tm.timers });
+    assert.equal(await fill.fill('click'), 0);
+    assert.equal(f.meta.tr[half], '로빈 is a clerk caught up in daily chaos.', '되돌림');
+    assert.equal(f.meta.tr.Day, '낮', '조각 짝');
+    assert.equal(await fill.fill('click'), 0);
+    assert.equal(f.calls.json.length, 1, '못 바꾼 글은 다시 안 보냄');
+    delete f.meta.tr.Day; delete f.meta.tr.Morning; delete f.meta.tr['Front Desk'];
+    fill.tidySoon(); await tm.run(3000);
+    assert.equal(f.meta.tr.Day, '낮', '채팅 열기 · 답 끝 뒤 자동');
+});
+
+await test('⑬ 고정 낱말 사전(테마 card-values 하나): 요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴 · 대소문자 · 줄임 · 복수 — 값 전체일 때만 · 이름 칸 · 문장은 아님', () => {
+    const cases = { Saturday: '토요일', SATURDAY: '토요일', sat: '토요일', Tues: '화요일', April: '4월', Sept: '9월', Winter: '겨울', 'Late Autumn': '늦가을', Day: '낮', Dusk: '해 질 녘', Afternoon: '오후', 'Partly Cloudy': '구름 조금', 'Sunny, gentle breeze': '맑음, 산들바람', Weekends: '주말', 'Day 3': '3일째', '4/1 (Mon)': '4/1(월)', 'April 2': '4월 2일', 'Heavy rain · Cold': '폭우 · 추움' };
+    for (const [en, ko] of Object.entries(cases)) assert.equal(T.fixedValue(en), ko, en);
+    assert.equal(T.fixedValue('Mon', 'week'), '월');
+    for (const text of ['May', 'Morning walk to the lobby', 'The day begins', 'Sunny Side Cafe']) assert.equal(T.fixedValue(text), null, text);
+    assert.equal(T.fixedValue('Summer', 'name'), null, '이름 칸은 안 바꿈');
+    const pairs = Object.fromEntries(T.fixedPairs([{ text: 'Mon', key: 'week' }, { text: 'Spring', key: 'season' }, { text: 'Summer', key: 'name' }, { text: 'Morning:Lobby, Day:Desk', key: 'sched' }, { text: 'Rainy days make Mira sleepy.', key: 'desc' }], {}));
+    assert.deepEqual(pairs, { Mon: '월', Spring: '봄', Morning: '아침', Day: '낮' });
+});
+
+await test('⑭ 고정 낱말 칸은 번역 요청에 0번 실림 · 누르기 전에 사전에 들어감(그 확장 길도 안 보냄) · 사전 짝은 한 번에', async () => {
+    const f = fakeTarget({ ko: { 'Rainy days make Mira sleepy.': '비 오는 날이면 미라는 졸려 한다.' } });
+    f.app.current.snaps = new Map([[1, { labels: ['🌤 Partly cloudy', '📍 Lobby'] }]]);
+    f.app.current.state = { core: { title: 'Harbor Archive' }, data: { calendar: { week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], months: [{ name: 'January' }, { name: 'April' }], times: ['Dawn', 'Morning', 'Day', 'Evening', 'Night'], time: 'morning', weather: 'Light rain, chilly', season: 'Spring' }, rel: { user: [{ name: 'Mira', memo: 'Rainy days make Mira sleepy.' }] } }, recent: [] };
+    Object.assign(f.meta.tr, { 'Harbor Archive': '항구 기록관', Mira: '미라', Lobby: '로비' });
+    let adds = 0; const realAdd = f.mb.tr.addPairs; f.mb.tr.addPairs = p => { adds++; return realAdd(p); };
+    const tm = fakeTimers();
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A', now: tm.now, timers: tm.timers });
+    f.mb.tr.missingTr = () => [];
+    fill.onClick({ target: Object.assign(window.document.createElement('button'), { className: 'ss-trf-go' }), isTrusted: true });
+    assert.equal(f.meta.tr.Sat, '토', '누르는 순간 사전에');
+    assert.equal(f.meta.tr['Light rain, chilly'], '약한 비, 쌀쌀함');
+    assert.equal(f.meta.tr.morning, '아침');
+    assert.equal(f.meta.tr['Partly cloudy'], '구름 조금');
+    assert.equal(adds, 1);
+    await tm.run(9000);
+    const sent = f.calls.json.flat();
+    assert.deepEqual(sent, ['Rainy days make Mira sleepy.'], JSON.stringify(sent));
+    for (const w of ['Mon', 'April', 'Morning', 'Day', 'Spring', 'Light rain, chilly', 'Partly cloudy', 'morning']) assert.equal(sent.includes(w), false, w);
+});
+
+// ───── 1.5.2: 고정 낱말이 자유 글 속 낱말을 바꾸지 않게 · 칩 줄도 같은 사전 · 같은 길 (지어낸 이름) ─────
+// 그 확장 화면 번역의 동작을 본뜬 것(코드는 옮기지 않음): 통째 맞춤(hasOwn) → 사전 열쇠(Object.entries · 3~40자 · 긴 것부터)를 낱말 경계로 바꿈
+const viewLike = (dict, v) => {
+    const k = v.trim();
+    if (Object.hasOwn(dict, k)) return v.replace(k, () => dict[k]);
+    let out = v;
+    for (const [en, ko] of Object.entries(dict).filter(([e]) => e.length >= 3 && e.length <= 40).sort((a, b) => b[0].length - a[0].length)) {
+        const re = new RegExp(`(^|[^A-Za-z])${en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z])`, 'g');
+        if (out.includes(en)) out = out.replace(re, (m, pre) => pre + ko);
+    }
+    return out;
+};
+await test('⑮ 고정 낱말은 자유 글 속에서 안 바뀜(Morning After · Monday Blues · Spring Festival · May I …) · 정해진 자리는 그대로 · 파일엔 안 적힘', () => {
+    const f = fakeTarget();
+    f.app.current.snaps = new Map();
+    f.app.current.state = { core: { title: 'Harbor Archive' }, data: { calendar: { week: ['Mon', 'Sat'], times: ['Morning', 'Night'], time: 'Morning', months: [{ name: 'April' }, { name: 'May' }] }, profile: { list: [{ name: 'Rowan', sched: 'Morning:Front Desk, Night:Staff Dorm 2' }] }, rel: { user: [{ name: 'Marlow', label: 'Complicated Morning After' }] } }, recent: [] };
+    Object.assign(f.meta.tr, { Morning: '아침', Monday: '월요일', Spring: '봄', May: '5월', Sat: '토요일', Rowan: '로완', Marlow: '말로', 'Front Desk': '안내 데스크' });
+    f.meta.trLock = {};
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+    fill.tidy({ draw: false });
+    const d = f.meta.tr;
+    for (const text of ['Complicated Morning After', 'Monday Blues', 'Spring Festival', 'May I come in?', 'Saturday Night Fever'])
+        assert.equal(viewLike(d, text), text, text);
+    assert.equal(viewLike(d, 'Morning'), '아침', '값 전체는 그대로 한국어');
+    assert.equal(viewLike(d, '4/5(Sat) Morning'), '4/5(토) 아침', '띠 · 머리 날짜 줄');
+    assert.equal(viewLike(d, '6일 (Sat)'), '6일 (토)');
+    assert.equal(viewLike(d, '지금 여기 (Morning)'), '지금 여기 (아침)');
+    assert.equal(viewLike(d, '2026년 May 6일 (Mon)'), '2026년 5월 6일 (월)');
+    assert.equal(viewLike(d, ' · Morning:Front Desk, Night:Staff Dorm 2 · '), ' · 아침:안내 데스크, 밤:Staff Dorm 2 · ', '일과 줄');
+    assert.equal(viewLike(d, 'Rowan smiles.'), '로완 smiles.', '이름은 그 확장 뜻대로 글 속에서도');
+    assert.equal(JSON.parse(JSON.stringify(d)).Morning, undefined, '고정 낱말 열쇠는 채팅 파일에 안 적힘(열 때마다 다시)');
+    assert.equal(fill.tidy({ draw: false }), 0, '두 번째는 할 일 없음');
+});
+
+await test('⑯ 칩 줄: 같은 사전 · 같은 길 — 관계 이름 · 새 장소는 번역 대상(이름은 빼고) · 시간대 칩은 사전 · 「이름\'s」는 「이름의」', () => {
+    const d = { Rowan: '로완', Marlow: '말로' };
+    Object.defineProperty(d, 'Morning', { value: '아침', enumerable: false, writable: true, configurable: true });
+    const labels = ['💞 Rowan = Complicated Morning After', "🗺️ 새 장소: Marlow's Penthouse", '🕐 Morning', '날씨: Light rain', '♥ Rowan +8', '📅 +3일', '📍 지옥', '+Silver Key', "📜 진행: Find Mira's Ledger"];
+    const shown = labels.map(l => T.chipText(viewLike(d, l), d));
+    assert.deepEqual(shown, ['💞 로완 = Complicated Morning After', '🗺️ 새 장소: 말로의 Penthouse', '🕐 아침', '날씨: 약한 비', '♥ 로완 +8', '📅 +3일', '📍 지옥', '+Silver Key', "📜 진행: Find Mira's Ledger"]);
+    const { list } = T.collectGaps(labels, { shown: t => viewLike(d, t), has: p => Object.hasOwn(d, p) });
+    assert.deepEqual(list, ['Complicated Morning After', "Marlow's Penthouse", 'Silver Key', "Find Mira's Ledger"]);
+    // 번역이 들어오면 칩은 통째로
+    Object.assign(d, { 'Complicated Morning After': '복잡한 다음 날 아침', "Marlow's Penthouse": '말로의 펜트하우스' });
+    assert.equal(T.chipText(viewLike(d, labels[0]), d), '💞 로완 = 복잡한 다음 날 아침');
+    assert.equal(T.chipText(viewLike(d, labels[1]), d), '🗺️ 새 장소: 말로의 펜트하우스');
+});
+
 console.log(`ext-bridge-tr: ${passed} 통과`);

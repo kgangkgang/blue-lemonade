@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+// 1.5.3 번역 보기 공용 부품(src/inline-translate.js) — 아래에서 import 줄을 떼므로 이름을 앞에 붙여 줘요
+globalThis.__blInl = await import(pathToFileURL(path.resolve(process.argv[2] || '.') + '/src/inline-translate.js').href); globalThis.__blInlHead = 'const {createInlineTranslate,TR_ICON,TR_FAIL,trBoxInner:sharedTrBoxInner,trIconHtml}=globalThis.__blInl;';
 const root=path.resolve(process.argv[2]||'.'), url=pathToFileURL(root+'/');
 const prompt=await import(new URL('src/addons/direction/prompt.js',url));
 globalThis.__dirPlace=(await import(new URL('src/addons/direction/prompt.js',url))).placeInstructions;   // 1.4.0 넣는 곳마다
 const {insertDirection,insertInstructions,CONTINUE_DIRECTION}=prompt;
 const ext={};const probe={ext,insertInstructions,saves:0,subs:0,macro:null};
 probe.context={substituteParams(text){probe.subs++;if(probe.subFails)throw new Error('macro engine failed');let out=String(text).replace(/\{\{user\}\}|<USER>/gi,()=>'Alice').replace(/\{\{char\}\}/gi,()=>'Robin');if(probe.macro)out=out.replace(/\{\{direction\}\}/gi,()=>probe.macro());return out;}};globalThis.__directionTest=probe;globalThis.window={matchMedia:()=>({matches:false})};
-const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'');
+const source=(await fs.readFile(path.join(root,'src/addons/direction/index.js'),'utf8')).split('// ── 시작')[0].replace(/^import .*;$/gm,'').replace(/^/, globalThis.__blInlHead);
 const prelude='const addonRunning=()=>true;const placeInstructions=globalThis.__dirPlace;const setExtensionPrompt=(...a)=>{(globalThis.__dirExt??=[]).push(a);};const extension_prompt_types={NONE:-1,IN_PROMPT:0,IN_CHAT:1,BEFORE_PROMPT:2};const extension_prompt_roles={SYSTEM:0,USER:1,ASSISTANT:2};const {ext:extension_settings,insertInstructions}=globalThis.__directionTest;const getContext=()=>globalThis.__directionTest.context;const saveSettingsDebounced=()=>{globalThis.__directionTest.saves++;};const getChatCompletionModel=()=>globalThis.__directionTest.model||"example-model";const oai_settings={};';
 const m=await import('data:text/javascript;base64,'+Buffer.from(prelude+source+'\nexport {initSettings,settings,injectDirection,markRawGeneration,rawFromStack,trackGeneration,remember,savePreset,isSaved,alwaysActive,directionMacroText,KINDS,HISTORY_MAX,PRESET_MAX};').toString('base64'));
 ext['Direction-Manager-Lite']={extensionEnabled:false,direction:{enabled:true,content:'literal $& direction'},directionPrompt:'Custom {{direction}}',promptDepth:3};

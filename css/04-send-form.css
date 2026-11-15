@@ -370,6 +370,8 @@ body.salty.salty-icons-line :is(#jj-button[data-jj-level] > i, #jj-popup[data-jj
   mask-image: none;
   font-size: 0.8em; /* 선 아이콘(24 칸 안에 그린 깃털)과 같은 크기로 — 글리프는 1em 을 꽉 채운다 */
 }
+/* 1.5.2 면 안 가운데: 깃털 글리프의 잉크가 단추 가운데보다 1.07px 위 · 0.47px 오른쪽이었어요(폰 384 화소 측정) */
+body.salty.salty-icons-line #jj-button[data-jj-level] > i { translate: -.4px 1px; }
 /* 줄인 글리프에도 같은 고정 굵기 */
 body.salty.salty-icons-line :is(#jj-button[data-jj-level="1"] > i, #jj-popup[data-jj-level="1"] .jj-popup-title > i)::before {
   -webkit-text-stroke-width: 1.3px;

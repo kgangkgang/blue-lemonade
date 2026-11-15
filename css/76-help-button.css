@@ -43,6 +43,8 @@ html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_set
   font-size: 0 !important; line-height: 0 !important; display: block !important; width: var(--bl-help-glyph) !important; height: var(--bl-help-glyph) !important; background: currentColor !important; -webkit-mask: var(--bl-help-mask) center/contain no-repeat !important; mask: var(--bl-help-mask) center/contain no-repeat !important;   /* 1.0.0: 글꼴 대신 마스크 — 원 가운데 */   /* TTS 는 아이콘에 포인트 색을 줬었다 — 보조 글자색 하나로. 크기는 원(1.3em)의 약 58% */
 }
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help, .bl-wi-help, #bl-deus-popover .dq-help-button) > i::before { content: none !important; }
+/* 1.5.2 면 안 가운데: 물음표 그림의 잉크가 원 가운데보다 0 ~ 1px 아래였어요(글줄 위 원의 자리가 소수라 원마다 달라요 — 가운데값만큼만 올려 전부 0.55 안으로 · 설정 창 · 월드 인포 · 애드온 창 화소 측정) */
+html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .bl-wi-help) > i { translate: -.1px -.35px; }
 /* 글자 ? 만 있던 단추는 전부 <i class="fa-solid fa-question"> 를 품게 바꿨다 — ::before 는 86-touch-targets 의 44px 누르는 칸 몫이라 여기선 쓰지 않는다 */
 html body.salty:not(#bl-h1):not(#bl-h2) :is(.bl-help-btn, .lv-help-btn, .bwr_settings .bwr_help, .bl-word-help, .pt-qhelp:not(.pt-act), .blzi .blzi-help, .bl-wi-help, #bl-deus-popover .dq-help-button) > span { display: none !important; }
 /* 누르는 칸 44(폰)는 87-addon-touch 의 ::after 가 이미 그린다(.lv-help-btn · .bwr_help · .bl-word-help …) */

@@ -431,7 +431,7 @@ await test('Custom: 옛 custom_model_lists 를 읽음 (지우지 않음) · 저�
     reset({ provider: 'custom', s: { custom_url: 'https://new.test/v1', provider_model_history: { custom: 'other-model' } } });
     A.updateModelList();
     assert.deepEqual(optionRows()[0], ['other-model', 'other-model (이전 목록)', true]);
-    assert.match(doc.byId.llm_custom_models_status.textContent, /^아직 불러오지 않았습니다/);
+    assert.match(doc.byId.llm_custom_models_status.textContent, /^아직 불러오지 않았어요/);
 });
 
 // ---------- 3) 받기
@@ -450,7 +450,7 @@ await test('Custom 목록 요청: 본문 · 헤더가 2.2.7 과 글자까지 같
     assert.equal(calls[0].raw, oldBody('https://relay.test/v1', false, T.ctx.chatCompletionSettings));
     assert.deepEqual(settings.custom_model_lists, {}, 'settings.json 에 쓰지 않음');
     assert.deepEqual(JSON.parse(globalThis.localStorage.data[LM.STORE_KEY])['custom:https://relay.test/v1'].ids, ['m-2', 'm-1']);
-    assert.deepEqual(H.toasts, [['success', '모델 2개를 불러왔습니다.']]);
+    assert.deepEqual(H.toasts, [['success', '모델 2개를 불러왔어요.']]);
     assert.deepEqual(optionValues(), ['m-2', 'm-1', 'custom']);
     // 본체 주소를 물려받을 때: 본체 추가 헤더 (매크로 치환)
     reset({ provider: 'custom', cs: { custom_url: 'http://127.0.0.1:5001/v1/', custom_include_headers: 'X-H: {{user}}' } });
@@ -466,7 +466,7 @@ await test('Custom 받기 실패: 2.2.7 문구 · 예전 목록 그대로 · 적
     const ids = await A.fetchCustomModelList({ silent: false });
     assert.deepEqual(ids, []);
     assert.equal(H.toasts[0][0], 'error');
-    assert.match(H.toasts[0][1], /엔드포인트가 모델 목록을 돌려주지 않았습니다/);
+    assert.match(H.toasts[0][1], /엔드포인트가 모델 목록을 돌려주지 않았어요/);
     assert.match(doc.byId.llm_custom_models_status.textContent, /^불러오기 실패: 엔드포인트가/);
     assert.deepEqual(LM.cached('custom:https://relay.test/v1').ids, ['m-1'], '예전 목록 그대로');
     useFetch(() => ({ status: 200, body: { data: [{ id: 'm-9' }, { id: 'm-1' }] } }));
@@ -474,7 +474,7 @@ await test('Custom 받기 실패: 2.2.7 문구 · 예전 목록 그대로 · 적
     assert.equal(settings.provider_model_history.custom, 'm-9');
     assert.equal(settings.llm_model, 'm-9');
     assert.equal(doc.byId.llm_model.value, 'm-9');
-    assert.equal(A.modelListErrorMessage(Object.assign(new Error('x'), { name: 'AbortError' }), true), '응답 시간이 초과되었습니다. (30초)');
+    assert.equal(A.modelListErrorMessage(Object.assign(new Error('x'), { name: 'AbortError' }), true), '응답 시간이 초과됐어요. (30초)');
 });
 await test('Custom: 저절로 받는 중에 버튼을 누르면 같은 요청 하나를 같이 기다리고, 실패하면 이유를 알려 줌', async () => {
     reset({ provider: 'custom', s: { custom_url: 'https://relay.test/v1' } });
@@ -558,7 +558,7 @@ await test('↻: 늘 받음 · 결과 알림 · 받는 중 잠김 · 실패면 �
     assert.match(doc.byId.llm_model_refresh.children[0].style.animation, /llmt-spin/);
     await flush(); release(); await job;
     assert.equal(doc.byId.llm_model_refresh.disabled, false);
-    assert.deepEqual(H.toasts, [['success', '모델 2개를 불러왔습니다.']]);
+    assert.deepEqual(H.toasts, [['success', '모델 2개를 불러왔어요.']]);
     assert.deepEqual(optionValues().slice(0, 3), ['gpt-5.4-mini', 'gpt-7', 'gpt-6.1-sol']);
     useFetch(() => ({ status: 502, body: {} }));
     H.toasts.length = 0;

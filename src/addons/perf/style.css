@@ -910,6 +910,11 @@
 .rl-pricing-preview { margin: .6em 0; padding: .75em; border: 1px solid var(--rl-line); border-radius: var(--bl-r-md,12px); min-width: 0; }
 .rl-pricing-preview summary { cursor: pointer; overflow-wrap: anywhere; line-height: 1.5; }
 .rl-pricing-preview summary > span { display: block; margin-top: .35em; }
+/* 1.5.1 접기 표시를 다른 창과 같은 꺾쇠로: 브라우저 세모 대신 첫 줄 오른쪽에 테마 꺾쇠(펼치면 뒤집힘 · 움직임 없음) */
+.rl-pricing-preview summary { position: relative; list-style: none; padding-inline-end: 26px; }
+.rl-pricing-preview summary::-webkit-details-marker { display: none; }
+.rl-pricing-preview summary::before { content: ""; position: absolute; right: 2px; top: .75em; width: 14px; height: 14px; margin-top: -7px; background: var(--salty-muted, currentColor); -webkit-mask: var(--bl-ui-glyph-chev, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E")) center / contain no-repeat; mask: var(--bl-ui-glyph-chev, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E")) center / contain no-repeat; pointer-events: none; }
+.rl-pricing-preview[open] > summary::before { transform: rotate(180deg); }
 .rl-pricing-more { color: var(--salty-accent-ink,var(--rl-accent)); }
 .rl-pricing-preview > .rl-pricing-card { border: 0; border-top: 1px solid var(--rl-line); border-radius: 0; padding: .8em 0 0; }
 .rl-pricing-preview > p { line-height: 1.5; overflow-wrap: anywhere; }

@@ -101,7 +101,7 @@ export function settingRoute(path) {
     if (scope === 'colorOverrides') { const t = path.split('.')[2]; return TEXT_TOKEN_ROUTE[t] || { tab:'theme', sub:'colors' }; }   // 1.0.0 중복 정리: 글자 모양에 있는 색은 그 화면으로
     if (scope === 'roleIcons' || scope === 'pickedIcons') return { tab:'theme', sub:'icons' };
     if (['palette','lightTint','nightTint','auto','enabled','customName'].includes(scope)) return {tab:'theme',sub:'palette'};
-    if (scope === 'fonts') return key === 'name' || key === 'userName' ? {tab:'chat',sub:key === 'name' ? 'name' : 'user-name'} : {tab:'text',sub:key === 'hanja' ? 'text' : key};
+    if (scope === 'fonts') return key === 'mb' ? {tab:'chat',sub:'screen'} : key === 'name' || key === 'userName' ? {tab:'chat',sub:key === 'name' ? 'name' : 'user-name'} : {tab:'text',sub:key === 'hanja' ? 'text' : key};   // mb = 1.5.1 미트볼 글꼴(채팅 › 화면의 미트볼 묶음)
     if (path === 'userProfile.metaSide') return {tab:'chat',sub:'user-profile'};
     if (scope === 'profile' || scope === 'userProfile') return {tab:'chat',sub:/^(name|header|meta|button)/.test(key) ? scope === 'profile' ? 'name' : 'user-name' : scope === 'profile' ? 'profile' : 'user-profile'};
     if (scope === 'type') return {tab:'text',sub:({dialogueSize:'dialogue',uiSize:'ui',codeSize:'code',para:'para',gutter:'para',measure:'para',indent:'para',align:'para'})[key] || 'text'};

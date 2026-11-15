@@ -24,11 +24,18 @@ const WORDS_EN = {
     rain: '비', rainy: '비', 'light rain': '약한 비', 'heavy rain': '폭우', drizzle: '이슬비', showers: '소낙비', thunderstorm: '뇌우', storm: '폭풍', stormy: '폭풍',
     snow: '눈', snowy: '눈', 'light snow': '약한 눈', 'heavy snow': '폭설', sleet: '진눈깨비', hail: '우박', fog: '안개', foggy: '안개', mist: '옅은 안개', misty: '옅은 안개', haze: '연무', hazy: '연무',
     wind: '바람', windy: '바람', breeze: '산들바람', breezy: '산들바람', calm: '바람 없음', humid: '습함', dry: '건조함',
-    hot: '더움', warm: '따뜻함', mild: '온화함', cool: '선선함', chilly: '쌀쌀함', cold: '추움', freezing: '매우 추움', indoors: '실내', outdoors: '실외'
+    hot: '더움', warm: '따뜻함', mild: '온화함', cool: '선선함', chilly: '쌀쌀함', cold: '추움', freezing: '매우 추움', indoors: '실내', outdoors: '실외',
+    // 1.5.1 미트볼 상태창도 이 사전을 같이 써요(src/ext-bridge-tr.js · 값 전체가 이 낱말 · 낱말 묶음일 때만) — 시간대 · 날 · 계절 · 달 · 날씨 낱말 더함
+    day: '낮', daytime: '낮', 'mid-morning': '늦은 아침', 'mid-afternoon': '한낮', nightfall: '해 질 녘', 'early evening': '이른 저녁', 'early afternoon': '이른 오후', 'small hours': '새벽', 'wee hours': '새벽',
+    today: '오늘', tonight: '오늘 밤', tomorrow: '내일', yesterday: '어제', weekday: '평일', weekdays: '평일', weekend: '주말', weekends: '주말', holiday: '휴일',
+    spring: '봄', summer: '여름', autumn: '가을', winter: '겨울', 'early spring': '이른 봄', 'late spring': '늦봄', 'early summer': '초여름', 'midsummer': '한여름', 'late summer': '늦여름', 'early autumn': '초가을', 'late autumn': '늦가을', 'early winter': '초겨울', 'midwinter': '한겨울', 'late winter': '늦겨울',
+    'clear skies': '맑음', 'clear sky': '맑음', fair: '맑음', 'sunny intervals': '구름 사이 해', raining: '비', drizzling: '이슬비', shower: '소낙비', 'rain showers': '소낙비', thunderstorms: '뇌우', thunder: '천둥', lightning: '번개', downpour: '폭우', snowing: '눈', blizzard: '눈보라', 'gentle breeze': '산들바람', 'light breeze': '산들바람', 'strong wind': '강풍', 'strong winds': '강풍', gusty: '강풍', muggy: '무더움', crisp: '상쾌함', 'heat wave': '폭염', heatwave: '폭염', smog: '스모그', frost: '서리', frosty: '서리', icy: '얼음', rainbow: '무지개', cloud: '구름', clouds: '구름'
 };
 const WEEK_EN = { monday: '월', tuesday: '화', wednesday: '수', thursday: '목', friday: '금', saturday: '토', sunday: '일', mon: '월', tue: '화', tues: '화', wed: '수', thu: '목', thur: '목', thurs: '목', fri: '금', sat: '토', sun: '일' };
 const MONTH_EN = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12, jan: 1, feb: 2, mar: 3, apr: 4, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
 for (const [day, ko] of Object.entries(WEEK_EN)) WORDS_EN[day] = ko + '요일';
+// 1.5.1 달 이름 하나만(「April」 · 「Sept」) — 「May」는 사람 이름일 때가 있어 날짜 꼴(「May 3」)에서만 읽어요
+for (const [month, n] of Object.entries(MONTH_EN)) if (month !== 'may' && month !== 'mar') WORDS_EN[month] = `${n}월`;
 
 const keyOf = (table, word) => Object.prototype.hasOwnProperty.call(table, word) ? table[word] : null;
 const PERIODS = Object.keys(PERIOD_ZH).join('|'), CALENDARS = Object.keys(CALENDAR_ZH).sort((a, b) => b.length - a.length).join('|');
@@ -105,7 +112,17 @@ function byDictionary(text) {
 export function ruleValue(text) {
     const value = String(text ?? '').trim();
     if (!value || value.length > 80 || /[\r\n<>]/.test(value)) return null;
-    return dateZh(value) || timeZh(value) || timeEn(value) || dateEn(value) || byDictionary(value);
+    return dateZh(value) || timeZh(value) || timeEn(value) || dateEn(value) || dayCount(value) || slashDate(value) || byDictionary(value);
+}
+// 1.5.1 「Day 3」 「Day 12 of 30」 → 3일째 · 12일째 (30일 중) — 「4/1 (Mon)」 「12/24 (Tuesday)」 → 4/1(월) (미트볼 날짜 줄 꼴)
+function dayCount(text) {
+    const m = text.match(/^Day\s+(\d{1,5})(?:\s+of\s+(\d{1,5}))?$/i);
+    return m ? `${m[1]}일째${m[2] ? ` (${m[2]}일 중)` : ''}` : null;
+}
+function slashDate(text) {
+    const m = text.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\(\s*([A-Za-z]{3,9})\.?\s*\)$/);
+    const w = m && keyOf(WEEK_EN, m[3].toLowerCase());
+    return w ? `${Number(m[1])}/${Number(m[2])}(${w})` : null;
 }
 
 // ── 같은 값의 지난 번역 (이 기기만, 최근 LIMIT 개) ──
