@@ -64,13 +64,13 @@ export function segOpts(mes, s, final, readThoughts = false) {
 }
 /** 메시지의 글 두 벌: 원문 세그먼트 + 번역문 세그먼트(있으면, 원문과 짝 맞춤). 스트리밍 중엔 원문만.
  *  6.9.6 preview (대사 누르기 · 이어 듣기만): 번역 중 미리 보기가 그려져 있으면 그 글을 번역문으로 (translation.shownDisplay) → 돌려주는 preview: true */
-export function sourcesOf(mes, s, { final = true, text = null, readThoughts = false, preview = false } = {}) {
+export function sourcesOf(mes, s, { final = true, text = null, readThoughts = false, preview = false, prefer = '' } = {}) {
     const original = sub(text != null ? text : mes.mes);
     const opts = segOpts(mes, s, final, readThoughts);
     const orig = safeSegment(original, opts);
     let disp = null, shownPreview = false;
     if (final && text == null) {
-        const shown = typeof translation.shownDisplay === 'function' ? translation.shownDisplay(mes, { preview }) : { text: mes.extra?.display_text, preview: false };
+        const shown = typeof translation.shownDisplay === 'function' ? translation.shownDisplay(mes, { preview, prefer }) : { text: mes.extra?.display_text, preview: false };
         const d = shown.text;
         if (typeof d === 'string' && d.trim() && d !== mes.mes) {
             try { disp = pairSegments(orig, safeSegment(sub(speechDisplay(d)), opts)); } catch { disp = null; }

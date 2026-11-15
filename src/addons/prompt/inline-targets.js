@@ -5,7 +5,7 @@
 // 번역 · 저장 · 진행은 한글화 패널 것(inlineTranslation): 같은 캐시 열쇠 · 같은 진행 부품 · 같은 순서(패널 번역이 도는 동안은 겹쳐 보내지 않아요).
 //
 // 감시자(MutationObserver)는 하나도 안 걸어요: 해당 서랍 몇 개의 누름 · 고름 · 입력 뒤에만 열린 창을 훑어요(아래 「감시자 없이」). 단추는 칸마다 한 번(data-bl-kt 표시) — 실리태번이 목록을 다시 그리면 새 칸에 새로 붙고, 상태(펼침 · 번역)는 열쇠로 남아요.
-import { createInlineTranslate, TR_SVG, trBoxInner, fitBox } from '../../inline-translate.js';
+import { createInlineTranslate, TR_SVG, trBoxInner, fitBox, trNorm } from '../../inline-translate.js';
 // 쉴 때 그림 둘: 옆에 원작 글꼴 아이콘이 있는 자리는 같은 글꼴의 같은 그림(.kt-g · 같은 기준선이라 잉크 가운데가 저절로 맞아요), 없는 자리는 SVG
 const iconHtml = busy => (busy ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' : `${TR_SVG}<i class="fa-solid fa-language kt-g" aria-hidden="true"></i>`);
 
@@ -34,18 +34,22 @@ export function installInlineTargets(api, { doc = document, host = {} } = {}) {
     const rootOf = key => fields.get(key)?.root ?? null;
     const engine = async () => ({
         async cached(source, key) {
-            const found = await blockFor(key);
+            const found = await blockFor(key, source);
             return found ? api.view(found) : null;
         },
         async translate(source, key, ui) {
-            const found = await blockFor(key);
+            const found = await blockFor(key, source);
             if (!found) throw Object.assign(new Error('이 칸은 한글화 패널이 번역하지 않는 칸이에요.'), { userMessage: true });
             return api.translate(found, ui);
         },
     });
-    async function blockFor(key) {
+    // 1.5.5 부른 쪽이 잡은 원문(source)과 지금 칸의 글이 다르면 그 열쇠의 칸이 아니에요 — 같은 칸을 다른 항목이 다시 쓰는 창(프롬프트 편집 · 봇카드 · 페르소나)에서
+    //   옛 열쇠가 새 항목의 글을 제 원문으로 읽어 「원문이 바뀌었어요」를 잘못 띄우거나, 기다리는 사이 바뀐 글을 옛 열쇠로 번역해 넣던 길을 막아요.
+    async function blockFor(key, source) {
         const { kind, target, id } = parseKey(key);
-        return api.block(kind, target, id, sourceOf(key));
+        const raw = sourceOf(key);
+        if (source != null && trNorm(raw) !== trNorm(source)) return null;
+        return api.block(kind, target, id, raw);
     }
     const vw = () => (doc.defaultView || globalThis).innerWidth || 0;
     const tr = createInlineTranslate({ sourceOf, rootOf, engine, memo: false, tag: '[한글화 패널] 제자리 번역', iconHtml });
@@ -261,6 +265,7 @@ export function installInlineTargets(api, { doc = document, host = {} } = {}) {
         button.hidden = false;
         if (button.dataset.tr !== key) { button.dataset.tr = key; if (input.__blKtBox) input.__blKtBox.dataset.tr = key; }
         fields.set(key, { input, root });
+        for (const [old, field] of fields) if (old !== key && field.input === input) fields.delete(old);   // 1.5.5 같은 칸을 가리키던 옛 열쇠는 내려놔요 — 다른 항목의 글을 제 원문으로 읽지 않게
         if (fresh && tr.states.get(key)?.open) { ensureBox(input); requestAnimationFrame(() => fitBox(input.__blKtBox)); }   // 펼쳐 둔 칸을 실리태번이 다시 그렸으면 상자도 다시
         // 화면 폭이 바뀌었거나, 처음 맞출 때 옆 아이콘이 안 보여 못 맞췄거나(고급 정의 창이 닫혀 있던 때) 옆 아이콘 크기가 바뀌었으면 다시 맞춰요
         if (!fresh && button.__ktAnchor !== 'css' && (button.__ktVw !== vw() || button.__ktAnchor !== `${anchor.offsetWidth}x${anchor.offsetHeight}`)) mirror(button, anchor);

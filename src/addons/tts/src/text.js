@@ -455,7 +455,10 @@ export function segmentMessage(rawText, opts = {}) {
     const isKnownStrict = (name) => known.has(String(name).toLowerCase().replace(/\s+/g, ''));   // 2.0.6 띄어 쓴 이름표는 아는 이름만
 
     // 1~2. 정리
-    let work = String(rawText ?? '').replace(/\r\n?/g, '\n');
+    // 1.5.5 점자 빈칸(U+2800)은 보통 빈칸으로 — 「공백마다 점자 빈칸」 우회 프리셋(솔라 등)의 원문은 `<span⠀style="color:…">` 처럼 태그 속 빈칸까지 점자 빈칸이라
+    //   태그를 못 알아보고 `"color:#…"` 를 대사로 셌어요(원문 대사가 번역문의 두 배 · 색 없음 → 누른 줄의 원문 짝을 못 찾고 화면 글로 읽음).
+    //   화면은 그 프리셋 정규식이 보통 빈칸으로 되돌려 보여 줘요 — 같은 글자 수로 바꿔 자리는 그대로예요
+    let work = String(rawText ?? '').replace(/\r\n?/g, '\n').replace(/⠀/g, ' ');
     if (!work.trim()) return [];
     work = applyStrip(work, opts.stripRegex);
     work = blankThinkingHead(work, final);   // 1.8.8 과일 ECoT 생각 블록 (잘리기 전 · 스트리밍)

@@ -72,6 +72,8 @@ body.salty .ss-scope .ss-ib.on { background: var(--bl-ui-pick-face); color: var(
    숫자 동그라미와 점에만 걸어요 — 게이지 · 수치의 빨강(--ss-neg)은 그대로예요. 그 확장이 아이콘 요소(i)로 그려서 아이콘 크기 규칙에 끌려 크기가 달라졌어요 */
 body.salty .ss-scope .ss-badge.ss-badge { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 16px; height: 16px; margin: 0; padding: 0 4px; border: 1px solid var(--salty-lemon, var(--salty-line)); border-radius: 999px; background: var(--bl-lemon-bright, #FFE23C); color: var(--salty-text); font-family: var(--salty-font-ui); font-size: 10.5px; font-style: normal; font-weight: var(--bl-ui-strong, 650); line-height: 14px; letter-spacing: 0; }
 body.salty .ss-scope :is(.ss-ib, .ss-tabs, .ss-groups) .ss-badge.ss-badge { position: absolute; top: -4px; right: -4px; left: auto; }
+/* 1.5.5 상태창 머리의 종 배지: 머리 단추는 30px 상자가 틈 없이 붙어 있어서, 배지가 상자 밖 4px 로 나가면 옆 돋보기 단추 위에 걸쳐요(배지 오른쪽 끝 150.1 · 돋보기 상자 146.1 부터) → 제 상자 안에 둬요 */
+body.salty .ss-scope .ss-head-a .ss-ib .ss-badge.ss-badge { right: 0; }
 body.salty .ss-scope .ss-side-handle .ss-badge.ss-badge { position: absolute; top: -4px; left: -4px; right: auto; }
 body.salty .ss-float .ss-badge.ss-badge { position: absolute; top: -2px; right: -2px; left: auto; }
 body.salty .ss-scope .ss-badge.ss-badge.ss-hide { display: none; }
@@ -430,7 +432,10 @@ body.salty dialog.popup.ss-dlg.large_dialogue_popup :is(.ss-head, .ss-wz-head) {
 /* ---------- 창 머리 ---------- */
 body.salty .ss-scope .ss-head { gap: var(--bl-s2, 8px); padding: 0 0 var(--bl-s3, 12px); }
 body.salty .ss-scope .ss-head-t small { font-size: var(--bl-ts-cap, 12.5px); color: var(--salty-muted); }
-body.salty .ss-scope .ss-head-a { gap: 0; }
+body.salty .ss-scope .ss-head-a { gap: 2px; }
+/* 1.5.5 머리 단추 간격: 아이콘 단추끼리는 틈 0 · 「도우미」 칩 양옆만 2px 라 간격이 갈렸어요(디자인 관문 「형제 단추 사이 간격」 0 · 0 · 0 · 0 · 2 · 2) → 줄 틈 2px 하나로, 칩의 제 여백은 걷어요.
+   칩 양옆을 9px 로 넓혀 「보이는 간격」을 맞추는 쪽은 상자 간격이 0 · 9 로 더 갈려 버렸어요 */
+body.salty .ss-scope .ss-head-a :is(.ss-helpchip, .ss-chip) { margin-inline: 0; }   /* 난이도 칩(PC 에서만 보임)의 오른쪽 여백 4px 도 같이 */
 body.salty .ss-scope .ss-wz-head { gap: var(--bl-s3, 12px); margin-bottom: var(--bl-s4, 16px); }
 body.salty .ss-scope .ss-wz-head > i { width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); border-radius: var(--bl-ui-radius, 8px); font-size: var(--bl-ts-ui, 15px); }
 body.salty .ss-scope .ss-wz-head b { font-size: var(--bl-ts-head, 18px); line-height: 1.3; }
@@ -695,6 +700,9 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
 
 /* 좁은 화면(그 확장이 폰 꼴로 바꾸는 폭과 같은 700): 큰 창 머리는 제목 줄 · 단추 줄 두 줄로(묶음 탭 아이콘은 폰에서도 글 왼쪽에 보여요 — 위 「큰 탭 아이콘」) */
 @media (max-width: 700px) {
+  /* 1.5.5 상태창을 내리면 맨 위 탭 줄(「관리」)이 ✕ 밑으로 지나가며 겹치고, 위 흐림 때문에 줄이 ✕ 높이에서 잘려 보였어요 → 내린 동안(스크롤 흐림 표식 top · both)만 ✕ 줄 높이의 창 면 띠를 맨 위에 붙여
+     내용이 그 밑으로 지나가요. 맨 위에 있을 때(머리 줄이 ✕ 자리를 비워 둔 상태)는 띠가 없어요. 띠는 높이만큼 아래 여백을 접어 자리를 차지하지 않아요. PC 는 ✕ 가 내용 칸 밖이라 그대로예요. */
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: 40px; margin-bottom: -40px; background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); pointer-events: none; }
   /* 번역 고치기(폰): 목록(제 스크롤 55vh) + 위 칸 + 맨 아래 안내 글이 창 높이를 넘어 안내 글 첫 줄이 창 바닥 흐림 아래로 목록과 겹쳐 보였어요 → 목록을 조금 줄여 안내 글까지 창 안에 */
   body.salty .ss-scope.ss-trfix .ss-trf-list { max-height: 46vh; }
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
@@ -917,6 +925,17 @@ body.salty .ss-scope .ss-mod { opacity: 1; }
    목록 오른쪽 안쪽 여백(4px) · 스크롤 막대만큼 카드가 위 고르기 칸보다 안으로 들어왔어요 → 여백 빼고 막대는 가는 막대로.
    찾기 칸이 스위치 둘과 한 줄이라 안내 글이 잘렸어요 → 찾기 한 줄 · 스위치 둘 한 줄. 고정 핀은 점선 · 흐림 45% 라 꺼진 단추처럼 보였어요 → 테마 아이콘 단추 꼴 · 고른 핀은 고르기 면. */
 body.salty .ss-scope.ss-trfix .ss-trf-bar { position: static; background: none; padding: 0 0 var(--bl-s2, 8px); border-bottom: 1px solid var(--salty-line); }
+/* 1.5.5 「아직 영어로 남은 글」 상자(11-15 사용자 실제 폰 「남은글번역하기랑 저장하고닫기도 붙어있음」): 위에서 저장 줄의 위 여백을 걷은 탓에(원작은 위아래 6px) 상자 아래 테두리와 「저장하고 닫기」가 맞닿았어요(간격 0).
+   상자 안도 굵은 글 · 설명 · 단추가 글 줄 하나로 이어져 「5개AI가」처럼 붙고 단추가 글 바로 밑(또는 글 옆)에 붙었어요. → 상자 아래 8px · 상자 안은 굵은 글과 설명을 같은 기준선에(틈 8px),
+   단추는 다음 줄 왼쪽. 고르기 칸 위 여백도 8px 로(전 6px) — 머리 ↔ 상자 16 뒤로 묶음 사이가 8 · 8 · 8 이에요(전 0 · 6 · 8). */
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-trfix > .ss-trf-miss { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--bl-s1, 4px) var(--bl-s2, 8px); margin-bottom: var(--bl-s2, 8px); }
+/* 설명은 굵은 글 옆 한 줄에 다 들어갈 때만 옆에 있고(PC), 안 들어가면 통째로 다음 줄(상자 폭 · 왼쪽 맞춤)로 내려가요 — 좁은 옆 칸에서 「…한 번에 / 번역해요.」로 꺾여 매달리지 않게.
+   단추는 늘 제 줄: 높이 0 의 줄바꿈 칸(::after) 뒤에 놓아요. 줄 틈 4px 가 둘이라 글 ↔ 단추는 8px 이에요 */
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-trfix > .ss-trf-miss > b { flex: none; }
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-trfix > .ss-trf-miss > .ss-hint { flex: 0 1 auto; min-width: 0; margin: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-trfix > .ss-trf-miss::after { content: ''; flex: 0 0 100%; order: 1; height: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-trfix > .ss-trf-miss > .ss-trf-go { flex: none; order: 2; margin: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-trfix > .ss-trf-mod { margin-top: var(--bl-s2, 8px); }
 body.salty .ss-scope.ss-trfix .ss-trf-list { padding-right: 0; scrollbar-width: thin; }
 /* 폰(좁은 화면 묶음 안): 번역 고치기 목록 높이 46vh — 아래 「좁은 화면」 묶음 */
 body.salty .ss-scope.ss-trfix > .ss-inline { flex-wrap: wrap; row-gap: var(--bl-s2, 8px); }
@@ -951,7 +970,10 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-dl[data-bl-grid] > dt { grid-col
 body.salty:not([data-bl-ext-raw]) .ss-scope .ss-dl[data-bl-grid] > dd { grid-column: var(--bl-c, auto); grid-row: var(--bl-rd, auto); margin: 0 0 var(--bl-s3, 12px); min-width: 0; overflow-wrap: anywhere; }
 /* 1.5.4 펼친 「자세히」 칸 한 줄(사용자 「자세히랑 날짜도 한 줄에 들어갈 수 있으니까 한 줄」): 그 확장은 「자세히 ›」를 칸 오른쪽 아래 구석에 띄우고 아래 여백 16px 을 비워
    내용 한 줄 + 「자세히」 줄로 두 줄 높이였어요 → 내용(왼쪽 · 넘치면 말줄임)과 「자세히 ›」(오른쪽 끝 · 줄바꿈 안 함)를 한 줄에 세로 가운데로. 여러 줄 내용(게이지 · 퀘스트)은 내용만 여러 줄이에요. */
-body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det { display: flex; align-items: center; gap: 8px; padding: 5px 8px; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det { display: flex; align-items: baseline; gap: 8px; padding: 5px 8px; }
+/* 1.5.5 「자세히 ›」가 왼쪽 내용 글자보다 1px 남짓 위(사용자 사진 · 잉크 가운데로 잰 값 −0.83 ~ −1.48px): 상자끼리 가운데를 맞추면 글자 크기 · 줄 높이가 다른 두 글이 반 화소씩 따로 붙어요 →
+   같은 기준선에 놓아요(뒤 +0.17 ~ −0.48px · 폰 384 · PC 1280 같은 값). 게이지처럼 여러 줄인 내용은 전처럼 세로 가운데예요. */
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det > .ss-mini-bars, body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det > .ss-mini-bars + .go { align-self: center; }
 body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det > :not(.go) { flex: 1 1 auto; min-width: 0; }
 body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det > .go { position: static; flex: none; white-space: nowrap; line-height: 1.3; }
 /* 얼굴 동그라미 안 그림: 동그라미(36 · 작은 것 22)의 4할(18 · 13px)이라 동물이 서로 안 가려졌어요 → 동그라미의 6할 남짓(글자 크기 = 지름 × 0.75 — 선도 그만큼 굵어져요) */

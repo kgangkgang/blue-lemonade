@@ -161,8 +161,12 @@ export function displayReady(mes) {
  * 못 찾고 화면 글(번역문)을 듣는 언어로 다시 옮겼다 (요청 한 번 더 · 말투가 원문과 다름).
  * 「번역이 왔나」(displayReady) 는 그대로 저장된 글만 본다 — 미리 보기를 다 온 번역으로 치지 않는다
  */
-export function shownDisplay(mes, { preview = false } = {}) {
+export function shownDisplay(mes, { preview = false, prefer = '' } = {}) {
     if (preview) {
+        // 1.5.5 지금 글의 번역문이 이미 저장돼 있으면(번역이 끝남) 그 글이 먼저 — 번역이 끝나는 마지막 틈(미리 보기 기록이 아직 남아 있고 저장 · 다시 그리기 전)에
+        //   누르면 미리 보기 글로 찾고 「번역이 아직 덜 온 줄」이라고 잘못 알렸어요. prefer: 'preview' · 'final' — 한쪽으로 못 찾았을 때 다른 쪽으로 한 번 더(tapJobs)
+        const ready = prefer !== 'preview' && displayReady(mes);
+        if (prefer === 'final' || ready) return { text: displayOf(mes), preview: false };
         try {
             const text = globalThis[Symbol.for('blue-lemonade.translator')]?.previewText?.(mes);
             if (typeof text === 'string' && text.trim()) return { text, preview: true };

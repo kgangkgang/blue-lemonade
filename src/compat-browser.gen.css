@@ -1,4 +1,4 @@
-/* src/compat-browser.gen.css — tools/build-css.cjs 가 css/ 에서 크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 59개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build 8f56aef5a877) */
+/* src/compat-browser.gen.css — tools/build-css.cjs 가 css/ 에서 크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 60개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build 9797ab606640) */
 body.salty input[type="range"]:where(:not(.salty-panel:not(*)))::-moz-range-thumb {
 width:var(--bl-knob-size);
 height:var(--bl-knob-size);
@@ -54,6 +54,7 @@ color:inherit !important;
   background: var(--bl-knob-face);
   box-shadow: var(--bl-knob);
 }
+body.salty #left-nav-panel #bl-response-range::-moz-range-track { height: var(--bl-track-h, 5px); border: 0; border-radius: 999px; background: var(--salty-fill-shade-2, var(--salty-shade-2)); box-shadow: var(--bl-track); }
 @supports not (-webkit-mask-clip: text) {
 body.salty.salty-dem-ink.salty-dem-ink-marker:not(.salty-dlg-full) :is(:is(#chat,.bl-chat-like) .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
     -webkit-text-fill-color: currentColor;

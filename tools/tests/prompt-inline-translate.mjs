@@ -280,6 +280,12 @@ await test('프리셋 프롬프트 편집 창: 열면 단추 하나 · 다른 �
     assert.equal($$('#completion_prompt_manager_popup .bl-kt-btn').length, 1);
     assert.equal(btn.dataset.tr, ['preset', 'Sample Preset', 'nsfw'].join('␟'));
     assert.equal(input.previousElementSibling.hidden, true, 'new prompt starts closed');
+    // 1.5.5 같은 칸을 다른 항목이 다시 쓰면 옛 열쇠는 그 칸을 내려놔요 — 패널에서 번역이 끝나도(bl-kt:changed) 옛 열쇠가 새 항목의 글을 제 원문으로 읽지 않아요
+    const oldKey = ['preset', 'Sample Preset', 'main'].join('␟');
+    assert.equal(inline.fields.has(oldKey), false, 'the old key lets go of the reused field');
+    assert.equal(inline.tr.states.get(oldKey).source, 'Write vividly.');
+    doc.dispatchEvent(new window.CustomEvent('bl-kt:changed', { detail: { ns: 'pt-preset::Sample Preset' } })); await settle();
+    assert.equal(inline.tr.states.get(oldKey).source, 'Write vividly.', 'the old key never takes the new prompt as its source (no false 「원문이 바뀌었어요」)');
     pop.style.display = 'none'; pop.classList.remove('openDrawer'); await settle();
     save.dataset.pmPrompt = 'chatHistory'; setValue(input, ''); input.disabled = true;
     pop.style.display = 'flex'; pop.classList.add('openDrawer'); poke('completion_prompt_manager_popup'); await settle(); await frame();

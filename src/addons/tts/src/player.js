@@ -2514,13 +2514,24 @@ function noteMiss(mesId, seg) {
 function tapJobs(mesId, mes, segs, { readThoughts = null, awaitDisplay = false, expand = true, preview = false } = {}) {
     const s = settings();
     const srcs = new Map();
-    const srcFor = (rt) => {
-        if (!srcs.has(rt)) {
-            const src = sourcesOf(mes, s, { final: true, readThoughts: rt, preview });   // 6.9.6 누르기 · 이어 듣기는 미리 보기 글로도
+    const srcFor = (rt, prefer = '') => {
+        const k = `${rt}|${prefer}`;
+        if (!srcs.has(k)) {
+            const src = sourcesOf(mes, s, { final: true, readThoughts: rt, preview, prefer });   // 6.9.6 누르기 · 이어 듣기는 미리 보기 글로도
             const { origOf } = alignLists(src.orig, src.disp);
-            srcs.set(rt, { src, full: analysisLookup(cachedAnalysis(mesId), src.orig, src.disp, origOf) });
+            srcs.set(k, { src, full: analysisLookup(cachedAnalysis(mesId), src.orig, src.disp, origOf) });
         }
-        return srcs.get(rt);
+        return srcs.get(k);
+    };
+    // 1.5.5 한쪽 글(저장된 번역문 · 번역 중 미리 보기)로 원문 짝을 못 찾으면 다른 쪽 글로 한 번 더 — 같은 원문의 다시 번역(미리 보기가 새 글) · 끝나는 틈에도 원문으로
+    const pairFor = (rt, seg) => {
+        let { src, full } = srcFor(rt);
+        let cp = clickedPair(src, seg, { lt });
+        if (cp.miss && preview) {
+            const alt = srcFor(rt, src.preview ? 'final' : 'preview');
+            if (alt.src.disp) { const cp2 = clickedPair(alt.src, seg, { lt }); if (!cp2.miss) { ({ src, full } = alt); cp = cp2; } }
+        }
+        return { src, full, cp };
     };
     const lines = [];
     let missing = false, missingUser = false, held = 0;
@@ -2529,7 +2540,8 @@ function tapJobs(mesId, mes, segs, { readThoughts = null, awaitDisplay = false, 
         const { pair, real, miss } = cp;
         if (miss) noteMiss(mesId, seg);
         // 6.9.6 미리 보기 글이 덜 와서(그 문단이 아직 원문이거나 화면과 다름) 원문 짝이 없는 줄 — 지금처럼 화면 글로 읽되 까닭을 알린다
-        if (miss && src.preview) toastOnce(lt ? '번역이 아직 덜 온 줄이라 원문을 못 찾았어요 — 화면 글을 옮겨 읽어요' : '번역이 아직 덜 온 줄이라 원문을 못 찾았어요 — 화면 글로 읽어요', 'info');
+        // 1.5.5 번역이 정말 진행 중일 때만(저장된 번역문이 지금 글의 것이면 끝난 번역 — 미리 보기 기록이 남은 틈이라도 「덜 온 줄」이 아니에요)
+        if (miss && src.preview && !hasDisplay(mes)) toastOnce(lt ? '번역이 아직 덜 온 줄이라 원문을 못 찾았어요 — 화면 글을 옮겨 읽어요' : '번역이 아직 덜 온 줄이라 원문을 못 찾았어요 — 화면 글로 읽어요', 'info');
         const lookup = (x) => full(real.get(x) || x) || (real.has(x) ? full(x) : null);
         const built = buildJobs(mesId, mes, pair, { startSeg: 0, final: true, lookup, tapped: true, awaitDisplay });
         missing = missing || built.missing;
@@ -2541,8 +2553,7 @@ function tapJobs(mesId, mes, segs, { readThoughts = null, awaitDisplay = false, 
     let cuts;   // 소리 대본으로 읽는 답장이면 대본의 효과음 · 쉼 줄 자리 (처음 묶음을 펼칠 때 한 번)
     for (const seg of segs) {
         if (!seg || !seg.text) continue;
-        const { src, full } = srcFor(readThoughts === null ? seg.kind === 'thought' : !!readThoughts);
-        const cp = clickedPair(src, seg, { lt });
+        const { src, full, cp } = pairFor(readThoughts === null ? seg.kind === 'thought' : !!readThoughts, seg);
         const list = src.disp && s.text_source === 'display' ? src.disp : src.orig;   // buildJobs 의 기준 목록 (startIn) — 묶음 표시는 이 목록의 것
         const x = expand ? [...cp.real.values()].find(v => list.includes(v)) : null;
         if (!x?.join) { lines.push(build(src, full, seg, cp).jobs); continue; }

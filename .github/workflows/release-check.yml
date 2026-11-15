@@ -253,6 +253,7 @@ jobs:
           node tools/tests/cjk-wrap.mjs .
           node tools/tests/tts-original-panel.mjs .
           node tools/tests/tts-preview-source.mjs .
+          node tools/tests/tts-orig-found.mjs .
           node tools/tests/translator-autofix.mjs .
           node tools/tests/translator-check-fold.mjs .
           node tools/tests/translator-fail-cache.mjs .

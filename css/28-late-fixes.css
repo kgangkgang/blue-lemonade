@@ -6,6 +6,12 @@
 #bl-response-range { display: none; }
 body.salty #left-nav-panel #bl-response-range { display: block; grid-column: 1 / -1; grid-row: 2; width: 100% !important; min-width: 0; -webkit-appearance: none; appearance: none; }
 body.salty #bl-response-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; }
+/* 1.5.5 누를 자리(디자인 관문 「차」 154×5 < 40): 막대 상자가 보이는 선(5px)과 같아 손가락으로 선을 누르기 어려웠어요 → 상자는 40px(투명), 선은 트랙에 그려요.
+   테마의 다른 막대(낱말 가림 · 캡처 필터 — css/52-tool-editor)와 같은 꼴이에요. 줄 높이는 그대로(여백 10 → −7.5), 보이는 모양은 화소 하나 안 바뀌어요(전후 사진 차 0) */
+body.salty #left-nav-panel #bl-response-range { height: 40px !important; margin: -7.5px 0 !important; padding: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; cursor: pointer; }
+body.salty #left-nav-panel #bl-response-range::-webkit-slider-runnable-track { height: var(--bl-track-h, 5px); border: 0; border-radius: 999px; background: var(--salty-fill-shade-2, var(--salty-shade-2)); box-shadow: var(--bl-track); }
+body.salty #left-nav-panel #bl-response-range::-moz-range-track { height: var(--bl-track-h, 5px); border: 0; border-radius: 999px; background: var(--salty-fill-shade-2, var(--salty-shade-2)); box-shadow: var(--bl-track); }
+body.salty #left-nav-panel #bl-response-range::-webkit-slider-thumb { margin-top: calc((var(--bl-track-h, 5px) - var(--bl-knob-size, 22px)) / 2) !important; }
 body.salty #left-nav-panel #range_block_openai > hr { box-shadow: none !important; height: 0; /* 3.0.0: background · margin → css/14-prompt.css (원래 규칙으로 합침) */ }
 
 body.salty #qr--settings .qr--set-item > .qr--content { display: grid !important; grid-template-columns: 14px minmax(0, 1fr) 26px; gap: 4px; }

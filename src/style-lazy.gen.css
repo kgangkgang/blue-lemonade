@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 8f56aef5a877) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 9797ab606640) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
-:root{--bl-release:"1.5.4";}
+:root{--bl-release:"1.5.5";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -14774,6 +14774,10 @@ body.salty #left-nav-panel #openai_api-presets > div[data-bl-row~="soh"] > :is(.
 #bl-response-range { display: none; }
 body.salty #left-nav-panel #bl-response-range { display: block; grid-column: 1 / -1; grid-row: 2; width: 100% !important; min-width: 0; -webkit-appearance: none; appearance: none; }
 body.salty #bl-response-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; }
+body.salty #left-nav-panel #bl-response-range { height: 40px !important; margin: -7.5px 0 !important; padding: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; cursor: pointer; }
+body.salty #left-nav-panel #bl-response-range::-webkit-slider-runnable-track { height: var(--bl-track-h, 5px); border: 0; border-radius: 999px; background: var(--salty-fill-shade-2, var(--salty-shade-2)); box-shadow: var(--bl-track); }
+
+body.salty #left-nav-panel #bl-response-range::-webkit-slider-thumb { margin-top: calc((var(--bl-track-h, 5px) - var(--bl-knob-size, 22px)) / 2) !important; }
 body.salty #left-nav-panel #range_block_openai > hr { box-shadow: none !important; height: 0;  }
 body.salty #qr--settings .qr--set-item > .qr--content { display: grid !important; grid-template-columns: 14px minmax(0, 1fr) 26px; gap: 4px; }
 body.salty #qr--settings .qr--content > .drag-handle { grid-area: 1 / 1; align-self: center; }
