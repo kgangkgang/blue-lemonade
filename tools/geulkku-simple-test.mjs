@@ -2274,5 +2274,27 @@ await test('만든 이 표시 없음: 주석(js · mjs · cjs · css · html)과
     assert.deepEqual(hits, [], '만든 이 표시가 남았어요 — 이름을 빼고 무엇을 하는지만 적어요:\n' + hits.join('\n'));
 });
 
+// 11-15 「화내기」 글이 가운데만 움직이던 일: 견본 글(서술 · 이름 · 대사 × 2) 자리 번호에 박힌 규칙은 실제 로그(이름 숨김 · 문단 수 제각각)에서 엉뚱한 문단을 움직여요
+await test('글 문단 움직임: 검사기가 자리 번호 규칙을 잡고(견본 3 · 6 · 셋째 자식 대사) 종류로 고른 규칙은 지나가요', async () => {
+    const lc = await import(pathToFileURL(path.join(ROOT, 'tools', 'geulkku-lines-check.mjs')).href);
+    const frame = '<div class="gk gk-tl gk-kT"><details class="gk-kx"><summary class="gk-pb"></summary></details><div class="gk-lg"><p class="gk-nr"></p></div></div>';
+    const run = (css) => Object.fromEntries(Object.keys(lc.SHAPES).map(s => [s, lc.movedLines(frame, lc.rulesOf(css), s).moved.join(',')]));
+    const pos = run('.gk-kT:has(.gk-kx[open]) .gk-lg>p:nth-child(3){animation:a 1s}.gk-kT:has(.gk-kx[open]) .gk-lg>p:nth-child(6){animation:a 1s .2s}');
+    assert.equal(pos.견본, '3,6'); assert.equal(pos.이름숨김, '3,6');   // 이름 숨김에선 셋째가 서술 — 틀린 문단
+    const kind = run('.gk-kT:has(.gk-kx[open]) .gk-lg>.gk-dl{animation:a 1s}.gk-kT:has(.gk-kx[open]) .gk-lg>.gk-dl~.gk-dl{animation:a 1s .2s}');
+    assert.equal(kind.견본, '3,6'); assert.equal(kind.이름숨김, '2,4,6'); assert.equal(kind.대사만, '1,2,3,4'); assert.equal(kind.서술만, '');
+    assert.equal(run('.gk-kT:has(.gk-kx[open]) .gk-lg>*:nth-child(1){animation:a 1s}.gk-kT:has(.gk-kx[open]) .gk-lg>*:nth-child(n+2){animation:a 1s .1s}').문단30.split(',').length, 30);
+    assert.equal(run('.gk-kT:has(.gk-kx[open]) .gk-lg>.gk-dl:not(.gk-dl~.gk-dl){animation:a 1s}').이름숨김, '2');
+    assert.equal(run('.gk-kT:has(.gk-kx[open]) .gk-lg>:nth-child(even of .gk-dl){animation:a 1s}').대사만, '2,4');
+    assert.equal(run('.gk-kT .gk-lg>.gk-dl{animation:a 1s}').견본, '3,6');   // 늘 도는 움직임도 셈
+    assert.equal(run('.gk-kT:hover .gk-lg>.gk-dl{animation:a 1s}').견본, '');
+});
+await test('글 문단 움직임: 모든 심플 틀이 구조 여섯 가지(견본 · 이름 숨김 · 서술만 · 대사만 · 문단 1개 · 30개)에서 견본과 같은 뜻으로 움직여요', async () => {
+    const lc = await import(pathToFileURL(path.join(ROOT, 'tools', 'geulkku-lines-check.mjs')).href);
+    const dir = path.join(ROOT, 'tools', 'simple-frames');
+    const bad = fs.readdirSync(dir).filter(n => n.endsWith('.html')).map(n => lc.checkFrame(path.join(dir, n))).filter(x => x.fails.length && !x.allow);
+    assert.deepEqual(bad.map(x => x.frame + ': ' + x.fails[0]), [], '자세히: node tools/geulkku-lines-check.mjs');
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 process.exit(fail ? 1 : 0);
