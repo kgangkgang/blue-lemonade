@@ -34,6 +34,7 @@ async function boot({on=false,legacy=false,defer=false}={}){
  await fs.writeFile(path.join(host,'preset-manager.js'),G+'export const getPresetManager=()=>S.presetManager;');
  await fs.writeFile(path.join(host,'popup.js'),'export const POPUP_TYPE={TEXT:1};export async function callGenericPopup(){}');
  await fs.writeFile(path.join(deep,'addon-files-check.js'),'export function verifyAddonCss(){}');
+ await fs.copyFile(path.join(root,'src/stream-window.js'),path.join(deep,'stream-window.js'));   // 1.5.1
  await fs.writeFile(path.join(addon,'regexperf.js'),G+`
  S.imports++;if(S.defer)await new Promise(r=>S.release=r);
  export function setRuntimeEnabled(on){S.on=on;S.activations.push(on);return on}

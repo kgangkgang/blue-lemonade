@@ -69,6 +69,7 @@ async function boot({ enabled = ['ledger'], allowPreset = true, mainApi = 'opena
     await fs.writeFile(path.join(dir, 'st', 'preset-manager.js'), G + 'export const getPresetManager = () => S.presetManager;\n');
     await fs.writeFile(path.join(dir, 'st', 'openai.js'), G + 'export const oai_settings = S.oai; export const promptManager = S.promptManager;\n');
     await fs.writeFile(path.join(deep, 'addon-files-check.js'), 'export function verifyAddonCss() {}\n');
+    await fs.copyFile(path.join(root, 'src/stream-window.js'), path.join(deep, 'stream-window.js'));   // 1.5.1 index.js 가 답이 오는 동안 맞추기를 미뤄요
 
     const listeners = new Map();
     const events = {

@@ -297,6 +297,7 @@ jobs:
           node tools/tests/prompt-apply-live.mjs .
           node tools/tests/prompt-translation-cache.mjs .
           node tools/tests/regexlink-restore.mjs .
+          node tools/tests/stream-window-idle.mjs .
           node tools/tests/regex-manual.mjs .
           node tools/tests/regexlink-performance.mjs .
           node tools/tests/regex-perf.mjs .

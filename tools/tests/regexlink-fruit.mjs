@@ -131,6 +131,7 @@ try {
     await stub('st/preset-manager.js', 'export const getPresetManager = () => globalThis.__rl.presetManager;\n');
     await stub('st/openai.js', 'export const oai_settings = globalThis.__rl.oai; export const promptManager = globalThis.__rl.promptManager;\n');
     await fs.writeFile(path.join(deep, 'addon-files-check.js'), 'export function verifyAddonCss() {}\n');
+    await fs.copyFile(path.join(root, 'src/stream-window.js'), path.join(deep, 'stream-window.js'));   // 1.5.1 index.js 가 답이 오는 동안 맞추기를 미뤄요
 
     const listeners = new Map();
     const events = { on: (name, fn) => listeners.set(name, [...(listeners.get(name) || []), fn]), removeListener: (name, fn) => listeners.set(name, (listeners.get(name) || []).filter(f => f !== fn)), emit: name => (listeners.get(name) || []).forEach(fn => fn()) };

@@ -13,7 +13,7 @@ class Element {
   constructor(tag='div',attrs={},text=''){this.nodeType=1;this.tagName=tag.toUpperCase();this.attrs=new Map(Object.entries(attrs));this.children=[];this.dataset={};this.value='';if(text)this.append({nodeType:3,nodeValue:text});}
   get id(){return this.getAttribute('id')||''}get className(){return this.getAttribute('class')||''}
   get isConnected(){return this.tagName==='HTML'||!!this.parentElement?.isConnected}
-  getAttribute(k){return this.attrs.has(k)?this.attrs.get(k):null}setAttribute(k,v){this.attrs.set(k,String(v))}
+  getAttribute(k){return this.attrs.has(k)?this.attrs.get(k):null}setAttribute(k,v){this.attrs.set(k,String(v))}removeAttribute(k){this.attrs.delete(k)}
   append(node){node.parentElement=this;Object.defineProperty(node,'isConnected',{configurable:true,get:()=>this.isConnected});this.children.push(node)}
   remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(x=>x!==this);this.parentElement=null}
   matches(selector){return selector.split(',').some(part=>{
@@ -128,7 +128,10 @@ check('the built-in combination name translates only its display, preserving its
 check('user-chosen quick-reply names and font labels keep their exact text and accessible labels',()=>{assert.equal(userLabel.text,'首页');assert.equal(userLabel.getAttribute('title'),'首页');assert.equal(userLabel.getAttribute('aria-label'),'首页')});
 check('a keyword tooltip keeps the actual stored keyword',()=>{assert.ok(word.getAttribute('title').includes('首页'));assert.ok(!word.getAttribute('title').includes('홈'))});
 check('adjacent version captures preserve the version and translate the suffix',()=>{assert.ok(version.text.includes('20261003.1'));assert.ok(version.text.includes('로컬 테스트'));assert.ok(!version.text.includes('本地测试'))});
-check('reasoning display changes only the owned option; its value stays original',()=>{assert.equal(option.text,'과일의 마음');assert.equal(option.getAttribute('value'),'果实之心');assert.equal(foreign.text,'首页')});
+// 1.5.1: 과일 옵션은 label 로만 보여요 — 실리태번 getAllPresets() 가 읽는 글자(text)가 바뀌면 ECoT 스크립트가 설정 저장 고리를 돌았어요
+check('reasoning display changes only the owned option label; its text (preset name) and value stay original',()=>{assert.equal(option.getAttribute('label'),'과일의 마음');assert.equal(option.text,'果实之心');assert.equal(option.getAttribute('value'),'果实之心');assert.equal(foreign.text,'首页');assert.equal(foreign.getAttribute('label'),null);assert.ok(reasoning.children.map(o=>o.text).includes('果实之心'),'getAllPresets 꼴(옵션 글자 목록)에 원래 이름이 있어요')});
+// 과일 프리셋 ECoT 스크립트의 applyFormatter 판정(getAllPresets 에 이름이 없으면 savePreset)을 SETTINGS_UPDATED 다섯 번 흉내 — 저장 0번이어야 해요(예전: 다섯 번 모두 저장)
+check('the Fruit ECoT formatter check finds its template by option text, so repeated SETTINGS_UPDATED saves nothing',()=>{let saves=0;for(let k=0;k<5;k++){const names=reasoning.children.map(o=>o.text);if(!names.includes('果实之心'))saves++}assert.equal(saves,0)});
 check('QR branch keys stay original while labels translate',()=>{assert.ok(!qr.text.includes('剧情'));assert.equal(qr.getAttribute('data-qr-label'),'推进剧情');assert.equal(qr.getAttribute('data-qr'),'synthetic')});
 check('the observer never watches the chat or body subtree',()=>{for(const o of e.observers)for(const [n,opts] of o.targets){assert.notEqual(n,chat);if(n===e.body||n===e.html)assert.notEqual(opts.subtree,true)}});
 const save=add(panel,'button',{},'保存');e.mutate();
@@ -137,7 +140,7 @@ e.click(home);e.host.confirm('操作失败');e.host.prompt('方案名称','首�
 check('native dialogs translate only known prompts and preserve names/defaults/return values',()=>{assert.equal(e.calls[0][1],'操作失败');assert.notEqual(e.calls[1][1],'方案名称');assert.equal(e.calls[1][2],'首页');assert.ok(e.calls[2][1].includes('首页'));assert.equal(e.host.prompt('方案名称','原始值'),'首页')});
 home.children[0].nodeValue='사용자가 바꾼 표시';close.setAttribute('title','사용자가 바꾼 설명');
 e.cleanups.at(-1)();
-check('turning off restores only text and attributes still owned by the adapter',()=>{assert.equal(home.text,'사용자가 바꾼 표시');assert.equal(close.getAttribute('title'),'사용자가 바꾼 설명');assert.equal(save.text,'保存');assert.equal(option.text,'果实之心');assert.equal(prompt.getAttribute('placeholder'),'搜索全部条目…')});
+check('turning off restores only text and attributes still owned by the adapter',()=>{assert.equal(option.getAttribute('label'),null);assert.equal(home.text,'사용자가 바꾼 표시');assert.equal(close.getAttribute('title'),'사용자가 바꾼 설명');assert.equal(save.text,'保存');assert.equal(option.text,'果实之心');assert.equal(prompt.getAttribute('placeholder'),'搜索全部条目…')});
 check('the combination display restores on OFF and a changed selection key releases the owned label',()=>{assert.equal(builtInProfile.text,' 果实默认 ');e.run();assert.equal(builtInProfile.text,' 과일 기본 ');builtInProfile.setAttribute('data-profile','Custom name');e.mutate();assert.equal(builtInProfile.text,' 果实默认 ');builtInProfile.children[0].nodeValue='用户自己的名称';e.mutate();assert.equal(builtInProfile.text,'用户自己的名称');e.cleanups.at(-1)()});
 check('settings action labels fit a half-width button on one line',()=>{const data=JSON.parse('{'+codeOf('fruit-heart').split('installFruitHeartKorean(BlueLemonade,{')[1].trim().replace(/\);\s*$/,''));const ko=zh=>data.entries.find(x=>x.zh===zh&&x.kind==='text')?.ko;assert.equal(ko('重新配置酒馆解析'),'분석 설정 다시 적용');assert.equal(ko('保存当前为方案'),'현재 조합 저장');assert.equal(ko('删除当前方案'),'이 조합 삭제')});
 check('cleanup removes timers, observers, styles and handlers',()=>{assert.equal(e.intervals.size,0);assert.equal(e.listeners.size,0);assert.ok(e.observers.every(x=>x.targets.length===0));assert.equal(e.head.children.length,0);assert.equal(e.host.__blueLemonadeFruitHeartKorean_v1,undefined)});

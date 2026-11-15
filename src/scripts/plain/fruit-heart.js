@@ -27,6 +27,11 @@ function installFruitHeartKorean(BlueLemonade, data) {
   const skip = 'script,style,svg,code,textarea,[contenteditable]:not([contenteditable="false"]),[data-nsfw-drop],[data-profile],[data-bl-fruit-user-label],.fh-exp-preview,.fh-exp-rule';
   const attributes = ['title', 'aria-label', 'placeholder'];
   const texts = new Map(), attrs = new Map(), observed = new Set(), popupRoots = new Set();
+  // BL 1.5.1 opt-stream: 추론 서식 고르기의 과일 옵션은 글자 노드가 아니라 label 로 보여 줘요(optionLabels: 옵션 → { original: 예전 label 속성 | null, shown }).
+  //   실리태번 getAllPresets() · findPreset() 은 옵션의 보이는 글자(text)를 이름으로 읽어요 — 글자를 「과일의 마음」으로 바꾸면 과일 프리셋의 ECoT 스크립트가
+  //   추론 서식이 없다고 보고 SETTINGS_UPDATED 마다 savePreset → 고르기 change → 설정 저장 → SETTINGS_UPDATED 를 끝없이 되풀이했어요(실제 폰 추적: 35초에 35번 · 설정 저장 864ms).
+  //   label 은 화면(기본 고르기 · 테마 고르기 부품 opt.label || opt.text)에만 쓰이고 text 는 원문 그대로라 그 고리가 생기지 않아요.
+  const optionLabels = new Map();
   const normalize = value => String(value ?? '').replace(/\s+/g, ' ').trim();
   const exact = new Map(data.entries.filter(x => x.kind !== 'pattern' && x.kind !== 'attr').map(x => [normalize(x.zh), x.ko]));
   const attributeText = new Map(data.entries.filter(x => x.kind === 'attr').map(x => [normalize(x.zh), x.ko]));
@@ -256,6 +261,17 @@ function installFruitHeartKorean(BlueLemonade, data) {
     const walker = doc.createTreeWalker(root, 4); while (walker.nextNode()) paintText(walker.currentNode);
     for (const button of root.querySelectorAll('button[data-profile]')) paintProfileName(button);
   }
+  function paintOptionLabel(option) {
+    // 예전 판이 글자 노드를 바꿔 뒀으면 먼저 원문으로(이 판부터는 글자를 건드리지 않아요)
+    for (const node of option.childNodes || option.children || []) { const saved = node.nodeType === 3 && texts.get(node); if (saved && node.nodeValue === saved.shown) { node.nodeValue = saved.original; texts.delete(node); } }
+    const source = option.text ?? option.textContent ?? '';
+    const shown = translate(source, canPattern(option), titleContext(option));
+    const now = option.getAttribute('label'), old = optionLabels.get(option);
+    if (shown === source) { if (old && now === old.shown) { if (old.original === null) option.removeAttribute?.('label'); else option.setAttribute('label', old.original); } optionLabels.delete(option); return; }
+    if (now === shown) { if (!old) optionLabels.set(option, { original: null, shown }); return; }
+    optionLabels.set(option, { original: old ? old.original : now, shown });
+    option.setAttribute('label', shown);
+  }
   function paintHelperName(label) {
     if (!eligible(label)) return;
     const nodes = [], originals = [], walker = doc.createTreeWalker(label, 4);
@@ -317,7 +333,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     for (const root of roots) if (!closedPanel(root)) paint(root);
     const helperRoots = found.filter(el => el.matches(helperRootsSelector));
     for (const root of helperRoots) for (const label of root.querySelectorAll(helperLabelsSelector)) paintHelperName(label);
-    if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll('#reasoning_select option[value="果实之心"]')) paint(option);
+    if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll('#reasoning_select option[value="果实之心"]')) paintOptionLabel(option);
     for (const root of found) if (root.matches(POPUPS) && ownsPopup(root)) paint(root);
     // BL 1.1.6: 알림은 클릭 15초 창 없이, 과일의 마음 문구 표와 맞는 글만 바꿔요(paintToast).
     for (const root of found) if (root.matches(TOASTS)) paintToast(root);
@@ -376,8 +392,9 @@ function installFruitHeartKorean(BlueLemonade, data) {
     doc.removeEventListener('click', interaction, true); doc.removeEventListener('keydown', interaction, true);
     for (const [node, value] of texts) if (node.nodeValue === value.shown) node.nodeValue = value.original;
     for (const [node, record] of attrs) for (const [name, value] of record) if (node.getAttribute(name) === value.shown) node.setAttribute(name, value.original);
+    for (const [option, value] of optionLabels) if (option.getAttribute('label') === value.shown) { if (value.original === null) option.removeAttribute?.('label'); else option.setAttribute('label', value.original); }
     for (const [method, original, wrapped] of wrappers) if (host[method] === wrapped) host[method] = original;
-    texts.clear(); attrs.clear(); popupRoots.clear(); observed.clear(); remembered.clear(); style.remove();
+    texts.clear(); attrs.clear(); optionLabels.clear(); popupRoots.clear(); observed.clear(); remembered.clear(); style.remove();
     if (host[key]?.stop === stop) delete host[key];
   }
   host[key] = { stop };
@@ -431,7 +448,7 @@ function installFruitHeartKorean(BlueLemonade, data) {
     if (popupRoots.size || (Date.now() - recent < 15000 && unseenPopup())) return schedule();
     for (const node of observed) if (!node.isConnected) return schedule();
     if (rootAppeared()) return schedule();
-    if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll(fruitOption)) if (!texts.has(option.firstChild) && /[\u4e00-\u9fff]/.test(option.textContent)) return schedule();
+    if (doc.getElementById('fruit-heart-v6')) for (const option of doc.querySelectorAll(fruitOption)) if (option.getAttribute('label') !== (optionLabels.get(option)?.shown ?? null)) return schedule();   // 1.5.1 글자는 원문으로 남아요 — label 이 아직 안 칠해졌을 때만
   };
   discovery = host.setInterval(discover, 1500);
   flush();

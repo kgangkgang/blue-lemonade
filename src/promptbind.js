@@ -16,6 +16,7 @@
 import { getSettings, saveSettings } from './settings.js';
 import { themeEnabled } from './usage-mode.js';
 import { watchDom } from './dom-watch.js';
+import { whenNotStreaming } from './stream-window.js';
 import { currentKey, keyLabel } from './styles.js';
 import { promptChoiceGroups } from './prompt-choice-core.js';
 // 1.0.1 정규식 창에서 직접 바꾼 정규식은 맞추기가 덮지 않는다 (11-03 제보: 끄기 단추를 눌러도 CHAT_CHANGED 맞추기가 0.2초 뒤 되돌렸다) — regex-manual.js
@@ -558,7 +559,9 @@ export function startPromptBinds() {
     eventSource.on(event_types.CHAT_CHANGED, () => { lastChatChange = Date.now(); syncPromptBinds('chat'); });
     if (event_types.OAI_PRESET_CHANGED_AFTER) eventSource.on(event_types.OAI_PRESET_CHANGED_AFTER, () => { syncPromptBinds('preset'); });
     // 설정이 저장될 때마다(프리셋 · 다른 확장이 순서를 다시 쓴 뒤에도) 잠시 뒤 한 번 더 맞춘다 — 맞으면 저장하지 않으니 되돌이표는 없다 (여기서 바뀐 정규식은 다시 그리지 않는다)
-    if (event_types.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, () => { clearTimeout(settleTimer); settleTimer = setTimeout(() => { syncPromptBinds('settle'); }, 400); });
+    //   1.5.1 opt-stream: 답이 오는 동안 난 저장은 끝난 뒤 한 번만(whenNotStreaming — 그동안 맞춰 봐야 다음 저장이 또 부르고, 프롬프트는 이미 보냈어요)
+    const settle = whenNotStreaming(() => { syncPromptBinds('settle'); });
+    if (event_types.SETTINGS_UPDATED) eventSource.on(event_types.SETTINGS_UPDATED, () => { clearTimeout(settleTimer); settle.cancel(); settleTimer = setTimeout(settle, 400); });
     if (event_types.CHARACTER_RENAMED) eventSource.on(event_types.CHARACTER_RENAMED, (oldAvatar, newAvatar) => { renameKeys(oldAvatar, newAvatar); });
     // 7.0.2 채팅 이름 바꾸기 — 열쇠를 옮기고 다시 맞춘다 (CHAT_CHANGED 맞추기가 이미 꺼 둔 프롬프트를 다시 켜게)
     if (event_types.CHAT_RENAMED) eventSource.on(event_types.CHAT_RENAMED, data => {

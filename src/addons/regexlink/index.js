@@ -16,6 +16,7 @@ import { saveSettingsDebounced, eventSource, event_types } from '../../../../../
 import { oai_settings, promptManager } from '../../../../../../openai.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { plan, textHasModuleLow, modulesOf } from './engine.js';
+import { whenNotStreaming } from '../../stream-window.js';
 
 const VERSION = '1.2.0';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -247,7 +248,10 @@ function onRegexScreen(event) {
 /** 프리셋을 바꿔 목록이 통째로 다시 읽히면 그 차이는 사용자가 정규식 화면에서 바꾼 게 아니다 */
 function forgetUserEdit() { userEdit = null; }
 
-function schedule() { clearTimeout(timer); timer = setTimeout(() => sync(), 300); }
+// 1.5.1 opt-stream: 답이 오는 동안 온 신호(설정 저장 등)는 끝난 뒤 한 번 맞춰요 — 정규식 켜짐을 생성 도중에 바꾸면 받는 글에 걸리는 정규식만 흔들려요.
+//   끝(MESSAGE_RECEIVED)도 여기로 오니 결과는 같고, 실제 폰 추적의 생성 중 plan 673ms 가 끝 한 번으로 줄어요
+const syncWhenIdle = whenNotStreaming(() => sync());
+function schedule() { clearTimeout(timer); syncWhenIdle.cancel(); timer = setTimeout(syncWhenIdle, 300); }
 
 // ── 화면 ────────────────────────────────────────────────
 function summary() {
