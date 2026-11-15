@@ -375,7 +375,7 @@ await test('[BL 중1] 센 수 열쇠 — 보호 블록이 든 메시지를 번�
     assert.match(js, /noteGlossarySuggestions\(isRetranslation \? compareText : text, translatedText, suggestPairs, options\.checkSource \?\? text\);/, '두 길 모두 보호 블록을 가리기 전 원문으로 열쇠');
     // 1.1.3 감사 T12: 다시 번역은 메시지 번호(contextAt)도 넘겨요 — 그 앞뒤로 원문 열쇠 · 이름 모으기가 그대로인지 봐요
     assert.match(js, /retranslation = await translate\(textToRetranslate, \{ \.\.\.options, (?:contextAt: Number\(messageId\), )?checkSource: originalText, collectNames: true,/);
-    assert.match(js, /translation = await translate\(originalText, \{ segmentCache, collectNames: true,/);
+    assert.match(js, /translation = await translate\(originalText, \{ segmentCache, (?:prior: segmentCache \? prior : null, )?collectNames: true,/);
 });
 
 await test('[BL 낮] 페르소나 이름은 공통 칸 — 모든 캐릭터 칩 · 용어집을 끄면 모으지도 보이지도 않는다', () => {

@@ -62,7 +62,7 @@ export function collectGaps(texts, { shown = t => t, has = () => false, tried = 
         // 1.5.2: 「💞 이름 = 관계 이름」 · 「🗺️ 새 장소: 장소」처럼 나눔표가 있으면 덩이를 나눠요 — 이름은 이미 사전에 있고, 뒤 글만 보내요(상태창 본체와 같은 열쇠)
         for (const piece of text.split(/\s+=\s+|:\s+|↔/)) {
             const part = englishPart(piece);
-            if (!part || skipPart(part) || has(part) || tried.has(part) || fixedValue(part)) continue;   // 1.5.1 고정 낱말은 사전으로(번역 요청에 안 실어요)
+            if (!part || skipPart(part) || has(part) || tried.has(part) || fixedValue(part, chipSlot(text))) continue;   // 1.5.3: 시간대 · 날씨 칩만 사전으로   // 1.5.1 고정 낱말은 사전으로(번역 요청에 안 실어요)
             (owners.get(part) ?? owners.set(part, []).get(part)).push(text);
         }
     }
@@ -102,25 +102,47 @@ export function visibleTexts(current, meta) {
 const NOT_TEXT_KEYS = new Set(['id', 'url', 'link', 'src', 'img', 'avatar', 'handle', 'color', 'icon', 'key', 'mesid', 'chatId', 'seed', 'currencyCode', 'unit', 'cls', 'sort', 'every', 'repeat', 'show', 'pick']);
 /** 코드일 때가 많은 칸 — 한 낱말이면 코드로 봐요(그 확장의 화면은 이 값을 한국어 이름표로 바꿔 그려요) */
 const SOFT_TEXT_KEYS = new Set(['kind', 'role', 'status', 'mode', 'type', 'by', 'from', 'contact', 'play', 'judge', 'system', 'sys']);
-/** 사람 · 곳 이름이 드는 칸 — 고정 낱말 사전을 걸지 않아요(「April」 「Summer」 같은 이름) */
-const NAME_KEYS = new Set(['name', 'title', 'who', 'a', 'b', 'hero', 'cast', 'here', 'home', 'currency']);
 const ruleMemo = new Map();
 /** 요일 칸(달력 week)은 날짜 줄 「4/1(월)」 꼴에 맞춰 한 글자로 */
 const shortWeek = ko => (/^[월화수목금토일]요일$/.test(ko) ? ko[0] : ko);
-/** 고정 낱말 사전(테마 상태창 카드 값 사전 card-values 하나를 같이 써요): 값 전체가 그 낱말 · 낱말 묶음 · 날짜 꼴일 때만 — 문장은 아니에요 */
+/**
+ * 1.5.3: 고정 낱말 사전을 거는 칸 — 그 칸의 「종류」로만 판단해요(낱말만 보고 바꾸지 않아요).
+ *   달력 요일(week) · 시간대(times · time) · 달(month) · 날씨(weather) · 계절(season) · 일과의 시간대 이름표(slot) · 시간대 · 날씨 칩(chip-time · chip-weather).
+ *   이름 칸 · 사람 이름 · 자유 글(관계 이름 · 장소 · 메모 · 할 일 …)에는 절대 안 걸어요 — 1.5.2 는 칸 종류를 안 보고 값만 봐서
+ *   이름이 April · Summer 인 사람이 「4월 · 여름」으로 사전에 들어갔어요(검토 2).
+ */
+export const FIXED_SLOT_KEYS = new Set(['week', 'times', 'time', 'month', 'weather', 'season', 'slot', 'chip-time', 'chip-weather']);
+const SLOT_HINT = { week: 'day', times: 'time', time: 'time', slot: 'time', 'chip-time': 'time', month: 'date', weather: 'weather', 'chip-weather': 'weather', season: 'season' };
+/** 고정 낱말 사전(테마 상태창 카드 값 사전 card-values 하나를 같이 써요): 정해진 칸의 값 전체가 그 낱말 · 낱말 묶음 · 날짜 꼴일 때만 — 문장 · 이름은 아니에요 */
 export function fixedValue(text, key = '') {
     const value = String(text ?? '').trim();
-    if (!value || !/[A-Za-z]/.test(value) || NAME_KEYS.has(key)) return null;
+    if (!value || !/[A-Za-z]/.test(value) || !FIXED_SLOT_KEYS.has(key)) return null;
     if (key === 'month' && /^(?:may|mar)\.?$/i.test(value)) return /^may/i.test(value) ? '5월' : '3월';   // 달력 달 칸에서만(다른 곳의 May 는 이름일 수 있어요)
-    let ko = ruleMemo.get(value);
+    const memo = `${SLOT_HINT[key]}\u0000${value}`;
+    let ko = ruleMemo.get(memo);
     if (ko === undefined) {
-        try { ko = ruleValue(value) || null; } catch { ko = null; }
+        try { ko = ruleValue(value, SLOT_HINT[key]) || null; } catch { ko = null; }
         if (ko && /[A-Za-z]{2,}/.test(ko.replace(ACRONYM, ' '))) ko = null;
         if (ruleMemo.size > 2000) ruleMemo.clear();
-        ruleMemo.set(value, ko);   // 같은 값은 다시 안 읽어요(채팅 열기 · 답 끝마다 같은 칸)
+        ruleMemo.set(memo, ko);   // 같은 값은 다시 안 읽어요(채팅 열기 · 답 끝마다 같은 칸)
     }
     if (!ko) return null;
     return key === 'week' ? shortWeek(ko) : ko;
+}
+/** 칩 글의 종류: 「🕐 …」 = 시간대 · 「날씨: …」 = 날씨 — 그 밖의 칩(이름 · 장소 · 관계 · 물건 …)은 고정 낱말 사전을 안 걸어요 */
+export const chipSlot = text => (/^\s*🕐/u.test(String(text ?? '')) ? 'chip-time' : /^\s*날씨\s*:/.test(String(text ?? '')) ? 'chip-weather' : '');
+/**
+ * 사람 이름(그 채팅의 인물 · 페르소나 · 캐릭터) — 이 글은 고정 낱말 짝을 만들지 않고 숨기지도 않아요(이름이 April 이면 April 은 번역 대상이 아니에요).
+ * items: stateTexts 결과 · extra: 페르소나 · 캐릭터 이름 같은 바깥 이름
+ */
+export function nameSet(items, state, extra = []) {
+    const out = new Set();
+    const add = v => { const t = String(v ?? '').trim(); if (t && /[A-Za-z]/.test(t) && t.length <= 40) out.add(t); };
+    for (const { text, key } of items) if (key === 'name' || key === 'who' || key === 'a' || key === 'b' || key === 'hero' || key === 'cast') add(text);
+    const play = state?.data?.play ?? state?.play;
+    for (const v of [play?.hero, ...(Array.isArray(play?.cast) ? play.cast : [])]) add(v);
+    for (const v of extra) add(v);
+    return out;
 }
 const PIECE_SEP = /(\s*[,;:/|·]\s*|\s+(?:→|->|—|–)\s+)/;
 const ACRONYM = /\b(?:[A-Z]\.){2,}[A-Z]?\.?|\b[A-Z]{1,5}\b|\bd\d+\b|\d+\s?[a-z]{1,3}\b/g;
@@ -190,18 +212,19 @@ export function piecePairs(dict, only = null) {
  * 고정 낱말 짝(AI 0회): 칸 값 전체가 사전 낱말 · 날짜 꼴이면 그 값, 「이름표:값」 꼴이면 조각마다 — 사전에 없는 것만.
  * items: [{ text, key }] 또는 글 · 같은 글이 여러 칸에 있으면 요일 칸(week) 꼴이 이겨요.
  */
-export function fixedPairs(items, dict) {
+export function fixedPairs(items, dict, names = new Set()) {
     const out = new Map();
-    const add = (en, ko, key) => { if (!ko || Object.hasOwn(dict ?? {}, en)) return; if (!out.has(en) || key === 'week') out.set(en, ko); };
+    const add = (en, ko, key) => { if (!ko || names.has(en) || Object.hasOwn(dict ?? {}, en)) return; if (!out.has(en) || key === 'week') out.set(en, ko); };
     for (const item of items) {
         const text = typeof item === 'string' ? item : item?.text, key = typeof item === 'string' ? '' : item?.key ?? '';
         const value = String(text ?? '').trim();
-        if (!value || NAME_KEYS.has(key)) continue;
-        const whole = fixedValue(value, key);
+        if (!value) continue;
+        const whole = fixedValue(value, key);   // 1.5.3: 정해진 칸(요일 · 시간대 · 달 · 날씨 · 계절)의 값 전체만
         if (whole) { add(value, whole, key); continue; }
+        if (key !== 'sched') continue;   // 「이름표:값」 조각은 일과 칸에서만(이름표 = 시간대)
         const parts = value.split(PIECE_SEP);
         if (parts.length < 3 || !parts.some((s, i) => i % 2 && /[:→]|->/.test(s))) continue;
-        for (let i = 0; i < parts.length; i += 2) { const p = parts[i].trim(); const ko = p.split(/\s+/).length <= 3 ? fixedValue(p) : null; if (ko) add(p, ko, ''); }
+        for (let i = 0; i < parts.length; i += 2) { if (!/[:→]|->/.test(parts[i + 1] ?? '')) continue; const p = parts[i].trim(); const ko = p.split(/\s+/).length <= 3 ? fixedValue(p, 'slot') : null; if (ko) add(p, ko, ''); }
     }
     return [...out];
 }
@@ -227,7 +250,32 @@ export function batches(list, size = BATCH, chars = BATCH_CHARS) {
 //   → 칩은 테마가 원래 칩 글로 다시 적으니(paint) 칩 끝 덩이가 통째 고정 낱말일 때만 바꾸고, 한국어로 바뀐 이름 뒤 「's」는 「의」로.
 
 /** 값 전체가 고정 낱말인 사전 열쇠(달력 달 칸 꼴 「May」 · 「Mar」 포함) */
-export const isFixedKey = key => !!(fixedValue(key) || fixedValue(key, 'month'));
+export const isFixedKey = key => !!(fixedValue(key, 'time') || fixedValue(key, 'week') || fixedValue(key, 'month') || fixedValue(key, 'weather') || fixedValue(key, 'season'));
+/** 그 열쇠에 우리 고정 낱말 사전이 넣었을 값들(어느 칸 종류로든) — 이름을 잘못 바꾼 짝을 알아볼 때 */
+const fixedValuesOf = key => new Set(['time', 'week', 'month', 'weather', 'season'].map(k => fixedValue(key, k)).filter(Boolean).flatMap(v => [v, shortWeek(v)]));
+/**
+ * 1.5.3 되살리기(채팅을 열 때 · 두 번 돌아도 같은 결과): 1.5.2 를 쓰며 생겼을 수 있는 망가진 짝을 안전하게 풀어요 — 바꾼 수를 돌려줘요.
+ *   ① 잠금(📌)만 있고 사전에 값이 없는 고정 낱말 — 숨긴 칸에 고친 값이 저장되지 않은 것(검토 1). 잠금을 풀어 다시 넣고 · 번역되게 해요
+ *      (사용자가 넣었던 값은 파일에 없어서 되살릴 수 없어요).
+ *   ② 사람 이름인데 고정 낱말 사전 값(「April → 4월」 · 「Summer → 여름」)으로 들어간 짝 — 지워서 이름이 원래대로 보이게(검토 2).
+ *      사용자가 📌 고정한 짝은 건드리지 않아요.
+ *   ③ 잠금(📌)이 있는데 숨긴 칸인 고정 낱말 — 셀 수 있는 칸으로 되돌려 값까지 저장되게.
+ */
+export function repairDict(dict, lock, names) {
+    const out = { unlocked: [], removed: [], shown: [] };
+    if (!isObj(dict)) return out;
+    for (const k of Object.keys(isObj(lock) ? lock : {})) {
+        if (!lock[k]) continue;
+        const desc = Object.getOwnPropertyDescriptor(dict, k);
+        if (!desc) { if (isFixedKey(k)) { delete lock[k]; out.unlocked.push(k); } continue; }
+        if (!desc.enumerable) { delete dict[k]; dict[k] = desc.value; out.shown.push(k); }
+    }
+    for (const k of names) {
+        if (lock?.[k] || !Object.hasOwn(dict, k)) continue;
+        if (fixedValuesOf(k).has(dict[k])) { delete dict[k]; out.removed.push(k); }
+    }
+    return out;
+}
 /**
  * 사전의 고정 낱말 열쇠를 낱말 바꾸기에서 빼요 — 새로 뺀 열쇠 수. keep: 빼지 않을 열쇠(📌 고정 · 사람 · 곳 이름으로 쓰인 글).
  * 이미 뺀 열쇠는 건드리지 않아요(값은 그대로).
@@ -255,16 +303,16 @@ export function slotPairs(items, ko) {
         if (key === 'week') week.add(t); else if (key === 'times' || key === 'time') times.add(t); else if (key === 'month') months.add(t);
         else if (key === 'sched') for (const piece of t.split(/\s*,\s*/)) {
             const m = /^([A-Za-z][A-Za-z -]{1,18}?)\s*:\s*(.+)$/.exec(piece);
-            const k = m && ko(m[1].trim(), '');
+            const k = m && ko(m[1].trim(), 'slot');
             if (k && piece.length <= 40) out.set(piece, `${k}:${m[2]}`);
         }
     }
     for (const w of week) {
         const kw = ko(w, 'week'); if (!kw) continue;
         out.set(`(${w})`, `(${kw})`);
-        for (const t of times) { const kt = ko(t, ''); if (kt) out.set(`(${w}) ${t}`, `(${kw}) ${kt}`); }
+        for (const t of times) { const kt = ko(t, 'time'); if (kt) out.set(`(${w}) ${t}`, `(${kw}) ${kt}`); }
     }
-    for (const t of times) { const kt = ko(t, ''); if (kt) out.set(`(${t})`, `(${kt})`); }
+    for (const t of times) { const kt = ko(t, 'time'); if (kt) out.set(`(${t})`, `(${kt})`); }
     for (const m of months) { const km = ko(m, 'month'); if (km) out.set(`년 ${m}`, `년 ${km}`); }
     return [...out];
 }
@@ -272,12 +320,12 @@ export function slotPairs(items, ko) {
  * 칩 글(그 확장 사전으로 바꾼 뒤) 마무리: 끝 덩이가 통째 고정 낱말이면(「🕐 Morning」 · 「날씨: Light rain」) 그 한국어로,
  * 한국어로 바뀐 이름 뒤 「's」는 「의」로(「말로's Penthouse」→「말로의 Penthouse」). 글 속 낱말은 안 바꿔요.
  */
-export function chipText(shown, dict = {}) {
+export function chipText(shown, dict = {}, label = shown) {
     let s = String(shown ?? '');
-    for (const piece of s.split(/\s+=\s+|:\s+|↔/)) {
-        const part = englishPart(piece);
-        if (!part) continue;
-        const ko = Object.hasOwn(dict, part) && isFixedKey(part) ? dict[part] : fixedValue(part);
+    const slot = chipSlot(label);   // 1.5.3: 시간대 · 날씨 칩만(「♥ April +8」의 April 은 사람 이름 — 안 바꿔요)
+    if (slot) {
+        const part = englishPart(s.replace(/^\s*(?:🕐|날씨\s*:)\s*/u, ''));
+        const ko = part && (Object.hasOwn(dict, part) && isFixedKey(part) ? dict[part] : fixedValue(part, slot));
         if (ko) s = s.replace(part, () => ko);
     }
     return s.replace(/([가-힣])['’]s(?=\s|$)/g, '$1의');
@@ -307,6 +355,9 @@ async function loadTarget(doc) {
     return { tr, core, busy: typeof prompts.mainBusy === 'function' ? prompts.mainBusy : () => false };
 }
 
+/** 1.5.3 되살리기 진단 기록 — { at, chat, unlocked, removed, shown } (최근 50) */
+export const trRepairLog = [];
+try { globalThis.__blMbTrRepair = trRepairLog; } catch { /* 기록만 못 걸어요 */ }
 const stChatId = () => { try { return globalThis.SillyTavern?.getContext?.()?.getCurrentChatId?.() ?? null; } catch { return null; } };
 export function createTrFill(mb, { doc = globalThis.document, toast = globalThis.toastr, now = () => Date.now(), timers = globalThis, chatId = stChatId, faces = () => {} } = {}) {
     const { tr, core } = mb;
@@ -332,7 +383,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
                 if (!chips.length) continue;
                 if (chips.length !== labels.length) { try { tr.translateView(slot); } catch { /* 다음 그리기 때 */ } continue; }
                 const dict = (() => { try { const d = core.getMeta()?.tr; return isObj(d) ? d : {}; } catch { return {}; } })();
-                chips.forEach((chip, k) => { let want; try { want = chipText(tr.trString(labels[k]), dict); } catch { return; } if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
+                chips.forEach((chip, k) => { let want; try { want = chipText(tr.trString(labels[k]), dict, labels[k]); } catch { return; } if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
             }
         }
     }
@@ -358,29 +409,65 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const meta = core.getMeta();
         const dict = isObj(meta?.tr) ? meta.tr : null;
         if (!dict) return 0;
+        if (fixOpen) return 0;   // 1.5.3: 「번역 고치기」 창이 열린 동안은 숨기지 않아요(창이 닫히면 다시)
         const items = stateTexts(state, isOn);
-        // 칩 · 기록 · 알림 · 앨범 글 중 값 전체가 고정 낱말인 것(「📍 …」 앞머리는 빼고)도
-        for (const text of visibleTexts(core.app.current, meta)) { const part = englishPart(text); if (part) items.push({ text: part, key: '' }); }
+        // 칩 · 기록 · 알림 · 앨범 글: 시간대 · 날씨 칩만 그 종류로(「🕐 …」 · 「날씨: …」) — 다른 칩(이름 · 장소 · 관계)은 고정 낱말 사전을 안 걸어요
+        for (const text of visibleTexts(core.app.current, meta)) { const slot = chipSlot(text); const part = slot && englishPart(text.replace(/^\s*(?:🕐|날씨\s*:)\s*/u, '')); if (part) items.push({ text: part, key: slot }); }
         const texts = items.map(x => x.text.trim());
-        const lock = lockOf();
-        // 1.5.2: 📌 고정한 짝 · 사람 · 곳 이름으로 쓰인 글은 낱말 바꾸기에서 빼지 않아요(이름은 문장 속에서도 바뀌는 게 그 확장 뜻)
-        const keep = new Set([...Object.keys(lock), ...items.filter(x => NAME_KEYS.has(x.key)).map(x => x.text.trim())]);
-        // 「번역 고치기」로 📌 고정한 고정 낱말은 다시 셀 수 있는 칸으로(채팅 파일에 남게)
-        for (const k of Object.keys(lock)) { const desc = Object.getOwnPropertyDescriptor(dict, k); if (desc && !desc.enumerable) { delete dict[k]; dict[k] = desc.value; } }
-        const base = new Map([...fixedPairs(items, dict), ...piecePairs(dict, new Set(texts))]);   // 같은 조각이면 이 채팅 번역(조각 짝)이 이겨요
-        const koOf = (word, key) => { const v = Object.hasOwn(dict, word) && !keep.has(word) ? dict[word] : (base.get(word) ?? fixedValue(word, key)); return !v || /[A-Za-z]{2,}/.test(v) ? null : key === 'week' ? shortWeek(v) : v; };
+        const lock = isObj(meta?.trLock) ? meta.trLock : {};
+        // 1.5.3: 사람 이름(인물 · 페르소나 · 캐릭터)은 고정 낱말 짝을 만들지도 · 숨기지도 않아요 · 📌 고정한 짝은 늘 사용자 것
+        const names = nameSet(items, state, outerNames());
+        // 되살리기(①②③) — 바뀐 게 있으면 진단 기록에 남기고 채팅 파일에 한 번 저장
+        const fixed = repairDict(dict, lock, names);
+        const keep = new Set([...Object.keys(lock).filter(k => lock[k]), ...names]);
+        const repaired = fixed.unlocked.length + fixed.removed.length + fixed.shown.length;
+        if (repaired) noteRepair(fixed);
+        const base = new Map([...fixedPairs(items, dict, names), ...piecePairs(dict, new Set(texts))]);   // 같은 조각이면 이 채팅 번역(조각 짝)이 이겨요
+        const koOf = (word, key) => { if (names.has(word)) return null; const v = Object.hasOwn(dict, word) && !keep.has(word) ? dict[word] : (base.get(word) ?? fixedValue(word, key)); return !v || /[A-Za-z]{2,}/.test(v) ? null : key === 'week' ? shortWeek(v) : v; };
         for (const [k, v] of slotPairs(items, koOf)) base.set(k, v);
-        const pairs = [...base].filter(([en]) => !lock[en] && !Object.hasOwn(dict, en));
-        // 낱말 바꾸기 목록에 이미 든 고정 낱말 열쇠(그 확장이 넣은 「Morning」 같은 것): 그 확장 화면 번역의 목록을 새로 만들게 같은 짝으로 다시 넣고 셀 수 없는 칸으로
-        const shown = Object.keys(dict).filter(k => !keep.has(k) && isFixedKey(k));
-        if (!pairs.length && !shown.length) return 0;
-        const back = new Map(shown.map(k => [k, dict[k]]));
-        for (const [k, v] of back) { pairs.push([k, v]); delete dict[k]; }
-        const n = tr.addPairs(pairs) || 0;
-        for (const [k, v] of back) if (!Object.hasOwn(dict, k)) dict[k] = v;   // 못 들어간 것은 그대로 되돌려요
-        hideFixedKeys(dict, keep);
-        if ((n || shown.length) && draw) repaint();
+        const pairs = [...base].filter(([en]) => !keep.has(en) && !lock[en] && !Object.hasOwn(dict, en));
+        const n = pairs.length ? (tr.addPairs(pairs) || 0) : 0;
+        // 고정 낱말 열쇠를 낱말 바꾸기에서 빼고, 그 확장 화면 번역이 목록을 새로 만들게 해요(사전 판 올리기)
+        const hidden = hideFixedKeys(dict, keep);
+        if ((hidden || fixed.removed.length) && !n) bumpDict();
+        if (repaired) { try { core.saveMeta?.(); } catch { /* 다음 저장 때 */ } }
+        if ((n || hidden || repaired) && draw) repaint();
         return n;
+    }
+    /** 그 확장 화면 번역의 사전 판(trVer)을 올려 낱말 바꾸기 목록을 새로 만들게 — 그 확장 addPairs 로 표시 짝 하나를 넣고 곧바로 지워요(저장 전에 지워져 파일에 안 남아요) */
+    function bumpDict() {
+        const k = 'bl⁣sync⁣tr';
+        try { if (tr.addPairs([[k, '⁣']]) || tr.addPairs([[k, '⁤']])) { const d = core.getMeta()?.tr; if (isObj(d)) delete d[k]; } } catch { /* 다음 판 때 */ }
+    }
+    /** 페르소나 · 캐릭터 이름(실리태번) */
+    function outerNames() { try { const c = globalThis.SillyTavern?.getContext?.(); return [c?.name1, c?.name2]; } catch { return []; } }
+    /** 되살리기 진단 기록(콘솔이 아닌 · 시험 · 「로그 복사」 때 globalThis.__blMbTrRepair 로 봐요) — 채팅마다 바꾼 수 */
+    function noteRepair(fixed) {
+        trRepairLog.push({ at: now(), chat: chatId(), unlocked: fixed.unlocked.length, removed: fixed.removed.length, shown: fixed.shown.length });
+        if (trRepairLog.length > 50) trRepairLog.shift();
+    }
+    /** 「번역 고치기」(그 확장 app.openTrFix)를 감싸요 — 여는 동안 숨긴 열쇠를 모두 셀 수 있게 되돌려(창에 바르게 보이고 · 고친 값이 그대로 저장돼요) 닫힌 뒤 정리 */
+    let fixOpen = 0;
+    function reveal() {
+        const d = (() => { try { return core.getMeta()?.tr; } catch { return null; } })();
+        if (!isObj(d)) return 0;
+        let n = 0;
+        for (const k of Object.getOwnPropertyNames(d)) { const desc = Object.getOwnPropertyDescriptor(d, k); if (desc && !desc.enumerable && 'value' in desc) { delete d[k]; d[k] = desc.value; n++; } }
+        if (n) bumpDict();
+        return n;
+    }
+    function guardTrFix() {
+        const app = core.app, open = app?.openTrFix;
+        if (typeof open !== 'function' || open.__blTrGuard) return false;
+        const wrapped = async function (...args) {
+            fixOpen++;
+            reveal();
+            try { return await open.apply(this, args); }
+            finally { fixOpen = Math.max(0, fixOpen - 1); if (!fixOpen) tidySoon(0); }
+        };
+        wrapped.__blTrGuard = true;
+        app.openTrFix = wrapped;
+        return true;
     }
 
     /** 지금 상태 칸 중 화면에 영어가 남는 글(③) · 반쯤 번역 짝(④) */
@@ -490,7 +577,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         // 번역을 묻는 창에서 사람이 누른 취소만(「남은 글 번역하기」는 번역 고치기 창을 스스로 닫아요 — 그 누름은 isTrusted 가 false) · 이미 번역이 늘었으면 그건 메워요
         else if (watch && event.isTrusted && t.closest('dialog[open] .popup-button-cancel')) watch.cancelled = true;
     }
-    return { paint, slotRecord, view, fill, tidy, tidySoon, stateGaps, arm, afterReply, onClick, autoOn, _tried: tried, get watching() { return !!watch; } };
+    return { paint, slotRecord, view, fill, tidy, tidySoon, stateGaps, arm, afterReply, onClick, autoOn, guardTrFix, reveal, _tried: tried, get watching() { return !!watch; }, get fixOpen() { return fixOpen; } };
 }
 
 let started = null;
@@ -506,6 +593,7 @@ export function startTrFill(doc = globalThis.document) {
         const faces = () => { if (compat) compat.paintFaces(doc); };
         const fill = createTrFill(mb, { doc, faces });
         import('./ext-compat.js').then(m => { compat = m; m.setFaceName(name => (fill.view() ? mb.tr.trString(name) : name)); faces(); }).catch(() => { /* 얼굴은 원문 이름 첫 글자 그대로 */ });
+        fill.guardTrFix();   // 1.5.3 「번역 고치기」 동안 숨긴 열쇠를 되돌려 고친 값이 저장되게(검토 1)
         doc.addEventListener('click', fill.onClick, true);
         // 감시자를 새로 걸지 않고 메시지 꾸미기(공용 #chat 구독 하나)에 얹어요 — 칩 자리 안이 바뀐 기록만 · 답이 오는 동안에도 · 다음 프레임(그리기 전)
         addMessageDecorator('미트볼 칩 번역', list => fill.paint(list), { settle: 0, live: true, order: 90, filter: fill.slotRecord, enabled: fill.view });

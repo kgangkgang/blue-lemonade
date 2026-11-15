@@ -72,7 +72,7 @@ await test('① 흔한 꼴은 세 보기 모두 t 없이 (v: 2 · 64자 안) · 
         assert.match(extra.display_text, /llm-translator-details|translated_text/, `${mode}/${name}: 함께 보기 표시`);
         assert.equal(record.v, 2, `${mode}/${name}: ${JSON.stringify(record)}`);
         assert.equal(record.t, undefined);
-        assert.ok(JSON.stringify(record).length < 64, JSON.stringify(record));
+        const { p, ...rest } = record; assert.ok(JSON.stringify(rest).length < 64, JSON.stringify(record)); if (p) assert.ok(p.length <= p.split(' ').length * 8, '1.5.3 문단 해시는 문단 하나에 8자 안쪽');
         assert.equal(S.recordedSource(extra, { original: pair[0], hash }), pair[1], `${mode}/${name}`);
         extra.original_translation_backup = extra.display_text; extra.display_text = pair[0];   // 원문 보기 중
         assert.equal(S.recordedSource(extra, { original: pair[0], hash }), pair[1], `${mode}/${name}: 원문 보기 중`);
@@ -86,7 +86,7 @@ await test('① 떼어 낼 수 없는 꼴만 예전처럼 v: 1 + t — 읽으면
         assert.equal(S.recordedSource(extra, { original: pair[0], hash }), pair[1]);
     }
     const plain = attach('disabled', SHORT.문단);
-    assert.deepEqual(Object.keys(plain[S.SOURCE_KEY]).sort(), ['d', 'o', 'v']);
+    assert.deepEqual(Object.keys(plain[S.SOURCE_KEY]).filter(k => k !== 'p').sort(), ['d', 'o', 'v']);   // 1.5.3 p = 원문 문단 해시
     assert.equal(plain[S.SOURCE_KEY].v, 1, '6.9.5 와 같은 꼴');
 });
 await test('② 6.9.5 와 섞여도: v: 2 는 6.9.5 가 모른 척하고(번역 글 자리에 표시 HTML 을 쓰지 않음) · 6.9.5 가 남긴 v: 1 + t 는 그대로 읽는다 · 표시가 바뀌면 안 믿는다', () => {

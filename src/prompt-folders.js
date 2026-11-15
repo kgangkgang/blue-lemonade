@@ -22,7 +22,7 @@ import { showThemeModal } from './modal.js';
 import { mouseDevice } from './prompt-card-picker.js';
 import { promptChoiceGroups, withFolderChoices } from './prompt-choice-core.js';
 import { setFolderSource } from './prompt-choice.js';
-import { LIMITS, tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, readBoxPresetFolders, folderIndex, ungroupFolder, moveFolderBlock, shiftInFolder, scopeFolders, migrateFolderSlot, mergeFolders, seedBase } from './prompt-folders-core.js';
+import { LIMITS, tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, readBoxPresetFolders, folderIndex, ungroupFolder, moveFolderBlock, shiftInFolder, scopeFolders, migrateFolderSlot, mergeFolders, seedBase, undoRestored } from './prompt-folders-core.js';
 import { planFolderNames, applyFolderNamePlan } from './prompt-folder-labels.js';
 
 const CONTAINER = 'completion_prompt_manager';
@@ -75,8 +75,29 @@ function commit(list) {
     slot.folders = next.map(({ open, ...f }) => f);
     slot.base = seedBase(seed);
     slot.open = Object.fromEntries(next.map(f => [f.id, f.open]));
-    delete slot.seed;
+    delete slot.seed; delete slot.restored;
     saveSettings();
+}
+/** 1.5.3 옛 칸(1.5.1 까지 굳은 것)을 옮기며 프리셋 파일 항목을 합쳤으면 그 프리셋을 처음 그릴 때 한 번 알려요.
+ *  옛 칸에는 사용자가 뺀 것과 새 판이 더한 것을 가를 기록이 없어 합치는 쪽을 고르되, 조용히 되살리지 않고 되돌리기(합친 항목만 다시 빼기)를 줘요.
+ *  알린 순간 옮긴 칸을 저장해 다시 묻지 않아요. 합친 항목이 지금 목록에 하나도 없으면(프리셋을 바꾸는 사이) 건너뛰고 다음에 봐요 */
+function announceRestored(key, ids) {
+    const box = store(), raw = Object.hasOwn(box.presets, key) ? box.presets[key] : null;
+    if (!raw || typeof raw !== 'object' || raw.v === 2 || !Array.isArray(raw.folders) || !raw.folders.length) return;
+    const moved = migrateFolderSlot(raw, presetSeed());
+    const back = Object.entries(moved?.restored || {});
+    const present = new Set(ids);
+    if (!back.length || !back.some(([, list]) => list.some(id => present.has(id)))) return;
+    box.presets[key] = moved;
+    saveSettings();
+    const names = new Map(moved.folders.map(f => [f.id, f.name]));
+    const lines = back.map(([fid, list]) => `「${names.get(fid) || '폴더'}」 ${list.length}개(${list.slice(0, 4).map(shownNameById).join(' · ')}${list.length > 4 ? ' …' : ''})`).join(', ');
+    const toast = globalThis.toastr?.info?.(`프롬프트 폴더를 프리셋 새 판에 맞춰 다시 채웠어요: ${lines}. 예전에 일부러 폴더에서 뺀 항목이면 되돌리기를 눌러 주세요 — 한 번만 물어요.`, 'Blue Lemonade', { timeOut: 20000, extendedTimeOut: 10000 });
+    attachUndo(toast, () => {
+        if (presetName() !== key) return;
+        const now = store().presets[key];
+        if (now?.restored) { store().presets[key] = undoRestored(now); saveSettings(); apply(); }
+    });
 }
 /** 되돌리기용: 설정 칸 그대로(없으면 undefined) */
 function rawSlot() { const key = presetName(), box = store(); return Object.hasOwn(box.presets, key) ? structuredClone(box.presets[key]) : undefined; }
@@ -127,6 +148,7 @@ function apply() {
     ensureToolButton();
     const rows = rowsOf(list), ids = rows.map(row => row.dataset.pmIdentifier);
     const key = presetName();
+    announceRestored(key, ids);
     let list2 = folders();
     // 끌어 옮긴 줄: 놓인 자리로 소속을 정해요(같은 프리셋 · 하나만 옮겼을 때)
     if (lastPreset === key && lastIds && list2.length) {

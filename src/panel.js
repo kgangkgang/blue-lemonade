@@ -1695,6 +1695,7 @@ function tabChat(s, sub) {
         </div>
         ${cap('채팅 저장')}<div class="salty-group">
             ${row('빈 채팅 덮어쓰기 막기', toggle('chat.emptyGuard', s.chat.emptyGuard !== false && SillyTavern.getContext().extensionSettings?.save_dedupe?.emptyGuard !== false), '채팅을 다시 불러오는 사이나 불러오기가 실패했을 때, 메시지가 있던 채팅 파일을 빈 채팅으로 덮어 날아가지 않게 그 저장을 막고 알려 줘요 · 직접 지워 비운 채팅은 그대로 저장해요 · 성능 보조를 켜지 않아도 돼요(성능 보조 › 저장 정리의 체크와 같은 설정이에요)')}
+            ${stack('새 채팅에 직전 작가 노트', seg('chat.noteCarry', [['ask', '물어보기'], ['always', '늘 가져오기'], ['off', '안 함']], 'ask'), '같은 캐릭터 · 그룹에서 새 채팅을 열었는데 작가 노트가 비어 있으면 직전 채팅의 노트(글 · 깊이 · 간격 · 자리 · 역할)를 가져와요 · 캐릭터 노트나 기본 노트가 채운 채팅은 그대로예요 · 마지막 노트는 이 기기 브라우저에만 캐릭터마다 하나 남고(설정 백업 · 내보내기에 안 섞여요), 작가 노트 창의 「마지막으로 쓰던 노트 불러오기」로 되살려요')}
         </div>
         ${cap('설정 찾기')}<div class="salty-group">
             ${row('AI 로 설정 바꾸기', toggle('searchAi.on', !!s.searchAi?.on), `검색창에 「AI 에게 맡기기」가 생겨요 · 누를 때만 요청 한 번(설정 목록 + 검색 문장, 대화는 안 보내요) · 요청 한 번 약 <b data-search-ai-tokens>…</b> 토큰`)}

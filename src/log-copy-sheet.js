@@ -1511,7 +1511,7 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
 .bl-lc-pics textarea:focus { outline:1px solid var(--salty-accent); }
 .bl-lc-chips, .bl-lc-pals { display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; padding:5px 16px; scroll-padding:0 16px; }
 .bl-lc-chip { position:relative; flex:none; box-sizing:border-box; display:inline-flex; align-items:center; gap:4px; min-height:var(--bl-ui-chip, 34px); margin:0; padding:0 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-surface); color:var(--salty-text); font:inherit; font-size:13px; line-height:1.2; letter-spacing:inherit; white-space:nowrap; box-shadow:none; cursor:pointer; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
-.bl-lc-chip > i { font-size:12px; color:var(--salty-muted); }
+.bl-lc-chip > i { font-size:12px; color:var(--salty-muted); translate:0 .055em; }   /* 1.5.2 칩 아이콘 잉크가 칩 가운데보다 0.5px 위(그림 열 가지 같은 값 · 폰 · PC) — 글자 칸을 몸통 가운데로 다듬은 뒤(88-ui-parts) 글자는 0.3 ~ 0.4px 아래라 차가 0.8px 이었어요 → 제 크기 비율로 내려 0.2px 안 */
 .bl-lc-chip > .bl-lc-mart { color:var(--salty-muted); }
 .bl-lc-chip:is([aria-checked="true"], [aria-pressed="true"]) { background:var(--salty-accent-10, var(--salty-raised)); font-weight:650; }
 .bl-lc-chip[aria-pressed="true"] > i:first-child { color:var(--salty-accent-ink, var(--salty-accent)); }
@@ -1620,7 +1620,8 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
 .bl-lc .bl-lc-add-rule { justify-self:start; min-height:36px; }
 @media (min-width: 769px) and (pointer: fine) { .bl-lc-names input, .bl-lc-rule input, .bl-lc .bl-lc-add-rule, .bl-lc-field input { min-height:34px; } }
 .bl-lc-more { display:flex; padding:0 16px; }
-.bl-lc-more .bl-lc-chip > i { font-size:12.5px; color:inherit; }   /* 「더 보기 · 접기」 꺾쇠는 테마의 다른 꺾쇠와 같은 꼴(12.5px · 글자색) — 칩 아이콘 꼴(12px · 흐린 색)이면 꺾쇠 변형이 하나 늘어요 */
+.bl-lc-more .bl-lc-chip > i { font-size:12.5px; color:inherit; translate:0 -.11em; }
+.bl-lc-more .bl-lc-chip > i.fa-chevron-up { translate:0 .11em; }   /* 「더 보기 · 접기」 꺾쇠는 테마의 다른 꺾쇠와 같은 꼴(12.5px · 글자색) — 칩 아이콘 꼴(12px · 흐린 색)이면 꺾쇠 변형이 하나 늘어요 */
 .bl-lc.bl-lc-less :is(.bl-lc-cats, .bl-lc-gallery, .bl-lc-pals, .bl-lc-inks, .bl-lc-tools, .bl-lc-shows, .bl-lc-fields, .bl-lc-names, .bl-lc-words) { display:none; }   /* 1.1.3 접힌 채: 「더 보기」 안의 줄 */
 .bl-lc-foot { display:grid; grid-template-columns:auto auto 1fr; gap:8px; padding:12px 16px 16px; border-top:1px solid var(--salty-line); }
 .bl-lc-foot .salty-btn { min-height:40px; }
@@ -1722,8 +1723,8 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
   .bl-lc-fd-h > mark { flex:none; padding:1px 8px; border-radius:999px; background:var(--salty-accent-10, var(--salty-raised)); color:var(--salty-accent-ink, var(--salty-accent)); font-size:12px; font-weight:650; }
   .bl-lc-fd-h > mark.is-on { background:var(--salty-accent); color:var(--salty-on-accent, var(--salty-bg)); }   /* 1.2.2 「켬」 = 스위치 켬과 같은 팔레트 강조색(테마 규칙: 켜짐에는 두 번째 포인트 · 팔레트 밖 노랑을 안 써요) */
   .bl-lc-fd-h > mark[hidden] { display:none; }
-  .bl-lc-fd-h > i { flex:none; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); translate:0 -.0625em; transition:transform .15s, translate .15s; }   /* 1.5.2 꺾쇠 그림은 제 글자 칸 가운데보다 32/512 = 0.0625em 아래에 그려져 있어요(Font Awesome chevron-down) — 그림 몫만 제 크기 비율로 올려요(이름표 글꼴과 무관) */   /* 1.2.2 테마의 다른 꺾쇠와 같은 꼴(12.5 · 글자색) */
-  .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); translate:0 .0625em; }
+  .bl-lc-fd-h > i { flex:none; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); translate:0 -.11em; transition:transform .15s, translate .15s; }   /* 1.5.2 꺾쇠 그림은 제 글자 칸 가운데보다 아래에 그려져 있어요(Font Awesome chevron-down) — 그림 몫만 제 크기 비율로 올려요(이름표 글꼴과 무관). 잰 값(꺾쇠 ↔ 굵은 이름 잉크 가운데): 안 올림 1.75px · 0.0625em 1.07px · 0.15em −0.50px(12.5px 글자) → 0.11em */   /* 1.2.2 테마의 다른 꺾쇠와 같은 꼴(12.5 · 글자색) */
+  .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); translate:0 .11em; }
   .bl-lc-fd-h:focus-visible, .bl-lc-sw:focus-visible, .bl-lc-cr-more:focus-visible { outline:1px solid var(--salty-accent); outline-offset:-1px; }
   .bl-lc-fd > :is(.bl-lc-shows, .bl-lc-names, .bl-lc-words, .bl-lc-fields, .bl-lc-sw) { margin:0 12px; }
   .bl-lc-fd > .bl-lc-names { margin-top:-4px; }

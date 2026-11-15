@@ -69,7 +69,7 @@ await test('번역문 지우기(forgetSegments)도 같은 열쇠로 지운다 �
 await test('배선: index.js 가 보호 글을 translateSegments · forgetSegments 에 준다 · CI 등록 · 판 3.0.1', () => {
     const index = fs.readFileSync(path.join(root, 'src/addons/translator/index.js'), 'utf8');
     assert.match(index, /translateSegments\(\{ parts: paragraphParts,\n\s*signature: glossarySegmentSignature\(setupDigest\), protection: n => protectedBlocks\[n\],/);
-    assert.match(index, /forgetSegments\(parts, glossarySegmentSignature\(setupDigest\), n => protectedBlocks\[n\]\)/);
+    assert.match(index, /forgetSegments\(parts, glossarySegmentSignature\(setupDigest\), n => protectedBlocks\[n\](?:, \{ bodyKeys: Boolean\(keyParts\) \})?\)/);   // 1.5.3 v4 줄도 지우는 덧
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/translator-segment-keys\.mjs \./);
     assert.match(fs.readFileSync(path.join(root, 'src/addons/translator/manifest.json'), 'utf8'), /"version": "(?:3\.0\.[1-9]|3\.[1-9]\.\d+|[4-9]\.\d+\.\d+)"/);
 });

@@ -97,6 +97,22 @@ export function installInlineTargets(api, { doc = document, host = {} } = {}) {
     /** 단추를 옆 원작 아이콘(「크게 보기」)과 같은 면 크기 · 글자 크기 · 같은 간격으로. 아직 안 보이면(서랍 닫힘) 다음 프레임에 몇 번 더 */
     function mirror(button, anchor, tries = 8) {
         if (!anchor || !button.isConnected) return;
+        // 1.5.2 통합(polish 「이름표 + 크게 보기」 줄): 그 줄은 --bl-ink-row: 1 로 「CSS 가 세로를 맞춘다」고 알려요 — 그러면 JS 는 위치 · 크기를 재지도 밀지도 않아요.
+        //   크게 보기 줄은 같은 글꼴 그림을 기준선에 놓아 CSS 만으로 맞추고(style.css .kt-cssrow), 프리셋 이름표 줄은 polish 규칙이 상자를 맞춰요. 간격(앞 형제와 같은 간격)만 레이아웃 값으로 맞춰요
+        const win = doc.defaultView || globalThis;
+        if (win.getComputedStyle(button).getPropertyValue('--bl-ink-row').trim() === '1') {
+            const iconRow = anchor.classList.contains('editor_maximize');
+            button.classList.toggle('kt-cssrow', iconRow);
+            button.classList.remove('kt-glyph');
+            for (const v of ['--kt-w', '--kt-h', '--kt-fs', '--kt-top', '--kt-dy', '--kt-sx', '--kt-sy', '--kt-svg-h', '--kt-svg-w']) button.style.removeProperty(v);
+            const p = anchor.previousElementSibling, row = win.getComputedStyle(button.parentElement);
+            const flexGap = /flex|grid/.test(row.display) ? parseFloat(row.columnGap) || 0 : 0;
+            const gap = iconRow && p?.offsetWidth && p.offsetParent === anchor.offsetParent ? Math.max(0, anchor.offsetLeft - (p.offsetLeft + p.offsetWidth)) : 10;
+            button.style.setProperty('--kt-ml', `${gap - flexGap}px`);
+            button.__ktVw = vw(); button.__ktAnchor = 'css';
+            return;
+        }
+        button.classList.remove('kt-cssrow');
         const rr = anchor.getBoundingClientRect();
         // 안 보이거나(서랍 닫힘) 창이 열리며 줄었다 커지는 중이면(화면 크기가 제 크기와 1px 넘게 다름) 조금 뒤에 다시
         const moving = Math.abs(rr.width - anchor.offsetWidth) > 1 || Math.abs(rr.height - anchor.offsetHeight) > 1;
@@ -215,7 +231,7 @@ export function installInlineTargets(api, { doc = document, host = {} } = {}) {
     }
     /** 그림 상자를 기기 화소의 온 칸에 얹어요 */
     function snap(button) {
-        const svg = button.querySelector('.jj-tr-svg'); if (!svg || button.classList.contains('kt-glyph')) return;
+        const svg = button.querySelector('.jj-tr-svg'); if (!svg || button.classList.contains('kt-glyph') || button.__ktAnchor === 'css') return;
         button.style.setProperty('--kt-sx', '0px'); button.style.setProperty('--kt-sy', '0px');
         const dpr = (doc.defaultView || globalThis).devicePixelRatio || 1, q = svg.getBoundingClientRect();
         // 반 화소 넘게 옮겨야 하면(1배 화면에서 면이 …5 에 놓인 때) 옮기지 않아요 — 그땐 옮기면 가운데에서 0.5px 비켜나고, 그대로 두면 번진 가장자리가 양쪽 같아요
@@ -247,7 +263,7 @@ export function installInlineTargets(api, { doc = document, host = {} } = {}) {
         fields.set(key, { input, root });
         if (fresh && tr.states.get(key)?.open) { ensureBox(input); requestAnimationFrame(() => fitBox(input.__blKtBox)); }   // 펼쳐 둔 칸을 실리태번이 다시 그렸으면 상자도 다시
         // 화면 폭이 바뀌었거나, 처음 맞출 때 옆 아이콘이 안 보여 못 맞췄거나(고급 정의 창이 닫혀 있던 때) 옆 아이콘 크기가 바뀌었으면 다시 맞춰요
-        if (!fresh && (button.__ktVw !== vw() || button.__ktAnchor !== `${anchor.offsetWidth}x${anchor.offsetHeight}`)) mirror(button, anchor);
+        if (!fresh && button.__ktAnchor !== 'css' && (button.__ktVw !== vw() || button.__ktAnchor !== `${anchor.offsetWidth}x${anchor.offsetHeight}`)) mirror(button, anchor);
         else if (!fresh) snap(button);   // 둘레가 다시 그려져 자리가 소수점만큼 옮겨졌을 수 있어요 — 그림만 격자에 다시
         if (fresh) tr.paint(key, root);   // 이미 붙여 칠한 칸을 다시 훑을 땐 손대지 않아요
         if (!input.__blKtInput) {   // 원문을 고치면 「원문이 바뀌었어요」 (펼쳐 둔 것만 칠해요)

@@ -111,7 +111,7 @@ body.salty #right-nav-panel #CharListButtonAndHotSwaps { align-items: flex-start
 body.salty #right-nav-panel #CharListButtonAndHotSwaps > .flex-container { flex-flow: column !important; padding-top: 20px; }
 body.salty #right-nav-panel #HotSwapWrapper { display: flex; flex-direction: column !important; align-items: stretch !important; min-width: 0; gap: 4px; }
 body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading { width: 100%; flex: none; display: flex; align-items: center; gap: 6px; color: var(--salty-muted); font-size: var(--bl-fs-cap); font-weight: 650; line-height: 1.4; }
-body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading i { color: var(--bl-pop-ink); font-size: 1em; }
+body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading i { color: var(--bl-pop-ink); font-size: 1em; }   /* 1.5.2: 글자 칸을 몸통 가운데로 다듬은 뒤(css/88-ui-parts) 별 ↔ 글자 잉크 가운데 차 −0.18px(폰 384 배율 2) — 별에는 밀기를 두지 않아요(0.05em 내림은 0.44px 로 넘쳤어요) */
 body.salty #right-nav-panel #HotSwapWrapper .bl-favorites-heading small { margin-left: auto; font-size: inherit; font-variant-numeric: tabular-nums; color: var(--salty-muted); }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap { display: flex; align-items: flex-start; gap: 6px; width: 100%; height: auto !important; max-height: none !important; flex-wrap: nowrap !important; padding: 4px 0; overflow-x: auto; scrollbar-width: none; }
 body.salty #right-nav-panel #HotSwapWrapper .hotswap > .avatar {

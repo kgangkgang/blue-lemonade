@@ -24,8 +24,12 @@ const WORDS_EN = {
     rain: '비', rainy: '비', 'light rain': '약한 비', 'heavy rain': '폭우', drizzle: '이슬비', showers: '소낙비', thunderstorm: '뇌우', storm: '폭풍', stormy: '폭풍',
     snow: '눈', snowy: '눈', 'light snow': '약한 눈', 'heavy snow': '폭설', sleet: '진눈깨비', hail: '우박', fog: '안개', foggy: '안개', mist: '옅은 안개', misty: '옅은 안개', haze: '연무', hazy: '연무',
     wind: '바람', windy: '바람', breeze: '산들바람', breezy: '산들바람', calm: '바람 없음', humid: '습함', dry: '건조함',
-    hot: '더움', warm: '따뜻함', mild: '온화함', cool: '선선함', chilly: '쌀쌀함', cold: '추움', freezing: '매우 추움', indoors: '실내', outdoors: '실외',
-    // 1.5.1 미트볼 상태창도 이 사전을 같이 써요(src/ext-bridge-tr.js · 값 전체가 이 낱말 · 낱말 묶음일 때만) — 시간대 · 날 · 계절 · 달 · 날씨 낱말 더함
+    hot: '더움', warm: '따뜻함', mild: '온화함', cool: '선선함', chilly: '쌀쌀함', cold: '추움', freezing: '매우 추움', indoors: '실내', outdoors: '실외'
+};
+// 1.5.3 「정해진 칸」에서만 읽는 낱말 — 1.5.1 에 더했던 시간대 · 날 · 계절 · 날씨 낱말과 달 이름 하나만.
+//   이 낱말들은 사람 이름 · 별명(June · April · Summer · Autumn · Fair · Frost · Rainbow …)과 겹쳐서, 칸 이름이 날짜 · 시간 · 날씨 · 계절일 때만 읽어요(검토 3).
+//   칸을 모르면(옛 길) · 이름 칸이면 1.5.0 처럼 모델에 보내요. 미트볼 다리(src/ext-bridge-tr.js)는 정해진 칸 종류를 넘겨요.
+const SLOT_WORDS = {
     day: '낮', daytime: '낮', 'mid-morning': '늦은 아침', 'mid-afternoon': '한낮', nightfall: '해 질 녘', 'early evening': '이른 저녁', 'early afternoon': '이른 오후', 'small hours': '새벽', 'wee hours': '새벽',
     today: '오늘', tonight: '오늘 밤', tomorrow: '내일', yesterday: '어제', weekday: '평일', weekdays: '평일', weekend: '주말', weekends: '주말', holiday: '휴일',
     spring: '봄', summer: '여름', autumn: '가을', winter: '겨울', 'early spring': '이른 봄', 'late spring': '늦봄', 'early summer': '초여름', 'midsummer': '한여름', 'late summer': '늦여름', 'early autumn': '초가을', 'late autumn': '늦가을', 'early winter': '초겨울', 'midwinter': '한겨울', 'late winter': '늦겨울',
@@ -34,8 +38,12 @@ const WORDS_EN = {
 const WEEK_EN = { monday: '월', tuesday: '화', wednesday: '수', thursday: '목', friday: '금', saturday: '토', sunday: '일', mon: '월', tue: '화', tues: '화', wed: '수', thu: '목', thur: '목', thurs: '목', fri: '금', sat: '토', sun: '일' };
 const MONTH_EN = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12, jan: 1, feb: 2, mar: 3, apr: 4, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
 for (const [day, ko] of Object.entries(WEEK_EN)) WORDS_EN[day] = ko + '요일';
-// 1.5.1 달 이름 하나만(「April」 · 「Sept」) — 「May」는 사람 이름일 때가 있어 날짜 꼴(「May 3」)에서만 읽어요
-for (const [month, n] of Object.entries(MONTH_EN)) if (month !== 'may' && month !== 'mar') WORDS_EN[month] = `${n}월`;
+// 1.5.1 달 이름 하나만(「April」 · 「Sept」) — 정해진 칸에서만(1.5.3) · 「May」 「Mar」는 날짜 꼴(「May 3」)에서만 읽어요
+for (const [month, n] of Object.entries(MONTH_EN)) if (month !== 'may' && month !== 'mar') SLOT_WORDS[month] = `${n}월`;
+/** 칸 이름이 사람 이름 칸 — 사전을 안 걸어요(값은 모델로) */
+const NAME_FIELD = /name|이름|名|姓|who|partner|lover|spouse|char|person|nick|alias|별명|호칭|인물|人物|角色|npc/i;
+/** 칸 이름이 날짜 · 시간 · 날씨 · 계절 칸 — 정해진 칸 낱말까지 읽어요 */
+const SLOT_FIELD = /date|time|day|weather|season|clock|period|calendar|날짜|시간|시각|요일|날씨|계절|日期|时间|時間|天气|天氣|季节|季節|时段|星期/i;
 
 const keyOf = (table, word) => Object.prototype.hasOwnProperty.call(table, word) ? table[word] : null;
 const PERIODS = Object.keys(PERIOD_ZH).join('|'), CALENDARS = Object.keys(CALENDAR_ZH).sort((a, b) => b.length - a.length).join('|');
@@ -87,32 +95,40 @@ function hanWords(run) {
     }
     return out.join(' ');
 }
-function piece(text) {
+const wordOf = (word, slot) => keyOf(WORDS_EN, word) || (slot ? keyOf(SLOT_WORDS, word) : null);
+function piece(text, slot = false) {
     const value = text.trim(); if (!value) return '';
-    const english = keyOf(WORDS_EN, value.toLowerCase().replace(/\s+/g, ' '));
+    const english = wordOf(value.toLowerCase().replace(/\s+/g, ' '), slot);
     if (english) return english;
     const out = [];
     for (const word of value.split(/\s+/)) {
         if (/^[一-鿿]+$/.test(word)) { const ko = hanWords(word); if (!ko) return null; out.push(ko); continue; }
-        const ko = keyOf(WORDS_EN, word.toLowerCase()); if (!ko) return null; out.push(ko);
+        const ko = wordOf(word.toLowerCase(), slot); if (!ko) return null; out.push(ko);
     }
     return out.join(' ');
 }
-function byDictionary(text) {
+function byDictionary(text, slot = false) {
     const parts = text.split(SEPARATOR), out = [];
     for (let i = 0; i < parts.length; i++) {
         if (i % 2) { out.push(parts[i]); continue; }
-        const ko = piece(parts[i]); if (ko === null) return null; out.push((/^\s/.test(parts[i]) && i ? ' ' : '') + ko + (/\s$/.test(parts[i]) && i < parts.length - 1 ? ' ' : ''));
+        const ko = piece(parts[i], slot); if (ko === null) return null; out.push((/^\s/.test(parts[i]) && i ? ' ' : '') + ko + (/\s$/.test(parts[i]) && i < parts.length - 1 ? ' ' : ''));
     }
     const joined = out.join('').trim();
     return joined && /[가-힣]/.test(joined) ? joined : null;
 }
 
-/** 꼴이 정해진 카드 값의 한국어 ('' · null = 모델에 보낸다) */
-export function ruleValue(text) {
+/**
+ * 꼴이 정해진 카드 값의 한국어 ('' · null = 모델에 보낸다).
+ * key: 그 칸 이름(카드 칸 「Weather」 · 「日期」 · 미트볼 다리의 칸 종류 day · time · date · weather · season) — 1.5.3
+ *   사람 이름 칸이면 아무것도 안 읽고(모델로) · 날짜 · 시간 · 날씨 · 계절 칸이면 정해진 칸 낱말(달 · 계절 · Day · Fair …)까지 읽어요.
+ */
+export function ruleValue(text, key = null) {
     const value = String(text ?? '').trim();
     if (!value || value.length > 80 || /[\r\n<>]/.test(value)) return null;
-    return dateZh(value) || timeZh(value) || timeEn(value) || dateEn(value) || dayCount(value) || slashDate(value) || byDictionary(value);
+    const field = String(key ?? '');
+    if (field && NAME_FIELD.test(field)) return null;
+    const slot = !!field && SLOT_FIELD.test(field);
+    return dateZh(value) || timeZh(value) || timeEn(value) || dateEn(value) || dayCount(value) || slashDate(value) || byDictionary(value, slot);
 }
 // 1.5.1 「Day 3」 「Day 12 of 30」 → 3일째 · 12일째 (30일 중) — 「4/1 (Mon)」 「12/24 (Tuesday)」 → 4/1(월) (미트볼 날짜 줄 꼴)
 function dayCount(text) {
@@ -142,9 +158,9 @@ export function cardValues({ scope = '', remember = true, storage } = {}) {
     if (storage === undefined) try { storage = globalThis.localStorage; } catch { storage = null; }   // 막힌 저장소: 기억 없이
     const key = text => `${scope}\u0000${text}`;
     return {
-        local(text) {
+        local(text, cardName, field) {   // 1.5.3 칸 이름(field)을 받아 이름 칸 · 정해진 칸을 가려요
             const value = String(text ?? '').trim();
-            const rule = ruleValue(value); if (rule) return rule;
+            const rule = ruleValue(value, field); if (rule) return rule;
             if (!remember || value.length > MAX_TEXT) return null;
             const known = load(storage).get(key(value));
             return typeof known === 'string' && known.trim() ? known : null;

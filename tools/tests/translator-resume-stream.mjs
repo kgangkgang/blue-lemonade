@@ -115,8 +115,8 @@ await test('streamWatch: ⟦0⟧ 부터 매긴 답은 닫힌 문단이 safe · �
 await test('배선: 이어 하기 열쇠 · 하루 · 30일 캐시와 따로 · 진행 표시는 번역 표의 guard 로', () => {
     const src = fs.readFileSync(path.join(root, 'src/addons/translator/translation-segments.js'), 'utf8');
     assert.match(src, /const RESUME = 'resume:', RESUME_TTL = 86400000;/);
-    assert.match(src, /readMany\(\[\.\.\.new Set\(keyed\.map\(row => RESUME \+ row\[2\]\)\)\], RESUME_TTL\)/);
-    assert.match(src, /rows\.push\(\[RESUME \+ row\.key, localizeOut\(cleaned, row\.map\)\]\)/);   // 3.0.1 문단 안 차례로 저장
+    assert.match(src, /read(?:Many|Rows)\(\[\.\.\.new Set\(keyed\.map\(row => RESUME \+ row\[2\]\)\)\], RESUME_TTL\)/);
+    assert.match(src, /rows\.push\(\[RESUME \+ row\.key, localizeOut\(cleaned, row\.map\)(?:, row\.sig)?\]\)/);   // 1.5.3 v4 는 조각도   // 3.0.1 문단 안 차례로 저장
     assert.match(index, /const badge = progressBadge\(messageId, message, sourceMes, chatId, runToken\.guard\);\n\s+const preview = runToken\.preview = translationPreview\(messageId, message, sourceMes, chatId, originalText, runToken\.guard\);/);
     assert.match(index, /const index = guard \? guard\.index\(\) : message \? resolveTranslationTarget/);
     assert.ok(!index.includes("toastr.info('번역이 이미 진행 중이에요.')"), 'every notice says which message');

@@ -825,3 +825,19 @@ body .bl-kt .jj-tr-redo.menu_button { flex: 0 0 auto; width: auto; min-width: 0;
 }
 .bl-kt .jj-tr-text::-webkit-scrollbar { display: none; }
 .bl-kt .jj-tr-text.is-muted, .jj-tr.bl-kt.is-stale .jj-tr-text { color: var(--jj-tr-muted); }
+
+/* 1.5.2 통합(polish 「이름표 + 크게 보기」 줄 · --bl-ink-row: 1): 그 줄의 크게 보기 아이콘은 기준선에 놓이고 글자 크기가 이름표 대문자 높이의 4/3(--bl-ink-cap / .75)이에요.
+   번역 그림도 같은 글꼴(Font Awesome)로 같은 기준선에 놓아 CSS 만으로 맞춰요 — 글꼴 · 배율이 바뀌어도 그대로(JS 계산 없음 · inline-targets.js 는 간격만).
+   키: 확대 그림 잉크 448/512 em · 번역 그림 384/512 em → 번역 글자 크기 = 확대 × 448/384 × 1.04 = × 1.21333(잉크 키 1.04 배 — 1배 화면 홀짝).
+   두 그림 다 잉크 가운데가 기준선 위 0.375 em 이라, 커진 만큼(0.375 × 0.21333 × 확대 크기 = 대문자 높이 × 0.10667) 기준선을 내려 가운데를 같게 해요 */
+body .jj-tr-btn.bl-kt-btn.kt-cssrow {
+    display: inline-block; width: auto; min-width: 0; height: auto; min-height: 0; top: 0;
+    align-self: baseline !important; line-height: 1; font-size: calc(var(--bl-ink-cap, 9px) / .75);
+}
+body .jj-tr-btn.bl-kt-btn.kt-cssrow > .jj-tr-svg { display: none; }
+body .jj-tr-btn.bl-kt-btn.kt-cssrow > .kt-g {
+    display: inline; position: static; transform: none; width: auto; height: auto; padding: 0; border: 0; margin: 0;
+    font-size: calc(var(--bl-ink-cap, 9px) / .75 * 1.21333); line-height: 1; vertical-align: calc(var(--bl-ink-cap, 9px) * -0.10667);
+}
+body .jj-tr-btn.bl-kt-btn.kt-cssrow > .kt-g::before { display: inline; vertical-align: baseline !important; font-size: inherit; line-height: 1; }
+body .jj-tr-btn.bl-kt-btn.kt-cssrow > i.fa-spinner { position: static; display: inline-block; margin: 0; }

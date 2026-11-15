@@ -274,7 +274,7 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
     if (typeof reserve !== 'function') throw new TypeError('Card masks require a reserve callback');
     const localOf = (field,card) => {
         // 8.0.8 V3 관계 단계(Stage: Strangers)는 정해진 낱말이라 이 기기에서 채운다 (v3-modules.js) — 한국어로 옮길 때만(localValue 가 있을 때)
-        const value = typeof localValue === 'function' ? moduleLocalValue(field.text,card.name,field.key) ?? localValue(field.text,card.name) : null;
+        const value = typeof localValue === 'function' ? moduleLocalValue(field.text,card.name,field.key) ?? localValue(field.text,card.name,field.key) : null;
         return typeof value === 'string' && value.trim() && value.trim() !== field.text && !/[\r\n<>]|\[\[__/.test(value) ? value.trim() : null;
     };
     // Locally known fields get no token: the model sees only the remaining values of the card.

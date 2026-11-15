@@ -21,6 +21,7 @@ import { HIDDEN_BLOCKS, isHiddenBlock } from './hidden-blocks.js';   // 8.0.6 �
 import { compactTags } from './tag-compact.js';   // 8.0.6 보이는 본문 태그 속성은 짧은 이름으로 보내고 받자마자 되돌리기
 import { skyAttrs } from './sky-attrs.js';   // 8.0.6 번역한 시간 상태창에서도 하늘 장면 (data-t · data-w)
 import { stageAttrs } from './v3-modules.js';   // 8.0.8 번역한 V3 관계 단계에서도 단계 막대 (data-stage)
+import { cacheWhyLine, segmentBlocker, shortHash } from './translation-segments.js';   // 1.5.3 문단 캐시가 빗나간 까닭 한 줄 · 통째로 가는 까닭 · 열쇠 조각 해시
 import { streamWatch, hasFailMark } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
 import { createReasoningView } from './reasoning-view.js';   // 2.6.0 생각 블록(추론) 카드 · 번역해서 보기
 import { updateReasoningUI } from '../../../../../../reasoning.js';   // 2.6.0 생각 칸 다시 그리기
@@ -51,7 +52,7 @@ import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
-import { rememberSource, recordedSource, forgetSource, pruneSource } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
+import { rememberSource, recordedSource, forgetSource, pruneSource, priorFromRecord, priorParagraph } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
 import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
 import { withPromptCache, pureMacros } from '../../prompt-cache.js';   // 7.7.2 프롬프트 캐시 (Claude 직접 연결)
 import { whenMainChatIdle, isMainChatGenerating } from '../../main-chat-rules.js';   // 6.5.3 「생성 중」 = 본채팅 생성 · 테마의 붙잡음만 (조용한 생성 · 헬퍼 generate 는 기다리지 않음)
@@ -1938,12 +1939,14 @@ function fixMalformedPlaceholders(text) {
     return fixedText;
 }
 
-function connectionSignature() {
+// 1.5.3 forKey: 문단 캐시 조각용 — 저장 안 한 편집기 글(프리필)은 빼고, 직접 연결이면 지금 공급자의 parameters 만 (다른 공급자 칸 값이 바뀌어도 그대로)
+//   번역 중 감시(watcher)는 예전 그대로(forKey 없이) 본다
+function connectionSignature(forKey = false) {
     const c = getContext(), s = extensionSettings;
     return JSON.stringify({ mode: s.connection_mode, provider: s.llm_provider, model: s.llm_model,
-        custom: s.custom_models, parameters: s.parameters, url: s.custom_url,
+        custom: s.custom_models, parameters: forKey && s.connection_mode === 'direct' ? s.parameters?.[s.llm_provider] ?? null : s.parameters, url: s.custom_url,
         proxy: [s.use_reverse_proxy, s.reverse_proxy_url, s.reverse_proxy_password],
-        prefill: [s.llm_prefill_toggle, s.llm_prefill_content, document.querySelector('#prompt_select')?.value === 'llm_prefill_content' ? document.querySelector('#llm_prompt_editor')?.value : null],
+        prefill: [s.llm_prefill_toggle, s.llm_prefill_content, !forKey && document.querySelector('#prompt_select')?.value === 'llm_prefill_content' ? document.querySelector('#llm_prompt_editor')?.value : null],
         inherited: s.connection_mode === 'direct' ? {
             custom: s.llm_provider === 'custom' && getCustomEndpointConfig().inheritExtras ?
                 [oai_settings.custom_url, oai_settings.custom_include_body, oai_settings.custom_exclude_body, oai_settings.custom_include_headers] : null,
@@ -2041,6 +2044,7 @@ async function translate(text, options = {}) {
         const koreanKept = extensionSettings.keep_korean_source !== false && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined
             && KOREAN_TARGET.test(String(koreanTarget ?? '')) ? keepKorean(maskedText, block => { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; }) : null;
         if (koreanKept) maskedText = koreanKept.text;
+        const keptFrom = koreanKept ? protectedBlocks.length - koreanKept.blocks.length : protectedBlocks.length, keptTo = protectedBlocks.length;   // 1.5.3 한국어 남김 자리표시자 번호 범위 (문단 캐시 조각 f)
         // 3.1.4 한국어로 옮길 때 원문 그대로 온 알림 줄도 남은 원문 다시 번역 · 문단 캐시에서 빼기 (rp-lines.js — 입력 번역 · 다른 말로 옮길 때는 예전처럼)
         //   목표 말은 「into Korean」뿐 아니라 「into natural, fluent Korean」 같은 꾸밈말이 낀 꼴도 (사용자 지시문이 이 꼴 — KOREAN_TARGET 은 못 알아봤다)
         const noticeFix = !options.isInputTranslation && typeof hasNoticeLines === 'function' && (KOREAN_TARGET.test(String(koreanTarget ?? '')) || NOTICE_KOREAN_TARGET.test(String(koreanTarget ?? '')));
@@ -2065,6 +2069,7 @@ async function translate(text, options = {}) {
             reserve(block) { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; },
         });
         maskedText = displayCards.text;
+        const cardsTo = protectedBlocks.length;   // 1.5.3 상태 카드 자리표시자 번호 범위 = keptTo ~ cardsTo (문단 캐시 조각 f)
         // 3.1.7 코드 칸 울타리 줄(```html · ~~~)은 보내지 않고 자리표로 — 모델이 빼거나 언어 이름을 바꿔도 제자리에 글자 그대로 (code-fences.js).
         //   상태 카드 · 보호 블록 뒤 번호라 앞 번호 · 캐시 열쇠는 그대로. 메시지 번역만 (입력 번역 · 다시 번역 · 점검 원문 견주기는 예전처럼)
         const fences = typeof maskFences === 'function' && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined
@@ -2100,6 +2105,7 @@ async function translate(text, options = {}) {
         // 커스텀 프롬프트 적용 (실시간 텍스트필드 값 사용) — [2.7.4] liveChatPrompt 로 떼어 냄: 자동 번역 건너뛰기(chatPromptTargetsKorean)가 같은 글을 본다
         let finalPrompt = prompt;
         if (prompt === extensionSettings.llm_prompt_chat) finalPrompt = liveChatPrompt();
+        const livePrompt = finalPrompt;   // 1.5.3 치환 전 글 — 문단 캐시 조각은 저장된 프롬프트로 (편집기에 저장 안 한 글이면 따로 치환)
 
         // ==================================================================================
         // [기존 로직 복구] 3. 플레이스홀더 치환 및 프롬프트 조립
@@ -2200,6 +2206,15 @@ async function translate(text, options = {}) {
         const digestOf = refHash => checkpointKey(JSON.stringify([...digestParts, ...(replyRefAt >= 0 ? ['reply-ref-v2', refHash || ''] : [])]));
         const resumeKeyOf = async digest => (chunks.length > 1 ? await checkpointKey(JSON.stringify([digest, text, ...(/<!--[\s\S]*?-->/.test(text) ? ['comments-v1'] : [])])) : '');   // 2.5.1 주석을 보호하기 전 덩이로 이어 쓰지 않게
         const setupDigest = await digestOf(replyRef?.hash);
+        // 1.5.3 문단 캐시 v4 조각 — 열쇠에는 문단 글만, 설정은 재료별 조각으로 줄 안에 (빗나가면 어느 조각이 달라졌는지가 까닭 · 옛 열쇠는 setupDigest 로 옮김)
+        //   typeof: translate 만 잘라 도는 시험은 예전 열쇠 그대로
+        //   1.5.3 좁힘: 프롬프트는 저장된 것(편집기에 저장 안 한 글은 열쇠에 안 넣음) · 참고 정보는 켠 항목 · 상한만(글은 안 넣음 — 작가 노트 · 로어북을 고쳐도 그대로) ·
+        //   메시지 표시(상태 카드 · 한국어 남김)는 그 자리표시자가 든 문단에만
+        const savedPrompt = prompt === extensionSettings.llm_prompt_chat && typeof savedChatPrompt === 'function' ? savedChatPrompt() : livePrompt;
+        const keyPrompt = savedPrompt === livePrompt ? finalPrompt : substituteCustomPlaceholders(savedPrompt, isInputTranslation, options.contextAt);
+        const flagOf = body => { const kinds = new Set(); for (const m of String(body).matchAll(/\[\[__VAR_(\d+)__\]\]/g)) { const n = Number(m[1]); if (n >= keptFrom && n < keptTo) kinds.add('korean'); else if (n >= keptTo && n < cardsTo) kinds.add('cards'); } return [...kinds].sort().join(','); };
+        const keyParts = paragraphParts && typeof segmentKeyMaker === 'function' ? segmentKeyMaker({ connection: connectionSignature(true), prompt: keyPrompt, rulePrompt, additionalGuidance,
+            autoStamp: autoContextGuard ? autoContextGuard.stamp : null, reference: replyRefAt >= 0 ? (typeof replyReferenceSwitches === 'function' ? replyReferenceSwitches() : 'on') : null, chat: chatCtx, flagOf }) : null;
         const key = await resumeKeyOf(setupDigest);
         watcher.check();
         // 5.4.2: 번역문 삭제 — 이 글의 문단 캐시 · 이어하기 줄만 지우고 요청은 하지 않는다 (키는 번역할 때와 같은 재료로)
@@ -2210,7 +2225,7 @@ async function translate(text, options = {}) {
                 const bodies = parts.filter((part, i) => i % 2 === 0 && part.trim());
                 parts = options.forget.map(n => bodies[n]).filter(body => body !== undefined).flatMap(body => [body, '']);
             }
-            if (parts?.length) await forgetSegments(parts, glossarySegmentSignature(setupDigest), n => protectedBlocks[n]);   // 3.0.1 번역할 때와 같은 열쇠(보호 글 포함)
+            if (parts?.length) await forgetSegments(parts, glossarySegmentSignature(setupDigest), n => protectedBlocks[n], { bodyKeys: Boolean(keyParts) });   // 3.0.1 번역할 때와 같은 열쇠(보호 글 포함) · 1.5.3 v4 줄도
             if (key && !Array.isArray(options.forget)) await clearCheckpoints(key);
             // 감사 고침: 참고 월드인포는 번역할 때의 상태(넣음 · 생성 중 건너뜀 · 실패)에 따라 열쇠 몫이 달라요. 지울 때 상태가 다르면(예: 다음 답을 만드는 동안 휴지통)
             //   그 번역의 캐시 줄을 하나도 못 찾아, 지운 번역이 다시 번역할 때 요청 없이 그대로 돌아왔어요 — 그 메시지가 가질 수 있는 다른 몫으로도 지워요
@@ -2339,8 +2354,10 @@ async function translate(text, options = {}) {
             const failReasons = new Map(); // 5.2.9: 문단 본문 → 실패 원인
             const noCache = new Set(); // 5.3.4: 붙이긴 하되 캐시에 넣지 않을 문단 (1부터 다시 매긴 답 — 한 칸 밀린 답과 구별이 안 된다)
             const result = await translateSegments({ parts: paragraphParts,
-                signature: glossarySegmentSignature(setupDigest), protection: n => protectedBlocks[n], check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류 · 3.0.1 protection = 열쇠에 드는 보호 글
+                signature: glossarySegmentSignature(setupDigest), protection: n => protectedBlocks[n], keyParts, check: watcher.check, progress, blockedMarker: (body, error) => failMarkOf(failReasons.get(body) ?? error), // 5.4.1: 원문 되풀이 = 형식 오류 · 3.0.1 protection = 열쇠에 드는 보호 글
                 partial: showPreview,   // 2.5.1
+                // 1.5.3 편집 전 번역 문단 (저장된 줄이 없는 문단만 · 자리표시자는 지금 번호로 · typeof: 잘라 도는 시험)
+                prior: options.prior && typeof priorParagraph === 'function' ? body => priorParagraph(options.prior, body, protectedBlocks) : null,
                 cacheable: (body, out) => {
                     const marks = value => JSON.stringify(value.match(/\[\[__VAR_\d+__\]\]/g) || []);
                     // 5.3.4: 묶음 중 한 문단만 거절문으로 온 경우도 30일 캐시에 넣지 않는다
@@ -2481,11 +2498,15 @@ async function translate(text, options = {}) {
                 },
             });
             translatedText = result.text;
+            // 1.5.3 설정 조각이 달라 다시 보낸 문단이 있으면 콘솔에 한 줄 (폰에서는 진행 표시 한 줄이 같은 말)
+            if (result.why && (result.why.setup || result.why.glossary || result.why.speech || result.why.marks)) console.info(`[LLM Translator] 문단 캐시: 저장된 번역 ${result.reused}/${result.total} · 다시 보낸 까닭 — 설정 ${result.why.setup} · 용어집 ${result.why.glossary} · 말투 ${result.why.speech} · 표시 ${result.why.marks} · 새 문단 ${result.why.absent}`);
             if (report) { report.reusedParagraphs = result.reused; report.translatedParagraphs = result.translated; report.partial = result.blocked > 0; report.blockedChunks = result.blocked; report.chunks = result.total; }
         } else if (maskedText.length > groupLimit && chunks.length > 1) {   // 2.8.3 통째로 보낼 크기도 같은 묶음 상한 (전엔 3600자 고정)
             translatedText = await runChunks();
         } else {
-            progress({ stage: 'whole' });
+            // 1.5.3 문단 캐시를 쓸 번역인데 문단 길로 못 간 까닭 (진행 표시 한 줄 — 「표 · 접기 같은 HTML 이 든 메시지라 통째로 번역」)
+            const wholeWhy = options.segmentCache && !isInputTranslation && !isRetranslation && !options.noChunks && typeof segmentBlocker === 'function' ? (fences?.tokens.length ? 'code' : segmentBlocker(maskedText)) : null;
+            progress(wholeWhy ? { stage: 'whole', why: wholeWhy } : { stage: 'whole' });
             let whole = null;
             // 2.9.1 통짜 길도 흘려받는다 — 2.8.3 에서 통짜로 보낼 크기가 응답 길이를 따라 커져(예: 28800자) 다시 번역 단추처럼 문단 캐시를 안 쓰는 길이
             //   거의 다 여기로 와 「번역 중 · 15초」만 뜨고 끝난 문단부터 보이지 않았다. 요청은 그대로 한 번, 빈 줄로 닫힌 문단까지 미리 보기 · 「문단 n/전체」.
@@ -2723,6 +2744,9 @@ function progressLabel(stage, started, note = null) {
     const tail = wait ? ` · ${wait} · ${sec}초` : ` · ${sec}초`;
     if (!stage || typeof stage !== 'object') return `번역 중${tail}`;
     if (stage.stage === 'chunks') return `${stage.resumed ? '이어 번역' : '번역 중'} · 문단 ${stage.done + 1}/${stage.total}${tail}`;
+    // 1.5.3 문단 캐시가 빗나간 까닭 · 통째로 가는 까닭을 알면 그 한 줄을 앞에 (「용어집이 바뀌어 6문단 모두 다시 번역 · 0/6」 · 「6문단 중 5개는 저장된 번역 · 번역 0/1」)
+    const why = typeof cacheWhyLine === 'function' ? cacheWhyLine(stage) : null;   // typeof: 이 함수만 잘라 도는 시험
+    if (why) return `${why}${tail}`;
     // 7.3.1 원문을 조금 고쳐 일부 문단만 다시 보낼 때(캐시가 나머지를 채움): 「바뀐 문단 1개만 다시 번역 · 0/1 · 캐시 88개」 (끊긴 묶음을 이어 갈 때는 「남은 문단 …개 이어서 번역」)
     //   3.0.0 「바뀐 문단」 은 메시지에 번역문이 있었을 때(stage.edited — 원문이 바뀌어 다시 번역)만. 첫 번역에서 캐시가 한두 문단(반복되는 상태창 줄)을 채운 것은 「문단 n개 번역」
     if (stage.stage === 'segments' && stage.pending && stage.reused) { const all = stage.batch ?? stage.pending; return `${stage.resumed ? `남은 문단 ${all}개 이어서 번역` : stage.edited ? `바뀐 문단 ${all}개만 다시 번역` : `문단 ${all}개 번역`} · ${stage.finished ?? 0}/${all} · 캐시 ${stage.reused}개${tail}`; }
@@ -3538,6 +3562,10 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         const chatId = context.chatId;
         const originalText = substituteParams(message.mes, context.name1, message.name);
         let shownOriginal = originalText, shownSource = sourceMes;   // 7.9.5 붙인 번역의 원문 (번역 중 그림만 바뀌었으면 지금 글)
+        // 1.5.3 옛 번역 문단 짝: 편집 저장이 남긴 것, 아니면 지금 지울 옛 번역(이어 쓰기 · 다른 길로 원문이 바뀜)에서. typeof: 이 함수만 잘라 도는 시험
+        let prior = typeof editPriors !== 'undefined' ? editPriors.get(message) ?? null : null;
+        if (typeof editPriors !== 'undefined') editPriors.delete(message);
+        if (!prior && typeof priorFromRecord === 'function' && message.extra.original_text_hash && message.extra.original_text_hash !== originalHashOf(originalText)) prior = priorFromRecord(message.extra, { hash: getStringHash });
         await hideStaleTranslation(message, () => runToken.guard.acceptDisplay());
         runToken.guard.assert();
 
@@ -3608,11 +3636,12 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 // 화살표 다시 번역이라도 차단 표시가 남은 글이면 문단 캐시를 쓴다 — 이미 된 문단은 다시 보내지 않고 차단된 문단만 다시 시도
                 const segmentCache = source !== 'fresh' && (source !== 'handleTranslateButtonClick_retranslate' || String(message.extra.display_text || '').includes(MARK_TAIL));
                 const startTimer = startToast ? setTimeout(() => startToast?.(), 1500) : 0;
-                const edited = Boolean(message.extra.display_text);   // 3.0.0 번역문이 있던 메시지 = 원문이 바뀌어 다시 번역 (진행 문구 「바뀐 문단」 은 이때만)
+                // 1.5.3 편집 저장(handleMessageEdit)은 번역 전에 번역문을 지워 두니 그 표(editedMessages — 보고 뗀다)도 본다 — 전엔 고친 메시지도 「바뀐 문단」 이 아니라 새 번역 문구였다
+                const edited = Boolean(message.extra.display_text) || (typeof editedMessages !== 'undefined' && editedMessages.delete(message));   // 3.0.0 번역문이 있던 메시지 = 원문이 바뀌어 다시 번역 (진행 문구 「바뀐 문단」 은 이때만)
                 const onProgress = stage => { const info = stage && typeof stage === 'object' ? { ...stage, edited } : stage; if (startToast) { clearTimeout(startTimer); startToast(startNotice(info, messageId)); } badge.update(info); };   // 7.3.1
                 try {
                     // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
-                    translation = await translate(originalText, { segmentCache, collectNames: true, auto: source === 'auto', contextAt: Number(messageId), assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onStreamNote: badge.note, onProgress, onPreview: preview.show, report });
+                    translation = await translate(originalText, { segmentCache, prior: segmentCache ? prior : null, collectNames: true, auto: source === 'auto', contextAt: Number(messageId), assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onStreamNote: badge.note, onProgress, onPreview: preview.show, report });
                 } finally {
                     clearTimeout(startTimer); startToast = null; preview.stop(); badge.remove();
                 }
@@ -5142,6 +5171,15 @@ function liveChatPrompt() {
     }
     return base;
 }
+/** 1.5.3 저장된 채팅 번역 프롬프트 — liveChatPrompt 에서 편집칸의 저장 안 한 글만 뺀 것 (문단 캐시 조각용: 고치는 중인 글자마다 캐시가 빗나가지 않게) */
+function savedChatPrompt() {
+    const base = extensionSettings.llm_prompt_chat;
+    if (extensionSettings.selected_translation_prompt_id) {
+        const selectedPrompt = promptManager?.getSelectedPrompt?.();
+        if (selectedPrompt?.content?.trim()) return selectedPrompt.content;
+    }
+    return base;
+}
 function chatPromptTargetsKorean() { return KOREAN_TARGET.test(String(liveChatPrompt() || '')); }
 /** 글자만 세어 한글 비율 — 한글(Script=Hangul) 대 나머지 글자(\p{L}: 라틴 · 키릴 · 그리스 · 태국 · 아랍 · 힌디 · 가나 · 한자 …). 태그 · 주소는 뺀다. 글자가 없으면 0 */
 function koreanShare(text) {
@@ -5417,6 +5455,33 @@ function glossarySegmentSignature(setupDigest) {
         const tag = glossaryVariantTag(entries, body);
         return tag ? `${setupDigest}|kana:${tag}` : setupDigest;
     };
+}
+
+/**
+ * 1.5.3 문단 캐시 v4 조각 (translation-segments.js translateSegments 의 keyParts) — 메시지 하나에 한 번 만들고 문단마다 부른다 → body => { c, g, s, f, k }.
+ *   그 문단에 실제로 닿는 재료만 넣는다 (예전엔 용어집 327개 전부 · 참고 글 · 메시지 전체 표시가 모든 문단 열쇠에 들어가, 하나만 바뀌어도 메시지 전체를 다시 번역했다):
+ *   c 연결(지금 공급자 칸 · 저장 안 한 편집기 글 뺌) · 저장된 프롬프트 · 규칙 · 지침 · 자동 문맥 · 참고 정보 켠 항목과 상한 · 프롬프트에 {{char}} · {{user}} 가 있으면 그 이름,
+ *   g 그 문단 원문에 나오는 용어집 · 채팅 용어 줄(요청에 붙는 그 줄 — 다른 캐릭터 범위는 처음부터 빠짐), s 그 문단에 나오는 화자의 말투 지정(요청에 붙는 그 글),
+ *   f 그 문단에 든 자리표시자 갈래(상태 카드 · 한국어 남김), k 그 문단의 표기 흔들림. 조각마다 짧은 해시
+ */
+function segmentKeyMaker({ connection, prompt, rulePrompt, additionalGuidance, autoStamp = null, reference = null, chat = null, flagOf = null }) {
+    const glossaryOn = extensionSettings.glossary_enabled !== false;
+    const names = /\{\{(?:char|user)\}\}/i.test(`${prompt}\n${rulePrompt}\n${additionalGuidance}`) ? [chat?.name1 ?? null, chat?.name2 ?? null] : null;
+    const c = shortHash(['core-v2', connection, prompt, rulePrompt, additionalGuidance, autoStamp, reference, glossaryOn, names]);
+    const meta = chat?.chatMetadata;
+    const entries = glossaryOn ? activeGlossaryEntries() : null;   // 지금 캐릭터(그룹 · 멤버) + 전체 + 이 채팅 용어 — buildGlossaryBlock 과 같은 목록
+    const speechOn = styleProfileSignature(meta).length > 0;
+    return body => {
+        const found = entries ? glossaryLines(entries, body, { maxLines: GLOSSARY_MAX_LINES }) : null;
+        const speech = speechOn ? styleProfileBlock(meta, body, { entries: entries ?? [] }) : '';
+        const tag = entries ? glossaryVariantTag(entries, body) : '';
+        return { c, g: found?.lines.length ? shortHash([found.lines, found.hasChoice]) : '', s: speech ? shortHash(speech) : '', f: flagOf ? flagOf(body) : '', k: tag ? shortHash(tag) : '' };
+    };
+}
+/** 1.5.3 참고 정보 켠 항목 · 월드인포 상한 (문단 캐시 조각 c — 글 자체는 안 넣는다) */
+function replyReferenceSwitches() {
+    const s = extensionSettings;
+    return JSON.stringify(['ref-v1', s.reply_ctx_char === true, s.reply_ctx_persona === true, s.reply_ctx_wi === true, s.reply_ctx_note === true, s.reply_ctx_wi === true ? s.reply_ctx_wi_limit ?? null : null]);
 }
 
 function glossaryNewId() {
@@ -6204,6 +6269,10 @@ async function rescueFromBuiltinTranslate(messageId, message) {
     return true;
 }
 
+// 1.5.3 편집 저장으로 번역문을 지운 메시지 → 다음 번역이 쓸 것 (진행 표시 「바뀐 문단」) — 번역이 시작되면 뗀다
+const editedMessages = new WeakMap();
+// 1.5.3 편집 저장 직전의 옛 번역 문단 짝 (translation-source.js priorFromRecord) — 다음 번역이 한 번 쓰고 뗀다
+const editPriors = new WeakMap();
 async function handleMessageEdit(messageId) {
     // 6.5.2 테마가 본문을 다시 그린 뒤 헬퍼에 알리는 MESSAGE_UPDATED (src/rerender-notify.js) — 글은 그대로고 표시만 다시 그렸으니 번역 데이터를 손대지 않는다.
     //       (안 막으면 아래 '해시 같음' 가지가 또 그리고 → 또 알리고 … 돈다)
@@ -6241,7 +6310,10 @@ async function handleMessageEdit(messageId) {
                 }
             }
 
-            // display_text 삭제 (실제로 수정된 경우에만)
+            // display_text 삭제 (실제로 수정된 경우에만) · 1.5.3 번역문이 있던 메시지라는 표 (진행 표시 「바뀐 문단」 · 「이 기기에 저장된 번역이 없어」)
+            if (typeof editedMessages !== 'undefined') editedMessages.set(message, true);   // typeof: 이 함수만 잘라 도는 시험
+            // 1.5.3 지우기 전에 옛 번역 문단을 원문 문단 해시와 짝지어 둔다 — 다음 번역이 안 바뀐 문단은 옛 번역을 그대로 쓴다 (다른 기기에서 번역한 메시지도)
+            if (typeof editPriors !== 'undefined' && typeof priorFromRecord === 'function') { const prior = priorFromRecord(message.extra, { hash: getStringHash }); if (prior) editPriors.set(message, prior); else editPriors.delete(message); }
             delete message.extra.display_text;
             forgetSource(message.extra);   // 6.9.6
             // 2026-10-06: 원문 보기 중에 고쳤으면 치워 둔 옛 번역(백업)도 지운다 — 남으면 아래에서 새 원문 해시가 찍혀 교정 재번역 ·

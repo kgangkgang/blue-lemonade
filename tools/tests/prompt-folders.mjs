@@ -222,6 +222,17 @@ await test('1.5.2 굳은 옛 설정 + 식구가 늘어난 새 판: 옮김 한 �
     assert.equal(same.folders, undefined, '손 안 댄 칸은 식구를 저장하지 않아요');
     assert.deepEqual(same.open, { L: true, S: false });
 });
+await test('1.5.3 옛 칸 옮김이 합친 항목은 restored 에 남고(알림 · 되돌리기용) · 되돌리면 그 항목만 다시 밖 — 그 뒤 새 판이 더한 항목은 안', () => {
+    const slot = core.migrateFolderSlot(FROZEN3(), SEED7());
+    assert.deepEqual(slot.restored, { S: ['t1', 't3', 't4', 't7'] }, '굳은 목록에 없고 파일에 있던 넷');
+    assert.equal(core.migrateFolderSlot({ folders: SEED7() }, SEED7()).restored, undefined, '손 안 댄 칸은 알릴 것 없음');
+    const undone = core.undoRestored(slot);
+    assert.equal(undone.restored, undefined);
+    const next = core.tidyFolders([...SEED7().filter(f => f.id !== 'S'), { id: 'S', name: '분량', ids: ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'], pick: true, parent: 'L' }]);
+    const S = core.mergeFolders(next, undone).find(f => f.id === 'S');
+    assert.deepEqual([...S.ids].sort(), ['t2', 't5', 't6', 't8'], '되돌린 넷은 밖 · 새로 더한 t8 은 안');
+    assert.equal(core.undoRestored({ v: 2, folders: [] }).restored, undefined, 'restored 없으면 그대로');
+});
 await test('1.5.2 옛 설정 옮김은 두 번 돌아도 같은 결과(멱등) · 이미 옮긴 칸은 그대로', () => {
     for (const raw of [FROZEN3(), { folders: [] }, { folders: [], seed: 'x' }, { folders: SEED7() }]) {
         const once = core.migrateFolderSlot(structuredClone(raw), SEED7());
@@ -485,17 +496,30 @@ const seedFile = sIds => ({ blPromptFolders: { version: 1, folders: [
 const SEVEN = ['p41', 'p42', 'p43', 'p44', 'p45', 'p46', 'p47'];
 const headsOf = id => heads().filter(h => h.dataset.pfId === id);
 const usePreset = async (name, extensions) => { preset = name; pmStub.serviceSettings.extensions = extensions; await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle(); };
+const restoreToast = { text: '', count: 0, undo: null };
+const watchToast = () => {
+    const box = document.createElement('div'), msg = document.createElement('div'); msg.className = 'toast-message'; box.append(msg);
+    restoreToast.undo = () => msg.querySelector('.bl-toast-undo').dispatchEvent(new Event('click', { bubbles: true }));
+    globalThis.toastr.info = text => { restoreToast.text = text; restoreToast.count++; return [box]; };
+};
+watchToast();
 await test('1.5.2 굳은 옛 설정 + 식구가 늘어난 새 판: 머리 1 · 하위 머리 1 · 식구 7/7 · 택1 숫자와 택1 지킴이도 일곱 전부', async () => {
     settings.promptFolders.presets.P6 = { folders: [
         { id: 'f16', name: '분량 · 리듬', ids: ['p40', 'p48', 'p49'], open: true },
         { id: 'f17', name: '분량', ids: ['p42', 'p45', 'p46'], open: true, pick: true, parent: 'f16' },
     ] };
     await usePreset('P6', seedFile(SEVEN));
+    assert.match(restoreToast.text, /다시 채웠어요: 「분량」 4개\(항목 41 · 항목 43 · 항목 44 · 항목 47\)\. 예전에 일부러 폴더에서 뺀 항목이면 되돌리기/, '한 번 알림');
+    assert.equal(restoreToast.count, 1);
+    drawList(); await settle();
+    assert.equal(restoreToast.count, 1, '다시 그려도 또 묻지 않아요');
     assert.equal(headsOf('f16').length, 1, '위 폴더 머리 하나');
     assert.equal(headsOf('f17').length, 1, '하위 폴더 머리 하나');
     assert.match(headsOf('f17')[0].querySelector('.bl-pf-count').textContent, /^\d\/7 · 택1$/, '택1 숫자가 식구 일곱 전부');
     assert.ok(SEVEN.every(id => row(id).classList.contains('bl-pf-in2')), '일곱 모두 하위 폴더 안');
-    assert.equal(settings.promptFolders.presets.P6.v, undefined, '보기만 할 때는 옛 칸을 설정에서 바꾸지 않아요(옮긴 사본으로 그림)');
+    // 1.5.3 합친 항목이 있으면 처음 그릴 때 한 번 알리고(되돌리기 단추) 옮긴 칸을 저장해 다시 묻지 않아요
+    assert.equal(settings.promptFolders.presets.P6.v, 2, '알린 순간 옮긴 칸을 저장');
+    assert.deepEqual(settings.promptFolders.presets.P6.restored, { f17: ['p41', 'p43', 'p44', 'p47'] });
     // 택1 지킴이(prompt-choice)도 새 식구까지 — p41 이 켜진 채 새 식구 p47 을 켜면 p41 이 꺼져요
     const pc = await import(url('src/prompt-choice.js'));
     let handler = null;
@@ -527,6 +551,43 @@ await test('1.5.2 「이 폴더 고치기」로 뺀 항목은 새 판에서도 �
     pmStub.serviceSettings.extensions = seedFile(SEVEN); drawList(); await settle();
     assert.ok(!row('p43').classList.contains('bl-pf-in2'), '뺀 것은 새 판에서도 밖');
     assert.ok(row('p47').classList.contains('bl-pf-in2'), '새 판이 더한 것은 안');
+});
+await test('1.5.3 알림의 되돌리기: 합친 항목만 다시 밖(일부러 뺀 사용자) · 그 뒤 새 판이 더한 항목은 안 · 다시 묻지 않음', async () => {
+    restoreToast.count = 0; watchToast();
+    settings.promptFolders.presets.P10 = { folders: [
+        { id: 'f16', name: '분량 · 리듬', ids: ['p40', 'p48', 'p49'], open: true },
+        { id: 'f17', name: '분량', ids: ['p41', 'p42', 'p44', 'p45', 'p46'], open: true, pick: true, parent: 'f16' },
+    ] };   // 1.5.1 에서 p43 을 일부러 뺀 사람 · 파일은 여섯(p41~p46)
+    await usePreset('P10', seedFile(['p41', 'p42', 'p43', 'p44', 'p45', 'p46']));
+    assert.equal(restoreToast.count, 1);
+    assert.ok(row('p43').classList.contains('bl-pf-in2'), '알림 전까지는 합쳐 보여요');
+    restoreToast.undo(); await settle();
+    assert.ok(!row('p43').classList.contains('bl-pf-in2'), '되돌리면 뺀 항목은 다시 밖');
+    assert.equal(settings.promptFolders.presets.P10.restored, undefined);
+    pmStub.serviceSettings.extensions = seedFile(SEVEN); drawList(); await settle();   // 새 판이 p47 을 더함
+    assert.ok(!row('p43').classList.contains('bl-pf-in2'), '새 판에서도 밖');
+    assert.ok(row('p47').classList.contains('bl-pf-in2'), '새 판이 새로 더한 것은 안');
+    assert.equal(restoreToast.count, 1, '다시 묻지 않아요');
+});
+await test('1.5.3 이미 1.5.2 에서 옮김을 지난 칸(합쳐진 채 저장 · 기록 없음): 알림은 없고, 사용자가 한 번 다시 빼면 그 뒤 새 판에서도 밖', async () => {
+    restoreToast.count = 0; watchToast();
+    const seed6 = seedFile(['p41', 'p42', 'p43', 'p44', 'p45', 'p46']);
+    const seedList = core.readPresetFolders(seed6);
+    settings.promptFolders.presets.P11 = { v: 2, open: { f16: true, f17: true }, folders: seedList.map(({ open, ...f }) => f), base: core.seedBase(seedList) };
+    await usePreset('P11', seed6);
+    assert.equal(restoreToast.count, 0, '1.5.2 칸은 합친 기록이 없어 알리지 않아요');
+    assert.ok(row('p43').classList.contains('bl-pf-in2'), '돌아온 채로 보여요');
+    headsOf('f17')[0].querySelector('.bl-pf-more').dispatchEvent(new Event('click', { bubbles: true }));
+    [...document.querySelectorAll('.bl-pf-layer button')].find(b => b.textContent === '이 폴더 고치기').dispatchEvent(new Event('click', { bubbles: true }));
+    const editor = document.querySelector('dialog.bl-pf-editor');
+    editor.querySelector('.bl-pf-left .bl-pf-item[data-id="p43"] [data-pf-item="out"]').dispatchEvent(new Event('click', { bubbles: true }));
+    editor.querySelector('[data-card-done]').dispatchEvent(new Event('click', { bubbles: true })); await settle();
+    pmStub.serviceSettings.extensions = seedFile(SEVEN); drawList(); await settle();
+    assert.ok(!row('p43').classList.contains('bl-pf-in2'), '다시 뺀 것은 새 판에서도 밖');
+    assert.ok(row('p47').classList.contains('bl-pf-in2'), '새 판이 더한 것은 안');
+    pmStub.serviceSettings.extensions = seed6; drawList(); await settle();
+    assert.ok(!row('p43').classList.contains('bl-pf-in2'), '같은 판으로 돌아가도 밖');
+    for (const key of ['P10', 'P11']) delete settings.promptFolders.presets[key];
 });
 await test('1.5.2 식구 0 인 「이어서」 머리는 그리지 않아요(위 폴더 이어서 밑이 하위 폴더 머리뿐일 때) · 위 폴더를 접으면 그 자리에 접힌 머리', async () => {
     await usePreset('P9', { blPromptFolders: { version: 1, folders: [

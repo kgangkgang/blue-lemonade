@@ -68,6 +68,14 @@ await test('1.0.0 계열: 원격 manifest 의 bl_series 를 읽어 s2:1.0.0 — 
     assert.ok(compareRelease('s2:1.0.0', '8.2.5') > 0, '1.0.0(계열 2) > 8.2.5(계열 1)');
 });
 
+await test('1.5.3 noticeTable: 업데이트 창의 대체 출처(raw 의 src/notice-data.js 글)를 읽으면 공지 표와 같아요 · 꼴이 다르면 던짐', async () => {
+    const fs = await import('node:fs');
+    const { NOTICES } = await import(mod('src/notice-data.js'));
+    assert.deepEqual(U.noticeTable(fs.readFileSync(path.join(root, 'src/notice-data.js'), 'utf8')), NOTICES, '공지 표 꼴을 바꾸면 update-check.js 의 noticeTable 도 같이 고쳐요');
+    assert.throws(() => U.noticeTable('<html>404</html>'));
+    assert.throws(() => U.noticeTable('export const NOTICES = [ {bad} ];'));
+});
+
 await test('fetchLatest: GitHub manifest → 버전 · 막히거나 이상하면 Pages 공지 맨 위 · 둘 다 안 되면 던짐', async () => {
     REMOTE = { manifest: { status: 200, body: { version: '5.7.0' } }, notes: { status: 200, body: [{ version: '5.6.9', items: [] }] } };
     assert.equal(await U.fetchLatest(), '5.7.0');

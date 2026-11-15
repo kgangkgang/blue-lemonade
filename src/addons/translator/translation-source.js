@@ -51,6 +51,26 @@ export function translationFromShown(shown) {
     return wrapped && !lines.includes(null) ? lines.join('\n') : null;
 }
 
+// ── 1.5.3 편집 때 옛 번역 문단 다시 쓰기 ──
+// 원문을 고치면 번역문을 지우고 다시 번역하는데, 문단 캐시는 이 브라우저에만 있어 다른 기기에서 번역한 메시지 · 번역 설정을 바꾼 뒤의 메시지는
+//   한 문단만 고쳐도 전부 다시 보냈다. 번역할 때 원문 문단마다 짧은 해시를 기록 p 에 남기고(원문 · 번역 문단 수가 같을 때만), 고칠 때 지우기 전에
+//   옛 번역 문단과 짝지어 둔다 → 새 원문 문단의 해시가 옛 목록에 있으면(자리가 아니라 내용으로 — 끼우거나 빼도) 그 옛 번역 문단을 쓴다.
+//   크기: 문단 하나에 7자 안팎(32비트 36진수 + 띄어쓰기) — 100문단 답이면 약 0.8KB. 이 칸(translation_source)과 같이 지워지고 같이 뗀다
+const PARA_SPLIT = /\r?\n[\t ]*\r?\n(?:[\t ]*\r?\n)*/;   // translation-segments.js segmentParagraphs 와 같은 빈 줄
+const paragraphsOf = text => String(text ?? '').split(PARA_SPLIT);
+/** 문단 글 → 짧은 해시 (FNV-1a 32비트 · 36진수) */
+export function paragraphHash(text) {
+    const value = String(text ?? '');
+    let h = 0x811c9dc5;
+    for (let i = 0; i < value.length; i++) h = Math.imul(h ^ value.charCodeAt(i), 0x01000193) >>> 0;
+    return h.toString(36);
+}
+/** 원문 · 번역 문단 수가 같으면(2문단 이상) 원문 문단 해시를 띄어쓰기로 이은 글, 아니면 null */
+export function paragraphHashes(original, raw) {
+    const src = paragraphsOf(original), out = paragraphsOf(raw);
+    return src.length > 1 && src.length === out.length ? src.map(paragraphHash).join(' ') : null;
+}
+
 /** 번역을 붙일 때: raw = processTranslationText 에 넣은 번역 글, display = 나온 표시 (원문 보기 중이면 치워 둔 번역 자리에 들어간 글) */
 export function rememberSource(extra, { original, raw, display, hash }) {
     if (!extra || typeof extra !== 'object' || typeof raw !== 'string' || typeof display !== 'string' || !raw.trim() || !display) return false;
@@ -59,8 +79,49 @@ export function rememberSource(extra, { original, raw, display, hash }) {
         if (translationFromShown(display) === raw) record.v = 2;   // 6.9.6 표시에서 그대로 떼어 낼 수 있으면 번역 글을 따로 적지 않는다
         else record.t = raw;
     }
+    const hashes = paragraphHashes(original, raw);   // 1.5.3
+    if (hashes) record.p = hashes;
     extra[SOURCE_KEY] = record;
     return true;
+}
+
+/**
+ * 1.5.3 고치기 직전(원문은 이미 새 글 · 번역 표시와 original_text_hash 는 아직 옛것)에 → { hashes, paragraphs, index } 또는 null.
+ * 기록의 원문 해시가 옛 original_text_hash, 표시 해시가 지금 표시와 맞고 p 가 있을 때만. paragraphs = 옛 번역 글을 같은 빈 줄로 나눈 것
+ */
+export function priorFromRecord(extra, { hash }) {
+    const record = extra?.[SOURCE_KEY];
+    if (!record || typeof record !== 'object' || (record.v !== 1 && record.v !== 2) || typeof record.p !== 'string' || typeof record.o !== 'string') return null;
+    if (extra.original_text_hash === undefined || String(extra.original_text_hash) !== record.o) return null;
+    const shown = shownOf(extra);
+    if (typeof shown !== 'string' || !shown || String(hash(shown)) !== record.d) return null;
+    const raw = record.v === 2 ? translationFromShown(shown) : typeof record.t === 'string' ? record.t : shown;
+    if (typeof raw !== 'string' || !raw.trim()) return null;
+    const hashes = record.p.split(' '), paragraphs = paragraphsOf(raw);
+    if (hashes.length !== paragraphs.length) return null;
+    const index = new Map();
+    hashes.forEach((h, i) => { if (!index.has(h)) index.set(h, i); });
+    return { hashes, paragraphs, index };
+}
+
+/**
+ * 1.5.3 가린 문단(자리표시자 [[__VAR_n__]]) → 옛 번역 문단을 같은 자리표시자로 가린 글, 짝이 없으면 null.
+ * 자리표시자를 보호 글(blocks[n])로 되돌린 글의 해시로 찾고, 옛 번역 안의 같은 보호 글을 다시 자리표시자로 바꾼다(못 찾으면 null — 상태 카드처럼 모양이 바뀐 것)
+ */
+export function priorParagraph(prior, body, blocks) {
+    if (!prior?.index || typeof body !== 'string') return null;
+    const tokens = [...new Set(body.match(/\[\[__VAR_\d+__\]\]/g) || [])];
+    let source = body;
+    for (const token of tokens) { const block = blocks?.[Number(token.slice(8, -4))]; if (typeof block !== 'string' || !block) return null; source = source.split(token).join(block); }
+    const at = prior.index.get(paragraphHash(source));
+    if (at === undefined) return null;
+    let text = prior.paragraphs[at];
+    for (const token of tokens) {
+        const block = blocks[Number(token.slice(8, -4))], where = text.indexOf(block);
+        if (where < 0) return null;
+        text = text.slice(0, where) + token + text.slice(where + block.length);
+    }
+    return text;
 }
 
 /** 지금 보이는 번역의 번역 글 — 기록이 지금 원문 · 지금 표시와 맞을 때만, 아니면 null */

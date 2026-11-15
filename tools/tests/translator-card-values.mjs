@@ -43,6 +43,33 @@ test('weather made only of dictionary words reads locally; anything else goes to
     for (const text of ['上层区·微阴', '晴 朗朗微风', 'Green hall', 'The day begins', '两步距离 · 一条围裙', '2026-10-15', 'Morning walk'])
         assert.equal(ruleValue(text), null, text);
 });
+test('1.5.3 name-like words (months · seasons · Day · Fair …) read only in date/time/weather/season fields; name fields always go to the model', () => {
+    for (const word of ['June', 'April', 'Summer', 'Autumn', 'Winter', 'Day', 'Holiday', 'Rainbow', 'Frost', 'Crisp', 'Fair', 'Cloud', 'Today'])
+        assert.equal(ruleValue(word), null, `${word} with no field stays for the model (1.5.1 behaviour)`);
+    assert.equal(ruleValue('Summer', 'Season'), '여름');
+    assert.equal(ruleValue('Fair', 'Weather'), '맑음');
+    assert.equal(ruleValue('April', '日期'), '4월');
+    assert.equal(ruleValue('Day', 'Time of day'), '낮');
+    for (const [word, field] of [['Summer', 'Name'], ['April', 'Partner'], ['Morning', 'Name'], ['Dawn', 'Character'], ['June', '이름'], ['Fair', '人物']])
+        assert.equal(ruleValue(word, field), null, `${field}: ${word} is a name`);
+    assert.equal(ruleValue('Morning'), '아침', 'old fixed words without a field still read locally');
+    assert.equal(ruleValue('Saturday', 'Weather'), '토요일');
+});
+test('1.5.3 a card name field keeps its value for the model; the weather field next to it reads locally', () => {
+    forgetCardValueMemory();
+    const values = cardValues({ scope: 's', storage: storage() });
+    const src = '<stat>Name=Summer|Weather=Fair|Season=Summer|Partner=April|Place=Green hall</stat>';
+    const p = prepare(src, values);
+    assert.equal((p.text.match(/Summer/g) || []).length, 1, 'only the name value goes to the model');
+    assert.ok(p.text.includes('April'), 'partner name goes to the model');
+    assert.ok(!p.text.includes('Fair'), 'weather word reads locally');
+    const out = p.restore(answer(p.text, { Summer: '서머', April: '에이프릴', 'Green hall': '초록 홀' }));
+    assert.equal(out, '<stat>Name=서머|Weather=맑음|Season=여름|Partner=에이프릴|Place=초록 홀</stat>');
+    // 칸 이름이 없는 옛 카드(日期 · 地点 …)에서 이름처럼 보이는 낱말은 1.5.1 처럼 모델로
+    forgetCardValueMemory();
+    const old = prepare('<status_bar>\n日期：2026年10月15日 星期四\n地点：Summer\n题记：Fair\n</status_bar>', cardValues({ scope: 's', storage: storage() }));
+    assert.ok(old.text.includes('Summer') && old.text.includes('Fair'));
+});
 test('a local field is never sent; the card restores with the local value and exact keys', () => {
     forgetCardValueMemory();
     const values = cardValues({ scope: 's', storage: storage() });

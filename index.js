@@ -238,6 +238,8 @@ const IDLE_LAYER = [
 const BOOT_FRAME = [
     // 8.0.7 작가 노트 「페르소나 위치」 · 「캐릭터 설명 위치」 — 테마 화면 켜짐과 따로(확장만 모드에서도), 테마를 끄면 본체 위치로 (an-anchor.js)
     ['startNoteAnchor', () => import('./src/an-anchor.js'), m => { m.startNoteAnchor(); }],
+    // 1.5.3 작가 노트 안전망 — 새 채팅에 직전 노트 묻기 · 지우기 경고 한 줄 · 마지막 노트 불러오기 (an-keep.js · 감시자 없음 · 사건과 누름으로만)
+    ['startNoteKeep', () => import('./src/an-keep.js'), m => { m.startNoteKeep(); }],
     // 8.2.4 가운데 서랍을 한 번 열면 body 가 :has() 기준이 되어 프롬프트 토글 · 채팅 변화마다 메시지 요소 전부를 다시 계산했다 (st-has-anchor.js)
     // 1.2.2 시작 덮개 동안이면 걷힐 때 — 실리태번 style.css 규칙을 고치는 일이라 media 로 못 모아요. 걷힐 때 꺼 둔 시트 켜기와 같은 마이크로태스크에서 하면 다시 계산이 한 번이에요(boot-gate.js)
     ['rebaseBodyHasRules', () => import('./src/st-has-anchor.js'), m => { afterBoot(() => m.rebaseBodyHasRules()); }],

@@ -128,10 +128,10 @@ await check('translateSegments reports finished/batch after every group; the lab
     assert.equal(startNotice({ stage: 'segments', reused: 1, resumed: 0, pending: 47 }, 12), '번역을 시작해요 #12', '3.0.0 first translation with a cached line keeps the old toast');
     assert.equal(startNotice({ stage: 'segments', reused: 40, resumed: 40, pending: 49 }, 12), '남은 문단 49개를 이어서 번역해요 #12');
     assert.equal(startNotice({ stage: 'segments', reused: 0, pending: 89 }, 12), '번역을 시작해요 #12', 'first translation keeps the old toast');
-    assert.match(source, /const edited = Boolean\(message\.extra\.display_text\);/, '3.0.0 wiring: edited = the message already had a translation');
+    assert.match(source, /const edited = Boolean\(message\.extra\.display_text\)[^;\n]*;/, '3.0.0 wiring: edited = the message already had a translation');
     assert.match(source, /\{ \.\.\.stage, edited \}/, '3.0.0 wiring: progress stages carry edited');
     assert.match(source, /\{ \.\.\.stage, edited: true \}/, '3.0.0 wiring: the retranslate path is always edited');
-    assert.match(source, /const edited = Boolean\(message\.extra\.display_text\);/, '3.0.0 wiring: edited = the message already had a translation');
+    assert.match(source, /const edited = Boolean\(message\.extra\.display_text\)[^;\n]*;/, '3.0.0 wiring: edited = the message already had a translation');
     assert.match(source, /\{ \.\.\.stage, edited \}/, '3.0.0 wiring: progress stages carry edited');
     assert.match(source, /\{ \.\.\.stage, edited: true \}/, '3.0.0 wiring: the retranslate path is always edited');
     assert.equal(startNotice({ stage: 'segments', reused: 89, pending: 0 }, 12), null, 'nothing to send: no start toast (the cache toast follows)');

@@ -34,6 +34,12 @@ async function db() {
 }
 // 메모리에 없는 키만 한 연결 · 한 읽기 트랜잭션으로 한꺼번에 읽는다 (예전엔 키마다 DB 를 열었다). 결과: key → text (TTL 지난 것은 뺌)
 async function readMany(keys, ttl = TTL) {
+    const fresh = new Map();
+    for (const [key, value] of await readRows(keys, ttl)) fresh.set(key, value.text);
+    return fresh;
+}
+// 1.5.3 줄 전체(글 + 번역 설정 조각 sig) — paragraph-v4 줄은 열쇠에 설정이 없고 sig 로 견준다
+async function readRows(keys, ttl = TTL) {
     const found = new Map(), missing = [];
     for (const key of keys) { const value = memory.get(key); if (value) { memory.delete(key); memory.set(key, value); found.set(key, value); } else missing.push(key); }   // 7.3.1 쓴 것은 맨 뒤로 (LRU)
     let handle;
@@ -47,12 +53,12 @@ async function readMany(keys, ttl = TTL) {
         })));
     } catch { /* Storage unavailable: translate normally. */ } finally { handle?.close(); }
     const fresh = new Map();
-    for (const [key, value] of found) if (value?.time > Date.now() - ttl) fresh.set(key, value.text);
+    for (const [key, value] of found) if (value?.time > Date.now() - ttl) fresh.set(key, value);
     return fresh;
 }
-// 5.3.4: 한 번역에서 새로 받은 문단을 한 연결 · 한 쓰기 트랜잭션으로 저장한다 (예전엔 문단마다 DB 를 열고 트랜잭션을 따로 만들었다). rows: [key, text]
+// 5.3.4: 한 번역에서 새로 받은 문단을 한 연결 · 한 쓰기 트랜잭션으로 저장한다 (예전엔 문단마다 DB 를 열고 트랜잭션을 따로 만들었다). rows: [key, text, sig?]
 async function writeMany(rows, stamp) {
-    const values = rows.filter(([, text]) => text.length <= 12000).map(([key, text]) => ({ key, text, time: Date.now() }));
+    const values = rows.filter(([, text]) => text.length <= 12000).map(([key, text, sig]) => ({ key, text, time: Date.now(), ...(typeof sig === 'string' ? { sig } : {}) }));
     if (!values.length) return;
     for (const value of values) { memory.delete(value.key); memory.set(value.key, value); }
     while (memory.size > MEMORY_LIMIT) memory.delete(memory.keys().next().value);
@@ -104,18 +110,87 @@ export async function segmentCacheKey(signature, body, protection = null) {
     const values = map.map(n => String(protection?.(n) ?? ''));
     return { key: await checkpointKey(JSON.stringify(['paragraph-v3', signature(body), norm, values])), map };
 }
+// ── 1.5.3 문단 캐시 paragraph-v4 ──
+// 예전 열쇠는 문단 글 + 메시지 전체에 하나인 서명(연결 · 프롬프트 · 용어집 전부 · 참고 정보 …)이라, 번역과 고침 사이에 그중 하나만 바뀌어도(용어집 한 줄 · 작가 노트)
+//   그 메시지의 모든 문단이 빗나가 처음부터 다시 번역했고, 왜 그런지 알 길이 없었다. v4 열쇠는 문단 글(+ 그 자리의 보호 글)만이고,
+//   번역 설정은 재료별 조각(sig — c 연결 · 프롬프트, g 용어집, s 말투, f 메시지 표시, k 표기 흔들림)으로 줄 안에 같이 둔다.
+//   조각이 같아야 적중 · 다르면 어느 조각이 달라졌는지가 곧 빗나간 까닭이다. 같은 문단 글은 줄 하나(마지막 설정의 번역)만 남는다
+export const KEY_PARTS = Object.freeze(['c', 'g', 's', 'f', 'k']);
+/** 조각용 짧은 해시 (동기 · FNV 두 갈래 64비트 · 16진수) — 조각 글이 길어도 줄에는 이것만 */
+export function shortHash(value) {
+    const text = typeof value === 'string' ? value : JSON.stringify(value ?? null);
+    let a = 0x811c9dc5, b = 0x050c5d1f;
+    for (let i = 0; i < text.length; i++) { const ch = text.charCodeAt(i); a = Math.imul(a ^ ch, 0x01000193) >>> 0; b = Math.imul(b ^ ch, 0x5bd1e995) >>> 0; }
+    return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0');
+}
+/** 조각 객체 → 줄에 두는 글 (모르는 조각은 '') */
+export const partsSig = parts => JSON.stringify(KEY_PARTS.map(name => String(parts?.[name] ?? '')));
+/** 두 sig 사이에 달라진 조각 이름 (못 읽으면 전부) */
+export function changedParts(before, after) {
+    try {
+        const a = JSON.parse(before), b = JSON.parse(after);
+        if (!Array.isArray(a) || !Array.isArray(b)) return [...KEY_PARTS];
+        return KEY_PARTS.filter((name, i) => a[i] !== b[i]);
+    } catch { return [...KEY_PARTS]; }
+}
+const REASON_OF = [['c', 'setup'], ['g', 'glossary'], ['k', 'glossary'], ['s', 'speech'], ['f', 'marks']];
+/** 빗나간 까닭 하나 — setup(연결 · 모델 · 프롬프트) · glossary · speech · marks(상태 카드 · 한국어 남김) · same(조각은 같음) */
+export function missReason(before, after) {
+    const changed = changedParts(before, after);
+    return REASON_OF.find(([name]) => changed.includes(name))?.[1] ?? 'same';
+}
+/** v4 열쇠 → { key, map } — 자리표시자 번호는 문단 안 차례로 (3.0.1 과 같게), 그 자리의 보호 글도 열쇠에 */
+export async function bodyCacheKey(body, protection = null) {
+    const { norm, map } = localizePlaceholders(body);
+    const values = map.map(n => String(protection?.(n) ?? ''));
+    return { key: await checkpointKey(JSON.stringify(['paragraph-v4', norm, values])), map };
+}
+// 진행 표시 한 줄 (index.js progressLabel 이 뒤에 「· 3초」 를 붙인다) — 까닭을 알 때만, 모르면 null(예전 문구).
+//   진행 표시는 한 줄 알약(줄바꿈 없음 · 넘치면 말줄임)이라 폰 384 폭(글 칸 약 300px · 12px 글자)에 들어가게 짧게 — 자세한 까닭은 콘솔 한 줄
+const WHY_LONG = { setup: '번역 설정이 바뀌어', glossary: '용어집이 바뀌어', speech: '말투 지정이 바뀌어', marks: '카드 · 한국어 표시가 바뀌어' };
+const WHY_SHORT = { setup: '설정 바뀜', glossary: '용어집 바뀜', speech: '말투 바뀜', marks: '표시 바뀜' };
+const WHOLE_WHY = { code: '코드 칸이 있어 통째로 번역', block: '표 · 접기 HTML 이 있어 통째로 번역', tags: '문단을 건너는 태그가 있어 통째로 번역', long: '문단이 너무 많아 통째로 번역' };
+/** stage = translate 의 진행 알림 (+ edited · priorKnown) → 한 줄 또는 null */
+export function cacheWhyLine(stage) {
+    if (!stage || typeof stage !== 'object') return null;
+    if (stage.stage === 'whole') return WHOLE_WHY[stage.why] ?? null;
+    if (stage.stage !== 'segments' || !stage.pending || stage.resumed) return null;
+    const why = stage.why && typeof stage.why === 'object' ? stage.why : {};
+    const total = Number(stage.total) || 0, reused = Number(stage.reused) || 0, send = Number(stage.batch ?? stage.pending) || 0, done = Number(stage.finished) || 0;
+    const changed = Object.keys(WHY_LONG).map(name => [name, Number(why[name]) || 0]).filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);
+    if (reused > 0) {
+        const from = stage.fromPrior && stage.fromPrior === reused ? '이전 번역' : '저장된 번역';
+        return `${from} ${reused}/${total}${changed.length ? ` · ${WHY_SHORT[changed[0][0]]} ${changed[0][1]}` : ''} · 새로 번역 ${done}/${send}`;
+    }
+    if (changed.length) return `${WHY_LONG[changed[0][0]]} ${changed[0][1] === send ? `${send}개 모두 다시 번역` : `${changed[0][1]}개 다시 번역`} · ${done}/${send}`;
+    if (stage.edited && total > 1 && (Number(why.absent) || 0) === send) return `${stage.priorKnown ? '모든 문단이 바뀌어 새로 번역' : '이 기기에 저장된 번역이 없어요'} · ${done}/${send}`;
+    return null;
+}
+/** 문단 길로 못 가는 까닭 (segmentParagraphs 가 null 일 때) — code · block · tags · long, 문단 길로 가면 null */
+export function segmentBlocker(text) {
+    const value = String(text ?? '');
+    if (/```|~~~/.test(value)) return 'code';
+    if (/<\/?(?:div|details|table|pre|script|style|ul|ol|blockquote)\b/i.test(value)) return 'block';
+    if (segmentParagraphs(value) !== null) return null;
+    return value.split(/(\r?\n[\t ]*\r?\n(?:[\t ]*\r?\n)*)/).length > SEGMENT_PARTS_MAX ? 'long' : 'tags';
+}
 // 7.2.6 글자(\p{L})가 하나도 없는 문단 — 자리표시자 · 태그 · 기호뿐(그림 한 장 `<img …>` 같은 것) — 은 보내지 않고 그대로 둔다 (token-audit 번역 1)
 const bareLetters = body => /\p{L}/u.test(String(body).replace(/\[\[__VAR_\d+__\]\]/g, '').replace(/<[^>]*>/g, '').replace(/⟦\d+⟧/g, ''));
 // 1.0.4 앞 빈칸은 맨 앞에 한 번만 — 예전 꼴(묶음마다 앞뒤 \s*)은 자리표시자 사이 빈칸을 나누는 길이 여러 개라 보호 블록이 20개쯤 이어진 뒤 글이 오면 수십 초 되짚었어요
 const skipBody = body => !body.trim() || /^\s*(?:\[\[__VAR_\d+__\]\]\s*)+$/.test(body) || !bareLetters(body);
 export const skipsBody = skipBody;   // 시험용
 /** 5.4.2: 한 메시지의 문단 캐시 줄을 지운다 (사용자가 번역문을 지웠을 때) — 남아 있으면 다시 번역해도 요청 없이 옛 번역이 그대로 나왔다 */
-export async function forgetSegments(parts, signature, protection = null) {
+export async function forgetSegments(parts, signature, protection = null, { bodyKeys = false } = {}) {
     const keys = [];
-    for (let i = 0; i < parts.length; i += 2) if (!skipBody(parts[i])) keys.push((await segmentCacheKey(signature, parts[i], protection)).key);   // 3.0.1 번역할 때와 같은 열쇠
+    let count = 0;
+    for (let i = 0; i < parts.length; i += 2) if (!skipBody(parts[i])) {
+        count++;
+        keys.push((await segmentCacheKey(signature, parts[i], protection)).key);   // 3.0.1 번역할 때와 같은 열쇠
+        if (bodyKeys) { const { key } = await bodyCacheKey(parts[i], protection); keys.push(key, RESUME + key); }   // 1.5.3 v4 줄 · 그 이어 하기 줄
+    }
     if (!keys.length) return 0;
     await dropKeys(keys);
-    return keys.length;
+    return count;
 }
 /** 열쇠 줄을 메모리 · 저장소에서 한 트랜잭션으로 지운다 */
 async function dropKeys(keys) {
@@ -1010,9 +1085,14 @@ export function streamWatch({ done, settled, shape = text => text, frame = globa
     };
 }
 // 2.5.1 partial(text): 캐시에서 온 문단 · 끝난 묶음의 문단은 번역문, 나머지는 원문인 글 (끝난 문단부터 번역문으로 보여 주기용)
-export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker, partial = null, protection = null }) {
+// 1.5.3 keyParts(body) = 그 문단의 번역 설정 조각 객체 → paragraph-v4 (열쇠 = 문단 글, 조각은 줄 안 sig). 이때 signature 는 옛 열쇠(v2 · v3) — 새 열쇠로 못 찾은 문단만
+//   옛 열쇠로 한 번 더 찾아 쓰고 새 열쇠로 다시 저장한다(옮김 · 쌓인 30일치가 한꺼번에 쓸모없어지지 않게). keyParts 가 없으면 예전 그대로(v2 · v3).
+//   prior(body) = 편집 전 번역에서 짝지은 그 문단 번역(지금 자리표시자 번호) 또는 null — 저장된 줄이 없을 때만, 캐시와 같은 검사를 거쳐 쓴다
+export async function translateSegments({ parts, signature, request, check = () => {}, progress = () => {}, cacheable = () => true, blockedMarker, partial = null, protection = null, keyParts = null, prior = null }) {
     const stamp = epoch, output = [...parts], total = Math.ceil(parts.length / 2), missing = new Map();
-    let reused = 0, translated = 0, blocked = 0, resumedCount = 0;
+    let reused = 0, translated = 0, blocked = 0, resumedCount = 0, migrated = 0, fromPrior = 0;
+    const v4 = typeof keyParts === 'function';
+    const why = { setup: 0, glossary: 0, speech: 0, marks: 0, same: 0, absent: 0 };   // 1.5.3 보낼 문단이 왜 캐시에 없었나 (보낼 문단 하나에 하나)
     const touched = [];   // 7.3.1 캐시에서 꺼내 쓴 문단 — 끝에 시각을 새로 써서 최근에 쓴 채팅이 밀려나지 않게 (LRU)
     // paragraph-v2: 서명이 준비된 프롬프트 전체가 아니라 짧은 요약(연결 · 프롬프트 · 용어집)이 됐다
     const keyed = [];
@@ -1020,27 +1100,50 @@ export async function translateSegments({ parts, signature, request, check = () 
         check();
         const body = parts[i];
         if (skipBody(body)) continue;
-        const { key, map } = await segmentCacheKey(signature, body, protection);   // 3.0.1
-        keyed.push([i, body, key, map]);
+        const { key, map } = v4 ? await bodyCacheKey(body, protection) : await segmentCacheKey(signature, body, protection);   // 3.0.1
+        keyed.push([i, body, key, map, v4 ? partsSig(keyParts(body)) : undefined]);
     }
-    const saved = await readMany([...new Set(keyed.map(row => row[2]))]);
-    const resumed = await readMany([...new Set(keyed.map(row => RESUME + row[2]))], RESUME_TTL);   // 2.9.0 끊긴 묶음에서 남긴 문단
+    const saved = await readRows([...new Set(keyed.map(row => row[2]))]);
+    const resumed = await readRows([...new Set(keyed.map(row => RESUME + row[2]))], RESUME_TTL);   // 2.9.0 끊긴 묶음에서 남긴 문단
     check();
-    for (const [i, body, key, map] of keyed) {
+    const usable = (text, body) => text !== null && cleanParagraphEcho(text, body) === text.replace(/^\n+|\s+$/g, '') && cacheable(body, text);
+    const left = [];
+    for (const [i, body, key, map, sig] of keyed) {
         // 5.4.1: 예전에 캐시에 들어간 원문 되풀이 답(원문+화살표+번역 · 망가진 ⟦n] 표시)은 없는 셈 치고 다시 요청한다
         // 6.4.2 v2 지금 규칙으로 캐시에 넣지 않을 문단(예: 6.4.1 이하가 넣은 원문 한자 남은 문단)은 다시 쓰지 않고 번역한다 — 서명은 그대로라 다른 문단 캐시는 산다
         // 3.0.1 저장된 글의 자리표시자 번호(문단 안 차례)를 지금 번호로 되돌린 뒤 견주고 쓴다
-        const hit = saved.has(key) ? restorePlaceholders(saved.get(key), map) : null;
-        if (hit !== null && cleanParagraphEcho(hit, body) === hit.replace(/^\n+|\s+$/g, '') && cacheable(body, hit)) { output[i] = hit; reused++; touched.push([key, saved.get(key)]); continue; }
-        const kept = resumed.has(RESUME + key) ? restorePlaceholders(resumed.get(RESUME + key), map) : null;
-        if (kept && cleanParagraphEcho(kept, body) === kept.replace(/^\n+|\s+$/g, '') && cacheable(body, kept)) { output[i] = kept; reused++; resumedCount++; continue; }   // 2.9.0 이어 하기 · 7.3.1 resumed = 그중 이어 하기로 온 수
-        if (!missing.has(key)) missing.set(key, { key, body, map, indices: [] });
+        const row = saved.get(key), same = row && (!v4 || row.sig === sig);
+        const hit = same ? restorePlaceholders(row.text, map) : null;
+        if (usable(hit, body)) { output[i] = hit; reused++; touched.push(v4 ? [key, row.text, sig] : [key, row.text]); continue; }
+        const keptRow = resumed.get(RESUME + key);
+        const kept = keptRow && (!v4 || keptRow.sig === sig) ? restorePlaceholders(keptRow.text, map) : null;
+        if (kept && usable(kept, body)) { output[i] = kept; reused++; resumedCount++; continue; }   // 2.9.0 이어 하기 · 7.3.1 resumed = 그중 이어 하기로 온 수
+        left.push([i, body, key, map, sig, row ? (same ? 'same' : missReason(row.sig, sig)) : 'absent']);
+    }
+    // 1.5.3 옛 열쇠 옮김: v4 줄이 아예 없는 문단만 옛 열쇠(같은 설정 · 메시지 전체 서명)로 — 찾으면 쓰고 v4 줄로 다시 저장
+    const legacy = new Map();
+    if (v4 && typeof signature === 'function') {
+        for (const item of left) if (item[5] === 'absent') { check(); item[6] = (await segmentCacheKey(signature, item[1], protection)).key; }
+        const keys = left.filter(item => item[6]).map(item => item[6]);
+        if (keys.length) for (const [key, value] of await readMany([...new Set(keys)])) legacy.set(key, value);
+        check();
+    }
+    for (const [i, body, key, map, sig, reason, oldKey] of left) {
+        const old = oldKey && legacy.has(oldKey) ? restorePlaceholders(legacy.get(oldKey), map) : null;
+        if (usable(old, body)) { output[i] = old; reused++; migrated++; touched.push([key, legacy.get(oldKey), sig]); continue; }   // 옛 줄 글은 이미 문단 안 차례 번호
+        let before = null;
+        if (reason === 'absent' && typeof prior === 'function') { try { before = prior(body); } catch { before = null; } }
+        if (typeof before === 'string' && usable(before, body)) { output[i] = before; reused++; fromPrior++; if (v4) touched.push([key, localizeOut(before, map), sig]); continue; }
+        if (v4) why[reason in why ? reason : 'same']++;
+        if (!missing.has(key)) missing.set(key, { key, body, map, sig, indices: [] });
         missing.get(key).indices.push(i);
     }
     const pending = [...missing.values()];
     // 2.5.5 묶음 번역 진행: batch = 이번에 보낼 문단 수, finished = 그중 끝난 수 (묶음이 끝날 때마다 — 「수정 문단 17/74」)
     // 7.3.1 resumed: 캐시 중 이어 하기(끊긴 묶음)에서 온 문단 수 — 알림 · 진행 문구가 「바뀐 문단 n개만」과 「남은 문단 n개 이어서」를 가른다
-    progress({ stage: 'segments', done: reused, total, reused, resumed: resumedCount, translated, pending: pending.length, batch: pending.length, finished: 0 });
+    // 1.5.3 why · fromPrior · migrated: 진행 표시가 빗나간 까닭 한 줄을 만든다 (cacheWhyLine)
+    const notes = v4 || fromPrior ? { why, fromPrior, migrated, ...(typeof prior === 'function' ? { priorKnown: true } : {}) } : {};
+    progress({ stage: 'segments', done: reused, total, reused, resumed: resumedCount, translated, pending: pending.length, batch: pending.length, finished: 0, ...notes });
     const touch = async () => { if (touched.length && epoch === stamp) { try { await writeMany(touched.splice(0), stamp); } catch { /* 시각 새로 쓰기는 번역을 막지 않는다 */ } } };
     const tell = list => {
         if (!partial) return;
@@ -1061,7 +1164,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                 const row = pending[n];
                 if (!row || typeof text !== 'string' || !text.trim() || keptRows.get(n) === text) return;
                 const cleaned = cleanParagraphEcho(text, row.body);
-                if (cleaned !== null && epoch === stamp && cacheable(row.body, cleaned)) { rows.push([RESUME + row.key, localizeOut(cleaned, row.map)]); marks.push([n, text]); }   // 3.0.1 문단 안 차례로 저장
+                if (cleaned !== null && epoch === stamp && cacheable(row.body, cleaned)) { rows.push([RESUME + row.key, localizeOut(cleaned, row.map), row.sig]); marks.push([n, text]); }   // 3.0.1 문단 안 차례로 저장 · 1.5.3 v4 는 조각도
             });
             if (rows.length) { await writeMany(rows, stamp); for (const [n, text] of marks) keptRows.set(n, text); }
         } catch { /* 남기기 실패는 원래 오류를 바꾸지 않는다 */ }
@@ -1083,7 +1186,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                 // 2.9.0 · 2.9.2 받은 글만 더한다 — 실패한 묶음은 끝에 null 배열로 한 번 더 알리는데(index.js done(translated)), 그때 앞서 닫힌 문단을 지워 이어 하기가 비었다
                 if (Array.isArray(done)) done.slice(0, Math.min(safe, finished)).forEach((text, n) => { if (typeof text === 'string' && text.trim()) closedRows[n] = text; });
                 if (finished < pending.length && closedRows.length) checkpoint();   // 8.1.3 페이지가 닫혀도 받은 문단은 남게
-                progress({ stage: 'segments', done: reused + finished, total, reused, resumed: resumedCount, translated, pending: pending.length, batch: pending.length, finished });
+                progress({ stage: 'segments', done: reused + finished, total, reused, resumed: resumedCount, translated, pending: pending.length, batch: pending.length, finished, ...notes });
                 if (finished < pending.length) tell(done);
             });
         }
@@ -1115,7 +1218,7 @@ export async function translateSegments({ parts, signature, request, check = () 
                         for (const i of row.indices) { output[i] = `${markOf(row.body, echoed ?? undefined)}\n${row.body}`; blocked++; }
                         continue;
                     }
-                    if (epoch === stamp && cacheable(row.body, result)) rows.push([row.key, localizeOut(result, row.map)]);   // 3.0.1 문단 안 차례로 저장
+                    if (epoch === stamp && cacheable(row.body, result)) rows.push([row.key, localizeOut(result, row.map), row.sig]);   // 3.0.1 문단 안 차례로 저장 · 1.5.3 v4 는 조각도
                     for (const i of row.indices) { output[i] = result; translated++; }
                 }
             } finally { if (epoch === stamp) rows.push(...touched.splice(0)); if (rows.length) await writeMany(rows, stamp); }   // 7.3.1 꺼내 쓴 문단도 같은 트랜잭션으로
@@ -1128,8 +1231,8 @@ export async function translateSegments({ parts, signature, request, check = () 
     }
     check();
     await touch();
-    progress({ stage: 'segments', done: total, total, reused, resumed: resumedCount, translated, pending: 0 });
-    return { text: output.join(''), reused, resumed: resumedCount, translated, blocked, total };
+    progress({ stage: 'segments', done: total, total, reused, resumed: resumedCount, translated, pending: 0, ...notes });
+    return { text: output.join(''), reused, resumed: resumedCount, translated, blocked, total, ...notes };
 }
 
 // ── 6.2.1 태그 짝 지키기 ──

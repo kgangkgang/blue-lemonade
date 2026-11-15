@@ -125,6 +125,7 @@ export function settingRoute(path) {
     if (scope === 'compat') return key === 'preserveExtensionColors' || key === 'extensionColorsOff' ? {tab:'theme',sub:'etc'} : {tab:'chat',sub:'etc'};
     if (scope === 'chat' && key === 'triangleFold') return {tab:'chat',sub:'etc'};
     if (scope === 'chat' && key === 'emptyGuard') return {tab:'chat',sub:'etc'};   // 성능 보조를 꺼도 쓰는 보호라 채팅 › 기타에 줄이 있어요
+    if (scope === 'chat' && key === 'noteCarry') return {tab:'chat',sub:'etc'};   // 1.5.3 작가 노트 안전망도 채팅 › 기타 「채팅 저장」 묶음
     if (scope === 'chat' && /^(user|header|char$|bubbleSplit$)/.test(key)) return {tab:'chat',sub:'message'};   // 캐릭터 메시지 · 말풍선 나누기도 메시지 화면
     return {tab:'chat',sub:'screen'};
 }

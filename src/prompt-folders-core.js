@@ -86,13 +86,22 @@ export function migrateFolderSlot(slot, seed = []) {
     }
     const prints = seedBase(seed).prints;
     if (frozen.length === seed.length && frozen.every(f => prints[f.id] === folderPrint(f))) return { v: 2, open };
-    const claimed = new Set(frozen.flatMap(f => f.ids));
+    // 1.5.3 옛 칸에는 「사용자가 뺌」과 「새 판이 더함」을 가를 기록(저장 시각 · 그때 파일 · 판 표식)이 없어요 → 합치되, 합친 항목을 restored 에 남겨
+    //   화면이 한 번 알리고(「뺐던 항목이 돌아왔으면 되돌리기」) 되돌리기로 정확히 그 항목만 다시 뺄 수 있게 해요(조용히 되살리지 않기)
+    const claimed = new Set(frozen.flatMap(f => f.ids)), restored = {};
     for (const s of seed) {
         const host = frozen.find(f => f.id === s.id) || frozen.find(f => f.name === s.name);
         if (!host) continue;
-        for (const id of s.ids) if (!claimed.has(id) && host.ids.length < LIMITS.ids) { host.ids.push(id); claimed.add(id); }
+        for (const id of s.ids) if (!claimed.has(id) && host.ids.length < LIMITS.ids) { host.ids.push(id); claimed.add(id); (restored[host.id] ||= []).push(id); }
     }
-    return { v: 2, open, folders: frozen, base: seedBase(seed) };
+    return { v: 2, open, folders: frozen, base: seedBase(seed), ...(Object.keys(restored).length ? { restored } : {}) };
+}
+/** 옮김이 합친 항목을 다시 빼요(1.5.3 알림의 되돌리기) — 그 항목은 고칠 때 파일에 있던 id 라 앞으로도 밖이에요. 새 칸을 돌려줘요 */
+export function undoRestored(slot) {
+    if (!isObj(slot) || !isObj(slot.restored) || !Array.isArray(slot.folders)) return slot;
+    const out = { ...slot, folders: slot.folders.map(f => ({ ...f, ids: f.ids.filter(id => !(slot.restored[f.id] || []).includes(id)) })) };
+    delete out.restored;
+    return out;
 }
 /** 지금 보일 폴더 = 프리셋 파일 폴더(seed) + 테마 설정 칸(slot, v2). 새 객체를 돌려줘요(고쳐도 칸 · 파일은 그대로) */
 export function mergeFolders(seed = [], slot = null) {

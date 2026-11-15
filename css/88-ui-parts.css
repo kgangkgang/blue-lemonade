@@ -382,9 +382,10 @@ html:not(#bl-ui-parts-off) body .eh-pchip { font-size: var(--bl-ui-tab-fs) !impo
     .llmt-tab > span, .llmt-card-head > span,
     .lv-tab > span, label.lv-toggle > span:not(.lv-desc), .lv-card-head > span,
     .jj-card-title > span,
-    .bl-lc-chip > span, .bl-lc-fd-h > :is(b, span), .bl-lc-foot > .salty-btn > span, .bl-lc-done > span, #bl-lc-title > span, .bl-lc-np-h,
+    .bl-lc-chip > span, .bl-lc-fd-h > :is(b, span), .bl-lc-foot > .salty-btn > span, .bl-lc-done > span, #bl-lc-title > :is(span, small), .bl-lc-np-h,
     label.pa-hub-load > span,
     .salty-notice-toggle > span,
+    .bl-favorites-heading > :is(span, small),
     .bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)
   ) { text-box: trim-both cap alphabetic; padding-block: calc((1lh - 1cap) / 2); }
 }
@@ -396,3 +397,7 @@ html:not(#bl-ui-parts-off) body .eh-pchip { font-size: var(--bl-ui-tab-fs) !impo
    옆 번역 단추는 제 여백을 아이콘과 같이 접어 줄 높이를 아이콘 상자에 맞춰요(줄이 더 크면 기준선 묶음이 위로 붙어요). --bl-ink-row 는 「이 줄은 CSS 가 세로를 맞춘다」는 표식이에요. */
 @property --bl-ink-cap { syntax: '<length>'; inherits: true; initial-value: 0px; }
 /* 이 묶음의 규칙(크게 보기 아이콘 줄)은 css/15-drawers.css 끝(둘째 장 — 서랍 · 창을 열 때 받아요)에 있어요 · 프리셋 편집 창 줄은 css/59-prompt-ux.css — 첫 장 :has( 상한 149 를 넘지 않게(1.5.2 통합). @property 는 여기 첫 장에 */
+/* 1.5.2 확장 서랍 맨 위 단추 줄: 「확장 순서」 · 「성능 보조」 아이콘이 옆 원작 단추(15px · 줄 높이 15px)와 글자 크기 · 줄 높이가 달라(16/16 · 상자 0.3px 위) 잉크 가운데가 0.63 · −0.29px 갈렸어요 → 같은 상자로(뒤 0.00 · −0.01px) */
+html:not(#bl-ui-parts-off) body.salty #rm_extensions_block .extensions_block > .flex-container > :is(#po-open, #pa-hub-open) > i { font-size: 15px !important; line-height: 15px !important; height: auto; }
+/* 1.5.2 요청 로그 탭 아이콘: 그림 잉크가 탭 줄 가운데보다 0.47px 낮았어요(15px 글자 · 세 탭 같은 값) → 제 크기 비율로 올려요. 「집계」 · 「예산」은 글자 잉크가 0.49px 위라 차가 0.96px 이었어요(뒤 0.5px 안 — 글자 모양 몫은 남아요) */
+html:not(#bl-ui-parts-off) body.salty .rl-tab > i { translate: 0 -.03em; }

@@ -69,7 +69,7 @@ const COVERAGE = [
     ['image.*', '그림 무대'],
     // 미리보기가 없는 동작 · 성능 · 도구 옵션
     ['enabled', NONE, '테마 켜기'], ['apiStatus.on', NONE, '서랍 안 점'], ['auto.by', NONE, '자동 밝기 기준'], ['chat.chatLight', NONE, '성능'],
-    ['chat.colorPop', NONE, '도구 팝업'], ['chat.selectPop', NONE, '도구 팝업'], ['chat.emptyGuard', NONE, '저장 동작'], ['chat.homeIcon', NONE, '홈 화면 아이콘(설명 글만)'],
+    ['chat.colorPop', NONE, '도구 팝업'], ['chat.selectPop', NONE, '도구 팝업'], ['chat.emptyGuard', NONE, '저장 동작'], ['chat.noteCarry', NONE, '새 채팅 · 작가 노트 동작'], ['chat.homeIcon', NONE, '홈 화면 아이콘(설명 글만)'],
     ['chat.lazyAvatars', NONE, '성능'], ['chat.numComma', NONE, '숫자 칸'], ['chat.persona*', NONE, '페르소나 목록'], ['chat.replyTop', NONE, '스크롤 동작'],
     ['chat.searchIme', NONE, '검색 칸'], ['chat.showMoreAuto', NONE, '불러오기 동작'], ['chat.streamFade', NONE, '스트리밍 동작'], ['st.streamFadeIn', NONE, '스트리밍 동작'],
     ['chat.worldInfoLight', NONE, '성능'], ['chatOrganizer.on', NONE, '서랍 도구'], ['compat.*', NONE, '다른 확장 호환'], ['deviceLayouts.on', NONE, '기기별 설정'],

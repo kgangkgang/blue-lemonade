@@ -196,7 +196,7 @@ await test('⑩ 조각 짝(AI 0): 같은 나눔표면 조각끼리 · 표가 다
     const got = Object.fromEntries(T.piecePairs(dict));
     assert.deepEqual(got, { Morning: '아침', 'Front Desk': '안내 데스크', Day: '낮', 'Dorm 2': '기숙사 2동' });
     assert.deepEqual(T.piecePairs(dict, new Set(['other'])), []);
-    assert.deepEqual(T.fixedPairs(['Morning:Lobby, Afternoon:Desk, Night:Dorm', 'Sunday'], { Night: '밤' }), [['Morning', '아침'], ['Afternoon', '오후'], ['Sunday', '일요일']]);
+    assert.deepEqual(T.fixedPairs([{ text: 'Morning:Lobby, Afternoon:Desk, Night:Dorm', key: 'sched' }, { text: 'Sunday', key: 'week' }, { text: 'Spring', key: 'desc' }], { Night: '밤' }), [['Morning', '아침'], ['Afternoon', '오후'], ['Sunday', '일']]);
     assert.deepEqual(T.batches(['a'.repeat(5000), 'b'.repeat(4000), 'c'], 60, 8000).map(b => b.length), [1, 2]);
     assert.equal(T.batches(Array.from({ length: 130 }, (_, i) => `s${i}`)).length, 3);
 });
@@ -242,19 +242,18 @@ await test('⑫ 번역기가 다시 반쯤 돌려주면 옛 짝을 되돌리고(
     assert.equal(f.meta.tr.Day, '낮', '채팅 열기 · 답 끝 뒤 자동');
 });
 
-await test('⑬ 고정 낱말 사전(테마 card-values 하나): 요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴 · 대소문자 · 줄임 · 복수 — 값 전체일 때만 · 이름 칸 · 문장은 아님', () => {
-    const cases = { Saturday: '토요일', SATURDAY: '토요일', sat: '토요일', Tues: '화요일', April: '4월', Sept: '9월', Winter: '겨울', 'Late Autumn': '늦가을', Day: '낮', Dusk: '해 질 녘', Afternoon: '오후', 'Partly Cloudy': '구름 조금', 'Sunny, gentle breeze': '맑음, 산들바람', Weekends: '주말', 'Day 3': '3일째', '4/1 (Mon)': '4/1(월)', 'April 2': '4월 2일', 'Heavy rain · Cold': '폭우 · 추움' };
-    for (const [en, ko] of Object.entries(cases)) assert.equal(T.fixedValue(en), ko, en);
-    assert.equal(T.fixedValue('Mon', 'week'), '월');
-    for (const text of ['May', 'Morning walk to the lobby', 'The day begins', 'Sunny Side Cafe']) assert.equal(T.fixedValue(text), null, text);
-    assert.equal(T.fixedValue('Summer', 'name'), null, '이름 칸은 안 바꿈');
-    const pairs = Object.fromEntries(T.fixedPairs([{ text: 'Mon', key: 'week' }, { text: 'Spring', key: 'season' }, { text: 'Summer', key: 'name' }, { text: 'Morning:Lobby, Day:Desk', key: 'sched' }, { text: 'Rainy days make Mira sleepy.', key: 'desc' }], {}));
+await test('⑬ 고정 낱말 사전(테마 card-values 하나): 정해진 칸(요일 · 시간대 · 달 · 날씨 · 계절)의 값 전체만 · 대소문자 · 줄임 · 복수 · 날짜 꼴 — 이름 칸 · 자유 글 · 문장은 아님', () => {
+    const cases = [['Saturday', 'time', '토요일'], ['SATURDAY', 'time', '토요일'], ['sat', 'week', '토'], ['Tues', 'week', '화'], ['April', 'month', '4월'], ['Sept', 'month', '9월'], ['May', 'month', '5월'], ['Winter', 'season', '겨울'], ['Late Autumn', 'season', '늦가을'], ['Day', 'time', '낮'], ['Dusk', 'time', '해 질 녘'], ['Afternoon', 'slot', '오후'], ['Partly Cloudy', 'weather', '구름 조금'], ['Sunny, gentle breeze', 'weather', '맑음, 산들바람'], ['Weekends', 'time', '주말'], ['Day 3', 'time', '3일째'], ['4/1 (Mon)', 'time', '4/1(월)'], ['Heavy rain · Cold', 'weather', '폭우 · 추움'], ['Light rain', 'chip-weather', '약한 비'], ['Morning', 'chip-time', '아침']];
+    for (const [en, key, ko] of cases) assert.equal(T.fixedValue(en, key), ko, `${key}:${en}`);
+    for (const text of ['Morning walk to the lobby', 'The day begins', 'Sunny Side Cafe']) assert.equal(T.fixedValue(text, 'weather'), null, text);
+    for (const [text, key] of [['April', ''], ['Summer', 'name'], ['June', 'who'], ['Morning', 'label'], ['Spring', 'desc'], ['May', 'time']]) assert.equal(T.fixedValue(text, key), null, `${key}:${text} — 정해진 칸이 아니면 안 바꿈`);
+    const pairs = Object.fromEntries(T.fixedPairs([{ text: 'Mon', key: 'week' }, { text: 'Spring', key: 'season' }, { text: 'Summer', key: 'name' }, { text: 'Morning:Lobby, Day:Desk', key: 'sched' }, { text: 'Rainy days make Mira sleepy.', key: 'desc' }, { text: 'Autumn', key: 'label' }], {}));
     assert.deepEqual(pairs, { Mon: '월', Spring: '봄', Morning: '아침', Day: '낮' });
 });
 
 await test('⑭ 고정 낱말 칸은 번역 요청에 0번 실림 · 누르기 전에 사전에 들어감(그 확장 길도 안 보냄) · 사전 짝은 한 번에', async () => {
     const f = fakeTarget({ ko: { 'Rainy days make Mira sleepy.': '비 오는 날이면 미라는 졸려 한다.' } });
-    f.app.current.snaps = new Map([[1, { labels: ['🌤 Partly cloudy', '📍 Lobby'] }]]);
+    f.app.current.snaps = new Map([[1, { labels: ['날씨: Partly cloudy', '📍 Lobby'] }]]);
     f.app.current.state = { core: { title: 'Harbor Archive' }, data: { calendar: { week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], months: [{ name: 'January' }, { name: 'April' }], times: ['Dawn', 'Morning', 'Day', 'Evening', 'Night'], time: 'morning', weather: 'Light rain, chilly', season: 'Spring' }, rel: { user: [{ name: 'Mira', memo: 'Rainy days make Mira sleepy.' }] } }, recent: [] };
     Object.assign(f.meta.tr, { 'Harbor Archive': '항구 기록관', Mira: '미라', Lobby: '로비' });
     let adds = 0; const realAdd = f.mb.tr.addPairs; f.mb.tr.addPairs = p => { adds++; return realAdd(p); };
@@ -319,6 +318,85 @@ await test('⑯ 칩 줄: 같은 사전 · 같은 길 — 관계 이름 · 새 �
     Object.assign(d, { 'Complicated Morning After': '복잡한 다음 날 아침', "Marlow's Penthouse": '말로의 펜트하우스' });
     assert.equal(T.chipText(viewLike(d, labels[0]), d), '💞 로완 = 복잡한 다음 날 아침');
     assert.equal(T.chipText(viewLike(d, labels[1]), d), '🗺️ 새 장소: 말로의 펜트하우스');
+});
+
+// ───── 1.5.3: 1.5.2 검토 결함 (사용자가 고친 것이 이김 · 이름은 고정 낱말이 아님 · 망가진 자료 되살리기) ─────
+const reset = (meta, next) => { for (const k of Object.keys(meta)) delete meta[k]; Object.assign(meta, next); };
+// 그 확장 「번역 고치기」 창의 동작을 본뜬 것(코드는 옮기지 않음): 창을 열 때 사전을 펼쳐 읽고, 고치면 d[en] = 값 · 📌 잠금 · 곧바로 채팅 메타 저장(JSON)
+const fakeTrFix = (meta, edits, saved) => async () => {
+    const d = meta.tr, lock = (meta.trLock ??= {});
+    saved.seen = { ...d };
+    for (const [en, ko] of Object.entries(edits)) { d[en] = ko; lock[en] = true; }
+    saved.json = JSON.stringify(meta);
+};
+await test('⑰ 「번역 고치기」에서 고정 낱말을 고치고 📌 → 저장 → 다시 열기: 고친 값이 그대로(검토 1)', async () => {
+    const f = fakeTarget();
+    f.app.current.snaps = new Map();
+    f.app.current.state = { core: {}, data: { calendar: { times: ['Morning', 'Night'], time: 'Morning' } }, recent: [] };
+    f.meta.trLock = {};
+    const tm = fakeTimers();
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A', now: tm.now, timers: tm.timers });
+    fill.tidy({ draw: false });
+    assert.equal(Object.keys(f.meta.tr).includes('Morning'), false, '평소엔 숨김');
+    const saved = {};
+    f.app.openTrFix = fakeTrFix(f.meta, { Morning: '오전' }, saved);
+    assert.equal(fill.guardTrFix(), true);
+    await f.app.openTrFix(null, 'calendar');
+    assert.equal(saved.seen.Morning, '아침', '창에는 숨긴 짝도 보임');
+    assert.equal(JSON.parse(saved.json).tr.Morning, '오전', '고친 값이 채팅 파일에');
+    await tm.run(100);
+    assert.equal(Object.keys(f.meta.tr).includes('Morning'), true, '📌 한 것은 숨기지 않음');
+    assert.equal(Object.keys(f.meta.tr).includes('Night'), false, '나머지는 다시 숨김');
+    // 다시 열기 = 저장된 JSON 으로
+    reset(f.meta, JSON.parse(saved.json));
+    const again = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+    again.tidy({ draw: false });
+    assert.equal(f.meta.tr.Morning, '오전');
+    assert.equal(JSON.parse(JSON.stringify(f.meta)).tr.Morning, '오전', '다시 저장해도 남음');
+    assert.equal(f.meta.trLock.Morning, true);
+    assert.equal(viewLike(f.meta.tr, 'Morning'), '오전');
+});
+
+await test('⑱ 이름이 April · June · Summer 인 사람: 이름 그대로 · 고정 낱말 사전에 안 들어감 · 문장 속 이름도 그대로 · 정해진 칸의 Morning · Saturday · May 는 한국어(검토 2)', () => {
+    const f = fakeTarget();
+    f.app.current.snaps = new Map([[1, { labels: ['♥ April +8', '💞 June = Complicated Morning After', '🕐 Morning'] }]]);
+    f.app.current.state = { core: {}, data: { profile: { list: [{ name: 'April' }, { name: 'Summer' }] }, rel: { user: [{ name: 'June', label: 'Complicated Morning After' }] }, calendar: { week: ['Saturday'], months: [{ name: 'April' }, { name: 'May' }, { name: 'June' }], times: ['Morning'], time: 'Morning', season: 'Summer' } }, recent: [] };
+    f.meta.trLock = {};
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+    fill.tidy({ draw: false });
+    const d = f.meta.tr;
+    for (const name of ['April', 'June', 'Summer']) assert.equal(Object.hasOwn(d, name), false, `${name} 은 사전에 안 들어감`);
+    assert.equal(viewLike(d, 'April waved at Summer and June.'), 'April waved at Summer and June.');
+    assert.equal(viewLike(d, 'Morning'), '아침'); assert.equal(viewLike(d, 'Saturday'), '토'); assert.equal(viewLike(d, 'May'), '5월');
+    assert.equal(viewLike(d, 'Complicated Morning After'), 'Complicated Morning After', '부분 바꿈 0 그대로');
+    const chips = ['♥ April +8', '💞 June = Complicated Morning After', '🕐 Morning'].map(l => T.chipText(viewLike(d, l), d, l));
+    assert.deepEqual(chips, ['♥ April +8', '💞 June = Complicated Morning After', '🕐 아침']);
+    assert.equal(JSON.stringify(JSON.parse(JSON.stringify(d))).includes('4월'), false, '채팅 파일에 「4월」 짝 없음');
+});
+
+await test('⑲ 망가진 자료 되살리기: 값 없는 잠금 풀기 · 이름 → 달 · 계절 짝 지우기 · 📌 한 짝은 그대로 · 두 번 돌아도 같음 · 진단 기록', () => {
+    const f = fakeTarget();
+    f.app.current.snaps = new Map();
+    f.app.current.state = { core: {}, data: { profile: { list: [{ name: 'April' }, { name: 'June' }, { name: 'Autumn' }] }, calendar: { times: ['Morning'] } }, recent: [] };
+    reset(f.meta, { tr: { Rowan: '로완', April: '4월', June: '6월', Autumn: '가을' }, trLock: { Morning: true, June: true }, notes: [] });
+    Object.defineProperty(f.meta.tr, 'Night', { value: '야간', enumerable: false, writable: true, configurable: true });
+    f.meta.trLock.Night = true;   // 1.5.2 에서 고쳐 📌 했지만 숨은 채인 것
+    const before = T.trRepairLog.length;
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+    fill.tidy({ draw: false });
+    const d = f.meta.tr;
+    assert.equal(f.meta.trLock.Morning, undefined, '① 값 없는 잠금은 풀림');
+    assert.equal(d.Morning, '아침', '① 풀린 뒤 다시 들어감');
+    assert.equal(Object.hasOwn(d, 'April'), false, '② 이름 → 달 짝 지움'); assert.equal(Object.hasOwn(d, 'Autumn'), false);
+    assert.equal(d.June, '6월', '📌 한 짝은 사용자 것'); assert.equal(d.Rowan, '로완');
+    assert.equal(Object.keys(d).includes('Night') && JSON.parse(JSON.stringify(d)).Night, '야간', '③ 📌 한 숨은 짝은 파일에 남게');
+    const log = T.trRepairLog.at(-1);
+    assert.equal(T.trRepairLog.length, before + 1);
+    assert.deepEqual([log.unlocked, log.removed, log.shown], [1, 2, 1]);
+    const snap = JSON.stringify(f.meta);
+    fill.tidy({ draw: false });
+    assert.equal(JSON.stringify(f.meta), snap, '두 번째도 같은 결과');
+    assert.equal(T.trRepairLog.length, before + 1, '두 번째는 기록 없음');
 });
 
 console.log(`ext-bridge-tr: ${passed} 통과`);

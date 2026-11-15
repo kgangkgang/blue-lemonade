@@ -1,7 +1,7 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3d9e1013ab22) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build dc8b3b414361) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"61363f7ea4524234"}
 /* css/00-base.css */
-:root{--bl-release:"1.5.2";}
+:root{--bl-release:"1.5.3";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -8802,14 +8802,18 @@ html:not(#bl-ui-parts-off) body.salty :where(b):where(.bl-lc-fd-h > :is(b, span)
 html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-fd-h > :is(b, span)):is(#bl-s, *):is(bl-s, *),
 html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-foot > .salty-btn > span):is(#bl-s, *):is(bl-s, *),
 html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-lc-done > span):is(#bl-s, *):is(bl-s, *),
-html:not(#bl-ui-parts-off) body.salty #bl-lc-title > span,
+html:not(#bl-ui-parts-off) body.salty #bl-lc-title > :where(span):is(span, small),
+html:not(#bl-ui-parts-off) body.salty #bl-lc-title > :where(small):is(span, small),
 html:not(#bl-ui-parts-off) body.salty :where(.bl-lc-np-h):is(#bl-s, *):is(bl-s, *),
 html:not(#bl-ui-parts-off) body.salty :where(span):where(label.pa-hub-load > span):is(#bl-s, *):is(bl-s, *),
 html:not(#bl-ui-parts-off) body.salty :where(span):where(.salty-notice-toggle > span):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(span):where(.bl-favorites-heading > :is(span, small)):is(#bl-s, *):is(bl-s, *),
+html:not(#bl-ui-parts-off) body.salty :where(small):where(.bl-favorites-heading > :is(span, small)):is(#bl-s, *):is(bl-s, *),
 html:not(#bl-ui-parts-off) body.salty :where(.bl-ext-fold-t):where(.bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)):is(#bl-s, *):is(bl-s, *),
 html:not(#bl-ui-parts-off) body.salty :where(.bl-ext-fold-v):where(.bl-ext-fold > :is(.bl-ext-fold-t, .bl-ext-fold-v)):is(#bl-s, *):is(bl-s, *) { text-box: trim-both cap alphabetic; padding-block: calc((1lh - 1cap) / 2); }
 }
 @property --bl-ink-cap { syntax: '<length>'; inherits: true; initial-value: 0px; }
+html:not(#bl-ui-parts-off) body.salty .rl-tab > i { translate: 0 -.03em; }
 /* css/89-form-metrics.css */
 :where(.salty-panel),
 :where(.bl-ft-dialog),

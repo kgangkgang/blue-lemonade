@@ -10,6 +10,10 @@
 //   raw.githubusercontent 가 막히면 GitHub Pages 의 release-notes.json 맨 위 버전으로.
 // 알약: 새 버전이 있으면 확장 서랍 머리 · 설정 창 제목의 버전 알약에 has-update (css/20-panel.css 노란 빛, 공지 빛 is-new 보다 먼저).
 // 누르면: 업데이트 창 — 지금 → 새 버전, 그 사이 버전들의 공지 (release-notes.json 은 창을 열 때만 받음 · 152 KB).
+//   1.5.3 게시 직후엔 raw 의 manifest 가 새 판을 먼저 알리고 Pages 배포(1 ~ 3분)가 뒤따라요 — 그 사이에 창을 열면
+//     Pages 공지에 새 판 항목이 아직 없어요. 그래서 새 판 항목이 있는 출처를 차례로 찾고(fetchNotes: Pages → raw main 의
+//     src/notice-data.js — manifest 와 한 커밋이라 manifest 가 새 판이면 이것도 새 판), 받았는데 아직 없으면 「준비하는 중」으로
+//     20 · 40 · 80 · 160초 뒤 스스로 다시 불러요(캐시를 피하는 주소 · 창을 닫으면 멈춤). 못 받으면(네트워크 · 404) 「다시 시도」 단추.
 // 업데이트:
 //   Git 으로 깐 곳 → 실리태번 업데이트 (/api/extensions/update — 확장 관리의 업데이트 단추와 같음)
 //     7.8.5 그게 실패하면 (저장소 기록이 다시 쓰여 받아 오기가 막힌 경우 등) 아래 ZIP 길로 새로 받아 깐다.
@@ -115,6 +119,45 @@ export function notesBetween(notes, from, to) {
         .filter(n => n && noteRelease(n) && Array.isArray(n.items) && compareRelease(noteRelease(n), from) > 0 && compareRelease(noteRelease(n), to) <= 0)
         .sort((a, b) => compareRelease(noteRelease(b), noteRelease(a)));
 }
+
+/** 1.5.3 공지 표 글(src/notice-data.js) → 항목 배열. 「export const NOTICES = [」 와 끝 「];」 사이가 JSON 한 줄씩이에요. 꼴이 다르면 던져요 */
+export function noticeTable(text) {
+    const head = 'export const NOTICES = [', s = String(text ?? ''), i = s.indexOf(head), e = s.lastIndexOf('];');
+    if (i < 0 || e < i) throw new Error('공지 표 없음');
+    return JSON.parse(`[${s.slice(i + head.length, e).replace(/,\s*$/, '')}]`);
+}
+// 바뀐 내역 출처 — 이미 쓰는 호스트만(Pages · raw). 앞 것에 새 판 항목이 없을 때만 다음 것을 받아요.
+const NOTE_SOURCES = [
+    { url: NOTES, read: r => r.json() },                                                    // 모든 판
+    { url: `${RAW}/src/notice-data.js`, read: async r => noticeTable(await r.text()) },     // 계열 2(1.0.0 ~)만 · 더 작음 · manifest 와 한 커밋
+];
+export const NOTES_RETRY_MS = Object.freeze([20000, 40000, 80000, 160000]);
+const NOTES_BUCKET = 600000;   // 10분 묶음 — 새 판 항목까지 받은 응답만 이 값을 다시 써요
+let notesMissed = false;       // 지난번에 받았는데 새 판 항목이 없었나 — 그러면 다음 요청은 묶음 값 대신 새 값 (중간 캐시가 옛 목록을 또 주지 않게)
+const timed = (signal, ms) => (signal && typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, AbortSignal.timeout(ms)]) : AbortSignal.timeout(ms));
+/**
+ * 1.5.3 바뀐 내역 받기 (from 보다 새롭고 to 까지 · 새것 먼저).
+ * @returns {Promise<{state:'ok'|'pending'|'fail', list:object[]}>} ok = to 항목까지 있음 · pending = 받았는데 to 항목이 아직 없음(배포 전) · fail = 어디서도 못 받음
+ */
+export async function fetchNotes(from, to, { fetcher = fetch, fresh = false, now = Date.now(), signal } = {}) {
+    const bucket = Math.floor(now / NOTES_BUCKET);
+    const t = fresh || notesMissed ? `${bucket}-${now.toString(36)}` : String(bucket);
+    let reached = false;
+    for (const source of NOTE_SOURCES) {
+        if (signal?.aborted) break;
+        try {
+            const r = await fetcher(`${source.url}?t=${t}`, { cache: 'no-store', signal: timed(signal, 20000) });
+            if (!r.ok) continue;
+            const notes = await source.read(r);
+            if (!Array.isArray(notes)) continue;
+            reached = true;
+            const list = notesBetween(notes, from, to);
+            if (list.some(n => compareRelease(noteRelease(n), to) === 0)) { notesMissed = false; return { state: 'ok', list }; }
+        } catch { /* 다음 출처로 */ }
+    }
+    if (reached) notesMissed = true;
+    return { state: reached ? 'pending' : 'fail', list: [] };
+}
 export function notesHtml(list) {
     return list.map((n, i) => `
         <div class="salty-notice-item${i === 0 ? ' open' : ''}">
@@ -216,7 +259,7 @@ export async function runUpdate({ inst, headers = {}, fetcher = fetch, repo = RE
 }
 
 /** 버전 알약을 눌렀을 때 (새 버전이 있을 때만): '새 버전이 나왔어요 · 업데이트할까요?' + 바뀐 내역 */
-export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설정 창 한 줄의 업데이트 단추 — 창을 열자마자 업데이트를 시작
+export async function openUpdate({ start = false, retryMs = NOTES_RETRY_MS } = {}) {   // 6.6.9 start: 설정 창 한 줄의 업데이트 단추 — 창을 열자마자 업데이트를 시작 · 1.5.3 retryMs: 「준비하는 중」 다시 부르기 간격(시험용)
     await loadVersion();
     if (!hasUpdate()) return false;
     const ctx = SillyTavern.getContext();
@@ -228,7 +271,33 @@ export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설
         <p class="bl-update-ask">업데이트할까요? <span class="bl-update-vers">v${esc(now)} → <b>v${esc(next)}</b></span></p>
         <p class="bl-update-status" role="status" aria-live="polite" hidden></p>
         <div class="bl-update-notes"><p class="salty-note">바뀐 내역을 불러오는 중…</p></div>`;
+    const box = wrap.querySelector('.bl-update-notes');
+    const life = new AbortController();   // 창이 닫히면 abort — 받는 중인 요청 · 다시 부르기를 멈춰요
+    let retryTimer = 0, tries = 0;
+    const releases = `<a href="${RELEASES}" target="_blank" rel="noopener noreferrer">GitHub 릴리스</a>`;
+    const retryButton = '<button type="button" class="menu_button bl-update-retry">다시 시도</button>';
+    const loadNotes = async (fresh = false) => {
+        clearTimeout(retryTimer); retryTimer = 0;
+        if (life.signal.aborted) return;
+        const got = await fetchNotes(from, to, { fresh, signal: life.signal });
+        if (life.signal.aborted) return;
+        if (got.state === 'ok') { box.innerHTML = notesHtml(got.list); return; }
+        if (got.state === 'pending' && tries < retryMs.length) {   // 받았는데 새 판 항목이 아직 없음 — 게시 직후 Pages 배포 전
+            box.innerHTML = '<p class="salty-note bl-update-wait">바뀐 내역을 준비하는 중이에요. 잠시 뒤 다시 불러올게요.</p>';
+            retryTimer = setTimeout(() => { retryTimer = 0; void loadNotes(true); }, retryMs[tries++]);
+            return;
+        }
+        box.innerHTML = got.state === 'pending'
+            ? `<p class="salty-note">새 판의 바뀐 내역이 아직 올라오지 않았어요. 조금 뒤 다시 시도하거나 ${releases}에서 볼 수 있어요.</p>${retryButton}`
+            : `<p class="salty-note">바뀐 내역을 못 불러왔어요. ${releases}에서 볼 수 있어요.</p>${retryButton}`;
+    };
     wrap.addEventListener('click', (event) => {
+        if (event.target.closest('.bl-update-retry')) {
+            tries = 0;
+            box.innerHTML = '<p class="salty-note">바뀐 내역을 불러오는 중…</p>';
+            void loadNotes(true);
+            return;
+        }
         const toggle = event.target.closest('.salty-notice-toggle');
         if (!toggle) return;
         const item = toggle.parentElement;
@@ -238,18 +307,7 @@ export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설
     });
     const statusEl = wrap.querySelector('.bl-update-status');
     const status = (text, kind = '') => { statusEl.textContent = text; statusEl.hidden = !text; statusEl.className = `bl-update-status${kind ? ` is-${kind}` : ''}`; };
-    void (async () => {
-        const box = wrap.querySelector('.bl-update-notes');
-        try {
-            const r = await fetch(`${NOTES}?t=${Math.floor(Date.now() / 600000)}`, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
-            if (!r.ok) throw new Error(String(r.status));
-            const list = notesBetween(await r.json(), from, to);
-            if (!list.length) throw new Error('empty');
-            box.innerHTML = notesHtml(list);
-        } catch {
-            box.innerHTML = `<p class="salty-note">바뀐 내역을 못 불러왔어요. <a href="${RELEASES}" target="_blank" rel="noopener noreferrer">GitHub 릴리스</a>에서 볼 수 있어요.</p>`;
-        }
-    })();
+    void loadNotes();
     let stage = 'ask', popup = null;
     const buttons = () => {
         if (!popup?.okButton) return;
@@ -279,17 +337,19 @@ export async function openUpdate({ start = false } = {}) {   // 6.6.9 start: 설
         }
         buttons();
     };
-    await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.CONFIRM, '', {
-        okButton: '업데이트', cancelButton: '나중에', allowVerticalScrolling: true,
-        onOpen: (p) => { popup = p; p?.dlg?.classList.add('bl-roomy-dialog', 'bl-update-dialog'); buttons(); if (start) void go(); },
-        onClosing: (p) => {
-            if (stage === 'busy') return false;                       // 업데이트 중에는 닫지 않는다
-            if (p.result !== ctx.POPUP_RESULT.AFFIRMATIVE) return true;
-            if (stage === 'done') { location.reload(); return false; }
-            if (stage === 'zip') { window.open(RELEASES, '_blank', 'noopener,noreferrer'); return true; }
-            void go();
-            return false;
-        },
-    });
+    try {
+        await ctx.callGenericPopup(wrap, ctx.POPUP_TYPE.CONFIRM, '', {
+            okButton: '업데이트', cancelButton: '나중에', allowVerticalScrolling: true,
+            onOpen: (p) => { popup = p; p?.dlg?.classList.add('bl-roomy-dialog', 'bl-update-dialog'); buttons(); if (start) void go(); },
+            onClosing: (p) => {
+                if (stage === 'busy') return false;                       // 업데이트 중에는 닫지 않는다
+                if (p.result !== ctx.POPUP_RESULT.AFFIRMATIVE) return true;
+                if (stage === 'done') { location.reload(); return false; }
+                if (stage === 'zip') { window.open(RELEASES, '_blank', 'noopener,noreferrer'); return true; }
+                void go();
+                return false;
+            },
+        });
+    } finally { life.abort(); clearTimeout(retryTimer); retryTimer = 0; }   // 1.5.3 창이 닫히면 내역 다시 부르기 멈춤
     return true;
 }

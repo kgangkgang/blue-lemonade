@@ -40,7 +40,7 @@ await test('#5 번역 점검의 자동 다시 번역은 별도 스위치 · 기�
 await test('#6 거절된 묶음 반 나누기: 자동 번역은 2번까지 · 손으로 누른 번역은 6번', () => {
     const src = read('src/addons/translator/index.js');
     assert.match(src, /const SPLIT_CAP = options\.auto \? 2 : 6;/);
-    assert.match(src, /translation = await translate\(originalText, \{ segmentCache, collectNames: true, auto: source === 'auto',/);
+    assert.match(src, /translation = await translate\(originalText, \{ segmentCache, (?:prior: segmentCache \? prior : null, )?collectNames: true, auto: source === 'auto',/);
 });
 await test('#7 · #10 TTS: 분석 결과 저장은 5초 모아서(숨기거나 떠나면 바로) · 스와이프 해시 불일치는 메모리에서만 · 사용량 저장 2분', async () => {
     const A = read('src/addons/tts/src/analysis.js');
