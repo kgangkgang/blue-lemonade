@@ -180,10 +180,10 @@ export function initialOf(name, n = 1) {
     const ls = LETTERS(name).length ? LETTERS(name) : [...String(name || '')].filter(ch => /[\p{L}\p{N}]/u.test(ch));
     return ls.slice(0, n).map(ch => /[a-z]/i.test(ch) ? ch.toUpperCase() : ch).join('') || '?';
 }
+/** 1.5.4 사용자 「이름 왜 두 글자씩 나오는 애들 뭐냐」: 첫 글자가 겹치는 사람만 두 글자로 구분했더니 한 목록에 한 글자 · 두 글자가 섞였어요 → 늘 한 글자.
+ *  같은 첫 글자인 사람은 바탕색(인물 색 · 톤)과 옆의 이름으로 가려요. */
 export function initialsFor(names) {
-    const uniq = [...new Set(names.map(String))], count = new Map();
-    for (const name of uniq) { const k = initialOf(name); count.set(k, (count.get(k) || 0) + 1); }
-    return new Map(uniq.map(name => [name, count.get(initialOf(name)) > 1 ? initialOf(name, 2) : initialOf(name)]));
+    return new Map([...new Set(names.map(String))].map(name => [name, initialOf(name)]));
 }
 export const FACE_TONES = 4;
 export const toneOf = name => { let h = 0; for (const ch of String(name)) h = (h * 31 + ch.codePointAt(0)) % 9973; return h % FACE_TONES; };
@@ -193,13 +193,73 @@ const FACES = ':is(.ss-ava.emo, .ss-tf)[title]';
 let faceName = name => name;
 export function setFaceName(fn) { faceName = typeof fn === 'function' ? fn : (name => name); }
 const shownName = name => { try { const out = faceName(name); return typeof out === 'string' && out.trim() ? out : name; } catch { return name; } };
-/** 화면의 얼굴 요소 전부에 첫 글자 · 톤 표식 — 설정이 「아이콘」이면 아무것도 안 해요(표식이 남아 있어도 시트가 안 봐요) */
+/** 1.5.4 얼굴 바탕 = 그 인물의 정해진 색(사용자 「프리셋 색깔 있으면 따라가게 · TTS 나 하여튼 지정색 어디든 정해져 있는 거」):
+ *  테마 인물표(src/people.js · 이름 다리 people.get — 이 채팅의 대사 색: 프리셋 정규식 · AI 가 쓴 색 대사 · TTS 목소리 칸에서 정한 색)를 실행 때 이름으로 물어요.
+ *  이름은 원문(title) · 화면 이름(번역) 둘 다. 모르면 예전처럼 톤(사람마다 색 톤 설정) 또는 기본 면. 이름 · 색을 코드에 적지 않아요. */
+const PEOPLE_KEY = Symbol.for('blue-lemonade.names');
+const peopleOf = doc => { try { const p = (doc?.defaultView ?? globalThis)[PEOPLE_KEY]?.people; return p?.version === 1 ? p : null; } catch { return null; } };
+export function personColor(people, ...names) {
+    if (!people) return null;
+    for (const n of names) { if (!n) continue; let c = null; try { c = people.get(String(n))?.color; } catch { c = null; } if (/^#[0-9a-f]{6}$/i.test(String(c || ''))) return String(c).toLowerCase(); }
+    return null;
+}
+/** 1.5.4 사용자 「대사 없어도 TTS 랑 프리셋에 정해 둔 색」: 인물표의 색은 이 채팅 대사에서 이름이 붙은 색이라 대사가 나오기 전엔 비어요.
+ *  TTS 설정의 카드별 색 기억(extension_settings.lemon_voice.card_colors[카드 그림] 은 「색 → 이름」 표 — TTS 색 표에서 사용자가 이름을 정해 둔 것 · 새 채팅의 씨앗)을
+ *  지금 채팅의 카드(그룹이면 구성원 카드 전부)에서 읽어 이름 → 색 표로 — 대사와 상관없이 바로 써요. 이름은 전체 · 첫 낱말로 맞춰요(대소문자 · 공백 무시). */
+const foldName = n => String(n ?? '').normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ');
+export function cardColorTable(ctx) {
+    const out = new Map();
+    try {
+        const all = ctx?.extensionSettings?.lemon_voice?.card_colors;
+        if (!all || typeof all !== 'object') return out;
+        const avatars = ctx.groupId ? ((ctx.groups || []).find(g => g?.id === ctx.groupId)?.members || []) : [ctx.characters?.[ctx.characterId]?.avatar];
+        for (const av of avatars) {
+            const m = av && all[av];
+            if (!m || typeof m !== 'object') continue;
+            for (const [col, name] of Object.entries(m)) {
+                const c = String(col || '').trim().toLowerCase(), n = foldName(name);
+                if (!/^#[0-9a-f]{6}$/.test(c) || !n) continue;
+                if (!out.has(n)) out.set(n, c);
+                const first = n.split(' ')[0]; if (first && first !== n && !out.has(first)) out.set(first, c);
+            }
+        }
+    } catch { /* 표 없음 */ }
+    return out;
+}
+export function tableColor(table, ...names) {
+    for (const n of names) { const k = foldName(n); if (!k) continue; const c = table.get(k) ?? table.get(k.split(' ')[0]); if (c) return c; }
+    return null;
+}
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgbOf = css => { const m = String(css || '').match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/); return m ? [+m[1], +m[2], +m[3]] : null; };
+const lumOf = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+export const contrastOf = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+/** 인물 색을 면 바닥(밤 짙게 · 낮 밝게)과 섞어 그 위 글자(ink)가 4.5 : 1 이 되는 가장 진한 바탕 — 색이 가장 많이 남는 비율(45%)부터 10% 까지 */
+export function faceFill(color, ink) {
+    const c = hexRgb(color), dark = lumOf(ink) > 0.4, base = dark ? [30, 32, 36] : [250, 251, 253];
+    for (let f = 0.45; f >= 0.099; f -= 0.05) {
+        const m = c.map((v, i) => Math.round(v * f + base[i] * (1 - f)));
+        if (contrastOf(m, ink) >= 4.5) return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+    return null;
+}
+let peopleHooked = false;
+/** 화면의 얼굴 요소 전부에 첫 글자 · 톤 · 인물 색 표식 — 설정이 「아이콘」이면 아무것도 안 해요(표식이 남아 있어도 시트가 안 봐요) */
 export function paintFaces(doc) {
     if (!doc?.body?.hasAttribute?.('data-bl-mb-face')) return 0;
     const els = [...doc.querySelectorAll(FACES)];
     const names = els.map(el => el.getAttribute('title')), shown = names.map(shownName);
-    const map = initialsFor(shown);
-    els.forEach((el, k) => { const ini = map.get(String(shown[k])); if (el.getAttribute('data-bl-ini') !== ini) el.setAttribute('data-bl-ini', ini); const tone = String(toneOf(names[k])); if (el.getAttribute('data-bl-tone') !== tone) el.setAttribute('data-bl-tone', tone); });
+    const map = initialsFor(shown), people = peopleOf(doc);
+    let cards = null; const cardsOf = () => (cards ??= cardColorTable((() => { try { return doc.defaultView?.SillyTavern?.getContext?.(); } catch { return null; } })()));
+    if (people && !peopleHooked) { peopleHooked = true; try { people.onChange(() => { try { paintFaces(doc); } catch { /* 다음 그리기 때 */ } }); } catch { peopleHooked = false; } }
+    els.forEach((el, k) => {
+        const ini = map.get(String(shown[k])); if (el.getAttribute('data-bl-ini') !== ini) el.setAttribute('data-bl-ini', ini);
+        const tone = String(toneOf(names[k])); if (el.getAttribute('data-bl-tone') !== tone) el.setAttribute('data-bl-tone', tone);
+        const color = personColor(people, names[k], shown[k]) || tableColor(cardsOf(), names[k], shown[k]);   // 이 채팅 대사 색 → 없으면 TTS 카드별 색 기억
+        let fill = null; if (color) { const ink = rgbOf(doc.defaultView?.getComputedStyle?.(el)?.color) || [230, 230, 232]; fill = faceFill(color, ink); }
+        if (fill) { if (el.getAttribute('data-bl-pc') !== fill) { el.setAttribute('data-bl-pc', fill); el.style?.setProperty?.('--bl-face', fill); } }
+        else if (el.hasAttribute?.('data-bl-pc')) { el.removeAttribute('data-bl-pc'); el.style?.removeProperty?.('--bl-face'); }
+    });
     return els.length;
 }
 /** 미트볼 「꾸미기」 창에 테마 칸 끼우기(1.5.2 사용자 「블루레몬에 넣지 말고 미트볼 꾸미기 쪽에」): 「크기 · 모양」 묶음 바로 아래에 「블루레몬 꾸미기」 묶음 하나 —
@@ -260,15 +320,27 @@ export function actsFit(tiles, cols = 4, need = 2) {
     return !tiles.some(t => t.r <= last && t.r + t.h - 1 >= last && t.c + t.w - 1 > cols - need);
 }
 const SPAN = /^\s*(\d+)\s*\/\s*span\s+(\d+)/;
+/** 1.5.4 띠 한 줄(사용자 「한 줄일 때는 칸 맞춰서 넓어지고 · 눌렀을 때 2줄 되면 안 됨」): 칸이 모두 첫 줄 한 칸 높이이고 칸이 셋 이하(폰 네 열 판)면 단추 줄을 칸 옆에 두고
+ *  칸 판의 열 수를 쓰인 열 수로 줄여 칸이 남는 폭을 고르게 나눠 가져요(표식 data-bl-acts="row" · 변수 --bl-tcols). 칸을 눌러 「자세히」 칸이 펼쳐져도
+ *  칸 자리는 그대로라 같은 판단 — 예전엔 펼친 칸이 있으면 한 줄을 풀어 단추가 둘째 줄로 떨어졌어요. tiles: [{ c, r, w, h }](1 부터) */
+export function rowCols(tiles, cols = 4) {
+    if (!tiles.length || !tiles.every(t => t.r === 1 && t.h === 1)) return 0;
+    // 칸 수로 봐요(칸 하나가 두 열을 쓰는 기본 배치 — 날짜 · 장소가 각 두 열 — 도 칸 둘이면 단추와 한 줄) · 열 수는 쓰인 끝 열까지(넓은 칸은 넓은 대로 나눠 가져요)
+    const n = Math.max(...tiles.map(t => t.c + t.w - 1));
+    return cols > 4 || tiles.length <= 3 ? n : 0;
+}
 export function fitActs(tb) {
     const tg = tb.querySelector?.('.ss-tg'), acts = tb.querySelector?.('.ss-tb-acts');
     let fit = false;
-    if (tg && acts && !tb.classList.contains('editing') && Number(tg.style.getPropertyValue('--cols')) === 4 && !tb.querySelector('.ss-t-det')) {
+    if (tg && acts && !tb.classList.contains('editing') && Number(tg.style.getPropertyValue('--cols')) >= 4) {
         const tiles = [];
         for (const t of tg.querySelectorAll(':scope > .ss-t')) { const c = SPAN.exec(t.style.gridColumn || t.style.gridColumnStart + ' / ' + t.style.gridColumnEnd), r = SPAN.exec(t.style.gridRow || t.style.gridRowStart + ' / ' + t.style.gridRowEnd); if (!c || !r) { tiles.length = 0; break; } tiles.push({ c: +c[1], w: +c[2], r: +r[1], h: +r[2] }); }
-        fit = actsFit(tiles, 4, acts.children.length > 5 ? 3 : 2);
+        const cols = Number(tg.style.getPropertyValue('--cols'));
+        const n = rowCols(tiles, cols);
+        if (n) { fit = 'row'; if (tb.style.getPropertyValue('--bl-tcols') !== String(n)) tb.style.setProperty('--bl-tcols', String(n)); }
+        else if (cols === 4 && actsFit(tiles, 4, acts.children.length > 5 ? 3 : 2)) fit = 'in';
     }
-    if (fit) tb.setAttribute('data-bl-acts', 'in'); else tb.removeAttribute('data-bl-acts');
+    if (fit) { if (tb.getAttribute('data-bl-acts') !== fit) tb.setAttribute('data-bl-acts', fit); } else tb.removeAttribute('data-bl-acts');
     return fit;
 }
 /** 띠 종(알림함)의 숫자 배지(1.5.2 사용자 결정): 10 이상은 화면에서만 「9+」 — 배지가 늘 한 자리 크기라 종을 덜 가려요. 그 확장이 적은 글자(실제 숫자)는 그대로 두고
@@ -283,15 +355,24 @@ export function markBadge(tb) {
     return n;
 }
 /** 이름표 → 값 목록(프로필 · 관계 · 장소): 값이 긴 칸(열세 자 넘거나 줄바꿈 — 폰 반 폭에 한 줄로 안 들어가는 길이)에 표식 — 두 단을 가로질러 통째 한 줄(src/ext-status.css). 글자 수만 봐요(배치를 재지 않아요) */
-export const LONG_VALUE = 13;
+/** 1.5.4 사용자 「프로필 설명 왜 세로 2열 아니지」: 13자 넘는 값을 두 단 통째로 돌렸더니 문장 값뿐인 프로필은 전부 한 열이 됐어요(여러 단 흐름이라 칸 사이 간격도 들쭉날쭉).
+ *  → 두 열 격자에 칸(이름표 위 · 값 아래)을 차례로 놓고, 값이 아주 길 때(마흔 자 넘거나 줄바꿈)만 그 칸이 두 열을 차지해요. 칸 자리는 변수(--bl-c · --bl-rt · --bl-rd)로 — 배치를 재지 않아요. */
+export const LONG_VALUE = 40;
 export function markLong(dl) {
-    let n = 0;
+    let n = 0, row = 1, col = 1;
     for (const dd of dl.querySelectorAll?.(':scope > dd') || []) {
         const text = (dd.textContent || '').trim(), long = text.length > LONG_VALUE || /[\r\n]/.test(text);
         const dt = dd.previousElementSibling?.tagName === 'DT' ? dd.previousElementSibling : null;
-        for (const el of [dd, dt]) if (el) { if (long) el.setAttribute('data-bl-long', ''); else el.removeAttribute('data-bl-long'); }
+        if (long && col === 2) { row++; col = 1; }
+        const c = long ? '1 / -1' : String(col);
+        for (const el of [dd, dt]) if (el) {
+            if (long) el.setAttribute('data-bl-long', ''); else el.removeAttribute('data-bl-long');
+            el.style?.setProperty?.('--bl-c', c); el.style?.setProperty?.('--bl-rt', String(row * 2 - 1)); el.style?.setProperty?.('--bl-rd', String(row * 2));
+        }
+        if (long || col === 2) { row++; col = 1; } else col = 2;
         if (long) n++;
     }
+    dl.setAttribute?.('data-bl-grid', '');
     return n;
 }
 const plain = doc => !!doc.body?.hasAttribute?.('data-bl-mb-plain');   // 테마 설정 「미트볼 상태창 편의 기능」을 끈 때(src/apply.js 가 달아요)

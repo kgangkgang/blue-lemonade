@@ -107,7 +107,8 @@ check('④ 그 확장이 없는 사람은 0 — 늘 붙는 시트 · 시작 묶�
 });
 check('⑤ 저장 · 프롬프트 · 본문 글은 안 건드려요 — 맞춤 모듈이 글자 노드를 고치지 않아요', () => {
     const mod = read('src/ext-compat.js').replace(/\/\/[^\n]*/g, '');
-    assert.ok(!/createTreeWalker|NodeFilter|splitText|\.nodeValue\s*=|\.normalize\(|replaceChildren|textContent\s*=\s*[^;]*\.(replace|split)/.test(mod), '글자 노드를 바꾸는 코드가 생겼어요');
+    // 1.5.4: 문자열의 유니코드 정규화(normalize('NFKC') — 이름 견주기)는 DOM 노드 normalize() 와 달라 빼요
+    assert.ok(!/createTreeWalker|NodeFilter|splitText|\.nodeValue\s*=|\.normalize\((?!\s*['\"]NFK?[CD]['\"])|replaceChildren|textContent\s*=\s*[^;]*\.(replace|split)/.test(mod), '글자 노드를 바꾸는 코드가 생겼어요');
     // 얼굴 고르개의 고를 그림 표(AVA_PICKS — 사람이 고르는 목록이지 글자를 바꾸는 표가 아니에요)만 빼고 봐요. 그 표의 그림은 전부 선 아이콘 글꼴에 있어야 해요(없으면 고른 얼굴이 색 그림 글자로 떠요)
     const picks = /export const AVA_PICKS = \[[\s\S]*?\n\];/.exec(mod)?.[0] || '';
     assert.ok(picks, '얼굴 고르개 표');

@@ -20,15 +20,52 @@ ok('② 타일이 그 자리를 쓰면 지금처럼 아랫줄 — 꽉 채움 · 
     assert.equal(m.actsFit([]), false);
     assert.equal(m.actsFit([T(1, 1)], 4, 3), true); assert.equal(m.actsFit([T(1, 1), T(2, 1)], 4, 3), false, '단추가 여섯이면 세 칸이 필요해요');
 });
-ok('③ 긴 값 표식: 열세 자 넘거나 줄바꿈 — 이름표(dt)에도 같이 · 짧아지면 떼요', () => {
-    const el = (tag, text) => ({ tagName: tag, textContent: text, attrs: new Set(), previousElementSibling: null, setAttribute(k) { this.attrs.add(k); }, removeAttribute(k) { this.attrs.delete(k); } });
-    const rows = [['나이', '스물일곱 살'], ['배경', '옛 등대를 고쳐 다시 불을 밝힌 사람 그리고 더 긴 글'], ['메모', '첫 줄\n둘째 줄']];
+ok('②-1 (1.5.4) 칸이 모두 첫 줄 한 칸 높이이고 칸 셋 이하면 한 줄(row) — 열 수 = 쓰인 끝 열 · 칸 넷이면 아님 · PC 넓은 판은 다 같은 줄이면 한 줄', () => {
+    assert.equal(m.rowCols([T(1, 1)]), 1);
+    assert.equal(m.rowCols([T(1, 1), T(2, 1)]), 2);
+    assert.equal(m.rowCols([T(1, 1), T(2, 1), T(3, 1)]), 3);
+    assert.equal(m.rowCols([T(1, 1), T(2, 1), T(3, 1), T(4, 1)]), 0, '네 칸이면 단추와 한 줄에 너무 좁아요');
+    assert.equal(m.rowCols([T(1, 1, 2), T(3, 1)]), 3, '넓은 칸도 첫 줄이면');
+    assert.equal(m.rowCols([T(1, 1, 2), T(3, 1, 2)]), 4, '기본 배치(날짜 · 장소 각 두 열)도 칸 둘이면 한 줄 — 열 넷을 나눠 가져요');
+    assert.equal(m.rowCols([T(1, 1, 2), T(3, 1), T(4, 1)]), 4, '칸 셋');
+    assert.equal(m.rowCols([T(1, 1), T(1, 2)]), 0, '둘째 줄이 있으면 아님');
+    assert.equal(m.rowCols([T(1, 1, 1, 2)]), 0, '키 큰 칸이면 아님');
+    assert.equal(m.rowCols([T(1, 1), T(2, 1), T(3, 1), T(4, 1), T(5, 1)], 6), 5, 'PC 여섯 칸 판');
+    assert.equal(m.rowCols([]), 0);
+});
+ok('②-2 (1.5.4) 「자세히」 칸이 펼쳐져도 같은 표식 — 눌렀을 때 줄 수 · 칸 폭이 그대로', () => {
+    const mk = (det) => {
+        const attrs = {}, vars = {};
+        const tile = (c, r) => ({ style: { gridColumn: `${c} / span 1`, gridRow: `${r} / span 1` } });
+        const tg = { style: { getPropertyValue: k => (k === '--cols' ? '4' : '') }, querySelectorAll: () => [tile(1, 1), tile(2, 1)] };
+        const acts = { children: { length: 4 } };
+        return { classList: { contains: () => false }, style: { getPropertyValue: k => vars[k] || '', setProperty: (k, v) => { vars[k] = v; } },
+            getAttribute: k => attrs[k] ?? null, setAttribute: (k, v) => { attrs[k] = v; }, removeAttribute: k => { delete attrs[k]; },
+            querySelector: sel => (sel === '.ss-tg' ? tg : sel === '.ss-tb-acts' ? acts : sel === '.ss-t-det' ? det : null), attrs, vars };
+    };
+    const shut = mk(null), open = mk({});
+    assert.equal(m.fitActs(shut), 'row'); assert.equal(m.fitActs(open), 'row');
+    assert.equal(shut.attrs['data-bl-acts'], 'row'); assert.equal(open.attrs['data-bl-acts'], 'row');
+    assert.equal(open.vars['--bl-tcols'], '2');
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.match(css, /\.ss-tb\.hud\[data-bl-acts="row"\] > \.ss-tb-row \{ flex-wrap: nowrap;/);
+    assert.match(css, /\.ss-tb\.hud\[data-bl-acts="row"\] > \.ss-tb-row > \.ss-tg \{ flex: 1 1 0; min-width: 0; grid-template-columns: repeat\(var\(--bl-tcols, 2\), minmax\(0, 1fr\)\); \}/);
+});
+ok('③ (1.5.4) 이름표 → 값 두 열 격자: 칸을 두 열에 차례로 · 마흔 자 넘거나 줄바꿈인 값만 두 열 통째 · 이름표(dt)도 같은 칸 · 짧아지면 떼요', () => {
+    const el = (tag, text) => { const vars = {}; return { tagName: tag, textContent: text, attrs: new Set(), vars, previousElementSibling: null, style: { setProperty: (k, v) => { vars[k] = v; } }, setAttribute(k) { this.attrs.add(k); }, removeAttribute(k) { this.attrs.delete(k); } }; };
+    const long40 = '옛 등대를 고쳐 다시 불을 밝힌 사람 그리고 그 등대를 지키는 일을 이어받은 사람이에요';
+    const rows = [['나이', '최근 귀화한 사후세계 시민.'], ['종족', '전직 인간 영혼.'], ['배경', long40], ['직업', '본부 신입 직원.'], ['메모', '첫 줄\n둘째 줄'], ['목표', '자리를 잡는 것.']];
     const dds = rows.map(([k, v]) => { const dt = el('DT', k), dd = el('DD', v); dd.previousElementSibling = dt; return dd; });
-    const dl = { querySelectorAll: () => dds };
+    const attrs = new Set(); const dl = { querySelectorAll: () => dds, setAttribute: k => attrs.add(k) };
     assert.equal(m.markLong(dl), 2);
-    assert.deepEqual(dds.map(d => d.attrs.has('data-bl-long')), [false, true, true]);
-    assert.equal(dds[1].previousElementSibling.attrs.has('data-bl-long'), true);
-    dds[1].textContent = '짧게'; m.markLong(dl); assert.equal(dds[1].attrs.has('data-bl-long'), false);
+    assert.ok(attrs.has('data-bl-grid'));
+    assert.deepEqual(dds.map(d => d.attrs.has('data-bl-long')), [false, false, true, false, true, false], '열세 자 넘는 문장 값은 한 칸(두 열 격자의 한 열)');
+    assert.deepEqual(dds.map(d => [d.vars['--bl-c'], d.vars['--bl-rd']]), [['1', '2'], ['2', '2'], ['1 / -1', '4'], ['1', '6'], ['1 / -1', '8'], ['1', '10']], '반쯤 찬 줄 뒤의 긴 값은 새 줄 · 긴 값 뒤는 새 줄 첫 열');
+    assert.equal(dds[2].previousElementSibling.vars['--bl-rt'], '3'); assert.equal(dds[2].previousElementSibling.attrs.has('data-bl-long'), true);
+    dds[2].textContent = '짧게'; m.markLong(dl); assert.equal(dds[2].attrs.has('data-bl-long'), false); assert.equal(dds[2].vars['--bl-c'], '1');
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.match(css, /\.ss-scope \.ss-dl\[data-bl-grid\] \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+    assert.ok(!/column-count: 2/.test(css), '옛 여러 단 흐름은 뺐어요');
 });
 ok('④ 감시자 · 타이머 없이 — 다시 그려진 것은 animationstart 하나로 알아채요 · 시트는 그 확장의 키프레임을 0.001초로 빌려요', () => {
     const js = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8'), css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
@@ -40,9 +77,9 @@ ok('④ 감시자 · 타이머 없이 — 다시 그려진 것은 animationstart
     assert.match(css, /\.ss-tb\.hud\[data-bl-acts="in"\] > \.ss-tb-row \{ row-gap: 0; \}/, '줄 사이 틈이 남으면 아래 여백만 커져요');
     assert.match(css, /body\.salty #ss-hud \.ss-tg \{ grid-auto-rows: 26px;/, '폰 타일 줄 높이 26 — 위 값과 한 벌');
 });
-ok('⑤ 이름 첫 글자: 한글 한 음절 · 영문 대문자 · 그림 글자 · 기호 · 괄호 별칭은 건너뛰고 · 겹치는 사람끼리만 두 글자', () => {
+ok('⑤ 이름 첫 글자: 한글 한 음절 · 영문 대문자 · 그림 글자 · 기호 · 괄호 별칭은 건너뛰고 · (1.5.4) 겹쳐도 늘 한 글자', () => {
     const map = m.initialsFor(['도윤', '도현', '서린', '楓(카에데)', '🌙 Luna', 'alex', '(별칭)민수', '릴', '★']);
-    assert.deepEqual([...map.values()], ['도윤', '도현', '서', '楓', 'L', 'A', '민', '릴', '?']);
+    assert.deepEqual([...map.values()], ['도', '도', '서', '楓', 'L', 'A', '민', '릴', '?'], '1.5.4 첫 글자가 겹쳐도 늘 한 글자(한 목록에 한 글자 · 두 글자가 섞이지 않게)');
     assert.equal(m.initialOf('A.B.C 대장'), 'A'); assert.equal(m.initialOf('  하람 님'), '하');
     assert.equal(m.initialsFor(['하람', '하람']).get('하람'), '하', '같은 사람이 여러 자리에 나오는 것은 겹침이 아니에요');
     assert.ok(m.toneOf('도윤') >= 0 && m.toneOf('도윤') < m.FACE_TONES); assert.equal(m.toneOf('도윤'), m.toneOf('도윤'));
@@ -62,7 +99,40 @@ ok('⑥ 얼굴 표시 설정: 기본 = 아이콘(표식 없음) · 「이름 첫
     assert.equal(m.paintFaces(doc), 0);
     const els = ['도윤', '도현', '릴'].map(name => { const a = { title: name }; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, a }; });
     assert.equal(m.paintFaces({ body: { hasAttribute: () => true }, querySelectorAll: () => els }), 3);
-    assert.deepEqual(els.map(e => e.a['data-bl-ini']), ['도윤', '도현', '릴']);
+    assert.deepEqual(els.map(e => e.a['data-bl-ini']), ['도', '도', '릴'], '1.5.4 늘 한 글자');
+});
+ok('⑥-1 (1.5.4) 얼굴 바탕 = 인물표의 그 사람 색(원문 · 화면 이름 둘 다로 물어요) · 면 바닥과 섞어 글자 4.5 : 1 · 모르면 표식 없음 · 이름 · 색을 코드에 안 적어요', () => {
+    const people = { version: 1, get: n => ({ Leon: { color: '#E0567F' }, '미라': { color: '#ffe23c' } }[n] ?? null), onChange: () => () => {} };
+    assert.equal(m.personColor(people, 'Leon'), '#e0567f');
+    assert.equal(m.personColor(people, 'Mira', '미라'), '#ffe23c', '화면 이름으로도');
+    assert.equal(m.personColor(people, 'Nobody'), null); assert.equal(m.personColor(null, 'Leon'), null);
+    for (const [c, ink] of [['#ffe23c', [225, 225, 229]], ['#e0567f', [225, 225, 229]], ['#1f2a6b', [30, 30, 35]], ['#ffe23c', [30, 30, 35]]]) {
+        const f = m.faceFill(c, ink); assert.match(f, /^#[0-9a-f]{6}$/);
+        const rgb = [1, 3, 5].map(i => parseInt(f.slice(i, i + 2), 16)); assert.ok(m.contrastOf(rgb, ink) >= 4.5, `${c} → ${f}`);
+    }
+    const face = name => { const a = { title: name }; const vars = {}; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty: (k, v) => { vars[k] = v; }, removeProperty: k => { delete vars[k]; } }, a, vars }; };
+    const els = ['Leon', 'Nobody'].map(face);
+    const win = { [Symbol.for('blue-lemonade.names')]: { people }, getComputedStyle: () => ({ color: 'rgb(225, 225, 229)' }) };
+    m.paintFaces({ body: { hasAttribute: () => true }, querySelectorAll: () => els, defaultView: win });
+    assert.match(els[0].a['data-bl-pc'], /^#[0-9a-f]{6}$/); assert.equal(els[0].vars['--bl-face'], els[0].a['data-bl-pc']);
+    assert.equal('data-bl-pc' in els[1].a, false);
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.match(css, /\.ss-ava\.emo\[data-bl-pc\][^{]*\{ background: var\(--bl-face\); color: var\(--salty-text\); \}/);
+});
+ok('⑥-2 (1.5.4) 대사가 없어도 TTS 카드별 색 기억(lemon_voice.card_colors)에서 — 지금 카드 · 그룹 구성원 · 전체 이름 · 첫 낱말', () => {
+    const ctx = { characterId: 0, characters: [{ avatar: 'a.png' }], extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#E0567F': 'Mina Park', '#3a8ee6': '레온', 'bad': '누구' }, 'b.png': { '#ffe23c': '다른 카드' } } } } };
+    const t = m.cardColorTable(ctx);
+    assert.equal(m.tableColor(t, 'mina park'), '#e0567f'); assert.equal(m.tableColor(t, 'Mina'), '#e0567f', '첫 낱말');
+    assert.equal(m.tableColor(t, '레온'), '#3a8ee6'); assert.equal(m.tableColor(t, '다른 카드'), null, '다른 카드의 기억은 안 봐요');
+    const g = m.cardColorTable({ groupId: 'g', groups: [{ id: 'g', members: ['a.png', 'b.png'] }], extensionSettings: ctx.extensionSettings });
+    assert.equal(m.tableColor(g, '다른 카드'), '#ffe23c', '그룹이면 구성원 카드 전부');
+    assert.equal(m.cardColorTable({}).size, 0);
+    const face = name => { const a = { title: name }; const vars = {}; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty: (k, v) => { vars[k] = v; }, removeProperty: k => { delete vars[k]; } }, a, vars }; };
+    const els = ['Mina Park', '모름'].map(face);
+    const win = { [Symbol.for('blue-lemonade.names')]: { people: { version: 1, get: () => null, onChange: () => () => {} } }, SillyTavern: { getContext: () => ctx }, getComputedStyle: () => ({ color: 'rgb(225, 225, 229)' }) };
+    m.paintFaces({ body: { hasAttribute: () => true }, querySelectorAll: () => els, defaultView: win });
+    assert.match(els[0].a['data-bl-pc'] || '', /^#[0-9a-f]{6}$/, '인물표에 색이 없어도 카드별 색 기억으로');
+    assert.equal('data-bl-pc' in els[1].a, false);
 });
 ok('⑦ 무늬 띠 걷기: 블루레몬 아래에서는 그 확장의 판 무늬 · 원작 꾸미기 색 대신 테마 면 — 배경 그림 없음 · 면 · 테 · 타일 면이 테마 변수 · 「원작 그대로 보기」에서는 안 걸려요', () => {
     const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -114,7 +184,9 @@ await (async () => {
     await m.decoAct(el('font'), async () => { throw Error('글꼴은 설정 창 모듈을 여기서 받지 않아요'); }); assert.deepEqual(calls.at(-1), ['open', false, 'mb-deco']);
     assert.equal(m.decoTheme({ ownerDocument: { body: { hasAttribute: k => k === 'data-bl-ext-raw' } } }), false, '원작 그대로 보기');
     const js = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8'), pj = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8');
-    assert.ok(!/extensionSettings|statussim/.test(js), '그 확장 설정 저장소를 건드리지 않아요');
+    assert.ok(!/statussim/.test(js), '그 확장 설정 저장소를 건드리지 않아요');
+    assert.ok(![...js.matchAll(/extensionSettings\??\.(\w+)/g)].some(x => x[1] !== 'lemon_voice'), '설정 저장소는 테마 TTS(lemon_voice) 카드별 색 기억만 읽어요(1.5.4)');
+    assert.ok(!/lemon_voice\??\.\w+(\??\.\w+|\[[^\]]*\])*\s*=(?!=)/.test(js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')), 'TTS 설정은 읽기만(주석 빼고)');
     assert.match(pj, /if \(popup && initialExtension === 'mb-deco'\) \{ ui\.tab = 'chat'; ui\.subs\.chat = 'screen'; ui\.picker = null; ui\.mbOnly = true; \}/);
     assert.match(pj, /data-act="mb-deco"/, '테마 설정 창에는 안내 줄 하나(검색 · 변경한 설정이 막다른 길이 안 되게)');
     const screen = pj.slice(pj.indexOf("    if (sub === 'screen') {"), pj.indexOf("${cap('퀵 리플라이')}"));
@@ -139,7 +211,7 @@ ok('⑬ 얼굴 첫 글자는 보이는 이름으로(1.5.2): 화면만 번역이�
     const face = name => { const a = { title: name }; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, a }; };
     const doc = els => ({ body: { hasAttribute: () => true }, querySelectorAll: () => els });
     const raw = ['Leon', 'Lily'].map(face); m.paintFaces(doc(raw));
-    assert.deepEqual(raw.map(e => e.a['data-bl-ini']), ['LE', 'LI']);
+    assert.deepEqual(raw.map(e => e.a['data-bl-ini']), ['L', 'L'], '1.5.4 늘 한 글자');
     const dict = { Leon: '레온', Lily: '릴리' };
     m.setFaceName(name => dict[name] ?? name);
     const shown = ['Leon', 'Lily', 'Mara'].map(face); m.paintFaces(doc(shown));
