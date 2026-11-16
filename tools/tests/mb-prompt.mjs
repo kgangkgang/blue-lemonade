@@ -115,7 +115,7 @@ await ok('테마에 원작 문구를 담지 않아요 · 연결 · 기본 적용
     assert.ok(!/world-builder|PROMPT_DEFS|OUTPUT JSON SHAPE/.test(src)); assert.ok(!/MutationObserver|setInterval|\.emit\(/.test(src));
     const apply = fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8'), set = fs.readFileSync(path.join(root, 'src/settings.js'), 'utf8'), panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8');
     assert.ok(apply.includes("lateSync('mbPrompt', () => import('./mb-prompt.js'), want.has('salty') && (lv !== 'off' || once)"));
-    assert.ok(set.includes("s.chat.mbPrompt = 'off'") && set.includes("mbPrompt: 'off', mbPromptCount: 9, mbPromptChars: 2000, mbPromptCap: 120000,"));
+    assert.ok(set.includes("s.chat.mbPrompt = 'off'") && set.includes("mbPrompt: 'off', mbPromptCount: 9, mbPromptChars: 2000, mbPromptCap: 0,"));
     assert.ok(panel.includes("seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'],"));
     for (const f of ['src/settings-labels.js', 'src/settings-search.js']) assert.ok(fs.readFileSync(path.join(root, f), 'utf8').includes('chat.mbPrompt'), f);
 });
@@ -184,7 +184,7 @@ await ok('채팅 전체 연결: 단계 다섯 · 고를 때 확인 창(취소하
     assert.ok(i > 0 && j > i && /\)\)\) break;/.test(panel.slice(i, j)), '확인 창에서 취소하면 설정을 안 바꿔요');
     assert.ok(panel.includes('data-act="mb-prompt-once"') && panel.includes("case 'mb-prompt-once':") && panel.includes("slider('chat.mbPromptCap'"));
     assert.ok(apply.includes("localStorage.getItem('bl-mb-prompt-once')") && apply.includes('{ cap: s.chat.mbPromptCap }'));
-    assert.ok(set.includes("range('mbPromptCap', 0, 1000000, 120000)") && set.includes("'recent', 'all'].includes(s.chat.mbPrompt)"));
+    assert.ok(set.includes("range('mbPromptCap', 0, 1000000, 0)") && set.includes("'recent', 'all'].includes(s.chat.mbPrompt)"));
 });
 // ── 1.6.1 줄 꼴 규칙(본편 출력 규칙 · 별도 분석 문구에 붙는 한 덩이) ──
 const RDEF = { 'inj.output': 'Test output rule. Values in Korean, names exactly as above.', 'inj.ultra.output': 'Test short rule. Keys: {keys}', 'ai.analyze': 'Test tracker.' };   // 시험용으로 지어낸 기본 문구(원작 글 아님)
@@ -302,5 +302,125 @@ await ok('이번 한 번만 끝 알림에 실은 양: 「채팅 전체를 실어
         assert.equal(memo(), '[#1] Old part summary.');
         await M.endOnce({ c, toast, def: DEF, force: true }); assert.match(toasts.at(-1), /^「기억 요약」 으로 1번 보냈어요 — 요청마다 기억 요약 1개\(메시지 #1~#1\)/);
     } finally { globalThis.setTimeout = st; globalThis.clearTimeout = ct; delete globalThis.localStorage; }
+});
+// ── 1.6.5 상한 기본 0(없음) · 옛 기본 12만 옮기기 · 모델 한도 알림 ──
+await ok('1.6.5 상한 기본 0: 새로 깐 사람 0 · 저장값이 옛 기본 12만이면 한 번 0 으로(표시 mbPromptCapV) · 손으로 넣은 다른 값은 그대로 · 옮긴 뒤 다시 12만을 고르면 그대로', async () => {
+    assert.equal(M.DEFAULT_CAP, 0); assert.equal(M.OLD_DEFAULT_CAP, 120000);
+    const { getSettings } = await import(pathToFileURL(path.join(root, 'src/settings.js')).href);
+    const load = saved => { const ext = saved === undefined ? {} : { salty: saved }; globalThis.SillyTavern = { getContext: () => ({ extensionSettings: ext }) }; return getSettings().chat; };
+    const fresh = load(undefined); assert.deepEqual([fresh.mbPromptCap, fresh.mbPromptCapV], [0, 2]);
+    const old = load({ chat: { mbPromptCap: 120000 } }); assert.deepEqual([old.mbPromptCap, old.mbPromptCapV], [0, 2]);
+    const mine = load({ chat: { mbPromptCap: 50000 } }); assert.deepEqual([mine.mbPromptCap, mine.mbPromptCapV], [50000, 2]);
+    const again = load({ chat: { mbPromptCap: 120000, mbPromptCapV: 2 } }); assert.equal(again.mbPromptCap, 120000, '옮긴 뒤 사용자가 다시 고른 12만은 그대로');
+    const none = load({ chat: {} }); assert.equal(none.mbPromptCap, 0);
+    delete globalThis.SillyTavern;
+});
+await ok('1.6.5 모델 한도: 미트볼이 기본 연결이면 실리태번 연결의 맥락 값(채팅 완성은 openai_max_context) · 연결 프로필을 쓰면 모름(0) · 넘는 게 확실할 때만(적게 잡는 어림) · 상한 0 이면 다 실음', async () => {
+    const big = { chat: [{ name: 'A', mes: 'x'.repeat(40000) }] };   // 적게 잡아 1만 토큰
+    assert.equal(M.modelLimit({ mainApi: 'openai', chatCompletionSettings: { openai_max_context: 8000 }, extensionSettings: { statussim: {} } }), 8000);
+    assert.equal(M.modelLimit({ mainApi: 'textgenerationwebui', maxContext: 4096 }), 4096);
+    assert.equal(M.modelLimit({ mainApi: 'openai', chatCompletionSettings: { openai_max_context: 8000 }, extensionSettings: { statussim: { profGen: 'p1' } } }), 0, '따로 연결 프로필 — 모름');
+    assert.equal(M.modelLimit({}), 0); assert.equal(M.modelLimit(null), 0);
+    const c = { ...big, mainApi: 'openai', chatCompletionSettings: { openai_max_context: 8000 } };
+    assert.equal(M.overModel(M.allText(big, 0).text, c), 8000);
+    assert.equal(M.overModel(M.allText(big, 0).text, { ...c, chatCompletionSettings: { openai_max_context: 1000000 } }), 0);
+    assert.equal(M.overModel('짧은 글', { mainApi: 'openai' }), 0, '한도를 모르면 말 안 함');
+    const r = M.allText(big); assert.deepEqual([r.count, r.summarized, r.cut, r.dropped, r.chars], [1, 0, 0, 0, 40003], '기본(상한 0) — 원문 그대로');
+});
+await ok('1.6.5 「지금 상태로」 지시: 덧붙는 덩어리마다(가볍게부터) 이야기가 흘렀으면 처음이 아니라 이야기 끝의 상태로 · 「시작」 을 「지금」 으로 읽게 · 첫 메시지부터 끝까지 · 자리표시({낱말})와 안 부딪혀요', async () => {
+    for (const lv of ['light', 'last', 'recent', 'all', 'memo']) { const b = M.block(lv); assert.ok(b.includes('NOT A NEW STORY') && b.includes('at the END of the story text') && b.includes('"starting values"') && b.includes('from the first message to the last'), lv); assert.ok(!/\{[a-z][a-zA-Z0-9_]*\}/.test(b.replace(/\{\{[^}]+\}\}/g, '')), lv); }
+});
+await ok('1.6.5 변화 장: 답마다 남은 상태 변화 줄(extra.statussim)을 사람마다 합치고(쉼표 · 세로줄 여럿) · 마지막 장소 · 시간 · 사건 차례 · 숨긴 메시지 · 고르지 않은 스와이프는 빼요 · 채팅 전체 · 기억 요약 매크로 맨 앞에', async () => {
+    const op = (sw, ...ops) => ({ bySwipe: { [sw]: ops } });
+    const chat = [   // 시험용으로 지어낸 줄
+        { name: 'A', mes: 'one', swipe_id: 0, extra: { statussim: op(0, ['aff', 'Mira +2, Joon +1'], ['trust', 'Mira +3'], ['loc', 'Harbor'], ['event', 'Met at the harbor.']) } },
+        { name: 'A', mes: 'two', is_system: true, extra: { statussim: op(0, ['aff', 'Mira +50']) } },
+        { name: 'A', mes: 'three', swipe_id: 1, extra: { statussim: { bySwipe: { 0: [['aff', 'Mira +40']], 1: [['aff', 'Mira +4 | Joon -2'], ['period', 'Night'], ['place', 'Home'], ['event', 'Walked home.']] } } } },
+        { name: 'U', is_user: true, mes: 'four' },
+    ];
+    const l = M.opsLedger({ chat });
+    assert.deepEqual([l.msgs, l.people, l.events], [2, 2, 2]);
+    assert.ok(l.text.includes('Mira: aff +6, trust +3; Joon: aff -1, trust 0'), l.text);
+    assert.ok(l.text.includes('Latest location: Home (#2)') && l.text.includes('Latest time of day: Night (#2)') && l.text.includes('#0 Met at the harbor.\n#2 Walked home.'));
+    { const { sums, ...rest } = M.opsLedger({ chat: [{ name: 'A', mes: 'x' }] }); assert.deepEqual(rest, { text: '', people: 0, events: 0, msgs: 0 }); assert.equal(sums.size, 0); }
+    assert.deepEqual([...l.sums], [['Mira', { aff: 6, trust: 3 }], ['Joon', { aff: -1, trust: 0 }]]);
+    const reg = []; const c = { chat, registerMacro: (k, fn) => reg.push([k, fn]), extensionSettings: { statussim: {} }, chatMetadata: { memoria: { turns: [{ mesId: 0, summary: 'S0.' }] } } };
+    globalThis.SillyTavern = { getContext: () => c };
+    const fn = k => (reg.length ? reg : globalThis.__blReg).find(x => x[0] === k)?.[1];
+    if (!fn(M.MACRO_ALL)) await M.syncMbPrompt('off', 9, 2000, { c, retry: false, doc: { querySelectorAll: () => [] } }).catch(() => null);
+    const all = fn(M.MACRO_ALL)(), memo = fn(M.MACRO_MEMO)();
+    assert.ok(all.startsWith('--- STATUS CHANGES RECORDED DURING THE STORY') && all.includes('\n\n--- STORY TEXT ---\nA: one'));
+    assert.ok(memo.startsWith('--- STATUS CHANGES RECORDED') && memo.includes('--- STORY TEXT ---\n[#0] S0.'));
+    delete globalThis.SillyTavern;
+});
+await ok('1.6.5 버그 사냥 6차: 「기억 요약」 이 상한을 안 넘어요(요약 머리가 넘치면 뒤 원문은 가장 새 것만 · 그래도 넘치면 오래된 요약부터 빼요 · 가장 새 요약은 남김) · 알림 · 주석(is_system · 다른 종류)은 숨긴 수에 안 세요', async () => {
+    const turns = Array.from({ length: 40 }, (_, i) => ({ mesId: i, summary: `Turn ${i} summary ${'s'.repeat(300)}` }));   // 지어낸 요약 40개(하나 약 90 토큰)
+    const chat = [...Array.from({ length: 40 }, (_, i) => ({ name: 'A', mes: `m${i}` })), { name: 'A', mes: 'x'.repeat(3000) }, { name: 'U', is_user: true, mes: 'y'.repeat(700) }];
+    const c = { chat, chatMetadata: { memoria: { turns } } };
+    const free = M.memoText(c, 0); assert.deepEqual([free.count, free.dropped, free.tail], [40, 0, 2]);
+    const r = M.memoText(c, 2000);
+    assert.ok(r.tokens <= 2000, `어림 ${r.tokens} 이 상한 2,000 을 넘어요`);
+    assert.ok(r.dropped > 0 && r.count === 40 - r.dropped && r.first === r.dropped, JSON.stringify({ ...r, text: 0 }));
+    assert.ok(r.text.includes('Turn 39 summary') && !r.text.includes('Turn 0 summary'), '가장 새 요약은 남기고 오래된 것부터');
+    assert.ok(r.text.endsWith('y'.repeat(700)), '가장 새 원문은 그대로');
+    assert.match(M.fillLine('memo', r), /· 상한 때문에 오래된 요약 \d+개는 뺌 · /);
+    const n0 = M.memoText({ chat: [{ name: 'A', mes: 'a' }], chatMetadata: { memoria: { turns: [{ mesId: 0, summary: 'S.' }] } } }, 5);
+    assert.deepEqual([n0.count, n0.dropped], [1, 0], '요약 하나는 늘 남겨요');
+    const sys = { chat: [
+        { name: 'A', mes: 'story one' },
+        { name: 'System', is_system: true, mes: 'help text', extra: { type: 'help' } },
+        { name: 'System', is_system: true, mes: 'a comment', extra: { type: 'comment' } },
+        { name: 'System', is_system: false, mes: 'narration line', extra: { type: 'narrator' } },
+        { name: 'A', is_system: true, mes: 'hidden reply' },
+        { name: 'System', is_system: true, mes: 'hidden narration', extra: { type: 'narrator' } },
+    ] };
+    const a = M.allText(sys, 0);
+    assert.deepEqual([a.hidden, a.total], [2, 2], '숨긴 것은 눈 감긴 답 · 내레이션 둘만 · 알림 · 주석은 세지도 싣지도 않아요');
+    assert.equal(a.text, 'A: story one\n\nSystem: narration line');
+});
+await ok('1.6.5 관계 숫자 바로잡기: 적용 뒤 애정 · 우정이 변화 합보다 낮으면 그 합까지(음수 합은 그만큼 아래로) · 이미 따르면 그대로 · 합 없는 사람 그대로 · 바뀐 사람만 단계 자동(−1) · 이름표의 직함으로도 맞춰요 · 「채팅 전체」 · 「기억 요약」 일 때만 · 적용 안 하면 안 해요', async () => {
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });   // 시험용으로 지어낸 변화 줄
+    const chat = [
+        { name: 'A', mes: 'a', swipe_id: 0, extra: op(['aff', 'Mira +9, Chief +7'], ['trust', 'Mira +4']) },
+        { name: 'A', mes: 'b', swipe_id: 0, extra: op(['aff', 'Mira +8 | Joon -6'], ['trust', 'Joon -3, Ria +2']) },
+    ];
+    const mk2 = () => ({ chat, saveMetadata() { this.saved = (this.saved || 0) + 1; }, chatMetadata: { statussim: { base: { data: { rel: { user: [
+        { name: 'Mira', aff: 4, trust: 25, stage: 2 },            // 애정 4 < 합 17 → 17 · 우정 25 ≥ 4 → 그대로
+        { name: 'Joon', aff: 2, trust: 1, stage: 1 },             // 합 −6 · −3 → 아래로
+        { name: 'Bo', label: 'Office Chief', aff: 1, trust: 3, stage: 0 },   // 이름표의 직함으로 맞춤(합 7)
+        { name: 'Ria', aff: 5, trust: 9, stage: 1 },              // 우정 합 2 — 이미 더 높음 → 그대로
+        { name: 'Kai', aff: 0, trust: 0, stage: 0 },              // 변화 줄 없음 → 그대로
+    ] } } }, origin: { data: { rel: { user: [{ name: 'Mira', aff: 4, trust: 25, stage: 2 }] } } } } } });
+    const c = mk2(); const r = M.reconcileRel(c); const u = c.chatMetadata.statussim.base.data.rel.user;
+    assert.deepEqual(u.map(x => [x.name, x.aff, x.trust, x.stage]), [['Mira', 17, 25, -1], ['Joon', -6, -3, -1], ['Bo', 7, 3, -1], ['Ria', 5, 9, 1], ['Kai', 0, 0, 0]]);
+    assert.deepEqual(r.changed.map(x => x.name), ['Mira', 'Joon', 'Bo']); assert.equal(r.checked, 4);
+    assert.deepEqual(c.chatMetadata.statussim.origin.data.rel.user[0], { name: 'Mira', aff: 17, trust: 25, stage: -1 });
+    assert.equal(M.reconcileRel(c).changed.length, 0, '두 번 해도 그대로');
+    // 창이 닫힌 뒤: 기준 자료가 새것으로 바뀌었을 때만 · 단계가 all · memo 일 때만
+    const toasts = []; const toast = { success: m => toasts.push('ok ' + m), info: m => toasts.push('i ' + m) }; let refreshed = 0; const core = { app: { refreshNow: () => refreshed++ } };
+    const c2 = mk2(); const before = c2.chatMetadata.statussim.base;
+    assert.equal(await M.afterWizard({ before, level: 'all', c: c2, toast, waitMs: 20, step: 5, core }), null, '적용 안 함 — 그대로');
+    assert.equal(await M.afterWizard({ before: null, level: 'recent', c: c2, toast, waitMs: 20, step: 5, core }), null, '「최근 답」 은 안 해요');
+    const nb = structuredClone(before); setTimeout(() => { c2.chatMetadata.statussim.base = nb; }, 10);
+    const res = await M.afterWizard({ before, level: 'all', c: c2, toast, waitMs: 500, step: 5, core });
+    assert.equal(res.changed.length, 3); assert.equal(nb.data.rel.user[0].aff, 17); assert.equal(c2.saved, 1); assert.equal(refreshed, 1);
+    assert.match(toasts.at(-1), /^ok 관계 숫자를 채팅 기록\(3명\)에 맞췄어요/);
+    const c3 = mk2(); M.reconcileRel(c3); const b3 = c3.chatMetadata.statussim.base; c3.chatMetadata.statussim.base = structuredClone(b3);
+    await M.afterWizard({ before: b3, level: 'memo', c: c3, toast, waitMs: 50, step: 5, core }); assert.match(toasts.at(-1), /^i 관계 숫자가 채팅 기록을 따라요\(4명 확인\)/);
+});
+await ok('1.6.5 진짜 모델 다시 넣기에서 찾은 것: 직함이 다른 사람 이름표에도 들어 있으면 그 사람을 안 올려요(이름 · 별칭이 같은 사람이 있으면 그 사람만) · 시간대는 마지막 시간대 글을 그 확장 달력 시간대로', async () => {
+    const sums = new Map([['Captain', { aff: 14, trust: 3 }], ['Chief', { aff: 5, trust: 1 }]]);   // 지어낸 이름
+    const list = [{ name: 'Captain', label: 'Boss' }, { name: 'Ozz', label: 'The very first Captain' }, { name: 'Raf', label: 'Office Chief' }, { name: 'Tam', label: 'Chief of staff' }];
+    assert.deepEqual(M.sumFor(list[0], sums, list), { aff: 14, trust: 3 }, '이름이 같으면 그 사람');
+    assert.equal(M.sumFor(list[1], sums, list), null, '다른 사람 이름인 직함이 이름표에 있어도 안 맞춰요');
+    assert.equal(M.sumFor(list[2], sums, list), null, '같은 직함이 이름표에 둘이면 안 맞춰요');
+    assert.deepEqual(M.sumFor(list[2], sums, [list[2]]), { aff: 5, trust: 1 }, '한 명뿐이면 맞춰요');
+    const T = ['새벽', '아침', '낮', '저녁', '밤', '심야'];
+    assert.deepEqual(['Evening -> Night', 'Late Night', 'Noon', 'Morning', 'dusk', '심야', 'Teatime'].map(x => M.timeOfDay(x, T)), ['밤', '심야', '낮', '아침', '저녁', '심야', null]);
+    assert.equal(M.timeOfDay('Night', ['Morning', 'Night']), 'Night');
+    const c = { chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: { statussim: { bySwipe: { 0: [['period', 'Evening -> Night'], ['aff', 'Captain +14']] } } } }],
+        chatMetadata: { statussim: { base: { data: { calendar: { time: '아침', times: T }, rel: { user: [{ name: 'Captain', aff: 3, trust: 0, stage: 0 }, { name: 'Ozz', label: 'The very first Captain', aff: 0, trust: 8, stage: 0 }] } } } } } };
+    const r = M.reconcileRel(c);
+    assert.deepEqual(r.time, { from: '아침', to: '밤' }); assert.deepEqual(c.chatMetadata.statussim.base.data.rel.user.map(x => [x.name, x.aff, x.trust]), [['Captain', 14, 0], ['Ozz', 0, 8]]);
 });
 console.log(`mb-prompt: ${n}개 통과`);

@@ -27,7 +27,8 @@ export const KEY = 'gen.system'; // 「생성 시스템 프롬프트」 — 상�
 export const LEVELS = ['off', 'light', 'last', 'recent', 'all', 'memo'];   // memo 는 만들기 화면의 이번 한 번만(테마 설정 단계로는 안 골라요)
 export const MACRO = 'bl_mb_recent', MACRO_ALL = 'bl_mb_all', MACRO_MEMO = 'bl_mb_memo';
 export const DEFAULT_COUNT = 9, DEFAULT_CHARS = 2000, FULL_CAP = 40000;
-export const DEFAULT_CAP = 120000, HEAD_CHARS = 1000;   // 채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음) · 상한을 넘을 때 오래된 메시지에 남기는 앞 글자 수
+// 1.6.5 (11-17 사용자 「채팅 전체 상한 기본값 두지마 다 열어 ㄱㄱ」): 상한 기본 12만 → 0(없음). 옛 저장값 12만은 src/settings.js 가 한 번 0 으로 옮겨요.
+export const DEFAULT_CAP = 0, OLD_DEFAULT_CAP = 120000, HEAD_CHARS = 1000;   // 채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음) · 상한을 넘을 때 오래된 메시지에 남기는 앞 글자 수
 export const ONCE_KEY = 'bl-mb-prompt-once', ONCE_WAIT = 10 * 60000, ONCE_IDLE = 4 * 60000;
 export const ONCE_LV_KEY = 'bl-mb-prompt-once-lv';   // 1.6.1 「이번 한 번만」 의 단계(채팅 전체가 아닐 때만 적어요 — 미트볼 만들기 화면의 「채팅 읽기」 고르기 src/mb-read.js)
 const ONCE_NAME = { off: '기본', light: '기본', last: '마지막 답 전체', recent: '최근 답 여러 개', all: '채팅 전체', memo: '기억 요약' };
@@ -44,6 +45,8 @@ const LIGHT = [
     'Where the story text (the excerpts, and any fuller text below) disagrees with the character card or lorebook about the present situation, who is in the scene, or how people stand with each other, follow the story text.',
     'Do not add a person who appears in none of the sources.',
     'Use one spelling per name: reuse the exact spelling already used in the current panel data and the sources, and never list the same person twice under different spellings or translations.',
+    // 1.6.5 (11-17 사용자 「미트볼 반영 안 되는 거 같다니까 채팅」): 그 확장의 만들기 지시는 「시작 값 · 시작 날짜 · 시작 장소」 로 쓰여 있어 채팅이 다 실려도 처음 상태 쪽으로 채워요 — 이야기가 이미 흘렀으면 「지금(이야기 끝)」 으로 읽게 해요
+    'NOT A NEW STORY: when the story text shows the story is already under way, fill every panel with the state NOW, at the END of the story text, not at the opening. Wherever the task says "start", "starting values" or "where the user starts", read it as "now": the in-story date and time at the end, the place the user is at the end, relationship numbers and stages moved from the realistic baseline by everything that has happened between them, what people hold now, and memos, summaries and profile lines that mention the latest events. Go through the story text from the first message to the last so early events are not lost.',
 ].join('\n');
 const LAST = '\n\n--- LATEST STORY TURN (complete text of the newest reply) ---\n{{lastCharMessage}}';
 const RECENT = `\n\n--- LATEST STORY TURNS (oldest first; only the newest is complete, older ones are shortened) ---\n{{${MACRO}}}`;
@@ -254,6 +257,9 @@ function fit(rows, cap, memoOf = () => null) {
     }
     return { sum, full };
 }
+/** 1.6.5 (버그 사냥 6차) 숨긴 메시지 = 눈 감긴 메시지(is_system · 종류 없음 또는 내레이터). 실리태번 알림 · 주석(is_system · 다른 종류 — 도움말 · /comment 등)은 숨긴 것으로 세지 않고 빼요 */
+const hiddenMsg = x => !!x?.is_system && (!x.extra?.type || x.extra.type === 'narrator');
+const noticeMsg = x => !!x?.is_system && !!x.extra?.type && x.extra.type !== 'narrator';
 const indexMemo = list => { const by = new Map(); for (const e of list) for (let i = e.from; i <= e.to && i - e.from < 5000; i++) if (!by.has(i)) by.set(i, e); return by; };
 /**
  * 채팅 전체: 숨기지 않은 모든 메시지(내 메시지 포함)를 이름 붙여 차례대로. 숨긴 메시지는 기억 요약이 있으면 그 요약을([Summary]) 그 자리에.
@@ -266,8 +272,8 @@ export function allText(c = ctx(), cap = DEFAULT_CAP) {
     const { list } = memoEntries(c), by = indexMemo(list);
     const rows = []; let hidden = 0, hiddenSum = 0, fullChars = 0; const hiddenUsed = new Set();
     chat.forEach((x, at) => {
-        if (!x || typeof x.mes !== 'string') return;
-        if (x.is_system) {
+        if (!x || typeof x.mes !== 'string' || noticeMsg(x)) return;   // 실리태번 알림 · 주석은 이야기가 아니라 빼고 숨긴 수에도 안 세요
+        if (hiddenMsg(x)) {
             hidden++; const e = by.get(at);
             if (e && !hiddenUsed.has(e)) { hiddenUsed.add(e); hiddenSum++; rows.push({ at, head: `[Summary #${e.from}${e.to !== e.from ? `-#${e.to}` : ''}] `, body: e.text, memo: e, sum: true, hiddenRow: true }); }
             return;
@@ -289,26 +295,64 @@ export function allText(c = ctx(), cap = DEFAULT_CAP) {
  */
 export function memoText(c = ctx(), cap = DEFAULT_CAP) {
     const { list, source } = memoEntries(c);
-    if (!list.length) return { text: '', count: 0, first: -1, last: -1, tail: 0, tailCut: 0, source: '', chars: 0, tokens: 0 };
+    if (!list.length) return { text: '', count: 0, first: -1, last: -1, tail: 0, tailCut: 0, dropped: 0, source: '', chars: 0, tokens: 0 };
     const chat = Array.isArray(c?.chat) ? c.chat : [];
     const last = Math.max(...list.map(e => e.to));
-    const head = list.map(e => `[#${e.from}${e.to !== e.from ? `-#${e.to}` : ''}] ${e.text}`).join('\n');
+    const lines = list.map(e => `[#${e.from}${e.to !== e.from ? `-#${e.to}` : ''}] ${e.text}`);
     const rows = [];
-    chat.forEach((x, at) => { if (at > last && x && !x.is_system && typeof x.mes === 'string') { const body = plain(x.mes); if (body) rows.push({ at, head: `${nameOf(x)}: `, body }); } });
+    chat.forEach((x, at) => { if (at > last && x && !hiddenMsg(x) && !noticeMsg(x) && typeof x.mes === 'string') { const body = plain(x.mes); if (body) rows.push({ at, head: `${nameOf(x)}: `, body }); } });
     const limit = Math.max(0, Math.round(Number(cap)) || 0);
-    fit(rows, limit ? Math.max(1, limit - tokensSafe(head)) : 0);
+    // 1.6.5 (버그 사냥 6차): 요약 머리만으로 상한을 넘으면 뒤 원문은 가장 새 메시지만 · 그래도 넘으면 오래된 요약부터 빼요(가장 새 요약은 남겨요) — 전엔 머리를 안 줄여 상한을 넘었어요
+    const lineTok = lines.map(l => tokensSafe(l) + 1); let headTok = lineTok.reduce((a, b) => a + b, 0);
+    fit(rows, limit ? Math.max(1, limit - headTok) : 0);
     const kept = rows.filter(r => !r.drop);
+    let from = 0;
+    if (limit) { const tailTok = kept.reduce((a, r) => a + rowSize(r), 0); while (from < lines.length - 1 && headTok + tailTok > limit) headTok -= lineTok[from++]; }
+    const head = lines.slice(from).join('\n');
     const text = head + (kept.length ? `\n\n--- AFTER THE LAST SUMMARY (full text) ---\n${kept.map(r => r.head + r.body).join('\n\n')}` : '');
-    return { text, count: list.length, first: list[0].from, last, tail: kept.length, tailCut: rows.filter(r => r.cut || r.drop).length, source, chars: text.length, tokens: tokensSafe(text) };
+    return { text, count: list.length - from, first: list[from].from, last, tail: kept.length, tailCut: rows.filter(r => r.cut || r.drop).length, dropped: from, source, chars: text.length, tokens: tokensSafe(text) };
 }
-const kNum = n => Math.round(Number(n) || 0).toLocaleString('ko-KR');
+/**
+ * 1.6.5 본편 AI 가 답마다 남긴 상태 변화 줄(그 확장이 메시지 extra.statussim.bySwipe 에 적어 둔 것)을 한 장으로 — 호감 · 우정 합 · 마지막 장소 · 시간 · 사건 차례.
+ *   사용자 채팅(11-17): 답마다 「aff 이름 +N」 이 쌓여 사람마다 +12 ~ +19 인데, 만들기는 「시작 값(−10 ~ 10)」 으로 채워 숫자가 이야기를 안 따랐어요. 이 장을 실어 숫자 · 장소 · 날짜가 쌓인 변화를 따르게 해요.
+ *   숨긴 메시지 · 고르지 않은 다른 답(스와이프)은 빼요. 돌려주는 것: { text, people, events, msgs } · 줄이 없으면 text ''
+ */
+export function opsLedger(c = ctx()) {
+    const chat = Array.isArray(c?.chat) ? c.chat : [];
+    const sum = new Map(), events = [], last = {}; let msgs = 0;
+    const add = (name, k, n) => { if (!name) return; const r = sum.get(name) || { aff: 0, trust: 0 }; r[k] += n; sum.set(name, r); };
+    chat.forEach((m, i) => {
+        if (!m || m.is_system) return;
+        const ops = m.extra?.statussim?.bySwipe?.[m.swipe_id ?? 0];
+        if (!Array.isArray(ops) || !ops.length) return; msgs++;
+        for (const op of ops) {
+            if (!Array.isArray(op)) continue; const [k, v] = op, s = String(v ?? '').trim(); if (!s) continue;
+            if (k === 'aff' || k === 'trust') { for (const part of s.split(/[,|]/)) { const x = /^\s*(.*?)\s*([+-]\d+)\s*$/.exec(part); if (x) add(x[1].trim(), k, Number(x[2])); } }
+            else if (k === 'event') events.push(`#${i} ${s}`);
+            else if (k === 'loc' || k === 'place') last.place = `${s} (#${i})`;
+            else if (k === 'period' || k === 'time') { last.time = `${s} (#${i})`; last.timeRaw = s; }
+            else if (k === 'date') last.date = `${s} (#${i})`;
+        }
+    });
+    if (!msgs) return { text: '', people: 0, events: 0, msgs: 0, sums: new Map() };
+    const sign = n => (n > 0 ? `+${n}` : String(n));
+    const rows = [...sum].filter(([, r]) => r.aff || r.trust).map(([n, r]) => `${n}: aff ${sign(r.aff)}, trust ${sign(r.trust)}`);
+    const text = ['--- STATUS CHANGES RECORDED DURING THE STORY (written by the story AI after each reply; they are already part of the story — current values must include them) ---',
+        'Names here are as the story AI wrote them and may be a title, rank or nickname; in every panel use each person’s real name exactly as in the card, lorebook or current panel data, never the title.',
+        rows.length ? `Total relationship changes since the first message (aff = romance, trust = friendship): ${rows.join('; ')}` : '',
+        last.place ? `Latest location: ${last.place}` : '', last.time ? `Latest time of day: ${last.time}` : '', last.date ? `Latest date change: ${last.date}` : '',
+        events.length ? `Events in order (#N = message number):\n${events.join('\n')}` : ''].filter(Boolean).join('\n');
+    return { text, people: rows.length, events: events.length, msgs, sums: sum, time: last.timeRaw || '' };
+}
+const withLedger = (c, body) => { try { const l = opsLedger(c); return l.text ? `${l.text}\n\n--- STORY TEXT ---\n${body}` : body; } catch { return body; } };
+const kNum = n =>Math.round(Number(n) || 0).toLocaleString('ko-KR');
 const kBig = n => { const v = Math.round(Number(n) || 0); return v >= 10000 ? `${(v / 10000).toFixed(v >= 100000 ? 0 : 1).replace(/\.0$/, '')}만` : kNum(v); };
 /** 실은 양 한 줄(만들기 화면 어림 줄 · 다 보낸 뒤 알림이 같이 써요) — f = allText · memoText 결과 */
 export function fillLine(lv, f) {
     if (!f) return '';
     if (lv === 'memo') {
         if (!f.count) return '이 채팅에 매 턴 기억 요약이 없어요';
-        return `기억 요약 ${kNum(f.count)}개(메시지 #${f.first}~#${f.last})${f.tail ? ` · 그 뒤 메시지 ${kNum(f.tail)}개는 원문${f.tailCut ? `(${kNum(f.tailCut)}개는 줄임)` : ''}` : ''} · ${kBig(f.chars)}자 · 약 ${kBig(f.tokens)} 토큰`;
+        return `기억 요약 ${kNum(f.count)}개(메시지 #${f.first}~#${f.last})${f.tail ? ` · 그 뒤 메시지 ${kNum(f.tail)}개는 원문${f.tailCut ? `(${kNum(f.tailCut)}개는 줄임)` : ''}` : ''}${f.dropped ? ` · 상한 때문에 오래된 요약 ${kNum(f.dropped)}개는 뺌` : ''} · ${kBig(f.chars)}자 · 약 ${kBig(f.tokens)} 토큰`;
     }
     const parts = [`메시지 ${kNum(f.count)}/${kNum(f.total)}개 · ${kBig(f.chars)}자 · 약 ${kBig(f.tokens)} 토큰`];
     if (f.summarized) parts.push(`오래된 ${kNum(f.summarized)}개는 기억 요약으로`);
@@ -322,6 +366,20 @@ export function tokens(text) {
     const s = String(text ?? ''); const ko = (s.match(/[ㄱ-힣]/g) || []).length;
     return Math.ceil(ko / 2 + (s.length - ko) / 4);
 }
+/**
+ * 1.6.5 접속한 모델의 맥락 한도(사용자가 실리태번 연결에 적어 둔 값) — 미트볼이 따로 연결 프로필을 쓰면 몰라요(0).
+ *   채팅 완성(openai 꼴)은 chatCompletionSettings.openai_max_context, 그 밖은 maxContext.
+ */
+export function modelLimit(c = ctx()) {
+    try {
+        const mb = c?.extensionSettings?.[META] || {};
+        if (mb.profGen || mb.aiProfile) return 0;
+        const n = c?.mainApi === 'openai' ? Number(c?.chatCompletionSettings?.openai_max_context) : Number(c?.maxContext);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+    } catch { return 0; }
+}
+/** 실을 글이 모델 한도를 넘는 게 확실할 때만(적게 잡는 어림 tokens 로 견줘요) 그 한도 · 아니면 · 모르면 0 — 막지 않고 알리기만 해요 */
+export function overModel(text, c = ctx()) { const lim = modelLimit(c); return lim && tokens(text) > lim ? lim : 0; }
 /** 단계마다 요청 1회에 더 드는 토큰 어림(지금 채팅 기준) */
 export function estimate(lv, c = ctx(), count = DEFAULT_COUNT, chars = DEFAULT_CHARS, cap = DEFAULT_CAP) {
     lv = level(lv);
@@ -351,8 +409,8 @@ function ensureMacro(c = ctx()) {
     if (state.macro || typeof c?.registerMacro !== 'function') return state.macro;
     try {
         c.registerMacro(MACRO, () => { try { onceSeen(); const t = recentText(ctx(), state.once?.level === 'last' && state.once.until > now() ? 0 : state.count, state.chars); filled('recent', { chars: t.length, tokens: tokensSafe(t) }); return t; } catch { return ''; } }, '블루레몬: 눈 감긴 답을 뺀 최근 답 본문(미트볼 문구용)');
-        c.registerMacro(MACRO_ALL, () => { try { onceSeen(); const r = allText(ctx(), state.cap); filled('all', r); return r.text; } catch { return ''; } }, '블루레몬: 채팅 전체 본문(숨긴 메시지는 기억 요약 · 미트볼 문구용)');
-        c.registerMacro(MACRO_MEMO, () => { try { onceSeen(); const r = memoText(ctx(), state.cap); filled('memo', r); return r.text; } catch { return ''; } }, '블루레몬: 기억 확장의 매 턴 요약(미트볼 문구용)');
+        c.registerMacro(MACRO_ALL, () => { try { onceSeen(); const c = ctx(), r = allText(c, state.cap); filled('all', r); return withLedger(c, r.text); } catch { return ''; } }, '블루레몬: 채팅 전체 본문(숨긴 메시지는 기억 요약 · 미트볼 문구용)');
+        c.registerMacro(MACRO_MEMO, () => { try { onceSeen(); const c = ctx(), r = memoText(c, state.cap); filled('memo', r); return r.text ? withLedger(c, r.text) : ''; } catch { return ''; } }, '블루레몬: 기억 확장의 매 턴 요약(미트볼 문구용)');
         state.macro = true;
     } catch { /* 이 판에는 매크로 등록이 없어요 */ }
     return state.macro;
@@ -427,6 +485,97 @@ export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_
     if (!r.ok && retry && !state.timer && globalThis.setTimeout) state.timer = setTimeout(() => { state.timer = null; syncMbPrompt(state.level, state.count, state.chars, { retry: false }).catch(() => { /* 다음 설정 바뀜에 */ }); }, 4000);
     if (!r.ok && !retry && state.level !== 'off' && r.why === 'shape') { try { toast?.warning?.('미트볼의 「생성 시스템 프롬프트」 자리를 못 찾았어요(다른 판) — 문구는 그대로 뒀어요.', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } }
     return r;
+}
+// ── 1.6.5 만들기 뒤 관계 숫자 바로잡기(AI 에 기대지 않는 안전망) ─────────────────────────────
+// 11-17 사용자 「완벽하게 고쳐」: 「채팅 전체」 · 「기억 요약」 으로 만들어 적용한 직후, 관계 칸의 애정 · 우정이 본편 AI 가 답마다 남긴 변화 합보다
+//   처음 쪽(0 근처)에 머물러 있으면 그 합까지 끌어올려요(합이 음수면 그만큼 끌어내려요). AI 가 이미 합을 따랐으면 그대로예요.
+//   고른 방식 — 「max(AI 값, 채팅 변화 합)」(음수 합은 min): 그 확장의 관계 값은 −100 ~ 100 이고 만들기 지시의 시작 값이 대개 −10 ~ 10(애정) · −10 ~ 30(우정)이라,
+//     변화 합은 「처음 만났을 때부터 쌓인 양」 의 아래 끝이에요. 「시작 기준값 + 합」 은 시작 값을 몰라 AI 가 이미 합을 더한 값에 또 더할 위험이 있고(두 번 셈),
+//     「합으로 덮어쓰기」 는 카드 · 로어북의 오랜 사이(어릴 적 인연 등)를 지워요. max 는 그 둘을 피하고, AI 가 맞게 준 값은 건드리지 않아요.
+//   단계는 숫자가 바뀐 사람만 −1(그 확장의 「자동」 — 계산할 때 단계 기준표 stageIndex(애정 · 우정 문턱)로 정해요)로 돌려 그 확장이 다시 계산하게 해요.
+//   이름 맞추기: 정확히 같은 이름 · 별칭(aliases) · 이름표(label) 안의 낱말(직함으로 적힌 변화 줄 — 예: 사람 이름 대신 직함). 못 맞춘 사람은 그대로.
+//   그 확장 파일은 안 고쳐요: 채팅 메타데이터의 상태창 자료(statussim.base · origin)만 고치고, 그 확장이 이미 띄운 core 모듈의 화면 새로고침(app.refreshNow)을 불러요(같은 모듈 주소).
+const metaMb = c => c?.chatMetadata?.statussim || null;
+/** 지금 상태창 기준 자료(만들기 적용 전후를 가리려고 같은 것인지만 봐요) */
+export const baseRef = (c = ctx()) => metaMb(c)?.base || null;
+const clampRel = n => Math.max(-100, Math.min(100, Math.round(n)));
+const words = s => String(s ?? '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+/** 관계 한 사람에 맞는 변화 합(없으면 null) */
+const namesOf = r => [String(r?.name ?? '').toLowerCase(), ...(Array.isArray(r?.aliases) ? r.aliases : []).map(a => String(a).toLowerCase())].filter(Boolean);
+export function sumFor(r, sums, list = [r]) {
+    if (!r?.name || !sums?.size) return null;
+    const mine = namesOf(r);
+    for (const [k, v] of sums) if (mine.includes(String(k).toLowerCase())) return v;
+    if ([...sums.keys()].some(k => mine.includes(String(k).toLowerCase()))) return null;
+    // 이름표의 낱말(직함)로 맞추기는 아주 좁게: 그 낱말이 누구의 이름 · 별칭도 아니고, 이름표에 그 낱말이 든 사람이 딱 한 명일 때만
+    //   (진짜 모델 다시 넣기에서 「the very first Captain」 같은 다른 사람 이름표에 걸려 엉뚱한 사람이 올라간 것을 막아요)
+    const all = Array.isArray(list) && list.length ? list : [r];
+    for (const [k, v] of sums) {
+        const kk = String(k).toLowerCase(); if (kk.includes(' ')) continue;
+        if (all.some(p => namesOf(p).includes(kk))) continue;
+        const holders = all.filter(p => words(p?.label).includes(kk));
+        if (holders.length === 1 && holders[0] === r) return v;
+    }
+    return null;
+}
+/** 마지막 시간대 글(「Evening -> Night」 면 화살표 뒤) → 그 확장 달력의 시간대 이름(달력 times 에 있을 때만) */
+const TIME_WORDS = [[/late\s*night|midnight|심야|한밤/i, '심야'], [/dawn|새벽/i, '새벽'], [/morning|아침/i, '아침'], [/noon|afternoon|day|lunch|낮|점심|오후/i, '낮'], [/evening|dusk|sunset|저녁|해질/i, '저녁'], [/night|밤/i, '밤']];
+export function timeOfDay(raw, times = []) {
+    const s = String(raw ?? '').split(/->|→/).pop().trim(); if (!s) return null;
+    const list = Array.isArray(times) ? times.map(String) : [];
+    const exact = list.find(t => t.toLowerCase() === s.toLowerCase()); if (exact) return exact;
+    for (const [re, ko] of TIME_WORDS) if (re.test(s)) { const hit = list.find(t => t === ko) || list.find(t => re.test(t)); if (hit) return hit; }
+    return null;
+}
+/** 관계 숫자 바로잡기 — 바꾼 사람 목록을 돌려줘요. 자료는 그 자리에서 고쳐요(origin 도 같은 사람이면 같이) */
+export function reconcileRel(c = ctx()) {
+    const meta = metaMb(c), list = meta?.base?.data?.rel?.user, cal = meta?.base?.data?.calendar;
+    const led = opsLedger(c), sums = led.sums;
+    const changed = []; let checked = 0, time = null;
+    // 시간대: 본편 AI 가 마지막으로 적은 시간대(그 확장 달력의 시간대 이름으로 바꿀 수 있을 때만) — 기본 틀 달력이 「아침」 에 머무는 것
+    if (cal && led.time) { const t = timeOfDay(led.time, cal.times); if (t && t !== cal.time) { time = { from: cal.time, to: t }; cal.time = t; } }
+    if (!Array.isArray(list) || !list.length || !sums?.size) return { changed, checked, time };
+    const fix = (r, k, d) => { const v = Number(r[k]) || 0; if (!d) return v; return d > 0 ? Math.max(v, clampRel(d)) : Math.min(v, clampRel(d)); };
+    for (const r of list) {
+        const s = sumFor(r, sums, list); if (!s) continue; checked++;
+        const aff = fix(r, 'aff', s.aff), trust = fix(r, 'trust', s.trust);
+        if (aff === r.aff && trust === r.trust) continue;
+        changed.push({ name: r.name, from: [r.aff, r.trust], to: [aff, trust], sum: [s.aff, s.trust] });
+        r.aff = aff; r.trust = trust; r.stage = -1;
+        const o = meta.origin?.data?.rel?.user?.find?.(x => x?.name === r.name); if (o) { o.aff = aff; o.trust = trust; o.stage = -1; }
+    }
+    return { changed, checked, time };
+}
+async function mbCore(doc = globalThis.document, load = url => import(url)) {
+    try {
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
+        if (!src || src.includes('?')) return null;
+        return await load(new URL('./src/core.js', src).href);
+    } catch { return null; }
+}
+/**
+ * 만들기 창이 닫힌 뒤(「채팅 전체」 · 「기억 요약」 으로 보냈을 때만): 상태창 기준 자료가 새것으로 바뀌면(적용) 관계 숫자를 바로잡고 저장 · 새로고침 · 알려요.
+ *   before = 고르기를 걸 때의 기준 자료 · 적용이 창 닫힘보다 늦을 수 있어 잠깐(waitMs) 기다려요. 돌려주는 것: 바로잡은 결과 또는 null(적용 안 함)
+ */
+export async function afterWizard({ before = null, level = '', c = undefined, toast = globalThis.toastr, waitMs = 8000, step = 250, doc = globalThis.document, core = undefined } = {}) {
+    if (level !== 'all' && level !== 'memo') return null;
+    const cx = () => c || ctx();
+    let base = baseRef(cx());
+    for (let t = 0; (!base || base === before) && t < waitMs; t += step) { await new Promise(r => setTimeout(r, step)); base = baseRef(cx()); }
+    if (!base || base === before) return null;
+    const res = reconcileRel(cx());
+    if (res.changed.length || res.time) {
+        try { await cx().saveMetadata?.(); } catch { /* 다음 저장 때 */ }
+        try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
+    }
+    try {
+        const tm = res.time ? ` 시간대도 채팅의 마지막 시간대 「${res.time.to}」 로 맞췄어요.` : '';
+        if (res.changed.length) toast?.success?.(`관계 숫자를 채팅 기록(${res.changed.length}명)에 맞췄어요 — 본편 AI 가 답마다 남긴 애정 · 우정 변화 합보다 낮게 만들어진 사람만 그 합까지 올렸어요.${tm}`, '', { timeOut: 12000 });
+        else if (res.checked) toast?.info?.(`관계 숫자가 채팅 기록을 따라요(${res.checked}명 확인).${tm}`, '', { timeOut: 6000 });
+        else if (tm) toast?.info?.(tm.trim(), '', { timeOut: 6000 });
+    } catch { /* 알림 없이 */ }
+    return res;
 }
 export const lastResult = () => state.last;
 /** 지금 걸려 있는 「이번 한 번만」 단계(없으면 '') */

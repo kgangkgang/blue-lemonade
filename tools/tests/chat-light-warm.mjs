@@ -465,6 +465,18 @@ test('(멀리 뛰기) scroll 사건 그 자리에서 — 프레임이 그려지�
     assert.ok(w.length <= M.WARM_AROUND + 2 * M.WARM_KEEP + 2 * M.VIEW_GUARD + 4, '푼 수 ' + w.length);
     assert.ok(M._warm.state().cooled > 0);
 });
+test('(1.6.5 버그 사냥 6차) 다른 확장 · CSS 가 숨긴(display:none · 자리 0) 메시지가 섞여도 이분 탐색이 보이는 메시지를 찾아요', () => {
+    begin(500, 489); M.kickWarm(0); settle(120000);
+    moveTo(100);
+    const hide = i => (i > 100 && i % 3 !== 0) || (i < 90 && i % 4 === 0);   // 보이는 자리 아래로 많이 · 위로도 몇 개 숨김
+    for (const m of mes) if (hide(m.i)) m.getBoundingClientRect = () => { rectReads++; return { top: 0, bottom: 0, height: 0 }; };
+    scrollEvent();
+    const vis = mes.filter(m => !hide(m.i) && m.top < 600 && m.top + 200 > 0).map(m => m.i);
+    assert.ok(vis.includes(100), '보이는 것 ' + vis);
+    for (const i of vis) assert.ok(mes[i].attrs.has('data-bl-warm'), i + '번(보이는 메시지)이 아직 건너뛴 채');
+    for (const m of mes) delete m.getBoundingClientRect;
+    setMessages(500, 489);   // 다음 시험을 위해 새 메시지로
+});
 test('(여유) 둘레에서 WARM_KEEP 안쪽으로만 벗어난 푼 메시지는 되돌리지 않는다(조금 굴릴 때마다 뗐다 붙였다 하지 않게)', () => {
     begin(500, 290); scrollEvent(); moveTo(300); scrollEvent(); settle(120000);   // 아래로 굴리던 중(둘레가 같은 쪽으로 치우친 채)
     const a = warmed();

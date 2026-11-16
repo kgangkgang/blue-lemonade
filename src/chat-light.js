@@ -317,7 +317,17 @@ export function warmPaused(doc = document) {
     if (!on) return true;
     if (doc.getElementById?.('preloader')) return true;   // 처음 불러오는 동안은 그리는 일을 보태지 않아요(걷힌 뒤 다시 봐요)
     if (doc.body?.dataset?.generating === 'true') return true;
-    return !!doc.querySelector?.('.drawer-content.openDrawer:not(.pinnedOpen)');
+    return openLooseDrawer(doc);
+}
+/** (고정 아닌) 서랍이 열려 있나 — `.drawer-content.openDrawer:not(.pinnedOpen)` 과 같은 판정.
+ *  최적화 6차: 이 판정은 굴리는 동안 화면에 들어온 메시지마다(onReveal) · 묶음마다 불려요. 예전 querySelector 는 부를 때마다 문서 전체(긴 채팅 노드 4.8만)를
+ *  선택자로 훑었어요(버그 사냥 4차 프로필: 2000 채팅 위로 굴리기 22초 중 1.27초 몫). 서랍 목록(getElementsByClassName — 브라우저가 문서마다 담아 두고
+ *  DOM 이 바뀔 때만 다시 모아요)의 class 만 봐요 */
+function openLooseDrawer(doc) {
+    if (typeof doc.getElementsByClassName !== 'function') return !!doc.querySelector?.('.drawer-content.openDrawer:not(.pinnedOpen)');
+    const list = doc.getElementsByClassName('drawer-content');
+    for (let i = 0; i < list.length; i++) { const c = list[i].classList; if (c.contains('openDrawer') && !c.contains('pinnedOpen')) return true; }
+    return false;
 }
 /** 처리를 기다리는 키 · 누름이 있나 — 있으면 묶음을 미뤄 입력이 먼저(없는 브라우저는 늘 false) */
 export function inputPending(nav = typeof navigator !== 'undefined' ? navigator : null) {
@@ -456,7 +466,7 @@ export function coolForRestyle(doc = document) {
 /** 서랍이 열리면 쉬면서 화면 밖을 되돌리고, 닫히면 다시 미리 그린다 */
 export function warmOnDrawers(doc = document) {
     if (!on) return;
-    if (doc.querySelector('.drawer-content.openDrawer:not(.pinnedOpen)')) { if (!warm.cool || warm.timer || warm.job || warm.look) coolOffscreen(doc); } else kickWarm();
+    if (openLooseDrawer(doc)) { if (!warm.cool || warm.timer || warm.job || warm.look) coolOffscreen(doc); } else kickWarm();
 }
 // 답장을 받는 동안: 토큰마다 마지막 메시지가 다시 그려질 때 푼 메시지 전부가 배치 · 층 나누기 · 넘기기에 끼어(폰 4배 스트리밍 50ms 넘는 프레임 3 → 14개)
 //   첫 토큰(또는 생성 시작)에 화면 밖을 되돌리고, 토큰이 STREAM_QUIET_MS 끊기거나 생성이 끝나면 다시 쉬는 시간에 푼다. 드라이런(토큰 세기)은 건너뛴다.
@@ -545,8 +555,10 @@ export function viewGuard(el) {
     const box = el.getBoundingClientRect(); const top = el.scrollTop;
     if (warm.lastTop !== null && top !== warm.lastTop) warm.dir = top < warm.lastTop ? -1 : 1;
     warm.lastTop = top;
+    // 1.6.5 (버그 사냥 6차): 다른 확장 · CSS 가 숨긴(display:none) 메시지는 자리가 0 이라 이분 탐색이 그 위아래를 헷갈려요 — 숨긴 것은 아래 첫 보이는 메시지 자리로 봐요(아래가 다 숨김이면 보는 칸 아래로)
+    const rectAt = i => { for (let j = i; j < n; j++) { const r = kids[j].getBoundingClientRect(); if (r.height || r.top || r.bottom) return r; } return null; };
     let lo = 0, hi = n - 1;
-    while (lo < hi) { const m = (lo + hi) >> 1; if (kids[m].getBoundingClientRect().bottom > box.top) hi = m; else lo = m + 1; }
+    while (lo < hi) { const m = (lo + hi) >> 1, r = rectAt(m); if (!r || r.bottom > box.top) hi = m; else lo = m + 1; }
     let last = lo;
     while (last + 1 < n && kids[last + 1].getBoundingClientRect().top < box.bottom) last++;
     const picked = [];

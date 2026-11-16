@@ -51,6 +51,8 @@ export function costLine(pick, chat = {}, c = undefined, costText = '', P = null
     const over = lv === 'all' && (all.summarized || all.cut || all.dropped);
     const parts = [lv === 'all' ? `${P.fillLine('all', all)}${over ? ` — 상한 ${big(cap)}에 맞춤` : ' — 다 실어요'}` : lv === 'memo' ? P.fillLine('memo', memo) : `채팅 ${num(all.total)}개`, one ? `요청 1회 약 ${big(one)} 토큰 더` : '더 드는 토큰 없음'];
     if (one && k) parts.push(`이번 만들기 약 ${big(one * k)} 토큰 더(AI ${k}회)`);
+    const lim = lv === 'all' ? (P.overModel?.(all.text, c) || 0) : lv === 'memo' ? (P.overModel?.(memo.text, c) || 0) : 0;   // 1.6.5 모델 한도를 넘을 게 확실할 때만(모르면 말 안 함)
+    if (lim) parts.push(`모델 한도(약 ${big(lim)} 토큰)를 넘을 수 있어요`);
     return parts.join(' · ');
 }
 /** 보낸 뒤 줄: 「보냈어요 N번 — 요청마다 …」(이번 한 번만이 고른 단계로 걸려 있고 요청이 보였을 때만 · 아니면 '') */
@@ -90,7 +92,7 @@ let started = false;
 export function startMbRead(doc = globalThis.document, { watch = watchDom, settings = defaultSettings, load = loadPrompt, toast = () => globalThis.toastr } = {}) {
     if (started || !doc?.addEventListener) return false;
     started = true;
-    let chat = {}, host = null, hostQuiet = false, P = null, lastRow = null, heard = false;      // host = 이번 한 번을 건 만들기 창 · P = 문구 모듈(창이 처음 뜰 때) · lastRow = 마지막으로 놓은 고르기
+    let chat = {}, host = null, hostQuiet = false, P = null, lastRow = null, heard = false, armedBase = null;      // host = 이번 한 번을 건 만들기 창 · P = 문구 모듈(창이 처음 뜰 때) · lastRow = 마지막으로 놓은 고르기
     const prev = new WeakMap();   // 고르기 → 바로 앞 값(기억 요약이 없을 때 되돌려요)
     const refresh = row => {
         try {
@@ -141,11 +143,13 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         const usual = chat.mbPrompt || 'off', want = levelFor(sel.value, usual);
         if (want === 'all') {                                                  // 상한을 넘으면 고르는 순간 미리 알려요
             let a = null; try { a = P.allText(undefined, cap); } catch { a = null; }
+            const lim = a ? (P.overModel?.(a.text) || 0) : 0;
+            if (lim) warn(`채팅 전체가 지금 연결의 모델 한도(약 ${big(lim)} 토큰)를 넘을 수 있어요 — ${P.fillLine('all', a)}. 막지는 않아요. 넘치면 모델이 앞부분을 못 볼 수 있으니 「기억 요약」 이나 상한을 써 보세요.`, 15000);
             if (a && (a.summarized || a.cut || a.dropped)) warn(`미리 알려요: 채팅 전체가 요청 1회 상한(약 ${big(cap)} 토큰)을 넘어요 — ${P.fillLine('all', a)}. 원문을 다 넣으려면 블루레몬 설정 › 채팅 › 미트볼 문구의 「채팅 전체: 요청 1회 상한」 을 올려요(0 = 없음).`, 15000);
         }
         (async () => {
             if (pickOf(usual) === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요
-            if (await P.armOnce({ level: want, quiet: true })) { host = row.closest('dialog') || row.closest('.ss-wizard'); hostQuiet = want === 'off' || want === 'light'; }   // 기본 쪽은 요청을 셀 수 없어 닫을 때 조용히 돌려놔요
+            if (await P.armOnce({ level: want, quiet: true })) { host = row.closest('dialog') || row.closest('.ss-wizard'); hostQuiet = want === 'off' || want === 'light'; armedBase = P.baseRef?.() ?? null; }   // 기본 쪽은 요청을 셀 수 없어 닫을 때 조용히 돌려놔요
         })().catch(() => { /* 평소 단계 그대로 */ });
     }, true);
     // 기능을 켜고 끄면 그 확장이 「AI k회」 를 다시 적어요 — 그 창 안을 누른 뒤 한 박자 뒤에 어림을 다시 적어요
@@ -158,7 +162,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         watch(doc.body, { childList: true, name: '미트볼 만들기 채팅 읽기' }, records => {
             if (!host) return;
             for (const r of records) for (const n of r.removedNodes || []) {
-                if (n === host || (n.nodeType === 1 && n.contains?.(host))) { host = null; if (P?.onceLevel()) P.endOnce({ force: true, quiet: hostQuiet }).catch(() => { /* 다음 맞추기에 */ }); return; }
+                if (n === host || (n.nodeType === 1 && n.contains?.(host))) { host = null; const info = P?.onceInfo?.(); if (info?.seen && P.afterWizard) P.afterWizard({ before: armedBase, level: info.level }).catch(() => { /* 그대로 */ }); if (P?.onceLevel()) P.endOnce({ force: true, quiet: hostQuiet }).catch(() => { /* 다음 맞추기에 */ }); return; }   // 1.6.5 적용했으면 관계 숫자를 채팅 기록에 맞춰요(src/mb-prompt.js afterWizard)
             }
         });
     } catch { /* 창을 닫아도 시간이 지나면 돌아가요 */ }

@@ -681,20 +681,20 @@ function stack(label, control, note = '') {
 const mbNum = n => Number(n).toLocaleString('ko-KR');
 const mbBig = n => (n >= 10000 ? `약 ${(Math.round(n / 1000) / 10).toLocaleString('ko-KR')}만` : `약 ${mbNum(Math.round(n / 100) * 100)}`);
 function mbPromptAll(s) {
-    try { return mbPromptAllText(undefined, s.chat.mbPromptCap ?? 120000); } catch { return null; }
+    try { return mbPromptAllText(undefined, s.chat.mbPromptCap ?? 0); } catch { return null; }
 }
 function mbPromptRows(s) {
     const lv = MB_PROMPT_LEVELS.includes(s.chat.mbPrompt) ? s.chat.mbPrompt : 'off';
-    const n = s.chat.mbPromptCount ?? 9, m = s.chat.mbPromptChars ?? 2000, cap = s.chat.mbPromptCap ?? 120000;
+    const n = s.chat.mbPromptCount ?? 9, m = s.chat.mbPromptChars ?? 2000, cap = s.chat.mbPromptCap ?? 0;
     const tok = v => { try { return mbNum(mbPromptEstimate(v, undefined, n, m, cap)); } catch { return '?'; } };
     const all = mbPromptAll(s);
-    const allLine = all ? `채팅 전체: 지금 채팅 보이는 메시지 ${mbNum(all.total)}개 · ${mbBig(all.tokens)} 토큰 · 상태창 만들기 1번(5회쯤) = ${mbBig(all.tokens * 5)} 토큰${all.summarized || all.cut || all.dropped ? ` · 상한 때문에 ${[all.summarized ? `오래된 ${mbNum(all.summarized)}개는 기억 요약으로` : '', all.cut ? `${mbNum(all.cut)}개는 앞 1,000자만` : '', all.dropped ? `${mbNum(all.dropped)}개는 뺐어요` : ''].filter(Boolean).join(' · ')}(상한 없이는 ${mbBig(all.full)})` : ''}` : '채팅 전체: 지금 채팅을 못 읽었어요';
+    const allLine = all ? `채팅 전체: 지금 채팅 보이는 메시지 ${mbNum(all.total)}개 · ${mbBig(all.tokens)} 토큰 · 상태창 만들기 1번(5회쯤) = ${mbBig(all.tokens * 5)} 토큰${all.summarized || all.cut || all.dropped ? ` · 상한 때문에 ${[all.summarized ? `오래된 ${mbNum(all.summarized)}개는 기억 요약으로` : '', all.cut ? `${mbNum(all.cut)}개는 앞 1,000자만` : '', all.dropped ? `${mbNum(all.dropped)}개는 뺐어요` : ''].filter(Boolean).join(' · ')}(상한 없이는 ${mbBig(all.full)})` : cap ? '' : ' · 상한 없음 — 다 실어요'}` : '채팅 전체: 지금 채팅을 못 읽었어요';
     const cost = `요청 1회에 더 드는 토큰(지금 채팅 기준 어림) — 가볍게 약 ${tok('light')} · 마지막 답 전체 약 ${tok('last')} · 최근 답 여러 개 약 ${tok('recent')} · 칸 다시 생성 · AI로 수정은 1회, 상태창 만들기는 5회쯤 보내요 · 어느 단계든 본편 답마다 약 ${mbNum(mbRuleTokens())}(줄 꼴 규칙: 시간 · 장소는 새 값만 · 인물은 한 줄에 한 사람)`;
     return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 본편 「출력 규칙」 · 「별도 분석」 문구 끝에는 줄 꼴 규칙 한 덩이를 붙여요 · 「적용 안 함」 으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
             <p class="salty-note">${cost}</p>
             <p class="salty-note bl-mb-prompt-all" data-keep-note>${allLine}</p>
             ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 미트볼의 상태창 만들기 화면에서도 고를 수 있어요(「채팅 읽기」) · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요')}
-            ${slider('chat.mbPromptCap', '채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음)', 0, 500000, 10000, 120000)}
+            ${slider('chat.mbPromptCap', '채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음 · 기본 0 = 다 실어요)', 0, 500000, 10000, 0)}
             ${lv === 'recent' ? `${slider('chat.mbPromptCount', '마지막 답 앞의 메시지 수', 0, 30, 1, 9)}${slider('chat.mbPromptChars', '앞 메시지마다 읽을 글자 수', 500, 8000, 100, 2000)}` : ''}
             ${lv !== 'off' ? `<details class="salty-note bl-mb-prompt-peek"><summary>덧붙는 글 보기</summary><pre>${esc(mbPromptBlock(lv))}</pre><pre>${esc(mbRuleBlock())}</pre></details>` : ''}`;
 }
