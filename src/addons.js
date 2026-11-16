@@ -7,7 +7,7 @@ import { DUPLICATES } from './extension-folder.js';
 import { PRIVATE_ADDONS, EMBEDDED_PRIVATE, ADDON_CARRY } from './private-addons.js';
 import { legacyFolders } from './extension-folder.js';
 import { perfErrorText } from './addons/perf/start-error.js';
-import { ADDON_STYLE_IDS, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags } from './addon-style-bundle.js';
+import { ADDON_STYLE_IDS, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, ADDON_BOOT_CSS, ADDON_CSS_SENTINEL, LATE_STYLE_IDS, bootSheetOf, gatedBundleFits, syncAddonStyleFlags, pruneAddonSheet } from './addon-style-bundle.js';
 import { onGate } from './boot-layers.js';
 import { afterBoot, booting, holdSheet } from './boot-gate.js';
 import { spreadBegin, spreadEnd, markLateDone } from './addon-start-state.js';
@@ -98,7 +98,7 @@ function swapSheet(link,href){
         let done=false;const finish=ok=>{if(done)return;done=true;clearTimeout(timer);if(ok)link.remove();else{full.remove();pendingSheets.set(link,href);}resolve(ok);};   // 못 받으면 첫 장 그대로 · 다음에 다시
         const timer=setTimeout(()=>finish(false),15000);
         full.href=href;
-        loadSheet(full,()=>{if(link.isConnected)link.after(full);else document.head.append(full);}).then(()=>finish(true),()=>finish(false));
+        loadSheet(full,()=>{if(link.isConnected)link.after(full);else document.head.append(full);}).then(()=>{if(full.dataset.blAddons)pruneAddonSheet(full.sheet,full.dataset.blAddons.split(' '));finish(true);},()=>finish(false));   // 2차: 끈 애드온 규칙 떼기(첫 장과 같게)
     });
 }
 /** 첫 장을 전체 시트로 — 처음 누를 때 · 서랍이나 창이 열릴 때 · 창 뿌리가 나타날 때(표지 규칙의 animationstart) */
@@ -128,7 +128,7 @@ function stylesheetBundle(ids){
     if(booting())afterBoot(setFlags);else setFlags();
     const link=document.createElement('link');link.rel='stylesheet';link.dataset.blAddons=ids.filter(id=>!LATE_STYLE_IDS.includes(id)).join(' ');link.href=addonUrl(ADDON_GATED_BOOT_BUNDLE);
     pendingSheets.set(link,addonUrl(ADDON_GATED_BUNDLE));
-    return attachStyle(link).catch(error=>{pendingSheets.delete(link);bundledStyleIds=[];syncAddonStyleFlags(document,[]);throw error;}).then(()=>{link.dataset.blAddonsAll=ids.join(' ');return link;});   // 2차: 붙인 <link> 를 돌려줘요(덮개 아래 먼저 붙인 것을 거둘 때)
+    return attachStyle(link).catch(error=>{pendingSheets.delete(link);bundledStyleIds=[];syncAddonStyleFlags(document,[]);throw error;}).then(()=>{link.dataset.blAddonsAll=ids.join(' ');pruneAddonSheet(link.sheet,ids);return link;});   // 2차: 붙인 <link> 를 돌려줘요(덮개 아래 먼저 붙인 것을 거둘 때)
 }
 async function persist(){saving++;saveError='';changed();try{await saveAddonsNow();saveError='';}catch(error){saveError=error.message;throw error;}finally{saving--;changed();}}
 // 확장은 실리태번이 설정을 다 읽기 전에 시작한다 (settingsReady 전엔 saveSettings 가 미루기만 해서 저장 확인이 실패로 남았다) — 저장은 APP_READY 뒤에

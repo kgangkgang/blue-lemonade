@@ -119,7 +119,7 @@ await test('customstyle: 답을 받는 동안의 설정 저장은 생성이 끝�
     const src = read('src/addons/customstyle/index.js');
     assert.match(src, /import \{ isMainChatGenerating, whenMainChatIdle \} from '\.\.\/\.\.\/main-chat-rules\.js';/);
     assert.match(src, /if \(isMainChatGenerating\(\)\) \{\s*if \(!afterReply\) \{ afterReply = true; whenMainChatIdle\(\{ quietMs: 300 \}\)\.then\(\(\) => \{ afterReply = false; later\(\); \}\); \}\s*return;\s*\}/);
-    assert.match(src, /settingsTimer = setTimeout\(\(\) => \{\s*if \(isMainChatGenerating\(\)\) \{ later\(\); return; \}/);
+    assert.match(src, /settingsTimer = setTimeout\(\(\) => \{\s*if \(isMainChatGenerating\(\)(?: \|\| streamingNow\(\))?\) \{ later\(\); return; \}/);   // 2차(11-16): 토큰만 흐르는 스트림도 함께 미뤄요
     assert.match(src, /const checkConfig = \(\) => \{[\s\S]*?if \(JSON\.stringify\(currentConfig\) !== JSON\.stringify\(this\.previousStyleValue\)\)/, '바뀌었을 때 하는 일은 그대로');
 });
 

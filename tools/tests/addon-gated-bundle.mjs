@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { ADDON_STYLE_IDS as IDS, addonStyleMark, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, gatedBundleFits, syncAddonStyleFlags } from '../../src/addon-style-bundle.js';
+import { ADDON_STYLE_IDS as IDS, addonStyleMark, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, gatedBundleFits, syncAddonStyleFlags, pruneAddonSheet } from '../../src/addon-style-bundle.js';
 import { tables, expandSheet } from '../build-addon-css.mjs';
 const MARKS = Object.fromEntries(IDS.map(id => [id, addonStyleMark(id)]));
 const require = createRequire(import.meta.url), lib = require('../css-lib.cjs');
@@ -85,5 +85,36 @@ test('연결은 조건부 묶음·전체 시트 전환·실패 대체·켜짐 �
     assert.match(src, /pendingSheets\.set\(link,addonUrl\(ADDON_GATED_BUNDLE\)\)/);
     assert.match(src, /bundledStyleIds=\[\];syncAddonStyleFlags\(document,\[\]\);throw error/);
     assert.match(src, /bundledStyleIds\.filter\(id=>addonsEnabled\(s\)&&s.addons\[id\]\)/);
+});
+// 2차(11-16): 끈 애드온 규칙 떼기 — 실제 묶음 두 장의 맨 위 구조를 CSSOM 꼴로 흉내 내 견줘요
+function fakeSheet(file) {
+    const toRule = n => n.type === 'rule' ? { selectorText: n.selector }
+        : n.type === 'at' && n.name === 'keyframes' ? { type: 7, cssRules: [{ keyText: 'from' }] }
+        : n.type === 'at' && n.children ? { type: 4, cssRules: n.children.filter(c => c.type !== 'comment').map(toRule) }
+        : { type: 0 };
+    const rules = lib.parse(fs.readFileSync(path.join(root, 'src/addons', file), 'utf8')).children.filter(n => n.type !== 'comment').map(toRule);
+    return { cssRules: rules, deleteRule(i) { rules.splice(i, 1); } };
+}
+const ownerOf = rule => { for (let r = rule; r; r = r.cssRules?.[0]) { if (r.selectorText) return /bl-asc-\d+/.exec(r.selectorText)?.[0] ?? null; if (r.type === 7) return null; } return null; };
+test('끈 애드온 규칙만 떼고 전역 규칙 · 켠 애드온 규칙 · 차례는 그대로예요', () => {
+    for (const file of [ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE]) {
+        const all = fakeSheet(file);
+        assert.equal(pruneAddonSheet(all, IDS), 0, '다 켰으면 안 건드려요');
+        for (const off of ['notes', 'perf', 'tts']) {
+            const sheet = fakeSheet(file), before = [...sheet.cssRules], ids = IDS.filter(id => id !== off);
+            const n = pruneAddonSheet(sheet, ids);
+            const kept = before.filter(r => ownerOf(r) !== MARKS[off]);
+            assert.equal(n, before.length - kept.length, `${file} ${off}`);
+            assert.deepEqual(sheet.cssRules, kept);
+            assert.ok(sheet.cssRules.some(r => r.type === 7), '@keyframes 는 남아요');
+        }
+    }
+    assert.equal(pruneAddonSheet(null, ['notes']), 0);
+    assert.equal(pruneAddonSheet({ get cssRules() { throw Error('다른 출처'); } }, ['notes']), 0);
+});
+test('묶음을 붙일 때(첫 장)와 전체 장으로 바꿀 때 둘 다 떼요', () => {
+    const src = fs.readFileSync(path.join(root, 'src/addons.js'), 'utf8');
+    assert.match(src, /link\.dataset\.blAddonsAll=ids\.join\(' '\);pruneAddonSheet\(link\.sheet,ids\);/);
+    assert.match(src, /if\(full\.dataset\.blAddons\)pruneAddonSheet\(full\.sheet,full\.dataset\.blAddons\.split\(' '\)\);finish\(true\);/);
 });
 console.log(`조건부 CSS 묶음 시험 ${passed}개를 통과했어요. 전체 규칙 ${actual.length}개를 대조했어요.`);

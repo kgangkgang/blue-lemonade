@@ -171,3 +171,22 @@ export async function withReplay(name, batch, { spread = false } = {}) {
         }
     }
 }
+
+// ── 부팅 뒤 미리 하기 ──
+// 1.5.7 2차 부팅: 닫힌 서랍을 미리 훑어 두는 일(표식 · 번역)은 「지금 안 보이는 것을 미리」라 부팅과 겨루지 않게 — 시작 뒤 화면을 처음 누르거나
+//   글쇠를 칠 때(그때부터는 쓰는 중) 또는 ms 뒤, 둘 중 먼저 오는 때에 한 번 fn. 그 전에 서랍을 열면 각 모듈이 예전처럼 여는 순간 그 서랍만 해요.
+export const SETTLE_MS = 10000;
+export function afterSettle(fn, ms = SETTLE_MS) {
+    let done = false, timer = 0;
+    const doc = globalThis.document;
+    const go = () => {
+        if (done) return; done = true;
+        clearTimeout(timer);
+        for (const type of ['pointerdown', 'keydown']) doc?.removeEventListener?.(type, go, true);
+        try { fn(); } catch (error) { console.warn('[Blue Lemonade] 부팅 뒤 미리 하기', error); }
+    };
+    timer = setTimeout(go, ms);
+    timer?.unref?.();   // 시험(node)에서 프로세스를 붙잡지 않게 — 브라우저 타이머는 숫자라 아무 일 없음
+    for (const type of ['pointerdown', 'keydown']) doc?.addEventListener?.(type, go, { capture: true, passive: true });
+    return go;
+}

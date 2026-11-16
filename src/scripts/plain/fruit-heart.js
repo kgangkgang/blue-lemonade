@@ -344,10 +344,27 @@ function installFruitHeartKorean(BlueLemonade, data) {
   function schedule() { if (!stopped && !frame) frame = host.requestAnimationFrame(flush); }
   // BL 1.4.x (폰 4배 · 채팅 열기): flush 의 문서 훑기를 #chat 밖 가지에서만 — 고르는 것(과일 창 · 입구 · Helper 목록 · 팝업 · 알림 · QR 자리)은 모두 #chat 밖에 있어요.
   //   예전에는 알림 하나가 뜰 때마다 메시지 요소까지 다 훑어 짧은 채팅 열기 42ms · 300개 열기 101ms(진단 diag-1)가 들었어요. 차례는 문서 차례 그대로로 맞춰요
+  // BL 1.5.7 2차 부팅: 고르는 것은 같고 길만 — 열일곱 선택자 목록(FLUSH_ALL)을 요소마다 다 견주던 훑기를 「id 는 id 표로 · 헬퍼 · 알림은 그 칸 안에서만 ·
+  //   남은 둘(과일 입구 · 팝업)만 문서 한 번」으로 나눠요. 부팅 동안 body 자식이 붙을 때마다 도는 일이라(폰 4배 부팅 부른 몫 235ms · 1위) — 리그 폰 4배 요소 1만: 12 → 5.6ms.
+  //   #chat 밖(채팅 · 그 조상 · head 빼고) · 문서 차례 · 한 번씩인 것도 같아요(리그에서 팝업 · 닫힌 dialog · 알림 · 헬퍼 · 채팅 안 팝업을 붙여 두고 답 대조 · tools/tests/fruit-heart-scan.mjs)
+  const SCAN_IDS = FLUSH_ALL.split(',').filter(s => /^#[\w-]+$/.test(s));
+  const SCAN_SCOPED = [['#tavern_helper', helperRootsSelector.split(',').map(s => s.replace(/^#tavern_helper\s+/, '')).join(',')], ['#toast-container', TOASTS.split(',').map(s => s.replace(/^#toast-container\s+/, '')).join(',')]];
+  const SCAN_REST = '[data-fh-cat="1"],.popup';   // .popup 은 「dialog 면 열림」만 — POPUPS(dialog.popup[open],.popup:not(dialog))와 같아요
   function scanOutsideChat() {
-    if (!branchable() || !doc.getElementById('chat')) return [...doc.querySelectorAll(FLUSH_ALL)];
+    const chat = doc.getElementById('chat');
+    if (!branchable() || !chat) return [...doc.querySelectorAll(FLUSH_ALL)];
+    if (typeof chat.contains !== 'function') {   // contains 가 없는 흉내 문서(시험)는 예전 길 — 가지마다 FLUSH_ALL
+      const out = [];
+      for (const branch of outsideChat()) { if (branch.matches(FLUSH_ALL)) out.push(branch); for (const el of branch.querySelectorAll(FLUSH_ALL)) out.push(el); }
+      if (out.length > 1 && typeof out[0].compareDocumentPosition === 'function') out.sort((a, b) => (a === b ? 0 : a.compareDocumentPosition(b) & 4 ? -1 : 1));
+      return out;
+    }
+    const found = new Set();
+    for (const id of SCAN_IDS) for (const el of doc.querySelectorAll(id)) found.add(el);
+    for (const [hostSel, inner] of SCAN_SCOPED) for (const holder of doc.querySelectorAll(hostSel)) for (const el of holder.querySelectorAll(inner)) found.add(el);
+    for (const el of doc.querySelectorAll(SCAN_REST)) if (el.localName !== 'dialog' || el.hasAttribute('open')) found.add(el);
     const out = [];
-    for (const branch of outsideChat()) { if (branch.matches(FLUSH_ALL)) out.push(branch); for (const el of branch.querySelectorAll(FLUSH_ALL)) out.push(el); }
+    for (const el of found) if (!chat.contains(el) && !el.contains(chat) && !el.closest('head')) out.push(el);
     if (out.length > 1 && typeof out[0].compareDocumentPosition === 'function') out.sort((a, b) => (a === b ? 0 : a.compareDocumentPosition(b) & 4 ? -1 : 1));
     return out;
   }
@@ -359,7 +376,20 @@ function installFruitHeartKorean(BlueLemonade, data) {
     flush();
   });
   // Watch only top-level insertions plus known UI roots; never observe chat or the whole body subtree.
-  const insertionObserver = new host.MutationObserver(schedule);
+  // BL 1.5.7 2차 부팅: html · body 에 붙고 떨어지는 것 가운데 고를 것(FLUSH_ALL)이거나 곧 고를 것이 될 수 있는 것(dialog · .popup · 과일 입구 · 헬퍼)을 품었거나,
+  //   지켜보던 뿌리 · 팝업이 떨어졌을 때만 다시 칠해요. 부팅 동안 붙는 jQuery 시험 칸(fieldset) · script · 메뉴 목록(ul.ui-menu) 같은 것마다 문서를 훑던 것을 덜어요.
+  //   그 밖의 것은 붙어도 flush 가 고르는 요소 · 칠하는 글이 같아요(깊은 곳에 늦게 생기는 뿌리는 예전처럼 discover 박자가 맡아요)
+  const RELEVANT = [FLUSH_ALL, 'dialog', '.popup', '[data-fh-cat]', '#tavern_helper'].join(',');
+  const lostRoot = () => { for (const node of observed) if (!node.isConnected) return true; for (const node of popupRoots) if (!node.isConnected) return true; return false; };
+  const relevantInsertion = records => {
+    let removed = false;
+    for (const record of records) {
+      for (const node of record.addedNodes) if (node.nodeType === 1 && (node.matches(RELEVANT) || node.querySelector(RELEVANT))) return true;
+      if (!removed) for (const node of record.removedNodes) if (node.nodeType === 1) { removed = true; break; }
+    }
+    return removed && lostRoot();
+  };
+  const insertionObserver = new host.MutationObserver(records => { if (!Array.isArray(records) || relevantInsertion(records)) schedule(); });   // 기록 없이 부르는 흉내 감시(시험)는 예전처럼 늘
   insertionObserver.observe(doc.documentElement, { childList: true });
   if (doc.body) insertionObserver.observe(doc.body, { childList: true });
   const interaction = event => {

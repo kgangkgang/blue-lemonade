@@ -116,6 +116,14 @@ test('다시 적기: 같은 칸에서 뒤의 키가 실리태번 표의 키면 �
     const el2 = new El({ 'data-i18n': 'Theirs;Ours' }, '그들 번역');
     assert.equal(ui.retranslateElement(el2, keys, () => '우리 번역', k => k === 'Theirs'), 1);
     assert.equal(el2.textContent, '우리 번역');
+    // 1.5.7 2차 부팅: 우리 키가 없는 요소는 실리태번 표를 묻지 않고(known 안 부름) 아무것도 안 적어요 — 묻던 때와 결과 같음
+    let asked = 0;
+    const el3 = new El({ 'data-i18n': 'Theirs;[title]Other' }, '그들 번역');
+    assert.equal(ui.retranslateElement(el3, keys, () => '우리 번역', k => { asked++; return k === 'Theirs'; }), 0);
+    assert.equal(asked, 0); assert.equal(el3.textContent, '그들 번역');
+    const el4 = new El({ 'data-i18n': '[title]Ours;Theirs' }, '그들 번역');
+    assert.equal(ui.retranslateElement(el4, keys, () => '우리 번역', k => { asked++; return k === 'Theirs'; }), 1, '속성 칸의 우리 키는 그대로 적어요');
+    assert.ok(asked > 0);
 });
 
 test('다시 적기: 나중에 붙은 아이콘 · 단추(자식 요소)는 지우지 않고 글 조각만 바꾼다', () => {

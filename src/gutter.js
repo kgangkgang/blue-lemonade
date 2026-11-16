@@ -4,13 +4,13 @@
 // 폰(≤1000px)에서는 스크롤바를 아예 숨기므로 이 클래스는 아무 규칙도 타지 않는다.
 // 1.0.0 극한 최적화: 매번 document.querySelectorAll(13 선택자) 로 문서 전체를 훑던 것(읽기 측정: 설정 54회 198ms · 토글 50회 180ms) → 아이디는 getElementById, 클래스는 살아 있는 목록(getElementsByClassName — 브라우저가 들고 있다가 DOM 이 바뀔 때만 다시 셈)
 const IDS = ['left-nav-panel', 'right-nav-panel', 'user-settings-block', 'PersonaManagement', 'rm_print_characters_block', 'WorldInfo', 'AdvancedFormatting', 'Backgrounds', 'floatingPrompt', 'rm_extensions_block', 'rm_api_block'];
-const CLASSES = ['scrollableInner', 'rm_tag_controls'];
-let liveLists = null;
+// 2차 부팅: 클래스 둘은 querySelectorAll 한 번으로 — 살아 있는 목록 둘(getElementsByClassName)은 DOM 이 바뀐 뒤 읽으면 저마다 문서 전체를 다시 세어
+//   부팅처럼 프레임마다 DOM 이 바뀌는 동안 문서를 두 번 돌았어요(리그 폰 4배 요소 1만: 7.7 → 3.9ms · PC 부팅 자기 시간 28ms). 모으는 요소는 같아요(Set — 차례는 안 써요)
+const CLASS_TARGETS = '.scrollableInner, .rm_tag_controls';
 function findTargets() {
     const out = new Set();
     for (const id of IDS) { const el = document.getElementById(id); if (el) out.add(el); }
-    liveLists ??= CLASSES.map(c => document.getElementsByClassName(c));
-    for (const list of liveLists) for (let i = 0; i < list.length; i++) out.add(list[i]);
+    for (const el of document.querySelectorAll(CLASS_TARGETS)) out.add(el);
     return out;
 }
 const CLASS = 'bl-scrolls';

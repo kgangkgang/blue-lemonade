@@ -22,7 +22,7 @@ const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';
 const SLOT = 'custom-ss-slot';
 const SLOTS = '.ss-slot, .custom-ss-slot';
 const BATCH = 60, BATCH_CHARS = 8000;
-const WATCH_MS = 1500, WATCH_MAX = 15 * 60 * 1000, AUTO_MS = 8000, TIDY_MS = 3000, TIDY_REPLY_MS = 1200;
+const WATCH_MS = 1500, WATCH_MAX = 15 * 60 * 1000, AUTO_MS = 8000, TIDY_MS = 3000, TIDY_REPLY_MS = 1200, TRANSLATED_MS = 1500;
 const isObj = value => !!value && typeof value === 'object';
 
 /**
@@ -330,6 +330,26 @@ export function chipText(shown, dict = {}, label = shown) {
     }
     return s.replace(/([가-힣])['’]s(?=\s|$)/g, '$1의');
 }
+/**
+ * 1.5.8 칩 글 → 화면 글: 「💞 이름 = 설명」 · 「🗺️ 새 장소: 장소」처럼 나눔표가 있으면 덩이마다, 없으면 칩 글 통째를 한 덩이로 —
+ *   ① 덩이의 영어가 사전에 통째로 있으면(길이 상관없이) 그 번역 ② 통째 짝이 없는 문장(영어 낱말 셋 이상)은 조각으로 바꾸지 않고 원문 그대로
+ *      (통째 번역이 오면 바뀌어요) ③ 그 밖(이름 · 짧은 이름 묶음)은 그 확장 화면 번역(trs) 그대로.
+ *   그 확장 화면 번역은 40자 넘는 열쇠를 글 속에서 안 바꾸고 짧은 열쇠만 끼워 넣어서, 관계 칩이 「그녀를 목격함 April 만우절 장난 망신」처럼
+ *   조각 짝(witnessed her · Fools prank humiliation)으로 이어 붙고 통째 번역(「그녀가 만우절 장난으로 망신당하는 모습을 목격함」)은 안 보였어요.
+ */
+export function chipShown(label, dict = {}, trs = t => t) {
+    const raw = String(label ?? '');
+    const parts = raw.split(/(\s+=\s+|:\s+|↔)/);
+    const out = parts.map((piece, i) => {
+        if (i % 2) return piece;
+        const part = englishPart(piece);
+        if (!part) return piece;
+        if (Object.hasOwn(dict, part) && typeof dict[part] === 'string') return piece.replace(part, () => dict[part]);
+        if (latinWords(part) >= 3) return piece;
+        try { return trs(piece); } catch { return piece; }
+    });
+    return chipText(out.join(''), dict, raw);
+}
 
 /** 그 확장 폴더(실리태번이 붙인 모듈 script 주소) — 이름으로 먼저, 없으면 manifest 의 이름으로 */
 async function findBase(doc) {
@@ -383,7 +403,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
                 if (!chips.length) continue;
                 if (chips.length !== labels.length) { try { tr.translateView(slot); } catch { /* 다음 그리기 때 */ } continue; }
                 const dict = (() => { try { const d = core.getMeta()?.tr; return isObj(d) ? d : {}; } catch { return {}; } })();
-                chips.forEach((chip, k) => { let want; try { want = chipText(tr.trString(labels[k]), dict, labels[k]); } catch { return; } if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
+                chips.forEach((chip, k) => { let want; try { want = chipShown(labels[k], dict, t => tr.trString(t)); } catch { return; } if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
             }
         }
     }
@@ -569,6 +589,21 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         timers.clearTimeout(autoTimer);
         autoTimer = timers.setTimeout(() => { if (mb.busy()) return afterReply(); fill('auto').catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e)); }, AUTO_MS);
     }
+    /**
+     * 1.5.8 테마 번역기가 답을 번역해 끝냈을 때(EXTENSION_LLM_TRANSLATE_DONE): 그 답이 새로 쓴 칩 · 상태 글(관계 이름 「이름 = 설명」 · 새 장소 · 메모 …) 중
+     *   사전에 없는 영어만 그 확장 번역 길로 한 번에 메워요. 사용자는 본문을 테마 번역기로 자동 번역하는데, 그 확장 자동 번역은 「번역 모델 + 실리 기본 번역일 때만」이라
+     *   새 칩 글이 번역 단추를 누르기 전까지 영어로 남았어요(본문은 한국어 · 칩만 영어). 그 확장 자동 번역을 「끔」으로 둔 사람은 그대로 안 해요.
+     */
+    let trTimer = 0;
+    function afterTranslate(data) {
+        if (!view() || autoMode() === 'off') return;
+        if (data && typeof data === 'object' && data.type && data.type !== 'translation') return;
+        timers.clearTimeout(trTimer);
+        trTimer = timers.setTimeout(() => { if (mb.busy()) return afterTranslate(data); fill('auto').catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e)); }, TRANSLATED_MS);
+    }
+    function autoMode() {
+        try { const set = core.settings(); return set.trAuto === true ? 'st' : set.trAuto === false ? 'off' : (set.trAuto || 'st'); } catch { return 'off'; }
+    }
     function onClick(event) {
         const t = event.target;
         if (!t?.closest) return;
@@ -577,7 +612,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         // 번역을 묻는 창에서 사람이 누른 취소만(「남은 글 번역하기」는 번역 고치기 창을 스스로 닫아요 — 그 누름은 isTrusted 가 false) · 이미 번역이 늘었으면 그건 메워요
         else if (watch && event.isTrusted && t.closest('dialog[open] .popup-button-cancel')) watch.cancelled = true;
     }
-    return { paint, slotRecord, view, fill, tidy, tidySoon, stateGaps, arm, afterReply, onClick, autoOn, guardTrFix, reveal, _tried: tried, get watching() { return !!watch; }, get fixOpen() { return fixOpen; } };
+    return { paint, slotRecord, view, fill, tidy, tidySoon, stateGaps, arm, afterReply, afterTranslate, onClick, autoOn, guardTrFix, reveal, _tried: tried, get watching() { return !!watch; }, get fixOpen() { return fixOpen; } };
 }
 
 let started = null;
@@ -600,6 +635,7 @@ export function startTrFill(doc = globalThis.document) {
         try {
             const { eventSource, event_types: types } = globalThis.SillyTavern.getContext();
             if (types?.GENERATION_ENDED) eventSource.on(types.GENERATION_ENDED, () => fill.afterReply());
+            eventSource.on('EXTENSION_LLM_TRANSLATE_DONE', data => fill.afterTranslate(data));   // 1.5.8 테마 번역기가 답을 번역해 끝내면 그 답의 칩 · 새 상태 글도
             // 1.5.2: 고정 낱말 열쇠는 채팅 파일에 안 적혀서 열 때마다 다시 넣어요 — 상태가 늦게 계산돼도 되게 0.8초 · 3초 두 번(바뀐 게 없으면 아무것도 안 해요)
             if (types?.CHAT_CHANGED) eventSource.on(types.CHAT_CHANGED, () => { fill.tidySoon(800); globalThis.setTimeout(() => fill.tidySoon(0), 3000); });
             fill.tidySoon();

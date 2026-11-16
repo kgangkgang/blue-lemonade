@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { ADDON_STYLE_IDS, gatedBundleFits, addonStyleMark, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, syncAddonStyleFlags } from '../../src/addon-style-bundle.js';
+import { ADDON_STYLE_IDS, gatedBundleFits, addonStyleMark, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, syncAddonStyleFlags, pruneAddonSheet } from '../../src/addon-style-bundle.js';
 const src = fs.readFileSync(new URL('../../src/addons.js', import.meta.url), 'utf8');
 function part(startText, endText) {
     const start = src.indexOf(startText), end = src.indexOf(endText, start);
@@ -20,7 +20,7 @@ function harness({ cover = false } = {}) {
     };
     // 1.4.1 loadSheet(focus-copies.js)의 예전 길(실리태번 사본 자리가 없을 때)과 같은 흉내 — 미리 받기 길은 focus-copies.mjs 가 봐요
     const loadSheet = (link, place) => new Promise((resolve, reject) => { link.rel = 'stylesheet'; link.onload = () => resolve(); link.onerror = () => reject(Error('스타일을 읽지 못했어요.')); place(link); });
-    const box = { document, setTimeout, clearTimeout, syncAddonStyleFlags, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, addonUrl: rel => rel, loadSheet, holdSheet: () => false, booting: () => gate.cover, afterBoot: fn => { if (gate.cover) gate.waiting.push(fn); else fn(); },
+    const box = { document, setTimeout, clearTimeout, syncAddonStyleFlags, pruneAddonSheet, ADDON_GATED_BUNDLE, ADDON_GATED_BOOT_BUNDLE, LATE_STYLE_IDS, addonUrl: rel => rel, loadSheet, holdSheet: () => false, booting: () => gate.cover, afterBoot: fn => { if (gate.cover) gate.waiting.push(fn); else fn(); },
         ADDON_STYLE_IDS, gatedBundleFits, getSettings: () => gate.settings, addonsEnabled: () => true };
     // 2차: 시작 덮개 흉내 — lift() 가 boot-gate.js release 처럼 덮개를 걷고 기다리던 일을 차례로 불러요
     const gate = { cover, waiting: [], settings: { addons: Object.fromEntries(ADDON_STYLE_IDS.map(id => [id, true])) }, lift() { gate.cover = false; for (const fn of gate.waiting.splice(0)) fn(); } };   // 2차: 덮개 동안 꺼 두기(holdSheet) — 덮개 없는 흉내라 아무것도 안 해요

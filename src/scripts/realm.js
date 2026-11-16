@@ -14,6 +14,11 @@ const SELF_KEYS = new Set(['parent', 'top', 'self', 'window', 'frames', 'globalT
 const OBSERVERS = ['MutationObserver', 'ResizeObserver', 'IntersectionObserver'];
 // 제 속성이 length · name 뿐인 함수만 묶어요 (창의 기본 함수). 속성을 품은 함수(NodeFilter 상수 등)는 묶으면 속성을 잃어요
 const plainFunction = fn => Object.getOwnPropertyNames(fn).every(name => name === 'length' || name === 'name');
+// 2차 부팅: 「속성을 품은 함수」 판정은 함수마다 한 번 — 한글화 첫 훑기가 노드마다 host.NodeFilter.FILTER_* 를 읽어 그때마다 NodeFilter 의 제 속성 목록(상수 스무 개)을
+//   새 배열로 만들었어요(폰 4배 부팅 자기 시간 67ms · PC 9ms). 창의 기본 함수 · 인터페이스 상수는 늘지도 줄지도 않아(지울 수 없는 상수) 답이 바뀌지 않아요.
+//   「묶는 함수」(제 속성이 length · name 뿐) 쪽은 예전처럼 늘 물어요 — 나중에 속성이 붙으면 그때부터 그대로 돌려주는 것도 같아요
+const withProps = new WeakSet();
+const keepsProps = fn => { if (withProps.has(fn)) return true; if (plainFunction(fn)) return false; withProps.add(fn); return true; };
 
 export function createRealm(id, { host = globalThis, onError = () => {} } = {}) {
     const timeouts = new Set(), frames = new Set(), idles = new Set(), intervals = new Set(), live = new Set(), listeners = [], hides = [];
@@ -79,7 +84,7 @@ export function createRealm(id, { host = globalThis, onError = () => {} } = {}) 
             // 창의 기본 함수(getComputedStyle · confirm · queueMicrotask …)는 prototype 이 없어요 — 진짜 창에 묶어야 불려요.
             // 생성자 · jQuery 처럼 prototype 이 있는 함수는 그대로(속성 · new 가 그대로 돼요)
             //   NodeFilter 처럼 prototype 은 없어도 상수(SHOW_TEXT …)를 품은 것도 그대로 — 묶으면 상수가 사라져요(트리 훑기가 빈손이 됨)
-            if (typeof value !== 'function' || value.prototype !== undefined || !plainFunction(value)) return value;
+            if (typeof value !== 'function' || value.prototype !== undefined || keepsProps(value)) return value;
             let entry = bound.get(key);
             if (!entry || entry.fn !== value) { entry = { fn: value, wrap: value.bind(target) }; bound.set(key, entry); originals.set(entry.wrap, value); }
             return entry.wrap;

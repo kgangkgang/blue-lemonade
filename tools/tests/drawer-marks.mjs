@@ -63,7 +63,7 @@ await test('그 밖의 그릇 신호 — h4 · h4dep · soh · idr · odd · api
     assert.equal(toks(el('div', 'flex-container flexFlowColumn', el('div', 'oneline-dropdown'))), 'odd');
     assert.equal(toks(el('div', 'flex-container', el('div', 'api_button'))), 'api');
     assert.equal(toks(el('div', 'relative inline-block', elA('input', 'peer sr-only', { type: 'checkbox' }), el('label', ''))), 'peer');
-    assert.equal(toks(el('div', '', el('small', ''), el('div', 'editor_maximize'))), 'smax');
+    assert.equal(toks(el('div', '', el('small', ''), el('div', 'editor_maximize'))), 'max smax');
     assert.equal(toks(el('div', '', elA('select', '', { id: 'instruct_names_behavior' }))), 'instr sel');
     assert.equal(toks(el('div', 'range-block', el('div', '', elA('input', '', { id: 'stream_toggle', type: 'checkbox' })))), 'stream');
     assert.equal(toks(el('div', 'flex flex-wrap', el('div', 'menu_button_icon', el('i', 'fa-folder-plus')))), 'fplus');
@@ -80,7 +80,7 @@ await test('CSS 에 옛 서랍 신호 :has 가 남아 있지 않음', () => {
 await test('표식 선택자의 특이도 보정이 조건별 특이도와 같음', () => {
     // 토큰 → 보정 꼬리(옛 :has 안 조건의 특이도). where 로 감싼 것은 (0,0,n) · (1,0,0)
     const C = ':is(.bl-s, *)', T = ':is(bl-s, *)', I = ':is(#bl-s, *)';
-    const want = { neo: C + C + T, sneo: C + C + T, lneo: C + T, range: C, num: C + C + C + T, chk: C + T, sel2: T + T, logic: T, subsel: T, pm: T, f1sel: T, numin: T, h4dep: T, title: '', slider: '', idr: '', soh: '', odd: '', api: '', pmc: '', copy: '', sl2: C, fplus: C, smax: T, peer: C + C + T + T };
+    const want = { neo: C + C + T, sneo: C + C + T, lneo: C + T, range: C, num: C + C + C + T, chk: C + T, sel2: T + T, logic: T, subsel: T, pm: T, f1sel: T, numin: T, h4dep: T, title: '', slider: '', idr: '', soh: '', odd: '', api: '', pmc: '', copy: '', sl2: C, fplus: C, smax: T, max: '', peer: C + C + T + T };
     const wantWhere = { lsel: T + T, lsel2: T + T, sel: T, dsel: T, h4: T, instr: I, resp: I, wics: I, rxp: I, mui: I, 'oai-ctx-unl': I, stream: I, 'oai-ctx': I, 'oai-tok': I, 'n-openai': I, seed: I };
     let n = 0; const bad = [];
     for (const f of fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && !f.endsWith('.gen.css'))) {

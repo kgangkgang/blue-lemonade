@@ -1,0 +1,135 @@
+{
+ "note": "1.5.4 코드(node tools/tests/tts-analyze-once.mjs <1.5.4 루트> --make-fixture)로 만든 저장된 분석. 감정 · 화자 · 효과음 값은 지어낸 것",
+ "lines": [
+  "color:#3ccfbf",
+  "いや〜、最初は俺もびっくりしたんすけどね！ ほら、新年度じゃないっすか？ 室長が『挨拶運動を徹底する』って急に言い出して！",
+  "color:#ff5a3c",
+  "そうそう。新人さんだし、お堅い子こそ柔軟なユーモアを取り入れてもらわないと困るって、室長が真剣な顔で言ってたよ〜",
+  "color:#9b7cff",
+  "……冗談、ですよね？",
+  "color:#d4a017",
+  "冗談に見えるか。明日の朝から実施だ。以上",
+  "color:#ff5a3c",
+  "じゃ、練習しよっか〜。ほら、手はこう！"
+ ],
+ "analysis": {
+  "hash": "7a0vme",
+  "swipe": 0,
+  "langs": [],
+  "model": "fixture",
+  "at": 0,
+  "speaker": true,
+  "lib": 2,
+  "segs": [
+   {
+    "i": 0,
+    "h": "k2imgk",
+    "emotion": "happy",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 1,
+    "h": "5t39d",
+    "emotion": "angry",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 2,
+    "h": "1uwl88z",
+    "emotion": "surprised",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 3,
+    "h": "1103dml",
+    "emotion": "sad",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 4,
+    "h": "6rwr0u",
+    "emotion": "calm",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 5,
+    "h": "11u0n4e",
+    "emotion": "fearful",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 6,
+    "h": "vj1r1q",
+    "emotion": "happy",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 7,
+    "h": "17px2ms",
+    "emotion": "angry",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 8,
+    "h": "1uwl88z",
+    "emotion": "surprised",
+    "text": {},
+    "speaker": "Corvin"
+   },
+   {
+    "i": 9,
+    "h": "r5dy0h",
+    "emotion": "sad",
+    "text": {},
+    "speaker": "Corvin"
+   }
+  ],
+  "sfx": [
+   {
+    "after": 2,
+    "id": "bell",
+    "strength": 1,
+    "repeats": 1,
+    "durationMs": 0
+   },
+   {
+    "after": 10,
+    "id": "thud",
+    "strength": 1,
+    "repeats": 1,
+    "durationMs": 0
+   }
+  ],
+  "italics": [
+   {
+    "j": 0,
+    "h": "1j6qjv2",
+    "kind": "narration"
+   },
+   {
+    "j": 1,
+    "h": "1irv6lu",
+    "kind": "thought",
+    "speaker": "Mira"
+   },
+   {
+    "j": 2,
+    "h": "ws0sbr",
+    "kind": "narration"
+   }
+  ],
+  "italicsTried": [
+   "0:1j6qjv2",
+   "1:1irv6lu",
+   "2:ws0sbr"
+  ]
+ }
+}

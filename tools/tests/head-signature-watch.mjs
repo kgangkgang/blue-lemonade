@@ -55,4 +55,14 @@ await check('시트 규칙 수 · 화면 크기는 감시자 없이도 늘 봐�
     assert.notEqual(headSignature(doc, win), a);
     assert.notEqual(headSignature(doc, { ...win, innerWidth: 400 }), headSignature(doc, win));
 });
+// 2차(11-16 · 갈래 다): 생성 표식 없이 토큰만 흘리는 스트림 중에도 설정 저장 뒤 :root 읽기(서명 · 계산 스타일)는 끝난 뒤 한 번
+await check('토큰만 흐르는 스트림 중 저장은 끝난 뒤로 미뤄요(stream-window 판정)', async () => {
+    const fs = await import('node:fs');
+    const src = fs.readFileSync(path.join(root, 'src/addons/customstyle/index.js'), 'utf8');
+    assert.match(src, /import \{ streamingNow, whenNotStreaming \} from '\.\.\/\.\.\/stream-window\.js';/);
+    assert.match(src, /const afterTokens = whenNotStreaming\(\(\) => later\(\)\);/);
+    assert.match(src, /clearTimeout\(settingsTimer\); afterTokens\.cancel\(\);/);
+    assert.match(src, /if \(streamingNow\(\)\) \{ afterTokens\(\); return; \}/);
+    assert.match(src, /if \(isMainChatGenerating\(\) \|\| streamingNow\(\)\) \{ later\(\); return; \}/);
+});
 console.log(`head-signature-watch: ${passed}개 통과`);

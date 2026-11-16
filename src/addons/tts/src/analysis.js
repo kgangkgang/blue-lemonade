@@ -44,6 +44,7 @@ import { runtimeEnabled, assertRuntime, waitForRuntime } from './runtime.js';
 //   carryOver(segs, prev) → segs             같은 글의 번역을 재사용한다. 감정은 새 문맥으로 분석한 값을 유지한다.
 //   moveAnalysis(old, lines, hash) → { analysis, changed, refill } | null   1.7.0 다시 쓰기 뒤 줄 맞추기 (순수 함수 · 시험용)
 //   analysisCovers(analysis, langs) → boolean  1.7.0 그 언어들을 다 갖췄나 (다시 옮길 줄 analysis.redo 가 남은 언어는 아직)
+//   pairLines(olds, nows) → [옛 순번|-1]       1.5.8 저장된 분석의 줄을 지금 줄에 맞추기 (순수 함수 · 시험용 — alignOld)
 //
 // 실패: 통신·엔진 오류는 한국어 메시지의 Error 를 던진다 (e.retry = 429/5xx/시간 초과 → 재생기가 한 번 더). 중단(signal)은 그대로 던진다.
 // 응답 형식·필수 대사 정보 누락은 성공으로 저장하지 않고 세션 안에서만 실패를 기억한다. 자동 반복 없이 기본 읽기; 요술봉 재생성/원문·분석 설정 변경이면 재시도.
@@ -128,10 +129,12 @@ export function hash(str) {
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
     return (h >>> 0).toString(36);
 }
-/** 대사 비교용 정규화: 소문자 · 공백 하나 · 바깥 대화문 기호 제거 */
+/** 대사 비교용 정규화: 소문자 · 공백 하나 · 바깥 대화문 기호 제거. 1.5.8 점자 빈칸(U+2800)도 빈칸 — 저장할 때와 찾을 때 둘 다 이 함수 */
 export function normText(text) {
-    return String(text ?? '').replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    return String(text ?? '').replace(/⠀/g, ' ').replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
+/** 1.5.7 까지의 정규화 (점자 빈칸을 그대로 둠) — 그때 저장한 분석의 줄 해시를 알아볼 때만 */
+const legacyNorm = (text) => String(text ?? '').replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 /** max 글자로 자르기: 앞 60% + … + 뒤 40% (대사는 보통 뒤쪽에 있으니 양끝을 남긴다) */
 function clip(text, max) {
     const s = String(text || '');
@@ -1372,6 +1375,13 @@ function drop(id, mes, remember = false) {
 function continuedFrom(mes) {
     const old = previousOf(mes);
     if (!old || !Array.isArray(old.segs) || !old.segs.length) return null;
+    // 1.5.8 줄 나누기가 바뀐 옛 분석에서 일부 줄만 찾았으면 (alignStored) 찾은 줄을 그대로 — segs 는 지금 순번 자리 (못 찾은 줄 · 감정이 빠진 줄은 null → 묻는다)
+    const part = partialMemo.get(old);
+    if (part && part.hash === textHash(mes)) {
+        const emotionOn = !!(settings().analysis || {}).emotion;
+        const segs = part.prior.segs.map(g => (g && (!emotionOn || EMOTION_SET.has(g.emotion)) ? g : null));
+        return segs.some(Boolean) ? { ...part.prior, segs } : null;
+    }
     let lines = [];
     try { lines = dialogueLines(mes); } catch { return null; }
     if (old.segs.length > lines.length) return null;
@@ -1398,6 +1408,117 @@ function dialogueLines(mes) {
         out.push({ i: out.length, h: hash(normText(String(seg.text).trim())) });
     }
     return out;
+}
+
+// ---------- 1.5.8 저장된 분석을 지금 줄에 맞추기 (요청 없음)
+// 사용자 (11-16): 「tts 분석은 왜 누를때마다 하는거임? 한번싹하는거아니었어?」 — 1.5.5 가 점자 빈칸(U+2800)을 보통 빈칸으로 바꾼 뒤 나누면서
+//   1.5.4 까지 저장한 분석(색 태그 속 "color:#…" 까지 대사로 센 70줄)이 지금 줄(35줄)과 순번 · 해시가 하나도 안 맞았다. 글(hash)은 같으니 옛 분석이 나왔지만
+//   기울임 열쇠(j:h)도 달라 기울임 보충이 나갔고, 그 보충이 줄을 지금 줄로 다시 세며 감정을 모두 비워 → 다음 누름에 「감정 빠짐」 → 통째로 다시(유료).
+// 이제 분석을 처음 꺼낼 때(세션마다 분석 하나에 한 번) 지금 줄과 맞춰 보고, 안 맞으면 옛 줄을 해시로 찾아 지금 순번으로 옮긴다 —
+//   지금 정규화 · 옛 정규화(점자 빈칸 그대로) · 점자 빈칸을 둔 옛 나누기(text.js keepBraille)로. 감정 · 화자 · 번역 · 효과음 자리(after) · 기울임(j:h)까지.
+//   모든 줄을 찾으면 그대로 쓴다 (요청 0). 못 찾은 줄이 있으면 찾은 줄은 묻지 않고(known) 그 줄만 한 번 묻는다 (doAnalyze 의 prior — continuedFrom).
+const alignedMemo = new WeakMap();   // 분석 객체 → 맞춰 본 글 해시
+const partialMemo = new WeakMap();   // 분석 객체 → { hash, prior } 줄 일부만 찾은 옛 분석 (그 줄만 묻는다)
+function splitOf(mes, { keepBraille = false, paragraphs = false } = {}) {
+    const s = settings();
+    const { ctx, userName, charName } = chatCtx(mes);
+    return segmentMessage(sub(mes?.mes), { ...segOpts(mes, s, ctx, userName, charName, paragraphs), keepBraille }) || [];
+}
+const dialogueTexts = (segs) => segs.filter(g => g && g.text && g.kind === 'dialogue').map(g => String(g.text).trim());
+const actionTexts = (segs) => segs.filter(g => g && g.kind === 'action' && g.text).map(g => String(g.text).trim());
+/** 옛 글 t 의 해시가 h 였나 (지금 정규화든 옛 정규화든) → 지금 해시, 아니면 null */
+const nowHashOf = (t, h) => (t == null ? null : hash(normText(t)) === h || hash(legacyNorm(t)) === h ? hash(normText(t)) : null);
+/**
+ * 옛 줄 → 지금 줄 짝 (순수 함수 · 시험용). olds[k] = 옛 줄 k 가 될 수 있는 지금 해시들, nows[i] = 지금 줄 i 의 해시.
+ * 차례대로 한 번씩 (같은 대사가 두 번 나와도 앞에서부터) → 지금 순번마다 옛 순번 (없으면 -1)
+ */
+export function pairLines(olds, nows) {
+    const used = new Set();
+    const out = [];
+    let from = 0;
+    const hit = (x, h) => !used.has(x) && olds[x] && olds[x].has(h);
+    for (const h of nows) {
+        let k = -1;
+        for (let x = from; x < olds.length && k < 0; x++) if (hit(x, h)) k = x;
+        for (let x = 0; x < from && k < 0; x++) if (hit(x, h)) k = x;
+        if (k >= 0) { used.add(k); from = k + 1; }
+        out.push(k);
+    }
+    return out;
+}
+/**
+ * 저장된 분석 a 를 지금 글의 줄에 맞춘다 (요청 · 저장 없음). 이미 맞으면 null.
+ * → { analysis, complete } — analysis.segs 는 지금 줄 차례 (못 찾은 줄은 null; complete 면 null 없음)
+ */
+function alignOld(mes, a) {
+    const lines = dialogueTexts(splitOf(mes)).map(t => hash(normText(t)));
+    const braille = /⠀/.test(String(mes?.mes ?? ''));
+    const same = lines.length === a.segs.length && a.segs.every((g, k) => isObj(g) && g.i === k && g.h === lines[k]);
+    if (same && !braille) return null;
+    const legacy = braille ? dialogueTexts(splitOf(mes, { keepBraille: true })) : [];
+    const olds = a.segs.map(g => {
+        const c = new Set();
+        if (!isObj(g)) return c;
+        if (typeof g.h === 'string') c.add(g.h);
+        const now = Number.isInteger(g.i) ? nowHashOf(legacy[g.i], g.h) : null;
+        if (now) c.add(now);
+        return c;
+    });
+    const pair = same ? lines.map((_, i) => i) : pairLines(olds, lines);
+    // 해시로 찾은 줄이 제자리 줄보다 많을 때만 옮긴다 — 해시를 하나도 못 알아보는 분석(해시 없음 · 다른 규칙)은 예전처럼 그대로 (글이 같으면 다시 사지 않음)
+    const kept = lines.filter((h, i) => isObj(a.segs[i]) && a.segs[i].i === i && a.segs[i].h === h).length;
+    if (!same && pair.filter(k => k >= 0).length <= kept) return null;
+    const segs = lines.map((h, i) => (pair[i] >= 0 ? { ...a.segs[pair[i]], i, h } : null));
+    // 효과음 자리: after = 앞의 대화문 수 → 옛 순번 after 앞에서 찾은 지금 줄의 마지막 다음
+    const oldIndex = pair.map(k => (k >= 0 && isObj(a.segs[k]) && Number.isInteger(a.segs[k].i) ? a.segs[k].i : -1));
+    const moveAfter = (n) => { let at = 0; oldIndex.forEach((k, i) => { if (k >= 0 && k < n) at = i + 1; }); return at; };
+    const out = { ...a, segs };
+    if (Array.isArray(a.sfx)) out.sfx = a.sfx.map(c => (isObj(c) && Number.isInteger(c.after) ? { ...c, after: moveAfter(c.after), ...(Number.isInteger(c.stopAfter) ? { stopAfter: moveAfter(c.stopAfter) } : {}) } : c));
+    if (isObj(a.redo)) {
+        const redo = {};
+        for (const [lang, list] of Object.entries(a.redo)) { const m = (Array.isArray(list) ? list : []).map(k => oldIndex.indexOf(k)).filter(i => i >= 0); if (m.length) redo[lang] = m; }
+        if (Object.keys(redo).length) out.redo = redo; else delete out.redo;
+    }
+    // 기울임 (j = 원문 기울임 순번 · h = 글 해시): 같은 글의 지금 조각 가운데 옛 순번에 가장 가까운 것. 못 찾은 답 · 물어본 기록은 버린다 (그 조각은 한 번 다시 물음)
+    if (Array.isArray(a.italics) || Array.isArray(a.italicsTried)) {
+        const nowActs = actionTexts(splitOf(mes, { paragraphs: true })).map(t => hash(normText(t)));
+        const oldActs = braille ? actionTexts(splitOf(mes, { keepBraille: true, paragraphs: true })) : null;
+        const moveKey = (j, h) => {
+            const want = (oldActs && nowHashOf(oldActs[j], h)) || h;
+            let best = -1;
+            nowActs.forEach((x, k) => { if (x === want && (best < 0 || Math.abs(k - j) < Math.abs(best - j))) best = k; });
+            return best < 0 ? null : { j: best, h: want };
+        };
+        if (Array.isArray(a.italics)) out.italics = a.italics.map(x => { const m = isObj(x) && Number.isInteger(x.j) ? moveKey(x.j, x.h) : null; return m ? { ...x, ...m } : null; }).filter(Boolean);
+        if (Array.isArray(a.italicsTried)) out.italicsTried = [...new Set(a.italicsTried.map(k => { const [j, h] = String(k).split(':'); const m = moveKey(Number(j), h); return m ? `${m.j}:${m.h}` : null; }).filter(Boolean))];
+    }
+    return { analysis: out, complete: segs.every(Boolean) };
+}
+/**
+ * getAnalysis 에서: 저장된 분석이 지금 줄과 맞나 (분석 하나에 한 번만 나눠 봄). 맞거나 다 옮겼으면 쓸 분석, 줄 일부만 찾았으면 null (그 줄만 묻는다)
+ */
+function alignStored(id, mes, a) {
+    const h = textHash(mes);
+    if (alignedMemo.get(a) === h) return a;
+    const part = partialMemo.get(a);
+    if (part && part.hash === h) return null;
+    let r;
+    try { r = alignOld(mes, a); } catch (e) { log('err', `대사 분석 줄 맞추기 실패: ${snip(e?.message, 30)}`); alignedMemo.set(a, h); return a; }
+    if (!r) { alignedMemo.set(a, h); return a; }
+    const found = r.analysis.segs.filter(Boolean).length;
+    if (!r.complete) {
+        partialMemo.set(a, { hash: h, prior: r.analysis });
+        log('info', `대사 분석 줄 맞추기 #${id} · ${a.segs.length} → ${r.analysis.segs.length}줄 가운데 ${found}줄 찾음 (못 찾은 줄만 다시 물음)`);
+        return null;
+    }
+    slot(mes, true).analysis = r.analysis;
+    alignedMemo.set(r.analysis, h);
+    if (id >= 0) {
+        try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(id); } catch { /* 스와이프 정보 없음 */ }
+        scheduleSave(STORE_SAVE_MS);
+    }
+    log('info', `대사 분석 줄 맞추기 #${id} · ${a.segs.length} → ${found}줄 모두 찾음 (요청 없음)`);
+    return r.analysis;
 }
 /**
  * 옛 분석을 새 글의 대화문 줄로 옮긴다 (순수 함수). 줄 수 · 순번이 같아야 한다 — 아니면 null.
@@ -1526,6 +1647,8 @@ export function getAnalysis(mesId) {
     } else if (typeof a.key !== 'string') followSpeech(Number(mesId), mes);   // 7.2.9 옛 분석에 key 를 적어 둔다 (그 뒤 그림이 붙어도 이어 쓰게)
     a = slot(mes, false)?.analysis;
     if (!sameSwipe(a, mes)) return null;
+    a = alignStored(Number(mesId), mes, a);   // 1.5.8 줄 나누기가 바뀐 옛 분석 (점자 빈칸) — 지금 줄로 옮겨 쓴다
+    if (!a) return null;
     const cfg = settings().analysis || {};
     if (cfg.emotion && a.segs.some(g => !EMOTION_SET.has(g?.emotion))) return null;
     // 효과음 끄기는 소리만 숨긴다 (감정·번역을 다시 묻지 않고, 다시 켜면 기존 효과음을 그대로). 효과음 없이 받은 분석은 효과음을 켠 뒤 지문이 있는 글이면 한 번 다시 받는다
@@ -1643,7 +1766,7 @@ async function doAnalyze(entry) {
     // 이미 끝난 메시지는 새로 필요한 번역만 보충한다. 감정·화자·효과음과 이전 언어의 완료 기록은 그대로 유지한다.
     const promptOpts = { langs: requestLangs, emotion: !previous && !!cfg.emotion, translate: !!cfg.translate, context_chars: cfg.context_chars, speaker: !previous && cfg.speaker !== false, extras: !previous && extrasOn(), sfx: !previous, done: previous ? { segs: previous.segs, langs: previous.langs || [], redo: previous.redo || null } : null,
         italics: previous ? fill.length > 0 : cfg.speaker !== false && settings().join_paragraph !== false,   // 1.9.1 기울임 조각도 · 1.9.2 보충이면 답이 없는 것만
-        italicsOnly: previous ? fill : null, display: previous && fill.length && !requestLangs.length ? false : undefined, known: prior ? prior.segs.map(g => g.i) : null };
+        italicsOnly: previous ? fill : null, display: previous && fill.length && !requestLangs.length ? false : undefined, known: prior ? prior.segs.filter(Boolean).map(g => g.i) : null };   // 1.5.8 줄 맞추기로 일부만 찾은 옛 분석은 빈 자리(null)가 있다
     const built = buildPrompt(mes, promptOpts);
     entry.lines = built.lines.length;   // 1.7.0 받는 사이 다시 쓰기가 끼면 대화문 수가 같을 때만 끝까지 받는다 (onMessageChanged)
     const failedKey = failureKey(mes);
@@ -1665,8 +1788,8 @@ async function doAnalyze(entry) {
         if (Object.keys(redo).length) base.redo = redo; else delete base.redo;
     }
     if (built.sfx) { base.baseProfile = profileOf(mes, cfg, langs, null, extrasOn(), false); base.sfx = []; base.lib = SFX_LIB; }   // 1.6.8 보관함 판 — 이 표시가 없는 분석의 'footsteps' 는 재생 때 daily_footsteps (sfx-library.resolveSfxId)
-    if (built.empty) { store(id, mes, base); if (prior) log('info', `대사 분석 #${id} · 이어 쓰기 전 분석 ${prior.segs.length}줄 재사용 (요청 없음)`); return base; }   // 물을 게 없음 → 그것도 기억 (토큰 0)
-    log('req', `대사 분석 #${id} · ${built.asked}줄${prior ? ` (앞 ${prior.segs.length}줄은 이어 쓰기 전 분석 재사용)` : ''} · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
+    if (built.empty) { store(id, mes, base); if (prior) log('info', `대사 분석 #${id} · 이어 쓰기 전 분석 ${prior.segs.filter(Boolean).length}줄 재사용 (요청 없음)`); return base; }   // 물을 게 없음 → 그것도 기억 (토큰 0)
+    log('req', `대사 분석 #${id} · ${built.asked}줄${prior ? ` (${prior.segs.filter(Boolean).length}줄은 옛 분석 재사용)` : ''} · ${engine === 'provider' ? String(cfg.provider || '') : engine}`);
     const t0 = Date.now();
     const onSend = () => { entry.sent = true; };               // 보낸 뒤로는 부르는 쪽이 모두 그만둬도 끝까지 받아 저장 (join)
     // 6.1.8 검열되면 다른 모델로: 내용 차단(맨 400 · 거절 글 포함)이면 골라 둔 모델로 한 번만 더. 이미 막힌 메시지 · 「다른 모델로 다시」는 그 모델로 바로

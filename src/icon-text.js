@@ -2,6 +2,8 @@ import { refreshPopupMarks } from './popup-marks.js';
 import { watchDom } from './dom-watch.js';
 import { addMessageDecorator } from './message-decor.js';
 import { afterBoot } from './boot-gate.js';
+import { afterSettle } from './boot-layers.js';
+import { streamingNow } from './stream-window.js';
 // 아이콘 단추 표식 — CSS :has() 대신 JS 가 .menu_button · 체크 줄 label 에 표식을 단다
 // 1) data-bl-icon-text: css/02-controls.css 의 '아이콘만 있는 버튼' 규칙은 `> i` 하나뿐인 .menu_button 을 면 없는 아이콘으로 칠한다.
 //    CSS 는 글자 노드를 못 봐서 `<i class="fa-…"></i> 독서 패널 열기` 같은 다른 확장의 글자 버튼도 거기 걸려
@@ -154,6 +156,8 @@ const ROW_TOKENS = [
     ['f1sel', k => k.some(c => has(c, 'flex1') && !!c.querySelector('select'))],
     ['numin', k => k.some(c => tag(c, 'input') && c.type === 'number')],
     ['smax', k => k.some((c, i) => tag(c, 'small') && k[i + 1] && has(k[i + 1], 'editor_maximize'))],
+    // 2차 opt(스트리밍): 1.5.2 의 `body.salty :has(> .editor_maximize)`(주어 *) 대신 — 크게 보기 아이콘이 바로 아래에 있는 줄
+    ['max', k => k.some(c => has(c, 'editor_maximize'))],
     ['peer', k => k.some((c, i) => tag(c, 'input') && c.type === 'checkbox' && has(c, 'peer') && has(c, 'sr-only') && k[i + 1] && tag(k[i + 1], 'label'))],
     ['h4', k => k.some(c => tag(c, 'h4'))],
     ['h4dep', k => k.some(c => tag(c, 'h4') && [...c.children].some(g => g.getAttribute('data-i18n') === '(DEPRECATED)'))],
@@ -211,7 +215,7 @@ const ROW_NEED = {
     neo: '.neo-range-slider', sneo: '.neo-range-slider', lneo: '.neo-range-slider', range: '.range-block-title', num: '.range-block-title', numd: '.range-block-title',
     chk: '.checkbox_label', title: '.range-block-title', slider: '.neo-range-slider', idr: '.inline-drawer', soh: '.standoutHeader', odd: '.oneline-dropdown', api: '.api_button',
     pmc: '.prompt_manager_prompt_controls', copy: '.bl-copyright', sl2: '.salty-slider', fplus: '.menu_button_icon', sel: 'select', logic: 'select', subsel: 'select', pm: 'select',
-    lsel: 'select', lsel2: 'select', sel2: '.flex-container', f1sel: '.flex1', numin: 'input', smax: '.editor_maximize', peer: 'input', h4: 'h4', h4dep: 'h4',
+    lsel: 'select', lsel2: 'select', sel2: '.flex-container', f1sel: '.flex1', numin: 'input', smax: '.editor_maximize', max: '.editor_maximize', peer: 'input', h4: 'h4', h4dep: 'h4',
     instr: '#instruct_names_behavior', resp: '#bl-response-range', wics: '#world_info_character_strategy', rxp: '#regex_presets', mui: '#movingUIModeCheckBlock',
 };
 /** 자식 특징 열쇠 묶음(진단 · 시험용 — 판정은 rowFeatureBits 비트로 해요) */
@@ -233,7 +237,24 @@ export function rowTokens(el) {
 // 표식이 붙을 수 있는 요소 — 자식 줄 모양을 보는 그릇. CSS 주어가 div · form · label · span · li 등 여러 태그라 요소 자식이 있는 요소면 다 본다(글자 · 그림 · 입력 요소와 svg 안은 뺌)
 const NOT_HOST = new Set(['script', 'style', 'template', 'svg', 'path', 'g', 'use', 'select', 'option', 'optgroup', 'textarea', 'input', 'img', 'video', 'canvas', 'iframe', 'br', 'hr', 'i']);
 function isRowHost(el) { return !NOT_HOST.has(el.localName) && !el.closest('svg'); }
-function checkRow(el) { setAttr(el, ROW, rowTokens(el)); }
+function checkRow(el) { setAttr(el, ROW, rowTokens(el)); markBeforeMax(el); }
+// 2차 opt(스트리밍): 1.5.2 의 `body.salty :has(+ .editor_maximize)`(주어 *) 대신 — 크게 보기 아이콘 바로 앞 형제에 data-bl-max-prev.
+//   주어가 * 인 :has 는 크롬이 모든 요소에서 따지고 표식을 남겨, 채팅 글이 바뀔 때마다 body 자식 · 메시지들의 :has 를 다시 보고
+//   (여기에 다른 규칙의 넓은 :has 무효화가 겹쳐) 토큰마다 요소 수백 개를 다시 계산했어요(리그 스트리밍 요소 3,324 → 722 · 2차-가 보고).
+//   아이콘이 있거나 예전에 표식을 단 줄만 자식을 훑어요(그 밖의 줄은 비트 검사 하나).
+const BEFORE_MAX = 'data-bl-max-prev';
+const MAX_BIT = CLASS_BIT.get('editor_maximize');
+const maxHosts = new WeakSet();
+export function markBeforeMax(el) {
+    const any = (rowFeatureBits(el) & MAX_BIT) !== 0;
+    if (!any && !maxHosts.has(el)) return;
+    if (any) maxHosts.add(el); else maxHosts.delete(el);
+    for (let c = el.firstElementChild; c; c = c.nextElementSibling) {
+        const n = c.nextElementSibling;
+        const want = any && !!n && n.classList.contains('editor_maximize');
+        if (want !== c.hasAttribute(BEFORE_MAX)) { if (want) c.setAttribute(BEFORE_MAX, ''); else c.removeAttribute(BEFORE_MAX); }
+    }
+}
 function checkMes(mes) { setAttr(mes, EDITING, editingTokens(mes)); setAttr(mes, META, metaTokens(mes)); }
 function checkReasoning(details) {
     const want = details.getElementsByClassName('reasoning_edit_textarea').length > 0;
@@ -269,10 +290,13 @@ const drain = steps => { for (let r = steps.next(); !r.done; r = steps.next()); 
 //   다 훑을 때까지 그 서랍은 「미뤄 둔 서랍」으로 남아요: 그사이 열리면 원래대로 열릴 때 통째로 훑고(scanOpenedDrawers) 하던 조각은 버려요. 훑은 칸을 또 훑어도 같은 표식이에요
 const prescanJobs = new Map();
 const inputWaiting = () => { try { return !!globalThis.navigator?.scheduling?.isInputPending?.(); } catch { return false; } };
-export function prescanDeferredDrawers(ric = globalThis.requestIdleCallback, now = () => performance.now()) {
+// 1.5.7 2차 부팅: 미리 훑기는 답이 흘러드는 동안(stream-window.js streamingNow) 쉬어요 — 부팅 뒤로 옮긴 미리 훑기가 첫 답의 한가한 틈을 쓰지 않게(3초 뒤 다시 봐요)
+export const STREAM_REST_MS = 3000;
+export function prescanDeferredDrawers(ric = globalThis.requestIdleCallback, now = () => performance.now(), busy = () => streamingNow()) {
     if (typeof ric !== 'function') return;
     const queue = [...document.querySelectorAll(CLOSED_DRAWER)].filter(d => deferredDrawers.has(d));
     const step = deadline => {
+        if (busy()) { setTimeout(() => ric(step, { timeout: 5000 }), STREAM_REST_MS); return; }
         const end = now() + (deadline.didTimeout ? 8 : Math.min(45, deadline.timeRemaining()));
         for (let n = 0; queue.length; n++) {
             if (!(n & 15) && (now() >= end - 2 || inputWaiting())) break;
@@ -413,7 +437,7 @@ export function startIconTextMark() {
     if (started || !document.body) return;
     started = true;
     scan(document.body);
-    afterBoot(() => prescanDeferredDrawers());
+    afterBoot(() => afterSettle(() => prescanDeferredDrawers()));   // 1.5.7 2차 부팅: 닫힌 서랍 미리 훑기는 부팅 뒤(첫 누름 · 10초) — 그 전에 연 서랍은 예전처럼 여는 순간(scanOpenedDrawers)
     refreshPopupMarks(null, document.body);
     // 붙은 요소 속 .menu_button · label · .mes 와, 자식(글자 · 아이콘 · 편집칸 · 타이머 글자)이 바뀐 요소, 클래스(menu_button_icon) · type 이 바뀐 요소만 본다.
     // 9.0.4: 공용 감시 허브 구독 — 채팅(#chat) 밖만(body 구역 · 채팅 가지는 감시도 안 걸어요). 콜백은 예전처럼 그리기 전(when 'now')

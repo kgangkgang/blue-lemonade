@@ -399,4 +399,55 @@ await test('⑲ 망가진 자료 되살리기: 값 없는 잠금 풀기 · 이�
     assert.equal(T.trRepairLog.length, before + 1, '두 번째는 기록 없음');
 });
 
+await test('⑳ 1.5.8 테마 번역기가 답을 번역해 끝내면 그 답의 관계 칩 「이름 = 설명」 · 새 상태 글을 한 번에 메움 · 그 확장 자동 번역 「끔」이면 안 함', async () => {
+    const LABEL = 'witnessed her harbor prank humiliation';
+    for (const [auto, expect] of [['st', 1], ['always', 1], ['off', 0]]) {
+        const f = fakeTarget({ auto, engine: 'llm', ko: { [LABEL]: '항구 장난으로 망신당한 걸 봄' } });
+        f.app.current.snaps = new Map([[1, { labels: ['♥ Rowan +2', `💞 Marlow = ${LABEL}`] }]]);
+        f.app.current.state = { core: {}, data: { rel: { user: [{ name: 'Marlow', label: LABEL }, { name: 'Rowan', label: '' }] } }, recent: [] };
+        Object.assign(f.meta.tr, { Rowan: '로완', Marlow: '말로' });
+        f.meta.trLock = {};
+        const tm = fakeTimers();
+        const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A', now: tm.now, timers: tm.timers });
+        fill.afterTranslate({ type: 'translation' });
+        fill.afterTranslate({ type: 'translation' });   // 한 번으로 묶음
+        await tm.run(2000);
+        assert.equal(f.calls.json.length, expect, `trAuto=${auto}`);
+        if (expect) {
+            assert.deepEqual(f.calls.json[0], [LABEL], '이름은 빼고 설명만 · 칩과 상태 글이 같은 열쇠라 한 번');
+            assert.equal(f.meta.tr[LABEL], '항구 장난으로 망신당한 걸 봄');
+            const mes = window.document.querySelector('.mes'); mes.setAttribute('mesid', '1');
+            mes.querySelector('.custom-ss-slot').innerHTML = `<div class="ss-msgcard ss-scope"><span class="ss-mchip">♥ Rowan +2</span><span class="ss-mchip">💞 Marlow = ${LABEL}</span></div>`;
+            f.mb.tr.trString = t => viewLike(f.meta.tr, t);
+            fill.paint([mes]);
+            assert.deepEqual([...mes.querySelectorAll('.ss-mchip')].map(e => e.textContent), ['♥ 로완 +2', '💞 말로 = 항구 장난으로 망신당한 걸 봄']);
+        }
+    }
+    const f = fakeTarget();
+    const tm = fakeTimers();
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A', now: tm.now, timers: tm.timers });
+    fill.afterTranslate({ type: 'retranslation-check' });
+    await tm.run(2000);
+    assert.equal(f.calls.json.length, 0, '번역 끝남이 아닌 알림은 안 봄');
+});
+
+await test('㉑ 1.5.8 칩 「이름 = 긴 설명」: 사전의 통째 번역(40자 넘어도)이 먼저 · 통째 짝이 없으면 조각 짝으로 이어 붙이지 않고 원문 그대로', () => {
+    const LONG = 'witnessed her harbor prank humiliation at dawn';   // 40자 넘음 — 그 확장 화면 번역은 글 속에서 안 바꾸는 길이
+    const d = { Marlow: '말로', 'witnessed her': '그녀를 목격함', 'harbor prank humiliation': '항구 장난 망신' };
+    const label = `💞 Marlow = ${LONG}`;
+    assert.equal(viewLike(d, label), '💞 말로 = 그녀를 목격함 항구 장난 망신 at dawn', '그 확장 화면 번역만 쓰면 조각이 이어 붙음(사용자 화면 꼴)');
+    assert.equal(T.chipShown(label, d, t => viewLike(d, t)), `💞 말로 = ${LONG}`, '통째 짝이 없으면 원문 그대로');
+    d[LONG] = '새벽에 그녀가 항구 장난으로 망신당하는 모습을 목격함';
+    assert.equal(T.chipShown(label, d, t => viewLike(d, t)), '💞 말로 = 새벽에 그녀가 항구 장난으로 망신당하는 모습을 목격함');
+    // 칩 줄에 그려진 글도
+    const f = fakeTarget();
+    Object.assign(f.meta.tr, d);
+    f.mb.tr.trString = t => viewLike(f.meta.tr, t);
+    f.app.current.snaps = new Map([[1, { labels: ['♥ Marlow +2', label, '🗺️ 새 장소: Marlow\'s Penthouse', '+Silver Key'] }]]);
+    const mes = window.document.querySelector('.mes'); mes.setAttribute('mesid', '1');
+    mes.querySelector('.custom-ss-slot').innerHTML = `<div class="ss-msgcard ss-scope">${['♥ Marlow +2', label, "🗺️ 새 장소: Marlow's Penthouse", '+Silver Key'].map(l => `<span class="ss-mchip">${l}</span>`).join('')}</div>`;
+    T.createTrFill(f.mb, { doc: window.document }).paint([mes]);
+    assert.deepEqual([...mes.querySelectorAll('.ss-mchip')].map(e => e.textContent), ['♥ 말로 +2', '💞 말로 = 새벽에 그녀가 항구 장난으로 망신당하는 모습을 목격함', '🗺️ 새 장소: 말로의 Penthouse', '+Silver Key']);
+});
+
 console.log(`ext-bridge-tr: ${passed} 통과`);

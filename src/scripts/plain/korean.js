@@ -422,6 +422,7 @@ export default function blueLemonadeScript(BlueLemonade, window) {
       flushLater();   // BL 1.0.0: 쉴 때 훑어 두고 안 받은 조각을 서랍이 열리는 순간 받아요
       if (deferred.delete(drawer)) { kids.delete(drawer); processNode(drawer); continue; }
       for (const node of dirty) if (drawer.contains(node)) { dirty.delete(node); if (node.isConnected) processNode(node); }
+      for (const node of closedDirty) if (drawer.contains(node)) { closedDirty.delete(node); if (node.isConnected) processNode(node); }
     }
   });
   const DRAWER_WATCH = { attributes: true, attributeFilter: ['class', 'style'] };
@@ -443,7 +444,7 @@ export default function blueLemonadeScript(BlueLemonade, window) {
       else {
         for (const node of record.addedNodes) schedule(node);
         // 미룬 서랍에서 다른 곳으로 옮겨 보여 주는 칸(서랍 자신의 class · style 은 안 바뀌는 길) — 옮겨진 자리에서 그리기 전에 바로
-        if (deferred.size) for (const node of record.removedNodes) if (node.nodeType === 1 && node.isConnected) processNode(node);
+        if (deferred.size || closedDirty.size) for (const node of record.removedNodes) if (node.nodeType === 1 && node.isConnected) processNode(node);
       }
     }
   }
@@ -458,11 +459,13 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     }
     if (node.nodeType !== 1 || node.closest(SKIP)) return;
     translateAttributes(node, true);
-    const walker = doc.createTreeWalker(node, host.NodeFilter.SHOW_ELEMENT | host.NodeFilter.SHOW_TEXT, {
+    // BL 1.5.7 (2차 부팅): 상수는 한 번만 읽어요 — 창 대리(realm) 너머 host.NodeFilter 를 노드마다 세 번 읽었어요(첫 훑기 요소 · 글자 수천 개)
+    const NF = host.NodeFilter, REJECT = NF.FILTER_REJECT, ACCEPT = NF.FILTER_ACCEPT;
+    const walker = doc.createTreeWalker(node, NF.SHOW_ELEMENT | NF.SHOW_TEXT, {
       acceptNode(child) {
-        if (deferOn && child.nodeType === 1 && child.matches(DEFER)) { addDeferred(child); return host.NodeFilter.FILTER_REJECT; }
-        if (child.nodeType === 1 && child.matches(SKIP)) return host.NodeFilter.FILTER_REJECT;
-        return host.NodeFilter.FILTER_ACCEPT;
+        if (deferOn && child.nodeType === 1 && child.matches(DEFER)) { addDeferred(child); return REJECT; }
+        if (child.nodeType === 1 && child.matches(SKIP)) return REJECT;
+        return ACCEPT;
       },
     });
     while (walker.nextNode()) {
@@ -473,12 +476,23 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     translateHtmlAround(node);
   }
 
+  // BL 1.5.7 (2차 부팅): 닫힌 서랍 안에서 바뀐 칸은 지금 번역하지 않고 서랍이 열리는 순간(그리기 전 · openWatch) · 부팅이 지난 뒤 쉴 때 번역해요.
+  //   부팅 동안 실리태번 · 확장이 닫힌 서랍(확장 설정 · API · 사용자 설정 …)을 채우며 이 길로 요소 · 글자 6천 개 남짓을 바로 훑었어요(PC 리그 한 번 부팅).
+  //   닫힌 서랍은 보이지 않아(display:none) 그때 번역해도 보이는 것이 같고, 열리는 class · style 변화 콜백이 그리기 전에 마저 해요 — 처음 훑기(init)의 닫힌 서랍과 같은 길.
+  const closedDirty = new Set();
+  const closedDrawerOf = node => (node.nodeType === 1 ? node : node.parentElement)?.closest?.(DEFER) || null;
   function flush() {
     timer = null;
     if (stopped) return;
-    const work = [...dirty];
-    dirty.clear();
-    for (const node of work) if (node.isConnected) processNode(node);
+    const work = [...dirty, ...closedDirty];
+    dirty.clear(); closedDirty.clear();
+    for (const node of work) {
+      if (!node.isConnected) continue;
+      if (lateDrain) { processNode(node); continue; }
+      const drawer = closedDrawerOf(node);
+      if (drawer) { closedDirty.add(node); openWatch.observe(drawer, DRAWER_WATCH); continue; }
+      if (quiet) processNode(node); else processNodeNow(node);   // 닫힌 서랍 밖임을 방금 봤어요 — quietFor 가 같은 조상 찾기를 또 하지 않게(답은 같아요: quiet 그대로)
+    }
     for (const node of textChanges.keys()) if (!node.isConnected) textChanges.delete(node);
     for (const element of attributeChanges.keys()) if (!element.isConnected) attributeChanges.delete(element);
   }
@@ -546,6 +560,7 @@ export default function blueLemonadeScript(BlueLemonade, window) {
 
   function handleChatRecords(records) {
     if (stopped) return;
+    lastChatChange = Date.now();
     // 뿌리 콜백이 먼저 불려도 아직 안 넘어온 글자 기록을 같이 본다 (끝에서 버리는 것은 이 콜백 안에서 우리가 쓴 것뿐)
     records = records.concat(chatText.takeRecords());
     const labels = new Set();
@@ -753,7 +768,9 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     if (prefetchParts) { doc.removeEventListener('pointerdown', prefetchParts, true); doc.removeEventListener('keydown', prefetchParts, true); prefetchParts = null; }
     loadPart = null; pendingText.clear(); pendingAttr.clear(); pendingHtml.clear(); laterParts.clear();
     discovery.disconnect();
-    openWatch.disconnect(); deferred.clear(); kids.clear();
+    openWatch.disconnect(); deferred.clear(); kids.clear(); closedDirty.clear();
+    if (lateTimer !== null) host.clearTimeout(lateTimer);
+    doc.removeEventListener('pointerdown', startLateDrain, true); doc.removeEventListener('keydown', startLateDrain, true);
     helperWatch.disconnect();helperObservers.clear();
     chatRootWatch.disconnect();
     chatObservers.clear();
@@ -781,6 +798,16 @@ export default function blueLemonadeScript(BlueLemonade, window) {
   // 쉴 때 미룬 서랍을 하나씩 (한 번에 10ms 쯤 — 긴 작업을 만들지 않게 큰 서랍은 자식 단위로 나눈다)
   function drainDeferred(deadline) {
     if (stopped) return;
+    // BL 1.5.7 (2차 부팅): 부팅 뒤 미리 번역은 채팅이 바뀌는 동안(답이 흘러드는 중 · 채팅을 여는 중) 쉬어요 — 그 틈을 쓰지 않게 마지막 변화 뒤 CHAT_REST_MS 를 기다려요
+    if (lateDrain && Date.now() - lastChatChange < CHAT_REST_MS) { host.setTimeout(() => idle(drainDeferred), CHAT_REST_MS); return; }
+    if (!deferred.size && closedDirty.size) {   // 2차 부팅: 부팅 동안 미뤄 둔 닫힌 서랍 안 칸 — 미룬 서랍을 다 본 뒤 같은 조각 길로
+      const started = host.performance.now();
+      quiet = true;
+      for (const node of closedDirty) { if (host.performance.now() - started > 8) break; closedDirty.delete(node); if (node.isConnected) processNode(node); }
+      quiet = false;
+      if (closedDirty.size) idle(drainDeferred);
+      return;
+    }
     const started = host.performance.now();
     quiet = true;   // BL 1.0.0: 닫힌 서랍의 글은 조각을 받지 않고 적어만 둬요(laterParts · pending) — 열리거나 처음 누를 때 받아요
     const budget = () => (deadline?.timeRemaining && !deadline.didTimeout ? deadline.timeRemaining() > 2 : host.performance.now() - started < 10);   // 시간 초과로 불리면 남은 시간이 0 이라 10ms 만큼은 한다
@@ -802,6 +829,18 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     }
     quiet = false;
     if (deferred.size) { if (deadline && !deadline.didTimeout) idle(drainDeferred); else host.setTimeout(() => drainDeferred(null), 20); }   // 쉴 틈이 없으면 10ms 일 · 20ms 쉼
+    else if (closedDirty.size) idle(drainDeferred);
+  }
+  // BL 1.5.7 (2차 부팅): 닫힌 서랍 미리 번역(쉴 때 조각)은 부팅이 지난 뒤에 시작해요 — 부팅 동안 이 미리 번역이 한글화가 훑는 요소의 3분의 2(1만 8천 개)였어요.
+  //   그 전에 서랍을 열면 예전처럼 여는 순간 그 서랍만 통째로(openWatch). 시작 뒤 화면을 처음 누르거나 글쇠를 치면 바로, 아니면 LATE_DRAIN_MS 뒤 쉴 때.
+  const LATE_DRAIN_MS = 10000, CHAT_REST_MS = 3000;
+  let lateDrain = false, lateTimer = null, lastChatChange = -Infinity;
+  function startLateDrain() {
+    if (lateDrain || stopped) return;
+    lateDrain = true;
+    if (lateTimer !== null) host.clearTimeout(lateTimer);
+    doc.removeEventListener('pointerdown', startLateDrain, true); doc.removeEventListener('keydown', startLateDrain, true);
+    if (deferred.size || closedDirty.size) idle(drainDeferred);
   }
   const idle = fn => (host.requestIdleCallback ? host.requestIdleCallback(fn, { timeout: 1000 }) : host.setTimeout(() => fn(null), 60));
   function init() {
@@ -809,7 +848,8 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     deferOn = true;
     for (const scope of doc.querySelectorAll(SCOPE)) attachScope(scope);
     deferOn = false;
-    if (deferred.size) idle(drainDeferred);
+    lateTimer = host.setTimeout(startLateDrain, LATE_DRAIN_MS);
+    doc.addEventListener('pointerdown', startLateDrain, true); doc.addEventListener('keydown', startLateDrain, true);
     discovery.observe(doc.body, { childList: true });
     watchChat();
     for(const pop of doc.querySelectorAll('.TH-popup'))watchHelper(pop);

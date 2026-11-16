@@ -7,6 +7,7 @@ import { extension_settings } from '../../../../../../extensions.js';
 import { ask } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신)
 import { isMainChatGenerating, whenMainChatIdle } from '../../main-chat-rules.js';
 import { headSignature } from './head-signature.js';
+import { streamingNow, whenNotStreaming } from '../../stream-window.js';
 const VERSION = '0.1.3';   // 1.0.0 되살림: 다른 애드온 창처럼 머리에 판 알약 — manifest.json 의 원작 판과 같아요   // 7.2.8 답을 받는 동안은 :root 를 읽지 않는다
 
 // Constants and Types
@@ -625,14 +626,18 @@ class CustomThemeSettingsManager {
         // 7.2.8 답을 받는 동안(본채팅 생성)의 설정 저장은 생성이 끝난 뒤 한 번 본다: 글자가 들어올 때마다 스타일이 바뀌어 있어
         //   :root 읽기가 그때마다 문서 전체 스타일 계산을 앞당겼다 (폰 4배 CPU 스트리밍 중 110~180 ms). 바뀐 설정은 끝난 뒤 그대로 반영된다
         let afterReply = false;
+        // 2차 최적화(11-16 · 갈래 다): 생성 표식(body[data-generating]) 없이 토큰만 흘리는 스트림(다른 확장 · 성능 관문 장면)도 끝난 뒤 한 번 —
+        //   1.5.1 stream-window 판정(표식 또는 1초 안 토큰)을 같이 봐요. 그동안 :root 읽기가 스트리밍 재계산을 앞당기던 일(int1 스트리밍 테마 함수 1위)을 없애요
+        const afterTokens = whenNotStreaming(() => later());
         const later = () => {
-            clearTimeout(settingsTimer);
+            clearTimeout(settingsTimer); afterTokens.cancel();
             if (isMainChatGenerating()) {
                 if (!afterReply) { afterReply = true; whenMainChatIdle({ quietMs: 300 }).then(() => { afterReply = false; later(); }); }
                 return;
             }
+            if (streamingNow()) { afterTokens(); return; }
             settingsTimer = setTimeout(() => {
-                if (isMainChatGenerating()) { later(); return; }   // 7.2.8 기다리는 사이 답이 시작됐으면 끝난 뒤로
+                if (isMainChatGenerating() || streamingNow()) { later(); return; }   // 7.2.8 기다리는 사이 답이 시작됐으면 끝난 뒤로
                 // 5.6.4 (점검 RP-7): 저장마다 :root 계산 스타일을 그 자리에서 읽어 스타일 계산을 강제했다 (채팅 열 때 2~3번, 폰 리그 4배 71~123 ms).
                 // 화면을 한 번 그린 직후에 읽는다 — 스타일이 이미 계산돼 있어 거의 공짜. 숨은 탭은 그리기가 없으니 1초 뒤 그냥 읽는다 (부팅 boot 와 같은 방법)
                 cancelAnimationFrame(settingsFrame); clearTimeout(settingsLate);

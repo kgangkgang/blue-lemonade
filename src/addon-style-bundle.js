@@ -22,6 +22,32 @@ export function syncAddonStyleFlags(doc, ids) {
         if (list.contains(key) !== on) list.toggle(key, on);
     }
 }
+// 2차 최적화(11-16 · 갈래 다): 묶음 시트에는 16개 애드온 규칙이 다 있어요. 끈 애드온 몫은 뿌리 표식(html.bl-asc-N)이 없어 안 맞지만, 크롬은 표식을 맨 왼쪽이라
+//   맨 나중에 봐서 요소마다 견줌은 그대로 냈어요(사용자 구성 = 노트 꺼짐 · 전체 장 3,235규칙 중 558 · 첫 장 582 중 209).
+//   붙일 때 목록(ids)에 없는 애드온은 이 세션에 다시 켜지지 않아요(켜면 「새로고침해서 적용」) — 그 규칙을 시트에서 떼요. 다 켰으면 아무것도 안 읽어요.
+//   @keyframes · @property 처럼 표식 없는 전역 규칙은 남겨요. 실행 중에 끈 애드온은 예전처럼 표식만 빼요(다시 켜면 바로 돌아오게).
+const markOf = rule => {
+    for (let r = rule, depth = 0; r && depth < 8; depth++) {
+        if (typeof r.selectorText === 'string') return /\bbl-asc-\d+\b/.exec(r.selectorText)?.[0] ?? null;
+        if (r.type === 7 || !r.cssRules?.length) return null;   // 7 = @keyframes(안의 칸은 선택자가 아니에요)
+        r = r.cssRules[0];   // @media · @container · @supports — 한 애드온 시트에서 온 묶음이라 첫 규칙의 표식이 묶음의 표식이에요
+    }
+    return null;
+};
+/** 묶음 시트에서 ids 밖 애드온 규칙을 떼요. 돌려줌: 뗀 맨 위 규칙 수 */
+export function pruneAddonSheet(sheet, ids) {
+    const keep = new Set((ids || []).map(addonStyleMark));
+    if (ADDON_STYLE_IDS.every(id => keep.has(addonStyleMark(id)))) return 0;
+    let rules = null;
+    try { rules = sheet?.cssRules ?? null; } catch { rules = null; }
+    if (!rules) return 0;
+    let n = 0;
+    for (let i = rules.length - 1; i >= 0; i--) {
+        const mark = markOf(rules[i]);
+        if (mark && !keep.has(mark)) try { sheet.deleteRule(i); n++; } catch { /* 그대로 둬도 표식이 막아요 */ }
+    }
+    return n;
+}
 // 1.0.0 극한 최적화: 애드온 창 안에서만 쓰는 규칙을 뺀 첫 장(<시트>.boot.gen.css · 빌드 tools/build-addon-css.mjs)을 먼저 붙이고, 처음 누르거나 창이 뜨면(또는 서랍 · 창이 열리면) 전체 시트로 바꿔요.
 //   id → 창 안 표시(바깥 사슬에 있으면 뺌) · 지킴(있으면 남김). 표에 없는 애드온은 작아서 그대로 전체 시트를 붙여요
 export const ADDON_BOOT_CSS = Object.freeze({

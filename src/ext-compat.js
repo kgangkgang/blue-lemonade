@@ -371,14 +371,27 @@ export function fitActs(tb) {
 /** 1.5.5 사용자 「아침 4/1 뒤에 (화)(월) 이런 식으로 요일」: 그 확장의 날짜 칸은 칩에 「때 + 월/일」만 적고, 칸 설명(title)엔 「월/일(요일) 때 …」 를 적어요.
  *  설명 맨 앞의 「월/일(요일)」 을 읽어, 칩의 작은 글이 같은 「월/일」 로 끝나면 바깥 틀에 표식(data-bl-wd · 변수 --bl-wd)만 달아요 — 시트가 그 뒤에 「(요일)」 을 그려요(글 · 저장 자료는 안 바꿔요).
  *  요일이 없거나(빈 괄호) 세 글자 넘는 이름(판타지 달력 등) · 이미 요일이 붙은 칩(넓은 칸)은 아무것도 안 붙여요. 띠가 다시 그려질 때마다 다시 달아요(번역은 글만 바꿔 표식이 남아요). */
-const WEEKDAY = /^\s*(\d{1,2})\/(\d{1,2})\(([^()\s]{1,3})\)/;
+const WEEKDAY = /^\s*(\d{1,2})\/(\d{1,2})\(([^()]{1,12})\)/;
+/** 1.5.8 사용자 「왜 날짜 Mon 으로 뜸 · 월이라고 떠야지」: 그 확장의 달력 요일 이름은 채팅마다 달라요(달력을 만들 때 적힌 대로 — 영어 「Mon」 · 일본어 「月」 …).
+ *  테마 화면은 한국어라 칩의 요일은 늘 한국어 한 글자로 — 한국어 · 영어(짧은 · 긴 꼴 · 대소문자) · 일본어 · 중국어 꼴을 바꾸고, 못 알아보는 꼴(판타지 달력 등)은 붙이지 않아요.
+ *  날짜 숫자로 요일을 셈하지는 않아요(그 확장 달력이 현실 달력이 아닐 수 있어요 — 자료에 적힌 요일이 먼저). */
+const KO_DAYS = '일월화수목금토';
+const EN_DAYS = [/^sun(day)?$/i, /^mon(day)?$/i, /^tue(s|sday)?$/i, /^wed(nesday)?$/i, /^thu(r|rs|rsday)?$/i, /^fri(day)?$/i, /^sat(urday)?$/i];
+export function koWeekday(raw) {
+    const w = String(raw ?? '').normalize('NFKC').trim().replace(/[.\s]+$/, '');
+    let m = /^([일월화수목금토])(요일)?$/.exec(w); if (m) return m[1];
+    m = /^([日月火水木金土])(曜日?)?$/.exec(w); if (m) return KO_DAYS['日月火水木金土'.indexOf(m[1])];
+    m = /^(?:星期|礼拜|禮拜|周|週)([日天一二三四五六])$/.exec(w); if (m) return KO_DAYS['日一二三四五六'.indexOf(m[1] === '天' ? '日' : m[1])];
+    const i = EN_DAYS.findIndex(re => re.test(w));
+    return i >= 0 ? KO_DAYS[i] : '';
+}
 export function markWeekday(tb) {
     // 표식은 띠 바깥 틀(#ss-hud)에 — 그 확장이 칩을 누를 때마다 띠를 새로 그려도 첫 화면부터 요일이 그대로예요(칩마다 달면 한 화면씩 깜빡여요 · 1.5.5 「지글지글」)
     const host = tb.closest?.('#ss-hud') || tb;
     const t = tb.querySelector?.('.ss-tg > .ss-t.t-date'), sm = t && !t.classList?.contains?.('L') ? t.querySelector?.('small') : null;
     const m = sm ? WEEKDAY.exec(t.getAttribute?.('title') || '') : null, md = m ? `${+m[1]}/${+m[2]}` : '';
     const text = String(sm?.textContent || '').trim();
-    const wd = md && text.endsWith(md) && /(^|[^\d/])$/.test(text.slice(0, -md.length)) ? m[3].replace(/["\\]/g, '') : '';
+    const wd = md && text.endsWith(md) && /(^|[^\d/])$/.test(text.slice(0, -md.length)) ? koWeekday(m[3]) : '';
     if (wd) { if (host.getAttribute('data-bl-wd') !== wd) { host.setAttribute('data-bl-wd', wd); host.style?.setProperty?.('--bl-wd', `"(${wd})"`); } }
     else if (host.hasAttribute?.('data-bl-wd')) { host.removeAttribute('data-bl-wd'); host.style?.removeProperty?.('--bl-wd'); }
     return wd;

@@ -60,10 +60,10 @@ await test('p1: the module and its dictionary are exactly what the build makes f
 await test('p3: closed drawers are skipped at start and translated when they open (before paint) or at idle in ~10ms slices', () => {
     for (const text of [source, korean]) {
         assert.ok(text.includes("const DEFER = '.drawer-content:not(.openDrawer)';"));
-        assert.ok(text.includes('if (deferOn && child.nodeType === 1 && child.matches(DEFER)) { addDeferred(child); return host.NodeFilter.FILTER_REJECT; }'));
-        assert.ok(text.includes('deferOn = true;') && text.includes('if (deferred.size) idle(drainDeferred);'));
+        assert.ok(text.includes('if (deferOn && child.nodeType === 1 && child.matches(DEFER)) { addDeferred(child); return REJECT; }'));
+        assert.ok(text.includes('deferOn = true;') && text.includes('if (deferred.size || closedDirty.size) idle(drainDeferred);'));   // 1.5.7 2차 부팅: 미리 번역은 부팅 뒤(첫 누름 · 10초) — tools/tests/korean-closed-late.mjs
         assert.ok(/host\.performance\.now\(\) - started < 10\)/.test(text), '10ms slices');
-        assert.ok(text.includes('openWatch.disconnect(); deferred.clear(); kids.clear();'), 'cleanup forgets deferred drawers');
+        assert.ok(text.includes('openWatch.disconnect(); deferred.clear(); kids.clear(); closedDirty.clear();'), 'cleanup forgets deferred drawers');
     }
 });
 
@@ -73,7 +73,8 @@ await test('open flush: any top drawer that opens flushes its pending translatio
     assert.ok(source.includes('handleRecords(scopeWatch.takeRecords());'), 'records the scope observer has not delivered yet');
     assert.ok(source.includes("for (const drawer of root.querySelectorAll?.('.drawer-content') || []) openWatch.observe(drawer, DRAWER_WATCH);"));
     assert.ok(source.includes('    watchDrawers(element);'), 'every scope watches its drawers');
-    assert.ok(source.includes('if (deferred.size) for (const node of record.removedNodes) if (node.nodeType === 1 && node.isConnected) processNode(node);'), 'content moved out of a deferred drawer');
+    assert.ok(source.includes('if (deferred.size || closedDirty.size) for (const node of record.removedNodes) if (node.nodeType === 1 && node.isConnected) processNode(node);'), 'content moved out of a deferred drawer');
+    assert.ok(source.includes('for (const node of closedDirty) if (drawer.contains(node)) { closedDirty.delete(node); if (node.isConnected) processNode(node); }'), '닫힌 서랍 안에서 미룬 칸도 열릴 때');
     assert.ok(source.includes('// SillyTavern Korean UI (leftover English), v1.4.8') && source.includes("host[INSTANCE_KEY] = { version: '1.4.8', cleanup };"));
     assert.match(read('src/scripts/catalog.js'), /\{id:'korean',name:'실리태번 한글화',version:'1\.4\.8'/);
 });
@@ -84,7 +85,8 @@ await test('p5: 과일 창은 한 번에 훑고 유휴 발견은 좁은 범위�
     assert.ok(fh.includes('function rootAppeared() {'));
     // 1.4.x opt-chat-open: 한 번에 훑는 것은 그대로 · #chat 밖 가지에서만(채팅 메시지까지 훑지 않게)
     assert.ok(fh.includes('const found = scanOutsideChat();'));
-    assert.ok(fh.includes('for (const branch of outsideChat()) { if (branch.matches(FLUSH_ALL)) out.push(branch); for (const el of branch.querySelectorAll(FLUSH_ALL)) out.push(el); }'));
+    // 1.5.7 2차 부팅: 같은 것을 고르되 id 표 · 칸 안 · 두 선택자 한 번으로(예전 길과의 대조는 tools/tests/fruit-heart-scan.mjs)
+    assert.ok(fh.includes("const SCAN_REST = '[data-fh-cat=\"1\"],.popup';") && fh.includes("if (!chat.contains(el) && !el.contains(chat) && !el.closest('head')) out.push(el);"));
     assert.ok(fh.includes('if (rootAppeared()) return schedule();'));
     assert.ok(!fh.includes('doc.querySelectorAll(DISCOVER_ALL)'));
     assert.ok(!fh.includes('[...doc.querySelectorAll(rootsSelector)]') && !fh.includes("doc.querySelectorAll('#toast-container .toast-message')"), 'old per-selector walks are gone');

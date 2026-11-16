@@ -254,6 +254,7 @@ jobs:
           node tools/tests/tts-original-panel.mjs .
           node tools/tests/tts-preview-source.mjs .
           node tools/tests/tts-orig-found.mjs .
+          node tools/tests/tts-analyze-once.mjs .
           node tools/tests/translator-autofix.mjs .
           node tools/tests/translator-check-fold.mjs .
           node tools/tests/translator-fail-cache.mjs .
@@ -774,6 +775,9 @@ jobs:
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .
+          node tools/tests/fruit-heart-scan.mjs . tools
+          node tools/tests/korean-closed-late.mjs . tools
+          node tools/tests/after-settle.mjs .
           node tools/tests/script-watch-outside-chat.mjs .
           node tools/tests/chat-open-fixed-cost.mjs .
           # 공용 스케줄러가 늦게 온 박자 다음의 제때 온 박자를 건너뛰지 않는지(과일 입구 1.5초 안전망이 약 3초로 늘던 것)

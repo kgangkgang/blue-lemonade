@@ -260,7 +260,12 @@ ok('⑱ (1.5.5) 시간 칩 요일 · 칩 글자 맞춤: 칸 설명 맨 앞 「�
         return { h, tb: { closest: s => (s === '#ss-hud' ? h : null), querySelector: () => tile } }; };
     const run = (...args) => { const x = band(...args); const r = m.markWeekday(x.tb); return { r, ...x.h }; };
     let x = run('4/1(월) 아침 · 맑음', ['4/1']); assert.equal(x.r, '월'); assert.equal(x.a['data-bl-wd'], '월'); assert.equal(x.v['--bl-wd'], '"(월)"', '바깥 틀에');
-    assert.equal(run('4/1(Mon) Morning', ['Morning 4/1']).v['--bl-wd'], '"(Mon)"', '번역 채팅도');
+    assert.equal(run('4/1(Mon) Morning', ['Morning 4/1']).v['--bl-wd'], '"(월)"', '1.5.8 영어 요일 자료 · 번역 채팅도 한국어 한 글자');
+    // 1.5.8 요일 꼴: 한 · 영(짧은 · 긴 · 대소문자) · 일 · 중 → 한국어 한 글자 / 모르는 꼴은 빈 값(붙이지 않아요)
+    const W = { '월': '월', '화요일': '화', 'Mon': '월', 'MON': '월', 'monday': '월', 'Tue': '화', 'Tues': '화', 'Wednesday': '수', 'Thu': '목', 'Thurs': '목', 'FRI': '금', 'Sat.': '토', 'Sunday': '일',
+        '月': '월', '月曜日': '월', '水曜': '수', '日': '일', '土曜日': '토', '星期一': '월', '周日': '일', '星期天': '일', '週五': '금' };
+    for (const [raw, ko] of Object.entries(W)) assert.equal(m.koWeekday(raw), ko, raw);
+    for (const raw of ['별빛의날', 'Moonday', 'Mo', 'X', '', '1', 'Mon Tue']) assert.equal(m.koWeekday(raw), '', `모르는 꼴: ${raw}`);
     for (const [title, sm, L] of [['4/1(월) 아침', ['4/1(월)'], true], ['3/12(별빛의날) 새벽', ['3/12']], ['4/1() 아침', ['4/1']], ['4/1(월) 아침', ['14/1']], ['4/1(월) 아침', ['4/2']], ['4/1(월)', []]])
         assert.equal('data-bl-wd' in run(title, sm, L).a, false, `${title} · ${sm}`);
     const b2 = band('4/1(월) 아침', ['4/1']); m.markWeekday(b2.tb); b2.tb.querySelector = () => ({ classList: { contains: () => false }, getAttribute: () => '4/2(화) 아침', querySelector: () => ({ textContent: '4/1' }) });

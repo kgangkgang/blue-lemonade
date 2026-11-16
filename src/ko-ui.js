@@ -97,7 +97,11 @@ function setText(el, value) {
  *  여러 키(;)가 같은 칸을 가리키면 실리태번처럼 뒤의 것이 이긴다 — 이기는 키가 우리 키일 때만 적는다 (known: 표에 번역이 있는 키) */
 export function retranslateElement(el, keys, lookup, known = key => keys.has(key)) {
     const last = new Map(); // 칸('' = 글, 그 밖 = 속성 이름) → 이기는 키
-    for (const part of (el.getAttribute('data-i18n') || '').split(';')) {
+    const parts = (el.getAttribute('data-i18n') || '').split(';');
+    // 1.5.7 2차 부팅: 우리 키가 하나도 없는 요소는 아무 칸도 적지 않아요(아래 끝 고리는 이기는 키가 우리 키일 때만 적어요) — 그런 요소에서
+    //   known(실리태번 translate 를 한 번 부름)을 키마다 부르지 않아요. 쉴 때 [data-i18n] 전부(수천 개)를 다시 보는 첫 훑기의 거의 다가 이런 요소예요
+    if (!parts.some(part => keys.has(part.match(/\[(\S+)\](.+)/)?.[2] ?? part))) return 0;
+    for (const part of parts) {
         const attr = part.match(/\[(\S+)\](.+)/);
         const key = attr ? attr[2] : part;
         if (keys.has(key) || known(key)) last.set(attr ? attr[1] : '', key);

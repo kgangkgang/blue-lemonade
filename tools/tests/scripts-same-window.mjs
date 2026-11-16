@@ -156,6 +156,11 @@ await test('창 대리: parent · top · self 는 자기 자신 · 기본 함수
     // 크롬의 NodeFilter 는 prototype 없는 함수에 상수를 품어요 — 묶으면 상수가 사라져 트리 훑기가 빈손(실제 창 점검에서 잡힌 것)
     const NodeFilter = () => {}; Object.assign(NodeFilter, { SHOW_ELEMENT: 1, SHOW_TEXT: 4 }); fake.win.NodeFilter = NodeFilter;
     assert.equal(w.NodeFilter, NodeFilter); assert.equal(w.NodeFilter.SHOW_ELEMENT | w.NodeFilter.SHOW_TEXT, 5);
+    // 2차 부팅: 판정은 함수마다 한 번 기억해요 — 두 번째 읽기(기억한 길)도 같은 것 · 묶는 함수가 바뀌면 새로 묶어요
+    for (let i = 0; i < 3; i++) assert.equal(w.NodeFilter, NodeFilter, '상수를 품은 함수는 몇 번을 읽어도 그대로');
+    const before = w.confirm; fake.win.confirm = function other() { return true; };
+    assert.notEqual(w.confirm, before, '창의 함수가 바뀌면 새로 묶어요'); assert.equal(w.confirm(), true);
+    fake.win.confirm = original;
     let hidden = 0; w.addEventListener('pagehide', () => hidden++, { once: true });
     assert.equal(fake.listeners.length, 0, 'pagehide 는 진짜 창에 안 걸어요');
     for (const fn of realm.hides()) fn();
