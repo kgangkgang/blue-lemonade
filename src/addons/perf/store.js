@@ -39,7 +39,13 @@ function openDb() {
                 db.createObjectStore(RELAY, { keyPath: 'key' });
             }
         };
-        request.onsuccess = () => resolve(request.result);
+        request.onsuccess = () => {
+            const db = request.result;
+            // 브라우저가 연결을 끊으면(폰에서 탭을 오래 숨겼다 돌아옴) 다음에 다시 열어요 — 전에는 새로고침 전까지 요청 기록 · 날짜 집계가 조용히 빠졌어요
+            db.onclose = () => { dbPromise = null; };
+            db.onversionchange = () => { try { db.close(); } catch { /* 이미 닫힘 */ } dbPromise = null; };
+            resolve(db);
+        };
         request.onerror = () => {
             console.warn('[요청 로그] IndexedDB를 열지 못했어요. 메모리에만 기록해요.', request.error);
             memoryOnly = true;
@@ -55,7 +61,9 @@ function openDb() {
 
 function tx(db, store, mode, work) {
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(store, mode);
+        let transaction;
+        try { transaction = db.transaction(store, mode); }
+        catch (error) { if (error?.name === 'InvalidStateError') dbPromise = null; reject(error); return; }   // 닫힌 연결 — 다음 부름에서 다시 열어요
         const result = work(transaction.objectStore(store));
         transaction.oncomplete = () => resolve(result?.result ?? result);
         transaction.onerror = () => reject(transaction.error);

@@ -22,6 +22,15 @@ export function ensureQuickCss() {
 
 // ── 떠 있는 작은 메뉴 — 공용 고르기 목록 팝업 모양(.salty-pick · css/72)을 그대로 써요. 한 번에 하나, 바깥 · Esc 로 닫혀요 ──
 let menu = null;
+// 메뉴 바깥을 눌러 닫은 손가락을 뗄 때의 click 이 뒤 화면(목록 줄 · 단추)에 떨어지지 않게 한 번 삼켜요 — 폰은 층이 사라진 자리의 것을 눌러요(mes-fold.js · selects.js · chat-organizer.js 와 같은 지킴).
+// 다음 누름 · 키가 시작되면 그 click 은 이미 왔거나 오지 않아요 — 그때 풀어요. 코드가 부른 click(.click())은 건드리지 않아요.
+function swallowNextClick(ms = 700) {
+    const eat = (event) => { if (!event.isTrusted) return; event.preventDefault(); event.stopPropagation(); done(); };
+    const done = () => { clearTimeout(timer); for (const [type, fn] of [['click', eat], ['pointerdown', done], ['keydown', done]]) document.removeEventListener(type, fn, true); };
+    const timer = setTimeout(done, ms);
+    for (const [type, fn] of [['click', eat], ['pointerdown', done], ['keydown', done]]) document.addEventListener(type, fn, true);
+}
+export { swallowNextClick };   // 프리셋 폴더 목록(preset-folders.js)도 같은 지킴을 써요
 export function closeMenu() {
     if (!menu) return;
     const { layer, off } = menu; menu = null; off();
@@ -37,7 +46,7 @@ export function openMenu(anchor, items) {
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh;margin:0;padding:0;border:0;overflow:visible;max-width:none;max-height:none;background:transparent;color:inherit';
     layer.innerHTML = `<div class="salty-pick salty-pick-float bl-quick-menu" role="menu"><div class="salty-pick-rows">${items.map((item, i) => `<button type="button" role="menuitem" data-i="${i}" class="${item.danger ? 'bl-quick-danger' : ''}${item.check ? ' on' : ''}"${item.disabled ? ' disabled' : ''}><span>${esc(item.label)}</span>${item.check ? '<i aria-hidden="true"></i>' : ''}</button>`).join('')}</div></div>`;
     const box = layer.firstElementChild;
-    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); closeMenu(); } });
+    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); closeMenu(); swallowNextClick(); } });
     // 실리태번은 서랍 밖 누름(touchstart · mousedown)으로 열린 서랍을 닫아요 — 메뉴 안 누름은 문서로 올려 보내지 않아요
     for (const type of ['touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerdown', 'pointerup']) layer.addEventListener(type, event => event.stopPropagation());
     layer.addEventListener('click', event => {

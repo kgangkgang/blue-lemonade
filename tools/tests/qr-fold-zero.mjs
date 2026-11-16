@@ -34,4 +34,12 @@ test('요술봉 뒤 접기(quick.qrFold)를 쓰는 동안은 예전처럼 줄 �
     assert.ok(got.includes('salty-qr-fold-off'));
     assert.ok(!got.includes('salty-qr-folded'));
 });
+test('접기 단추 끔(chat.qrFold false): 접어 둔 채 꺼도 접힘 클래스를 붙이지 않아요(« 가 없어 펼 길이 없어요)', () => {
+    const got = run({ qrFold: false, qrFolded: true });
+    assert.ok(got.includes('salty-qr-fold-off'));
+    assert.ok(!got.includes('salty-qr-folded'));
+});
+test('접기 단추를 다시 켜면 접어 둔 모습이 돌아와요', () => {
+    assert.ok(run({ qrFold: true, qrFolded: true }).includes('salty-qr-folded'));
+});
 console.log(`qr-fold-zero: ${passed} 통과`);

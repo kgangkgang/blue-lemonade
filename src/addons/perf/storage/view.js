@@ -4,7 +4,7 @@
 // 누를 때만: 「서버 재기」(실리태번 공개 API — 그림 폴더 · 채팅 목록 · 파일 HEAD) · 「자세히 재기」(IndexedDB 를 읽기 전용으로 훑기).
 // 이 창은 아무것도 직접 지우지 않는다: 그 확장이 저장 공간 다리(st.storage-report.v1)에 정리를 올렸을 때만, 확인 창을 거쳐 그 확장의 정리를 부른다.
 import * as EXT from '../../../../../../../extensions.js';
-import { allOwners, ownerLabel, dbInfo, groupLocalStorage, parseSize, formatBytes, valueSize, normalizeItems, STORAGE_BRIDGE } from './core.js';
+import { allOwners, dbInfo, groupLocalStorage, parseSize, formatBytes, valueSize, normalizeItems, STORAGE_BRIDGE } from './core.js';
 import { openPanel, confirmBox, esc, holdToOpen, toast, ensureStyle } from './panel.js';
 
 const ctx = () => EXT.getContext();

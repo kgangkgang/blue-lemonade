@@ -264,6 +264,7 @@ function openDb() {
         request.onsuccess = () => {
             const db = request.result;
             db.onversionchange = () => { db.close(); dbPromise = null; };
+            db.onclose = () => { dbPromise = null; };   // 브라우저가 연결을 끊으면 다음에 다시 열어요 — 전에는 새로고침 전까지 내 효과음이 재생 · 저장되지 않았어요
             finish(db);
         };
         request.onerror = () => finish(null, request.error || new Error('효과음 저장소를 열지 못했어요.'));
@@ -273,7 +274,9 @@ function openDb() {
 async function transaction(mode, act) {
     const db = await openDb();
     return new Promise((resolve, reject) => {
-        const tx = db.transaction('files', mode);
+        let tx;
+        try { tx = db.transaction('files', mode); }
+        catch (error) { if (error?.name === 'InvalidStateError') dbPromise = null; reject(error); return; }   // 닫힌 연결 — 다음 부름에서 다시 열어요
         let result;
         const timer = setTimeout(() => { try { tx.abort(); } catch { /* already finished */ } }, 15000);
         tx.oncomplete = () => { clearTimeout(timer); resolve(result); };

@@ -150,6 +150,7 @@ await test('날짜: 오늘 · 어제 · 이번 해 · 다른 해 이름표와 �
 const dom = await import(url('tools/tests/leak-dom.mjs'));
 const settings = { enabled: true, chatOrganizer: { on: true, folders: [], chats: {} } };
 const { ctx, eventSource } = dom.installBrowser({ settings });
+ctx.event_types.GROUP_CHAT_DELETED ??= 'group_chat_deleted';   // 실리태번 events.js — 그룹 채팅을 서버에서 지운 뒤에만 나요
 dom.installHost(ctx);
 const { register } = await import('node:module');
 register(url('tools/tests/leak-loader.mjs'), { data: { root } });
@@ -200,7 +201,8 @@ org._forTest.st.script = async () => ({
     deleteCharacterChatByName: async (at, f) => { deleted.push([ctx.characters[at].avatar, f]); serverRows = serverRows.filter(r => !(r.avatar === ctx.characters[at].avatar && r.file_name === `${f}.jsonl`)); },
     renameGroupOrCharacterChat: async () => {},
 });
-org._forTest.st.groups = async () => ({ openGroupById: async g => { opened.push(['openGroup', g]); ctx.groupId = g; }, deleteGroupChatByName: async (g, f) => { const gr = ctx.groups.find(x => x.id === g); gr.chats.splice(gr.chats.indexOf(f), 1); deleted.push([g, f]); } });
+org._forTest.st.groups = async () => ({ openGroupById: async g => { opened.push(['openGroup', g]); ctx.groupId = g; }, deleteGroupChatByName: async (g, f) => { const gr = ctx.groups.find(x => x.id === g); gr.chats.splice(gr.chats.indexOf(f), 1); if (groupDeleteFails) return; deleted.push([g, f]); await eventSource.emit(ctx.event_types.GROUP_CHAT_DELETED, f); } });   // 실리태번처럼: 목록에서 먼저 빼고, 서버가 실패하면 되돌리지 않고 그냥 돌아와요
+let groupDeleteFails = false;
 const settle = async (ms = 40) => { await dom.clock.advance(ms); for (let i = 0; i < 10; i++) await null; };
 const pane = () => panel.querySelector('.bl-co-pane');
 const tabsEl = () => panel.querySelector('.bl-co-tabs');
@@ -298,6 +300,31 @@ await test('열기: 캐릭터를 고르고(서랍 화면은 그대로) 그 채�
     assert.deepEqual(opened.slice(-2), [['openGroup', 'g1'], ['group', 'g1', 'g chat']]);
     current = 'Ann now'; ctx.groupId = null; ctx.characterId = 0;
 });
+// 1.5.8 까지: ⋮ 메뉴 바깥(다른 채팅 줄 위)을 톡 눌러 닫으면, 폰에서는 손을 뗄 때의 click 이 층이 사라진 자리의 줄에 떨어져 그 채팅이 열렸어요
+await test('⋮ 메뉴 바깥을 눌러 닫은 직후의 손 click 은 뒤 줄로 가지 않아요 · 그다음 누름부터는 그대로 · 코드가 부른 click 은 안 삼킴', async () => {
+    const tap = el => { const e = new Event('click', { bubbles: true, cancelable: true }); e.isTrusted = true; el.dispatchEvent(e); return e; };
+    const openMenuOf = async f => { click(rowEl(f).querySelector('[data-co-act="row-menu"]')); await settle(); const layer = document.querySelector('.bl-co-layer'); assert.ok(layer, '메뉴가 떠요'); return layer; };
+    let layer = await openMenuOf('Bob shop');
+    let n = opened.length;
+    layer.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));   // 메뉴 바깥(층)을 누름
+    assert.equal(document.querySelector('.bl-co-layer'), null, '메뉴가 닫혀요');
+    const ghost = tap(rowEl('Bob shop').querySelector('[data-co-act="open"]')); await settle();
+    assert.equal(ghost.defaultPrevented, true); assert.equal(opened.length, n, '뒤 줄의 채팅이 열리지 않아요(고치기 전: 열림)');
+    tap(rowEl('Bob shop').querySelector('[data-co-act="open"]')); await settle();
+    assert.equal(opened.length, n + 2, '그다음 누름은 그대로 열어요(한 번만 삼켜요)');
+    current = 'Ann now'; ctx.groupId = null; ctx.characterId = 0;
+    layer = await openMenuOf('Bob shop'); n = opened.length;
+    layer.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+    click(rowEl('Bob shop').querySelector('[data-co-act="open"]')); await settle();   // isTrusted 아님 = 코드가 부른 click
+    assert.equal(opened.length, n + 2, '코드가 부른 click 은 삼키지 않아요');
+    current = 'Ann now'; ctx.groupId = null; ctx.characterId = 0;
+    layer = await openMenuOf('Bob shop'); n = opened.length;
+    layer.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
+    await settle(1000);                                                                 // 손을 뗀 click 이 안 온 채 시간이 지나면 풀려요
+    tap(rowEl('Bob shop').querySelector('[data-co-act="open"]')); await settle();
+    assert.equal(opened.length, n + 2);
+    current = 'Ann now'; ctx.groupId = null; ctx.characterId = 0;
+});
 await test('열기(1.5.0 버그 사냥): 답 생성 · 저장 중이라 실리태번이 캐릭터를 안 바꾸면 지금 캐릭터에 그 채팅을 열지 않아요', async () => {
     const real = ctx.selectCharacterById, realGroup = org._forTest.st.groups, toastr = globalThis.toastr, warned = [];
     globalThis.toastr = { ...(toastr || {}), warning: m => warned.push(m), info() {}, error() {} };
@@ -336,6 +363,28 @@ await test('확인에서 취소하면 아무것도 안 지움', async () => {
     await org._forTest.deleteFlow([{ k: 'g', o: 'g1', f: 'g chat' }]);
     assert.equal(confirms.length, 2); assert.equal(deleted.length, 0);
     assert.ok(ctx.groups[0].chats.includes('g chat'));
+});
+// 1.5.8 까지: 실리태번이 목록에서 먼저 빼서 「목록에 남았나」로는 실패를 못 알아봤어요 — 서버에 파일이 남았는데 「지웠어요」 · 고정이 풀림
+await test('그룹 채팅 지우기: 서버가 실패하면 못 지운 것으로 세고 고정을 풀지 않아요 · 성공하면 예전처럼', async () => {
+    globalThis.confirm = () => true;
+    const toasts = []; const keep = globalThis.toastr;
+    globalThis.toastr = { ...keep, success: m => toasts.push(['success', m]), warning: m => toasts.push(['warning', m]), info: () => ({}), clear() {} };
+    const warn = console.warn; console.warn = () => {};
+    try {
+        assert.ok(ctx.event_types.GROUP_CHAT_DELETED, '시험 틀에 그 사건이 있어요');
+        if (!ctx.groups[0].chats.includes('g chat')) ctx.groups[0].chats.push('g chat');
+        settings.chatOrganizer.chats = { e1: { k: 'g', o: 'g1', f: 'g chat', pin: 1 } };
+        groupDeleteFails = true; deleted.length = 0;
+        await org._forTest.deleteFlow([{ k: 'g', o: 'g1', f: 'g chat' }]);
+        assert.equal(deleted.length, 0);
+        assert.deepEqual(Object.keys(settings.chatOrganizer.chats), ['e1'], '고정 항목이 남아요');
+        assert.equal(toasts.at(-1)[0], 'warning'); assert.match(toasts.at(-1)[1], /0개 지움 · 1개는 못 지웠어요/);
+        groupDeleteFails = false; toasts.length = 0; ctx.groups[0].chats.push('g chat');
+        await org._forTest.deleteFlow([{ k: 'g', o: 'g1', f: 'g chat' }]);
+        assert.deepEqual(deleted, [['g1', 'g chat']]);
+        assert.deepEqual(settings.chatOrganizer.chats, {});
+        assert.deepEqual(toasts.at(-1), ['success', '채팅 1개를 지웠어요.']);
+    } finally { globalThis.toastr = keep; console.warn = warn; groupDeleteFails = false; }
 });
 await test('폴더 지우기는 되돌리기 알림과 함께 · 채팅 파일은 안 건드림', async () => {
     const s = settings.chatOrganizer;

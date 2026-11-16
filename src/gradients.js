@@ -65,14 +65,6 @@ export function gradientSample(g,position) {
     const left=parseColor(a.color),right=parseColor(b.color),t=b.at>a.at?(at-a.at)/(b.at-a.at):1;
     return `rgba(${left.slice(0,3).map((v,i)=>Math.round(v+(right[i]-v)*t)).join(',')},${Number((left[3]+(right[3]-left[3])*t).toFixed(3))})`;
 }
-export function gradientCap(g,right) {
-    const angle=g.angle*Math.PI/180;
-    const stops=[0,.25,.5,.75,1].map(y=>{
-        const c=gradientSample(g,.5+Math.sin(angle)*(right?.5:-.5)-Math.cos(angle)*(y-.5));
-        const [r,b,v,a]=parseColor(c);return `<stop offset='${y}' stop-color='rgb(${r},${b},${v})' stop-opacity='${a}'/>`;
-    }).join('');
-    return `<linearGradient id='blend' x1='0' y1='0' x2='0' y2='1'>${stops}</linearGradient>`;
-}
 
 // Separate fill variables keep gradients out of color(), shadows and host tokens.
 export function gradientFills(s,vars) {

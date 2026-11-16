@@ -43,7 +43,7 @@ export function frameFilter(d) {
 export function decorVars(d, prefix, radius = 0) {
     return { [`--bl-${prefix}-decor-ratio`]: String(d.ratio * (d.frameWidth || 100) / (d.frameHeight || 100)), [`--bl-${prefix}-decor-opacity`]: String(d.opacity / 100),
         [`--bl-${prefix}-decor-zoom`]: String(d.zoom / 100), [`--bl-${prefix}-decor-position`]: `${d.x}% ${d.y}%`, [`--bl-${prefix}-decor-fit`]: d.fit, [`--bl-${prefix}-decor-radius`]: `${d.radius ?? radius}px`,
-        [`--bl-${prefix}-decor-tilt`]: `${d.presetTilt || 0}deg`,   // 1.0.1 기울기: 액자와 사진을 함께(css/41-decor.css rotate)
+        [`--bl-${prefix}-decor-tilt`]: `${d.presetTilt || 0}deg`,   // 1.0.1 기울기: 액자와 사진을 함께(src/chat-appearance.css rotate)
         [`--bl-${prefix}-decor-filter`]: frameFilter(d) };
 }
 export function prepareDecor(settings) {

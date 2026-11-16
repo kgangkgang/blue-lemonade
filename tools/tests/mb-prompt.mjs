@@ -1,0 +1,187 @@
+// 1.6.0 미트볼 문구: 블루레몬 추천(src/mb-prompt.js) — 그 확장의 「생성 시스템 프롬프트」 설정 값 끝에 테마 줄을 덧붙이고, 되돌리면 그 줄만 떼요.
+//   적용 · 되돌리기 왕복이 글자 하나 안 틀리게 · 손으로 고친 문구 보존 · 그 확장이 없거나 자리를 못 찾으면 건너뜀 · 테마에 원작 문구를 담지 않음.
+//   node tools/tests/mb-prompt.mjs [저장소 뿌리]
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+const root = path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '../..'));
+let n = 0; const ok = async (name, fn) => { await fn(); n++; console.log('ok', name); };
+const M = await import(pathToFileURL(path.join(root, 'src/mb-prompt.js')).href);
+
+const DEF = 'You are a test world builder.\nReturn JSON only. {outLang}\n';   // 시험용으로 지어낸 기본 문구(원작 글 아님)
+const mk = (prompts) => { let saves = 0; const c = { extensionSettings: { statussim: prompts === undefined ? {} : { prompts } }, saveSettingsDebounced: () => { saves++; } }; return { c, saves: () => saves, set: c.extensionSettings.statussim }; };
+
+await ok('기본 문구 위에: 적용 → 끝에 덧붙음 · 되돌리기 → 고친 문구 칸이 비워짐(기본값 상태)', async () => {
+    const { c, set, saves } = mk();
+    for (const lv of ['light', 'last', 'recent', 'all']) {
+        const r = await M.syncPrompt(lv, { c, def: DEF });
+        assert.deepEqual([r.ok, r.changed], [true, true]);
+        const text = set.prompts[M.KEY];
+        assert.ok(text.startsWith(DEF + '\n\n=== BLUE LEMONADE NOTE ===\n'), lv); assert.equal(M.levelOf(text), lv); assert.equal(M.strip(text), DEF);
+        assert.equal(text.includes('{{lastCharMessage}}'), lv === 'last'); assert.equal(text.includes(`{{${M.MACRO}}}`), lv === 'recent'); assert.equal(text.includes(`{{${M.MACRO_ALL}}}`), lv === 'all');
+        assert.equal((text.match(/=== BLUE LEMONADE NOTE ===/g) || []).length, 1, '단계를 바꿔도 한 덩어리만');
+    }
+    assert.equal((await M.syncPrompt('all', { c, def: DEF })).changed, false, '같은 단계를 또 맞추면 그대로');
+    const r = await M.syncPrompt('off', { c, def: DEF });
+    assert.equal(r.changed, true); assert.equal(M.KEY in set.prompts, false); assert.ok(saves() >= 5);
+    assert.equal((await M.syncPrompt('off', { c, def: DEF })).changed, false);
+});
+await ok('손으로 고친 문구 위에: 왕복하면 글자 하나 안 틀리고 그대로 남아요(끝 빈칸 · 줄바꿈까지)', async () => {
+    for (const mine of ['내가 고친 문구예요.\n둘째 줄  \n\n', 'A', DEF + ' ', '끝에 빈 줄\n\n\n']) {
+        const { c, set } = mk({ [M.KEY]: mine, 'gen.core': '다른 칸' });
+        await M.syncPrompt('last', { c, def: DEF });
+        assert.ok(set.prompts[M.KEY].startsWith(mine + '\n\n=== BLUE LEMONADE NOTE ==='));
+        assert.ok(!/\[d:/.test(set.prompts[M.KEY]), '손으로 고친 글에는 기본 문구 지문을 안 적어요');
+        await M.syncPrompt('light', { c, def: DEF }); await M.syncPrompt('off', { c, def: DEF });
+        assert.equal(set.prompts[M.KEY], mine); assert.equal(set.prompts['gen.core'], '다른 칸', '다른 칸은 안 건드려요');
+    }
+});
+await ok('적용한 뒤 사용자가 앞부분을 더 고쳐도 되돌릴 때 그 글이 살아요', async () => {
+    const { c, set } = mk();
+    await M.syncPrompt('light', { c, def: DEF });
+    set.prompts[M.KEY] = 'EXTRA LINE\n' + set.prompts[M.KEY];
+    await M.syncPrompt('off', { c, def: DEF });
+    assert.equal(set.prompts[M.KEY], 'EXTRA LINE\n' + DEF);
+});
+await ok('원작이 기본 문구를 바꾸면: 기본 문구 위에 붙여 둔 것은 새 기본 문구로 옮기고, 되돌리면 칸이 비워져요', async () => {
+    const { c, set } = mk();
+    await M.syncPrompt('light', { c, def: DEF });
+    const NEW = DEF + 'One more default line.\n';
+    await M.syncPrompt('light', { c, def: NEW });
+    assert.ok(set.prompts[M.KEY].startsWith(NEW + '\n\n=== BLUE LEMONADE NOTE ===')); assert.equal(M.strip(set.prompts[M.KEY]), NEW);
+    await M.syncPrompt('off', { c, def: NEW }); assert.equal(M.KEY in set.prompts, false);
+});
+await ok('그 확장이 없거나(설정 없음) · 기본 문구를 못 읽으면(다른 판) 아무것도 안 바꿔요', async () => {
+    const none = { extensionSettings: {}, saveSettingsDebounced() { throw new Error('저장하면 안 돼요'); } };
+    assert.deepEqual(await M.syncPrompt('last', { c: none, def: DEF }), { ok: false, changed: false, why: 'none', level: 'last' });
+    const { c, set, saves } = mk({ [M.KEY]: '고친 글' });
+    for (const bad of [null, '', 5]) assert.equal((await M.syncPrompt('last', { c, def: bad })).why, 'shape');
+    assert.equal(set.prompts[M.KEY], '고친 글'); assert.equal(saves(), 0);
+    const odd = mk(); odd.set.prompts = 'x'; assert.equal((await M.syncPrompt('last', { c: odd.c, def: DEF })).why, 'shape');
+    assert.equal((await M.syncPrompt('엉뚱한 값', { c, def: DEF })).level, 'off');
+});
+await ok('기본 문구 읽기: 그 확장이 띄운 주소 그대로만 · 못 찾으면 null(모듈을 한 벌 더 띄우지 않아요)', async () => {
+    const doc = src => ({ querySelectorAll: () => src.map(s => ({ src: s, getAttribute: () => s })) });
+    const seen = [];
+    const load = async url => { seen.push(url); return { PROMPT_MAP: { [M.KEY]: { text: DEF } } }; };
+    assert.equal(await M.readDefault(doc(['http://x/scripts/extensions/third-party/other/index.js', 'http://x/scripts/extensions/third-party/meatballstats/index.js']), load), DEF);
+    assert.deepEqual(seen, ['http://x/scripts/extensions/third-party/meatballstats/src/prompts.js']);
+    assert.equal(await M.readDefault(doc(['http://x/a/index.js']), load), null);
+    assert.equal(await M.readDefault(doc(['http://x/scripts/extensions/third-party/meatballstats/index.js?v=2']), load), null);
+    assert.equal(await M.readDefault(doc(['http://x/scripts/extensions/third-party/meatballstats/index.js']), async () => ({ PROMPT_MAP: {} })), null);
+    assert.equal(await M.readDefault(doc(['http://x/scripts/extensions/third-party/meatballstats/index.js']), async () => { throw new Error('없음'); }), null);
+});
+await ok('최근 답 글: 눈 감긴 답 제외 · 꾸밈 태그 · 상태 블록 걷어냄 · 가장 새 답만 전체 · 오래된 것부터', async () => {
+    const long = 'L'.repeat(5000);
+    const c = { chat: [
+        { name: 'A', is_user: false, mes: 'old0' },
+        { name: 'U', is_user: true, mes: '<b>hi</b> there' },
+        { name: 'A', is_user: false, is_system: true, mes: 'HIDDEN SECRET' },
+        { name: 'A', is_user: false, mes: `<span style="color:red">one</span> two\n\n\n\nthree ${long}` },
+        { name: 'A', is_user: false, mes: `<span class="x">NEW</span> text ${long}\n<meatball>\naff: X +1\n</meatball><style>.a{}</style>` },
+        { name: 'U', is_user: true, mes: 'after the last reply' },
+    ] };
+    const t = M.recentText(c, 2, 500);
+    assert.ok(!t.includes('HIDDEN') && !t.includes('<') && !t.includes('aff: X') && !t.includes('old0') && !t.includes('after the last'));
+    assert.ok(t.startsWith('U: hi there\n\nA: one two\n\nthree L'));
+    assert.ok(t.includes('A: NEW text ' + long), '가장 새 답은 전체');
+    assert.ok(t.indexOf('one two') < t.indexOf('NEW text')); assert.ok(/three L{400,494}…/.test(t), '앞 메시지는 자른 글');
+    assert.equal(M.recentText({ chat: [{ is_user: true, mes: 'u' }] }), ''); assert.equal(M.recentText({}), '');
+    assert.ok(M.recentText(c, 0, 500).startsWith('A: NEW text'));
+});
+await ok('토큰 어림: 단계가 올라갈수록 늘고, 적용 안 함은 0', async () => {
+    const c = { chat: [{ name: 'A', is_user: false, mes: 'x'.repeat(8000) }, { name: 'A', is_user: false, mes: 'y'.repeat(20000) }] };
+    const e = lv => M.estimate(lv, c, 9, 2000);
+    assert.equal(e('off'), 0); assert.ok(e('light') > 60 && e('light') < 400); assert.ok(e('last') > e('light') + 4500); assert.ok(e('recent') > e('last'));
+    assert.equal(M.tokens('가나다라'), 2); assert.equal(M.tokens('abcdefgh'), 2);
+});
+await ok('맞추기: 「최근 답 여러 개」 는 매크로를 한 번 등록 · 그 확장이 아직 없으면 조금 뒤 한 번 더', async () => {
+    const reg = []; const { c, set } = mk();
+    c.registerMacro = (k, fn) => reg.push([k, fn]); c.chat = [{ name: 'A', is_user: false, mes: 'body text' }];
+    globalThis.SillyTavern = { getContext: () => c };
+    globalThis.__blReg = reg;
+    const doc = { querySelectorAll: () => [] };   // 주소를 못 찾음 → shape
+    const timers = []; const st = globalThis.setTimeout; globalThis.setTimeout = (fn, ms) => { timers.push(ms); return 1; };
+    try {
+        const r = await M.syncMbPrompt('recent', 3, 800, { c, doc });
+        assert.equal(r.why, 'shape'); assert.deepEqual(timers, [4000]); assert.deepEqual(reg.map(x => x[0]), [M.MACRO, M.MACRO_ALL]); assert.equal(reg[0][1](), 'A: body text'); assert.equal(reg[1][1](), 'A: body text');
+        await M.syncMbPrompt('all', 3, 800, { c, doc }); assert.equal(reg.length, 2, '두 번 등록 안 해요');
+    } finally { globalThis.setTimeout = st; }
+    assert.equal(set.prompts, undefined);
+});
+await ok('테마에 원작 문구를 담지 않아요 · 연결 · 기본 적용 안 함', async () => {
+    const src = fs.readFileSync(path.join(root, 'src/mb-prompt.js'), 'utf8');
+    assert.ok(!/world-builder|PROMPT_DEFS|OUTPUT JSON SHAPE/.test(src)); assert.ok(!/MutationObserver|setInterval|\.emit\(/.test(src));
+    const apply = fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8'), set = fs.readFileSync(path.join(root, 'src/settings.js'), 'utf8'), panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8');
+    assert.ok(apply.includes("lateSync('mbPrompt', () => import('./mb-prompt.js'), want.has('salty') && (lv !== 'off' || once)"));
+    assert.ok(set.includes("s.chat.mbPrompt = 'off'") && set.includes("mbPrompt: 'off', mbPromptCount: 9, mbPromptChars: 2000, mbPromptCap: 120000,"));
+    assert.ok(panel.includes("seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'],"));
+    for (const f of ['src/settings-labels.js', 'src/settings-search.js']) assert.ok(fs.readFileSync(path.join(root, f), 'utf8').includes('chat.mbPrompt'), f);
+});
+await ok('채팅 전체: 보이는 메시지 전부(내 메시지 포함 · 이름 · 차례대로) · 눈 감긴 메시지 · 꾸밈 태그 · 상태 블록 제외', async () => {
+    const c = { chat: [
+        { name: 'A', is_user: false, mes: 'first <i>reply</i>' },
+        { name: 'U', is_user: true, mes: 'my line' },
+        { name: 'A', is_user: false, is_system: true, mes: 'HIDDEN SECRET' },
+        { name: 'A', is_user: false, mes: '<span style="color:red">second</span> reply\n<meatball>\naff: X +1\n</meatball>', extra: { reasoning: 'THINKING' } },
+        { name: 'U', is_user: true, mes: 'last word' },
+        { name: 'A', is_user: false, mes: '<style>.x{}</style>' },
+    ] };
+    const r = M.allText(c, 0);
+    assert.equal(r.text, 'A: first reply\n\nU: my line\n\nA: second reply\n\nU: last word');
+    assert.deepEqual([r.count, r.total, r.cut, r.dropped], [4, 4, 0, 0]); assert.equal(r.tokens, r.full);
+    assert.deepEqual(M.allText({}, 0), { text: '', count: 0, total: 0, cut: 0, dropped: 0, tokens: 0, full: 0 });
+});
+await ok('채팅 전체 상한: 넘으면 오래된 메시지부터 앞 1,000자로 · 그래도 넘으면 오래된 것부터 빼고 · 가장 새 메시지는 남겨요', async () => {
+    const big = i => ({ name: 'A', is_user: false, mes: String.fromCharCode(97 + i).repeat(7000) });   // 한 개 약 2,000 토큰
+    const c = { chat: [big(0), big(1), big(2), big(3)] };
+    const free = M.allText(c, 0); assert.ok(free.tokens > 7900 && free.cut === 0);
+    const some = M.allText(c, 5000);   // 앞 둘만 줄이면 맞아요
+    assert.ok(some.tokens <= 5000); assert.deepEqual([some.count, some.cut, some.dropped], [4, 2, 0]); assert.equal(some.full, free.tokens);
+    assert.ok(some.text.startsWith('A: ' + 'a'.repeat(M.HEAD_CHARS) + '…\n\nA: ' + 'b'.repeat(M.HEAD_CHARS) + '…\n\nA: ' + 'c'.repeat(7000)));
+    const tight = M.allText(c, 2500);  // 앞 셋을 줄여도 넘어요 → 오래된 것부터 빼요
+    assert.ok(tight.tokens <= 2500); assert.ok(tight.dropped >= 1); assert.ok(tight.text.endsWith('d'.repeat(7000)), '가장 새 메시지는 전체');
+    const tiny = M.allText(c, 10); assert.equal(tiny.count, 1); assert.ok(tiny.text.endsWith('d'.repeat(7000)));
+    assert.equal(M.estimate('all', c, 9, 2000, 5000), M.estimate('light') + some.tokens);
+    assert.ok(M.tokensSafe('가나다라') >= 3 && M.tokensSafe('日本語') === 3 && M.tokensSafe('abcdefg') === 2, '넉넉한 어림');
+});
+await ok('이번 한 번만: 걸면 채팅 전체 줄 · 요청이 보이면 끝을 미루고 · 때가 되면 원래 단계로 돌려놓고 알려요 · 거두기', async () => {
+    const reg = []; const { c, set } = mk();
+    c.registerMacro = (k, fn) => reg.push([k, fn]); c.chat = [{ name: 'A', is_user: false, mes: 'body text' }];
+    globalThis.SillyTavern = { getContext: () => c };
+    const mem = new Map(); globalThis.localStorage = { getItem: k => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)), removeItem: k => mem.delete(k) };
+    const toasts = []; const toast = { info: m => toasts.push(m), warning: m => toasts.push('!' + m) };
+    const st = globalThis.setTimeout, ct = globalThis.clearTimeout, real = Date.now; let clock = 1000000; const timers = [];
+    globalThis.setTimeout = (fn, ms) => { timers.push({ fn, ms }); return timers.length; }; globalThis.clearTimeout = () => { }; Date.now = () => clock;
+    try {
+        await M.syncMbPrompt('light', 9, 2000, { c, def: DEF, doc: { querySelectorAll: () => [] }, retry: false, toast }).catch(() => { });
+        await M.syncPrompt('light', { c, def: DEF });   // 원래 단계 = 가볍게
+        assert.equal(await M.armOnce({ c, toast, def: DEF }), true);
+        assert.equal(M.levelOf(set.prompts[M.KEY]), 'all'); assert.equal(M.onceActive(), true); assert.equal(Number(mem.get(M.ONCE_KEY)), clock + M.ONCE_WAIT);
+        assert.equal(await M.endOnce({ c, toast, def: DEF }), false, '때가 안 됐으면 그대로');
+        const all = (reg.length ? reg : globalThis.__blReg).find(x => x[0] === M.MACRO_ALL)[1];
+        clock += 60000; assert.equal(all(), 'A: body text'); assert.equal(Number(mem.get(M.ONCE_KEY)), clock + M.ONCE_IDLE, '요청이 보이면 그 뒤 한동안으로');
+        clock += 30000; all();
+        clock += M.ONCE_IDLE + 1; assert.equal(M.onceActive(), false);
+        assert.equal(await M.endOnce({ c, toast, def: DEF }), true);
+        assert.equal(M.levelOf(set.prompts[M.KEY]), 'light', '원래 단계로'); assert.equal(mem.has(M.ONCE_KEY), false); assert.ok(/2번 보냈어요/.test(toasts.at(-1)));
+        // 누르고 아무것도 안 만들면 10분 뒤 거둬요
+        await M.armOnce({ c, toast, def: DEF }); clock += M.ONCE_WAIT + 1;
+        assert.equal(await M.endOnce({ c, toast, def: DEF }), true); assert.ok(/생성이 없어서/.test(toasts.at(-1))); assert.equal(M.levelOf(set.prompts[M.KEY]), 'light');
+        // 거두기(바로)
+        await M.armOnce({ c, toast, def: DEF }); assert.equal(await M.endOnce({ c, toast, def: DEF, force: true }), true); assert.equal(M.levelOf(set.prompts[M.KEY]), 'light');
+        assert.equal(await M.endOnce({ c, toast, def: DEF, force: true }), false);
+    } finally { globalThis.setTimeout = st; globalThis.clearTimeout = ct; Date.now = real; delete globalThis.localStorage; }
+});
+await ok('채팅 전체 연결: 단계 다섯 · 고를 때 확인 창(취소하면 안 바뀜) · 한 번만 단추 · 상한 설정 · 새로 고친 뒤에도 돌려놓게 표시를 봄', async () => {
+    const panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8'), apply = fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8'), set = fs.readFileSync(path.join(root, 'src/settings.js'), 'utf8');
+    assert.deepEqual(M.LEVELS, ['off', 'light', 'last', 'recent', 'all']);
+    assert.ok(panel.includes("['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off'"));
+    const i = panel.indexOf("if (path === 'chat.mbPrompt' && value === 'all' && String(current) !== 'all' && !(await askConfirm("), j = panel.indexOf('update(st => setPath(st, path, typeof current', i);
+    assert.ok(i > 0 && j > i && /\)\)\) break;/.test(panel.slice(i, j)), '확인 창에서 취소하면 설정을 안 바꿔요');
+    assert.ok(panel.includes('data-act="mb-prompt-once"') && panel.includes("case 'mb-prompt-once':") && panel.includes("slider('chat.mbPromptCap'"));
+    assert.ok(apply.includes("localStorage.getItem('bl-mb-prompt-once')") && apply.includes('{ cap: s.chat.mbPromptCap }'));
+    assert.ok(set.includes("range('mbPromptCap', 0, 1000000, 120000)") && set.includes("'recent', 'all'].includes(s.chat.mbPrompt)"));
+});
+console.log(`mb-prompt: ${n}개 통과`);

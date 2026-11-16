@@ -2,7 +2,7 @@
 //
 // style.css · css/*.css 를 소스 위치를 잃지 않고 읽는다: 주석 · 문자열 · data URI 안의 ; ( ) { } 를 건너뛰고,
 // 규칙마다 [시작, 끝] · 선택자 · 선언(이름 · 값 · !important · 자리)을 준다. 특이도 · 선택자 쪼개기도 여기.
-// 쓰는 곳: tools/build-css.cjs · tools/check-order.cjs · tools/gen-preview-css.js(자기 파서 유지) · 정리 도구
+// 쓰는 곳: tools/build-css.cjs · tools/css-report.mjs · tools/audit/css-overrides.mjs · tools/gen-preview-css.js(자기 파서 유지) · 정리 도구
 'use strict';
 
 // ───────── 글자 훑기 ─────────

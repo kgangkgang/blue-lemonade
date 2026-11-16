@@ -433,7 +433,7 @@ class CustomThemeSettingsManager {
             const rootRegex = /:root\s*\{/;
             if (rootRegex.test(currentContent)) {
                 // Insert into :root
-                newContent = currentContent.replace(rootRegex, `:root {\n  --custom-theme-style-inputs: ${generatedCSS};\n`);
+                newContent = currentContent.replace(rootRegex, () => `:root {\n  --custom-theme-style-inputs: ${generatedCSS};\n`);   // 함수로 — 값 · 이름의 $& · $' 를 치환 표시로 풀지 않게
             } else {
                 // Append new block
                 newContent = `${currentContent}\n:root {\n  --custom-theme-style-inputs: ${generatedCSS};\n}`;

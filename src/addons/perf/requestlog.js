@@ -6,7 +6,7 @@ import { afterBoot } from '../../boot-gate.js';
 import { onGate } from '../../boot-layers.js';
 import { onFirstShow } from './hub.js';
 import { eventSource, event_types } from '../../../../../../../script.js';
-import { TITLE, VERSION, FOLDER, initSettings, settings } from './state.js';
+import { TITLE, VERSION, initSettings, settings } from './state.js';
 import { installCapture, setGenerationType, clearGenerationType, beginSendTrace, markSend, onEntry } from './capture.js';
 import { ledgerEntryFromLog, MAIN_EXT } from '../../usage-feed.js';   // 7.4.0 사용량 장부 — 본 생성 · BL 기능
 import { record as recordUsage } from '../../usage-ledger.js';

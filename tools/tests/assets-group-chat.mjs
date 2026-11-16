@@ -54,10 +54,12 @@ await test('speakerCharacter: group only during a turn (this_chid set to a membe
 
 // ---- store.js: 멤버 목록
 const requests = [];
+const failing = new Set();   // 다음 한 번 목록 읽기가 실패할 폴더
 const files = new Map([['A', ['smile.png', 'cry.png']], ['B', ['moon.png', 'moon-2.png']], ['C', ['sun.png']]]);
 const fetch = async url => {
     const key = new URL(url, 'https://fixture.invalid').searchParams.get('name');
     requests.push(key);
+    if (failing.delete(key)) return { ok: false, status: 500, json: async () => ({}) };
     return { ok: true, json: async () => (files.get(key) ?? []).map(file => ({ path: `/characters/${key}/${file}` })) };
 };
 const assets = await load('assets.js', { fetch, getRequestHeaders: () => ({}), formatKeywordList: names.formatKeywordList });
@@ -92,6 +94,27 @@ await test('switching a picture off rebuilds the loaded member lists · chat cha
     assert.equal(cleared, 1); assert.equal(store.memberEntry('A'), null);
     await store.loadMember('A');
     assert.deepEqual(requests, ['A', 'B', 'A'], 'read again after the chat changed');
+});
+
+// 1.5.8 까지: 멤버 목록 읽기가 한 번 실패하면 빈 목록이 「읽음」으로 굳어, 채팅을 바꿀 때까지 그 멤버의 그림이 안 나왔어요
+await test('a failed member list is not remembered — the next call (after a short rest) reads it again', async () => {
+    const realNow = Date.now; let clock = realNow();
+    Date.now = () => clock;
+    const warn = console.warn; console.warn = () => {};
+    try {
+        failing.add('C'); requests.length = 0;
+        const first = await store.loadMember('C');
+        assert.equal(first?.keywords || '', '', 'the failed read has no pictures');
+        assert.equal(store.memberEntry('C'), null, 'not kept as a finished read');
+        assert.equal(await store.loadMember('C'), null, 'no hammering right after a failure');
+        assert.deepEqual(requests, ['C']);
+        clock += 5000;
+        const again = await store.loadMember('C');
+        assert.deepEqual(requests, ['C', 'C'], 'read again');
+        assert.match(again.keywords, /sun.png/);
+        assert.equal(store.memberEntry('C'), again, 'a good read is remembered as before');
+        await store.loadMember('C'); assert.deepEqual(requests, ['C', 'C']);
+    } finally { Date.now = realNow; console.warn = warn; }
 });
 
 // ---- render.js: 메시지마다 주인 폴더의 찾아보기표

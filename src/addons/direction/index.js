@@ -984,7 +984,7 @@ function renderList() {
     }
     pages.hidden = true;
     box.querySelectorAll('.jj-seg [data-list]').forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.list === view)));
-    const current = settings()[page].content.trim();
+    const current = slotOf(page).content.trim();   // 채팅방마다 따로일 때 전개 지시 글은 채팅방 기록에만 있어요 — 전역 글로 보면 「지금 내용 저장」이 늘 꺼졌어요
     const keep = box.querySelector('[data-act="save-preset"]');
     keep.hidden = view !== 'presets';
     keep.disabled = !current || isSaved(page, current);

@@ -383,6 +383,7 @@ export function startCompactLayout() {
     let wasQrVertical = document.body.classList.contains('salty-qr-y');
     let wasFindOff = document.body.classList.contains('salty-qr-find-off');
     let wasShelf = document.body.classList.contains('salty-qr-shelf');
+    let wasFoldOff = document.body.classList.contains('salty-qr-fold-off');   // 접기 단추 스위치 — 바뀌면 « 를 바로 넣고 빼요(1.5.8 까지는 다음 배치 때까지 남거나 안 생겼어요)
     let wasCtxNames = document.body.classList.contains('salty-qr-ctx-names');
     watchDom(document.body, { attributes: ['class'], name: '입력판 배치 (body class)' }, () => {
         const enabled = document.body.classList.contains('salty');
@@ -390,12 +391,13 @@ export function startCompactLayout() {
         const qrVertical = document.body.classList.contains('salty-qr-y');
         const findOff = document.body.classList.contains('salty-qr-find-off');
         const shelfOn = document.body.classList.contains('salty-qr-shelf');
+        const foldOff = document.body.classList.contains('salty-qr-fold-off');
         const themeChanged = enabled !== wasEnabled;
-        if (themeChanged || qrTop !== wasQrTop || qrVertical !== wasQrVertical || findOff !== wasFindOff || shelfOn !== wasShelf) placeQuickReplies();
+        if (themeChanged || qrTop !== wasQrTop || qrVertical !== wasQrVertical || findOff !== wasFindOff || shelfOn !== wasShelf || foldOff !== wasFoldOff) placeQuickReplies();
         if (themeChanged) { refreshWorld(); refreshPersonaTitle(); }
         const ctxNames = document.body.classList.contains('salty-qr-ctx-names');
         if (ctxNames !== wasCtxNames) syncQrTitles();   // 7.9.7
-        wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff; wasShelf = shelfOn; wasCtxNames = ctxNames;
+        wasEnabled = enabled; wasQrTop = qrTop; wasQrVertical = qrVertical; wasFindOff = findOff; wasShelf = shelfOn; wasFoldOff = foldOff; wasCtxNames = ctxNames;
     });
     mobile.addEventListener('change', placeQuickReplies);
     document.addEventListener('change', event => { if (event.target?.id === 'qr--isEnabled') placeQuickReplies(); });

@@ -132,6 +132,7 @@ async function applyFold(target, fold) {
             ctx.swipe?.refresh?.();
             await ctx.saveChat();
         }
+        try { document.dispatchEvent(new CustomEvent('bl-mes-fold', { detail: { id } })); } catch { /* 듣는 곳이 없어도 그대로 */ }   // 1.6.0 눈 감긴 답 미트볼에서 빼기(src/mb-hidden.js)가 들어요
     } catch (error) {
         console.warn('[Blue Lemonade] 접기', error);
         globalThis.toastr?.warning(fold ? '접지 못했어요' : '펼치지 못했어요', 'Blue Lemonade');

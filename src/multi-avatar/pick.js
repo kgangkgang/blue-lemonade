@@ -22,7 +22,6 @@ export function folderOf(avatar) { return `${FOLDER_PREFIX}${hex8(fnv(avatar, 0x
 export const isFolder = name => /^bl-avatar-[0-9a-f]{16}$/.test(String(name ?? ''));
 /** 경로 → 화면 주소 (/user/images/… — 실리태번이 계정별로 서빙) */
 export const urlOf = p => '/' + String(p).split('/').map(encodeURIComponent).join('/');
-export const folderOfPath = p => String(p).split('/')[2] || '';
 
 export const hasAny = settings => !!settings && Object.keys(settings.chars || {}).length > 0;
 

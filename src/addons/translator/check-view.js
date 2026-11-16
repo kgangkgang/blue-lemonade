@@ -133,7 +133,7 @@ export function createCheckView({ stateOf, rerender, act, scope, autoFixOn = () 
     }
     function open(flag) {
         close();
-        const id = Number(flag.dataset.llmtMes ?? flag.closest('.mes')?.getAttribute('mesid')), index = Number(flag.dataset.llmtPara);
+        const id = Number(flag.closest('.mes')?.getAttribute('mesid') ?? flag.dataset.llmtMes), index = Number(flag.dataset.llmtPara);   // 지금 번호가 먼저 — 그릴 때 적은 번호는 앞 메시지를 지우면 낡아요(reasoning-view.js 와 같은 까닭)
         const { state, result, row } = rowOf(id, index);
         if (!row) return;
         const missing = row.missing ? row.missing[1] - row.missing[0] + 1 : 0;

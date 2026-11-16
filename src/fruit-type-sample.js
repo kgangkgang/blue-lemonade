@@ -335,4 +335,3 @@ export async function buildFruitSample(type,{width=360,vars=sampleVars(),lists=s
     const pending=make();cache.set(key,pending);if(cache.size>40)cache.delete(cache.keys().next().value);
     return pending;
 }
-export const SAMPLE_TYPES=FRUIT_TYPES.map(t=>t.id);

@@ -3,7 +3,7 @@
 //  - 언어별 글꼴 합치기: 한국어·영어·일본어·중국어 글꼴을 unicode-range 로 잘라 하나의 가족('Salty Text' 등)으로 묶음.
 //    글꼴 CSS(@font-face)를 직접 받아와 가족 이름과 unicode-range 만 바꿔 다시 씀.
 //  - 고르기 목록 미리보기: 보이는 글자만 담은 작은 구글 폰트 파일(&text=)
-import { getSettings, saveSettings, FONT_SLOTS, cssFamily, cssUrl, cssLink, safeFont } from './settings.js';
+import { getSettings, cssFamily, cssUrl, safeFont } from './settings.js';
 import { CATALOG } from './catalog.js';
 
 export { CATALOG };

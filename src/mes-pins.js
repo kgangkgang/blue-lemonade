@@ -5,6 +5,7 @@
 
 import { getSettings, saveSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';
+import { onChatChildren } from './show-more-watch.js';
 
 import { GENERIC, PAIRS, PAIRED, PIN_LIMIT, KNOWN_PINS, tidyPins } from './mes-pins-keys.js';   // 9.0.9 통합: 설정 정리(settings.js)가 쓰는 순수 부분 — 이 파일(감시 허브 포함)은 2층(features.js)에서만 받아요
 export { PIN_LIMIT, tidyPins };
@@ -173,6 +174,19 @@ function schedule(id, all = false) {
 }
 const scheduleOne = id => schedule(id);
 const scheduleAll = () => schedule(null, true);
+// 최적화 3차: 메시지가 #chat 에 붙은 그 작업 안에서(감시 콜백들이 다 돈 바로 뒤 · 마이크로태스크) 그 메시지만 먼저 훑어요.
+//   예전에는 채팅을 열면 이벤트 60ms 뒤에야 단추를 옮겨서, 이미 한 번 계산 · 그린 단추 줄을 메시지마다 다시 계산했어요(리그 · 채팅 1000 끝 50 열기: 핀 몫 재계산 요소 947).
+//   실리태번은 메시지를 한 번에 붙이고(redisplayChat) 다음 await 뒤에야 처음 스타일을 계산하니, 그 사이에 옮기면 첫 계산 한 번에 같이 들어가요.
+//   같은 작업 안의 다른 감시(번역 · TTS 단추 붙이기)가 끝난 뒤라 그 단추도 같이 옮겨요. 늦게 붙는 단추는 예전처럼 60ms · 700ms 훑기가 맡아요(이미 옮긴 것은 그대로 — 끝 모습 같음).
+//   「더 보기」는 실리태번이 붙인 그 자리에서 높이를 읽어(강제 계산) 첫 계산에는 못 들어가지만, 번역 단추가 붙는 같은 프레임으로 모여요.
+let offEarly = null;
+function earlySweep(records) {
+    if (!active) return;
+    let added = null;
+    for (const r of records) for (const node of r.addedNodes) if (node.nodeType === 1 && node.classList.contains('mes')) (added ??= []).push(node);
+    if (!added) return;
+    queueMicrotask(() => { if (active) for (const mes of added) if (mes.isConnected) sweep(mes); });
+}
 
 function onHint(event) {
     const hint = event.target?.closest?.('.extraMesButtonsHint');
@@ -191,6 +205,7 @@ function bind() {
     //   예전엔 다음 메시지 이벤트의 전체 훑기가 그 단추를 옛 메시지에서도 꺼냈는데, 메시지 하나만 훑게 된 뒤로는 채팅을 다시 열 때까지 메뉴 안에 남았어요.
     //   애드온이 시작 · 켜짐 · 저장을 마치면 내는 bl:addons-state(addons.js) 뒤에 채팅 전체를 훑어요(tools/tests/mes-pins-addon-late.mjs)
     globalThis.window?.addEventListener?.('bl:addons-state', scheduleAll);
+    try { if (typeof document !== 'undefined' && typeof document.getElementById === 'function' && typeof queueMicrotask === 'function') offEarly = onChatChildren(earlySweep); } catch { offEarly = null; }   // 최적화 3차 — 못 걸면 예전처럼 이벤트 뒤에만
     bound = { eventSource, handlers };
 }
 
@@ -199,6 +214,7 @@ function unbind() {
     bound.handlers.forEach(([name, fn]) => bound.eventSource.removeListener(name, fn));
     document.removeEventListener('click', onHint, true);
     globalThis.window?.removeEventListener?.('bl:addons-state', scheduleAll);
+    offEarly?.(); offEarly = null;
     timers.forEach(clearTimeout);
     timers = [];
     pendingAll = false; pendingIds.clear();
@@ -309,7 +325,7 @@ function togglePin(el) {
     const pinned = el.classList.contains('bl-pinned') || current.includes(own) || current.includes(legacy);
     let next;
     if (pinned) next = current.filter(k => k !== own && k !== legacy);
-    else if (current.length >= PIN_LIMIT) { globalThis.toastr?.warning(`버튼은 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade'); return; }
+    else if (current.length >= PIN_LIMIT) { held = { el, at: Date.now() };   /* 못 꺼낼 때도 손을 뗄 때의 click 은 막아요 — 안 막으면 경고와 함께 그 단추(번역 · 지우기 …)가 눌렸어요 */ globalThis.toastr?.warning(`버튼은 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade'); return; }
     else next = [...current, own];
     held = { el, at: Date.now() };
     try { navigator.vibrate?.(15); } catch { /* 진동이 없는 기기 */ }

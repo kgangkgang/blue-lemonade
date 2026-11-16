@@ -1,7 +1,7 @@
 // 8.2.7 폰 예측점검(hunt-mobile) · 가볍게: 몰입 읽기(src/reader.js)는 폰에서 채팅을 내리고 올릴 때마다 body 에 bl-bars-hidden 을 붙였다 떼요.
 // 네모 단추 감시(src/squared-buttons.js)는 body 의 class 가 바뀌면 문서 전체를 뿌리로 잡아 후보 전부를 다시 표시하고(restamp) 0.3초 뒤 다시 쟀어요
 // (offsetParent · getBoundingClientRect · innerText · getComputedStyle — 긴 채팅 폰 4배에서 0.3초대). 그래서 읽다가 방향을 바꿀 때마다 스크롤 중에 끊겼어요.
-// bl-bars-hidden 은 위 바 · 입력판을 top · transform 으로 밀기만 해요(css/29-reader-onehand.css — 보임 · 모서리 · 크기는 그대로) → 단추 모양 판정이 같아요.
+// bl-bars-hidden 은 위 바 · 입력판을 top · transform 으로 밀기만 해요(src/chat-appearance.css — 보임 · 모서리 · 크기는 그대로) → 단추 모양 판정이 같아요.
 // 고친 뒤: body 에서 bl-bars-hidden 만 바뀐 기록은 다시 재지 않아요(채팅 성능 표식과 같은 길). 다른 class 가 같이 바뀌면 지금처럼 다시 재요.
 //   node tools/tests/squared-reader-bars.mjs <테마 루트>
 import assert from 'node:assert/strict';

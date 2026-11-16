@@ -16,4 +16,3 @@ export const SCRIPT_FAMILIES = [
   {id:'fruit-family',name:'과일 계열 (과일 · 야한과일 · 청과)',version:'2.0.0',icon:'fa-leaf',description:'과일 · 야한과일(涩果) · 청과(青果) 프리셋을 한 묶음으로 한글화해요. 프롬프트·정규식 이름, 과일의 마음 창, 청과 문장 점검 화면이 함께 켜지고 꺼져요. 원본 이름·본문·선택은 그대로예요.',members:['fruit','qingguo','fruit-heart']},
 ];
 export const scriptFamily = id => SCRIPT_FAMILIES.find(item=>item.id===id||item.members.includes(id));
-export const scriptDefinition = id => SCRIPT_CATALOG.find(item=>item.id===id);

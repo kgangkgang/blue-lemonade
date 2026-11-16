@@ -86,7 +86,7 @@ export const DEFAULTS = {
     em: { italic: true, weight: 400, size: null, letterSpacing: null },
     strike: { line: true, own: false, color: '#ff7a7a', thickness: 2, fade: 55, italic: false },   // ~~취소선~~ — own: 선 색을 따로(false 면 글자 색), thickness px, fade: 지워진 글자를 남기는 정도 %   // *속마음* — 기울일지, 굵기, 크기(px · null = 본문과 같게), 자간(1/100 em · null = 본문과 같게)
     strong: { weight: 650, size: null, letterSpacing: null },              // **강조**
-    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, namePeople: false, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: false, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, noteCarry: 'ask', replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, solaStyle: 'original', homeIcon: 'auto', demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherFollowMeatball: true, mbFace: 'icon', mbFaceTone: false, mbFaceLook: 'color', weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 채팅 설정 뜻은 각 기능 모듈의 머리 주석에 있어요.
+    chat: { user: 'bubble', char: 'plain', bubbleSplit: 'whole', header: 'full', userSize: 100, userInk: 100, icons: 'line', bgImage: false, bgAlpha: 82, mesPins: [], inkContrast: true, namePeople: false, triangleFold: false, weatherBubble: 70, qrCtxNames: false, unifyRegex: true, unifyInline: true, regexIcons: false, selectPop: true, colorPop: true, numComma: false, helpMarks: true, webSearchMarks: true, personaTall: false, hideSendTextarea: false, showMoreAuto: true, lazyAvatars: true, searchIme: true, codePlain: false, worldInfoLight: true, chatLight: true, personaDefer: true, emptyGuard: true, noteCarry: 'ask', replyTop: false, sentTokens: true, streamFade: false, hiddenFade: false, hiddenOpacity: 40, hiddenGray: 30, hiddenHover: true, reasoningFollow: true, demSkin: false, solaStyle: 'original', homeIcon: 'auto', demFold: true, weather: 'off', weatherReadability: false, weatherAutoRest: true, weatherFollowMeatball: true, mbFace: 'icon', mbFaceTone: false, mbFaceLook: 'color', mbPrompt: 'off', mbPromptCount: 9, mbPromptChars: 2000, mbPromptCap: 120000, weatherLevel: 2, weatherAmount: null, weather2Amount: null, weatherOpacity: 100, weatherSize: 100, weatherSpeed: 100, weatherAngle: -9, weatherMotion: 'natural', weatherSway: 100, weatherSpin: 100, weatherCurvature:65, weatherOrbitSize:100, weatherOrbitDirection:'right', weatherArtStyle:'real', weatherIllustrated:false, weatherArtOutline:false, weatherColorMode:'auto', weatherColor:'#91cfff', weatherImage: '', weatherImageId: '', qrScroll: 'x', qrFind: true, qrFold: true, qrFolded: false, qrRows: 2, qrPlace: 'bottom', demInk: false, demInkMode: 'text', toneInline: false, tone: { light: { s: 58, l: 38 }, dark: { s: 70, l: 74 } }, markerTone: { light: { s: 88, l: 72 }, dark: { s: 62, l: 46 } } }, // 채팅 설정 뜻은 각 기능 모듈의 머리 주석에 있어요.
     // 3.1.0: 몰입 읽기(폰 — 아래로 밀면 위 바 · 입력창 숨김, reader.js) · 한 손 버튼 줄(입력판 위 ‹ › 사칭 · 이어 쓰기 · 다시 생성, onehand.js)
     reader: { autoHide: false },
     // 3.4.0 프롬프트 호환: 데우스 엑스 마키나 — 끄면 카드 스킨 · 폰 접기 · 카드 색 통일 · 카드 이모티콘 · 트래커 날씨가 모두 쉰다 (값은 남음)
@@ -140,7 +140,7 @@ export const DEFAULTS = {
     inputBox: { hold: false, noCorrect: false },   // 1.1.2 입력칸 높이 고정 · 자동 수정 밑줄 끄기 (input-box.js — 켤 때만 받아요)
     apiStatus: { on: false },   // 1.0.3 API 서버 상태 — 켜면 회사 공식 상태 페이지(바깥 주소)를 읽어요 (api-status.js)
     qrShelf: { on: false, items: {}, recent: [] },   // 1.0.3 QR 책장 (모양은 qr-shelf-core.js tidyStore)
-    promptSaves: { on: false, presets: {} }, presetFolders: { on: false, folders: [] }, quick: { selEdit: false, mesDelete: false, rangeDelete: true, selEditTr: false, adeChat: false, adeDaily: false, wiSkip: false, qrFold: false },   // 1.0.3 편의 기능 (src/quick/) · 1.1.1 시제품
+    promptSaves: { on: false, presets: {} }, presetFolders: { on: false, folders: [] }, quick: { selEdit: false, mesDelete: false, rangeDelete: true, selEditTr: false, adeChat: false, adeDaily: false, wiSkip: false, qrFold: false, selSpan: true },   // 1.0.3 편의 기능 (src/quick/) · 1.1.1 시제품
     promptLink: { on: false, rows: [] },   // 6.5.2 캐릭터 이름 연동 — 이름이 든 프롬프트·정규식을 그 캐릭터 채팅에서만 켜고 「기본」 짝은 반대로 · 6.7.5 여러 줄 rows [{ word, cards: [아바타] }] (prompt-link.js · promptbind.js)
     longpressHelp: true,   // 8.1.2 단추 길게 누르면 설명 (longpress-help.js — 끄면 길게 눌러도 원래 동작만)
     koUi: true,   // 6.9.0 실리태번 한국어 화면 다듬기 (ko-ui.js — 언어가 ko-kr 일 때만, 바꾸면 새로고침 뒤)
@@ -482,6 +482,7 @@ function tidyFlags(s) {
         if (!['color', 'letter'].includes(s.chat.mbFaceLook)) s.chat.mbFaceLook = 'color'; // 1.5.6 사용자 「프로필 색깔만 보기 · 디스코드 프로필처럼 · 선택 가능하게」: 지정색이 있는 사람의 동그라미를 색만(기본) / 색 + 첫 글자
         s.chat.namePeople = flag(s.chat.namePeople, false); // 1.5.9 채팅 이름표를 인물 색으로(인물표에 색이 있는 사람만) — 기본 끔
         s.chat.mbFaceTone = flag(s.chat.mbFaceTone, false); // 이름 첫 글자일 때 사람마다 색 톤(팔레트 안 다섯 톤) — 기본 끔(같은 톤 하나)
+        s.chat.mbHiddenSync = flag(s.chat.mbHiddenSync, true); // 1.6.0 눈 감긴 답을 미트볼 상태에서 빼기(src/mb-hidden.js) — 기본 켬(11-16 사용자 결정 · 예전 설정에는 없으니 켬 · 그 확장은 감긴 답도 더하는 게 원래 동작이에요)
         s.chat.mbHelpers = flag(s.chat.mbHelpers, true); // 미트볼 상태창 편의 기능(설정 찾기 · 맨 위로) — 기본 켬 · 끄면 둘 다 숨겨요
         s.chat.codePlain = flag(s.chat.codePlain, false); // 코드 색 입히기 끄기 (code-plain.js) — 켤 때만
         s.chat.worldInfoLight = flag(s.chat.worldInfoLight, true); // 월드인포 긴 목록 가볍게 (worldinfo-light.js) — 예전 설정에는 없으니 켬
@@ -513,6 +514,8 @@ function tidyFlags(s) {
         range('weatherSize', 40, 250, 100);
         range('weatherSpeed', 20, 250, 100);
         range('weatherAngle', -45, 45, -9);
+        if (!['off', 'light', 'last', 'recent', 'all'].includes(s.chat.mbPrompt)) s.chat.mbPrompt = 'off'; // 1.6.0 미트볼 문구: 블루레몬 추천(src/mb-prompt.js) — 기본 적용 안 함(요청 토큰이 느는 일이라 사용자가 골라요)
+        range('mbPromptCount', 0, 30, 9); range('mbPromptChars', 500, 8000, 2000); range('mbPromptCap', 0, 1000000, 120000); // 채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음) // 「최근 답 여러 개」: 마지막 답 앞의 몇 개를 · 몇 자씩
         range('weatherBubble',30,100,70); // 날씨를 켠 동안 내 메시지 면의 농도
         range('weatherShadowBlur',0,100,35);
         range('weatherFogStretch',50,300,100); range('weatherFogEdge',0,100,30); range('weatherFogSwell',0,300,100); range('weatherFogDepth',0,200,100);
@@ -864,7 +867,8 @@ export const RESET_GROUPS = { addons: ['addons', 'addonUI'], tools: ['wordTools'
 // 테마 모습이 아닌 쓰는 방식(켬 · 사용 모드 · 잠금 · 자동 화이트/나이트 · 한 손 · 몰입 읽기 · 백그라운드 창 · 알림 · 다른 CSS)은 '테마 모습' 초기화에 남긴다
 // 1.1.7: multiAvatar(프로필 여러 개 사진 목록 — 지우면 서버 사진이 「안 쓰는 파일」이 돼요) · addonCarry(개인 확장 이어받기 단계) 도 자료라 남겨요.
 //   settings-differences.js 의 OMITTED_KEYS(모습이 아닌 자료)는 전부 RESET_KEEP · RESET_GROUPS · RESET_CLEARED 중 한 곳에 있어야 해요 (tools/tests/reset-keep-drift.mjs 가 지켜요)
-export const RESET_KEEP = ['multiAvatar', 'addonCarry', 'appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'syncWatch', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'headSwitchMove', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'logCopy', 'sceneSound'];
+// 1.5.9 쓰는 방식 넷도 남겨요(사용자 결정 11-16) — 한글화 · 길게 눌러 도움말 · 입력창 동작 · 머리 스위치 안내 줄. 전에는 「테마 모습」만 골라도 처음 값으로 돌아갔어요
+export const RESET_KEEP = ['multiAvatar', 'addonCarry', 'appearanceHistory', 'customFonts', 'noticeSeen', 'updateCheck', 'syncWatch', 'styles', 'charStyles', 'promptBinds', 'promptLink', 'promptFolders', 'chatOrganizer', 'quick', 'promptSaves', 'presetFolders', 'qrShelf', 'apiStatus', 'headSwitches', 'headSwitchMove', 'enabled', 'usageMode', 'settingLocks', 'compat', 'auto', 'onehand', 'reader', 'bgWindow', 'replyNotify', 'searchAi', 'extcheck', 'koUi', 'longpressHelp', 'inputBox', 'headSwitchRows', 'logCopy', 'sceneSound'];
 // 「테마 모습」 초기화에서 일부러 처음 값으로 돌리는 자료 칸 — 판 번호, 입혀 둔 스타일 상태, 고른 내 팔레트(팔레트 자체는 library 묶음)
 export const RESET_CLEARED = ['version', 'activeStyle', 'baseStyle', 'activeCustomPalette'];
 export function resetSettings(groups = { look: true }) {
@@ -878,7 +882,7 @@ export function resetSettings(groups = { look: true }) {
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'mbAlbumBtn', 'mbHelpers', 'mbFace', 'mbFaceTone', 'mbFaceLook', 'namePeople', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard', 'noteCarry']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'mbAlbumBtn', 'mbPrompt', 'mbPromptCount', 'mbPromptChars', 'mbPromptCap', 'mbHelpers', 'mbHiddenSync', 'mbFace', 'mbFaceTone', 'mbFaceLook', 'namePeople', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard', 'noteCarry']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }

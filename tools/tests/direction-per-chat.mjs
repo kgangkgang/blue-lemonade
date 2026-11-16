@@ -152,6 +152,20 @@ await test('끄면 지금 채팅방 모습이 모든 채팅방 공용 · 채팅�
     assert.deepEqual(send(), ['u1', 'one', 'D[old story]', 'a1'], 'on again: chat A record comes back');
 });
 
+// 1.5.8 까지: 저장 목록(renderList)이 전역 글(settings().direction.content)로 「지금 내용 저장」 단추를 켜고 껐어요 —
+//   채팅방마다 따로일 때 전개 지시 글은 채팅방 기록에만 적혀서, 방금 쓴 지시가 있어도 단추가 늘 꺼져 저장할 길이 없었어요
+await test('채팅방마다 따로: 저장 목록의 「지금 내용 저장」은 지금 채팅방의 글을 봐요', () => {
+    const s = fresh({ direction: { enabled: true, content: '' } });
+    m.setPerChat(true);
+    open('B');
+    typeDirection('The bells ring at dawn.');
+    assert.equal(m.slotOf('direction').content, 'The bells ring at dawn.', '칸에 보이는 글');
+    assert.equal(s.direction.content, '', '전역 글은 그대로 빈칸 — 이것으로 판정하면 단추가 꺼져요');
+    const render = js.slice(js.indexOf('function renderList('), js.indexOf("box.querySelector('.jj-items').replaceChildren("));
+    assert.ok(render.includes('const current = slotOf(page).content.trim();'), 'renderList 가 slotOf 로 지금 글을 읽어요');
+    assert.ok(!render.includes('settings()[page].content'), '전역 글로 판정하는 줄이 남아 있지 않아요');
+    assert.ok(js.includes("const result = savePreset(page, slotOf(page).content);"), '누르면 저장하는 글도 같은 곳');
+});
 await test('창을 닫을 때 채팅 파일을 바로 저장 · 화면 · 도움말 · 매크로 · 채팅방 바뀜 · CI', async () => {
     const css = await read('src/addons/direction/style.css');
     assert.match(js, /if \(chatUnflushed\) \{\s*chatUnflushed = false;\s*try \{ void getContext\(\)\.saveMetadata\?\.\(\); \}/, 'flush on close');

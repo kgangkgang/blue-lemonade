@@ -158,7 +158,13 @@ function openDb() {
             const db = r.result;
             if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'k' }).createIndex('at', 'at');
         };
-        r.onsuccess = () => resolve(r.result);
+        r.onsuccess = () => {
+            const db = r.result;
+            // 브라우저가 연결을 끊으면(폰에서 탭을 오래 숨겼다 돌아옴) 다음에 다시 열어요 — 죽은 연결을 쥐고 있으면 저장된 번역을 못 읽어 같은 줄을 번역기로 다시 보냈어요(cache.js 와 같은 지킴)
+            db.onclose = () => { if (dbp) dbp = null; };
+            db.onversionchange = () => { try { db.close(); } catch { /* 이미 닫힘 */ } if (dbp) dbp = null; };
+            resolve(db);
+        };
         r.onerror = () => reject(r.error || new Error('IndexedDB 열기 실패'));
         r.onblocked = () => reject(new Error('IndexedDB 막힘'));
     });
@@ -175,7 +181,7 @@ async function dbGet(keys) {
         const st = t.objectStore(STORE);
         for (const k of keys) { const r = st.get(k); r.onsuccess = () => { if (r.result && typeof r.result.t === 'string') out.set(k, r.result.t); }; }
         await txDone(t);
-    } catch { /* 메모리만 */ }
+    } catch (e) { if (e?.name === 'InvalidStateError') dbp = null;   /* 닫힌 연결 — 다음에 다시 열어요 · 이번은 메모리만 */ }
     return out;
 }
 // 세션의 첫 쓰기에도 한 번 잰다 — 셈이 메모리에만 있어 새로고침마다 0 이면, 한 세션에 200줄을 못 채우는 사용자는 5000줄 상한이 영영 안 돌았다
@@ -190,7 +196,7 @@ async function dbPut(rows) {
         await txDone(t);
         writes += rows.length;
         if (writes >= 200) { writes = 0; await prune(); }
-    } catch { /* 메모리만 */ }
+    } catch (e) { if (e?.name === 'InvalidStateError') dbp = null;   /* 닫힌 연결 — 다음에 다시 열어요 · 이번은 메모리만 */ }
 }
 /** 5000줄을 넘으면 오래된 것부터 4000줄까지 */
 async function prune() {

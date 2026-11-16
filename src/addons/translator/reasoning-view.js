@@ -118,7 +118,9 @@ export function createReasoningView({ getContext, hashOf, translate, progressTex
         const button = event.target.closest?.('.llmt-rsn-btn');
         if (!button) return;
         event.preventDefault(); event.stopPropagation();
-        toggle(Number(button.dataset.mesid ?? button.closest('.mes')?.getAttribute('mesid')));
+        // 지금 번호(.mes 의 mesid)가 먼저예요 — 앞 메시지를 지우면 실리태번은 mesid 만 다시 매기고 다시 그리지 않아, 꾸밀 때 적어 둔 번호(dataset)는 낡아요.
+        //   1.5.8 까지는 낡은 번호로 다른 메시지의 생각 글을 번역했어요(요청이 엉뚱한 메시지로 나가고 누른 칸은 그대로).
+        toggle(Number(button.closest('.mes')?.getAttribute('mesid') ?? button.dataset.mesid));
     }, true);
 
     /** 화면에 있는 생각 칸 모두 다시 꾸미기 (설정을 바꿨을 때) */

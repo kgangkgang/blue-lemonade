@@ -48,5 +48,15 @@ assert.equal(tried, 3, '겹친 창 중 맨 위 창 안의 select 는 그대로 �
 modals = [{ contains: el => el instanceof HTMLSelectElement }, { contains: () => false }];   // select 가 든 창 위에 설명 창이 떴어요
 tap();
 assert.equal(tried, 3, '맨 위 창(설명 창) 밖의 select 는 열지 않아요');
+// 마우스: 왼쪽 단추만 목록을 열어요 (1.5.8 까지: 오른쪽 · 가운데 단추에도 열려 브라우저 메뉴와 겹쳤어요)
+modal = null; modals = null;
+const press = button => { sel = new HTMLSelectElement(); let prevented = false; for (const fn of handlers.pointerdown) fn({ target: sel, pointerType: 'mouse', button, preventDefault() { prevented = true; } }); return prevented; };
+let before = tried;
+press(2); assert.equal(tried, before, '오른쪽 단추는 목록을 열지 않아요');
+press(1); assert.equal(tried, before, '가운데 단추도 열지 않아요');
+press(0); assert.equal(tried, before + 1, '왼쪽 단추는 예전처럼 열어요');
+before = tried; for (const fn of handlers.pointerdown) fn({ target: (sel = new HTMLSelectElement()), pointerType: 'mouse', preventDefault() {} });   // button 을 안 주는 옛 사건
+assert.equal(tried, before + 1, 'button 이 없는 사건은 예전처럼');
+console.log('PASS 마우스 오른쪽 · 가운데 단추는 고르기 목록을 열지 않아요');
 console.warn = warn;
 console.log('PASS 길게 누르기 설명 창이 뜬 누름은 고르기 목록을 열지 않고, 모달 안 select 는 그대로 열어요(창이 겹치면 맨 위 창 기준)');

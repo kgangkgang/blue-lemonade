@@ -62,7 +62,7 @@ function messageRoots(range, chat) {
 }
 
 // 1.0.7 고른 글자 자리를 적어 두고, 글이 다시 그려졌으면 다시 세워요(폰 제보)
-function charOffset(root, node, offset) {
+export function charOffset(root, node, offset) {
     try {
         const before = document.createRange();
         before.setStart(root, 0);
@@ -303,11 +303,16 @@ const caretAt = (x, y) => {
     const r = document.caretRangeFromPoint?.(x, y);
     return r ? [r.startContainer, r.startOffset] : null;
 };
+/** 고른 끝(focus)이 채팅 밖으로 나가 있나 — 시작은 채팅 안 (자리를 읽지 않아요) */
+function strayFocus(selection, chat) {
+    const anchor = selection?.anchorNode, focus = selection?.focusNode;
+    return !!chat && !!anchor && !!focus && selection.rangeCount === 1 && chat.contains(anchor) && !chat.contains(focus);
+}
 export function keepInChat() {
     const selection = document.getSelection();
     const chat = document.getElementById('chat');
-    const anchor = selection?.anchorNode, focus = selection?.focusNode;
-    if (!chat || !anchor || !focus || selection.rangeCount !== 1 || !chat.contains(anchor) || chat.contains(focus)) return false;
+    if (!strayFocus(selection, chat)) return false;
+    const anchor = selection.anchorNode, focus = selection.focusNode;
     const down = !!(anchor.compareDocumentPosition(focus) & Node.DOCUMENT_POSITION_FOLLOWING);
     const box = chat.getBoundingClientRect();
     const x = Math.min(Math.max(dragX ?? box.left + box.width / 2, box.left + 12), box.right - 12);
@@ -318,6 +323,35 @@ export function keepInChat() {
         }
     }
     return false;
+}
+
+// 1.6.0 손가락으로 고르는 동안에는 되돌리지 않아요 — 폰에서 선택 손잡이를 끄는 도중에 스크립트가 Selection.extend 로 끝을 옮기면 끌기가 끊길 수 있어요(제보 11-16 「스크롤 하면 선택된 게 끊겨서」 · 추정).
+//   마지막 누름이 손가락(pointerType touch · 누름이 없었으면 손가락 기기)이면 selectionchange 마다 바로 붙잡지 않고, 손을 뗀 뒤(touchend) 또는 고른 범위가 KEEP_SETTLE_MS 동안 그대로일 때 한 번만 붙잡아요.
+//   안드로이드의 선택 손잡이는 브라우저가 그려서 그 끌기의 터치 사건이 페이지에 오지 않아요 — 그때는 「범위가 멈춘 지 KEEP_SETTLE_MS」로 손을 뗐다고 봐요. 마우스 끌기는 예전처럼 그 자리에서 붙잡아요.
+export const KEEP_SETTLE_MS = 600, KEEP_AFTER_TOUCH_MS = 120;
+let lastPointer = null, touching = 0, keepTimer = 0;
+const fingerMode = () => (lastPointer ? lastPointer === 'touch' : coarse());
+function settleKeep() {
+    keepTimer = 0;
+    if (touching > 0) return;   // 아직 손가락이 닿아 있어요 — 뗄 때(noteTouch) 다시 잡아요
+    keepInChat();
+}
+/** selectionchange 마다 — 마우스는 바로, 손가락은 손을 뗀 뒤에 */
+export function keepInChatWhenFree() {
+    if (!fingerMode()) return keepInChat();
+    clearTimeout(keepTimer); keepTimer = 0;
+    if (!strayFocus(document.getSelection(), document.getElementById('chat'))) return false;   // 채팅 안이면 타이머도 안 걸어요
+    keepTimer = setTimeout(settleKeep, KEEP_SETTLE_MS);
+    return false;
+}
+/** 누른 도구(mouse · touch · pen) */
+export function notePointer(type) { if (type) lastPointer = type === 'touch' ? 'touch' : type; }
+/** 닿아 있는 손가락 수 — 0 이 되면 조금 뒤 한 번 붙잡아요 */
+export function noteTouch(count) {
+    touching = Math.max(0, count | 0);
+    if (touching > 0) { lastPointer = 'touch'; return; }
+    clearTimeout(keepTimer); keepTimer = 0;
+    if (strayFocus(document.getSelection(), document.getElementById('chat'))) keepTimer = setTimeout(settleKeep, KEEP_AFTER_TOUCH_MS);
 }
 
 /** 스크롤 · 화면 크기 변화 때 자리만 다시 잡는다 (숨은 탭에서는 requestAnimationFrame 이 안 도니 타이머도 함께) */
@@ -379,10 +413,12 @@ function start() {
     document.addEventListener('selectionchange', () => {
         // 보내기 칸에 글을 칠 때마다 오는 알림은 줄이 없으면 아무것도 하지 않는다
         if (!held && typingInField()) return;
-        keepInChat();
+        keepInChatWhenFree();
         schedule();
     });
     document.addEventListener('pointermove', (event) => { if (event.buttons === 1) dragX = event.clientX; }, { passive: true, capture: true });
+    document.addEventListener('pointerdown', (event) => notePointer(event.pointerType), { passive: true, capture: true });
+    for (const type of ['touchstart', 'touchend', 'touchcancel']) document.addEventListener(type, (event) => noteTouch(event.touches?.length ?? 0), { passive: true, capture: true });
     document.getElementById('chat')?.addEventListener('scroll', reposition, { passive: true });
     window.addEventListener('resize', reposition);
     window.visualViewport?.addEventListener('resize', reposition);

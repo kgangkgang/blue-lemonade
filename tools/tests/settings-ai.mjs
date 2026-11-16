@@ -221,5 +221,21 @@ await test('회사별 모델 기억은 보존하고 사용 시 잘못된 지도 
     assert.equal({}.polluted,undefined);assert.deepEqual(normalizeModelConfig(Settings.resetSettings({look:true}).searchAi),saved);
 });
 
+// 1.5.8 까지: 요청이 도는 중에 설정 창을 닫아도 요청이 안 끊겼어요(끊는 곳은 검색어 바꿈 · 지우기 · 취소 단추뿐) — 창을 뗄 때(panel.js unmountPanel)도 끊어요
+await test('설정 창을 닫으면 도는 중인 AI 요청을 끊어요 (panel.js unmountPanel 의 실제 줄로)', () => {
+    const panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8');
+    const start = panel.indexOf('export function unmountPanel(root) {');
+    const body = panel.slice(start, panel.indexOf('root.remove();', start));
+    const line = body.split(String.fromCharCode(10)).find(l => l.includes('root._searchAi'));
+    assert.ok(line, 'unmountPanel 이 _searchAi 를 다뤄요');
+    const controller = new AbortController();
+    const fake = { _searchAi: { state: 'asking', controller } };
+    new Function('root', line)(fake);
+    assert.equal(controller.signal.aborted, true);
+    assert.equal(fake._searchAi, null, '늦은 답은 「내 것이 아님」으로 버려져요(settings-search.js 의 root._searchAi !== state)');
+    new Function('root', line)({});   // 요청이 없던 창도 그대로
+    assert.ok(fs.readFileSync(path.join(root, 'src/settings-search.js'), 'utf8').includes('if (root._searchAi !== state) return;'));
+});
+
 console.log(`settings-ai: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

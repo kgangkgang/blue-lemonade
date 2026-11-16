@@ -1,4 +1,5 @@
 import { deviceKind } from './device-layout-options.js';
+import { estimate as mbPromptEstimate, block as mbPromptBlock, LEVELS as MB_PROMPT_LEVELS, allText as mbPromptAllText, onceActive as mbPromptOnceActive, armOnce as mbPromptArmOnce, endOnce as mbPromptEndOnce } from './mb-prompt.js';   // 1.6.0 미트볼 문구: 블루레몬 추천 — 토큰 어림 · 덧붙는 글(순수 함수만)
 import { armGuard, disarmGuard } from './cheap-guards.js';
 import { trackerWeatherOn } from './weather-readability.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
@@ -326,7 +327,7 @@ async function askResetGroups() {
     const rows = [['look', '테마 모습', true], ['addons', '애드온 켬 · 설정', false], ['tools', '단어 치환 · 캡처', false], ['library', '프레임 · 팔레트 · 날씨 그림 · 모양', false]];
     const box = document.createElement('div');
     box.className = 'salty-reset-pick';
-    box.innerHTML = `<p><b>처음 설정으로</b></p>${rows.map(([id, label, on]) => `<label><input type="checkbox" data-reset="${id}" ${on ? 'checked' : ''}><span>${label}</span></label>`).join('')}<p class="salty-note">내 글꼴 · 내 스타일은 남아요.</p>`;
+    box.innerHTML = `<p><b>처음 설정으로</b></p>${rows.map(([id, label, on]) => `<label><input type="checkbox" data-reset="${id}" ${on ? 'checked' : ''}><span>${label}</span></label>`).join('')}<p class="salty-note">내 글꼴 · 내 스타일은 남아요.</p><p class="salty-note">「테마 모습」을 되돌려도 쓰는 방식(한글화 · 길게 눌러 도움말 · 입력창 동작 · 머리 스위치 줄 · 사용 방식 · 잠금)은 그대로 남아요.</p>`;
     let ok;
     if (ctx.callGenericPopup && ctx.POPUP_TYPE) ok = await ctx.callGenericPopup(box, ctx.POPUP_TYPE.CONFIRM, '', { okButton: '되돌리기', cancelButton: '취소' }) === ctx.POPUP_RESULT?.AFFIRMATIVE;
     else ok = confirm('테마 설정을 처음 상태로 돌릴까요? (내 글꼴 목록은 남아요)');
@@ -419,6 +420,7 @@ export function unmountPanel(root) {
     root._healthCleanup?.();
     root._updateCleanup?.(); root._updateCleanup=null;
     root._aiConnectionCleanup?.(); root._aiConnectionCleanup=null;
+    root._searchAi?.controller?.abort(); root._searchAi=null;   // 「AI 에게 맡기기」가 도는 중에 창을 닫으면 요청을 끊어요 — 전에는 볼 사람이 없는데도 끝까지 가서 답을 받았어요(유료 연결이면 요금)
     root._previewCleanup?.();
     for (const key of ['_fontIO', '_rowsRO', '_mainStickRO']) { root[key]?.disconnect(); root[key] = null; }
     root.remove(); panels.delete(root); root._pv = {}; root._previewViews?.clear();
@@ -673,6 +675,33 @@ function row(label, control, note = '') {
 function stack(label, control, note = '') {
     labelHistoryControl(label, control);
     return `<div class="salty-stack"><span>${label}${note ? `<small>${note}</small>` : ''}</span>${control}</div>`;
+}
+
+// 1.6.0 미트볼 문구: 블루레몬 추천(src/mb-prompt.js) — 단계 고르기 · 지금 채팅 기준 토큰 어림 · 한 번만 싣기 · 덧붙는 글 펼쳐 보기
+const mbNum = n => Number(n).toLocaleString('ko-KR');
+const mbBig = n => (n >= 10000 ? `약 ${(Math.round(n / 1000) / 10).toLocaleString('ko-KR')}만` : `약 ${mbNum(Math.round(n / 100) * 100)}`);
+function mbPromptAll(s) {
+    try { return mbPromptAllText(undefined, s.chat.mbPromptCap ?? 120000); } catch { return null; }
+}
+function mbPromptRows(s) {
+    const lv = MB_PROMPT_LEVELS.includes(s.chat.mbPrompt) ? s.chat.mbPrompt : 'off';
+    const n = s.chat.mbPromptCount ?? 9, m = s.chat.mbPromptChars ?? 2000, cap = s.chat.mbPromptCap ?? 120000;
+    const tok = v => { try { return mbNum(mbPromptEstimate(v, undefined, n, m, cap)); } catch { return '?'; } };
+    const all = mbPromptAll(s);
+    const allLine = all ? `채팅 전체: 지금 채팅 보이는 메시지 ${mbNum(all.total)}개 · ${mbBig(all.tokens)} 토큰 · 상태창 만들기 1번(5회쯤) = ${mbBig(all.tokens * 5)} 토큰${all.cut || all.dropped ? ` · 상한 때문에 오래된 ${mbNum(all.cut)}개는 앞 1,000자만${all.dropped ? ` · ${mbNum(all.dropped)}개는 뺐어요` : ''}(상한 없이는 ${mbBig(all.full)})` : ''}` : '채팅 전체: 지금 채팅을 못 읽었어요';
+    const cost = `요청 1회에 더 드는 토큰(지금 채팅 기준 어림) — 가볍게 약 ${tok('light')} · 마지막 답 전체 약 ${tok('last')} · 최근 답 여러 개 약 ${tok('recent')} · 칸 다시 생성 · AI로 수정은 1회, 상태창 만들기는 5회쯤 보내요`;
+    return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 「적용 안 함」 으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
+            <p class="salty-note">${cost}</p>
+            <p class="salty-note bl-mb-prompt-all" data-keep-note>${allLine}</p>
+            ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요')}
+            ${slider('chat.mbPromptCap', '채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음)', 0, 500000, 10000, 120000)}
+            ${lv === 'recent' ? `${slider('chat.mbPromptCount', '마지막 답 앞의 메시지 수', 0, 30, 1, 9)}${slider('chat.mbPromptChars', '앞 메시지마다 읽을 글자 수', 500, 8000, 100, 2000)}` : ''}
+            ${lv !== 'off' ? `<details class="salty-note bl-mb-prompt-peek"><summary>덧붙는 글 보기</summary><pre>${esc(mbPromptBlock(lv))}</pre></details>` : ''}`;
+}
+/** 「채팅 전체」 를 고르거나 한 번만 싣기 전에 한 번 묻는 글 */
+function mbPromptConfirmText(s) {
+    const all = mbPromptAll(s);
+    return `미트볼이 AI 를 부를 때마다 채팅 전체가 실려요.\n지금 채팅은 보이는 메시지 ${all ? mbNum(all.total) : '?'}개 · ${all ? mbBig(all.tokens) : '?'} 토큰(넉넉히 잡은 어림)이에요.\n상태창 만들기는 5번쯤 보내니 한 번에 ${all ? mbBig(all.tokens * 5) : '?'} 토큰이 들어요.`;
 }
 
 // 묶음 제목 (+ 옆에 옅은 예시)
@@ -1681,6 +1710,7 @@ function tabChat(s, sub) {
         ${cap('메시지 편의')}<div class="salty-group">
             ${row('고른 글 고치기', toggle('quick.selEdit', s.quick?.selEdit === true), `채팅에서 글을 끌어 고르면 뜨는 줄에 「고치기」 · 고른 부분의 원래 글만 작은 창에서 고쳐요(메시지 전체 편집을 안 열어도 돼요) · 자리가 확실하지 않으면 고치지 않고 알려 줘요 · 번역문이 있는 메시지는 번역기의 「번역문 수정」으로 · 고친 뒤 알림의 ↶ 로 되돌려요${restNote('quickSelEdit')}`)}
             ${row('번역문도 고치기', toggle('quick.selEditTr', s.quick?.selEditTr === true), `(시제품) 번역문이 있는 메시지에서도 「고치기」가 떠요 · 원문은 그대로 두고 화면의 번역문만 고쳐요(실리태번 내장 번역처럼 번역문을 메시지에 담는 꼴) · 번역기 확장(ST-Interpres · llm-translator)이 따로 보여 주는 번역 칸은 그대로 번역기의 「번역문 수정」으로 · 고친 뒤 편집 알림(사건)은 보내지 않아요 — 번역 확장이 다시 번역해 고친 글을 덮지 않게${restNote('quickSelEdit')}`)}
+            ${row('여기부터 · 여기까지', toggle('quick.selSpan', s.quick?.selSpan !== false), '여러 화면에 걸친 글을 한 번에 고르기 · 글을 고르면 뜨는 줄의 「여기부터」로 시작을 찍고, 굴린 뒤 끝낼 곳의 글을 골라 「여기까지」를 누르면 그 사이가 한 선택이 돼요 · 시작 표시는 취소 · 채팅 바꾸기 · 5분 뒤에 사라져요')}
             ${row('로어북 스캔에서 상태창 글 빼기', toggle('quick.wiSkip', s.quick?.wiSkip === true), '로어북이 키워드를 찾을 때 코드 칸(\`\`\`)과 접는 칸(details) 안의 글은 보지 않아요 · 상태창 · 트래커에 적힌 낱말 때문에 엉뚱한 항목이 켜지는 것을 막아요 · AI 에게 보내는 글은 그대로예요 · 이 테마 뒤에 도는 다른 확장은 그 사이 뺀 글을 볼 수 있어요')}
             ${row('퀵 리플라이 줄 접기', toggle('quick.qrFold', s.quick?.qrFold === true), '입력창 요술봉 뒤 ⌃ 단추로 퀵 리플라이 줄을 통째로 접고 펼쳐요 · 접은 상태를 기억해요 · 켜 둔 동안 줄 앞의 「QR 접기 단추」(채팅 › 화면)는 쉬고, 끄면 그 단추와 접어 둔 상태가 그대로 돌아와요 · Simple QR Bar Toggle 확장을 따로 쓰고 있으면 그쪽을 써요')}
             ${s.quick?.qrFold === true && s.usageMode !== 'zero' ? addonCreditHtml('qrtoggle') : ''}
@@ -1763,6 +1793,8 @@ function tabChat(s, sub) {
             ${mesPinPicker(s)}
             ${row('미트볼 추억 앨범 단추', toggle('chat.mbAlbumBtn', s.chat.mbAlbumBtn === true), '미트볼 상태창이 답마다 이름 줄에 붙이는 「추억 앨범에 담기」 단추를 보여요 · 끄면(기본) 숨겨서 폰 이름 줄이 한 줄에 들어가요 · 앨범 기능 · 상태창의 앨범 탭은 그대로예요')}
             ${row('미트볼 상태창 편의 기능', toggle('chat.mbHelpers', s.chat.mbHelpers !== false), '미트볼 상태창 설정 칸의 「설정 찾기」와 긴 상태창의 「맨 위로」 단추를 보여요 · 끄면 둘 다 사라지고 나머지 맞춤 화면은 그대로예요')}
+            ${row('눈 감긴 답은 미트볼 상태에서 빼기', toggle('chat.mbHiddenSync', s.chat.mbHiddenSync !== false), '눈 단추로 감긴 AI 답에서 나온 인물 · 호감 · 장소 · 시간을 미트볼 상태창 계산에서 빼요 · 눈을 뜨면 그대로 돌아와요 · 눈 길게 눌러 「접기」 한 답도 같아요(이미 접어 둔 답은 채팅을 열 때 빼고 알려요) · 요약 확장 · 자동 숨김 · /hide 명령으로 감긴 답은 그대로 더해요 · 끄면 전부 원래대로 더해요')}
+            ${mbPromptRows(s)}
             ${row('미트볼 글꼴 · 얼굴 표시', `<button class="salty-btn" data-act="mb-deco">열기</button>`, '미트볼 상태창 › 꾸미기 화면에 있어요(「블루레몬 꾸미기」 묶음) · 여기서도 열 수 있어요')}
         </div>
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
@@ -2706,12 +2738,18 @@ function bind(root) {
                 case 'reset-colors':
                     update((st) => { delete st.colorOverrides[st.palette]; delete st.gradients.overrides[st.palette]; });
                     break;
-                case 'mb-deco': ui.mbOnly = true; ui.picker = null; refreshPanels(); break;   // 미트볼 꾸미기 칸(글꼴 · 얼굴 표시 · 색 톤)만 보기
+                case 'mb-deco': ui.mbOnly = true; ui.picker = null; refreshPanels(); break;
+                case 'mb-prompt-once': {   // 1.6.0 미트볼 문구: 이번 한 번만 채팅 전체로(걸려 있으면 거두기)
+                    if (mbPromptOnceActive()) await mbPromptEndOnce({ force: true });
+                    else if (await askConfirm(mbPromptConfirmText(getSettings()), { ok: '한 번만 싣기', cancel: '취소', title: '다음 생성에 채팅 전체를 실을까요?' })) await mbPromptArmOnce();
+                    refreshPanels(); break;
+                }   // 미트볼 꾸미기 칸(글꼴 · 얼굴 표시 · 색 톤)만 보기
                 case 'seg': {
                     // 테두리와 흐림은 원리상 양립 불가: 흐림 마스크가 box-shadow(테두리)까지 지운다.
                     // 그래서 테두리를 고르면 흐림을 끄고, 흐림을 켜면 테두리를 없앤다 — 고른 것이 바로 보이게.
                     const { path, value } = el.dataset;
                     const current = getPath(getSettings(), path);
+                    if (path === 'chat.mbPrompt' && value === 'all' && String(current) !== 'all' && !(await askConfirm(mbPromptConfirmText(getSettings()), { ok: '계속', cancel: '취소', title: '채팅 전체를 실을까요?' }))) break;   // 1.6.0 토큰이 크게 느는 단계 — 한 번 물어요
                     if (String(current) === value && !(path.startsWith('image.cutEdge.') && getSettings().image.cutEdge.preset !== 'custom')) break; // 7.3.0 프리셋이 보여 준 값과 같아도 「직접」으로
                     update(st => setPath(st, path, typeof current === 'number' ? Number(value) : value));
                     break;
@@ -3369,6 +3407,7 @@ function bind(root) {
                 if (!data?.saltySettings || !incoming || typeof incoming !== 'object' || Array.isArray(incoming)) throw new Error('이 테마의 설정 파일이 아니에요');
                 const ext = SillyTavern.getContext().extensionSettings;
                 const backup = ext.salty;
+                const modeBefore = usageMode(backup || {});   // 아래 history.run 이 backup 객체에 새 값을 그대로 부어서, 그 뒤에 읽으면 늘 새 방식이에요(8.2.1 ~ 1.5.8 새로고침이 한 번도 안 돎)
                 try {
                     ext.salty = structuredClone(incoming);
                     for (const k of Object.keys(ext.salty)) if (ext.salty[k] === null) delete ext.salty[k];
@@ -3383,7 +3422,7 @@ function bind(root) {
                 history.run(backup, st => { for (const key of Object.keys(st)) delete st[key]; Object.assign(st, ext.salty); ext.salty = st; });
                 // 8.2.1 사용 방식(테마 + 확장 · 테마만 · 확장만)이 바뀌는 파일이면 사용 방식 단추처럼 저장한 뒤 새로고침해요 —
                 //   값만 바뀌고 새로고침이 없으면 켜진 확장 · 테마 그리기가 옛 방식으로 남았어요(부록 F 5.5.6)
-                const modeChanged = usageMode(backup || {}) !== usageMode(ext.salty);
+                const modeChanged = modeBefore !== usageMode(ext.salty);
                 if (modeChanged && usageMode(ext.salty) === 'extensions' && restoreState()) { try { await offerRestore(); } catch (error) { toastr.warning(`실리태번 모습은 못 되돌렸어요: ${error.message || error}`, 'Blue Lemonade'); } }
                 saveSettings();
                 refreshPanels();

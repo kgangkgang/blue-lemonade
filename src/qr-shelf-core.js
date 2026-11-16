@@ -14,7 +14,6 @@ const BAD = new Set(['__proto__', 'constructor', 'prototype']);
 
 const clean = (value, max) => String(value ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 export const keyOf = (setName, id) => `${String(setName ?? '')}${SEP}${String(id ?? '')}`;
-export const setOfKey = key => String(key).split(SEP)[0];
 
 /** 저장값 다듬기: 깨진 값 · 너무 긴 글 · 빈 항목은 버리고 { on, items, recent } 로 */
 export function tidyStore(raw) {

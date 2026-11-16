@@ -7,7 +7,7 @@
    · 설정 창 스위치(.salty-switch, 21-witidy 가 box-shadow: none) · 월드 인포 체크 줄 스위치(#wiCheckboxes, 21-witidy 가 none !important).
    실리태번 체크 줄 스위치(02-controls) · 확장 서랍 확장 켜기 스위치(64-headswitch)는 이미 var(--bl-knob) — 그대로.
    테마가 꺼진 확장만 모드의 설정 창 스위치는 20-panel 의 기본 그림자(0 1px 3px)가 이미 부드럽다 — 그대로(--bl-knob 은 body.salty 에만 있다).
-   되돌리기(rollback): 이 파일만 지우고 node tools/build-css.cjs — 단추 볼록(90-puffy)과 따로 지울 수 있다(tools/tests/puffy-rollback.mjs).
+   되돌리기(rollback): 이 파일만 지우고 node tools/build-css.cjs (단추 볼록 90-puffy 와 그 시험 puffy-rollback.mjs 는 7.8.6 에서 걷혔다 — 남은 누름 · 전환은 90-press · tools/tests/press-flat.mjs).
    ===== */
 html[data-bl-puffy] body.salty .salty-panel .salty-switch span::after {
   box-shadow: var(--bl-knob);

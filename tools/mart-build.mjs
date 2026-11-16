@@ -270,7 +270,7 @@ const simple = simpleFrames();
 const pictures = pictureFrames(pack, martDir, tmp);
 const geulkku = await geulkkuItems();
 // 1.0.1 「액자에 넣어 보기」: 테마 장식 액자 설정과 같은 이름 · 범위 · 기본값(src/decor.js DECOR_DEFAULTS · tidyDecor · src/panel.js decorControls 슬라이더 ·
-//   src/frames.js 그림자) — 마트 미리보기가 이 표로 슬라이더를 만들고 css/41-decor.css 와 같은 규칙으로 그려요
+//   src/frames.js 그림자) — 마트 미리보기가 이 표로 슬라이더를 만들고 src/chat-appearance.css(옛 css/41-decor.css)와 같은 규칙으로 그려요
 const { DECOR_DEFAULTS } = await load('src/decor.js');
 const { FRAME_DEFAULTS, FRAME_RANGE } = await load('src/frames.js');
 const DECOR_SLIDERS = [

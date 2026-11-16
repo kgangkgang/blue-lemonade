@@ -154,8 +154,8 @@ await t('④ 기본 confirm() · alert() 이 남지 않음 (패널 「처음 설
     const prompt = read('src/addons/prompt/index.js');
     assert.match(prompt, /await ask\('캐릭터 카드에 임베디드 월드북\(character_book\)이 있으면 JSON 에 함께 넣을까요\?[^']*', \{ ok: '포함', cancel: '제외' \}\)/);
     assert.match(prompt, /\{ ok: '적용', cancel: '취소', danger: true \}/, '원본 적용은 붉은 단추');
-    assert.match(read('src/addons/translator/index.js'), /async deleteSelectedPrompt\(\) \{[\s\S]*?toastr\.warning\('기본 프롬프트는 지울 수 없어요\.'\)[\s\S]*?await ask\(`「\$\{selectedPrompt\.name \|\| '이 프롬프트'\}」를 지울까요\?`, \{ ok: '지우기', cancel: '취소', danger: true \}\)/);
-    assert.equal((read('src/panel.js').match(/await askConfirm\(/g) || []).length, 4);
+    assert.match(read('src/addons/translator/index.js'), /async deleteSelectedPrompt\(\) \{[\s\S]*?toastr\.warning\('기본 프롬프트는 지울 수 없어요\.'\)[\s\S]*?await ask\(`「\$\{selectedPrompt\.title \|\| '이 프롬프트'\}」를 지울까요\?`, \{ ok: '지우기', cancel: '취소', danger: true \}\)/);
+    assert.equal((read('src/panel.js').match(/await askConfirm\(/g) || []).length, 6);   // 1.6.0 미트볼 문구 「채팅 전체」 확인 창 둘이 더해졌어요(4 → 6)
     assert.match(read('src/checks.js'), /run: async \(\) => \{\s*if \(await ask\(/);
     assert.match(read('src/addons/customstyle/index.js'), /async insertDefaultCSS\(\) \{\s*if \(!await ask\(/);
 });

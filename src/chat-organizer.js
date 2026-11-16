@@ -333,6 +333,14 @@ function onPane(event) {
 }
 
 // 공용 고르기 목록 팝업(css/72) — 프롬프트 폴더 메뉴와 같은 틀
+// 메뉴 바깥을 눌러 닫은 손가락을 뗄 때의 click 이 뒤 화면(목록 줄 · 단추)에 떨어지지 않게 한 번 삼켜요 — 폰은 층이 사라진 자리의 것을 눌러요(mes-fold.js · selects.js 와 같은 지킴).
+// 다음 누름 · 키가 시작되면 그 click 은 이미 왔거나 오지 않아요 — 그때 풀어요. 코드가 부른 click(.click())은 건드리지 않아요.
+function swallowNextClick(ms = 700) {
+    const eat = (event) => { if (!event.isTrusted) return; event.preventDefault(); event.stopPropagation(); done(); };
+    const done = () => { clearTimeout(timer); for (const [type, fn] of [['click', eat], ['pointerdown', done], ['keydown', done]]) document.removeEventListener(type, fn, true); };
+    const timer = setTimeout(done, ms);
+    for (const [type, fn] of [['click', eat], ['pointerdown', done], ['keydown', done]]) document.addEventListener(type, fn, true);
+}
 function closeMenu() {
     if (!menu) return;
     const { layer, off: done } = menu; menu = null; done();
@@ -346,7 +354,7 @@ function openMenu(anchor, items) {
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh;margin:0;padding:0;border:0;overflow:visible;max-width:none;max-height:none;background:transparent;color:inherit';
     layer.innerHTML = `<div class="salty-pick salty-pick-float bl-co-menu" role="menu"><div class="salty-pick-rows">${items.map((item, i) => `<button type="button" role="menuitem" data-i="${i}"${item.depth ? ` data-depth="${item.depth}"` : ''} class="${item.danger ? 'bl-co-danger' : ''}${item.on ? ' on' : ''}"${item.disabled ? ' disabled' : ''}><span>${esc(item.label)}</span>${item.on ? '<i aria-hidden="true"></i>' : ''}</button>`).join('')}</div></div>`;
     const box = layer.firstElementChild;
-    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); closeMenu(); } });
+    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); closeMenu(); swallowNextClick(); } });
     for (const type of ['touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerdown', 'pointerup']) layer.addEventListener(type, event => event.stopPropagation());
     layer.addEventListener('click', event => {
         event.stopPropagation();
@@ -486,8 +494,14 @@ async function deleteFlow(refs) {
                 if (r.k === 'g') {
                     const g = ownerOf(r)?.group;
                     if (!g?.chats?.includes?.(r.f)) throw Error('그룹에 없는 채팅');
-                    await groups.deleteGroupChatByName(r.o, r.f);
-                    if (g.chats.includes(r.f)) throw Error('지워지지 않음');
+                    // 실리태번은 서버에 묻기 전에 그룹 목록에서 먼저 빼고, 실패해도 되돌리지 않아요 — 목록만 보면 늘 「지워짐」이에요(1.5.8 까지: 실패해도 「지웠어요」 · 고정 · 폴더에서 뺌).
+                    //   성공했을 때만 나는 GROUP_CHAT_DELETED 로 판정해요(그 사건이 없는 옛 실리태번은 예전처럼 목록으로).
+                    const { eventSource, event_types: T } = ctx();
+                    const type = T?.GROUP_CHAT_DELETED; let gone = false;
+                    const seen = name => { if (name === r.f) gone = true; };
+                    if (type) eventSource?.on?.(type, seen);
+                    try { await groups.deleteGroupChatByName(r.o, r.f); } finally { if (type) eventSource?.removeListener?.(type, seen); }
+                    if (type && eventSource?.on ? !gone : g.chats.includes(r.f)) throw Error('지워지지 않음');
                 } else {
                     const at = (ctx().characters || []).findIndex(x => x.avatar === r.o);
                     if (at < 0) throw Error('캐릭터 없음');

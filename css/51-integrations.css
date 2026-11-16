@@ -59,7 +59,6 @@ body.salty-dark .bl-mask-sample[data-mask=mosaic] { background:conic-gradient(#2
 @media(max-width:640px){.bl-capture-layout{grid-template-columns:minmax(0,1fr)}.bl-capture-dialog{padding:12px}.bl-capture-dialog footer{bottom:-14px}}
 .bl-addon-actions { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0 20px; }
 .bl-apply-pending { outline:1px solid var(--salty-accent); box-shadow:none; background:var(--salty-accent-13); font-weight:650; }
-@keyframes bl-apply-glow { 50% { box-shadow:none; } }
 @media(prefers-reduced-motion:reduce){.bl-apply-pending{animation:none}}
 .bl-addon-position-preview, .bl-wand-preview { padding:12px; border:1px solid var(--salty-line); border-radius:12px; margin:12px 0; background:var(--salty-shade); }
 .bl-addon-position-preview>div, .bl-wand-preview-input { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0; }

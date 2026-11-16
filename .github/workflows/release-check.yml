@@ -232,6 +232,11 @@ jobs:
           node tools/tests/weather-status-ko.mjs .
           node tools/tests/weather-meatball.mjs .
           node tools/tests/mb-dot-seen.mjs .
+          node tools/tests/mb-hidden.mjs .
+          node tools/tests/mb-prompt.mjs .
+          node tools/tests/mb-arrow.mjs .
+          node tools/tests/mb-rowbtn-gap.mjs .
+          node tools/tests/mb-face-now.mjs .
           node tools/tests/name-people.mjs .
           node tools/tests/translator-stub.mjs .
           node tools/tests/translator-cancel-reason.mjs .
@@ -320,7 +325,6 @@ jobs:
           node tools/tests/translator-auto-skip.mjs .
           node tools/tests/translator-swipe-pending.mjs .
           node tools/tests/translator-buttons-template.mjs .
-          node tools/tests/translator-message-template.mjs . tools
           node tools/tests/translator-send-button-keys.mjs .
           node tools/tests/tts-buttons-added.mjs .
           node tools/tests/head-signature-watch.mjs .
@@ -779,13 +783,9 @@ jobs:
           node tools/tests/icon-text-scope.mjs .
           node tools/tests/icon-text-hosts.mjs .
           node tools/tests/icon-text-row-bits.mjs .
-          node tools/tests/icon-text-prescan-slices.mjs . tools
-          node tools/tests/trash-wrap-marks.mjs . tools
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .
-          node tools/tests/fruit-heart-scan.mjs . tools
-          node tools/tests/korean-closed-late.mjs . tools
           node tools/tests/after-settle.mjs .
           node tools/tests/script-watch-outside-chat.mjs .
           node tools/tests/chat-open-fixed-cost.mjs .
@@ -893,6 +893,25 @@ jobs:
           node tools/tests/translator-check-stale-id.mjs .
           node tools/tests/translator-slash-message-id.mjs .
           node tools/tests/translator-batch-shift.mjs .
+          node tools/tests/translator-batch-reload.mjs .
+          # 1.5.8 뒤 버그 사냥(코드 읽기)에서 고친 것
+          node tools/tests/translator-prompt-manager.mjs .
+          node tools/tests/translator-progress-shift.mjs .
+          node tools/tests/translator-edit-twice.mjs .
+          node tools/tests/translator-stale-mesid.mjs .
+          node tools/tests/prompt-small-guards.mjs .
+          node tools/tests/style-keeps-behavior.mjs .
+          node tools/tests/mes-pins-limit-hold.mjs .
+          node tools/tests/menu-outside-click.mjs .
+          node tools/tests/replace-dollar.mjs .
+          node tools/tests/tts-pron-dollar.mjs .
+          node tools/tests/tts-cache-reopen.mjs .
+          node tools/tests/idb-reopen.mjs .
+          node tools/tests/tts-shell-retap.mjs .
+          node tools/tests/tts-voice-row-redraw.mjs .
+          node tools/tests/translator-whole-cache-sig.mjs .
+          node tools/tests/notes-merge-fields.mjs .
+          node tools/tests/tts-reanalyze-needs.mjs .
           node tools/tests/draft-two-tabs.mjs .
           node tools/tests/tts-speakers-proto.mjs .
           # 1.1.3 코드 감사에서 미룬 것
@@ -939,6 +958,15 @@ jobs:
           node tools/tests/prompt-inline-translate.mjs . tools
           # 1.5.3 작가 노트 안전망: 새 채팅에 직전 노트 묻기 · 지우기 경고 한 줄 · 마지막 노트 불러오기 (같은 jsdom · 가짜 새 채팅 · 지우기 길)
           node tools/tests/an-keep.mjs . tools
+          # 1.6.0 jsdom 을 쓰는 시험은 모두 위 npm ci 뒤에 — 앞 단계에는 tools/node_modules 가 없어 「jsdom 을 못 찾았어요」(종료 2)로 Release consistency 가 실패했어요(1.5.9)
+          node tools/tests/translator-message-template.mjs . tools
+          node tools/tests/icon-text-prescan-slices.mjs . tools
+          node tools/tests/trash-wrap-marks.mjs . tools
+          node tools/tests/fruit-heart-scan.mjs . tools
+          node tools/tests/korean-closed-late.mjs . tools
+          node tools/tests/squared-live-candidates.mjs . tools
+          # 1.6.0 여기부터 · 여기까지: 시작 표시 · 범위 만들기 · 다시 그려진 메시지에서 자리 되찾기 · 거두기 (같은 jsdom · 실제 Selection)
+          node tools/tests/sel-span.mjs . tools
           git status --porcelain
           git diff --exit-code --stat
           test -z "$(git status --porcelain)"

@@ -11,7 +11,7 @@ import { pickRect } from '../selects.js';
 import { showThemeModal } from '../modal.js';
 import { ask } from '../ask.js';
 import { splitCssReady } from '../lite.js';
-import { esc, ensureQuickCss, openMenu, closeMenu } from './shared.js';
+import { esc, ensureQuickCss, openMenu, closeMenu, swallowNextClick } from './shared.js';
 import { tidyFolders, newFolderId, groupPresets, searchPresets, assignPresets, moveFolder, removeFolder, folderOf, followRenames, sameNames, MAX_FOLDERS, MAX_NAME, MAX_SEEN } from './preset-list-core.js';
 
 const SELECT = 'settings_preset_openai';
@@ -109,7 +109,7 @@ function open(sel) {
     layer.innerHTML = `<div class="salty-pick salty-pick-float bl-pfo-menu" role="listbox" aria-label="프리셋 고르기">${search ? '<div class="salty-pick-search"><input type="search" placeholder="찾기" autocomplete="off" spellcheck="false" aria-label="프리셋 찾기"></div>' : ''}<div class="salty-pick-rows">${rowsHtml(sel)}</div></div>`;
     const box = layer.firstElementChild, rows = box.querySelector('.salty-pick-rows'), input = box.querySelector('input');
     const redraw = () => { rows.innerHTML = rowsHtml(sel, input?.value || ''); };
-    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); close(); } });
+    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); close(); swallowNextClick(); } });   // 바깥을 눌러 닫은 손가락의 click 이 뒤 화면(서랍 안 단추 · 서랍 닫기)에 떨어지지 않게
     for (const type of ['touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerdown', 'pointerup']) layer.addEventListener(type, event => event.stopPropagation());
     layer.addEventListener('click', event => {
         event.stopPropagation();

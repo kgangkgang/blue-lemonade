@@ -187,6 +187,22 @@ await test('keep-alive: 보일 때는 아무것도 안 함(hold false · wait nu
     assert.equal(k.holding, false); assert.notEqual(el.src, '', 'prepare 뒤 늦게 끝난 linger 는 무시 (새 줄 src 를 지우지 않음)');
 });
 
+// 1.5.8 까지: 숨은 화면에서 무음 play() 가 거절되면 ended 도 error 도 안 와 줄 사이 쉼이 영영 안 끝났어요(「재생 중」으로 멈춤)
+await test('keep-alive: 숨은 화면에서 무음 재생이 거절돼도 쉼은 그 길이 뒤에 끝나요 · 끊으면 false', async () => {
+    class BlockedAudio extends MockAudio { async play() { throw Object.assign(Error('play() failed'), { name: 'NotAllowedError' }); } }
+    const k = K.createKeepAlive({ audio: new BlockedAudio(), hidden: () => true });
+    const started = Date.now();
+    const ok = await Promise.race([k.wait(200, { promise: new Promise(() => {}), fired: false }), sleep(1500).then(() => 'stuck')]);
+    assert.equal(ok, true, '쉼이 끝나요(고치기 전: 영영 안 끝남)');
+    assert.ok(Date.now() - started >= 150, '쉼 길이만큼은 기다려요');
+    let fire; const ir = { fired: false, promise: new Promise(r => { fire = () => { ir.fired = true; r(); }; }) };
+    const cut = k.wait(5000, ir); fire();
+    assert.equal(await Promise.race([cut, sleep(1000).then(() => 'stuck')]), false);
+    class ThrowingAudio extends MockAudio { play() { throw Error('no audio'); } }
+    const k2 = K.createKeepAlive({ audio: new ThrowingAudio(), hidden: () => true });
+    assert.equal(await Promise.race([k2.wait(100, null), sleep(1000).then(() => 'stuck')]), true, 'play 가 바로 던져도 같아요');
+});
+
 await test('keep-alive: 뒷일 다리 — 읽는 동안 하나(busy) · 끝나면 놓음 · 4분마다 꼬리표를 새로 잡아도 busy 가 끊기지 않음', async () => {
     let t = 0;
     const bridge = AW.createAfterWork({ now: () => t });

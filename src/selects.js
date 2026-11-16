@@ -324,6 +324,7 @@ export function startSelectPop() {
     document.addEventListener('pointerdown', (e) => {
         if (!eligible(e.target)) return;
         if (e.pointerType === 'touch') { e.preventDefault(); return; } // 손가락은 touchend 에서 연다
+        if (e.button > 0) return;   // 오른쪽 · 가운데 단추는 열지 않아요(OS 목록도 왼쪽 단추에서만 열려요) — 전에는 오른쪽 단추에 테마 목록과 브라우저 메뉴가 같이 떴어요
         if (tryOpen(e.target)) e.preventDefault();
     }, true);
     document.addEventListener('touchstart', (e) => {

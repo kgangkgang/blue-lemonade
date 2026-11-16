@@ -2057,7 +2057,8 @@ async function translate(text, options = {}) {
         // 1.1.3 낱말 korean 만 보던 판정은 「from Korean」 · 「Keep Korean names」 프롬프트에서도 카드 값을 한국어로 채웠다 — 목표어가 한국어인 꼴만
         //       (KOREAN_TARGET 과 같은 꼴 + 꾸밈말이 낀 「into natural, fluent Korean」 — 괄호 · 마침표를 건너 「to English (… Korean)」 까지는 안 잡는다)
         //       감사 4차: 사이 낱말은 꾸밈말만 — 「into English and keep Korean names」 · 「into Japanese, not Korean」 은 아님 (rp-lines.js NOTICE_KOREAN_TARGET 과 글자까지 같은 정규식 · 시험이 같은지 봐요)
-        const cardLocal = !options.isInputTranslation && /\b(?:to|into)\s+(?:(?:natural|fluent|native|casual|formal|informal|polite|modern|standard|contemporary|colloquial|idiomatic|literary|proper|plain|simple|everyday|smooth|good|clear|accurate|correct|[a-z]+ly)(?:\s*,\s*(?:and\s+)?|\s+and\s+|\s+)){0,3}korean\b|한국어로|한글로/i.test(String(options.prompt ?? chatPrompt)) ? cardValues({
+        //       1.5.8 까지는 기본 칸 글(llm_prompt_chat)로만 판정해, 골라 둔 커스텀 프롬프트가 다른 말로 옮기는데도 카드 값만 한국어로 채웠어요 — 실제로 쓰는 프롬프트(위 koreanTarget)로 봐요
+        const cardLocal = !options.isInputTranslation && /\b(?:to|into)\s+(?:(?:natural|fluent|native|casual|formal|informal|polite|modern|standard|contemporary|colloquial|idiomatic|literary|proper|plain|simple|everyday|smooth|good|clear|accurate|correct|[a-z]+ly)(?:\s*,\s*(?:and\s+)?|\s+and\s+|\s+)){0,3}korean\b|한국어로|한글로/i.test(String(koreanTarget ?? chatPrompt)) ? cardValues({
             scope: String(getStringHash(JSON.stringify([chatPrompt, ...(styleProfileSignature(cardChat?.chatMetadata).length ? ['speech-alias-v2',styleProfileSignature(cardChat?.chatMetadata)] : []), extensionSettings.glossary_enabled === false ? null
                 : [cardChat?.groupId ?? null, cardChat?.characters?.[cardChat?.characterId]?.avatar ?? null, glossarySignature(extensionSettings.glossary_entries), ...chatGlossarySignature(cardChat?.chatMetadata)]]))),   // 2.7.5 updated 는 서명에서 뺀다
             remember: options.isRetranslation !== true,
@@ -2937,6 +2938,10 @@ function beginTranslation(messageId, message, guardOptions = {}) {
     Object.defineProperties(token,{finished:{value:new Promise(r=>done=r)},resolve:{value:error=>done(error)}});
     // [1.9.5] 표에 메시지를 달아 둔다 (디버그 출력에 메시지 전체가 찍히지 않게 열거되지 않는 속성으로)
     Object.defineProperty(token, 'message', { get: () => token.guard.target?.() ?? message });   // 6.5.2 같은 채팅을 다시 불러오면 새 객체를 가리킨다
+    // 번호 자리에 다른 메시지의 번역 표가 아직 살아 있으면(그 메시지는 앞 메시지가 지워져 번호가 당겨짐) 덮지 않고 옆 자리로 옮겨요 —
+    //   덮으면 그 메시지가 「번역 중 아님」으로 보여 단추를 누를 때 같은 글에 요청이 한 번 더 나갔어요(판정은 메시지 객체로 · 등록은 번호로 하던 어긋남).
+    const before = translationInProgress[messageId];
+    if (before && before !== token) { let slot = `moved:${messageId}`; while (translationInProgress[slot]) slot += '+'; translationInProgress[slot] = before; }
     translationInProgress[messageId] = token;
     // 6.9.8 뒷일 다리 — 소리 없이 버티기가 번역이 끝날 때까지 버틴다 (다리가 없으면 undefined)
     let endAfterWork; try { endAfterWork = globalThis[Symbol.for('blue-lemonade.after-work')]?.begin?.('translate'); } catch {}
@@ -2947,6 +2952,7 @@ function endTranslation(messageId, token) {
     token?.resolve?.(token.error);
     if (token && afterWorkEnds.has(token)) { const endAfterWork = afterWorkEnds.get(token); afterWorkEnds.delete(token); try { endAfterWork(); } catch {} }   // 6.9.8 성공 · 실패 · 취소 모두 finally 의 여기로 — 뒷일 끝 (한 번만)
     if (translationInProgress[messageId] === token) translationInProgress[messageId] = false;
+    else for (const key of Object.keys(translationInProgress)) if (translationInProgress[key] === token) delete translationInProgress[key];   // 옆 자리로 옮겨 둔 표
     if (typeof checkView !== 'undefined') checkView.schedule(messageId);   // 2.6.0 번역 중엔 점검하지 않으니 끝나면 한가할 때 점검
 }
 /**
@@ -3994,6 +4000,9 @@ async function onTranslateChatClick() {
     if (!messages.length) { toastr.warning('번역할 채팅이 없어요.'); return; }
     const pending = new Set(messages.filter(batchNeeded));
     if (!pending.size) { toastr.info('이 채팅은 이미 모두 번역돼 있어요.'); return; }
+    // 도는 중에 같은 채팅이 제자리에서 다시 불리면(정규식 창 저장 · 프롬프트 귀속 · 다른 확장) 채팅 배열이 새 객체로 바뀌어요 — 메시지마다 가드를 떠 두고 같은 자리의 같은 메시지로 따라가요.
+    //   1.5.8 까지는 떠 둔 옛 객체를 못 찾아 남은 메시지를 전부 건너뛰고 「채팅 번역이 완료됐어요」라고 알렸어요.
+    const follow = new Map(messages.map(message => [message, guards.capture(message)]));
     // Reserve while the confirmation is open as well.
     const run = { stopped: false }; batchRun = run;
     const button = $('#llm_translate_chat');
@@ -4012,7 +4021,8 @@ async function onTranslateChatClick() {
         for (const message of messages) {
             guard.assert();
             if (run.stopped) break;
-            const id = getContext().chat.indexOf(message);
+            let id = getContext().chat.indexOf(message);
+            if (id < 0) { const moved = follow.get(message); await settleGuard(moved); guard.assert(); id = moved.index(); }
             if (id < 0) continue;
             try { await translateMessage(id, false, 'batch'); }
             catch (error) {
@@ -4189,6 +4199,7 @@ function addButtonsToExistingMessages() {
 // 번역문 수정
 let editShowsSource = false;   // 번역 리모컨(translate-remote): 수정 창에서 원문을 펴 두었는지 (이 세션 동안 기억)
 // 번역문 수정 함수 (원복 및 플래그 갱신 수정)
+const editOpening = new WeakSet();   // 수정 창을 여는 중인 메시지 (editTranslation)
 async function editTranslation(messageId) {
     const context = getContext();
     const message = context.chat[messageId];
@@ -4200,6 +4211,9 @@ async function editTranslation(messageId) {
     }
 
     const mesBlock = $(`.mes[mesid="${messageId}"]`);
+    // 이미 수정 창이 열렸거나 여는 중이면 또 열지 않아요 — 연필을 빠르게 두 번 누르면 아래 await 사이에 두 번째가 들어와 수정 창이 두 벌 생겼어요(리모컨 길은 remote.js 가 먼저 봐요)
+    if (mesBlock.find('.translation_edit_textarea').length || editOpening.has(message)) return;
+    editOpening.add(message);
     const mesText = mesBlock.find('.mes_text');
     const mesButtons = mesBlock.find('.mes_buttons'); // 버튼 영역 참조 추가
 
@@ -4217,6 +4231,8 @@ async function editTranslation(messageId) {
         console.error("편집용 원본 번역문 DB 조회 실패:", error);
         toastr.error("편집을 위해 원본 번역문을 가져오는 데 실패했어요.");
         return;
+    } finally {
+        editOpening.delete(message);   // 이 뒤로는 await 없이 바로 translation-editing 클래스가 붙어요
     }
 
     // 편집 모드 전환
@@ -4305,7 +4321,7 @@ async function editTranslation(messageId) {
         else if (newText !== originalDbTranslation) {
             try {
                 // DB 업데이트 — 1.0.9 DB 가 실패해도(사생활 창 · 용량 초과) 고친 글은 메시지에 남겨요. 전엔 수정창이 이미 닫혀 쓴 글이 그대로 사라졌어요
-                await addTranslationToDB(originalTextForDbKey, newText).catch(error => console.warn(`[LLM Translator] 고친 번역문 캐시 저장 실패 — 메시지에는 남겨요`, error));
+                await addTranslationToDB(originalTextForDbKey, newText, { sig: WHOLE_SIG_ANY }).catch(error => console.warn(`[LLM Translator] 고친 번역문 캐시 저장 실패 — 메시지에는 남겨요`, error));
                 message.extra.translation_edited = originalHashOf(originalTextForDbKey); // 6.2.4 손으로 고친 번역은 낱말 걷기를 하지 않는다
 
                 // 화면 표시 업데이트
@@ -4473,7 +4489,7 @@ function syncSelection(force = false) {
         deleteHooks: {
             rawTranslation: (message, source) => localOrDisplayedTranslation(message, source),
             remember: (extra, source, raw, display) => rememberSource(extra, { original: source, raw, display, hash: getStringHash }), // 6.9.5
-            saveTranslation: (source, text) => addTranslationToDB(source, text),
+            saveTranslation: (source, text) => addTranslationToDB(source, text, { sig: WHOLE_SIG_ANY }),   // 고른 글 고치기 · 지우기 = 사용자가 정한 글
             layout: (source, text) => processTranslationText(source, text, { inspect: true }),
             cachedTranslation: source => getTranslationFromDB(source),             // 되돌리기용 원래 기록 줄 (없으면 null — 읽기 실패는 던진다: 기록을 건드리지 않게)
             dropTranslation: source => deleteTranslationByOriginalText(source),
@@ -6982,7 +6998,47 @@ function openDB() {
     })
 }
 
+// 1.5.9 메시지 통째 캐시의 서명 — 그 번역을 만든 「모델 · 채팅 번역 프롬프트 · 그 원문에 걸리는 용어집 줄」.
+//   1.5.8 까지 통째 캐시의 열쇠는 원문뿐이라, 용어집 · 프롬프트 · 모델을 바꿔도 같은 원문이면 옛 번역이 요청 없이 붙었어요(문단 캐시는 조각으로 빗나가는데 통째 캐시가 앞에서 가로챔).
+//   범위는 좁게: 용어집은 그 원문에 실제로 나오는 줄만(다른 낱말을 고쳐도 이 글의 캐시는 그대로) · 연결은 방식 · 공급자 · 모델만(온도 같은 조절값은 안 봄).
+//   줄(record.sig): 글자 = 그 서명으로 만든 번역 · '*' = 손으로 고친 번역(어느 서명에서나 씀) · 없음 = 옛 판이 넣은 줄.
+//   옛 줄은 지우지 않고, 처음 읽을 때 「지금 서명」의 것으로 받아들여 표시만 해 둬요(이전 길) — 그래서 판을 올린 직후 다시 번역이 몰려 나가지 않아요. 그 뒤 재료가 바뀌면 그때 빗나가요.
+const WHOLE_SIG_ANY = '*';
+const WHOLE_SIG_ROWS = 4;   // 원문 하나에 서명이 다른 줄은 이만큼까지(모델 · 프롬프트를 오갈 때 다시 사지 않게) — 넘치면 오래된 줄부터 갈아 써요
+function wholeCacheSignature(originalText) {
+    const s = extensionSettings, glossaryOn = s.glossary_enabled !== false;
+    const found = glossaryOn ? glossaryLines(activeGlossaryEntries(), String(originalText ?? ''), { maxLines: GLOSSARY_MAX_LINES }) : null;
+    return shortHash(['whole-v1', s.connection_mode ?? null, s.llm_provider ?? null, s.llm_model ?? null, String(savedChatPrompt() ?? ''), glossaryOn, found?.lines ?? [], found?.hasChoice ?? false]);
+}
+/** 지금 서명 — 못 만들면(시험 틀 · 재료 없음) undefined: 그때는 예전처럼 서명을 안 봐요 */
+function currentWholeSig(originalText) {
+    try { return typeof wholeCacheSignature === 'function' ? wholeCacheSignature(originalText) : undefined; }
+    catch (error) { console.warn('[LLM Translator] 번역 캐시 서명을 못 만들었어요 — 서명 없이 써요:', error?.message || error); return undefined; }
+}
+/** 줄 고르기(순수): 같은 원문의 줄들 rows 에 서명 sig 의 새 줄을 넣을 때 → { target: 고쳐 쓸 줄 | undefined(새로 더함), drop: 지울 줄들 }
+ *   서명 없음(가져오기 · 시험 틀) · '*'(손으로 고친 번역): 첫 줄을 고쳐 쓰고 나머지는 지워요 — 손으로 고친 글은 그 원문의 하나뿐인 줄.
+ *   서명 있는 새 번역: 같은 서명의 줄 → 없으면 옛 줄 · 손으로 고친 줄을 갈아 써요(다시 번역한 것이 이겨요). 서명이 다른 줄은 WHOLE_SIG_ROWS 개까지 남겨요. */
+function pickWholeRows(rows, sig) {
+    rows = (rows || []).filter(row => row && row.id !== undefined);
+    if (!sig || sig === WHOLE_SIG_ANY) return { target: rows[0], drop: rows.slice(1) };
+    const same = rows.filter(row => row.sig === sig), loose = rows.filter(row => !row.sig || row.sig === WHOLE_SIG_ANY);
+    const other = rows.filter(row => row.sig && row.sig !== WHOLE_SIG_ANY && row.sig !== sig);
+    let target = same[0] ?? loose[0];
+    const drop = [...same, ...loose].filter(row => row !== target);
+    const extra = other.slice(0, Math.max(0, other.length - (WHOLE_SIG_ROWS - 1)));
+    if (!target && extra.length) target = extra.shift();
+    drop.push(...extra);
+    return { target, drop };
+}
+/** 줄 찾기(순수): 쓸 수 있는 줄들(새 것부터) usable 에서 지금 서명 sig 로 읽을 줄 — 지금 서명 → 손으로 고친 줄 → 옛 줄(서명 없음) 차례. 서명이 다른 줄만 있으면 없음.
+ *   sig 가 undefined(가져오기의 「이미 있나」 · 서명을 못 만드는 자리)면 예전처럼 가장 새 줄 */
+function findWholeRow(usable, sig) {
+    if (sig === undefined) return usable[0];
+    return usable.find(item => item.sig === sig) ?? usable.find(item => item.sig === WHOLE_SIG_ANY) ?? usable.find(item => !item.sig);
+}
+
 // 데이터 추가 함수 수정
+// cacheContext.sig: 글자 = 그 서명의 번역 · WHOLE_SIG_ANY = 손으로 고친 번역 · 안 주면 옛 줄처럼(가져오기 — 처음 읽을 때 지금 서명으로 받아들임)
 async function addTranslationToDB(originalText, translation, cacheContext = {}) {
     const requestMetadata = cacheContext.requestMetadata ?? getContext().chatMetadata;
     // Legacy full-message cache is keyed only by source. Keep chat-specific
@@ -7007,16 +7063,19 @@ async function addTranslationToDB(originalText, translation, cacheContext = {}) 
         const transaction = db.transaction(STORE_NAME, 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const record = { originalText: originalText, translation: translation, provider: provider, model: model, date: date };
+        const sig = typeof cacheContext.sig === 'string' && cacheContext.sig ? cacheContext.sig : undefined;
+        if (sig) record.sig = sig;
 
         // [1.9.2] 같은 원문의 줄이 있으면 더하지 않고 그 줄을 고쳐 쓴다 (남은 중복 줄은 지움).
         //         예전에는 늘 더하기만 했는데 찾기는 가장 오래된 줄을 읽어서, 예전 버전이 넣어 둔 거절문 줄이 있으면
         //         새 번역을 넣어도 계속 '없음' 으로 보여 번역할 때마다 API 를 다시 부르고 줄만 늘었다.
-        const lookup = store.index('originalText').getAllKeys(originalText);
+        const lookup = store.index('originalText').getAll(originalText);
         lookup.onsuccess = () => {
             if (requestMetadata !== getContext().chatMetadata || chatTermCachePolicy.blocked(requestMetadata)) { resolve("skipped"); return; }
-            const [first, ...rest] = lookup.result || [];
-            rest.forEach(key => store.delete(key));
-            const request = first === undefined ? store.add(record) : store.put({ ...record, id: first });
+            // 1.5.9 서명에 따라 고쳐 쓸 줄 · 지울 줄을 골라요 (pickWholeRows) — 서명 없는 길은 [1.9.2] 그대로: 첫 줄을 고쳐 쓰고 남은 중복 줄은 지움
+            const { target, drop } = typeof pickWholeRows === 'function' ? pickWholeRows(lookup.result, sig) : { target: (lookup.result || [])[0], drop: (lookup.result || []).slice(1) };
+            drop.forEach(row => store.delete(row.id));
+            const request = target === undefined ? store.add(record) : store.put({ ...record, id: target.id });
             request.onsuccess = (event) => {
                 resolve("add success");
             };
@@ -7350,16 +7409,26 @@ async function deleteCachedTranslation(originalText) {
     await forgetParagraphCache(originalText);
     return deleteTranslationByOriginalText(originalText);
 }
+/** 1.5.9 옛 줄(서명 없음)을 지금 서명의 줄로 표시 — 읽은 뒤 따로 조용히(실패해도 다음에 또 받아들이면 돼요). 번역 글 · 날짜는 그대로 */
+function adoptWholeSig(id, sig) {
+    if (id === undefined || !sig) return;
+    openDB().then(db => {
+        const transaction = db.transaction(STORE_NAME, 'readwrite'), store = transaction.objectStore(STORE_NAME);
+        const request = store.get(id);
+        request.onsuccess = () => { const row = request.result; if (row && !row.sig) store.put({ ...row, sig }); };
+        transaction.oncomplete = transaction.onerror = transaction.onabort = () => db.close();
+    }).catch(() => { /* 캐시를 못 열면 그대로 */ });
+}
 async function storeTranslationQuietly(originalText, translation, cacheContext = {}) {
     if (cacheContext.chatTermScoped) return;
     if (hasFailMark(translation)) { console.warn('[LLM Translator] 번역 실패 표시가 남은 글이라 캐시에 넣지 않았어요 (다시 번역하면 그 문단만 다시 보내요)'); return; }   // 6.9.6
     // 5.4.1: 원문을 베껴 품은 번역(원문+화살표+번역 · ⟦n] 표시)은 캐시에 넣지 않는다 — 다시 번역해도 캐시에서 같은 글이 나왔다
     if (hasSourceEcho(originalText, translation)) { console.warn('[LLM Translator] 번역문에 원문이 섞여 있어 캐시에 넣지 않았어요'); return; }
-    try { await addTranslationToDB(originalText, translation, cacheContext); }
+    try { await addTranslationToDB(originalText, translation, { ...cacheContext, sig: cacheContext.sig ?? (typeof currentWholeSig === 'function' ? currentWholeSig(originalText) : undefined) }); }   // 방금 받은 번역 = 지금 서명의 줄
     catch (error) { console.warn('[LLM Translator] 번역 캐시 저장 실패 — 번역문은 붙였어요:', error?.message || error); }
 }
 
-async function getTranslationFromDB(originalText) {
+async function getTranslationFromDB(originalText, { anySig = false } = {}) {
     const requestMetadata = getContext().chatMetadata;
     if (chatTermCachePolicy.blocked(requestMetadata)) return null;
     const db = await openDB();
@@ -7378,7 +7447,11 @@ async function getTranslationFromDB(originalText) {
             const records = event.target.result || [];
             // 5.4.1: 원문 되풀이가 섞인 번역(원문+화살표+번역 · ⟦n] 표시)도 없는 셈 친다 — 다시 번역하면 새로 받는다
             // 6.9.6 실패 표시가 든 줄(6.9.5 까지 점검 자동 고치기 등이 넣은 것)도 없는 셈 친다 — 다시 번역하면 그 문단만 다시 보낸다
-            const record = records.reverse().find(item => !looksLikeRefusal(originalText, item.translation) && !hasSourceEcho(originalText, item.translation) && matchesDisplayCardStructure(originalText, item.translation) && !hasFailMark(item.translation));
+            const usable = records.reverse().filter(item => !looksLikeRefusal(originalText, item.translation) && !hasSourceEcho(originalText, item.translation) && matchesDisplayCardStructure(originalText, item.translation) && !hasFailMark(item.translation));
+            // 1.5.9 서명: 지금 서명의 줄 → 손으로 고친 줄 → 옛 줄(받아들여 표시해 둠). 서명이 다른 줄만 있으면 없는 셈(다시 번역) — findWholeRow
+            const sig = anySig || typeof currentWholeSig !== 'function' ? undefined : currentWholeSig(originalText);
+            const record = typeof findWholeRow === 'function' ? findWholeRow(usable, sig) : usable[0];
+            if (record && sig !== undefined && !record.sig && typeof adoptWholeSig === 'function') adoptWholeSig(record.id, sig);
             resolve(record ? record.translation : null);
         };
         request.onerror = (e) => {
@@ -7696,7 +7769,7 @@ async function restoreTranslationsFromMetadata() {
             // 데이터 병합 로직 (Add-Only)
             try {
                 // logDebug(`Checking local DB for item ${i}: "${item.originalText.substring(0,30)}..."`); // 개별 확인 로그 (너무 많을 수 있음)
-                const localTranslationExists = await getTranslationFromDB(item.originalText) !== null;
+                const localTranslationExists = await getTranslationFromDB(item.originalText, { anySig: true }) !== null;
 
                 if (!localTranslationExists) {
                     // logDebug(`Item ${i} not found locally. Adding...`); // 개별 추가 로그
@@ -9516,6 +9589,11 @@ class PromptManager {
             if (selectedPrompt) {
                 extensionSettings.selected_translation_prompt = selectedPrompt.content;
                 logDebug('Loaded saved prompt:', selectedPrompt.title);
+            } else {
+                // 골라 둔 프롬프트가 목록에 없어요(그 프롬프트가 없는 설정 파일을 가져옴 · 다른 기기에서 지움) — 지우기 단추처럼 선택을 비워요.
+                //   남겨 두면 다음에 열 때 고르기 칸과 편집 칸이 비어 보였어요(번역은 기본 프롬프트로 가는데 화면은 아무것도 안 고른 꼴).
+                extensionSettings.selected_translation_prompt_id = null;
+                extensionSettings.selected_translation_prompt = null;
             }
         }
     }
@@ -9768,7 +9846,7 @@ class PromptManager {
             return;
         }
 
-        if (await ask(`「${selectedPrompt.name || '이 프롬프트'}」를 지울까요?`, { ok: '지우기', cancel: '취소', danger: true })) {
+        if (await ask(`「${selectedPrompt.title || '이 프롬프트'}」를 지울까요?`, { ok: '지우기', cancel: '취소', danger: true })) {
             const deletedPromptId = selectedPrompt.id;
             this.customPrompts = this.customPrompts.filter(p => p.id !== deletedPromptId);
             this.saveToSettings();

@@ -334,6 +334,14 @@ function toggleAll(id) {
 }
 
 // ───────── 메뉴 (공용 고르기 목록 팝업 · css/72) ─────────
+// 메뉴 바깥을 눌러 닫은 손가락을 뗄 때의 click 이 뒤 화면(목록 줄 · 단추)에 떨어지지 않게 한 번 삼켜요 — 폰은 층이 사라진 자리의 것을 눌러요(mes-fold.js · selects.js · chat-organizer.js 와 같은 지킴).
+// 다음 누름 · 키가 시작되면 그 click 은 이미 왔거나 오지 않아요 — 그때 풀어요. 코드가 부른 click(.click())은 건드리지 않아요.
+function swallowNextClick(ms = 700) {
+    const eat = (event) => { if (!event.isTrusted) return; event.preventDefault(); event.stopPropagation(); done(); };
+    const done = () => { clearTimeout(timer); for (const [type, fn] of [['click', eat], ['pointerdown', done], ['keydown', done]]) document.removeEventListener(type, fn, true); };
+    const timer = setTimeout(done, ms);
+    for (const [type, fn] of [['click', eat], ['pointerdown', done], ['keydown', done]]) document.addEventListener(type, fn, true);
+}
 function closeMenu() {
     if (!menu) return;
     const { layer, off } = menu; menu = null; off();
@@ -347,7 +355,7 @@ function openMenu(anchor, items) {
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh;margin:0;padding:0;border:0;overflow:visible;max-width:none;max-height:none;background:transparent;color:inherit';
     layer.innerHTML = `<div class="salty-pick salty-pick-float bl-pf-menu" role="menu"><div class="salty-pick-rows">${items.map((item, i) => `<button type="button" role="${item.check === undefined ? 'menuitem' : 'menuitemcheckbox'}" data-i="${i}"${item.check !== undefined ? ` aria-checked="${!!item.check}" class="${item.check ? 'on' : ''}"` : ''}${item.disabled ? ' disabled' : ''}><span>${esc(item.label)}</span>${item.check !== undefined ? '<i aria-hidden="true"></i>' : ''}</button>`).join('')}</div></div>`;
     const box = layer.firstElementChild;
-    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); closeMenu(); } });
+    layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); closeMenu(); swallowNextClick(); } });
     for (const type of ['touchstart', 'touchend', 'mousedown', 'mouseup', 'pointerdown', 'pointerup']) layer.addEventListener(type, event => event.stopPropagation());
     layer.addEventListener('click', event => {
         event.stopPropagation();

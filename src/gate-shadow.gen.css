@@ -1,4 +1,4 @@
-/* src/gate-shadow.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 3개(글자 그림자(본문 · 대사 · 강조 · 굵게 · 코드) · 데우스 대사 그림자 — 기본 끔이라 켠 사람만 받아요) — 고치지 말 것. src/lite.js 가 body 에 salty-demink-shadow · salty-shadow-code · salty-shadow-dialogue · salty-shadow-em · salty-shadow-strong · salty-shadow-text 가 붙기 전에 테마 시트 뒤에 붙여요 (build 86a9ea9946f8) */
+/* src/gate-shadow.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 3개(글자 그림자(본문 · 대사 · 강조 · 굵게 · 코드) · 데우스 대사 그림자 — 기본 끔이라 켠 사람만 받아요) — 고치지 말 것. src/lite.js 가 body 에 salty-demink-shadow · salty-shadow-code · salty-shadow-dialogue · salty-shadow-em · salty-shadow-strong · salty-shadow-text 가 붙기 전에 테마 시트 뒤에 붙여요 (build a6d515173a07) */
 body.salty.salty-shadow-text :is(:is(#chat,.bl-chat-like), .cg-root, #salty-nochat, .salty-preview) .mes .mes_text:not(#salty-none),
 body.salty.salty-shadow-text :is(:is(#chat,.bl-chat-like), .cg-root, #salty-nochat, .salty-preview) .mes .mes_text :not(#salty-none),
 body.salty .salty-sample.salty-shadow-text:not(#salty-none),

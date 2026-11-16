@@ -21,6 +21,20 @@ try {
     assert.deepEqual(cleared, [], `RESET_KEEP 과 RESET_CLEARED 에 동시에 있어요: ${cleared.join(', ')}`);
     assert.deepEqual(unknown, [], `DEFAULTS 에 없는 칸 이름이에요(오타?): ${unknown.join(', ')}`);
     for (const k of ['multiAvatar', 'addonCarry']) assert.ok(S.RESET_KEEP.includes(k), `${k} 는 늘 남겨야 해요`);
+    // 1.5.9 「테마 모습」 초기화가 쓰는 방식 넷을 남기는지 — 실제로 돌려 봐요 (1.5.8 까지: 넷 다 처음 값으로)
+    {
+        const ext = { salty: structuredClone(S.DEFAULTS) };
+        Object.assign(ext.salty, { koUi: false, longpressHelp: false, headSwitchRows: true, inputBox: { hold: true, noCorrect: true }, palette: 'night' });
+        globalThis.SillyTavern = { getContext: () => ({ extensionSettings: ext, saveSettingsDebounced() {} }) };
+        const next = S.resetSettings({ look: true });
+        assert.equal(next.koUi, false, '한글화'); assert.equal(next.longpressHelp, false, '길게 눌러 도움말'); assert.equal(next.headSwitchRows, true, '머리 스위치 줄');
+        assert.deepEqual(next.inputBox, { hold: true, noCorrect: true }, '입력창 동작');
+        assert.equal(next.palette, S.DEFAULTS.palette, '모습은 처음 값으로');
+        for (const k of ['koUi', 'longpressHelp', 'inputBox', 'headSwitchRows']) assert.ok(S.RESET_KEEP.includes(k));
+        const panel = (await import('node:fs')).readFileSync(path.join(root, 'src/panel.js'), 'utf8');
+        assert.ok(panel.includes('쓰는 방식(한글화 · 길게 눌러 도움말 · 입력창 동작 · 머리 스위치 줄'), '확인 창에 무엇이 남는지 한 줄');
+        console.log('  PASS  「테마 모습」 초기화가 쓰는 방식 넷을 남기고 확인 창에 알려요');
+    }
     console.log(`  PASS  자료 칸 ${D.OMITTED_KEYS.size}개가 모두 초기화 정책을 가져요`);
     console.log('reset-keep-drift: 1 passed');
 } catch (e) { console.log(`  FAIL  ${e.message}`); process.exitCode = 1; }

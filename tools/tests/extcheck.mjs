@@ -388,7 +388,7 @@ await test('설정: 전송 동의 · 연결은 기억(변경한 설정 · 초기
     const s = await import(url('src/settings.js'));
     assert.deepEqual(s.DEFAULTS.extcheck, { aiConsent: false, profileId: '' });
     assert.match(read('src/settings-differences.js'), /'multiAvatar','extcheck'\]\)/);
-    assert.match(read('src/settings.js'), /'searchAi', 'extcheck', 'logCopy'/);
+    assert.match(read('src/settings.js'), /'searchAi', 'extcheck', /);
 });
 
 console.log(`extcheck: ${passed} PASS`);

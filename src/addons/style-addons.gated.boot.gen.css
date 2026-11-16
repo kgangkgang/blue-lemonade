@@ -523,11 +523,6 @@
 :where(html.bl-asc-8) .bl-sticky .bl-sticky-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px 6px 8px; }
 :where(html.bl-asc-8) .bl-sticky .bl-sticky-view { min-height: 3em; }
 :where(html.bl-asc-8) .bl-sticky.bl-sticky .bl-sticky-body { min-height: 5em; }
-:where(html.bl-asc-8) .bl-look-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 10px; padding: 6px 4px; font-size: 13px; }
-:where(html.bl-asc-8) .bl-look-row > span { color: var(--bl-notes-muted); }
-:where(html.bl-asc-8) .bl-look-row select,:where(html.bl-asc-8) .bl-look-row input[type="number"] { width: 100%; min-width: 0; box-sizing: border-box; height: 32px; padding: 0 8px; border: 0; border-radius: var(--bl-r-sm, 6px); background: var(--bl-notes-card); color: var(--bl-notes-text); font: inherit; outline: none; }
-:where(html.bl-asc-8) .bl-look-row input[type="range"] { width: 100%; min-width: 0; accent-color: var(--bl-notes-accent); }
-:where(html.bl-asc-8) .bl-look-row output { min-width: 3.5em; text-align: right; color: var(--bl-notes-muted); font-variant-numeric: tabular-nums; }
 :where(html.bl-asc-8) .bl-look-sample { margin: 8px 4px 2px; padding: 8px 10px; background: var(--bl-notes-card); cursor: default; }
 :where(html.bl-asc-8) .bl-look-sample:hover { background: var(--bl-notes-card); }
 :where(html.bl-asc-8) .bl-notes-view[hidden],:where(html.bl-asc-8) .bl-note .bl-note-body[hidden],:where(html.bl-asc-8) .bl-sticky .bl-sticky-body[hidden],:where(html.bl-asc-8) .bl-notes-peek .bl-notes-peek-body[hidden] { display: none !important; }
@@ -651,11 +646,9 @@
 :where(html.bl-asc-8) .bl-bind-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 6px; font-size: 12px; }
 :where(html.bl-asc-8) .bl-bind-head input[type="search"] { width: 150px; height: 26px !important; min-height: 0 !important; margin: 0 !important; padding: 0 10px !important; border: 0 !important; border-radius: 999px !important; background: var(--bl-notes-card) !important; color: var(--bl-notes-text) !important; font: inherit !important; font-size: 12px !important; box-shadow: none !important; outline: none !important; }
 :where(html.bl-asc-8) .bl-bind-list { display: flex; flex-direction: column; gap: 2px; max-height: 50vh; overflow: auto; overscroll-behavior: contain; }
-:where(html.bl-asc-8) .bl-bind-person,:where(html.bl-asc-8) .bl-bind-chat,:where(html.bl-asc-8) .bl-bind-back { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 6px 10px; border: 0; border-radius: var(--bl-r-sm, 6px); background: transparent; color: var(--bl-notes-text); text-align: left; font: inherit; font-size: 13px; cursor: pointer; }
-:where(html.bl-asc-8) .bl-bind-person:hover,:where(html.bl-asc-8) .bl-bind-chat:hover,:where(html.bl-asc-8) .bl-bind-back:hover { background: var(--bl-notes-hover); }
-:where(html.bl-asc-8) .bl-bind-person img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; }
-:where(html.bl-asc-8) .bl-bind-person > span,:where(html.bl-asc-8) .bl-bind-chat > span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:where(html.bl-asc-8) .bl-bind-person > i:last-child { color: var(--bl-notes-muted); font-size: 11px; }
+:where(html.bl-asc-8) .bl-bind-chat,:where(html.bl-asc-8) .bl-bind-back { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 6px 10px; border: 0; border-radius: var(--bl-r-sm, 6px); background: transparent; color: var(--bl-notes-text); text-align: left; font: inherit; font-size: 13px; cursor: pointer; }
+:where(html.bl-asc-8) .bl-bind-chat:hover,:where(html.bl-asc-8) .bl-bind-back:hover { background: var(--bl-notes-hover); }
+:where(html.bl-asc-8) .bl-bind-chat > span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :where(html.bl-asc-8) .bl-bind-chat small { color: var(--bl-notes-muted); font-size: 11px; flex: none; }
 :where(html.bl-asc-8) .bl-bind-back { color: var(--bl-notes-accent); font-weight: 700; }
 :where(html.bl-asc-8) .bl-bind-list.is-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 58vh; }

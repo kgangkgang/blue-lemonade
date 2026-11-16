@@ -12,7 +12,6 @@ import { addMessageDecorator } from './message-decor.js';
 const SEL = '.mes_text font[color], .mes_text [style*="color"]';
 const GREY = 0.14; // 이 아래 채도는 회색으로 침
 let probe = null;  // 이름 색(darkred 같은 것) · 온갖 표기를 브라우저에게 rgb 로 바꾸게 하는 숨은 요소
-let timer = null;
 
 function enabled() {
     const s = readSettings();   // 8.2.6 채팅 감시 콜백(스트리밍 글자마다)에서 도는 읽기 — 설정 사건까지 정리 결과를 그대로

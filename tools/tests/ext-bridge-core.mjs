@@ -61,6 +61,10 @@ test('② 기능: 가장 안쪽의 아는 함수 — 만들기 안의 번역은 
     assert.deepEqual(C.slotOf(nested, MB), { slot: 'translate', fn: 'trJSON' });
     const truth = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['truthReply', `${BASE}/${MB}/src/ai.js`, 'async ']));
     assert.deepEqual(C.slotOf(truth, MB), { slot: 'contact', fn: 'truthReply' }, '2.7.23 최면 어플 답장은 연락 칸');
+    for (const [fn, file, slot] of [['groupReply', 'ai.js', 'contact'], ['roomSummaryAI', 'addons.js', 'contact'], ['gbWrite', 'minihome.js', 'contact'], ['ilchonWrite', 'minihome.js', 'contact'], ['noteReplyAI', 'minihome.js', 'contact'], ['ledgerScan', 'story.js', 'analyze']]) {
+        const frames = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], [fn, `${BASE}/${MB}/src/${file}`, 'async ']));
+        assert.deepEqual(C.slotOf(frames, MB), { slot, fn }, `2.8.0 ${fn}`);
+    }
     const unknown = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['brandNewFeature', `${BASE}/${MB}/src/ai.js`]));
     assert.deepEqual(C.slotOf(unknown, MB), { slot: '', fn: '' });
     const foreign = C.parseFrames(chrome(['genModule', `${BASE}/other/ai.js`]));

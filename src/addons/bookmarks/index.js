@@ -15,6 +15,7 @@ import { safeImageSrc } from './render.js';
 import { startSelectionChip, hideSelectionChip } from './selection-chip.js';
 import { booting, afterBoot } from '../../boot-gate.js';
 import { onThemeLook } from '../../shared/theme-look.js';
+import { onChatChildren } from '../../show-more-watch.js';
 
 // 4.5.4: 모아 보기 창(panel.js 47KB + 그것만 쓰는 settings-view.js 17.7KB)은 창을 열 때 읽는다.
 // 북마크 표시 · 메모 · 미리보기는 창 없이도 돌아가야 해서 index.js 는 그대로 시작할 때 읽힌다.
@@ -36,19 +37,29 @@ function targetRecord() {
 
 // ── 메시지 버튼 ─────────────────────────────────────────────
 
+function ensureMessageButton(mes) {
+    const buttons = mes.querySelector('.mes_block .ch_name .mes_buttons');
+    if (!buttons || buttons.querySelector(`:scope > .${BUTTON_CLASS}`)) return;
+    const button = document.createElement('div');
+    button.className = `mes_button ${BUTTON_CLASS} fa-regular ${iconName()} interactable`;
+    button.title = '북마크 (길게 누르면 메모)';
+    button.tabIndex = 0;
+    button.setAttribute('role', 'button');
+    const anchor = buttons.querySelector(':scope > .mes_bookmark') ?? buttons.querySelector(':scope > .mes_edit');
+    if (anchor) anchor.before(button);
+    else buttons.append(button);
+}
 function ensureMessageButtons() {
-    document.querySelectorAll('#chat .mes').forEach((mes) => {
-        const buttons = mes.querySelector('.mes_block .ch_name .mes_buttons');
-        if (!buttons || buttons.querySelector(`:scope > .${BUTTON_CLASS}`)) return;
-        const button = document.createElement('div');
-        button.className = `mes_button ${BUTTON_CLASS} fa-regular ${iconName()} interactable`;
-        button.title = '북마크 (길게 누르면 메모)';
-        button.tabIndex = 0;
-        button.setAttribute('role', 'button');
-        const anchor = buttons.querySelector(':scope > .mes_bookmark') ?? buttons.querySelector(':scope > .mes_edit');
-        if (anchor) anchor.before(button);
-        else buttons.append(button);
-    });
+    document.querySelectorAll('#chat .mes').forEach(ensureMessageButton);
+}
+// 최적화 3차: 메시지가 #chat 에 붙은 그 작업 안에서(마이크로태스크) 단추를 먼저 붙여요 — 예전에는 채팅 바뀜 120ms 뒤에 붙여서, 이미 계산 · 그린 단추 줄을
+//   메시지마다 한 번 더 계산했어요(리그 · 채팅 1000 끝 50 열기: 북마크 단추 몫 재계산 요소 600 ~ 777). 붙는 단추 · 자리는 같고(위 함수 그대로),
+//   채워진 모양(고른 북마크)은 예전처럼 refreshMessageIcons 가 맞춰요(이벤트 뒤 훑기는 그대로 — 이미 붙은 메시지는 건너뛰어요).
+function earlyMessageButtons(records) {
+    let added = null;
+    for (const r of records) for (const node of r.addedNodes) if (node.nodeType === 1 && node.classList.contains('mes')) (added ??= []).push(node);
+    if (!added) return;
+    queueMicrotask(() => { for (const mes of added) if (mes.isConnected && mes.parentElement?.id === 'chat') ensureMessageButton(mes); });
 }
 
 function refreshMessageIcons() {
@@ -339,6 +350,7 @@ for (const type of [event_types.MESSAGE_SENT, event_types.MESSAGE_RECEIVED, even
 for (const type of [event_types.CHARACTER_MESSAGE_RENDERED, event_types.USER_MESSAGE_RENDERED, event_types.MORE_MESSAGES_LOADED, event_types.MESSAGE_SWIPED, event_types.MESSAGE_UPDATED]) {
     eventSource.on(type, () => scheduleIconRefresh(50));
 }
+try { if (typeof queueMicrotask === 'function') onChatChildren(earlyMessageButtons); } catch { /* 못 걸면 예전처럼 이벤트 뒤에만 */ }   // 최적화 3차
 
 // 블루 레몬에이드를 켜고 끄거나 에이드(팔레트)를 바꾸면 :root 변수와 body 클래스가 바뀐다 → 북마크 색 · 테마도 따라간다.
 // applyColors도 :root 변수를 쓰니 여기로 다시 들어오지만, 테마 색이 그대로면 아무것도 하지 않아서 멎는다.

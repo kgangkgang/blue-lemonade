@@ -68,7 +68,7 @@ async function copyPaint(source, clone, resources, signal, options={}, skip=()=>
         }
         if(bg.includes('url('))queue((async()=>{
             let output=bg;
-            for(const match of urls(bg))output=output.replace(match.raw,`url("${await embedded(new URL(match.url,location.href).href)}")`);
+            for(const match of urls(bg)){const inlined=`url("${await embedded(new URL(match.url,location.href).href)}")`;output=output.replace(match.raw,()=>inlined);}   // 함수로 — 주소 안의 $& · $' 를 치환 표시로 풀지 않게
             clone.style.backgroundImage=output;
         })());
         if(index+1<pairs.length&&performance.now()>=deadline){
@@ -150,7 +150,7 @@ export async function captureMessages(ids, progress=()=>{}, options={}, signal=n
                 // A font-face's URLs are alternative formats, not separate fonts.
                 for(const hit of urls(rule.style.src)) {
                     const url=new URL(hit.url,sheet.href||location.href).href;
-                    try { const embedded=await limited(resources.embed(url,controller.signal),3000,'글꼴 로딩 지연');css=rule.cssText.replace(rule.style.src,`url("${embedded}")`);break; } catch { css=''; }
+                    try { const embedded=await limited(resources.embed(url,controller.signal),3000,'글꼴 로딩 지연');css=rule.cssText.replace(rule.style.src,()=>`url("${embedded}")`);break; } catch { css=''; }
                 }
                 fonts+=css;
             }

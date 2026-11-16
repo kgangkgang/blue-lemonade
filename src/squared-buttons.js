@@ -15,6 +15,7 @@ const SKIP_AREA = '#send_form,.mes_buttons,.swipe_left,.swipe_right,[data-bl-nat
 //   답은 cheapSkip 의 앞 세 조건 · areasOf 와 같아요(뿌리가 구역 안이면 예전처럼 통째로 건너뜀) — 리그에서 뿌리 315개 대조 · 틀림 0.
 export const FAST_CANDIDATES = `:is(${CANDIDATES}):not([${ATTR}],input,select,textarea,img,svg,${SKIP_AREA},:is(${SKIP_AREA}) *)`;
 const NO_AREAS = new Set();
+export const DEAD_DRAWER = '.drawer-content.closedDrawer';
 // 7.5.4 상태를 나타내는 클래스는 생김새 열쇠에서 뺀다 (.on · .active · is-* 가 바뀌어도 같은 단추)
 const STATE_CLASS = /^(?:on|off|active|inactive|selected|current|open|closed|hidden|disabled|focus(?:ed)?|hover|pressed|checked|is-|has-|bl-)/;
 const SEEN_MAX = 400;
@@ -129,7 +130,7 @@ export function paddingOnly(record) {
 //   예전에는 그 기록도 #chat 을 뿌리로 넣어 메시지 300개의 후보(.mes_button 등 수천 개)를 offsetParent 로 다시 쟀다 — 서랍 덮개(chat-light.js)가
 //   #chat 을 content-visibility:hidden 으로 둔 동안에는 그 읽기가 하나하나 건너뛴 내용을 그 자리에서 계산하게 해, 폰 리그에서 서랍 열기가 0.25 → 3.5초(재계산 284번)가 됐다.
 // 8.2.7 폰: 몰입 읽기(reader.js)는 채팅을 내리고 올릴 때마다 body 에 bl-bars-hidden 을 붙였다 뗀다 — 위 바 · 입력판을 top · transform 으로 밀기만 해서
-//   (css/29-reader-onehand.css) 단추 보임 · 크기 · 모서리는 같다. 예전에는 그때마다 body 를 뿌리로 문서 전체를 다시 쟀다(스크롤 중 0.3초대 끊김)
+//   (src/chat-appearance.css) 단추 보임 · 크기 · 모서리는 같다. 예전에는 그때마다 body 를 뿌리로 문서 전체를 다시 쟀다(스크롤 중 0.3초대 끊김)
 const PERF_MARKS = new Set(['bl-chat-light', 'bl-bars-hidden']);
 const COVER_ATTR = 'data-bl-chat-covered';   // chat-light.js 와 같은 이름(1.2.2 class → 속성 · 그 모듈을 여기서 끌어오지 않아요)
 export function perfMarkOnly(record) {
@@ -218,6 +219,30 @@ export function skippedMessageOf(el, view, cache = new Map(), known = null, root
     return el.checkVisibility({ contentVisibilityAuto: true }) ? null : mes;
 }
 
+// 1.6.0 opt4: body 전체를 훑을 때(시작 · 창 크기 바뀜 — 폰은 자판이 오르내릴 때마다) 그려지지 않는 닫힌 서랍(.drawer-content.closedDrawer · display:none) 안은 건너 훑어요.
+//   그 안 후보는 offsetParent 가 null 이라 어차피 재지 않고 버렸는데(닫힌 details 안이면 줄에 올렸다가 쉴 때 같은 까닭으로 버림), 후보를 고르는 일(선택자 13갈래 × 문서 전체)의 대부분이 그 서랍들 안이었어요
+//   (리그 폰 4배 · 자판 오르내림: 후보 고르기 · 싼 거르기 약 290ms). 서랍이 열리면 그 서랍이 class 기록으로 다시 훑여요(예전 그대로). 아는 생김새 바로 붙이기(restamp)는 예전처럼 서랍 안까지 해요.
+/** body 아래 후보(FAST_CANDIDATES)에서 「display:none 인 닫힌 서랍 안」만 뺀 목록 — 문서 차례 그대로. 닫힌 서랍이 없거나 못 물으면 null(예전 길) */
+export function liveCandidates(body, view) {
+    if (typeof body?.contains !== 'function' || typeof view?.getComputedStyle !== 'function') return null;
+    let dead;
+    try { if (body.closest(SKIP_AREA)) return null; dead = [...body.querySelectorAll(DEAD_DRAWER)].filter(d => view.getComputedStyle(d).display === 'none'); } catch { return null; }
+    if (!dead.length) return null;
+    const deadSet = new Set(dead), chain = new Set();
+    for (const d of dead) for (let p = d.parentElement; p && p !== body && !chain.has(p); p = p.parentElement) chain.add(p);
+    const list = [];
+    const walk = node => {
+        for (let c = node.firstElementChild; c; c = c.nextElementSibling) {
+            if (deadSet.has(c)) continue;
+            if (c.matches(FAST_CANDIDATES)) list.push(c);
+            if (chain.has(c)) walk(c); else for (const el of c.querySelectorAll(FAST_CANDIDATES)) list.push(el);
+        }
+    };
+    if (body.matches(FAST_CANDIDATES)) list.push(body);
+    walk(body);
+    return list;
+}
+
 export function watchSquaredButtons(doc, host) {
     const style = doc.createElement('style');
     style.dataset.blSquaredStyle = '';
@@ -257,7 +282,9 @@ export function watchSquaredButtons(doc, host) {
     // Measure every candidate first, then mark: marking between reads re-dirtied style and forced one recalc per button.
     function scan(root, found) {
         if (!root?.isConnected) return;
-        const got = candidates(root); if (!got) return;
+        if (fastOk === null) { try { doc.body.matches(FAST_CANDIDATES); fastOk = typeof doc.body.contains === 'function'; } catch { fastOk = false; } }
+        const live = fastOk && root === doc.body ? liveCandidates(root, host) : null;   // body 전체: 닫힌 서랍 안은 건너 훑어요(위)
+        const got = live ? { areas: NO_AREAS, list: live } : candidates(root); if (!got) return;
         const { areas, list } = got;
         const light = !doc.getElementById?.('chat')?.hasAttribute?.(COVER_ATTR), cache = new Map();
         const rootMes = light ? root.closest?.(LIGHT_MES) || null : null;

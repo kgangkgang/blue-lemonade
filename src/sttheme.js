@@ -14,7 +14,6 @@ import { getRequestHeaders } from '../../../../../script.js';
 import { paletteColors, parseColor } from './palettes.js';
 import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 import { getSettings } from './settings.js';
-import { themeEnabled } from './usage-mode.js';
 
 /** 팔레트 색을 실리태번이 쓰는 rgba 문자열로 */
 function toRgba(color, alpha = 1) {

@@ -3,6 +3,7 @@
 import { assert, load, suite } from './_t.mjs';
 const { test, done } = suite('unit-device-layout-and-panel-keys');
 const dl = await load('src/device-layout-options.js');
+const { installedTouchMode } = await load('src/device-layouts.js');   // 판정은 device-layouts.js 한 곳에만 있어요(index.js · pull-to-refresh.js 가 쓰는 그것)
 const pk = await load('src/addons/order/panel-keys.js');
 
 // ── device-layout-options.js ──
@@ -31,11 +32,11 @@ await test('installedTouchMode: 터치가 있고 거친 포인터이며 홈 화�
         navigator: { maxTouchPoints: touch, standalone: nav },
         matchMedia: q => ({ matches: q === '(pointer: coarse)' ? coarse : q === '(display-mode: standalone)' ? standalone : false }),
     });
-    assert.equal(dl.installedTouchMode(win()), true);
-    assert.equal(dl.installedTouchMode(win({ touch: 0 })), false);
-    assert.equal(dl.installedTouchMode(win({ coarse: false })), false);
-    assert.equal(dl.installedTouchMode(win({ standalone: false })), false);
-    assert.equal(dl.installedTouchMode(win({ standalone: false, nav: true })), true, 'iOS navigator.standalone');
+    assert.equal(installedTouchMode(win()), true);
+    assert.equal(installedTouchMode(win({ touch: 0 })), false);
+    assert.equal(installedTouchMode(win({ coarse: false })), false);
+    assert.equal(installedTouchMode(win({ standalone: false })), false);
+    assert.equal(installedTouchMode(win({ standalone: false, nav: true })), true, 'iOS navigator.standalone');
 });
 
 await test('syncDeviceLayout: 꺼져 있으면 값을 그대로 두고 칸만 만들어요', () => {

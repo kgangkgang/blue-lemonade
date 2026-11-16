@@ -114,7 +114,12 @@ await test('T9 흘려받기 첫 조각이 「data:」 중간에서 끊겨도 SSE
 await test('T11 상태 카드 값을 바로 채우는 것은 목표어가 한국어인 프롬프트일 때만', async () => {
     const line = lines.find(l => l.includes('const cardLocal = !options.isInputTranslation && '));
     // 감사 4차 A1: 카드 판정과 알림 줄 판정은 같은 정규식(rp-lines.js NOTICE_KOREAN_TARGET)이에요 — 카드 쪽은 translate() 를 잘라 쓰는 시험 하네스 때문에 글자로 둬요
-    const re = new Function(`return ${line.match(/&& (\/.+\/i)\.test\(String\(options\.prompt \?\? chatPrompt\)\)/)[1]};`)();
+    const re = new Function(`return ${line.match(/&& (\/.+\/i)\.test\(String\(koreanTarget \?\? chatPrompt\)\)/)[1]};`)();
+    // 1.5.8 까지: 기본 칸 글(options.prompt ?? chatPrompt)로만 판정해, 골라 둔 커스텀 프롬프트가 다른 말로 옮겨도 카드 값만 한국어로 채웠어요 —
+    //   한국어 남기기 · 알림 줄과 같은 「실제로 쓰는 프롬프트」(koreanTarget = 기본 칸이면 liveChatPrompt())로 판정해요
+    const targetLine = lines.findIndex(l => l.includes('const koreanTarget = options.prompt === undefined || options.prompt === extensionSettings.llm_prompt_chat ? liveChatPrompt() : options.prompt;'));
+    assert.ok(targetLine >= 0 && targetLine < lines.indexOf(line), 'koreanTarget 은 카드 판정보다 앞에서 실제 프롬프트로 정해져요');
+    assert.ok(!line.includes('options.prompt ?? chatPrompt'), '기본 칸 글만 보던 판정이 남아 있지 않아요');
     const rp = await import(pathToFileURL(path.join(dir, 'rp-lines.js')).href);
     assert.equal(re.source, rp.NOTICE_KOREAN_TARGET.source); assert.equal(re.flags, rp.NOTICE_KOREAN_TARGET.flags);
     const targetsKorean = p => re.test(p);

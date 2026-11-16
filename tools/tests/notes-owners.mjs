@@ -128,9 +128,11 @@ await test('보이는 메모: 전체 + 지금 채팅 + 그 캐릭터(그룹) 전
 await test('귀속 바꾸기: 지금 채팅 → 캐릭터 전체 → 전체 메모 (고친 시각 · 저장 · 알림), 없는 메모는 그대로', () => {
     reset([note('m')]);
     openChat(0, 'a-1');
+    const before = byId('m').updated;
     N.__setOwner('m', N.currentOwner());
     assert.deepEqual(byId('m').owner, own(A, 'a-1'));
-    assert.ok(byId('m').updated > 1); assert.ok(T.saves >= 1);
+    // 1.5.9 귀속은 metaUpdated 만 올려요(내용을 고친 시각 updated 는 그대로) — updated 를 올리면 기기 간 합치기가 다른 기기의 본문 수정을 덮었어요 (notes-merge-fields.mjs)
+    assert.ok(byId('m').metaUpdated > 1); assert.equal(byId('m').updated, before); assert.ok(T.saves >= 1);
     assert.ok(T.toasts.at(-1)[1].includes('a-1'));
     N.__setOwner('m', whole(A));
     assert.deepEqual(byId('m').owner, whole(A));

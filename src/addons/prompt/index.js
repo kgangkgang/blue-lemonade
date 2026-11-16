@@ -185,7 +185,7 @@ function cfg() {
     // 공급자별로 고른 모델 (c.models[공급자]) — 공급자를 바꿨다 돌아와도 쓰던 모델 그대로. 예전 c.model 은 지금 공급자의 기억으로 옮겨진다
     syncModelMemory(c);
     if (c.prefillEnabled === undefined) c.prefillEnabled = false;
-    if (!c.prefillText)   c.prefillText   = 'Understood. Executing the translation as instructed. Here is the translation:';
+    if (typeof c.prefillText !== 'string') c.prefillText = 'Understood. Executing the translation as instructed. Here is the translation:';
     if (c.useReverseProxy === undefined) c.useReverseProxy = false;
     if (!c.reverseProxyUrl) c.reverseProxyUrl = '';
     if (!c.reverseProxyPassword) c.reverseProxyPassword = '';
@@ -4670,6 +4670,9 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     // (JSON export, live-apply, , etc.) sees a normal entry.
                     const heading = hasTitle ? match.nameTranslated.trim() : (getTranslatedTitle(ns, it.id) || name);
                     setCache(ns, it.id, `### ${heading}\n\n${match.contentTranslated.trim()}`);
+                    // 가져온 번역의 원문은 지금 원문이에요(위 bodyVerified). 예전에 다른 원문으로 번역해 적어 둔 기록(::src)을 그대로 두면
+                    //   다음 「번역」이 이 항목을 「원문 바뀜」으로 보고 방금 가져온 번역을 다시 번역했어요.
+                    setSource(ns, it.id, original);
                     if (hasTitle) clearCachedTitle(ns, it.id);
                 } else {
                     setCacheTitle(ns, it.id, match.nameTranslated.trim());
@@ -5312,7 +5315,8 @@ function installInline() {
     if (duplicate) return;
     const start = () => import('./inline-targets.js').then(m => {
         inlineTargets = m.installInlineTargets(inlineTranslation, { doc: PDOC, host: {
-            currentCharacter: () => { try { const ctx = getContext(); return ctx.groupId ? '' : (ctx.characters?.[ctx.characterId]?.avatar || ''); } catch (e) { return ''; } },
+            // 새 캐릭터 만들기 화면(menuType 'create')은 같은 칸을 쓰지만 열려 있던 캐릭터가 그대로 남아 있어요 — 그 캐릭터 열쇠로 단추를 붙이면 초안 번역이 그 캐릭터의 저장된 번역을 덮었어요
+            currentCharacter: () => { try { const ctx = getContext(); return ctx.groupId || ctx.menuType === 'create' ? '' : (ctx.characters?.[ctx.characterId]?.avatar || ''); } catch (e) { return ''; } },
             currentPersona: () => { try { return currentPersona() || ''; } catch (e) { return ''; } },
         } });
         try { eventSource.on(event_types.CHAT_CHANGED, () => inlineTargets?.refresh()); } catch (e) { /* 그대로 */ }

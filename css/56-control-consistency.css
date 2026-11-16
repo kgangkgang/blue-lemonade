@@ -234,7 +234,6 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .salty-num i.salty-unit { flex:none; width:max-content; min-width:1.5em; }
 .salty-panel.bl-editor .salty-stack { row-gap:max(8px,.4em); }
 /* Labels keep their size; reduce the repeated space around controls instead. */
-.salty-panel .bl-editor-group-summary { color:var(--salty-muted); }
 .salty-panel .salty-fontrow { min-height:36px; padding-block:6px; }
 /* Short preservation switches fit side by side without squeezing their labels. */
 .salty-panel .salty-group.bl-setting-locks { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(9em,calc((100% - 20px) / 2))),1fr)); column-gap:20px; }

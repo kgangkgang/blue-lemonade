@@ -79,6 +79,9 @@ function open() {
         req.onsuccess = () => {
             const d = req.result;
             d.onversionchange = () => { d.close(); if (dbP) dbP = null; };   // 다른 탭이 올리면 놓아준다
+            // 브라우저가 연결을 끊으면(폰에서 탭을 오래 숨겼다 돌아옴 · 저장 공간 정리) 다음에 다시 열어요 —
+            //   1.5.8 까지는 죽은 연결을 계속 쥐고 있어, 새로고침 전까지 캐시가 전부 빗나가 같은 줄을 매번 새로 만들었어요(유료 엔진이면 그만큼 요금).
+            d.onclose = () => { if (dbP) dbP = null; };
             finish(d);
         };
         req.onerror = () => { log('err', `캐시 열기 실패: ${req.error?.name || ''}`); finish(null); };
@@ -93,7 +96,7 @@ function tx(mode, fn) {
         if (!d) return null;
         return new Promise((resolve, reject) => {
             let t;
-            try { t = d.transaction(STORE, mode); } catch (e) { reject(e); return; }
+            try { t = d.transaction(STORE, mode); } catch (e) { if (e?.name === 'InvalidStateError') dbP = null; reject(e); return; }   // 닫힌 연결(onclose 를 안 쏘는 브라우저) — 다음 부름에서 다시 열어요
             t.oncomplete = () => resolve(true);
             t.onerror = () => reject(t.error);
             t.onabort = () => reject(t.error || new Error('abort'));

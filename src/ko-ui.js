@@ -147,7 +147,7 @@ export function relabel(root, translate) {
         const text = node.nodeValue.trim();
         if (!text || !/[A-Za-z]/.test(text)) continue;
         const value = translate(text);
-        if (value && value !== text) { node.nodeValue = node.nodeValue.replace(text, value); changed++; }
+        if (value && value !== text) { node.nodeValue = node.nodeValue.replace(text, () => value);   /* 함수로 — 번역 글의 $& · $1 을 치환 표시로 풀지 않게 */ changed++; }
     }
     return changed;
 }

@@ -77,7 +77,6 @@ export function selectEditorGroup(root, group) {
     for (let p = group.parentElement; p && p !== sec; p = p.parentElement) if (p.matches('details')) p.open = true;
     sec.scrollTop += group.getBoundingClientRect().top - sec.getBoundingClientRect().top;
 }
-export function summarizeEditorGroups() { /* 1.0.0: 접힌 묶음이 없어 「지금 값」 요약도 없어요 */ }
 
 /** 검색 · 바로 가기로 찾아온 설정이 숨은 칩 묶음에 있으면 그 칩을 골라요.
  *  찾아온 것이 묶음 제목 줄이면(칩 화면에서는 숨김) 대신 표시할 그 칩을 돌려줘요 */

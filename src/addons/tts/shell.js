@@ -134,7 +134,7 @@ function onChatClick(e) {
     withBody('대사 누름', () => {
         const tap = pendingTap; pendingTap = null;
         if (!tap || tap.play !== playbackEpoch || Date.now() - tap.at > 8000 || !tap.target.isConnected) return;
-        tap.target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: tap.x, clientY: tap.y, view: window }));
+        tap.target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: tap.x, clientY: tap.y, view: window, detail: 1 })   /* detail 1 = 한 번 누름 — 없으면(0) 본체(clickplay.js)가 「한 번 누름이 아님」으로 버려 다시 눌러 주기가 한 번도 안 먹었어요 */);
     });
 }
 

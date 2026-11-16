@@ -24,7 +24,9 @@ globalThis.document = {
     getElementById: id => (id === 'chat' ? chat : null),
     caretPositionFromPoint: (x, y) => { probes.push([x, y]); const n = hit(x, y); return n ? { offsetNode: n, offset: 7 } : null; },
 };
-const { keepInChat } = await import(pathToFileURL(path.join(root, 'src/selection-bar.js')).href);
+globalThis.window = { matchMedia: () => ({ matches: false }) };
+const { keepInChat, keepInChatWhenFree, notePointer, noteTouch, KEEP_SETTLE_MS, KEEP_AFTER_TOUCH_MS } = await import(pathToFileURL(path.join(root, 'src/selection-bar.js')).href);
+const wait = ms => new Promise(done => setTimeout(done, ms));
 
 // 아래로 끌어 입력창에 닿음 → 채팅 맨 아래 줄로
 reset(N.a, N.form);
@@ -59,4 +61,47 @@ reset(N.a, N.form, () => N.form);
 assert.equal(keepInChat(), false);
 assert.equal(extended, null);
 
-console.log('selection-keep-in-chat: 6 통과');
+// ── 1.6.0 손가락으로 고르는 동안에는 붙잡지 않고 손을 뗀 뒤에만
+// 마우스: selectionchange 그 자리에서 (예전 그대로)
+notePointer('mouse');
+reset(N.a, N.form);
+assert.equal(keepInChatWhenFree(), true);
+assert.deepEqual(extended, ['b', 7]);
+
+// 손가락이 닿아 있는 동안: 붙잡지 않는다 (범위가 멈춰 있어도)
+notePointer('touch');
+noteTouch(1);
+reset(N.a, N.form);
+assert.equal(keepInChatWhenFree(), false);
+assert.equal(extended, null, '끄는 중에는 Selection.extend 를 부르지 않는다');
+await wait(KEEP_SETTLE_MS + 80);
+assert.equal(extended, null, '손가락이 닿아 있으면 멈춘 뒤에도 그대로');
+// 손을 떼면 조금 뒤 한 번
+noteTouch(0);
+assert.equal(extended, null);
+await wait(KEEP_AFTER_TOUCH_MS + 60);
+assert.deepEqual(extended, ['b', 7], '손을 뗀 뒤에 붙잡는다');
+
+// 선택 손잡이(터치 사건이 페이지에 안 옴): 범위가 바뀌는 동안은 미루고, 멈춘 지 KEEP_SETTLE_MS 뒤 한 번
+reset(N.a, N.form);
+for (let i = 0; i < 3; i++) { assert.equal(keepInChatWhenFree(), false); await wait(KEEP_SETTLE_MS / 3); }
+assert.equal(extended, null, '범위가 계속 바뀌는 동안은 붙잡지 않는다');
+await wait(KEEP_SETTLE_MS + 80);
+assert.deepEqual(extended, ['b', 7]);
+
+// 손가락이어도 끝이 채팅 안이면 자리를 재지 않고 타이머도 걸지 않는다 · 걸려 있던 것은 거둔다
+reset(N.a, N.form);
+keepInChatWhenFree();
+selection.focusNode = N.c;
+assert.equal(keepInChatWhenFree(), false);
+await wait(KEEP_SETTLE_MS + 80);
+assert.equal(extended, null);
+assert.equal(probes.length, 0);
+
+// 연결: selectionchange 가 새 길을 부르고, 누름 · 터치를 듣는다
+const src = (await import('node:fs')).readFileSync(path.join(root, 'src/selection-bar.js'), 'utf8');
+assert.match(src, /keepInChatWhenFree\(\);\s+schedule\(\);/);
+assert.match(src, /addEventListener\('pointerdown', \(event\) => notePointer\(event\.pointerType\)/);
+assert.match(src, /\['touchstart', 'touchend', 'touchcancel'\]\) document\.addEventListener\(type, \(event\) => noteTouch\(event\.touches\?\.length \?\? 0\)/);
+
+console.log('selection-keep-in-chat: 11 통과');

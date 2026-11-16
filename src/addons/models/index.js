@@ -1,8 +1,7 @@
 // 모델 등록 — 공급자마다 원하는 모델 이름을 직접 넣어 두고 고르는 확장
 // 이전 확장 Custom-Vertex-Model(버텍스 전용)을 대신한다. 설정은 처음 켤 때 한 번 옮겨 온다.
 import { eventSource, event_types } from '../../../../../../../script.js';
-import { extension_settings } from '../../../../../../extensions.js';
-import { OLD_MODULE, TITLE, VERSION, initSettings, saveSettings, settings } from './state.js';
+import { TITLE, initSettings, saveSettings, settings } from './state.js';
 import { applyAll, scheduleAll, watchPicks } from './inject.js';
 import { render } from './panel.js';
 import { offerNewModels, pruneNative } from './offer.js';

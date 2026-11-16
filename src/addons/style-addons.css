@@ -4731,11 +4731,6 @@ body.salty .cg-root div.cg-setting.cg-setting-desc > .cg-setting-text > small { 
 .bl-sticky .bl-sticky-view { min-height: 3em; }
 .bl-sticky.bl-sticky .bl-sticky-body { min-height: 5em; }
 .bl-notes-look { width: min(420px, 94vw); }
-.bl-look-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 10px; padding: 6px 4px; font-size: 13px; }
-.bl-look-row > span { color: var(--bl-notes-muted); }
-.bl-look-row select, .bl-look-row input[type="number"] { width: 100%; min-width: 0; box-sizing: border-box; height: 32px; padding: 0 8px; border: 0; border-radius: var(--bl-r-sm, 6px); background: var(--bl-notes-card); color: var(--bl-notes-text); font: inherit; outline: none; }
-.bl-look-row input[type="range"] { width: 100%; min-width: 0; accent-color: var(--bl-notes-accent); }
-.bl-look-row output { min-width: 3.5em; text-align: right; color: var(--bl-notes-muted); font-variant-numeric: tabular-nums; }
 .bl-look-sample { margin: 8px 4px 2px; padding: 8px 10px; background: var(--bl-notes-card); cursor: default; }
 .bl-look-sample:hover { background: var(--bl-notes-card); }
 .bl-notes-view[hidden], .bl-note .bl-note-body[hidden], .bl-sticky .bl-sticky-body[hidden], .bl-notes-peek .bl-notes-peek-body[hidden] { display: none !important; }
@@ -4744,11 +4739,6 @@ body.salty .cg-root div.cg-setting.cg-setting-desc > .cg-setting-text > small { 
 .bl-note-fmt { display: flex; flex-wrap: wrap; align-items: center; gap: 0; padding: 0 2px 2px; }
 .bl-note-fmt[hidden] { display: none !important; }
 .bl-note-fmt .bl-note-btn { min-width: 28px; height: 26px; font-size: 11px; }
-.bl-note-fmt-color { position: relative; display: inline-flex; }
-.bl-note-swatches { position: absolute; left: 0; top: 100%; z-index: 5; display: flex; flex-wrap: wrap; gap: 4px; width: 132px; padding: 6px; border-radius: var(--bl-r-sm, 6px); background: var(--bl-notes-surface); box-shadow: var(--bl-notes-shadow); }
-.bl-note-swatches[hidden] { display: none !important; }
-.bl-note-swatches button { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: var(--sw, transparent); color: var(--bl-notes-muted); cursor: pointer; display: grid; place-items: center; font-size: 11px; }
-.bl-note-swatches button:hover { outline: 2px solid var(--bl-notes-accent); outline-offset: 1px; }
 .bl-notes-view.salty-preview { --salty-gutter: 0px; }
 .bl-notes-view.salty-preview, .bl-notes-view.salty-preview .mes .mes_text, .bl-notes-view.salty-preview .mes .mes_block { background: transparent !important; background-image: none !important; }
 body.salty :is(#salty-nochat, .bl-notes-view) .mes, body.salty :is(#salty-nochat, .bl-notes-view) .mes .mes_block, body.salty :is(#salty-nochat, .bl-notes-view) .mes .mes_text {
@@ -4989,11 +4979,9 @@ body.salty :is(#salty-nochat, .bl-look-sample.salty-preview) { margin: 0 0 8px !
 .bl-bind-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 6px; font-size: 12px; }
 .bl-bind-head input[type="search"] { width: 150px; height: 26px !important; min-height: 0 !important; margin: 0 !important; padding: 0 10px !important; border: 0 !important; border-radius: 999px !important; background: var(--bl-notes-card) !important; color: var(--bl-notes-text) !important; font: inherit !important; font-size: 12px !important; box-shadow: none !important; outline: none !important; }
 .bl-bind-list { display: flex; flex-direction: column; gap: 2px; max-height: 50vh; overflow: auto; overscroll-behavior: contain; }
-.bl-bind-person, .bl-bind-chat, .bl-bind-back { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 6px 10px; border: 0; border-radius: var(--bl-r-sm, 6px); background: transparent; color: var(--bl-notes-text); text-align: left; font: inherit; font-size: 13px; cursor: pointer; }
-.bl-bind-person:hover, .bl-bind-chat:hover, .bl-bind-back:hover { background: var(--bl-notes-hover); }
-.bl-bind-person img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; }
-.bl-bind-person > span, .bl-bind-chat > span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bl-bind-person > i:last-child { color: var(--bl-notes-muted); font-size: 11px; }
+.bl-bind-chat, .bl-bind-back { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 6px 10px; border: 0; border-radius: var(--bl-r-sm, 6px); background: transparent; color: var(--bl-notes-text); text-align: left; font: inherit; font-size: 13px; cursor: pointer; }
+.bl-bind-chat:hover, .bl-bind-back:hover { background: var(--bl-notes-hover); }
+.bl-bind-chat > span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bl-bind-chat small { color: var(--bl-notes-muted); font-size: 11px; flex: none; }
 .bl-bind-back { color: var(--bl-notes-accent); font-weight: 700; }
 @container (max-width: 280px) {

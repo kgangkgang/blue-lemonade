@@ -29,6 +29,7 @@ const OPEN_DELAY_MS = 1200;                // 채팅을 연 뒤 마지막 답장
 const QUOTE_OPENERS = /[「『“"«＂„]/;      // 대화문 여는 글자가 하나도 없으면 그 메시지는 건너뜀 (싸게)
 const BLOCK = new Set(['P', 'DIV', 'LI', 'UL', 'OL', 'DL', 'DT', 'DD', 'TD', 'TH', 'TR', 'TABLE', 'BLOCKQUOTE', 'SECTION', 'ARTICLE', 'DETAILS', 'SUMMARY', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 let observer = null, timer = 0, openTimer = 0, generating = false;
+let carried = null;                         // 이어 가는 조각(16ms 뒤)이 다시 쓰는 메시지 요소 표 — 새로 예약되면(변화 · 다시 칠하기) 버려요
 const dirty = new Set();
 const tried = new WeakMap();                // 메시지 객체 → 분석을 시도한 'swipe|글'
 
@@ -207,22 +208,26 @@ async function maybeAnalyze(mesId) {
 function queue(mesId) {
     if (!Number.isInteger(mesId)) return;
     dirty.add(mesId);
-    clearTimeout(timer);
+    clearTimeout(timer); carried = null;
     timer = setTimeout(flush, DEBOUNCE_MS);
 }
 function flush() {
     timer = 0;
+    const kept = carried; carried = null;
     if (!observer) { dirty.clear(); return; }
     const t0 = performance.now();
     // 8.2.7 메시지 요소는 한 조각에 한 번 모아 둔다 — 예전엔 메시지마다 #chat .mes[mesid="…"] 를 문서에서 찾았다(긴 채팅을 연 뒤 폰 4배 300개에 0.27초).
     //       같은 번호가 둘이면 querySelector 처럼 앞의 것. 표에 없으면 paintMessage 가 예전처럼 찾는다
+    // 1.5.9 opt4: 12ms 조각이 끝나 이어 갈 때는 앞 조각이 모은 표를 다시 써요 — 긴 채팅(500개 · 폰 4배)을 열면 조각이 수백 번이라 조각마다 500개를 다시 모았어요(조각 수 × 메시지 수).
+    //       이어 가는 사이 채팅이 바뀌면 감시 콜백 · queue · refresh 가 표를 버려 새로 모으고, 다시 쓰는 요소도 아직 그 자리 · 그 번호인지 보고 써요(아니면 예전처럼 찾아요)
     const boxes = new Map();
-    for (const el of document.querySelectorAll('#chat .mes[mesid]')) { const id = mesIdOf(el); if (id !== null && !boxes.has(id)) boxes.set(id, el); }
+    if (kept) { const chatEl = document.getElementById('chat'); for (const id of dirty) { const el = kept.get(id); if (el && chatEl?.contains(el) && mesIdOf(el) === id) boxes.set(id, el); } }
+    else for (const el of document.querySelectorAll('#chat .mes[mesid]')) { const id = mesIdOf(el); if (id !== null && !boxes.has(id)) boxes.set(id, el); }
     // 아래(최근) 메시지부터 — 화면에 보이는 쪽이 먼저
     for (const id of [...dirty].sort((a, b) => b - a)) {
         dirty.delete(id);
         try { paintMessage(id, boxes.get(id) || null); } catch (e) { log('err', `화자 색: 칠하기 실패 ${String(e?.message || e).slice(0, 40)}`); }
-        if (dirty.size && performance.now() - t0 > SLICE_MS) { timer = setTimeout(flush, 16); break; }
+        if (dirty.size && performance.now() - t0 > SLICE_MS) { timer = setTimeout(flush, 16); carried = kept || boxes; break; }
     }
     observer.quiet();   // 우리가 바꾼 것은 다시 부르지 않게(이 구독만 — 다른 감시는 그대로 봐요)
 }
@@ -239,7 +244,7 @@ function onMutations(records) {
         }
     }
     if (!dirty.size) return;
-    clearTimeout(timer);
+    clearTimeout(timer); carried = null;
     timer = setTimeout(flush, DEBOUNCE_MS);
 }
 
@@ -250,7 +255,7 @@ export function refresh() {
     if (!enabled()) { unwrap(chatEl); return; }
     if (previewing()) return;
     for (const m of chatEl.querySelectorAll('.mes[mesid]')) { const id = mesIdOf(m); if (id !== null) dirty.add(id); }
-    clearTimeout(timer);
+    clearTimeout(timer); carried = null;
     timer = setTimeout(flush, 0);
 }
 
@@ -282,7 +287,7 @@ export function init() {
     refresh();
 }
 export function destroy() {
-    clearTimeout(timer); clearTimeout(openTimer); timer = 0; openTimer = 0; dirty.clear();
+    clearTimeout(timer); clearTimeout(openTimer); timer = 0; openTimer = 0; dirty.clear(); carried = null;
     if (observer) { observer(); observer = null; }
     const chatEl = document.getElementById('chat');
     if (chatEl) unwrap(chatEl);

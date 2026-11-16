@@ -87,7 +87,10 @@ export function createKeepAlive({ audio, hidden = defaultHidden, url = defaultUr
                 holding = true;
                 a.loop = false;
                 a.src = urlFor(left);
-                play(a);
+                // 무음 재생이 거절되면(숨은 화면에서 자동 재생 막힘 등) ended 도 error 도 안 와요 — 그때는 타이머로 쉼을 끝내요.
+                //   1.5.8 까지는 거절을 삼키기만 해서 줄 사이 쉼이 영영 안 끝나고 「재생 중」으로 멈췄어요(다음 줄 · 멈춤을 눌러야 풀림).
+                const byTimer = () => setTimeout(() => done(!ir?.fired), left);
+                try { const p = a.play(); if (p && typeof p.catch === 'function') p.catch(byTimer); } catch { byTimer(); }
             });
         },
         /** 큐가 끝났을 때(숨었으면): ms 동안 무음을 더 틀고 끝나면('ended') 끈다 — 이어 듣기가 그사이 다음 줄을 넣으면 그 줄이 갈아 끼운다. 숨지 않았거나 잡고 있지 않으면 false */

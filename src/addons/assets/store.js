@@ -185,11 +185,14 @@ export function memberEntry(folder) {
     return entry?.loaded ? entry : null;
 }
 
+const memberFailedAt = new Map();   // 폴더 → 목록 읽기가 실패한 때 (잇달아 다시 묻지 않게)
+const MEMBER_RETRY_MS = 3000;
 /** 멤버 폴더 하나를 읽는다 — 이미 읽었거나 읽는 중이면 그것. 읽은 뒤 render.js 에 그 폴더의 찾아보기표를 준다 */
 export function loadMember(folder) {
     if (!folder) return Promise.resolve(null);
     const known = members.get(folder);
     if (known) return known.promise;
+    if (Date.now() - (memberFailedAt.get(folder) ?? -Infinity) < MEMBER_RETRY_MS) return Promise.resolve(null);   // 방금 실패한 폴더는 잠깐 쉬었다가
     const entry = { folder, loaded: false, sources: [], assets: [], keywords: '', index: null, promise: null };
     entry.promise = (async () => {
         const plan = sourcesFor(settings(), folder);
@@ -204,6 +207,10 @@ export function loadMember(folder) {
         buildMember(entry);
         entry.loaded = true;
         setMemberIndex(folder, entry.index);
+        // 목록 읽기가 실패했으면 기억해 두지 않아요 — 다음에 부르면 다시 읽어요(1:1 길의 「오류가 있으면 다시 읽기」와 같게).
+        //   1.5.8 까지는 빈 목록이 「읽음」으로 굳어, 채팅을 바꿀 때까지 그 멤버의 그림이 한 장도 안 나왔어요.
+        if (sources.some(source => source.error)) { members.delete(folder); memberFailedAt.set(folder, Date.now()); }
+        else memberFailedAt.delete(folder);
         return entry;
     })();
     members.set(folder, entry);
@@ -213,6 +220,7 @@ export function loadMember(folder) {
 /** 채팅이 바뀌면 비운다 (다음 그룹 채팅에서 다시 읽는다) */
 export function clearMembers() {
     members.clear();
+    memberFailedAt.clear();
     clearMemberIndexes();
 }
 

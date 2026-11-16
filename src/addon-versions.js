@@ -1,6 +1,6 @@
 // 6.7.0 내장 애드온 판 한눈에 (업데이트 탭 · 진단 파일). 애드온마다 판을 적는 곳이 달라서 그 파일의 앞부분(4KB)만 읽어 찾는다.
 // 업데이트 탭을 열 때 · 진단 파일을 만들 때만 부르고, 한 번 읽으면 새로고침 전까지 기억한다 (설치 파일은 새로고침해야 바뀐다).
-// 새 애드온을 더하면 여기에 한 줄 — tools/tests/addon-versions.mjs 가 빠진 폴더와 못 찾는 판을 잡는다.
+// 새 애드온을 더하면 여기에 한 줄 — tools/tests/diag-file.mjs(「애드온 판」 칸)가 빠진 폴더와 못 찾는 판을 잡는다.
 import { PRIVATE_ADDONS } from './private-addons.js';
 import { zeroMode } from './usage-mode.js';
 export const ADDON_VERSION_FILES = Object.freeze({

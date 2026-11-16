@@ -106,6 +106,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (qrFold || modules.qrfold) load('qrfold', './addons/qrtoggle/index.js').then(m => m?.syncQrToggle(qrFold));
     const selEdit = qx && q.selEdit === true && !restingFor('quickSelEdit');
     if (selEdit || modules.seledit) load('seledit', './quick/sel-edit.js').then(m => m?.syncSelectionEdit(selEdit));
+    // 1.6.0 여기부터 · 여기까지 (quick/sel-span.js, 기본 켬) — 고른 글 도구 줄의 단추 둘 · 표시가 없는 동안은 감시가 없어요
+    const selSpan = qx && q.selSpan !== false;
+    if (selSpan || modules.selspan) load('selspan', './quick/sel-span.js').then(m => m?.syncSelSpan(selSpan));
     const mesDelete = qx && q.mesDelete === true && !restingFor('quickMesDelete');
     if (mesDelete || modules.mesdelete) load('mesdelete', './quick/mes-delete.js').then(m => m?.syncMesDelete(mesDelete));
     const rangeDelete = qx && q.rangeDelete !== false && !restingFor('quickRangeDelete');

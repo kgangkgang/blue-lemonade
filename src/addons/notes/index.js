@@ -11,7 +11,7 @@ import { verifyAddonCss } from '../../addon-files-check.js';
 import { getSettings } from '../../settings.js';
 import { wrapSpanningQuotes } from '../../dialogue-span.js';
 import { dressBody } from '../../dem-expressive.js';
-import { allFonts, findFont, loadFont, fontStack, fontsFor, GROUPS, SAMPLES } from '../../fonts.js';
+import { findFont, loadFont, fontStack, fontsFor, GROUPS, SAMPLES } from '../../fonts.js';
 import { previewStack, queuePreview } from '../../fonts-ui.js';
 import { restorePreviewRules } from '../../lite.js';
 import { typesetRoot } from '../../typography.js';
@@ -684,7 +684,7 @@ document.addEventListener('keydown', e => {
 function setOwner(id, owner) {
     const note = notes().find(n => n.id === id); if (!note) return;
     if (owner) note.owner = owner; else delete note.owner;
-    note.updated = Date.now(); save(); rerenderAll();
+    touchMeta(note); save(); rerenderAll();   // 귀속은 metaUpdated 로 — updated 를 올리면 합치기가 「내용을 늦게 고친 쪽」으로 읽어 다른 기기의 본문 수정을 덮었어요
     globalThis.toastr?.success(!owner ? '전체 메모로 바꿨어요.' : owner.whole ? `${owner.name} ${owner.group ? '그룹' : '캐릭터'} 전체에 귀속했어요.` : `${owner.name} · ${owner.chat} 에 귀속했어요.`, TITLE, { timeOut: 2500 });
 }
 let bindDialog = null;

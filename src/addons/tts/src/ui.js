@@ -602,6 +602,9 @@ function afterEdit(path, el) {
     const s = settings();
     if (SYNC_TEXT_FIELDS.includes(path)) { if (!s.field_stamps || typeof s.field_stamps !== 'object' || Array.isArray(s.field_stamps)) s.field_stamps = {}; s.field_stamps[path] = Date.now(); save(); }   // 7.0.2 기기 간 합치기
     // 1.3.8 「나」 자동을 골랐는데 「내 대사」가 읽지 않음이면 (직접 설정) AI 답장 속 내 대사가 안 읽혀 자동이 아무 일도 안 한다 → 읽게 바꾸고 한 줄 알림
+    // 「기본 · 나 · 내레이터」 목소리를 바꾸면 그 줄을 다시 그려요 — 줄 옆 감정 세기 칸 · 설정 단추가 새 목소리를 가리키게.
+    //   1.5.8 까지는 옛 목소리(data-uid)를 그대로 쥐고 있어, 감정 세기를 바꾸면 방금 바꾸기 전 목소리가 고쳐졌어요(캐릭터 줄은 onMapChange 가 이미 다시 그려요).
+    if (path === 'default_voice' || path === 'user_voice' || path === 'narrator_voice') renderMap();
     if (path === 'user_voice' && s.user_voice === USER_AUTO) {
         // 5.7.3 성별을 아직 모르면 바로 물어 정한다 (분석을 기다리지 않게) · 「내 대사」가 읽지 않음이면 읽게
         const skip = isObj(s.routes) && s.routes.user_dialogue === 'skip';
@@ -1345,7 +1348,7 @@ function extrasHtml(s) {
         try { v = voices.extraFor(name); } catch { v = null; }
         const g = e && e.g === 'f' ? '여' : e && e.g === 'm' ? '남' : '';
         const auto = `자동 · ${v ? v.name : '기본 목소리'}`;
-        const opts = voiceOptions('').replace('<option value="">(없음)</option>', `<option value="" selected>${esc(auto)}</option>`);
+        const opts = voiceOptions('').replace('<option value="">(없음)</option>', () => `<option value="" selected>${esc(auto)}</option>`);   // 함수로 — 목소리 이름의 $& · $' 를 치환 표시로 풀지 않게
         return `<div class="lv-row lv-extra"><span class="lv-row-label">${esc(name)}${g ? `<small class="lv-row-via">${g}</small>` : ''}</span><select class="text_pole" data-lv-extra="${esc(name)}" aria-label="${esc(name)} 목소리">${opts}</select><button type="button" class="lv-x" data-lv-act="extra-forget" data-name="${esc(name)}" aria-label="빼기"><i class="fa-solid fa-xmark"></i></button></div>`;
     });
     return h + `<details class="lv-extras"><summary><span class="lv-extras-count">엑스트라 ${fmtNum(entries.length)}명</span><button type="button" class="menu_button lv-extras-clear" data-lv-act="extra-forget-all" title="엑스트라 모두 지우기">모두 지우기</button></summary><div class="lv-rows">${rows.join('')}</div></details>`;

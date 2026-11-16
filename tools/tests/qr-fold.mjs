@@ -101,5 +101,14 @@ await test('키 목록 · CI 목록에 등록', () => {
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/qr-fold\.mjs \./);
 });
 
+await test('layout.js: 접기 단추 스위치(salty-qr-fold-off)가 바뀌면 줄을 바로 다시 놓아요(« 가 바로 생기고 없어져요)', () => {
+    const layout = read('src/layout.js');
+    const watch = layout.slice(layout.indexOf("name: '입력판 배치 (body class)'"));
+    const body = watch.slice(0, watch.indexOf('mobile.addEventListener'));
+    assert.ok(body.includes("const foldOff = document.body.classList.contains('salty-qr-fold-off')"));
+    assert.ok(body.includes('foldOff !== wasFoldOff) placeQuickReplies()'), '바뀌면 placeQuickReplies(→ syncQrFold)');
+    assert.ok(body.includes('wasFoldOff = foldOff'), '다음 비교를 위해 기억');
+});
+
 console.log(`\n${pass} 통과 · ${fail} 실패`);
 if (fail) process.exitCode = 1;

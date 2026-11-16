@@ -1,8 +1,8 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1764 · 뺀 규칙 3833 (style.css 17746e5f3706) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 86a9ea9946f8) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1760 · 뺀 규칙 3833 (style.css 710b8edbf68c) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build a6d515173a07) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b28fbbf5e0cf7922"}
 /* css/00-base.css */
-:root{--bl-release:"1.5.9";}
+:root{--bl-release:"1.6.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)) {
 :root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}
@@ -1916,24 +1916,6 @@ body.salty-dark .salty-shapes button.on {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.salty-style-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
-  padding: 8px 12px;
-  border-radius: var(--r-md);
-  background: var(--salty-fill-accent-10, var(--salty-accent-10));
-  color: var(--salty-accent-ink, var(--salty-accent));
-  font-size: var(--fs-small);
-  font-weight: 650;
-}
-.salty-style-note span {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
 .salty-code-box {
   width: 100%;
   min-height: 120px;
@@ -2542,12 +2524,11 @@ html body .bl-editor .bl-editor-stage .salty-prevbox[data-pv="img"]:not(.folded)
 }
 /* css/48-settings-favorites.css */
 .bl-favorites { padding: 0 0 16px; margin-bottom: 12px; border-bottom: 1px solid var(--salty-line); }
-.bl-favorites header, .bl-favorites header > span, .bl-favorite-row, .bl-search-result-row { display: flex; align-items: center; gap: 8px; }
+.bl-favorites header, .bl-favorites header > span, .bl-search-result-row { display: flex; align-items: center; gap: 8px; }
 .bl-favorites header { justify-content: space-between; }
 .bl-favorites header > span { font-size: 12px; color: var(--salty-muted); }
 .salty-panel .bl-favorite-toggle { flex: 0 0 40px; width: 40px; min-height: 40px; padding: 0; margin: 0; display: grid; place-items: center; color: var(--salty-muted); font: inherit; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
 .salty-panel .bl-favorite-toggle[aria-pressed="true"] { color: var(--salty-accent); }
-.salty-panel .bl-favorite-row > [data-favorite-jump] { flex: 1; min-width: 0; text-align: left; padding: 8px 6px; border: 0; background: transparent; color: var(--salty-text); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
 .bl-search-result-row > [data-settings-result] { flex: 1; min-width: 0; }
 .salty-panel .bl-search-result-row .bl-favorite-toggle { align-items: center; }
 .salty-panel .bl-favorite-toggle > .fa-star { width: 18px; line-height: 1; font-size: 17px; pointer-events: none; }
@@ -2793,7 +2774,6 @@ body.salty-dark .bl-mask-sample[data-mask=mosaic] { background:conic-gradient(#2
 }
 .bl-addon-actions { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0 20px; }
 .bl-apply-pending { outline:1px solid var(--salty-accent); box-shadow:none; background:var(--salty-accent-13); font-weight:650; }
-@keyframes bl-apply-glow { 50% { box-shadow:none; } }
 @media(prefers-reduced-motion:reduce) {
 .bl-apply-pending{animation:none}
 }
@@ -3150,7 +3130,7 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
 .bl-tool-grid > .bl-tool-pick { grid-column: 1 / -1; }
 }
 /* css/53-script-tools.css */
-.salty-panel .bl-script-list,.salty-panel .bl-script-editor,.salty-panel .bl-theme-update { min-width:0; }
+.salty-panel .bl-theme-update { min-width:0; }
 .salty-panel .bl-script-actions { display:flex;flex-wrap:wrap;gap:10px;margin:12px 0; }
 .salty-panel .bl-script-actions>.salty-btn { flex:1 1 140px;min-width:0;white-space:normal;margin:0;min-height:var(--bl-h-ctl,36px); }
 .salty-panel [data-script-feedback],.salty-panel [data-theme-update-status] { line-height:1.6;overflow-wrap:anywhere; }
@@ -3395,7 +3375,6 @@ html body .salty-panel.bl-editor .bl-setting-reset {
 .salty-panel .salty-num i { white-space:nowrap; }
 .salty-panel .salty-num i.salty-unit { flex:none; width:max-content; min-width:1.5em; }
 .salty-panel.bl-editor .salty-stack { row-gap:max(8px,.4em); }
-.salty-panel .bl-editor-group-summary { color:var(--salty-muted); }
 .salty-panel .salty-fontrow { min-height:36px; padding-block:6px; }
 .salty-panel .salty-group.bl-setting-locks { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(9em,calc((100% - 20px) / 2))),1fr)); column-gap:20px; }
 .salty-panel .bl-setting-locks > :not(.salty-row) { grid-column:1 / -1; }

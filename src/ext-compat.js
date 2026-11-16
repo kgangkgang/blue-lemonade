@@ -190,7 +190,7 @@ export function initialsFor(names) {
 }
 export const FACE_TONES = 4;
 export const toneOf = name => { let h = 0; for (const ch of String(name)) h = (h * 31 + ch.codePointAt(0)) % 9973; return h % FACE_TONES; };
-const FACES = ':is(.ss-ava.emo, .ss-tf)[title]';
+export const FACES = ':is(.ss-ava.emo, .ss-tf)[title]';
 /** 1.5.2 보이는 이름으로: 그 확장의 「화면만 번역」은 글자 마디만 바꾸고 얼굴 title 은 영어 원문이에요 — 번역 메우기(ext-bridge-tr.js)가 그 확장의 사전 바꾸기를 여기 걸어
  *  첫 글자가 화면의 한국어 이름을 따라가요. 톤은 원문 이름으로(번역이 바뀌어도 사람 색이 그대로). 걸린 게 없으면 원문 그대로. */
 let faceName = name => name;

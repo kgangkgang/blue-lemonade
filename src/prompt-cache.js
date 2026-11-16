@@ -11,12 +11,10 @@
 // 부르는 쪽이 고정 글을 앞에 두기만 한다.
 //
 // 밖으로:
-//   CACHE_TTL_MS · minCacheTokens(model) · estimateTokens(text)
+//   minCacheTokens(model) · estimateTokens(text)
 //   claudeCacheable(body) → 이 본문에 cache_control 을 붙여도 되나 (공급자 · 프록시 · 도구)
 //   withPromptCache(body, head) → 첫 user 메시지가 head 로 시작하고 head 가 모델 최소 길이 이상이면 [앞부분(캐시) · 나머지] 두 조각으로 나눈 새 본문, 아니면 body 그대로
 //   pureMacros(text) → 다시 치환해도 결과 · 부작용이 같은 글인가 ({{char}} · {{user}} 만 있거나 매크로가 없음)
-
-export const CACHE_TTL_MS = 5 * 60 * 1000;
 
 // 모델별 캐시 최소 길이 (Anthropic 문서 2026-10 — 이보다 짧으면 표시를 붙여도 조용히 캐시되지 않는다). 모르는 이름은 1024
 const MIN_TOKENS = [

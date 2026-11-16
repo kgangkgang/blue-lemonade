@@ -234,7 +234,8 @@ function pronRules(src) {
         if (i <= 0) continue;
         const from = l.slice(0, i).trim(), to = l.slice(i + 1).trim();
         if (!from) continue;
-        rules.push({ re: new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), to });
+        // 보통 꼴(글=글)의 바꿀 글은 글자 그대로 — replace 가 $& · $1 · $$ 를 치환 표시로 풀지 않게 $ 를 겹쳐요. /정규식/=… 꼴의 $1 은 위에서 그대로 살려요
+        rules.push({ re: new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), to: to.replace(/\$/g, '$$$$') });
     }
     pronMemo = { src, rules };
     return rules;
@@ -2335,7 +2336,9 @@ export async function reanalyze(mesId) {
     if (!analysisReady(s)) { toast('대사 분석 엔진을 먼저 설정해요 (TTS 설정)', 'warning'); return false; }
     if (waiting && waiting.mesId === mesId && waiting.mes === mes && waiting.phase === 'analyse') return false;   // 이미 분석 중
     const need = analysisNeeds(mesId, mes, s);
-    if (!need.emotion && !need.langs.size && !need.sfx) { toast('분석할 대사가 없어요', 'info'); return false; }
+    // 자동 분석(위 analyzeIfNeeded · runAnalysis)과 같은 판정 — 화자 찾기 · 기울임만 필요한 답장도 다시 분석해요.
+    //   1.5.8 까지는 감정 · 원어 · 효과음만 봐서, 화자 찾기만 켠 채(또는 색 없는 대사만 있는 답장에서) 재생성을 누르면 「분석할 대사가 없어요」로 끝났어요.
+    if (!need.emotion && !need.langs.size && !need.sfx && !need.speaker && !need.italics) { toast('분석할 대사가 없어요', 'info'); return false; }
     const w = beginWaiting(mesId, mes, ANALYSE_TEXT);
     let a = null;
     analyzeLight(1);

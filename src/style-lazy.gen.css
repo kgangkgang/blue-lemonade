@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 86a9ea9946f8) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build a6d515173a07) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b28fbbf5e0cf7922"}
 /* css/00-base.css */
-:root{--bl-release:"1.5.9";}
+:root{--bl-release:"1.6.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -3430,9 +3430,10 @@ body.salty #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .fa-
 color:var(--salty-lemon, var(--bl-fb-e9be00));
 }
 body.salty #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .fa-lemon {
---bl-glyph-y:.045em;
+--bl-glyph-y:.02em;
 }
 body.salty #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .fa-lemon::before { display: inline-block; translate: 0 var(--bl-glyph-y, 0); scale: 1.15; }
+body.salty #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .bl-copyright > .bl-copyright-icon { translate: 0 .2px; }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer-header > b > i,
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer-header > b > svg {
   width: auto;
@@ -15264,24 +15265,6 @@ body.salty.salty-light {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.salty-style-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
-  padding: 8px 12px;
-  border-radius: var(--r-md);
-  background: var(--salty-fill-accent-10, var(--salty-accent-10));
-  color: var(--salty-accent-ink, var(--salty-accent));
-  font-size: var(--fs-small);
-  font-weight: 650;
-}
-.salty-style-note span {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
 .salty-code-box {
   width: 100%;
   min-height: 120px;
@@ -16605,12 +16588,11 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 }
 /* css/48-settings-favorites.css */
 .bl-favorites { padding: 0 0 16px; margin-bottom: 12px; border-bottom: 1px solid var(--salty-line); }
-.bl-favorites header, .bl-favorites header > span, .bl-favorite-row, .bl-search-result-row { display: flex; align-items: center; gap: 8px; }
+.bl-favorites header, .bl-favorites header > span, .bl-search-result-row { display: flex; align-items: center; gap: 8px; }
 .bl-favorites header { justify-content: space-between; }
 .bl-favorites header > span { font-size: 12px; color: var(--salty-muted); }
 .salty-panel .bl-favorite-toggle { flex: 0 0 40px; width: 40px; min-height: 40px; padding: 0; margin: 0; display: grid; place-items: center; color: var(--salty-muted); font: inherit; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
 .salty-panel .bl-favorite-toggle[aria-pressed="true"] { color: var(--salty-accent); }
-.salty-panel .bl-favorite-row > [data-favorite-jump] { flex: 1; min-width: 0; text-align: left; padding: 8px 6px; border: 0; background: transparent; color: var(--salty-text); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
 .bl-search-result-row > [data-settings-result] { flex: 1; min-width: 0; }
 .salty-panel .bl-search-result-row .bl-favorite-toggle { align-items: center; }
  .salty-panel .bl-favorite-toggle > .fa-star { width: 18px; line-height: 1; font-size: 17px; pointer-events: none; }
@@ -16856,7 +16838,6 @@ body.salty-dark .bl-mask-sample[data-mask=mosaic] { background:conic-gradient(#2
 @media(max-width:640px){.bl-capture-layout{grid-template-columns:minmax(0,1fr)}.bl-capture-dialog{padding:12px}.bl-capture-dialog footer{bottom:-14px}}
 .bl-addon-actions { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0 20px; }
 .bl-apply-pending { outline:1px solid var(--salty-accent); box-shadow:none; background:var(--salty-accent-13); font-weight:650; }
-@keyframes bl-apply-glow { 50% { box-shadow:none; } }
 @media(prefers-reduced-motion:reduce){.bl-apply-pending{animation:none}}
 .bl-addon-position-preview, .bl-wand-preview { padding:12px; border:1px solid var(--salty-line); border-radius:12px; margin:12px 0; background:var(--salty-shade); }
 .bl-addon-position-preview>div, .bl-wand-preview-input { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0; }
@@ -17209,7 +17190,7 @@ html body .bl-tool-heading { gap:10px; font:inherit; font-size:.9em; line-height
   .bl-tool-grid > .bl-tool-pick { grid-column: 1 / -1; }
 }
 /* css/53-script-tools.css */
-.salty-panel .bl-script-list,.salty-panel .bl-script-editor,.salty-panel .bl-theme-update { min-width:0; }
+.salty-panel .bl-theme-update { min-width:0; }
 .salty-panel .bl-script-actions { display:flex;flex-wrap:wrap;gap:10px;margin:12px 0; }
 .salty-panel .bl-script-actions>.salty-btn { flex:1 1 140px;min-width:0;white-space:normal;margin:0;min-height:var(--bl-h-ctl,36px); }
 .salty-panel [data-script-feedback],.salty-panel [data-theme-update-status] { line-height:1.6;overflow-wrap:anywhere; }
@@ -17797,7 +17778,6 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel .salty-num i { white-space:nowrap; }
 .salty-panel .salty-num i.salty-unit { flex:none; width:max-content; min-width:1.5em; }
 .salty-panel.bl-editor .salty-stack { row-gap:max(8px,.4em); }
-.salty-panel .bl-editor-group-summary { color:var(--salty-muted); }
 .salty-panel .salty-fontrow { min-height:36px; padding-block:6px; }
 .salty-panel .salty-group.bl-setting-locks { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,max(9em,calc((100% - 20px) / 2))),1fr)); column-gap:20px; }
 .salty-panel .bl-setting-locks > :not(.salty-row) { grid-column:1 / -1; }
@@ -19912,7 +19892,6 @@ html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog
 html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > span,
 html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > h2,
 html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > h3 { margin: 0 !important; }
-html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > button:last-child { margin-left: auto !important; }
 html body.salty :is(dialog.bl-translator-dialog, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.blzi-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.bl-notes-dialog, dialog.bl-mart, dialog.bl-xc) > header > button:last-child { margin-left: auto !important; }
 html body.salty .pa-hub .pa-hub-title, html body.salty .po-dialog .po-title, html body.salty #pt-panel #pt-panel-header h3 { display: flex !important; align-items: center !important; gap: 8px !important; }
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > :where(i):is(.bl-s, *),

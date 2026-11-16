@@ -36,7 +36,6 @@ export function advancedRouteOf(path) {
     return null;
 }
 
-const ROW = '.salty-sizeopt,.bl-color-field,.salty-slider,.salty-row,.salty-stack';
 function findItem(section, spec) {
     if (spec.startsWith('sel:')) { try { return section.querySelector(spec.slice(4)); } catch { return null; } }
     const control = spec.startsWith('color:')

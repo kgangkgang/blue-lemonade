@@ -121,26 +121,6 @@
   text-overflow: ellipsis;
 }
 
-/* 창 머리: 지금 캐릭터 스타일이 입혀져 있음 */
-.salty-style-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
-  padding: 8px 12px;
-  border-radius: var(--r-md);
-  background: var(--salty-fill-accent-10, var(--salty-accent-10));
-  color: var(--salty-accent-ink, var(--salty-accent));
-  font-size: var(--fs-small);
-  font-weight: 650;
-}
-.salty-style-note span {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 /* 클립보드를 못 쓸 때 코드를 골라 복사하는 칸 */
 .salty-code-box {
   width: 100%;

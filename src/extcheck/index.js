@@ -2,7 +2,7 @@
 //   누를 때만 받는 도구예요: 창을 열기 전에는 이 폴더의 모듈을 하나도 받지 않고 리스너 · 감시도 없어요(명령 이름만 index.js 가 걸어 둬요).
 //   창을 닫으면 읽어 온 파일 글 · 결과를 버려요. 바깥 요청은 「받아서 검사」(GitHub) · 「AI 검토 보내기」(지금 연결 · 고른 프로필)를 누를 때 한 번씩뿐이에요.
 import { compare, reportText, twinRows, LEVELS, aiRequest, parseAi, AI_VERDICTS, AI_LIMITS, parseGithubUrl, snippet, place } from './core.js';
-import { readInstalled, readGithub, linkPlan, sourceText, clientVersion, OWN, LIMITS } from './source.js';
+import { readInstalled, readGithub, linkPlan, sourceText, clientVersion, LIMITS } from './source.js';
 import { knownConflicts } from '../extension-folder.js';
 import { showThemeModal } from '../modal.js';
 import { getSettings, saveSettings } from '../settings.js';

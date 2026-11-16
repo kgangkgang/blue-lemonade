@@ -95,24 +95,15 @@ export function preloadPreviewCss() {
 
 // --split 첫 시트는 작게 시작해요. 첫 서랍에서 원래 모듈 순서 전체를 받아 첫 시트를 끄고 교체해요.
 // 첫 시트는 메타와99꼬리를 찾는 원본으로 남아요. 둘째 파일의99꼬리도 원문으로 분리해 별도 받기 실패를 복구해요.
-const SPLIT_URL = new URL('./style-lazy.gen.css', import.meta.url).href;
 // 서랍 · 테마 설정 창 · 애드온 창(85-addon-unify 가 아는 창들)만 — 실리태번 보통 팝업(.popup · bl-roomy-dialog 표식 포함)은 아니에요
 //   닫힌 채 늘 문서에 있는 설정 블록(#model_register_settings · .bwr_settings …)은 열림이 아니에요 — 열린 서랍(.openDrawer)이나 열린 dialog 안에 있을 때만
 const LAZY_OPENERS = ['.drawer-content.openDrawer', 'dialog[open] .salty-panel', 'dialog[open].bl-settings-dialog', 'dialog[open].bl-translator-dialog', 'dialog[open].bl-assets-dialog', 'dialog[open].bl-direction-dialog', 'dialog[open].bl-notes-dialog', 'dialog[open].bl-ctsi-dialog', 'dialog[open].blpt-dialog', 'dialog[open].blzi-dialog', 'dialog[open].bl-mermaid-dialog', 'dialog[open].bl-mav-viewer', 'dialog[open] .bl-extension-page', 'dialog[open] .pa-hub', 'dialog[open].po-dialog', 'dialog[open] #pt-panel', 'dialog[open] .bwr_settings', 'dialog[open] #model_register_settings', 'dialog[open] #model-switch-settings', 'dialog[open] #lv_settings', 'dialog[open] .cg-root', 'dialog[open] .bl-notes-view'].join(', ');
-let splitPrefetched = false;
 /** 두 장 빌드면 테마 시트 */
 function splitBuild() {
     const sheet = themeSheet();
     const first = sheet?.cssRules?.[0];
     if (!first || first.selectorText !== ':root' || first.style?.getPropertyValue('--bl-css-split').trim() !== '1') return null;
     return sheet;
-}
-/** 둘째 장 미리 받기(fetch 만) */
-export function prefetchSplitCss() {
-    if (splitPrefetched || document.getElementById('salty-lazy-css') || !splitBuild()) return false;
-    splitPrefetched = true;
-    try { fetch(SPLIT_URL, { priority: 'low', credentials: 'same-origin' }).catch(() => {}); } catch { /* fetch 없음 */ }
-    return true;
 }
 let splitRequest = null;
 export function loadSplitCss() {
@@ -217,7 +208,7 @@ export function deferredPreviewRuleCount() {
 // 덮어쓰기가 뒤집힌다 (2.8.4 에서 월드인포 편집 칸이 폰에서 깨짐). 2.9.4 는 옮길 5개를 손으로 확인했다.
 // 3.0.0 부터 옮길 규칙은 분류기로 고르지 않고 css/99-lazy-panel.css 에 둔다 — 빌드가 이 모듈을 style.css 맨 끝에 두고,
 // 여기서는 시작 표시 규칙(#salty-lazy-panel-start) 뒤를 통째로 테마 <link> 바로 뒤 <style> 로 옮긴다.
-// 원래도 맨 끝이었으니 옮겨도 폭포 순서가 한 칸도 안 바뀐다. tools/check-order.cjs 가 이것을 확인한다.
+// 원래도 맨 끝이었으니 옮겨도 폭포 순서가 한 칸도 안 바뀐다(옮길 때 옛 tools/check-order.cjs 로 확인 — 그 도구는 1.0.0 에서 걷혔다).
 // 규칙 글은 CSSOM 의 cssText 가 아니라 style.css 원문 끝을 잘라 쓴다 (cssText 는 var() 가 든 줄임 속성을 온전히 못 되살린다).
 //
 // 5.6.4 (점검 RP-2): `> *` 뿐 아니라 오른쪽 끝이 태그뿐인 서랍 규칙(`… div:has(> select) > span`)도 옮겼다 (9 → 67개).

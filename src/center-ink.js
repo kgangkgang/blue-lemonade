@@ -86,6 +86,3 @@ export function syncCenterInk(on) {
     if (!fontsBound && document.fonts?.addEventListener) { document.fonts.addEventListener('loadingdone', () => requestAnimationFrame(all)); fontsBound = true; }
     requestAnimationFrame(all);
 }
-
-/** 설정 창 미리보기처럼 채팅 밖에 그린 표본은 그린 쪽이 직접 불러요 */
-export function centerInkIn(root) { if (root) apply([root]); }

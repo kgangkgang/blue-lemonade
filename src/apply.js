@@ -722,6 +722,7 @@ export function applyAll() {
         if (s.chat.qrFolded === true) want.add('salty-qr-folded');   // 1.0.1 QR 줄 접힘 — 접기 단추만 남고 버튼은 숨김 (css/35-qr-bar.css)
         if (s.quick?.qrFold === true && s.usageMode !== 'zero') { want.add('salty-qr-fold-off'); want.delete('salty-qr-folded'); }   // 1.1.2 요술봉 뒤 접기를 쓰는 동안 줄 앞 단추는 쉬어요(저장값은 그대로)
         if (s.usageMode === 'zero') want.delete('salty-qr-folded');   // 제로는 줄 앞 « 를 넣지 않아요(입력판 배치는 실리태번 그대로) — 접어 둔 채 오면 펼 길 없이 QR 이 다 숨었어요(저장값은 그대로)
+        if (s.chat.qrFold === false) want.delete('salty-qr-folded');   // 접기 단추를 끄면 줄 앞 « 가 없어요 — 접어 둔 채 끄면 펼 길 없이 QR 이 다 숨었어요(저장값은 그대로 · 다시 켜면 접힌 채)
         if (s.chat.qrCtxNames === true) want.add('salty-qr-ctx-names');   // 7.9.7 QR ⋮ 자리에 하위 세트 이름 (layout.js syncQrTitles)
         if (s.qrShelf?.on === true && s.usageMode !== 'extensions' && !restingFor('qrShelf')) want.add('salty-qr-shelf');   // 1.0.3 QR 책장 (layout.js syncQrShelf)
         if (s.chat.personaTall) want.add('salty-persona-tall');
@@ -823,6 +824,10 @@ export function applyAll() {
     if (document.body.hasAttribute('data-bl-mb-color-only') !== mbColorOnly) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-color-only', mbColorOnly); }
     // 1.5.9 채팅 이름표를 인물 색으로(기본 끔): 켠 때만 모듈을 받아요 — 시트 한 장(name-people.js) · 이름 글자 그러데이션을 건 쪽은 빼요
     { const on = want.has('salty') && s.chat.namePeople === true; lateSync('namePeople', () => import('./name-people.js'), on, m => m.syncNamePeople(on, { bg: /^#[0-9a-f]{6}$/i.test(String(pal.bg)) ? pal.bg : '', skipChar: !!gradientFor(s, 'name'), skipUser: !!gradientFor(s, 'userName') })); }
+    // 1.6.0 눈 감긴 답을 미트볼 상태에서 빼기(src/mb-hidden.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 바뀌면 한 번 알려요(끄면 남은 표식을 바로 치워요)
+    { const on = want.has('salty') && s.chat.mbHiddenSync !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-hidden-sync') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-hidden-sync', on); document.dispatchEvent(new Event('bl-mb-hidden-sync')); } }
+    // 1.6.0 미트볼 문구: 블루레몬 추천(src/mb-prompt.js · 기본 적용 안 함): 고른 때만 모듈을 받아요 — 그 확장의 「생성 시스템 프롬프트」 끝에 테마 줄을 덧붙이고, 「적용 안 함」 으로 돌리면 그 줄만 떼요
+    { const lv = want.has('salty') ? (s.chat.mbPrompt || 'off') : 'off'; let once = false; try { once = !!localStorage.getItem('bl-mb-prompt-once'); } catch { /* 표시 없이 */ } lateSync('mbPrompt', () => import('./mb-prompt.js'), want.has('salty') && (lv !== 'off' || once), m => { if (want.has('salty')) m.syncMbPrompt(lv, s.chat.mbPromptCount, s.chat.mbPromptChars, { cap: s.chat.mbPromptCap }).catch(error => console.warn('[Blue Lemonade] 미트볼 문구', error)); }); }
     const mbPlain = want.has('salty') && s.chat.mbHelpers === false;
     if (document.body.hasAttribute('data-bl-mb-plain') !== mbPlain) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-plain', mbPlain); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }
