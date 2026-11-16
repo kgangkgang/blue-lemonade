@@ -249,4 +249,17 @@ await t('연결: 「HTML 복사」 · 「내려받기」가 옮긴 HTML 을 쓰�
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/log-copy-lift\.mjs \./);
 });
 
+await t('1.6.3 pasteReady: 맨 앞 안내 주석이 많고 <style> 이 없는 HTML 도 바로 끝남(예전 꼴은 30개에 약 2초) · 주석 뒤 <style> 떼기는 그대로', async () => {
+    const { pasteReady } = await load('src/log-copy-lift.js');
+    let ms = performance.now();
+    const out = pasteReady('<!--a--> '.repeat(26) + '<div>x</div>');
+    ms = performance.now() - ms;
+    assert.ok(ms < 100, `주석 26개 ${ms.toFixed(0)}ms`);
+    assert.match(out, />x<\/div>/);
+    const lead = pasteReady('<!-- 안내 --><!-- 둘 -->\n<style>@keyframes k{to{opacity:1}}</style><div>y</div>');
+    assert.match(lead, /@keyframes k/, '주석 뒤 움직임 <style> 은 그대로 떼어 합쳐요');
+    assert.equal((lead.match(/<style>/g) || []).length, 1);
+    assert.match(lead, /<!-- 안내 -->/);
+});
+
 console.log(`log-copy-lift: ${n} passed`);

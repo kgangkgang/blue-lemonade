@@ -356,5 +356,23 @@ await test('1.0.4 보호 블록이 길게 이어진 뒤 글이 와도 바로 끝
     assert.equal((src.match(/\/\^\\s\*\(\?:\\\[\\\[__VAR_\\d\+__\\\]\\\]\\s\*\)[+*]\$\//g) || []).length, 2);
 });
 
+await test('1.6.3 「> > > …」 처럼 겹친 인용 줄이 길어도 바로 끝남 (예전 꼴은 30번 겹치면 몇 초) · 판정은 그대로', () => {
+    let t = performance.now();
+    assert.equal(S.isBareQuote('> '.repeat(26) + 'x'), false);
+    assert.equal(S.isBareQuote(' > \t'.repeat(40) + 'x'), false);
+    assert.equal(S.isBareQuote('> '.repeat(40)), true);
+    t = performance.now() - t;
+    assert.ok(t < 50, `겹친 인용 26번 판정 ${t.toFixed(0)}ms`);
+    // 예전 정규식과 같은 판정인지 — 짧은 줄을 고루 만들어 견줘요
+    const OLD = /^(?: {0,3}>[ \t]?)+[ \t]*$/;
+    const parts = ['>', ' ', '\t', 'a', '  ', '    '];
+    let seed = 7; const rnd = n => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) % n;
+    for (let i = 0; i < 20000; i++) {
+        let s = ''; const len = 1 + rnd(9);
+        for (let k = 0; k < len; k++) s += parts[rnd(parts.length)];
+        assert.equal(S.isBareQuote(s), OLD.test(s), JSON.stringify(s));
+    }
+});
+
 console.log(`translation-segments-edges: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

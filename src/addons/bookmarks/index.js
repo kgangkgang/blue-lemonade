@@ -20,7 +20,8 @@ import { onChatChildren } from '../../show-more-watch.js';
 // 4.5.4: 모아 보기 창(panel.js 47KB + 그것만 쓰는 settings-view.js 17.7KB)은 창을 열 때 읽는다.
 // 북마크 표시 · 메모 · 미리보기는 창 없이도 돌아가야 해서 index.js 는 그대로 시작할 때 읽힌다.
 let panelPromise = null;
-const panelModule = () => (panelPromise ??= import('./panel.js'));
+// 1.6.3 못 받으면(오프라인 · 서버 재시작) 약속을 비워 다음에 누를 때 다시 받아요 — 예전엔 실패한 약속을 쥐고 있어 새로고침 전까지 창이 안 열렸어요
+const panelModule = () => (panelPromise ??= import('./panel.js').catch(error => { panelPromise = null; throw error; }));
 export async function openPanel(...args) { return (await panelModule()).openPanel(...args); }
 // 창을 아직 안 열었으면 알릴 곳이 없다 — 읽은 뒤에만 넘긴다
 function notifyChatChanged() { if (panelPromise) panelPromise.then(m => m.onChatChanged()).catch(() => {}); }

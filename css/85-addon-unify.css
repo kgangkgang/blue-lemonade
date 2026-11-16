@@ -37,7 +37,15 @@ html body.salty dialog:is(.bl-translator-dialog, .blzi-dialog) > header { paddin
   html body.salty :is(dialog.bl-translator-dialog > .bl-translator-dialog-body, dialog.blzi-dialog > :not(header), .bls-panel > .bls-panel-body) { padding-inline: 4px !important; }
   html body.salty :is(dialog.bl-translator-dialog :is(.llmt-card-body, .llmt-card--accent), dialog.blzi-dialog .blzi-card, dialog.bl-assets-dialog .eh-card, .bls-panel .bls-card, dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-card, dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_card) { padding-inline: 8px !important; }
   /* 실리태번 팝업에 든 애드온(TTS · 다시 쓰기): 팝업 여백 10 은 두고 카드 묶음만 6 바깥으로 */
-  html body.salty dialog.popup:not(.bl-settings-dialog) :is(#lv_settings, .bwr_settings) { margin-inline: -6px !important; }
+  /* 11-17 디자인 전수조사: 예전엔 카드 묶음에 바깥 여백 −6px 을 줬는데, 감싼 .popup-content 가 넘침을 자르는 칸이라 양쪽 6px 이 잘렸어요(탭 · 체크 칸 · 설명 글 첫 글자).
+     그래서 묶음을 넓히지 않고 팝업 안쪽 여백을 10 → 4 로 줄여요 — 내용까지 거리는 예전 뜻(4px)과 같아요 */
+  html body.salty dialog.popup:not(.bl-settings-dialog):has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings)) { padding-inline: 4px !important; }
+  html body.salty dialog.popup:not(.bl-settings-dialog) :is(#lv_settings, .bwr_settings) { margin-inline: 0 !important; }
+  /* 1.6.4: 카드 · 탭 · 단추처럼 테가 있는 칸은 창 테에서 4 그대로, 테 없이 맨몸으로 놓인 글 · 체크 줄 · 스위치 줄만 6 더 들여 10 —
+     다른 애드온 창(모델 등록 · 확장 순서 · 정규식 연결 …)의 내용까지 거리 10 과 같아요. 4 에 두면 창 가장자리에 바짝 붙어 보였어요(「처음에는…」 · 「사용」 체크 줄 · 다시 쓰기 안내 글) */
+  html body.salty dialog.popup:not(.bl-settings-dialog) :is(#lv_settings :is(.lv-tagline, .lv-top, .inline-drawer-content > .bl-hs-row), .bwr_settings :is(.bwr_panel > .bwr_hint, .bwr_grid > .bwr_field > span)) { padding-inline: 6px !important; }
+  /* 머리 줄 제목도 창 테에서 6 → 12(모델 등록 · 정규식 연결 머리 12 와 같게) — 머리 줄 공용 여백 2 는 팝업 여백 10 을 전제로 한 값이라 */
+  html body.salty dialog.popup:not(.bl-settings-dialog) > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings) > .inline-drawer > .inline-drawer-header { padding-left: 8px !important; }
   html body.salty dialog.bl-notice-dialog .bl-notice-body { padding-inline: 12px; }
   /* 로그 복사 · 출처 창: 화면 가장자리 12 → 다른 창과 같은 6 (안쪽 16 은 그 창의 한 벌 값이라 그대로) */
   html body dialog:is(.bl-tool-dialog.bl-lc, .bl-credits-dialog) { width: calc(100vw - 12px); max-width: calc(100vw - 12px); }

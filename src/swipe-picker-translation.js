@@ -119,9 +119,17 @@ export function withoutOriginalHalf(text, originals) {
         const o = squash(original);
         if (!o || whole.length <= o.length || (!whole.endsWith(o) && !whole.startsWith(o))) continue;
         const blocks = text.split(/\n{2,}/);
-        for (let k = 1; k < blocks.length; k++) {
-            if (squash(blocks.slice(k).join('\n\n')) === o) return blocks.slice(0, k).join('\n\n');   // 번역 + 원문
-            if (squash(blocks.slice(0, k).join('\n\n')) === o) return blocks.slice(k).join('\n\n');   // 원문 + 번역
+        // 1.6.3 문단마다 남은 글 전체를 다시 이어 붙여 견주던 것(문단 수의 제곱 · 10만 자에 1초 넘게)을, 문단별 squash 와 앞 · 뒤 길이 합으로 —
+        //   squash(문단들을 빈 줄로 이은 것) = 빈 문단을 뺀 squash(문단) 들을 빈칸 하나로 이은 것이라, 길이가 맞을 때만 글을 만들어 견줘요(결과는 같아요)
+        const sq = blocks.map(squash), n = blocks.length;
+        const tail = new Array(n + 1).fill(0), head = new Array(n + 1).fill(0);
+        const join = (a, b) => (a && b ? a + 1 + b : a + b);
+        for (let k = n - 1; k >= 0; k--) tail[k] = join(sq[k].length, tail[k + 1]);
+        for (let k = 1; k <= n; k++) head[k] = join(head[k - 1], sq[k - 1].length);
+        const glue = (from, to) => sq.slice(from, to).filter(Boolean).join(' ');
+        for (let k = 1; k < n; k++) {
+            if (tail[k] === o.length && glue(k, n) === o) return blocks.slice(0, k).join('\n\n');   // 번역 + 원문
+            if (head[k] === o.length && glue(0, k) === o) return blocks.slice(k).join('\n\n');   // 원문 + 번역
         }
     }
     return text;

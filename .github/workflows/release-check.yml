@@ -616,6 +616,8 @@ jobs:
           node tools/tests/translation-cache-loading.mjs .
           node tools/tests/translation-segments.mjs .
           node tools/tests/translation-segments-edges.mjs .
+          node tools/tests/lazy-import-retry.mjs .
+          node tools/tests/reply-notify-group.mjs .
           node tools/tests/translation-segments-store.mjs .
           node tools/tests/translator-footnotes.mjs .
           node tools/tests/translation-display.mjs .

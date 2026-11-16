@@ -12,7 +12,8 @@ import { ledgerEntryFromLog, MAIN_EXT } from '../../usage-feed.js';   // 7.4.0 �
 import { record as recordUsage } from '../../usage-ledger.js';
 import { trimEntries } from './store.js';
 let budgetPromise = null;
-const budgetModule = () => (budgetPromise ??= import('./budget.js'));
+// 1.6.3 못 받으면 약속을 비워 다음에 다시 받아요(예전엔 실패한 약속을 쥐고 새로고침 전까지 예산 · 기록 창이 안 열렸어요)
+const budgetModule = () => (budgetPromise ??= import('./budget.js').catch(error => { budgetPromise = null; throw error; }));
 
 initSettings();
 // 1.0.0 극한 최적화: 가격표 캐시(loadPriceCache)는 가격 모듈을 처음 받을 때(capture.js ensurePricing · usage-ledger pricingModules)가 해요 — 부팅 때 가격표 235KB 를 받지 않아요
@@ -61,7 +62,7 @@ function checkFilesMatch() {
 // 4.5.3: 설정 칸과 기록 창(panel.js 52KB)은 실제로 열 때 읽는다.
 // 마법봉 단추는 12줄짜리라 여기서 직접 만들고, 누를 때 비로소 panel.js 를 받는다.
 let panelPromise = null;
-const panel = () => (panelPromise ??= import('./panel.js'));
+const panel = () => (panelPromise ??= import('./panel.js').catch(error => { panelPromise = null; throw error; }));
 async function openDialog() { try { (await panel()).openDialog(); } catch (error) { console.error('[요청 로그]', error); } }
 function mountWandButton() {
     if (document.getElementById('rl-wand-button')) return;

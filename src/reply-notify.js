@@ -86,6 +86,11 @@ export function syncReplyNotify(enabled) {
         // 프롬프트 관리자의 토큰 세기(dryRun) · 사칭 · 조용한 생성은 답이 아니다.
         // dryRun 은 정지 버튼을 띄우지 않아 끝 이벤트도 없다 — 도는 생성 사이에 끼어들어도 기다리던 알림을 지우지 않게 건너뛴다
         let real = false, before = null;
+        // 1.6.3 그룹 채팅: 실리태번은 멤버마다 Generate 를 따로 불러 끝 사건이 멤버 수만큼 와요(group-chats.js · 멤버마다 정지 버튼을 내림).
+        //   차례(GROUP_WRAPPER_STARTED ~ FINISHED) 동안은 「새 답이 하나라도 생겼나」 만 모아 두었다가 차례가 끝날 때 한 번 알려요 — 예전엔 첫 멤버 답에 바로 울렸어요
+        let group = false, groupGot = false;
+        listen('GROUP_WRAPPER_STARTED', () => { group = true; groupGot = false; });
+        listen('GROUP_WRAPPER_FINISHED', () => { const got = group && groupGot; group = false; groupGot = false; if (got) notify(); });
         listen('GENERATION_STARTED', (type, _params, dryRun) => {
             if (dryRun) return;
             real = !['quiet', 'impersonate'].includes(type);
@@ -101,6 +106,7 @@ export function syncReplyNotify(enabled) {
             const text = String(last?.mes ?? '').trim();
             if (!last || last.is_user || text === '' || text === '...') return;
             if (chat.length === before?.length && last.mes === before?.mes) return;
+            if (group) { groupGot = true; return; }
             notify();
         });
     } catch { /* 이벤트를 못 걸면 알림도 없다 */ }

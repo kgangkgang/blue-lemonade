@@ -21,6 +21,12 @@ const PAIR = /(\*{1,3}|_{1,3}|~~)(?=\S)((?:(?!\n[^\S\n]*\r?\n)[\s\S])*?\S)\1/g;
 const TAG = /<\/?[A-Za-z][^<>]*>/g;
 const BR = /^<br\s*\/?>$/i;
 const BREAK_TAG = /^<\/?(?:br|p|div|li|h[1-6]|blockquote|pre|details|summary|tr|ul|ol|table|hr)(?=[\s/>])[^<>]*>$/i;   // 화면에서 줄이 바뀌는 태그 (delete.js 의 BLOCKS 와 같게)
+// 1.6.3 줄 안 빈칸: 예전 꼴 [^\S\n] 은 \r 도 품어서, CRLF 줄끝에서 「앞 줄 빈칸이 \r 을 먹기」 와 「\r?\n 이 \r 을 먹기」 가 겹쳐
+//   빈 줄이 길게 이어진 뒤 글이 오면 빈 줄 둘마다 4배씩 느려졌어요(26개 1.5초). \r 은 \n 앞이 아닐 때만 빈칸으로 — 판정은 같아요
+const H = String.raw`(?:[^\S\r\n]|\r(?!\n))`;
+const ENDS_TWO_BLANK = new RegExp(String.raw`\S${H}*(?:\r?\n${H}*){2,}$`);
+const TRAIL_BLANK_LINES = new RegExp(String.raw`(?:${H}*\r?\n)+${H}*$`);
+const TRAIL_LINES = new RegExp(String.raw`(?:\r?\n${H}*)+$`);
 const FENCE = /^[^\S\n]*```[^\n]*\n[\s\S]*?\n[^\S\n]*```[^\S\n]*$/gm;
 const INLINE_CODE = /`[^`\n]+`/g;
 const HR_LINE = /^[^\S\n]*([*_-])(?:[^\S\n]*\1){2,}[^\S\n]*\r?$/gm;
@@ -313,8 +319,8 @@ export function deleteSpan(raw, span) {
         const at = lineRange(text, Math.min(cut, text.length));
         const tags = text.slice(at.from, at.to).replace(/^[^\S\n]+/, '');
         const head = text.slice(0, at.from);
-        if (/^(?:<\/[A-Za-z][\w-]*>[^\S\n]*)+\r?$/.test(tags) && /\S[^\S\n]*(?:\r?\n[^\S\n]*){2,}$/.test(head) && /^[^\S\n]*(?:\r?\n[^\S\n]*)?<\//.test(raw.slice(hi))) {
-            const kept = head.replace(/(?:[^\S\n]*\r?\n)+[^\S\n]*$/, '');
+        if (/^(?:<\/[A-Za-z][\w-]*>[^\S\n]*)+\r?$/.test(tags) && ENDS_TWO_BLANK.test(head) && /^[^\S\n]*(?:\r?\n[^\S\n]*)?<\//.test(raw.slice(hi))) {
+            const kept = head.replace(TRAIL_BLANK_LINES, '');
             text = kept + tags + text.slice(at.to);
             cut = kept.length;
         }
@@ -323,7 +329,7 @@ export function deleteSpan(raw, span) {
     if (shapeChanged(raw, span, text, cut, removed)) return null;
     // 글 앞뒤에 새로 생긴 빈 줄 (원래 글이 빈 줄로 시작 · 끝나지 않으면)
     if (!/^[^\S\n]*\r?\n/.test(raw)) { const lead = /^(?:[^\S\n]*\r?\n)+/.exec(text)?.[0].length ?? 0; text = text.slice(lead); cut = Math.max(0, cut - lead); }
-    if (!/\r?\n[^\S\n]*$/.test(raw)) text = text.replace(/(?:\r?\n[^\S\n]*)+$/, '');
+    if (!/\r?\n[^\S\n]*$/.test(raw)) text = text.replace(TRAIL_LINES, '');
     // 지운 자리의 빈 줄이 셋 이상 이어지면 둘로 (줄끝은 글 그대로)
     const eol = raw.includes('\r\n') ? '\r\n' : '\n';
     text = text.replace(/(?:\r?\n){3,}/g, (run, at) => (at <= cut + 2 && at + run.length >= cut - 2 ? eol + eol : run));

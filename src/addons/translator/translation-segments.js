@@ -424,7 +424,9 @@ export function splitBlockPrefix(line, { list = true, open = false, continued = 
     return { prefix, body: rest, quote, list: !!marker, indent: !!indent };
 }
 
-const RULE_LINE = /^ {0,2}(?:(?: ?-){3,}|(?: ?\*){3,}|(?: ?_){3,})[ \t]*$/, UNDERLINE = /^(?:-+|=+)[ \t]*$/, BARE_QUOTE = /^(?: {0,3}>[ \t]?)+[ \t]*$/;
+const RULE_LINE = /^ {0,2}(?:(?: ?-){3,}|(?: ?\*){3,}|(?: ?_){3,})[ \t]*$/, UNDERLINE = /^(?:-+|=+)[ \t]*$/, BARE_QUOTE = /^ {0,3}>(?:(?:\t {0,3}| {1,4})?>)*[ \t]*$/;
+// 1.6.3 겹친 인용 줄(「> > > …」): 예전 꼴 /^(?: {0,3}>[ \t]?)+[ \t]*$/ 은 「> 뒤 빈칸」 과 「다음 > 앞 빈칸」 이 같은 빈칸을 서로 가져갈 수 있어
+//   30번 겹친 줄 하나에 몇 초씩 걸렸어요(번역할 때마다 모든 줄에 돌아요). > 사이 빈칸을 한 덩어리(탭 하나 + 빈칸 셋 · 또는 빈칸 넷까지)로 — 판정은 같아요
 const TABLE_HEAD = /^ {0,3}\|?.+\|.+$/, TABLE_RULE = /^ {0,3}\|?[ \t]*:?[ \t]*[-=]{2,}[ \t]*:?[ \t]*\|[ \t]*:?[ \t]*[-=]{2,}/;
 const ONE_COLUMN_ROW = /^ {0,3}\|.+\|[ \t]*$/, ONE_COLUMN_RULE = /^ {0,3}\|[ \t]*:?[ \t]*[-=]{2,}[ \t]*:?[ \t]*\|[ \t]*$/;
 const CODE_FENCE = /^\s*`{3,}/;

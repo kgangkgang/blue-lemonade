@@ -167,4 +167,15 @@ t('swipe header wraps instead of clipping; bottom row is not clipped',()=>{
     }finally{globalThis.MutationObserver=RealMO;delete globalThis.document;delete chat[0].swipe_info[1].extra.original_text_hash;T.setHash(null);}
   });
 }
+t('1.6.3 long whole-fold display (10만 자 · 문단 1500) splits in linear time, same result',()=>{
+  const para=i=>'문단 '+i+' '+'가나다라마바사 '.repeat(8).trim();
+  const tr=Array.from({length:750},(_,i)=>'번역 '+para(i)).join('\n\n'), or=Array.from({length:750},(_,i)=>'Orig '+para(i)).join('\n\n');
+  let ms=performance.now();
+  assert.equal(withoutOriginalHalf(tr+'\n\n'+or,[or]),tr,'번역 + 원문');
+  assert.equal(withoutOriginalHalf(or+'\n\n'+tr,[or]),tr,'원문 + 번역');
+  assert.equal(withoutOriginalHalf(tr+'\n\n  \n\n'+or,[or]).trim(),tr,'빈 문단이 끼어도');
+  assert.equal(withoutOriginalHalf(tr+'\n\n'+or+' 더',[or]),tr+'\n\n'+or+' 더','안 맞으면 그대로');
+  ms=performance.now()-ms;
+  assert.ok(ms<150,`긴 표시 나누기 ${ms.toFixed(0)}ms`);
+});
 console.log(`PASS swipe picker translation: ${n} checks (fold · original-first · unfolded · whole fold · masked whole · plain · record · hash · backup · close glyph · header · bottom row · dialog · late hash)`);

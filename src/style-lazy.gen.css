@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 37fb152dd93a) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 5063bb4f603c) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b28fbbf5e0cf7922"}
 /* css/00-base.css */
-:root{--bl-release:"1.6.3";}
+:root{--bl-release:"1.6.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -20456,8 +20456,15 @@ html body.salty :where(.eh-card):is(dialog.bl-assets-dialog .eh-card):is(#bl-s, 
 html body.salty :where(.bls-card):is(.bls-panel .bls-card):is(#bl-s, *):is(.bl-s, *):is(bl-s, *),
 html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings .lv-card,
 html body.salty :where(.bwr_card):where(dialog.popup:not(.bl-settings-dialog) .bwr_settings .bwr_card):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) { padding-inline: 8px !important; }
+  html body.salty dialog.popup:not(.bl-settings-dialog):has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings)) { padding-inline: 4px !important; }
   html body.salty dialog.popup:not(.bl-settings-dialog) #lv_settings,
-html body.salty dialog.popup:not(.bl-settings-dialog) :where(.bwr_settings):is(#bl-s, *) { margin-inline: -6px !important; }
+html body.salty dialog.popup:not(.bl-settings-dialog) :where(.bwr_settings):is(#bl-s, *) { margin-inline: 0 !important; }
+  html body.salty dialog.popup:not(.bl-settings-dialog) :where(.lv-tagline):is(#lv_settings :is(.lv-tagline, .lv-top, .inline-drawer-content > .bl-hs-row)),
+html body.salty dialog.popup:not(.bl-settings-dialog) :where(.lv-top):is(#lv_settings :is(.lv-tagline, .lv-top, .inline-drawer-content > .bl-hs-row)),
+html body.salty dialog.popup:not(.bl-settings-dialog) :where(.bl-hs-row):is(#lv_settings :is(.lv-tagline, .lv-top, .inline-drawer-content > .bl-hs-row)),
+html body.salty dialog.popup:not(.bl-settings-dialog) :where(.bwr_hint):where(.bwr_settings :is(.bwr_panel > .bwr_hint, .bwr_grid > .bwr_field > span)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *),
+html body.salty dialog.popup:not(.bl-settings-dialog) :where(span):where(.bwr_settings :is(.bwr_panel > .bwr_hint, .bwr_grid > .bwr_field > span)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *) { padding-inline: 6px !important; }
+  html body.salty dialog.popup:not(.bl-settings-dialog) > .popup-body > .popup-content > :is(#lv_settings, .bwr_settings) > .inline-drawer > .inline-drawer-header { padding-left: 8px !important; }
   html body.salty dialog.bl-notice-dialog .bl-notice-body { padding-inline: 12px; }
   html body dialog:is(.bl-tool-dialog.bl-lc, .bl-credits-dialog) { width: calc(100vw - 12px); max-width: calc(100vw - 12px); }
   html body dialog.bl-credits-dialog > :not(header) { padding-inline: 12px; }
@@ -21276,7 +21283,7 @@ html:not(#bl-ui-parts-off) body.salty .po-dialog .po-item { background: var(--sa
 html:not(#bl-ui-parts-off) body.salty .cg-root .cg-segmented,
 html:not(#bl-ui-parts-off) body.salty .cg-root .cg-stepper { background: var(--salty-shade) !important; }
 html:not(#bl-ui-parts-off) body.salty #lv_settings .lv-icon:not(:hover) { background: transparent !important; border-color: transparent !important; }
-html:not(#bl-ui-parts-off) body.salty #lv_settings .lv-top > .lv-stop:not(:hover) { background: var(--lv-fill-hover) !important; border-color: var(--lv-border) !important; }
+html:not(#bl-ui-parts-off) body.salty #lv_settings .lv-top > .lv-stop > i.fa-stop::before { content: '\f28d'; }
 html:not(#bl-ui-parts-off) body.salty :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text :is(.custom-dem-modules__body > .custom-dem-card, .custom-dem-charpage__head) > summary::after,
 html:not(#bl-ui-parts-off) body.salty.salty-dem-skin :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-card__caret {
   content: "" !important; display: inline-block !important; flex: none !important; box-sizing: border-box;

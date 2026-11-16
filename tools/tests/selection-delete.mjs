@@ -1145,7 +1145,25 @@ await test('v5.1 번역 기록을 읽는 사이 메시지 · 채팅이 바뀌면
     } finally { hooks.cachedTranslation = cached; }
 });
 
+await test('1.6.3 CRLF 빈 줄이 길게 이어진 글에서 지워도 바로 끝남(예전 꼴은 빈 줄 30개에 몇십 초) · 결과는 그대로', () => {
+    let ms = performance.now();
+    const raw = 'Hello there.' + '\r\n'.repeat(26) + 'Tail words here and more.';
+    const r = D.deleteSpan(raw, D.occurrences(raw, 'and more.')[0]);
+    ms = performance.now() - ms;
+    assert.ok(ms < 100, `CRLF 빈 줄 26개 ${ms.toFixed(0)}ms`);
+    assert.equal(r.text, 'Hello there.' + '\r\n'.repeat(26) + 'Tail words here');
+    // 닫는 태그만 남는 줄을 윗글 끝에 붙이는 길(CRLF)도 같은 꼴
+    const tagged = '<prose>\r\n「안녕」 하고 웃었다.\r\n\r\n「잘 가」</prose>';
+    const t2 = D.deleteSpan(tagged, D.occurrences(tagged, '「잘 가」')[0]);
+    assert.equal(t2?.text, '<prose>\r\n「안녕」 하고 웃었다.</prose>');
+    const many = '첫 줄 글.' + '\r\n'.repeat(26) + 'x\r\n\r\n「잘 가」</p>';
+    ms = performance.now();
+    D.deleteSpan(many, D.occurrences(many, '「잘 가」')[0]);
+    ms = performance.now() - ms;
+    assert.ok(ms < 100, `닫는 태그 붙이기 ${ms.toFixed(0)}ms`);
+});
 const failed = results.filter(r => !r.pass);
+
 for (const r of failed) console.log('FAIL', r.name, '\n', r.error);
 console.log(`selection-delete: ${results.length - failed.length} passed, ${failed.length} failed`);
 if (failed.length) process.exitCode = 1;

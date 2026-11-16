@@ -236,7 +236,8 @@ export function pasteReady(html) {
     let text = String(html ?? '');
     if (!text.trim() || text.includes('.content>p,.blq-cm{') || text.includes(`${SCOPE}>p,.blq-cm{`)) return text;   // 이미 붙여 넣을 꼴(1.1.2 꼴 · 1.1.3 꼴)
     text = text.replace(/^\s*<p><br><\/p>/, '').replace(/<p><br><\/p>\s*$/, '');   // 1.1.2 감사 3차 S8: 앞뒤 공백이 있어도 코멘트 빈칸을 떼요
-    const lead = text.match(/^(\s*(?:<!--[\s\S]*?-->\s*)*)<style>((?:(?!<\/?style)[\s\S])*)<\/style>\s*/i);
+    // 1.6.3 주석 몸통은 「-->」 를 넘지 않게 — 예전 꼴 [\s\S]*? 은 다음 주석까지 늘어날 수 있어, 맨 앞 주석이 많고 <style> 이 없으면 기하급수로 느려졌어요(30개에 약 2초)
+    const lead = text.match(/^(\s*(?:<!--(?:(?!-->)[\s\S])*-->\s*)*)<style>((?:(?!<\/?style)[\s\S])*)<\/style>\s*/i);
     const motion = lead ? `<style>${lead[2]}</style>` : '';
     const rest = lead ? lead[1] + text.slice(lead[0].length) : text;
     return liftForCopy(rest, motion).full;
