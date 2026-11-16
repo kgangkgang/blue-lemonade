@@ -693,7 +693,7 @@ function mbPromptRows(s) {
     return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 본편 「출력 규칙」 · 「별도 분석」 문구 끝에는 줄 꼴 규칙 한 덩이를 붙여요 · 「적용 안 함」 으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
             <p class="salty-note">${cost}</p>
             <p class="salty-note bl-mb-prompt-all" data-keep-note>${allLine}</p>
-            ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요')}
+            ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 미트볼의 상태창 만들기 화면에서도 고를 수 있어요(「채팅 읽기」) · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요')}
             ${slider('chat.mbPromptCap', '채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음)', 0, 500000, 10000, 120000)}
             ${lv === 'recent' ? `${slider('chat.mbPromptCount', '마지막 답 앞의 메시지 수', 0, 30, 1, 9)}${slider('chat.mbPromptChars', '앞 메시지마다 읽을 글자 수', 500, 8000, 100, 2000)}` : ''}
             ${lv !== 'off' ? `<details class="salty-note bl-mb-prompt-peek"><summary>덧붙는 글 보기</summary><pre>${esc(mbPromptBlock(lv))}</pre><pre>${esc(mbRuleBlock())}</pre></details>` : ''}`;

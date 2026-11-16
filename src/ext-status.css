@@ -1130,3 +1130,18 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-tool-pop .ss-tool > i { flex: no
 body.salty:not([data-bl-ext-raw]) :is(.ss-tb, #ss-hud .ss-tb, #ss-side .ss-tb) { font-size: 13px !important; }
 /* 2.8.0 관계 카드 「속마음」 단추: 그 확장이 고른 아이콘 이름이 실리태번에 든 아이콘 글꼴(6.5)에 없어 그림 없이 이름만 나와요 — 옆 단추들과 줄 높이 · 가운데가 달랐어요(관문). 같은 글꼴의 하트 그림으로 채워요 */
 body.salty:not([data-bl-ext-raw]) .ss-scope .ss-ib > i.fa-heart-circle-question::before { content: '\f004'; }
+
+/* ---------- 1.6.1 미트볼 만들기 화면의 「채팅 읽기」 고르기(src/mb-read.js) ----------
+   1.6.2: 맨 위 요약 칸 「채팅 N개」 줄 오른쪽에 「읽기」 + 작은 고르기(높이 30 · 작은 단추와 같음). 줄에 겹쳐 놓아(가운데 맞춤 · 줄 사이 틈 6 안쪽) 요약 칸 · 만들기 화면 높이가 그대로예요.
+   요약 칸을 못 찾는 꼴이면 「추가 지시」 머리줄 오른쪽(작가 노트 넣기 앞 · 폭이 모자라면 고르기가 줄어 두 줄이 되지 않게).
+   「기본」 이 아닌 것을 골랐을 때만 요약 칸 아래(머리줄 자리면 입력칸 위)에 어림 글 한 줄(빈 줄은 숨김).
+   줄에는 hidden 속성이 달려 있어 이 규칙이 걸릴 때만 보여요 — 「원작 그대로 보기」 · 테마 꺼짐이면 안 보여요(줄을 놓는 신호도 안 나요). */
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read { display: flex; align-items: center; gap: var(--bl-s1, 4px); flex: 0 1 auto; min-width: 0; margin: 0 0 0 auto; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-host { position: relative; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read.bl-mb-read-at { position: absolute; top: 50%; right: 0; transform: translateY(-50%); max-width: calc(100% - 8em); margin: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read + .bl-mb-note-r { margin-left: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read > span { flex: none; color: var(--ss-dim); font-size: var(--bl-ts-meta, 13px); white-space: nowrap; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-sel { flex: 0 1 auto; width: auto; min-width: 0; max-width: 100%; height: 30px; min-height: 30px; padding-block: 0; margin: 0; font-size: var(--bl-ts-meta, 13px); text-overflow: ellipsis; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-cost { display: block; margin: 0 0 var(--bl-s2, 8px); color: var(--ss-dim); font-size: var(--bl-ts-meta, 13px); line-height: 1.45; overflow-wrap: anywhere; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-cost.bl-mb-read-cost-top { margin: var(--bl-s2, 8px) 0 0; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-cost:empty { display: none; }

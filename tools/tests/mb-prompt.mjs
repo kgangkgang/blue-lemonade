@@ -224,7 +224,7 @@ await ok('줄 꼴 규칙의 글: 그 확장이 읽는 줄 꼴에 맞는 예시(�
     assert.ok(!/\{[a-z][a-zA-Z0-9_]*\}/.test(b)); assert.ok(!b.includes('\n')); assert.ok(M.ruleTokens() > 40 && M.ruleTokens() < 160);
     const src = fs.readFileSync(path.join(root, 'src/mb-prompt.js'), 'utf8');
     assert.ok(src.includes("if (r.ok) await syncRules(state.level !== 'off', { c, doc })"));                     // 「가볍게」 부터 모든 단계 · 「적용 안 함」 이면 떼요
-    assert.ok(src.includes("await syncRules(state.level !== 'off', { c, doc }).catch(() => null);\n    try { toast?.info?.(seen"));   // 「이번 한 번만」 이 끝나면 원래 단계대로
+    assert.ok(src.includes("await syncRules(state.level !== 'off', { c, doc }).catch(() => null);\n    if (quiet) return true;"));   // 「이번 한 번만」 이 끝나면 원래 단계대로
     const panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8');
     assert.ok(panel.includes('mbRuleTokens()') && panel.includes('esc(mbRuleBlock())'));                         // 설정 줄: 본편 답마다 어림 · 덧붙는 글 보기
 });

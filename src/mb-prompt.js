@@ -22,6 +22,10 @@ export const MACRO = 'bl_mb_recent', MACRO_ALL = 'bl_mb_all';
 export const DEFAULT_COUNT = 9, DEFAULT_CHARS = 2000, FULL_CAP = 40000;
 export const DEFAULT_CAP = 120000, HEAD_CHARS = 1000;   // 채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음) · 상한을 넘을 때 오래된 메시지에 남기는 앞 글자 수
 export const ONCE_KEY = 'bl-mb-prompt-once', ONCE_WAIT = 10 * 60000, ONCE_IDLE = 4 * 60000;
+export const ONCE_LV_KEY = 'bl-mb-prompt-once-lv';   // 1.6.1 「이번 한 번만」 의 단계(채팅 전체가 아닐 때만 적어요 — 미트볼 만들기 화면의 「채팅 읽기」 고르기 src/mb-read.js)
+const ONCE_NAME = { off: '기본', light: '기본', last: '마지막 답 전체', recent: '최근 답 여러 개', all: '채팅 전체' };
+/** 「이번 한 번만」 단계가 실제로 붙이는 덩어리: 「마지막 답 전체」 는 요청이 불릴 때를 알 수 있게 테마 매크로({{bl_mb_recent}} · 앞 메시지 0개)로 실어요 */
+const onceBlock = lv => (lv === 'last' ? 'recent' : level(lv));
 const SEP = '\n\n';
 const BEGIN = '=== BLUE LEMONADE NOTE ===';
 const END_RE = /=== END BLUE LEMONADE NOTE(?: \[d:([0-9a-f]{8})\])? ===/;
@@ -240,7 +244,7 @@ const state = { level: 'off', count: DEFAULT_COUNT, chars: DEFAULT_CHARS, cap: D
 function ensureMacro(c = ctx()) {
     if (state.macro || typeof c?.registerMacro !== 'function') return state.macro;
     try {
-        c.registerMacro(MACRO, () => { try { return recentText(ctx(), state.count, state.chars); } catch { return ''; } }, '블루레몬: 눈 감긴 답을 뺀 최근 답 본문(미트볼 문구용)');
+        c.registerMacro(MACRO, () => { try { onceSeen(); return recentText(ctx(), state.once?.level === 'last' && state.once.until > now() ? 0 : state.count, state.chars); } catch { return ''; } }, '블루레몬: 눈 감긴 답을 뺀 최근 답 본문(미트볼 문구용)');
         c.registerMacro(MACRO_ALL, () => { try { onceSeen(); return allText(ctx(), state.cap).text; } catch { return ''; } }, '블루레몬: 눈 감긴 메시지를 뺀 채팅 전체 본문(미트볼 문구용)');
         state.macro = true;
     } catch { /* 이 판에는 매크로 등록이 없어요 */ }
@@ -252,7 +256,7 @@ const store = () => { try { return globalThis.localStorage ?? null; } catch { re
 const now = () => Date.now();
 function readOnce() {
     if (state.once) return state.once;
-    try { const until = Number(store()?.getItem(ONCE_KEY)); if (Number.isFinite(until) && until > 0) state.once = { until, seen: 0 }; } catch { /* 표시 없이 */ }
+    try { const until = Number(store()?.getItem(ONCE_KEY)); if (Number.isFinite(until) && until > 0) { const lv = store()?.getItem(ONCE_LV_KEY); state.once = { until, seen: 0, level: LEVELS.includes(lv) ? lv : 'all' }; } } catch { /* 표시 없이 */ }
     return state.once;
 }
 export const onceActive = () => { const o = readOnce(); return !!o && o.until > now(); };
@@ -268,35 +272,38 @@ function onceSeen() {
     try { store()?.setItem(ONCE_KEY, String(o.until)); } catch { /* 표시 없이 */ }
     watchOnce();
 }
-/** 누르면: 다음 생성 묶음에만 채팅 전체. 걸었으면 true */
-export async function armOnce({ c = ctx(), doc = globalThis.document, toast = globalThis.toastr, def = undefined } = {}) {
-    if (!ensureMacro(c)) { try { toast?.warning?.('이 실리태번 판은 매크로 등록이 없어 채팅 전체를 실을 수 없어요.', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } return false; }
-    state.once = { until: now() + ONCE_WAIT, seen: 0 };
-    const r = await syncPrompt('all', { c, doc, def });
-    if (r.ok) await syncRules(true, { c, doc }).catch(() => null);
+/** 누르면: 다음 생성 묶음에만 그 단계(기본 = 채팅 전체). 걸었으면 true · quiet 면 걸렸다는 알림을 안 띄워요(만들기 화면의 고르기) */
+export async function armOnce({ c = ctx(), doc = globalThis.document, toast = globalThis.toastr, def = undefined, level: want = 'all', quiet = false } = {}) {
+    const lv = level(want);
+    if (lv !== 'off' && lv !== 'light' && !ensureMacro(c)) { try { toast?.warning?.('이 실리태번 판은 매크로 등록이 없어 채팅 전체를 실을 수 없어요.', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } return false; }
+    state.once = { until: now() + ONCE_WAIT, seen: 0, level: lv };
+    const r = await syncPrompt(onceBlock(lv), { c, doc, def });
+    if (r.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null);   // 줄 꼴 규칙은 본편 쪽이라 「이번 한 번만」 과 상관없이 평소 단계를 따라요
     if (!r.ok) { state.once = null; try { toast?.warning?.(r.why === 'none' ? '미트볼 상태창 설정을 못 찾았어요.' : '미트볼의 「생성 시스템 프롬프트」 자리를 못 찾았어요(다른 판).', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } return false; }
-    try { store()?.setItem(ONCE_KEY, String(state.once.until)); } catch { /* 이 세션에서만 */ }
+    try { store()?.setItem(ONCE_KEY, String(state.once.until)); if (lv === 'all') store()?.removeItem(ONCE_LV_KEY); else store()?.setItem(ONCE_LV_KEY, lv); } catch { /* 이 세션에서만 */ }
     watchOnce();
+    if (quiet) return true;
     try { toast?.info?.('다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에 채팅 전체를 실어요. 끝나거나 10분 안에 안 만들면 원래 단계로 돌아가요.', '', { timeOut: 9000 }); } catch { /* 알림 없이 */ }
     return true;
 }
 /** 끝: 원래 단계로. 돌려놨으면 true */
-export async function endOnce({ c = ctx(), doc = globalThis.document, toast = globalThis.toastr, force = false, def = undefined } = {}) {
+export async function endOnce({ c = ctx(), doc = globalThis.document, toast = globalThis.toastr, force = false, def = undefined, quiet = false } = {}) {
     const o = readOnce(); if (!o) return false;
     if (!force && o.until > now()) { watchOnce(); return false; }
-    const seen = o.seen;
+    const seen = o.seen, name = ONCE_NAME[o.level] || ONCE_NAME.all;
     state.once = null; if (state.onceTimer) { try { clearTimeout(state.onceTimer); } catch { /* 그대로 */ } state.onceTimer = null; }
-    try { store()?.removeItem(ONCE_KEY); } catch { /* 표시 없이 */ }
+    try { store()?.removeItem(ONCE_KEY); store()?.removeItem(ONCE_LV_KEY); } catch { /* 표시 없이 */ }
     state.last = await syncPrompt(state.level, { c, doc, def });
     await syncRules(state.level !== 'off', { c, doc }).catch(() => null);
-    try { toast?.info?.(seen ? `채팅 전체를 실어 ${seen}번 보냈어요. 미트볼 문구를 원래 단계로 돌려놨어요.` : '미트볼 생성이 없어서 채팅 전체 싣기를 거두고 원래 단계로 돌려놨어요.', '', { timeOut: 9000 }); } catch { /* 알림 없이 */ }
+    if (quiet) return true;
+    try { toast?.info?.(seen ? (name === ONCE_NAME.all ? `채팅 전체를 실어 ${seen}번 보냈어요. 미트볼 문구를 원래 단계로 돌려놨어요.` : `「${name}」 로 ${seen}번 보냈어요. 미트볼 문구를 원래 단계로 돌려놨어요.`) : (name === ONCE_NAME.all ? '미트볼 생성이 없어서 채팅 전체 싣기를 거두고 원래 단계로 돌려놨어요.' : `미트볼 생성이 없어서 「${name}」 를 거두고 원래 단계로 돌려놨어요.`), '', { timeOut: 9000 }); } catch { /* 알림 없이 */ }
     return true;
 }
 /** 설정이 바뀔 때마다(src/apply.js) — 그 확장이 아직 안 떴으면 조금 뒤 한 번 더 */
 export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_CHARS, { c = ctx(), doc = globalThis.document, retry = true, toast = globalThis.toastr, cap = state.cap } = {}) {
     state.level = level(want); state.count = count; state.chars = chars; state.cap = Math.max(0, Math.round(Number(cap)) || 0);
     if (readOnce()) {   // 「이번 한 번만」 이 걸려 있는 동안은 채팅 전체 그대로 — 때가 지났으면 여기서 돌려놔요
-        if (state.once.until > now()) { ensureMacro(c); watchOnce(); state.last = await syncPrompt('all', { c, doc }); if (state.last.ok) await syncRules(true, { c, doc }).catch(() => null); return state.last; }
+        if (state.once.until > now()) { ensureMacro(c); watchOnce(); state.last = await syncPrompt(onceBlock(state.once.level || 'all'), { c, doc }); if (state.last.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null); return state.last; }
         await endOnce({ c, doc, toast, force: true });
         return state.last ?? { ok: true, changed: true, why: '', level: state.level };
     }
@@ -312,3 +319,5 @@ export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_
     return r;
 }
 export const lastResult = () => state.last;
+/** 지금 걸려 있는 「이번 한 번만」 단계(없으면 '') */
+export const onceLevel = () => (onceActive() ? (state.once.level || 'all') : '');
