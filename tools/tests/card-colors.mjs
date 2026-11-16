@@ -106,6 +106,19 @@ await test('코드: 이름 · 색을 박지 않아요 · features 가 테마와 
     assert.doesNotMatch(read('src/card-colors.js').replace(/^\s*\/\/.*$/gm, ''), /#[0-9a-fA-F]{6}\b/);
     assert.match(read('src/features.js'), /load\('cardcolors', '\.\/card-colors\.js'\)\.then\(m => m\?\.syncCardColors\(on\)\)/);
 });
+await test('1.6.2 첫 낱말: 그 첫 낱말을 가진 사람이 한 명이면 맞추고, 같은 첫 낱말이 둘이면 첫 낱말로는 안 맞춰요(전체 이름은 그대로)', () => {
+    const one = { ...ctx, characterId: 0, extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#e0567f': 'Mina Park', '#3a8ee6': 'Rho Ann' } } } } };
+    const t1 = K.cardColorTable(one);
+    assert.equal(K.tableColor(t1, 'Mina'), '#e0567f'); assert.equal(K.tableColor(t1, 'Mina Kim'), '#e0567f', '한 명이면 다른 이름도 첫 낱말로');
+    const two = { ...ctx, characterId: 0, extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#e0567f': 'Mina Park', '#2f9e6e': 'Mina Lee', '#3a8ee6': 'Rho Ann' } } } } };
+    const t2 = K.cardColorTable(two);
+    assert.equal(K.tableColor(t2, 'Mina'), null, '두 사람이 「mina」 — 누구인지 정하지 않아요');
+    assert.equal(K.tableColor(t2, 'Mina Kim'), null, '첫 낱말만 같은 다른 사람은 남의 색을 안 받아요');
+    assert.equal(K.tableColor(t2, 'Mina Park'), '#e0567f'); assert.equal(K.tableColor(t2, 'mina lee'), '#2f9e6e', '전체 이름은 그대로');
+    assert.equal(K.tableColor(t2, 'Rho'), '#3a8ee6', '다른 첫 낱말은 한 명이라 그대로');
+    const full = { ...ctx, characterId: 0, extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#e0567f': 'Mina Park', '#111111': 'Mina' } } } } };
+    assert.equal(K.tableColor(K.cardColorTable(full), 'Mina'), '#111111', '첫 낱말이 다른 사람의 전체 이름이면 그 사람');
+});
 
 console.log(`card-colors: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

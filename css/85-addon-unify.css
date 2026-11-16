@@ -123,7 +123,7 @@ html body.salty dialog.popup > .popup-body > .popup-content > .rl-root > .rl-top
 html body.salty dialog.popup > .popup-body > .popup-content > .rl-root { padding-top: 4px !important; }
 html body.salty:not(#bl-rl-off) dialog.popup:has(> .popup-body > .popup-content > .rl-root) > .popup-button-close { top: 17px !important; } /* :not(#…) 는 특이도만(위 :is(#lv_settings …) 규칙보다 앞서려고) */
 /* 7.7.8 ×는 내용 스크롤바 홈(오른쪽 끝 ≈ 16px)보다 안쪽 — 폰에서 스크롤 손잡이가 × 오른쪽 반을 덮었다. 위 줄과 같은 수평선(탭 줄 높이 가운데) */
-html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close { right: 26px !important; top: 9px !important; } /* 탭 줄(36, 내용 위 8px)과 같은 세로 중심: 12+8+18-17 = 9 (4배 확대 확인 10-23) */
+html body.salty dialog.popup:has(> .popup-body > .popup-content > :is(#lv_settings, .bwr_settings, #model_register_settings, #model-switch-settings, .po-dialog, .pa-hub, .rl-root, #regex-link-settings)) > .popup-button-close { right: 26px !important; top: 12px !important; } /* 머리 줄(34)과 같은 세로 중심: 팝업 위 12 + 34/2 − 34/2 = 12 — 11-17 디자인 전수조사: 내용 위 8px 여백이 없어진 뒤로 ×가 머리 줄보다 3px 위였어요(TTS · 다시 쓰기 · 모델 등록 · 모델 전환 · 확장 순서 · 성능 보조 · 정규식 연결) */
 html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab > .rl-tab-sub { display: inline !important; margin-left: 2px; font-size: .8em !important; opacity: .85; }
 html body.salty dialog.popup:not(.bl-settings-dialog) .rl-root .rl-tab > .rl-tab-sub:empty { display: none !important; }
 

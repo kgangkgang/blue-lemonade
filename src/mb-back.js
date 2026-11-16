@@ -24,7 +24,7 @@ export function closeDialog(dlg, isShown = shown) {
 }
 /** 뒤로 가기 한 번: 문서의 맨 위 열린 창이 이 창이 아니면 그것부터 닫고 false(이 창은 남아요) · 이 창이면 닫고 true */
 export function backOnce(doc, dlg, isShown = shown) {
-    const open = [...(doc?.querySelectorAll?.('dialog[open]') || [])];
+    const open = [...(doc?.querySelectorAll?.('dialog[open]:not([closing])') || [])];   // 닫히는 애니메이션 중인 창(실리태번이 [closing] 을 단 채 open 을 남겨요)은 맨 위가 아니에요 — 빠르게 두 번 눌러도 두 번째가 그 창을 또 누르지 않게
     const top = open[open.length - 1];
     if (top && top !== dlg) { closeDialog(top, isShown); return false; }
     if (dlg?.isConnected === false) return true;      // 이미 닫힌 창

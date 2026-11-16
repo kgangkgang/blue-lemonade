@@ -61,8 +61,12 @@ function applyEdits(nodes, find) {
         if (typeof edit.replace === 'string') first.node.text = before + edit.replace + after;
         else {
             const at = first.holder.indexOf(first.node);
-            const parts = [before ? { t: 'text', text: before } : null, edit.replace, after ? { t: 'text', text: after } : null].filter(Boolean);
+            if (at < 0) continue;
+            const head = before ? { t: 'text', text: before } : null;
+            const parts = [head, edit.replace, after ? { t: 'text', text: after } : null].filter(Boolean);
             first.holder.splice(at, 1, ...parts);
+            // 11-17 버그 사냥 4: 같은 글 조각에 앞쪽 편집이 또 오면(한 문단에 숨길 이름이 두 번) 빠진 옛 노드 대신 남은 앞 조각을 보게 — 전엔 indexOf -1 로 방금 넣은 가림을 지우고 원래 글을 다시 넣었어요
+            if (head) first.node = head;
         }
     }
     // 빈 글 조각 · 빈 인라인 요소는 걷어요

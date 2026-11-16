@@ -75,7 +75,10 @@ export function syncReplyTop(enabled) {
         listen('GENERATION_ENDED', () => { if (!armed) return; armed = false; onEnded(); });
         listen('MESSAGE_SWIPED', hide);
         listen('CHAT_CHANGED', hide);
-        for (const name of ['MESSAGE_DELETED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED']) listen(name, hide);   // 지우거나 고친 뒤 ↑ 가 남아 아무 데도 안 가지 않게
+        // 지우거나 고친 뒤 ↑ 가 남아 아무 데도 안 가지 않게 — 떠 있는 것만 걷어요. 11-17 버그 사냥 4: 답 끝 뒤 기다림(350ms)까지 지우면
+        //   번역 끝 그림 · 상태창 헬퍼 알림 · 에셋 다시 그리기가 곧바로 내는 MESSAGE_UPDATED 에 ↑ 가 한 번도 안 떴어요(기다림은 그때의 마지막 답으로 다시 재요)
+        const dismiss = () => { if (btn && !btn.hidden) hide(); };
+        for (const name of ['MESSAGE_DELETED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED']) listen(name, dismiss);
     } catch { /* 이벤트를 못 걸면 번역 신호만 */ }
     document.addEventListener('llm-translator:rendered', onRendered);
     offs.push(() => document.removeEventListener('llm-translator:rendered', onRendered));

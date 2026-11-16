@@ -165,8 +165,11 @@ function reattach() {
     if (mark.mes.isConnected && mark.mes.parentElement?.id === 'chat') return;
     if (chatId() !== mark.chatId) { clearMark(); return; }
     const chat = document.getElementById('chat');
+    // 11-17 버그 사냥 4: 앞 메시지를 지우면 실리태번이 붙어 있던 요소의 mesid 를 고쳐 둬요 — 표시할 때 적은 번호 대신 그 요소의 마지막 번호로 찾아요
+    //   (전엔 지운 뒤 같은 채팅이 다시 그려지면 옛 번호의 다른 메시지를 보고 「사라져 표시를 거뒀어요」 라고 했어요)
+    const mesid = mark.mes.getAttribute('mesid') ?? mark.mesid;
     let next = null;
-    for (let el = chat?.firstElementChild; el; el = el.nextElementSibling) if (el.classList.contains('mes') && el.getAttribute('mesid') === mark.mesid) { next = el; break; }
+    for (let el = chat?.firstElementChild; el; el = el.nextElementSibling) if (el.classList.contains('mes') && el.getAttribute('mesid') === mesid) { next = el; break; }
     const root = mesText(next);
     const at = root && !editing(next) ? locate(root.textContent ?? '', mark) : -1;
     if (at < 0) { clearMark(); toast('warning', '시작 표시를 둔 메시지가 사라져 표시를 거뒀어요.'); return; }

@@ -18,9 +18,17 @@ let capturePage=null;
 const CAPTURE_PAGE_SIZE=50;
 const context = () => SillyTavern.getContext();
 const userError = message => Object.assign(Error(message), { user: true });
+// 11-17 버그 사냥 4: 고른 것은 메시지 번호라, 창을 닫고 앞 메시지를 지우면 체크가 한 칸씩 밀린 다른 메시지에 붙어 「원문 가져오기」 · 캡처가 말없이 다른 메시지를 썼어요 — 지우면 고른 것을 비워요
+let deletions=0, seenDeletions=0, deletionBound=false;
+function bindDeletions(){
+    if(deletionBound)return;
+    try{const c=context(),T=c.eventTypes||c.event_types;if(T?.MESSAGE_DELETED&&c.eventSource?.on){c.eventSource.on(T.MESSAGE_DELETED,()=>{deletions++;});deletionBound=true;}}catch{/* 사건 없음 */}
+}
 function syncChat() {
+    bindDeletions();
     const key=context().chatId;
-    if(key!==chatKey){chatKey=key;selected.clear();proposal=null;previewGen++;undoChat=null;previewCache=new WeakMap();capturePage=null;}
+    if(key!==chatKey){chatKey=key;selected.clear();proposal=null;previewGen++;undoChat=null;previewCache=new WeakMap();capturePage=null;seenDeletions=deletions;}
+    else if(deletions!==seenDeletions){seenDeletions=deletions;selected.clear();proposal=null;previewGen++;capturePage=null;}
 }
 function previewText(raw) {
     let text=String(raw??'');

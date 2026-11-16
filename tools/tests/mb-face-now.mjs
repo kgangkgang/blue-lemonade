@@ -53,4 +53,28 @@ await ok('③ 다시 그림 → 같은 작업 안(마이크로태스크)에 한 
     assert.ok(read('index.js').includes("import('./src/mb-face-now.js').then(m => m.startFaceNow())"));
 });
 
+await ok('④ 1.6.2 띠 배지 · 꾸미기 묶음 · 두 열 목록도 같은 작업 안에 — 띠 · 띠 안 일부 · 목록을 품은 가지 · 창 머리 · 다른 것은 아님', async () => {
+    const el = (name, { parent = null, kids = [] } = {}) => { const e = { nodeType: 1, name, parentElement: parent, firstElementChild: kids[0] || null };
+        e.matches = sel => (sel === m.BAND && name === 'tb') || (sel === m.LIST && name === 'dl') || (sel === m.HEAD && name === 'head');
+        e.closest = sel => { for (let x = e; x; x = x.parentElement) if (x.matches(sel)) return x; return null; };
+        e.querySelectorAll = sel => { const out = []; const walk = x => { for (const k of x.kids || []) { if (k.matches(sel)) out.push(k); walk(k); } }; walk(e); return out; };
+        e.kids = kids; for (const k of kids) k.parentElement = e; return e; };
+    const badge = el('b.al'); const acts = el('acts', { kids: [badge] }); const tb = el('tb', { kids: [acts] }); el('hud', { kids: [tb] });
+    const dl = el('dl'); const pane = el('pane', { kids: [dl] }); const tw = el('tw'); const head = el('head', { parent: tw });
+    const other = el('div'); const text = { nodeType: 3 };
+    let t = m.markTargets([{ addedNodes: [tb] }]); assert.deepEqual([...t.bands], [tb]);
+    t = m.markTargets([{ addedNodes: [badge, acts] }]); assert.deepEqual([...t.bands], [tb]);                          // 띠 안 일부만 다시 그린 때도 그 띠
+    t = m.markTargets([{ addedNodes: [pane, dl, text, other] }, { addedNodes: [head] }]); assert.deepEqual([...t.lists], [dl]); assert.deepEqual([...t.tws], [tw]); assert.equal(t.bands.size, 0);
+    t = m.markTargets([{ addedNodes: [other, text] }, {}]); assert.equal(t.bands.size + t.lists.size + t.tws.size, 0);
+    // 구독: 맞춤 시트가 걸리는 때만(테마 켬 · 원작 그대로 보기 아님) · 얼굴 표시 설정과 상관없이 · 칠하는 함수가 던져도 나머지는 그대로
+    const classes = new Set(['salty']), attrs = new Set();
+    const doc = { body: { classList: { contains: c => classes.has(c) }, hasAttribute: a => attrs.has(a) } };
+    const got = []; let on = null;
+    const fresh = await import(pathToFileURL(path.join(root, 'src/mb-face-now.js')).href + '?t=4');
+    fresh.startFaceNow(doc, { watch: (r, s, fn) => { on = fn; }, soon: fn => fn(), paint: () => got.push('face'), marks: { badge: x => { got.push('badge'); throw new Error('x'); }, long: x => got.push('long'), deco: x => got.push(x === tw ? 'deco' : 'deco?') } });
+    on([{ addedNodes: [tb, pane] }, { addedNodes: [head] }]); assert.deepEqual(got, ['badge', 'long', 'deco']);
+    got.length = 0; attrs.add('data-bl-ext-raw'); on([{ addedNodes: [tb, pane, head] }]); assert.deepEqual(got, []);
+    attrs.delete('data-bl-ext-raw'); classes.delete('salty'); on([{ addedNodes: [tb] }]); assert.deepEqual(got, []);
+});
+
 console.log(`mb-face-now: ${n}개 통과`);

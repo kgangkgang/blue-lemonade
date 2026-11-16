@@ -29,6 +29,15 @@ await test('installedFolder: 정확한 이름 먼저 · 없으면 판 번호 붙
     assert.equal(F.installedFolder('', names, []), '', 'empty base (theme add-on with no folder)');
     assert.equal(F.installedFolder('story-notes', null, null), '');
 });
+await test('knownConflicts: 판 번호 · main 붙은 단독 확장 폴더도 같은 확장으로(애드온 카드 legacyFolders 와 같은 판정 · 버그 사냥 4)', () => {
+    const names = ['third-party/esetham-main', 'third-party/llm-translator-custom-1.4.1', 'third-party/other-main', 'tts-main'];
+    const rows = F.knownConflicts(names, [], { assets: true, translator: true, tts: true });
+    assert.deepEqual(rows.map(r => r.code), ['duplicate-assets', 'duplicate-translator']);
+    assert.match(rows[0].text, /^esetham-main: /, '실제 폴더 이름으로 알려요');
+    assert.equal(F.knownConflicts(['third-party/esetham-main'], ['third-party/esetham-main'], { assets: true }).length, 0, '꺼진 폴더');
+    assert.equal(F.knownConflicts(['third-party/esetham-extra'], [], { assets: true }).length, 0, '이름만 비슷한 다른 확장');
+    for (const n of names) assert.equal(F.legacyFolders(F.DUPLICATES.assets, [n], []).length > 0, n === 'third-party/esetham-main', '두 판정이 같아요: ' + n);
+});
 await test('모델 전환: 아는 확장은 본래 폴더 이름으로 찾고(판 번호 붙어도), 창 다시 그리기도 그 폴더로 · 자동 찾기는 실제 폴더로', () => {
     const t = read('src/addons/modelswitch/targets.js');
     assert.match(t, /import \{ folderBase, installedFolder \} from '\.\.\/\.\.\/extension-folder\.js';/);

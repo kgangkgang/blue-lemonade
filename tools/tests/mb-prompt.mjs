@@ -105,8 +105,8 @@ await ok('맞추기: 「최근 답 여러 개」 는 매크로를 한 번 등록
     const timers = []; const st = globalThis.setTimeout; globalThis.setTimeout = (fn, ms) => { timers.push(ms); return 1; };
     try {
         const r = await M.syncMbPrompt('recent', 3, 800, { c, doc });
-        assert.equal(r.why, 'shape'); assert.deepEqual(timers, [4000]); assert.deepEqual(reg.map(x => x[0]), [M.MACRO, M.MACRO_ALL]); assert.equal(reg[0][1](), 'A: body text'); assert.equal(reg[1][1](), 'A: body text');
-        await M.syncMbPrompt('all', 3, 800, { c, doc }); assert.equal(reg.length, 2, '두 번 등록 안 해요');
+        assert.equal(r.why, 'shape'); assert.deepEqual(timers, [4000]); assert.deepEqual(reg.map(x => x[0]), [M.MACRO, M.MACRO_ALL, M.MACRO_MEMO]); assert.equal(reg[0][1](), 'A: body text'); assert.equal(reg[1][1](), 'A: body text'); assert.equal(reg[2][1](), '', '기억 요약이 없으면 빈 글');
+        await M.syncMbPrompt('all', 3, 800, { c, doc }); assert.equal(reg.length, 3, '두 번 등록 안 해요');
     } finally { globalThis.setTimeout = st; }
     assert.equal(set.prompts, undefined);
 });
@@ -131,7 +131,8 @@ await ok('채팅 전체: 보이는 메시지 전부(내 메시지 포함 · 이�
     const r = M.allText(c, 0);
     assert.equal(r.text, 'A: first reply\n\nU: my line\n\nA: second reply\n\nU: last word');
     assert.deepEqual([r.count, r.total, r.cut, r.dropped], [4, 4, 0, 0]); assert.equal(r.tokens, r.full);
-    assert.deepEqual(M.allText({}, 0), { text: '', count: 0, total: 0, cut: 0, dropped: 0, tokens: 0, full: 0 });
+    assert.deepEqual(M.allText({}, 0), { text: '', count: 0, total: 0, summarized: 0, cut: 0, dropped: 0, hidden: 0, hiddenSum: 0, memo: 0, chars: 0, fullChars: 0, tokens: 0, full: 0 });
+    assert.deepEqual([r.hidden, r.hiddenSum, r.summarized, r.chars], [1, 0, 0, r.text.length]);
 });
 await ok('채팅 전체 상한: 넘으면 오래된 메시지부터 앞 1,000자로 · 그래도 넘으면 오래된 것부터 빼고 · 가장 새 메시지는 남겨요', async () => {
     const big = i => ({ name: 'A', is_user: false, mes: String.fromCharCode(97 + i).repeat(7000) });   // 한 개 약 2,000 토큰
@@ -176,7 +177,8 @@ await ok('이번 한 번만: 걸면 채팅 전체 줄 · 요청이 보이면 끝
 });
 await ok('채팅 전체 연결: 단계 다섯 · 고를 때 확인 창(취소하면 안 바뀜) · 한 번만 단추 · 상한 설정 · 새로 고친 뒤에도 돌려놓게 표시를 봄', async () => {
     const panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8'), apply = fs.readFileSync(path.join(root, 'src/apply.js'), 'utf8'), set = fs.readFileSync(path.join(root, 'src/settings.js'), 'utf8');
-    assert.deepEqual(M.LEVELS, ['off', 'light', 'last', 'recent', 'all']);
+    assert.deepEqual(M.LEVELS, ['off', 'light', 'last', 'recent', 'all', 'memo']);   // memo 는 만들기 화면의 이번 한 번만(설정 단계 고르기 · 저장 값 검사에는 없음)
+    assert.ok(!panel.includes("['memo'") && !set.includes("'all', 'memo'].includes(s.chat.mbPrompt)"));
     assert.ok(panel.includes("['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off'"));
     const i = panel.indexOf("if (path === 'chat.mbPrompt' && value === 'all' && String(current) !== 'all' && !(await askConfirm("), j = panel.indexOf('update(st => setPath(st, path, typeof current', i);
     assert.ok(i > 0 && j > i && /\)\)\) break;/.test(panel.slice(i, j)), '확인 창에서 취소하면 설정을 안 바꿔요');
@@ -227,5 +229,78 @@ await ok('줄 꼴 규칙의 글: 그 확장이 읽는 줄 꼴에 맞는 예시(�
     assert.ok(src.includes("await syncRules(state.level !== 'off', { c, doc }).catch(() => null);\n    if (quiet) return true;"));   // 「이번 한 번만」 이 끝나면 원래 단계대로
     const panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8');
     assert.ok(panel.includes('mbRuleTokens()') && panel.includes('esc(mbRuleBlock())'));                         // 설정 줄: 본편 답마다 어림 · 덧붙는 글 보기
+});
+// ── 1.6.3 기억 요약 · 채팅 전체가 넘칠 때 요약으로 · 실은 양 ──
+// 시험용으로 지어낸 기억 자료(그 확장들의 저장 모양만 흉내 · 원작 글 아님)
+const memoriaMeta = () => ({ memoria: { version: 1, turns: [
+    { id: 't2', mesId: 2, turnIndex: 3, summary: 'Day 2: the courier lost the parcel.' },
+    { id: 't0', mesId: 0, turnIndex: 1, summary: 'Day 1: the courier arrived at the harbor.' },
+    { id: 't1', mesId: 1, turnIndex: 2, summary: '', failed: false },
+    { id: 'tx', mesId: 3, turnIndex: 4, summary: 'broken', failed: true },
+] } });
+const elephantMeta = () => ({ long_memory: { timeline: [
+    { id: 'c1', tier: 'chapter', from: 0, to: 3, title: 'Chapter one', text: 'Whole chapter.' },
+    { id: 'e2', tier: 'episode', from: 2, to: 3, title: 'Lost parcel', text: 'The parcel went missing.' },
+], archive: [
+    { id: 'e1', kind: 'timeline', from: 0, to: 1, title: 'Arrival', text: 'The courier arrived.' },
+    { id: 'l1', kind: 'ledger', from: 1, to: 1, title: 'Item: key', text: 'not a turn summary' },
+    { id: 's0', kind: 'timeline', from: -1, to: 3, title: 'Story so far', text: 'saga' },
+] } });
+await ok('기억 요약 읽기: 메모리아 꼴(턴마다 · 빈 것 · 실패 뺌 · 차례대로) · 코끼리 꼴(가장 잘게 쪼갠 덩이 · 장 · 줄거리 · 장부 뺌) · 둘 다 있으면 턴마다 쪽만 · 없으면 빈 목록', async () => {
+    const a = M.memoEntries({ chatMetadata: memoriaMeta() });
+    assert.equal(a.source, 'memoria'); assert.deepEqual(a.list.map(e => [e.from, e.to]), [[0, 0], [2, 2]]);
+    const b = M.memoEntries({ chatMetadata: elephantMeta() });
+    assert.equal(b.source, 'long_memory'); assert.deepEqual(b.list.map(e => [e.from, e.to, e.text]), [[0, 1, 'Arrival: The courier arrived.'], [2, 3, 'Lost parcel: The parcel went missing.']]);
+    assert.equal(M.memoEntries({ chatMetadata: { ...memoriaMeta(), ...elephantMeta() } }).source, 'memoria');
+    assert.deepEqual(M.memoEntries({ chatMetadata: {} }), { list: [], source: '' }); assert.deepEqual(M.memoEntries({}), { list: [], source: '' });
+    assert.deepEqual(M.memoEntries({ chat_metadata: memoriaMeta() }).list.length, 2, '옛 이름(chat_metadata)도');
+});
+await ok('채팅 전체 + 기억 요약: 숨긴 메시지는 요약이 있으면 그 자리에 · 상한을 넘으면 오래된 메시지부터 그 요약으로(요약이 없으면 앞 1,000자) · 점자 빈칸은 띄어쓰기로 · 실은 양', async () => {
+    const big = (i, extra = {}) => ({ name: 'A', is_user: false, mes: String.fromCharCode(97 + i).repeat(7000), ...extra });
+    const chat = [big(0), big(1), big(2, { is_system: true }), big(3), { name: 'U', is_user: true, mes: 'go⠀now' }];
+    const c = { chat, chatMetadata: memoriaMeta() };
+    const free = M.allText(c, 0);
+    assert.ok(free.text.includes('[Summary #2] Day 2: the courier lost the parcel.') && !free.text.includes('c'.repeat(50)), '숨긴 #2 는 요약으로');
+    assert.ok(free.text.endsWith('U: go now'), '점자 빈칸 → 띄어쓰기');
+    assert.deepEqual([free.count, free.total, free.hidden, free.hiddenSum, free.summarized, free.cut, free.dropped, free.memo], [4, 4, 1, 1, 0, 0, 0, 2]);
+    const fit = M.allText(c, 3000);   // #0 을 요약으로 바꾸고 · 요약 없는 #1 은 앞 1,000자
+    assert.ok(fit.tokens <= 3000); assert.ok(fit.text.startsWith('[Summary] A: Day 1: the courier arrived at the harbor.\n\nA: ' + 'b'.repeat(M.HEAD_CHARS) + '…'));
+    assert.deepEqual([fit.count, fit.summarized, fit.cut, fit.dropped], [4, 1, 1, 0]); assert.ok(fit.text.includes('d'.repeat(7000)), '요약 없는 새 메시지는 원문');
+    assert.equal(M.fillLine('all', fit), `메시지 4/4개 · ${Math.round(fit.chars).toLocaleString('ko-KR')}자 · 약 ${fit.tokens.toLocaleString('ko-KR')} 토큰 · 오래된 1개는 기억 요약으로 · 1개는 앞 1,000자만 · 숨긴 메시지 1개는 요약 1개로`);
+    // 코끼리 꼴: 한 덩이가 #0~#1 을 덮으면 #0 자리에 한 번만 · #1 은 합쳐짐(실린 셈)
+    const e = M.allText({ chat: [big(0), big(1), big(3), big(4)], chatMetadata: elephantMeta() }, 3500);
+    assert.ok(e.text.startsWith('[Summary] A: Arrival: The courier arrived.\n\n[Summary] A: Lost parcel: The parcel went missing.\n\nA: e')); assert.equal((e.text.match(/Arrival/g) || []).length, 1);
+    assert.deepEqual([e.count, e.summarized, e.dropped, e.tokens <= 3500], [4, 3, 0, true]);
+});
+await ok('기억 요약 단계: 요약을 차례대로([#N]) + 마지막 요약 뒤 메시지는 원문 · 요약이 없으면 빈 글 · 문구 덩어리 · 알아보기 · 어림', async () => {
+    const chat = [{ name: 'A', mes: 'one' }, { name: 'A', mes: 'two' }, { name: 'A', mes: 'three' }, { name: 'U', is_user: true, mes: 'four' }, { name: 'A', is_system: true, mes: 'hidden five' }, { name: 'A', mes: 'six' }];
+    const r = M.memoText({ chat, chatMetadata: memoriaMeta() }, 0);
+    assert.equal(r.text, '[#0] Day 1: the courier arrived at the harbor.\n[#2] Day 2: the courier lost the parcel.\n\n--- AFTER THE LAST SUMMARY (full text) ---\nU: four\n\nA: six');
+    assert.deepEqual([r.count, r.first, r.last, r.tail, r.source], [2, 0, 2, 2, 'memoria']);
+    assert.equal(M.fillLine('memo', r), `기억 요약 2개(메시지 #0~#2) · 그 뒤 메시지 2개는 원문 · ${r.chars}자 · 약 ${r.tokens} 토큰`);
+    assert.deepEqual(M.memoText({ chat }, 0).count, 0); assert.equal(M.memoText({ chat }).text, ''); assert.equal(M.fillLine('memo', { count: 0 }), '이 채팅에 매 턴 기억 요약이 없어요');
+    assert.ok(M.block('memo').includes(`{{${M.MACRO_MEMO}}}`)); assert.equal(M.levelOf(M.block('memo')), 'memo'); assert.equal(M.levelOf(M.block('all')), 'all');
+    assert.equal(M.estimate('memo', { chat, chatMetadata: memoriaMeta() }), M.estimate('light') + r.tokens);
+});
+await ok('이번 한 번만 끝 알림에 실은 양: 「채팅 전체를 실어 N번 보냈어요 — 요청마다 메시지 a/b개 · …」 · 기억 요약도', async () => {
+    const reg = []; const { c, set } = mk();
+    c.registerMacro = (k, fn) => reg.push([k, fn]); c.chat = [{ name: 'A', is_user: false, mes: 'body text' }, { name: 'A', is_system: true, mes: 'old' }]; c.chatMetadata = { memoria: { turns: [{ mesId: 1, summary: 'Old part summary.' }] } };
+    globalThis.SillyTavern = { getContext: () => c };
+    const mem = new Map(); globalThis.localStorage = { getItem: k => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)), removeItem: k => mem.delete(k) };
+    const toasts = []; const toast = { info: m => toasts.push(m), warning: m => toasts.push('!' + m) };
+    const st = globalThis.setTimeout, ct = globalThis.clearTimeout; globalThis.setTimeout = () => 1; globalThis.clearTimeout = () => { };
+    try {
+        await M.armOnce({ c, toast, def: DEF, quiet: true });
+        const fills = []; const off = M.onFill(f => fills.push(f));
+        const all = (reg.length ? reg : globalThis.__blReg).find(x => x[0] === M.MACRO_ALL)[1];
+        assert.equal(all(), 'A: body text\n\n[Summary #1] Old part summary.'); all();
+        assert.equal(fills.length, 2); assert.deepEqual(M.onceInfo().seen, 2); assert.equal(M.onceInfo().fill.count, 1); off();
+        assert.equal(await M.endOnce({ c, toast, def: DEF, force: true }), true);
+        assert.match(toasts.at(-1), /^채팅 전체를 실어 2번 보냈어요 — 요청마다 메시지 1\/1개 · \d+자 · 약 \d+ 토큰 · 숨긴 메시지 1개는 요약 1개로\. 미트볼 문구를 원래 단계로 돌려놨어요\.$/);
+        await M.armOnce({ c, toast, def: DEF, quiet: true, level: 'memo' }); assert.equal(M.onceLevel(), 'memo'); assert.equal(M.levelOf(set.prompts[M.KEY]), 'memo'); assert.equal(mem.get(M.ONCE_LV_KEY), 'memo');
+        const memo = (reg.length ? reg : globalThis.__blReg).find(x => x[0] === M.MACRO_MEMO)[1];
+        assert.equal(memo(), '[#1] Old part summary.');
+        await M.endOnce({ c, toast, def: DEF, force: true }); assert.match(toasts.at(-1), /^「기억 요약」 으로 1번 보냈어요 — 요청마다 기억 요약 1개\(메시지 #1~#1\)/);
+    } finally { globalThis.setTimeout = st; globalThis.clearTimeout = ct; delete globalThis.localStorage; }
 });
 console.log(`mb-prompt: ${n}개 통과`);

@@ -4922,7 +4922,8 @@ jQuery(async () => {
             (text) => { if (!text) console.warn(`[LLM Translator] ${name} 가 비어 있음`); return String(text ?? ''); },
             (error) => { console.warn(`[LLM Translator] ${name} 불러오기 실패`, error?.status); return ''; });
         const html = await getPart('index.html');
-        const buttonHtml = await getPart('buttons.html');
+        // (1.6.2 opt5) 껍데기(shell.js)가 이미 ✦ 메뉴 두 줄을 붙였으면 같은 조각을 또 받지 않아요(부팅 뒤 같은 주소 두 번 — 아래 붙이기도 어차피 건너뛰어요)
+        const buttonHtml = document.getElementById('llm_translate_chat') ? '' : await getPart('buttons.html');
 
         if (!document.getElementById('llm_translate_chat')) $('#translate_wand_container').append(buttonHtml);   // 껍데기(shell.js)가 먼저 붙였으면 그대로
         $('#translation_container').append(html);

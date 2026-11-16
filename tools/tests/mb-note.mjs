@@ -71,6 +71,7 @@ await test('시트 한 번 · 키프레임은 이 시트에 · 지시칸 두 곳
     assert.match(css, /\.ss-scope \.ss-instruct/);
     assert.match(css, /\.ss-wizard textarea\.ss-w-ins/);
     assert.doesNotMatch(css, /:has\(/);
+    assert.match(css, /animation: bl-mb-note-seen \.001s 1 !important;/);   // 그 확장의 「움직임 줄이기」 규칙(.ss-scope * { animation: none !important })에 신호가 꺼지지 않게
     assert.doesNotMatch(css + fs.readFileSync(path.join(root, 'src/mb-note.js'), 'utf8'), /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u);   // 이모티콘 없음
 });
 

@@ -19,11 +19,17 @@ let promptMod = null;
 const loadPrompt = () => (promptMod ||= import('./mb-prompt.js'));
 
 export const ROW = 'bl-mb-read';
-export const PICKS = [['base', '기본(앞 700자씩)'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']];
+// 1.6.3 (11-17 사용자 「첫 채팅부터 쫙으로 만들었는데 … 반영 안 된 것 같다」 · 「기억 요약 확장에서 매 챗마다 요약된 거라도」):
+//   · 「채팅 전체」 어림 줄에 실을 양(메시지 수 · 글자 · 토큰 어림)과 상한에 맞춘 방식(오래된 것은 기억 요약으로 · 앞 1,000자만 · 숨긴 메시지)을 늘 보여요 — 다 들어가면 「다 실어요」.
+//     상한을 넘으면 고르는 순간 알림으로 미리 알려요. 보내고 나면 그 줄이 「보냈어요 N번 — 요청마다 …」 로 바뀌고, 끝 알림에도 같은 숫자가 나와요(src/mb-prompt.js).
+//   · 「기억 요약」(memo): 기억 확장이 남긴 매 턴 요약을 차례대로 + 마지막 요약 뒤 메시지는 원문. 요약이 없는 채팅이면 알리고 고르기를 되돌려요.
+//     「채팅 전체」 와 겹쳐 고르지 않아요 — 다 들어가는 채팅이면 원문이 요약보다 더 많이 담고(같은 이야기를 두 번 실을 까닭이 없어요),
+//     안 들어가는 채팅이면 「채팅 전체」 가 넘치는 오래된 메시지를 그 요약으로 바꿔 실어요(= 둘을 합친 것). 긴 채팅을 싸게 읽히고 싶을 때 「기억 요약」 하나만 골라요.
+export const PICKS = [['base', '기본(앞 700자씩)'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체'], ['memo', '기억 요약(매 턴 요약 + 그 뒤 원문)']];
 /** 머리줄 고르기에 보이는 짧은 글(값 차례는 PICKS 와 같아요) */
-export const SHORT = { base: '기본', last: '마지막 답', recent: '최근 답', all: '채팅 전체' };
+export const SHORT = { base: '기본', last: '마지막 답', recent: '최근 답', all: '채팅 전체', memo: '기억 요약' };
 /** 테마 설정 단계 → 고르기 값(적용 안 함 · 가볍게는 둘 다 「기본」) */
-export const pickOf = lv => (lv === 'last' || lv === 'recent' || lv === 'all' ? lv : 'base');
+export const pickOf = lv => (lv === 'last' || lv === 'recent' || lv === 'all' || lv === 'memo' ? lv : 'base');
 /** 고르기 값 → 이번 한 번에 쓸 단계(「기본」 은 평소가 기본 쪽이면 평소 그대로, 아니면 적용 안 함) */
 export const levelFor = (pick, usual) => (pick === 'base' ? (pickOf(usual) === 'base' ? (usual === 'light' ? 'light' : 'off') : 'off') : pick);
 const num = n => Math.round(Number(n) || 0).toLocaleString('ko-KR');
@@ -38,13 +44,20 @@ export function costLine(pick, chat = {}, c = undefined, costText = '', P = null
     if (!P) return '';
     const usual = chat.mbPrompt || 'off', lv = levelFor(pick, usual);
     const count = chat.mbPromptCount ?? P.DEFAULT_COUNT, chars = chat.mbPromptChars ?? P.DEFAULT_CHARS, cap = chat.mbPromptCap ?? P.DEFAULT_CAP;
-    let all = null, one = 0;
-    try { all = P.allText(c, cap); one = P.estimate(lv, c, count, chars, cap); } catch { return ''; }
+    let all = null, one = 0, memo = null;
+    try { all = P.allText(c, cap); one = P.estimate(lv, c, count, chars, cap); if (lv === 'memo') memo = P.memoText(c, cap); } catch { return ''; }
+    if (lv === 'memo' && !memo?.count) return P.fillLine('memo', memo || { count: 0 });
     const k = aiCalls(costText);
-    const parts = [`채팅 ${num(all.total)}개`, one ? `요청 1회 약 ${big(one)} 토큰 더` : '더 드는 토큰 없음'];
+    const over = lv === 'all' && (all.summarized || all.cut || all.dropped);
+    const parts = [lv === 'all' ? `${P.fillLine('all', all)}${over ? ` — 상한 ${big(cap)}에 맞춤` : ' — 다 실어요'}` : lv === 'memo' ? P.fillLine('memo', memo) : `채팅 ${num(all.total)}개`, one ? `요청 1회 약 ${big(one)} 토큰 더` : '더 드는 토큰 없음'];
     if (one && k) parts.push(`이번 만들기 약 ${big(one * k)} 토큰 더(AI ${k}회)`);
-    if (lv === 'all' && (all.cut || all.dropped)) parts.push(`상한 ${big(cap)}으로 줄임 — 오래된 답 ${num(all.cut)}개는 앞부분만${all.dropped ? ` · ${num(all.dropped)}개는 뺌` : ''}`);
     return parts.join(' · ');
+}
+/** 보낸 뒤 줄: 「보냈어요 N번 — 요청마다 …」(이번 한 번만이 고른 단계로 걸려 있고 요청이 보였을 때만 · 아니면 '') */
+export function sentLine(pick, chat = {}, P = null) {
+    const info = P?.onceInfo?.();
+    if (!info?.seen || pick === 'base' || info.level !== levelFor(pick, chat.mbPrompt || 'off')) return '';
+    return `보냈어요 ${num(info.seen)}번${info.fill && (info.level === 'all' || info.level === 'memo') ? ` — 요청마다 ${P.fillLine(info.level, info.fill)}` : ''}`;
 }
 /** 머리줄에 놓을 고르기(이름 「읽기」 + 고르기)를 만들어요 */
 export function makeRow(doc, pick) {
@@ -74,23 +87,26 @@ export function slotOf(el) {
 }
 const defaultSettings = async () => (await import('./settings.js')).getSettings();
 let started = false;
-export function startMbRead(doc = globalThis.document, { watch = watchDom, settings = defaultSettings, load = loadPrompt } = {}) {
+export function startMbRead(doc = globalThis.document, { watch = watchDom, settings = defaultSettings, load = loadPrompt, toast = () => globalThis.toastr } = {}) {
     if (started || !doc?.addEventListener) return false;
     started = true;
-    let chat = {}, host = null, hostQuiet = false, P = null;      // host = 이번 한 번을 건 만들기 창 · P = 문구 모듈(창이 처음 뜰 때)
+    let chat = {}, host = null, hostQuiet = false, P = null, lastRow = null, heard = false;      // host = 이번 한 번을 건 만들기 창 · P = 문구 모듈(창이 처음 뜰 때) · lastRow = 마지막으로 놓은 고르기
+    const prev = new WeakMap();   // 고르기 → 바로 앞 값(기억 요약이 없을 때 되돌려요)
     const refresh = row => {
         try {
             const root = row.closest('.ss-wizard') || row.closest('dialog') || doc;
             const sel = row.querySelector(`.${ROW}-sel`), cost = root.querySelector?.(`.${ROW}-cost`);
             if (!cost) return;
-            cost.textContent = sel.value === 'base' ? '' : costLine(sel.value, chat, undefined, root.querySelector?.('.ss-w-cost')?.textContent || '', P);   // 「기본」 이면 고르기 한 줄만 — 어림 줄은 다른 것을 골랐을 때만(빈 줄은 시트가 숨겨요 · 만들기 화면이 길어지지 않게)
+            cost.textContent = sel.value === 'base' ? '' : (sentLine(sel.value, chat, P) || costLine(sel.value, chat, undefined, root.querySelector?.('.ss-w-cost')?.textContent || '', P));   // 「기본」 이면 고르기 한 줄만 — 어림 줄은 다른 것을 골랐을 때만(빈 줄은 시트가 숨겨요 · 만들기 화면이 길어지지 않게) · 보낸 뒤에는 보낸 양
         } catch { /* 줄 없이 */ }
     };
+    const warn = (text, ms = 12000) => { try { toast()?.warning?.(text, '', { timeOut: ms }); } catch { /* 알림 없이 */ } };
     const place = async el => {
         const slot = slotOf(el); if (!slot) return null;
         let row = slot.root.querySelector(`.${ROW}`);
         try { chat = (await settings())?.chat || {}; } catch { chat = {}; }
         try { P = await load(); } catch { return null; }   // 문구 모듈을 못 받으면 줄을 놓지 않아요
+        if (!heard && P.onFill) { heard = true; P.onFill(() => { if (lastRow) refresh(lastRow); }); }   // 요청이 실릴 때마다 어림 줄을 「보냈어요」 로
         row = slot.root.querySelector(`.${ROW}`);
         if (!row) {
             const once = P.onceLevel();
@@ -105,15 +121,28 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
                 slot.sec.insertBefore(cost, slot.input);
             }
         }
+        const sel0 = row.querySelector(`.${ROW}-sel`); if (sel0 && !prev.has(sel0)) prev.set(sel0, sel0.value);
+        lastRow = row;
         refresh(row);
         return row;
     };
     doc.addEventListener('animationstart', event => { if (event.animationName === ANIM) place(event.target).catch(() => { /* 원래 화면 그대로 */ }); }, true);
     doc.addEventListener('change', event => {
         const sel = event.target; if (!sel?.classList?.contains(`${ROW}-sel`)) return;
-        const row = sel.closest(`.${ROW}`); refresh(row);
+        const row = sel.closest(`.${ROW}`);
+        const cap = chat.mbPromptCap ?? P?.DEFAULT_CAP;
+        if (P && sel.value === 'memo') {                                     // 기억 요약이 없는 채팅 — 알리고 되돌려요
+            let m = null; try { m = P.memoText(undefined, cap); } catch { m = null; }
+            if (!m?.count) { sel.value = prev.get(sel) ?? pickOf(chat.mbPrompt); refresh(row); warn('이 채팅에는 매 턴 기억 요약이 없어요(메모리아 · 코끼리 꼴 요약을 찾아요) — 고르기를 되돌렸어요.', 9000); return; }
+        }
+        prev.set(sel, sel.value);
+        refresh(row);
         if (!P) return;
         const usual = chat.mbPrompt || 'off', want = levelFor(sel.value, usual);
+        if (want === 'all') {                                                  // 상한을 넘으면 고르는 순간 미리 알려요
+            let a = null; try { a = P.allText(undefined, cap); } catch { a = null; }
+            if (a && (a.summarized || a.cut || a.dropped)) warn(`미리 알려요: 채팅 전체가 요청 1회 상한(약 ${big(cap)} 토큰)을 넘어요 — ${P.fillLine('all', a)}. 원문을 다 넣으려면 블루레몬 설정 › 채팅 › 미트볼 문구의 「채팅 전체: 요청 1회 상한」 을 올려요(0 = 없음).`, 15000);
+        }
         (async () => {
             if (pickOf(usual) === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요
             if (await P.armOnce({ level: want, quiet: true })) { host = row.closest('dialog') || row.closest('.ss-wizard'); hostQuiet = want === 'off' || want === 'light'; }   // 기본 쪽은 요청을 셀 수 없어 닫을 때 조용히 돌려놔요

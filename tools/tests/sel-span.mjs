@@ -287,6 +287,25 @@ await test('메시지가 지워지면 거두고 알린다 · 같은 채팅이 �
     assert.equal(document.getElementById(S.GUIDE_ID), null);
 });
 
+await test('앞 메시지를 지운 뒤 같은 채팅이 다시 그려져도 표시를 잃지 않는다(버그 사냥 4)', async () => {
+    reset();
+    S.setMark({ range: pick(3, '표식3B') });
+    unselect();
+    const text = mesAt(3).querySelector('.mes_text').textContent;
+    // 실리태번 deleteMessage(1): 그 요소를 빼고 뒤 메시지 mesid 를 하나씩 당겨요(updateViewMessageIds)
+    mesAt(1).remove();
+    for (const mes of chat.querySelectorAll('.mes')) { const id = Number(mes.getAttribute('mesid')); if (id > 1) mes.setAttribute('mesid', String(id - 1)); }
+    await sleep(S.LOST_MS + 120);
+    assert.equal(S._span.state()?.mes.getAttribute('mesid'), '2', '요소가 살아 있으니 그대로');
+    chat.innerHTML = chat.innerHTML;   // reloadCurrentChat: 같은 내용 · 새 요소
+    eventSource.emit(CHAT_CHANGED);
+    await sleep(S.LOST_MS + 120);
+    assert.ok(S._span.state(), '표시가 남아요: ' + JSON.stringify(toasts));
+    assert.equal(S._span.state().mes, mesAt(2), '지금 번호의 새 요소에 붙어요');
+    assert.equal(mesAt(2).querySelector('.mes_text').textContent, text);
+    assert.ok(!toasts.some(([kind]) => kind === 'warning'));
+});
+
 await test('5분이 지나면 거두고 알린다', () => {
     reset();
     const real = globalThis.setTimeout, timers = [];

@@ -5,7 +5,7 @@
 //   알려진 차이: 저장된 번역문의 옛 결함 수선(repairShownTranslations) · 겹친 용어집 항목 합치기 알림 · 자동 건너뛰기의 「이미 한국어」 판단은 처음 쓸 때 해요.
 import { bootSheetOf } from '../../addon-style-bundle.js';
 import { loadSheet } from '../../focus-copies.js';
-import { eventSource, event_types, chat } from '../../../../../../../script.js';
+import { eventSource, event_types, chat, getCurrentChatId } from '../../../../../../../script.js';
 import { extension_settings, getContext } from '../../../../../../extensions.js';
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
@@ -125,13 +125,23 @@ export function ensureBody(reason = '?') {
         for (const [type, fn] of shellListeners.splice(0)) { try { eventSource.removeListener(type, fn); } catch { /* 흉내 */ } }
         for (const [id, args] of [...pendingProtect]) { try { globalThis[API]?.protect?.(id, ...args); } catch { /* 본체가 알림 */ } }
         pendingProtect.clear();
-        for (const [type, args] of queued.splice(0)) { try { await m.replayEvent(type, args); } catch (error) { console.warn('[LLM Translator] 쌓아 둔 사건 넘기기', error); } }
+        for (const event of queued.splice(0)) { if (!stillHere(event)) continue; try { await m.replayEvent(event.type, event.args); } catch (error) { console.warn('[LLM Translator] 쌓아 둔 사건 넘기기', error); } }
         return m;
     }).catch(error => { bodyPromise = null; throw error; });
     bodyPromise.catch(error => console.error('[LLM Translator] 본체를 불러오지 못했어요', error));
     return bodyPromise;
 }
 const withBody = (reason, fn) => ensureBody(reason).then(fn).catch(() => {});
+// 11-17 버그 사냥 4: 본체를 받는 사이(폰에서 몇 초) 채팅을 바꾸거나 앞 메시지를 지우면, 쌓아 둔 번호가 새 채팅 · 밀린 메시지를 가리켜
+//   남의 메시지를 번역 · 번역문 삭제하거나 보낸 글(message.mes)을 번역문으로 바꿔 썼어요 — TTS 껍데기처럼 채팅과 그 메시지 객체를 같이 적어 두고 그대로일 때만 넘겨요
+const chatKey = () => { try { return getCurrentChatId(); } catch { return undefined; } };
+const MESSAGE_EVENTS = new Set(['MESSAGE_SENT', 'USER_MESSAGE_RENDERED', 'CHARACTER_MESSAGE_RENDERED', 'MESSAGE_SWIPED', 'MESSAGE_UPDATED'].map(k => event_types[k]).filter(Boolean));
+const msgAt = id => { const n = Number(id); return Number.isInteger(n) && n >= 0 ? chat[n] : undefined; };
+function record(type, args) {
+    const target = MESSAGE_EVENTS.has(type) ? msgAt(args[0]) : null;
+    return { type, args, chatId: chatKey(), target };
+}
+const stillHere = event => event.chatId === chatKey() && (!MESSAGE_EVENTS.has(event.type) || (!!event.target && msgAt(event.args[0]) === event.target));
 
 // ── 메시지 단추 누름: 본체를 받은 뒤 같은 일을 (index.js clickButton)
 const BUTTON_KINDS = [['mes_legacy_translate', 'legacy'], ['mes_llm_translate', 'translate'], ['mes_toggle_original', 'toggle'], ['mes_edit_translation', 'edit'], ['mes_paragraph_correction', 'paragraph'], ['mes_delete_translation', 'delete']];
@@ -142,7 +152,13 @@ function onButton(e) {
     const kind = BUTTON_KINDS.find(([cls]) => el.classList.contains(cls))?.[1];
     const messageId = el.closest('.mes')?.getAttribute('mesid');
     if (!kind || messageId == null) return;
-    withBody('단추', m => m.clickButton(kind, messageId));
+    const key = chatKey(), target = msgAt(messageId);
+    withBody('단추', m => {
+        // 받는 사이 채팅이 바뀌었거나 단추가 사라졌으면 그만 · 앞 메시지가 지워졌으면 지금 번호로(같은 메시지일 때만)
+        const now = el.isConnected ? el.closest('.mes')?.getAttribute('mesid') : null;
+        if (now == null || key !== chatKey() || !target || msgAt(now) !== target) return;
+        return m.clickButton(kind, now);
+    });
 }
 
 // ── 전역 다리 자리 (본체가 오면 같은 이름의 진짜 객체로 바뀌어요)
@@ -192,7 +208,7 @@ function listen() {
     for (const key of QUEUE) {
         const type = event_types[key];
         if (!type) continue;
-        const fn = (...args) => { if (body) return; queued.push([type, args]); ensureBody(key); };
+        const fn = (...args) => { if (body) return; queued.push(record(type, args)); ensureBody(key); };
         eventSource.on(type, fn); shellListeners.push([type, fn]);
     }
     eventSource.on(event_types.CHAT_CHANGED, () => {

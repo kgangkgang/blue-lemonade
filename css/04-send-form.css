@@ -136,6 +136,8 @@ body.salty #nonQRFormItems > #rightSendForm {
   body.salty #send_textarea {
     order: 2 !important;
     flex: 1 1 calc(100% - var(--bottomFormBlockSize) - 4px) !important;
+    /* 11-17 디자인 전수조사: 위 PC 규칙의 최소 폭 16em 이 글자를 키우면(메뉴 글자 18px → 288px) 남은 폭(폰 360 에서 283px)보다 커져 ≡ 만 윗줄에 혼자 남고 입력칸이 한 줄 아래로 밀렸어요 — 폰은 남은 폭 그대로 */
+    min-width: 0 !important;
     resize: none !important;
   }
 }

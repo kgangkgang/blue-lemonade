@@ -11,7 +11,9 @@ export function knownConflicts(names, disabled, addons) {
     // 실리태번 내장 tts 는 third-party/tts 와 다른 확장이다
     const thirdParty = new Set(names.filter(n => !disabled.includes(n) && n.startsWith('third-party/')).map(n => n.slice(12)));
     const owner = id => id === 'tts' ? thirdParty : active;
-    return Object.entries(DUPLICATES).filter(([id, name]) => addons[id] && name.some(folder => owner(id).has(folder))).map(([id, name]) => ({ code: 'duplicate-' + id, level: '확인됨', text: `${name.filter(folder => owner(id).has(folder)).join(', ')}: 내장 기능과 별도 확장이 함께 켜져 있어요. 내장 기능은 대기할 수 있어요.` }));
+    // 11-17 버그 사냥 4: ZIP 이름대로 풀린 폴더('esetham-main' · 'char-assets-1.4.1')도 같은 확장으로 — 애드온 카드(legacyFolders)는 대기로 보는데 확장 점검에는 줄이 없었어요
+    const hits = (id, list) => [...owner(id)].filter(folder => list.includes(folder) || list.includes(folderBase(folder)));
+    return Object.entries(DUPLICATES).filter(([id, name]) => addons[id] && hits(id, name).length).map(([id, name]) => ({ code: 'duplicate-' + id, level: '확인됨', text: `${hits(id, name).join(', ')}: 내장 기능과 별도 확장이 함께 켜져 있어요. 내장 기능은 대기할 수 있어요.` }));
 }
 
 /** 'xxx-1.2.3' · 'xxx-v2' · 'xxx-main' → 'xxx' (판 번호가 없으면 그대로) */

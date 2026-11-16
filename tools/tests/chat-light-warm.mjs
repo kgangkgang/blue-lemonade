@@ -404,5 +404,106 @@ test('CSS: 표식(data 속성)이 붙은 메시지는 content-visibility: visibl
     assert.ok(!/requestIdleCallback\(/.test(js), '쉬는 시간 콜백은 화면이 계속 그려지면 몇 ms 만 줘서 쓰지 않는다');
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/chat-light-warm\.mjs \./);
 });
+// ---------------------------------------------------------------- (1.6.1 opt4-warm) 보는 자리 둘레만 · 굴리는 동안 쉼 · 멀리 뛰면 그 자리부터
+//   예전(전부 풀기)은 묶음의 고정 몫이 이미 푼 수에 비례해 500개 채팅이 폰 4배에서 몇 분 동안 메인 스레드를 채웠어요(보고 지시-1116/최적화-4차).
+let fakeTop = 0; Object.defineProperty(chat, 'scrollTop', { get: () => fakeTop, configurable: true });
+const warmed = () => mes.filter(m => m.attrs.has('data-bl-warm')).map(m => m.i);
+/** 보는 칸 가운데 바로 위에 view 번이 오게 굴린 꼴(자리만 바꿈 · 사건은 따로) */
+const moveTo = view => { for (const m of mes) m.top = (m.i - view - 1) * 200 + 300; fakeTop = view * 200; };
+const begin = (count, view) => { setMessages(count); moveTo(view); M.syncChatLight(false); M.syncChatLight(true); M._warm.stop(); };
+const scrollEvent = () => docListeners.get('scroll').f({ target: chat });
+test('(둘레) warmWindow: 방향 쪽으로 WARM_AHEAD · 반대쪽 나머지 · 모르면 반반 · 끝에 닿으면 남는 몫은 반대쪽', () => {
+    const { warmWindow: W, WARM_AROUND: N, WARM_AHEAD: A } = M;
+    assert.ok(N >= 150 && N <= 200 && A > N / 2 && A < N, 'N ' + N + ' · 앞 ' + A);
+    assert.deepEqual(W(1000, 500, 0), { lo: 500 - N / 2, hi: 500 + N / 2 });
+    assert.deepEqual(W(1000, 500, -1), { lo: 500 - A, hi: 500 + (N - A) });
+    assert.deepEqual(W(1000, 500, 1), { lo: 500 - (N - A), hi: 500 + A });
+    assert.deepEqual(W(1000, 999, 0), { lo: 999 - N, hi: 999 }, '바닥에서 열면 위로 N 개');
+    assert.deepEqual(W(1000, 0, 1), { lo: 0, hi: N });
+    assert.deepEqual(W(50, 20, -1), { lo: 0, hi: 49 }, '짧으면 전부');
+    assert.deepEqual(W(0, 0, 0), { lo: 0, hi: -1 });
+    for (const [c, at, d] of [[1000, 3.5, -1], [1000, 996.5, 1], [300, 150, 0], [2000, 1999, -1]]) { const w = W(c, at, d); assert.ok(w.lo >= 0 && w.hi <= c - 1 && w.hi - w.lo <= N && w.lo <= at && at <= w.hi, JSON.stringify([c, at, d, w])); }
+});
+test('(둘레) 500개 채팅: 전부가 아니라 보는 자리 둘레 WARM_AROUND 안만 풀고 멈춘다 — 묶음 수도 그만큼만', () => {
+    begin(500, 489); const s0 = M._warm.state().slices;
+    M.kickWarm(0); settle(120000);
+    const w = warmed();
+    assert.ok(w.length > 100 && w.length <= M.WARM_AROUND + 1, '푼 수 ' + w.length);
+    assert.ok(w.every(i => i >= 500 - 10 - M.WARM_AROUND - 2 && i < 490), '둘레 밖을 풀었어요: ' + w[0] + ' ~ ' + w.at(-1));
+    assert.ok(mes.slice(0, 300).every(m => !m.attrs.has('data-bl-warm')), '먼 메시지(0 ~ 299)는 그대로 건너뛴다');
+    const st = M._warm.state(); assert.equal(st.timer || st.job || st.look, false, '다 풀면 일정이 남지 않는다');
+    assert.ok(st.slices - s0 <= M.WARM_AROUND, '묶음 ' + (st.slices - s0) + '번');
+});
+test('(굴리는 중 쉼) scroll 이 이어지는 동안 묶음을 돌리지 않고, WARM_SCROLL_REST_MS 멎은 뒤 새 자리 둘레로 이어 간다 · 굴리던 쪽을 더 넉넉히', () => {
+    begin(500, 489); M.kickWarm(0); advance(M.WARM_QUIET_MS + 400);   // 몇 묶음 푼 채
+    const before = M._warm.state().slices;
+    for (let v = 480; v >= 300; v -= 6) { moveTo(v); scrollEvent(); advance(50); }   // 위로 계속 굴림(1.5초)
+    assert.equal(M._warm.state().slices, before, '굴리는 동안 묶음이 돌았어요');
+    assert.equal(M._warm.state().dir, -1, '위로 굴리던 중');
+    settle(120000);
+    const w = warmed(); const up = w.filter(i => i < 300).length, down = w.filter(i => i > 301).length;
+    assert.ok(up >= M.WARM_AHEAD - 12 && up <= M.WARM_AHEAD + M.WARM_KEEP, '위쪽(굴리던 쪽) ' + up);
+    assert.ok(down >= 30, '아래쪽 ' + down);
+});
+test('(멀리 뛰기) scroll 사건 그 자리에서 — 프레임이 그려지기 전 — 보이는 메시지와 위아래 VIEW_GUARD 개가 풀린다 · 읽기가 모두 쓰기보다 먼저', () => {
+    begin(500, 489); M.kickWarm(0); settle(120000);
+    assert.ok(!mes[100].attrs.has('data-bl-warm'));
+    const log = []; for (const m of mes) { const r = m.getBoundingClientRect, w = m.setAttribute; m.getBoundingClientRect = () => { log.push('r'); return r(); }; m.setAttribute = (a, v) => { if (a === 'data-bl-warm') log.push('w'); w(a, v); }; }
+    events.length = 0; const reads0 = rectReads;
+    moveTo(100); scrollEvent();   // 찾기 · 북마크 · 번호로 이동 · 맨 위로 … 어느 길이든 #chat 이 구르면 와요. 시계를 돌리지 않음 = 같은 프레임
+    const vis = mes.filter(m => m.top < 600 && m.top + 200 > 0).map(m => m.i);
+    assert.ok(vis.length >= 2 && vis.includes(100), '보이는 것 ' + vis);
+    for (let i = vis[0] - M.VIEW_GUARD; i <= vis.at(-1) + M.VIEW_GUARD; i++) assert.ok(mes[i].attrs.has('data-bl-warm'), i + '번이 아직 건너뛴 채');
+    assert.ok(!mes[vis[0] - M.VIEW_GUARD - 1].attrs.has('data-bl-warm') && !mes[vis.at(-1) + M.VIEW_GUARD + 1].attrs.has('data-bl-warm'), '그 자리에서는 보이는 둘레만');
+    assert.ok(log.lastIndexOf('r') < log.indexOf('w'), '쓰기 뒤에 자리를 읽었어요(강제 배치): ' + log.join(''));
+    assert.ok(rectReads - reads0 <= 2 + 12 + vis.length + 2, '자리 읽기 ' + (rectReads - reads0) + '번(이분 탐색이어야 해요 · 메시지 500개)');
+    assert.ok(events.some(e => e[1] === 'contentvisibilityautostatechange' && e[2] === false), '네모 단추 감시에 풀린 메시지를 알린다');
+    settle(120000);
+    const w = warmed();
+    assert.ok(w.filter(i => i >= 20 && i <= 180).length >= 130, '뛴 자리 둘레가 풀린다');
+    assert.ok(mes.slice(300).every(m => !m.attrs.has('data-bl-warm')), '옛 자리(바닥 쪽)의 표식은 떼서 다시 건너뛴다 — 푼 수가 채팅 길이만큼 쌓이지 않는다');
+    assert.ok(w.length <= M.WARM_AROUND + 2 * M.WARM_KEEP + 2 * M.VIEW_GUARD + 4, '푼 수 ' + w.length);
+    assert.ok(M._warm.state().cooled > 0);
+});
+test('(여유) 둘레에서 WARM_KEEP 안쪽으로만 벗어난 푼 메시지는 되돌리지 않는다(조금 굴릴 때마다 뗐다 붙였다 하지 않게)', () => {
+    begin(500, 290); scrollEvent(); moveTo(300); scrollEvent(); settle(120000);   // 아래로 굴리던 중(둘레가 같은 쪽으로 치우친 채)
+    const a = warmed();
+    moveTo(300 + M.WARM_KEEP - 10); scrollEvent(); settle(120000);
+    for (const i of a) assert.ok(mes[i].attrs.has('data-bl-warm'), i + '번을 되돌렸어요');
+});
+test('(쉬는 동안) 답을 받는 중 · 서랍이 열려 표식을 뗀 동안에는 scroll 이 와도 달지 않는다(예전처럼 브라우저에 맡김)', () => {
+    begin(500, 489); M.kickWarm(0); settle(120000);
+    document.body.dataset.generating = 'true'; moveTo(100); scrollEvent();
+    assert.ok(!mes[100].attrs.has('data-bl-warm'));
+    delete document.body.dataset.generating;
+    M.coolOffscreen(); moveTo(200); scrollEvent();
+    assert.ok(!mes[200].attrs.has('data-bl-warm'), '되돌린 상태(cool)에서는 달지 않는다');
+    assert.equal(warmed().length, 0);
+    M._warm.stop();
+});
+test('(묶음 최소) 고정 몫이 조각 시간을 넘겨도 묶음 크기가 WARM_BATCH_MIN 아래로 내려가지 않는다 — 메시지마다 고정 몫을 따로 치르지 않게', () => {
+    begin(500, 489); const s0 = M._warm.state().slices; FIXED = 120; PER = 10;   // 긴 채팅: 고정 몫만으로 조각 시간(50ms)의 1.5배를 넘음
+    try { M.kickWarm(0); settle(240000); } finally { FIXED = 20; PER = 5; }
+    const st = M._warm.state(); const done = warmed().length;
+    assert.equal(M.WARM_BATCH_MIN, 4); assert.ok(done >= 140, '푼 수 ' + done);
+    assert.ok(st.k >= M.WARM_BATCH_MIN, '묶음 크기 ' + st.k);
+    assert.ok(st.slices - s0 <= Math.ceil(done / M.WARM_BATCH_MIN) + 6, '묶음 ' + (st.slices - s0) + '번 · 메시지 ' + done + '개(묶음 크기가 1 로 내려앉으면 메시지 수만큼 돌아요)');
+    M._warm.stop();
+});
+test('(짧은 채팅 · 다른 칸) 긴 채팅 표식이 없거나 #chat 이 아닌 칸의 scroll 은 아무것도 읽지 않는다', () => {
+    const r0 = rectReads; docListeners.get('scroll').f({ target: { id: 'other' } });
+    const had = htmlClasses.has('bl-chat-light'), hadC = chat.classes.has('bl-chat-light');
+    htmlClasses.delete('bl-chat-light'); chat.classes.delete('bl-chat-light'); scrollEvent();
+    assert.equal(rectReads, r0);
+    if (had) htmlClasses.add('bl-chat-light'); if (hadC) chat.classes.add('bl-chat-light');
+    M._warm.stop();
+});
+test('(배선) scroll 은 문서에서 capture · passive 로 한 번 · 글 고르는 동안의 규칙(data-bl-chat-sel)은 이 고침이 건드리지 않는다', () => {
+    const l = docListeners.get('scroll'); assert.ok(l && l.opts && l.opts.capture === true && l.opts.passive === true);
+    const js = read('src/chat-light.js');
+    assert.equal((js.match(/addEventListener\('scroll', onChatScroll/g) || []).length, 1);
+    assert.match(js, /if \(!warm\.cool && document\.body\?\.dataset\?\.generating !== 'true'\) viewGuard\(el\);/);
+    assert.match(read('css/05-chat.css'), /^:where\(html\.bl-chat-light\[data-bl-chat-sel\]\) body\.salty \[id="chat"\]:not\(#salty-none\) > \.mes/m, '고르는 동안 크기 기억 규칙(1.5.9)');
+});
 console.log(`chat-light-warm: ${n}/${n + failed} 통과`);
 process.exit(failed ? 1 : 0);

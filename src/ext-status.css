@@ -1145,3 +1145,9 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-sel { flex: 0 1 auto; wi
 body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-cost { display: block; margin: 0 0 var(--bl-s2, 8px); color: var(--ss-dim); font-size: var(--bl-ts-meta, 13px); line-height: 1.45; overflow-wrap: anywhere; }
 body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-cost.bl-mb-read-cost-top { margin: var(--bl-s2, 8px) 0 0; }
 body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-cost:empty { display: none; }
+/* 그 확장 설정 칸의 체크 칸 줄(11-16 사용자 「체크박스 옆에 글자들 약간 묘하게 떠 있음」 · 「일시정지 · OOC」 탭 · 폰 384 밤): 그 확장(2.7.x 끝 ~ 2.8.0)은 이 줄을 글 줄로 두고
+   체크 칸을 왼쪽 위 0.2em 에 띄워 둬요 — 테마의 두 칸 격자 규칙(위)이 밀려서, 줄 높이 19 · 체크 칸 20px 이면 체크 칸 가운데가 글 첫 줄 가운데보다 3.6px 아래였어요(리그 · 설정 칸 체크 줄 94 가운데 92).
+   그 꼴(글 줄 · 왼쪽 여백 · 긴 글 줄바꿈)은 그대로 두고, 줄 높이를 정해 체크 칸을 첫 줄 가운데에 놓아요: 위치 = (줄 높이 − 체크 칸 높이) / 2 − 0.045em
+   1.6.3: 체크 칸 규칙은 :has 없이 「줄의 첫 아이」 로만 골라요(뜻 같음 — 주어 아닌 :has 상한 93 을 넘지 않게). */
+body.salty #ss-settings .inline-drawer-content label.checkbox_label:has(> input[type="checkbox"]:first-child) { --bl-mb-cbox: 20px; line-height: 1.45; overflow-wrap: anywhere; }
+body.salty #ss-settings .inline-drawer-content label.checkbox_label > input[type="checkbox"]:first-child { font-size: inherit; width: var(--bl-mb-cbox); height: var(--bl-mb-cbox); top: calc((1.45em - var(--bl-mb-cbox)) / 2 - 0.045em);   /* 끝의 0.045em: 글꼴 위아래 여백이 비대칭이라 글자 상자가 줄 가운데보다 0.7px(15.5px 글자) 아래 — 글자 크기 비례로 맞춰요 */ margin: 0 !important; }

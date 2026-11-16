@@ -150,6 +150,36 @@ await test('하나만 고르면 그 하나 · 답 만드는 중엔 들어가지 
     ctx.getCurrentChatId = keep;
 });
 
+await test('지우는 도중 다른 채팅을 열면 거기서 멈춤 — 새 채팅의 같은 번호는 안 지움(버그 사냥 4)', async () => {
+    fill(6); deletes.length = 0; toasts.length = 0;
+    globalThis.confirm = () => true;
+    const keep = ctx.getCurrentChatId, keepDel = ctx.deleteMessage; let id = 'chat-a'; ctx.getCurrentChatId = () => id;
+    R._forTest.enter();
+    click(chat.querySelector('[mesid="1"]'));
+    click(chat.querySelector('[mesid="4"]'));
+    ctx.deleteMessage = async (...a) => {
+        await keepDel(...a);
+        if (deletes.length === 1) { id = 'chat-b'; ctx.chat.splice(0, ctx.chat.length, ...['b0', 'b1', 'b2', 'b3', 'b4'].map(mes => ({ mes }))); }   // 실리태번처럼 같은 배열을 새 채팅으로 채움
+    };
+    await R._forTest.confirmDelete();
+    assert.deepEqual(deletes.map(d => d[0]), [4], '첫 번째만 지우고 멈춤');
+    assert.deepEqual(ctx.chat.map(m => m.mes), ['b0', 'b1', 'b2', 'b3', 'b4'], '새 채팅은 그대로');
+    assert.ok(toasts.some(([k, m]) => k === 'warning' && /멈췄어요/.test(m) && /1개만/.test(m)), JSON.stringify(toasts));
+    ctx.getCurrentChatId = keep; ctx.deleteMessage = keepDel;
+});
+
+await test('확인 창이 떠 있으면 Esc 는 그 창 몫 — 고르기 줄은 그대로(버그 사냥 4)', () => {
+    fill(3);
+    R._forTest.enter();
+    const dlg = document.createElement('dialog'); dlg.setAttribute('open', ''); document.body.append(dlg);
+    const esc = new Event('keydown', { bubbles: true, cancelable: true }); Object.defineProperty(esc, 'key', { value: 'Escape' });
+    document.dispatchEvent(esc);
+    assert.equal(esc.defaultPrevented, false, '창의 cancel 을 막지 않아요');
+    assert.ok(document.getElementById('bl-range-del'), '고르기 줄은 남아요');
+    dlg.remove();
+    R._forTest.leave();
+});
+
 await test('끄면 메뉴 항목 · 고르기 줄 · 리스너 모두 없음', () => {
     R._forTest.enter();
     R.syncRangeDelete(false);

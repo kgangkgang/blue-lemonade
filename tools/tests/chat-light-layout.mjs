@@ -75,10 +75,11 @@ function insideCall(code, pos, callee) {
 }
 const lineOf = (code, at) => code.slice(0, at).split('\n').length;
 
-const READERS = ['restoreScroll', 'hide', 'evaluate', 'drawerCoversChat', 'chatViewRect'];
+// (1.6.1 opt4-warm) viewGuard: #chat 의 scroll 사건 안에서만 — 그 프레임의 스타일 · 배치 · 칠하기 전에 보이는 메시지를 찾아(읽기 먼저) 표식을 달아요(쓰기 나중). 굴리기만으로는 배치가 더러워지지 않아요
+const READERS = ['restoreScroll', 'hide', 'evaluate', 'drawerCoversChat', 'chatViewRect', 'viewGuard'];
 // ⑤ 미리 그리기 묶음의 배치 끝내기 — 이 함수 안의 이 한 줄만, 한 번만. 그 함수는 scheduler( 로만 넘긴다
 const WARM_FLUSH = { fn: 'stepWarm', statement: /\bvoid el\.offsetHeight;/g, scheduler: 'bgTask' };
-const CALLED_ONLY_IN = { restoreScroll: { call: 'afterLayout' }, evaluate: { call: 'afterLayout' }, hide: { fn: 'evaluate' }, drawerCoversChat: { fn: 'evaluate' }, chatViewRect: { fn: 'drawerCoversChat' } };
+const CALLED_ONLY_IN = { restoreScroll: { call: 'afterLayout' }, evaluate: { call: 'afterLayout' }, hide: { fn: 'evaluate' }, drawerCoversChat: { fn: 'evaluate' }, chatViewRect: { fn: 'drawerCoversChat' }, viewGuard: { fn: 'onChatScroll' } };
 /** 규칙 ①~③ 위반 목록 */
 function check(src, { readers = READERS, calledOnlyIn = CALLED_ONLY_IN, flush = WARM_FLUSH } = {}) {
     let code = strip(src.replace(/\r\n/g, '\n'));
@@ -194,7 +195,9 @@ test('afterLayout 은 ResizeObserver 첫 알림(배치 뒤 · 칠하기 전)을 
     const reveal = functionBody(raw, 'onReveal');
     // (1.4.8 select-scroll) 고른 채 굴릴 때 앞당겨 다는 곳 — IntersectionObserver 알림(배치 뒤 비동기) 안이라 강제 배치가 없어요
     const ahead = functionBody(raw, 'onSelectAhead');
-    assert.ok(setters.every(at => (sw.start < at && at < sw.end) || (reveal.start < at && at < reveal.end) || (ahead.start < at && at < ahead.end)), '표식은 stepWarm · onReveal(크롬이 이미 그린 메시지) · onSelectAhead(고른 채 굴릴 때 · 관찰 알림 안) 에서만');
+    // (1.6.1 opt4-warm) 굴러서 보이게 된 자리 지키기 — scroll 사건 안(그 프레임이 그려지기 전) · 읽기를 다 한 뒤에 달아요(규칙 ②가 봐요)
+    const guard = functionBody(raw, 'viewGuard');
+    assert.ok(setters.every(at => (sw.start < at && at < sw.end) || (reveal.start < at && at < reveal.end) || (ahead.start < at && at < ahead.end) || (guard.start < at && at < guard.end)), '표식은 stepWarm · onReveal(크롬이 이미 그린 메시지) · onSelectAhead(고른 채 굴릴 때 · 관찰 알림 안) · viewGuard(scroll 사건 안) 에서만');
     assert.equal([...raw.matchAll(/\bvoid\s+[\w$.?]+\.(?:offset|client|scroll)/g)].length, 1, 'void 로 배치를 끝내는 곳은 stepWarm 한 줄뿐');
     assert.ok(!/requestIdleCallback\(/.test(code));
 });

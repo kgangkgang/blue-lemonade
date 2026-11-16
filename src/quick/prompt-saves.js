@@ -3,7 +3,7 @@
 // ✎ 메뉴에서 묶음마다 지금 상태로 덮어쓰기 · 이름 바꾸기 · 앞 · 뒤로 · 지우기(물어요). 묶음은 프리셋마다 따로 테마 설정에 적어요(프리셋 파일은 안 건드려요).
 // 프롬프트 폴더의 모두 켜기 · 하나만 켜기 · 프롬프트 귀속(채팅마다)과는 따로 놀아요 — 묶음은 사용자가 누를 때만 입혀요.
 // 계산은 prompt-saves-core.js(순수). 입히기는 프롬프트 폴더와 같은 길(실리태번 순서 항목의 enabled → render → saveServiceSettings).
-// 비용: 켤 때만 받는 모듈. 프롬프트 관리자 칸의 바로 아래 자식만 보는 감시 하나(실리태번이 목록을 다시 그릴 때 칩 줄을 다시 꽂음) · 프리셋 바뀜 사건 하나.
+// 비용: 켤 때만 받는 모듈. 프롬프트 관리자 칸의 바로 아래 자식만 보는 감시 하나(실리태번이 목록을 다시 그릴 때 칩 줄을 다시 꽂음) · 프리셋 바뀜 · 이름 바뀜 사건 둘.
 import { getSettings, saveSettings } from '../settings.js';
 import { watchDom } from '../dom-watch.js';
 import { ask, attachUndo } from '../ask.js';
@@ -178,13 +178,23 @@ function watchHost() {
     unfind ??= watchDom(document.body, { childList: true, subtree: true, exclude: '#chat', when: 'frame', name: '프롬프트 켜짐 묶음 찾기' }, () => { if (document.getElementById(CONTAINER)) watchHost(); });
 }
 function onPreset() { if (wanted) ensureRow(); }
+/** 11-17 버그 사냥 4: 프리셋 이름을 바꾸면 묶음이 옛 이름 아래 남아 칩이 다 사라졌어요(같은 이름으로 새 프리셋을 만들면 남의 묶음이 되살아남) — 새 이름으로 옮겨요 */
+function onRenamed(data) {
+    if (!wanted || data?.apiId !== 'openai' || !data.oldName || !data.newName || data.oldName === data.newName) return;
+    const box = store();
+    if (!Object.hasOwn(box, data.oldName) || Object.hasOwn(box, data.newName)) return;
+    box[data.newName] = box[data.oldName];
+    delete box[data.oldName];
+    saveSettings();
+    ensureRow();
+}
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export async function syncPromptSaves(on) {
     wanted = !!on;
     if (!wanted) {
         unwatch?.(); unwatch = null; unfind?.(); unfind = null;
-        if (presetBound) { presetBound = false; try { const c = ctx(), types = c.eventTypes ?? c.event_types; c.eventSource.removeListener?.(types.OAI_PRESET_CHANGED_AFTER, onPreset); } catch { /* 사건 없음 */ } }
+        if (presetBound) { presetBound = false; try { const c = ctx(), types = c.eventTypes ?? c.event_types; c.eventSource.removeListener?.(types.OAI_PRESET_CHANGED_AFTER, onPreset); if (types.PRESET_RENAMED) c.eventSource.removeListener?.(types.PRESET_RENAMED, onRenamed); } catch { /* 사건 없음 */ } }
         closeMenu();
         row?.removeEventListener('click', onClick);
         row?.remove(); row = null;
@@ -202,7 +212,7 @@ export async function syncPromptSaves(on) {
     ensureQuickCss();
     if (!presetBound) {
         presetBound = true;
-        try { const c = ctx(), types = c.eventTypes ?? c.event_types; if (types?.OAI_PRESET_CHANGED_AFTER) c.eventSource.on(types.OAI_PRESET_CHANGED_AFTER, onPreset); } catch { /* 사건 없음 */ }
+        try { const c = ctx(), types = c.eventTypes ?? c.event_types; if (types?.OAI_PRESET_CHANGED_AFTER) c.eventSource.on(types.OAI_PRESET_CHANGED_AFTER, onPreset); if (types?.PRESET_RENAMED) c.eventSource.on(types.PRESET_RENAMED, onRenamed); } catch { /* 사건 없음 */ }
     }
     watchHost();
 }

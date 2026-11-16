@@ -15,15 +15,22 @@
 //   「이번 한 번만」: 단계는 그대로 두고 다음 생성 묶음에만 채팅 전체를 실어요 — 그 확장이 요청을 보낼 때마다 매크로가 불리는 것으로 시작을 알고,
 //   마지막 요청 뒤 한동안(ONCE_IDLE) 조용하거나 · 누른 뒤 ONCE_WAIT 안에 요청이 없으면 원래 단계로 돌려놓고 알려요(그 확장은 생성 시작 · 끝 사건을 내지 않아요).
 //   새로 고쳐도 돌아가게 이 기기 저장소에 끝날 때를 적어 둬요(src/apply.js 가 그 표시가 있으면 모듈을 받아요).
+// 1.6.3 (11-17 사용자 「첫 채팅부터 쫙으로 만들었는데 몇 분 만에 뚝딱 · 내용이 반영 안 된 것 같다」 「기억 요약 확장에서 매 챗마다 요약된 거라도 불러오면」):
+//   · 채팅 전체가 상한을 넘으면 오래된 메시지부터 **그 메시지의 기억 요약으로 바꿔** 싣고(요약이 없을 때만 앞 1,000자) · 고를 때 미리 알리고 · 다 보낸 뒤 알림에 실은 양(메시지 수 · 글자 · 토큰 어림)을 적어요.
+//     숨긴 메시지(기억 확장이 요약한 뒤 숨긴 것 등)는 본문 대신 그 요약이 있으면 요약을 실어요 — 「첫 채팅부터」 가 숨김 때문에 비지 않게.
+//   · 「기억 요약」 단계(memo · 만들기 화면의 이번 한 번만): 기억 확장이 채팅 메타데이터에 남긴 **매 턴 요약**을 차례대로 + 마지막 요약 뒤 메시지는 원문.
+//     읽는 자리(자료 모양만 읽어요 · 그 확장 코드는 안 불러요): chatMetadata.memoria.turns[]{ mesId, summary } · chatMetadata.long_memory.timeline[] / archive[]{ from, to, title, text }(가장 잘게 쪼갠 것만).
+//     둘 다 있으면 턴마다 쪼갠 쪽(memoria)만 — 같은 이야기를 두 번 싣지 않게. 짧은 전체 요약(줄거리 한 덩이 · 실리태번 기본 요약)은 안 써요.
+//   · 본문의 U+2800(점자 빈칸 — 일부 프리셋이 띄어쓰기 대신 씀)은 보통 띄어쓰기로 바꿔 실어요(읽기 쉽고 토큰이 덜 들어요).
 const META = 'statussim';        // 그 확장의 설정 칸 이름(읽고 · prompts 한 칸만 씀)
 export const KEY = 'gen.system'; // 「생성 시스템 프롬프트」 — 상태창 만들기 · 칸 다시 생성 · AI로 수정이 모두 쓰는 칸
-export const LEVELS = ['off', 'light', 'last', 'recent', 'all'];
-export const MACRO = 'bl_mb_recent', MACRO_ALL = 'bl_mb_all';
+export const LEVELS = ['off', 'light', 'last', 'recent', 'all', 'memo'];   // memo 는 만들기 화면의 이번 한 번만(테마 설정 단계로는 안 골라요)
+export const MACRO = 'bl_mb_recent', MACRO_ALL = 'bl_mb_all', MACRO_MEMO = 'bl_mb_memo';
 export const DEFAULT_COUNT = 9, DEFAULT_CHARS = 2000, FULL_CAP = 40000;
 export const DEFAULT_CAP = 120000, HEAD_CHARS = 1000;   // 채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음) · 상한을 넘을 때 오래된 메시지에 남기는 앞 글자 수
 export const ONCE_KEY = 'bl-mb-prompt-once', ONCE_WAIT = 10 * 60000, ONCE_IDLE = 4 * 60000;
 export const ONCE_LV_KEY = 'bl-mb-prompt-once-lv';   // 1.6.1 「이번 한 번만」 의 단계(채팅 전체가 아닐 때만 적어요 — 미트볼 만들기 화면의 「채팅 읽기」 고르기 src/mb-read.js)
-const ONCE_NAME = { off: '기본', light: '기본', last: '마지막 답 전체', recent: '최근 답 여러 개', all: '채팅 전체' };
+const ONCE_NAME = { off: '기본', light: '기본', last: '마지막 답 전체', recent: '최근 답 여러 개', all: '채팅 전체', memo: '기억 요약' };
 /** 「이번 한 번만」 단계가 실제로 붙이는 덩어리: 「마지막 답 전체」 는 요청이 불릴 때를 알 수 있게 테마 매크로({{bl_mb_recent}} · 앞 메시지 0개)로 실어요 */
 const onceBlock = lv => (lv === 'last' ? 'recent' : level(lv));
 const SEP = '\n\n';
@@ -40,7 +47,8 @@ const LIGHT = [
 ].join('\n');
 const LAST = '\n\n--- LATEST STORY TURN (complete text of the newest reply) ---\n{{lastCharMessage}}';
 const RECENT = `\n\n--- LATEST STORY TURNS (oldest first; only the newest is complete, older ones are shortened) ---\n{{${MACRO}}}`;
-const ALL = `\n\n--- THE STORY SO FAR (every visible message, oldest first) ---\n{{${MACRO_ALL}}}`;
+const ALL = `\n\n--- THE STORY SO FAR (every visible message, oldest first; lines starting with [Summary] are memory summaries standing in for a message) ---\n{{${MACRO_ALL}}}`;
+const MEMO = `\n\n--- THE STORY SO FAR AS MEMORY SUMMARIES (one per chat turn, oldest first; [#N] is the message number; messages after the last summary follow in full) ---\n{{${MACRO_MEMO}}}`;
 
 // 1.6.1 줄 꼴 규칙 — 본편 AI 가 답 끝에 적는 변화 줄(<meatball>)의 꼴을 바로잡는 한 덩이예요(테마가 쓴 글 · 예시도 테마가 지은 것).
 //   사용자 채팅에서 본 두 가지: ① 「period: Evening -> Night」 · 「loc: 집 -> 편의점」 처럼 「앞 -> 뒤」 로 적으면 그 확장은 글 통째를 시간 · 장소 값으로 받아요(새 이름의 지도 칸까지 생겨요)
@@ -68,7 +76,7 @@ export function mark8(text) {
 }
 /** 덧붙이는 덩어리 — d 는 기본 문구 위에 붙일 때의 기본 문구 지문 */
 export function block(lv, d = '') {
-    const body = LIGHT + (lv === 'last' ? LAST : lv === 'recent' ? RECENT : lv === 'all' ? ALL : '');
+    const body = LIGHT + (lv === 'last' ? LAST : lv === 'recent' ? RECENT : lv === 'all' ? ALL : lv === 'memo' ? MEMO : '');
     return `${BEGIN}\n${body}\n=== END BLUE LEMONADE NOTE${d ? ` [d:${d}]` : ''} ===`;
 }
 /** 테마가 덧붙인 덩어리를 뗀 글 */
@@ -77,7 +85,7 @@ export const strip = text => String(text ?? '').replace(BLOCK_RE, '');
 export function levelOf(text) {
     const s = String(text ?? '');
     if (!s.includes(BEGIN)) return 'off';
-    return s.includes(`{{${MACRO_ALL}}}`) ? 'all' : s.includes(`{{${MACRO}}}`) ? 'recent' : s.includes('{{lastCharMessage}}') ? 'last' : 'light';
+    return s.includes(`{{${MACRO_MEMO}}}`) ? 'memo' : s.includes(`{{${MACRO_ALL}}}`) ? 'all' : s.includes(`{{${MACRO}}}`) ? 'recent' : s.includes('{{lastCharMessage}}') ? 'last' : 'light';
 }
 
 /** 그 확장의 기본 문구를 그 확장에게서 읽어요(같은 모듈 주소 — 새로 띄우지 않아요). 못 찾으면 null */
@@ -170,6 +178,7 @@ export function plain(text) {
         .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
         .replace(/<!--[\s\S]*?-->/g, ' ')
         .replace(/<\/?[a-zA-Z][^<>]*>/g, '')
+        .replace(/⠀/g, ' ')
         .replace(/[ \t]+/g, ' ').replace(/ ?\n ?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 const cut = (s, n) => (s.length > n ? `${s.slice(0, n)}…` : s);
@@ -195,31 +204,118 @@ export function tokensSafe(text) {
     const ko = (s.match(/[\u3131-\u318E\uAC00-\uD7A3]/g) || []).length, cjk = (s.match(/[\u3040-\u30FF\u3400-\u9FFF]/g) || []).length;
     return Math.ceil(ko * 0.7 + cjk + (s.length - ko - cjk) / 3.5);
 }
+// ── 기억 요약(기억 확장이 채팅 메타데이터에 남긴 매 턴 요약) ─────────────────────────────
+const metaOf = c => { const m = c?.chatMetadata ?? c?.chat_metadata; return m && typeof m === 'object' ? m : {}; };
+const int = v => (Number.isInteger(Number(v)) && v !== '' && v !== null ? Number(v) : NaN);
 /**
- * 채팅 전체: 눈 감긴 메시지를 뺀 모든 메시지(내 메시지 포함)를 이름 붙여 차례대로.
- * cap(어림 토큰 · 0 이면 없음)을 넘으면 오래된 메시지부터 앞 HEAD_CHARS 자로 줄이고, 다 줄여도 넘으면 오래된 것부터 빼요(가장 새 메시지는 남겨요).
- * 돌려주는 것: { text, count(실린 메시지 수), total(보이는 메시지 수), cut(줄인 수), dropped(뺀 수), tokens(어림), full(상한 없을 때 어림) }
+ * 매 턴 요약 목록(메시지 번호 차례) — { list: [{ from, to, text }], source: 'memoria' | 'long_memory' | '' }
+ *   memoria: turns[]{ mesId, summary, failed } · long_memory: timeline[] + archive[](kind timeline){ from, to, title, text } 중 다른 덩이를 품지 않는 가장 잘게 쪼갠 것만(장 · 줄거리 덩이는 빼요)
+ */
+export function memoEntries(c = ctx()) {
+    const md = metaOf(c);
+    const turns = Array.isArray(md.memoria?.turns) ? md.memoria.turns : [];
+    const mo = [];
+    for (const t of turns) {
+        const s = typeof t?.summary === 'string' ? t.summary.trim() : '', id = int(t?.mesId);
+        if (s && !t.failed && id >= 0) mo.push({ from: id, to: id, text: s });
+    }
+    if (mo.length) return { list: mo.sort((a, b) => a.from - b.from), source: 'memoria' };
+    const E = md.long_memory && typeof md.long_memory === 'object' ? md.long_memory : null;
+    if (!E) return { list: [], source: '' };
+    const seen = new Set(), nodes = [];
+    const arc = Array.isArray(E.archive) ? E.archive.filter(a => a?.kind === 'timeline') : [];
+    for (const n of [...(Array.isArray(E.timeline) ? E.timeline : []), ...arc]) {
+        if (!n || (n.id != null && seen.has(n.id))) continue; if (n.id != null) seen.add(n.id);
+        const f = int(n.from), t = int(n.to), s = String(n.text ?? '').trim();
+        if (s && f >= 0 && t >= f) nodes.push({ from: f, to: t, text: n.title ? `${String(n.title).trim()}: ${s}` : s });
+    }
+    const fine = nodes.filter(a => !nodes.some(b => b !== a && b.from >= a.from && b.to <= a.to && b.to - b.from < a.to - a.from));
+    return { list: fine.sort((a, b) => a.from - b.from || a.to - b.to), source: fine.length ? 'long_memory' : '' };
+}
+const nameOf = x => x.name || (x.is_user ? 'User' : 'Character');
+const rowSize = r => (r.drop ? 0 : tokensSafe(r.head + r.body) + 1);
+/** 상한(어림 토큰)에 맞추기: 오래된 것부터 ① 그 메시지의 기억 요약으로 ② 앞 HEAD_CHARS 자로 ③ 빼기 — 가장 새 줄은 그대로. 바뀐 줄에 표시를 달아요 */
+function fit(rows, cap, memoOf = () => null) {
+    let sum = rows.reduce((a, r) => a + rowSize(r), 0);
+    const full = sum, limit = Math.max(0, Math.round(Number(cap)) || 0), used = new Set();
+    for (const r of rows) if (r.memo) used.add(r.memo);
+    if (limit && sum > limit) {
+        for (let i = 0; i < rows.length - 1 && sum > limit; i++) {
+            const r = rows[i], e = r.memo ? null : memoOf(r.at); if (!e || r.drop) continue;
+            const before = rowSize(r);
+            if (used.has(e)) { r.drop = true; r.merged = true; } else { used.add(e); r.head = `[Summary] ${r.head}`; r.body = e.text; r.memo = e; r.sum = true; }
+            sum += rowSize(r) - before;
+        }
+        for (let i = 0; i < rows.length - 1 && sum > limit; i++) {
+            const r = rows[i]; if (r.drop || r.sum || r.body.length <= HEAD_CHARS) continue;
+            const before = rowSize(r); r.body = `${r.body.slice(0, HEAD_CHARS)}…`; r.cut = true; sum += rowSize(r) - before;
+        }
+        for (let i = 0; i < rows.length - 1 && sum > limit; i++) if (!rows[i].drop) { sum -= rowSize(rows[i]); rows[i].drop = true; }
+    }
+    return { sum, full };
+}
+const indexMemo = list => { const by = new Map(); for (const e of list) for (let i = e.from; i <= e.to && i - e.from < 5000; i++) if (!by.has(i)) by.set(i, e); return by; };
+/**
+ * 채팅 전체: 숨기지 않은 모든 메시지(내 메시지 포함)를 이름 붙여 차례대로. 숨긴 메시지는 기억 요약이 있으면 그 요약을([Summary]) 그 자리에.
+ * cap(어림 토큰 · 0 이면 없음)을 넘으면 오래된 메시지부터 그 메시지의 기억 요약으로 바꾸고(요약이 없으면 앞 HEAD_CHARS 자로), 그래도 넘으면 오래된 것부터 빼요(가장 새 메시지는 남겨요).
+ * 돌려주는 것: { text, count(실린 메시지 수 · 요약으로 바뀐 것 포함), total(숨기지 않은 메시지 수), summarized(요약으로 바꾼 수), cut(앞부분만), dropped(뺀 수),
+ *   hidden(숨긴 메시지 수), hiddenSum(그중 요약을 실은 수), memo(이 채팅의 기억 요약 수), chars(실은 글자), fullChars(본문 그대로의 글자), tokens(어림), full(상한 없을 때 어림) }
  */
 export function allText(c = ctx(), cap = DEFAULT_CAP) {
     const chat = Array.isArray(c?.chat) ? c.chat : [];
-    const rows = [];
-    for (const x of chat) {
-        if (!x || x.is_system || typeof x.mes !== 'string') continue;
-        const body = plain(x.mes);
-        if (body) rows.push({ head: `${x.name || (x.is_user ? 'User' : 'Character')}: `, body, cut: false, drop: false });
-    }
-    const size = r => (r.drop ? 0 : tokensSafe(r.head + r.body) + 1);
-    let sum = rows.reduce((a, r) => a + size(r), 0);
-    const full = sum, limit = Math.max(0, Math.round(Number(cap)) || 0);
-    if (limit && sum > limit) {
-        for (let i = 0; i < rows.length - 1 && sum > limit; i++) {
-            const r = rows[i]; if (r.body.length <= HEAD_CHARS) continue;
-            const before = size(r); r.body = `${r.body.slice(0, HEAD_CHARS)}…`; r.cut = true; sum += size(r) - before;
+    const { list } = memoEntries(c), by = indexMemo(list);
+    const rows = []; let hidden = 0, hiddenSum = 0, fullChars = 0; const hiddenUsed = new Set();
+    chat.forEach((x, at) => {
+        if (!x || typeof x.mes !== 'string') return;
+        if (x.is_system) {
+            hidden++; const e = by.get(at);
+            if (e && !hiddenUsed.has(e)) { hiddenUsed.add(e); hiddenSum++; rows.push({ at, head: `[Summary #${e.from}${e.to !== e.from ? `-#${e.to}` : ''}] `, body: e.text, memo: e, sum: true, hiddenRow: true }); }
+            return;
         }
-        for (let i = 0; i < rows.length - 1 && sum > limit; i++) { sum -= size(rows[i]); rows[i].drop = true; }
-    }
+        const body = plain(x.mes);
+        if (body) { fullChars += body.length + nameOf(x).length + 2; rows.push({ at, head: `${nameOf(x)}: `, body }); }
+    });
+    const { sum, full } = fit(rows, cap, at => by.get(at) || null);
+    const kept = rows.filter(r => !r.drop), vis = rows.filter(r => !r.hiddenRow), text = kept.map(r => r.head + r.body).join('\n\n');
+    return {
+        text, count: vis.filter(r => !r.drop || r.merged).length, total: vis.length, summarized: vis.filter(r => (r.sum && !r.drop) || r.merged).length,
+        cut: vis.filter(r => r.cut && !r.drop).length, dropped: vis.filter(r => r.drop && !r.merged).length, hidden, hiddenSum: kept.filter(r => r.hiddenRow).length,
+        memo: list.length, chars: text.length, fullChars, tokens: sum, full,
+    };
+}
+/**
+ * 기억 요약: 매 턴 요약을 차례대로([#N] 메시지 번호) + 마지막 요약 뒤의 숨기지 않은 메시지는 원문(상한을 넘으면 그 원문만 앞에서부터 줄여요).
+ * 돌려주는 것: { text, count(요약 수), first · last(요약이 덮는 메시지 번호), tail(원문으로 실은 뒤 메시지 수), tailCut, source, chars, tokens } · 요약이 없으면 count 0 · text ''
+ */
+export function memoText(c = ctx(), cap = DEFAULT_CAP) {
+    const { list, source } = memoEntries(c);
+    if (!list.length) return { text: '', count: 0, first: -1, last: -1, tail: 0, tailCut: 0, source: '', chars: 0, tokens: 0 };
+    const chat = Array.isArray(c?.chat) ? c.chat : [];
+    const last = Math.max(...list.map(e => e.to));
+    const head = list.map(e => `[#${e.from}${e.to !== e.from ? `-#${e.to}` : ''}] ${e.text}`).join('\n');
+    const rows = [];
+    chat.forEach((x, at) => { if (at > last && x && !x.is_system && typeof x.mes === 'string') { const body = plain(x.mes); if (body) rows.push({ at, head: `${nameOf(x)}: `, body }); } });
+    const limit = Math.max(0, Math.round(Number(cap)) || 0);
+    fit(rows, limit ? Math.max(1, limit - tokensSafe(head)) : 0);
     const kept = rows.filter(r => !r.drop);
-    return { text: kept.map(r => r.head + r.body).join('\n\n'), count: kept.length, total: rows.length, cut: kept.filter(r => r.cut).length, dropped: rows.length - kept.length, tokens: sum, full };
+    const text = head + (kept.length ? `\n\n--- AFTER THE LAST SUMMARY (full text) ---\n${kept.map(r => r.head + r.body).join('\n\n')}` : '');
+    return { text, count: list.length, first: list[0].from, last, tail: kept.length, tailCut: rows.filter(r => r.cut || r.drop).length, source, chars: text.length, tokens: tokensSafe(text) };
+}
+const kNum = n => Math.round(Number(n) || 0).toLocaleString('ko-KR');
+const kBig = n => { const v = Math.round(Number(n) || 0); return v >= 10000 ? `${(v / 10000).toFixed(v >= 100000 ? 0 : 1).replace(/\.0$/, '')}만` : kNum(v); };
+/** 실은 양 한 줄(만들기 화면 어림 줄 · 다 보낸 뒤 알림이 같이 써요) — f = allText · memoText 결과 */
+export function fillLine(lv, f) {
+    if (!f) return '';
+    if (lv === 'memo') {
+        if (!f.count) return '이 채팅에 매 턴 기억 요약이 없어요';
+        return `기억 요약 ${kNum(f.count)}개(메시지 #${f.first}~#${f.last})${f.tail ? ` · 그 뒤 메시지 ${kNum(f.tail)}개는 원문${f.tailCut ? `(${kNum(f.tailCut)}개는 줄임)` : ''}` : ''} · ${kBig(f.chars)}자 · 약 ${kBig(f.tokens)} 토큰`;
+    }
+    const parts = [`메시지 ${kNum(f.count)}/${kNum(f.total)}개 · ${kBig(f.chars)}자 · 약 ${kBig(f.tokens)} 토큰`];
+    if (f.summarized) parts.push(`오래된 ${kNum(f.summarized)}개는 기억 요약으로`);
+    if (f.cut) parts.push(`${kNum(f.cut)}개는 앞 1,000자만`);
+    if (f.dropped) parts.push(`${kNum(f.dropped)}개는 뺌`);
+    if (f.hidden) parts.push(`숨긴 메시지 ${kNum(f.hidden)}개는 ${f.hiddenSum ? `요약 ${kNum(f.hiddenSum)}개로` : '뺌'}`);
+    return parts.join(' · ');
 }
 /** 토큰 어림(한글은 두 글자에 하나쯤, 그 밖은 네 글자에 하나쯤) */
 export function tokens(text) {
@@ -233,6 +329,7 @@ export function estimate(lv, c = ctx(), count = DEFAULT_COUNT, chars = DEFAULT_C
     const fixed = tokens(block('light', '00000000'));
     if (lv === 'light') return fixed;
     if (lv === 'all') return fixed + allText(c, cap).tokens;
+    if (lv === 'memo') return fixed + memoText(c, cap).tokens;
     if (lv === 'recent') return fixed + tokens(recentText(c, count, chars));
     const chat = Array.isArray(c?.chat) ? c.chat : [];
     let mes = '';
@@ -240,12 +337,22 @@ export function estimate(lv, c = ctx(), count = DEFAULT_COUNT, chars = DEFAULT_C
     return fixed + tokens(mes);
 }
 
-const state = { level: 'off', count: DEFAULT_COUNT, chars: DEFAULT_CHARS, cap: DEFAULT_CAP, macro: false, timer: null, last: null, once: null, onceTimer: null };
+const state = { level: 'off', count: DEFAULT_COUNT, chars: DEFAULT_CHARS, cap: DEFAULT_CAP, macro: false, timer: null, last: null, once: null, onceTimer: null, fill: null, listeners: new Set() };
+/** 매크로가 불려 글을 실을 때마다(실은 양) — 만들기 화면의 어림 줄이 「보냈어요」 로 바뀌어요 */
+export function onFill(fn) { state.listeners.add(fn); return () => state.listeners.delete(fn); }
+function filled(lv, f) {
+    state.fill = { level: lv, ...f, text: undefined };
+    if (state.once) state.once.fill = state.fill;
+    for (const fn of state.listeners) { try { fn(state.fill); } catch { /* 다음에 */ } }
+}
+/** 지금 걸린 「이번 한 번만」 의 단계 · 보낸 수 · 마지막으로 실은 양 */
+export const onceInfo = () => { const o = readOnce(); return o && o.until > now() ? { level: o.level || 'all', seen: o.seen || 0, fill: o.fill || null } : null; };
 function ensureMacro(c = ctx()) {
     if (state.macro || typeof c?.registerMacro !== 'function') return state.macro;
     try {
-        c.registerMacro(MACRO, () => { try { onceSeen(); return recentText(ctx(), state.once?.level === 'last' && state.once.until > now() ? 0 : state.count, state.chars); } catch { return ''; } }, '블루레몬: 눈 감긴 답을 뺀 최근 답 본문(미트볼 문구용)');
-        c.registerMacro(MACRO_ALL, () => { try { onceSeen(); return allText(ctx(), state.cap).text; } catch { return ''; } }, '블루레몬: 눈 감긴 메시지를 뺀 채팅 전체 본문(미트볼 문구용)');
+        c.registerMacro(MACRO, () => { try { onceSeen(); const t = recentText(ctx(), state.once?.level === 'last' && state.once.until > now() ? 0 : state.count, state.chars); filled('recent', { chars: t.length, tokens: tokensSafe(t) }); return t; } catch { return ''; } }, '블루레몬: 눈 감긴 답을 뺀 최근 답 본문(미트볼 문구용)');
+        c.registerMacro(MACRO_ALL, () => { try { onceSeen(); const r = allText(ctx(), state.cap); filled('all', r); return r.text; } catch { return ''; } }, '블루레몬: 채팅 전체 본문(숨긴 메시지는 기억 요약 · 미트볼 문구용)');
+        c.registerMacro(MACRO_MEMO, () => { try { onceSeen(); const r = memoText(ctx(), state.cap); filled('memo', r); return r.text; } catch { return ''; } }, '블루레몬: 기억 확장의 매 턴 요약(미트볼 문구용)');
         state.macro = true;
     } catch { /* 이 판에는 매크로 등록이 없어요 */ }
     return state.macro;
@@ -286,17 +393,20 @@ export async function armOnce({ c = ctx(), doc = globalThis.document, toast = gl
     try { toast?.info?.('다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에 채팅 전체를 실어요. 끝나거나 10분 안에 안 만들면 원래 단계로 돌아가요.', '', { timeOut: 9000 }); } catch { /* 알림 없이 */ }
     return true;
 }
+/** 받침 따라 조사(「기억 요약」 으로 · 「마지막 답 전체」 로 — 받침 ㄹ 은 「로」) */
+const josa = (w, withEnd, without) => { const k = String(w).charCodeAt(String(w).length - 1) - 0xac00; const end = k >= 0 && k < 11172 ? k % 28 : 0; return end && (withEnd !== '으로' || end !== 8) ? withEnd : without; };
 /** 끝: 원래 단계로. 돌려놨으면 true */
 export async function endOnce({ c = ctx(), doc = globalThis.document, toast = globalThis.toastr, force = false, def = undefined, quiet = false } = {}) {
     const o = readOnce(); if (!o) return false;
     if (!force && o.until > now()) { watchOnce(); return false; }
-    const seen = o.seen, name = ONCE_NAME[o.level] || ONCE_NAME.all;
+    const seen = o.seen, name = ONCE_NAME[o.level] || ONCE_NAME.all, lv = o.level || 'all';
+    const amount = seen && o.fill && (lv === 'all' || lv === 'memo') ? ` — 요청마다 ${fillLine(lv, o.fill)}` : '';
     state.once = null; if (state.onceTimer) { try { clearTimeout(state.onceTimer); } catch { /* 그대로 */ } state.onceTimer = null; }
     try { store()?.removeItem(ONCE_KEY); store()?.removeItem(ONCE_LV_KEY); } catch { /* 표시 없이 */ }
     state.last = await syncPrompt(state.level, { c, doc, def });
     await syncRules(state.level !== 'off', { c, doc }).catch(() => null);
     if (quiet) return true;
-    try { toast?.info?.(seen ? (name === ONCE_NAME.all ? `채팅 전체를 실어 ${seen}번 보냈어요. 미트볼 문구를 원래 단계로 돌려놨어요.` : `「${name}」 로 ${seen}번 보냈어요. 미트볼 문구를 원래 단계로 돌려놨어요.`) : (name === ONCE_NAME.all ? '미트볼 생성이 없어서 채팅 전체 싣기를 거두고 원래 단계로 돌려놨어요.' : `미트볼 생성이 없어서 「${name}」 를 거두고 원래 단계로 돌려놨어요.`), '', { timeOut: 9000 }); } catch { /* 알림 없이 */ }
+    try { toast?.info?.(seen ? (name === ONCE_NAME.all ? `채팅 전체를 실어 ${seen}번 보냈어요${amount}. 미트볼 문구를 원래 단계로 돌려놨어요.` : `「${name}」 ${josa(name, '으로', '로')} ${seen}번 보냈어요${amount}. 미트볼 문구를 원래 단계로 돌려놨어요.`) : (name === ONCE_NAME.all ? '미트볼 생성이 없어서 채팅 전체 싣기를 거두고 원래 단계로 돌려놨어요.' : `미트볼 생성이 없어서 「${name}」 ${josa(name, '을', '를')} 거두고 원래 단계로 돌려놨어요.`), '', { timeOut: amount ? 15000 : 9000 }); } catch { /* 알림 없이 */ }
     return true;
 }
 /** 설정이 바뀔 때마다(src/apply.js) — 그 확장이 아직 안 떴으면 조금 뒤 한 번 더 */

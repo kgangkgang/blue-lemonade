@@ -485,6 +485,16 @@ await test('11-09 닫힌 채 시작하는 반응 글꾸(봉투 · 초대장): �
     for (const t of ['ruleTimer', 'imageTimer', 'inkTimer', 'hist.timer']) assert.ok(onClose.includes(`clearTimeout(${t})`), `닫을 때 ${t} 를 걷어요`);
 });
 
+await test('이름 숨김: 한 글 조각에 이름이 여러 번 나와도 모두 가리고 글이 겹치지 않아요(버그 사냥 4)', () => {
+    const para = text => ({ ...model, messages: [{ ...model.messages[0], name: 'X', nodes: [{ t: 'el', block: true, tag: 'div', kind: 'p', style: {}, children: [{ t: 'text', text }] }] }] });
+    const one = (text, hide) => { const r = transformLog(para(text), { hide }); return { text: msgText(r.model.messages[0]), hidden: r.hidden }; };
+    assert.deepEqual(one('하루와 하루가 하루를', { names: ['하루'], mask: 'auto' }), { text: '○○와 ○○가 ○○를', hidden: 3 });
+    assert.deepEqual(one('Lemon met lemon', { names: ['Lemon'], mask: 'mosaic' }), { text: '▒▒▒▒▒ met ▒▒▒▒▒', hidden: 2 });
+    const black = transformLog(para('하루, 하루.'), { hide: { names: ['하루'], mask: 'black' } }).model.messages[0];
+    assert.equal(msgText(black), '　　, 　　.');
+    assert.ok(!JSON.stringify(black).includes('하루'));
+});
+
 await test('이름 숨김: 가림 글자를 직접 정해요(word) · 제목 · 보낸 이 칸이 숨긴 이름이면 비워요', () => {
     const named = { ...model, chatName: 'Seraphina', userName: 'Lemon' };
     const { model: out } = transformLog(named, { hide: { names: ['Seraphina', 'Lemon', '숲'], mask: 'auto', word: '아무개' } });

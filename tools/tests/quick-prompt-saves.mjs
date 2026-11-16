@@ -162,12 +162,25 @@ await test('덮어쓰기 · 이름 바꾸기 · 순서 · 지우기(물음, 취�
     assert.equal(settings.promptSaves.presets.Alpha, undefined, '이름 창 취소');
 });
 
+await test('프리셋 이름을 바꾸면 묶음이 새 이름으로 따라가요 · 다른 API 는 무시(버그 사냥 4)', async () => {
+    settings.promptSaves.presets.Alpha = [{ id: 'k1', name: '하나', states: { main: true } }];
+    preset = 'Alpha 2';
+    await eventSource.emit(ctx.eventTypes.PRESET_RENAMED, { apiId: 'openai', oldName: 'Alpha', newName: 'Alpha 2' });
+    assert.equal(settings.promptSaves.presets.Alpha, undefined);
+    assert.equal(settings.promptSaves.presets['Alpha 2']?.[0]?.name, '하나');
+    assert.match(rowEl().textContent, /하나/, '칩이 그대로 보여요');
+    await eventSource.emit(ctx.eventTypes.PRESET_RENAMED, { apiId: 'kobold', oldName: 'Alpha 2', newName: 'Z' });
+    assert.ok(settings.promptSaves.presets['Alpha 2'], '다른 API');
+    delete settings.promptSaves.presets['Alpha 2']; preset = 'Alpha'; P._forTest.paint();
+});
+
 await test('끄면 칩 줄 · 감시 · 사건이 남지 않음(다시 그려도 안 생김)', async () => {
     await P.syncPromptSaves(false);
     assert.equal(rowEl(), null);
     rerender(); await tick();
     assert.equal(rowEl(), null);
     assert.equal(eventSource.byType()[ctx.eventTypes.OAI_PRESET_CHANGED_AFTER] ?? 0, 0, '프리셋 바뀜 사건 뗌');
+    assert.equal(eventSource.byType()[ctx.eventTypes.PRESET_RENAMED] ?? 0, 0, '이름 바뀜 사건 뗌');
     const now = dom.listenerCounts(eventSource);
     assert.deepEqual({ ...now, eventSource: 0 }, { ...base, eventSource: 0 }, '요소 · 문서 · 창 리스너 없음');
     const { domWatchStats } = await import(url('src/dom-watch.js'));

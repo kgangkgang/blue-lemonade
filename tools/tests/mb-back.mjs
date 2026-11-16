@@ -15,7 +15,7 @@ const fresh = () => import(pathToFileURL(path.join(root, 'src/mb-back.js')).href
 const makeDoc = ({ salty = true, attrs = {} } = {}) => {
     const doc = { dialogs: [], watchers: [] };
     doc.body = { classList: { contains: c => c === 'salty' && salty }, attrs, hasAttribute: k => k in attrs, getAttribute: k => attrs[k] ?? null };
-    doc.querySelectorAll = sel => (sel === 'dialog[open]' ? doc.dialogs.filter(d => d.open) : sel === 'dialog.ss-dlg[open]' ? doc.dialogs.filter(d => d.open && d.mb) : []);
+    doc.querySelectorAll = sel => (sel === 'dialog[open]' ? doc.dialogs.filter(d => d.open) : sel === 'dialog[open]:not([closing])' ? doc.dialogs.filter(d => d.open && !d.closing) : sel === 'dialog.ss-dlg[open]' ? doc.dialogs.filter(d => d.open && d.mb) : []);
     doc.watch = (rootEl, spec, fn) => { assert.equal(rootEl, doc.body); assert.deepEqual(Object.keys(spec).sort(), ['childList', 'name']); doc.watchers.push(fn); };
     doc.show = d => { if (!doc.dialogs.includes(d)) doc.dialogs.push(d); d.isConnected = true; d.open = true; for (const fn of doc.watchers) fn([{ addedNodes: [d], removedNodes: [] }]); };
     doc.remove = d => { doc.dialogs.splice(doc.dialogs.indexOf(d), 1); d.isConnected = false; d.open = false; for (const fn of doc.watchers) fn([{ addedNodes: [], removedNodes: [d] }]); };
@@ -57,6 +57,15 @@ await ok('③ 미트볼 창 위에 다른 창(물음 · 테마 확인 창)이 �
     assert.equal(stack.layers[0].close(), false);                      // 겹은 남아요(공용 겹 쌓기가 기록 한 칸을 다시 채워요)
     assert.deepEqual(confirm.clicks, ['cancel']); assert.deepEqual(win.clicks, []); assert.equal(stack.live().length, 1);
     assert.equal(stack.layers[0].close(), true); assert.deepEqual(win.clicks, ['ok']);
+});
+await ok('③-2 위 창이 닫히는 애니메이션 중([closing] · open 그대로)이면 맨 위로 안 봐요 — 빠르게 두 번 누르면 두 번째는 미트볼 창을 닫아요', async () => {
+    const m = await fresh(); const doc = makeDoc(); const stack = fakeStack(); m.startMbBack(doc, { watch: doc.watch, stack, isShown });
+    const win = dialog(doc); doc.show(win);
+    const confirm = dialog(doc, { mb: false, cancel: true }); doc.show(confirm);
+    const cancel = confirm.querySelector('.popup-button-cancel'); cancel.click = () => { confirm.clicks.push('cancel'); confirm.closing = true; };   // 실리태번: 누르면 [closing] 만 달고 애니메이션이 끝난 뒤에 문서에서 빼요
+    assert.equal(stack.layers[0].close(), false); assert.deepEqual(confirm.clicks, ['cancel']);
+    assert.equal(stack.layers[0].close(), true);                       // 애니메이션이 아직 안 끝났어도 두 번째 뒤로 가기는 미트볼 창
+    assert.deepEqual(confirm.clicks, ['cancel']); assert.deepEqual(win.clicks, ['ok']);
 });
 await ok('④ 「원작 그대로 보기」 · 테마 꺼짐 · 설정 끔이면 겹을 안 올려요 · 켜 둔 동안 올린 겹은 꺼도 창이 닫힐 때 내려요', async () => {
     for (const opt of [{ attrs: { 'data-bl-ext-raw': '' } }, { salty: false }, { attrs: { 'data-bl-mb-back': 'off' } }]) {

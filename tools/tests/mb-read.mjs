@@ -57,8 +57,9 @@ await ok('① 고르기 값 ↔ 단계 · 「AI k회」 읽기 · 어림 한 줄
     const m = await fresh();
     assert.deepEqual(['off', 'light', 'last', 'recent', 'all', undefined].map(m.pickOf), ['base', 'base', 'last', 'recent', 'all', 'base']);
     assert.deepEqual([m.levelFor('base', 'off'), m.levelFor('base', 'light'), m.levelFor('base', 'all'), m.levelFor('last', 'off'), m.levelFor('all', 'light')], ['off', 'light', 'off', 'last', 'all']);
-    assert.deepEqual(m.PICKS.map(p => p[1]), ['기본(앞 700자씩)', '마지막 답 전체', '최근 답 여러 개', '채팅 전체']);
-    assert.deepEqual(m.PICKS.map(p => m.SHORT[p[0]]), ['기본', '마지막 답', '최근 답', '채팅 전체']);                // 머리줄에는 짧은 글(폰 384 에서 남는 폭)
+    assert.deepEqual(m.PICKS.map(p => p[1]), ['기본(앞 700자씩)', '마지막 답 전체', '최근 답 여러 개', '채팅 전체', '기억 요약(매 턴 요약 + 그 뒤 원문)']);
+    assert.deepEqual(m.PICKS.map(p => m.SHORT[p[0]]), ['기본', '마지막 답', '최근 답', '채팅 전체', '기억 요약']);
+    assert.ok(Math.max(...Object.values(m.SHORT).map(t => t.length)) === '채팅 전체'.length, '고르기 폭이 1.6.2 그대로(가장 긴 짧은 글 길이 같음)'); assert.equal(m.pickOf('memo'), 'memo'); assert.equal(m.levelFor('memo', 'off'), 'memo');                // 머리줄에는 짧은 글(폰 384 에서 남는 폭)
     assert.equal(m.aiCalls('AI 3회 (세계 핵심 1 + 묶음 2 · 기능 4개) · 보통 1~2분'), 3); assert.equal(m.aiCalls('AI 0회 · 토큰 0'), 0); assert.equal(m.aiCalls(''), 0);
     const c = chatOf();
     assert.equal(m.costLine('base', { mbPrompt: 'off' }, c, 'AI 3회', P), '채팅 3개 · 더 드는 토큰 없음');
@@ -67,8 +68,9 @@ await ok('① 고르기 값 ↔ 단계 · 「AI k회」 읽기 · 어림 한 줄
     assert.match(last, /^채팅 3개 · 요청 1회 약 [\d,.만]+ 토큰 더 · 이번 만들기 약 [\d,.만]+ 토큰 더\(AI 3회\)$/); assert.ok(one > 7000);
     assert.ok(!m.costLine('last', { mbPrompt: 'off' }, c, '', P).includes('이번 만들기'));               // 「AI k회」 를 못 읽으면 요청 1회 값만
     const capped = m.costLine('all', { mbPrompt: 'off', mbPromptCap: 3000 }, chatOf([9000, 9000, 9000]), 'AI 2회', P);
-    assert.match(capped, /상한 3,000으로 줄임 — 오래된 답 \d+개는 앞부분만/);
-    assert.ok(!m.costLine('all', { mbPrompt: 'off' }, c, 'AI 2회', P).includes('상한'));
+    assert.match(capped, /^메시지 2\/3개 · [\d,.만]+자 · 약 [\d,.만]+ 토큰 · 1개는 앞 1,000자만 · 1개는 뺌 — 상한 3,000에 맞춤 · 요청 1회 약 /);
+    assert.match(m.costLine('all', { mbPrompt: 'off' }, c, 'AI 2회', P), /^메시지 3\/3개 · [\d,.만]+자 · 약 [\d,.만]+ 토큰 — 다 실어요 · 요청 1회 약 .+\(AI 2회\)$/);
+    assert.equal(m.costLine('memo', { mbPrompt: 'off' }, c, 'AI 2회', P), '이 채팅에 매 턴 기억 요약이 없어요');
     assert.equal(m.costLine('all', {}, c, 'AI 2회', null), '');
 });
 
@@ -100,8 +102,8 @@ await ok('② 추가 지시 칸이 그려지면 머리줄 안에 고르기 하�
     assert.deepEqual(z.head.kids.map(k => k.cls[0]), ['bl-mb-read']);                                       // 고르기는 머리줄 안
     const row = z.sec.querySelector('.bl-mb-read'); const sel = row.querySelector('.bl-mb-read-sel'); const costEl = z.sec.querySelector('.bl-mb-read-cost');
     assert.equal(row.tagName, 'LABEL'); assert.equal(row.kids[0].textContent, '읽기');
-    assert.equal(row.hidden, true); assert.equal(costEl.hidden, true); assert.equal(sel.value, 'recent'); assert.equal(sel.kids.length, 4);
-    assert.deepEqual(sel.kids.map(o => o.textContent), ['기본', '마지막 답', '최근 답', '채팅 전체']); assert.equal(sel.kids[0].title, '기본(앞 700자씩)');
+    assert.equal(row.hidden, true); assert.equal(costEl.hidden, true); assert.equal(sel.value, 'recent'); assert.equal(sel.kids.length, 5);
+    assert.deepEqual(sel.kids.map(o => o.textContent), ['기본', '마지막 답', '최근 답', '채팅 전체', '기억 요약']); assert.equal(sel.kids[0].title, '기본(앞 700자씩)');
     assert.match(costEl.textContent, /^채팅 3개 · 요청 1회 약 .+ · 이번 만들기 약 .+\(AI 3회\)$/);
     z.cost.textContent = 'AI 5회 (세계 핵심 1 + 묶음 4)'; doc.fire('click', { target: z.cost }); await tick();   // 기능을 바꾸면 어림도 다시
     assert.match(costEl.textContent, /\(AI 5회\)$/);
@@ -173,5 +175,29 @@ await ok('⑤ 「원작 그대로 보기」 · 테마 꺼짐이면 안 보여요
     assert.ok(gate && gate.indexOf("getElementById('ss-settings')") < gate.indexOf('mb-read.js'));
     assert.ok(read('src/panel.js').includes('미트볼의 상태창 만들기 화면에서도 고를 수 있어요'));
     assert.ok(read('.github/workflows/release-check.yml').includes('node tools/tests/mb-read.mjs .'));
+});
+await ok('⑥ 1.6.3 기억 요약(없으면 알리고 되돌림) · 채팅 전체가 상한을 넘으면 고르는 순간 미리 알림 · 보내면 어림 줄이 「보냈어요 N번 — 요청마다 …」 · 끝 알림에도 실은 양', async () => {
+    mem.clear(); const m = await fresh(); const doc = makeDoc(); const w = world('off');
+    await P.syncMbPrompt('off', 9, 2000, { c: w.c, retry: false }).catch(() => null); await P.syncPrompt('off', { c: w.c, def: DEF }); w.toasts.length = 0;
+    w.c.chat = chatOf([9000, 9000, 900]).chat;
+    m.startMbRead(doc, { watch: doc.watch, settings: async () => ({ chat: { ...w.chat, mbPromptCap: 3000 } }), load: async () => w.Pw });
+    const z = wizard(doc, undefined, true); doc.fire('animationstart', { animationName: m.ANIM, target: z.ta }); await tick();
+    const sel = z.chatRow.querySelector('.bl-mb-read-sel'), costEl = z.wz.kids[1];
+    assert.equal(sel.value, 'base'); assert.equal(costEl.textContent, '');
+    sel.value = 'memo'; doc.fire('change', { target: sel }); await tick();                                       // 요약 없는 채팅
+    assert.equal(sel.value, 'base'); assert.equal(P.onceLevel(), ''); assert.equal(costEl.textContent, ''); assert.match(w.toasts.at(-1), /매 턴 기억 요약이 없어요.*고르기를 되돌렸어요/);
+    w.c.chatMetadata = { memoria: { turns: [{ mesId: 0, summary: 'First turn summary.' }, { mesId: 1, summary: 'Second turn summary.' }] } };   // 시험용으로 지어낸 요약
+    sel.value = 'memo'; doc.fire('change', { target: sel }); await tick();
+    assert.equal(P.onceLevel(), 'memo'); assert.match(costEl.textContent, /^기억 요약 2개\(메시지 #0~#1\) · 그 뒤 메시지 1개는 원문 · [\d,]+자 · 약 [\d,]+ 토큰 · 요청 1회 약 .+\(AI 3회\)$/);
+    assert.equal(w.macros[P.MACRO_MEMO](), `[#0] First turn summary.\n[#1] Second turn summary.\n\n--- AFTER THE LAST SUMMARY (full text) ---\nA: ${'x'.repeat(900)}2`);
+    assert.match(costEl.textContent, /^보냈어요 1번 — 요청마다 기억 요약 2개\(메시지 #0~#1\)/);
+    const n0 = w.toasts.length; sel.value = 'all'; doc.fire('change', { target: sel }); await tick();
+    assert.equal(P.onceLevel(), 'all'); assert.equal(w.toasts.length, n0 + 1);
+    assert.match(w.toasts.at(-1), /^미리 알려요: 채팅 전체가 요청 1회 상한\(약 3,000 토큰\)을 넘어요 — 메시지 3\/3개 · .+ · 오래된 1개는 기억 요약으로\. 원문을 다 넣으려면 /);
+    assert.match(costEl.textContent, /^메시지 3\/3개 · .+ · 오래된 1개는 기억 요약으로 — 상한 3,000에 맞춤 · 요청 1회 약 /);
+    w.macros[P.MACRO_ALL](); assert.match(costEl.textContent, /^보냈어요 1번 — 요청마다 메시지 3\/3개 · /);
+    doc.watchers[0]([{ removedNodes: [z.dlg] }]); await tick();
+    assert.equal(P.onceLevel(), ''); assert.match(w.toasts.at(-1), /^채팅 전체를 실어 1번 보냈어요 — 요청마다 메시지 3\/3개 · .+\. 미트볼 문구를 원래 단계로 돌려놨어요\.$/);
+    delete w.c.chatMetadata;
 });
 console.log(`mb-read: ${n}개 통과`);

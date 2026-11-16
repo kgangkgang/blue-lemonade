@@ -28,14 +28,21 @@ export function cardColorRows(ctx) {
     } catch { /* 표 없음 */ }
     return out;
 }
-/** 이름(접은 것 · 첫 낱말) → 색. 먼저 적힌 줄이 이겨요 */
+/** 이름(접은 것 · 첫 낱말) → 색. 먼저 적힌 줄이 이겨요.
+ *  1.6.2 첫 낱말은 그 첫 낱말을 가진 사람이 표에 한 명일 때만 넣어요 — 「Mina Park」 하나면 「Mina」 로도 찾지만,
+ *  첫 낱말이 같은 두 사람(「Mina Park」 · 「Mina Lee」)이 있으면 첫 낱말로는 누구 색인지 정하지 않아요(남의 색을 받지 않게). */
 export function cardColorTable(ctx) { return tableOf(cardColorRows(ctx)); }
 function tableOf(list) {
-    const out = new Map();
+    const out = new Map(), owners = new Map();
     for (const { name, color } of list) {
         const n = foldName(name);
         if (!out.has(n)) out.set(n, color);
-        const first = n.split(' ')[0]; if (first && first !== n && !out.has(first)) out.set(first, color);
+        const first = n.split(' ')[0];
+        if (first && first !== n) (owners.get(first) || owners.set(first, new Set()).get(first)).add(n);
+    }
+    for (const [first, names] of owners) {
+        if (names.size !== 1 || out.has(first)) continue;
+        out.set(first, out.get([...names][0]));
     }
     return out;
 }

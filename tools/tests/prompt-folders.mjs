@@ -378,6 +378,22 @@ await test('프리셋을 바꾸면 그 프리셋 폴더(없음)로, 돌아오면
     preset = 'P1'; await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle();
     assert.equal(heads().length, 4); assert.ok(row('p11').classList.contains('bl-pf-hide'));
 });
+await test('프리셋 이름을 바꾸면 폴더 칸이 새 이름으로 따라가요 · 다른 API · 새 이름 칸이 있으면 그대로(버그 사냥 4)', async () => {
+    const before = JSON.stringify(settings.promptFolders.presets.P1);
+    preset = 'P1 새'; await eventSource.emit(ctx.event_types.PRESET_RENAMED, { apiId: 'openai', oldName: 'P1', newName: 'P1 새' }); drawList(); await settle();
+    assert.equal(JSON.stringify(settings.promptFolders.presets['P1 새']), before);
+    assert.ok(!Object.hasOwn(settings.promptFolders.presets, 'P1'));
+    assert.equal(heads().length, 4, '폴더가 그대로 보여요'); assert.ok(row('p11').classList.contains('bl-pf-hide'), '접힘도');
+    await eventSource.emit(ctx.event_types.PRESET_RENAMED, { apiId: 'textgenerationwebui', oldName: 'P1 새', newName: 'X' });
+    assert.ok(Object.hasOwn(settings.promptFolders.presets, 'P1 새'), '다른 API 프리셋 이름 바뀜은 무시');
+    settings.promptFolders.presets.Q = { v: 2, open: {} };
+    pf._forTest.onRenamed({ apiId: 'openai', oldName: 'P1 새', newName: 'Q' });
+    assert.ok(Object.hasOwn(settings.promptFolders.presets, 'P1 새'), '새 이름 칸이 있으면 덮지 않아요');
+    delete settings.promptFolders.presets.Q;
+    pf._forTest.onRenamed({ apiId: 'openai', oldName: 'P1 새', newName: 'P1' });
+    preset = 'P1'; await eventSource.emit(ctx.event_types.OAI_PRESET_CHANGED_AFTER); drawList(); await settle();
+    assert.equal(heads().length, 4);
+});
 await test('끌어 옮김(실리태번 sortable 이 줄 하나를 옮기고 순서 저장): 같은 폴더 사이에 놓으면 그 폴더로, 밖으로 빼면 빠짐', async () => {
     // p7 을 p3 과 p4 사이로
     const [moved] = order.splice(7, 1); order.splice(4, 0, moved);

@@ -23,10 +23,10 @@ globalThis.document = {
     addEventListener() {}, removeEventListener() {},
 };
 globalThis.IntersectionObserver = class { observe() {} disconnect() {} };
-const timers = [];
-globalThis.setTimeout = fn => { timers.push(fn); return timers.length; };
-globalThis.clearTimeout = () => {};
-const run = () => { for (const fn of timers.splice(0)) fn(); };
+const timers = new Map(); let tick = 0;
+globalThis.setTimeout = fn => { timers.set(++tick, fn); return tick; };
+globalThis.clearTimeout = id => { timers.delete(id); };
+const run = () => { const list = [...timers.values()]; timers.clear(); for (const fn of list) fn(); };
 const M = await import(pathToFileURL(path.join(root, 'src/reply-top.js')));
 M.syncReplyTop(true);
 const shown = () => M._forTest.state().shown;
@@ -44,5 +44,14 @@ assert.equal(shown(), false, '새 답 뒤의 조용한 생성 끝은 ↑ 를 다
 // 미리 돌리기(dryRun)는 그대로 무시
 emit('gs', 'normal', {}, true); emit('ge', 6); run();
 assert.equal(shown(), false);
+// 버그 사냥 4: 답이 끝난 직후(350ms 안) 번역 끝 그림 · 상태창 헬퍼 알림 · 에셋 다시 그리기가 MESSAGE_UPDATED 를 내도 기다리던 ↑ 를 지우지 않아요
+//   (번역기는 'llm-translator:rendered' 로 기다림을 다시 걸고 곧바로 MESSAGE_UPDATED 를 내서, 자동 번역 + 상태창이면 ↑ 가 한 번도 안 떴어요)
+emit('gs', 'normal', {}, false); emit('ge', 6); emit('mu', 5); run();
+assert.equal(shown(), true, '기다리는 동안 온 MESSAGE_UPDATED 는 ↑ 를 막지 않아요');
+emit('mu', 5);
+assert.equal(shown(), false, '떠 있는 ↑ 는 고침 · 다시 그림에 걷어요(전과 같음)');
+emit('gs', 'normal', {}, false); emit('ge', 6); emit('md', 5); run();
+assert.equal(shown(), true, '지운 뒤에도 남은 마지막 답으로 다시 재요');
+M._forTest.hide();
 M.syncReplyTop(false);
 console.log('PASS ↑ 단추는 새 답이 끝날 때만 떠요 (사칭 · 조용한 생성 · 미리 돌리기는 아님)');

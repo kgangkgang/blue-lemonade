@@ -111,7 +111,9 @@ export function syncLazyAvatars(enabled) {
         markTemplates(false);
         return;
     }
-    if (!io && typeof IntersectionObserver === 'function') io = new IntersectionObserver(onSeen, { rootMargin: ROOT_MARGIN, threshold: 0 });
+    // 11-17 버그 사냥 4: 목록 그림은 스크롤 칸(#rm_print_characters_block 등) 안이라 rootMargin(뷰포트 여유)만으로는 칸에 잘린 그림이 「가까움」 이 안 됐어요 —
+    //   리그 크롬에서 rootMargin 만 false · scrollMargin 을 더하면 true. 그래서 「한 화면 미리」 가 없이 화면에 들어온 뒤에야 받았어요. scrollMargin 을 모르는 브라우저는 예전 그대로
+    if (!io && typeof IntersectionObserver === 'function') io = new IntersectionObserver(onSeen, { rootMargin: ROOT_MARGIN, scrollMargin: ROOT_MARGIN, threshold: 0 });
     markTemplates(true);   // 관찰자가 없는 환경이어도 브라우저 자체 lazy 는 살린다
     for (const id of LIST_ROOTS) watchRoot(document.getElementById(id));
     const chat = document.getElementById('chat');

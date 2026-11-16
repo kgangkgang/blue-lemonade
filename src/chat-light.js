@@ -52,14 +52,14 @@ export function syncChatLight(enabled) {
     on = !!enabled;
     kickWarm();   // (10-30 perf-chatlight) 쉴 때 미리 그리기 — 아래
     if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function') syncChatCover(on);   // 같은 설정(긴 채팅 가볍게) — 아래 서랍 덮개
-    if (!on) { stopSelectAhead(); mo?.disconnect(); mo = null; if (chat) markTail(chat, false); if (chat && document.documentElement.classList.contains(CLASS)) document.documentElement.classList.remove(CLASS); chat = null; return; }
+    if (!on) { warm.kids = null; warm.kidsOf = null; warm.lastTop = null; warm.dir = 0; stopSelectAhead(); mo?.disconnect(); mo = null; if (chat) markTail(chat, false); if (chat && document.documentElement.classList.contains(CLASS)) document.documentElement.classList.remove(CLASS); chat = null; return; }
     const el = document.getElementById('chat');
     if (!el) { mo?.disconnect(); mo = null; chat = null; return; }
     if (el !== chat) {
         mo?.disconnect();
         if (chat) markTail(chat, false);
         chat = el;
-        mo = new MutationObserver(() => { measure(); kickWarm(); });
+        mo = new MutationObserver(() => { warm.kids = null; measure(); kickWarm(); });
         mo.observe(el, { childList: true });
     }
     measure();
@@ -263,7 +263,24 @@ export const WARM_SLICE_MS = 50;
 export const WARM_BATCH_MAX = 12;   // 깨끗한 메시지(하나 1ms 남짓)로 키운 묶음이 처음 그리는 메시지(하나 4ms 안팎)를 만나도 한 묶음이 너무 길지 않게
 // css/05-chat.css 의 「긴 채팅 가볍게」 규칙과 같은 꼴(시험이 둘을 맞춰 봐요) — 이 선택자에 맞고 표식이 없는 메시지가 건너뛰는 메시지예요
 export const SKIP_SELECTOR = '.mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail])';
-let warm = { timer: 0, job: 0, look: null, list: null, i: 0, k: 4, done: 0, slices: 0, yielded: 0, cool: false, gate: null, parked: false, gated: 0 };
+// (1.6.1 opt4-warm) 미리 그리기는 「보는 자리 둘레」만 — 예전에는 건너뛴 메시지를 전부 풀었어요.
+//   묶음 하나를 끝낼 때(void el.offsetHeight) 드는 고정 몫(스타일 · #chat 배치 · 그 뒤 칠하기)이 「이미 푼 메시지 수」에 비례해서, 500개를 다 그린 채팅은
+//   폰 4배에서 묶음 464번(묶음 크기 1) · 240초를 기다려도 안 끝났고 그동안 메인 스레드가 꽉 찼어요(순정은 3초 · 연 직후 굴리기 프레임 p95 517ms · 긴 작업 341개).
+//   · 보는 자리(IntersectionObserver 첫 알림) 둘레 WARM_AROUND 개만 풀어요 — 굴리던 방향 쪽으로 WARM_AHEAD, 나머지는 반대쪽(방향을 모르면 반반 · 끝에 닿으면 남는 몫은 반대쪽으로).
+//   · 둘레에서 WARM_KEEP 넘게 벗어난 푼 메시지는 표식을 떼요(다시 content-visibility:auto — 크기는 기억돼 있어 자리가 안 튀어요). 푼 수가 둘레 + 여유를 안 넘어 묶음의 고정 몫이 채팅 길이와 함께 커지지 않아요.
+//   · 굴리는 동안은 쉬고(scroll 마다 처음부터 다시 잡음), WARM_SCROLL_REST_MS 멎으면 새 자리 둘레로 이어 가요.
+//   · 멀리 뛰기(찾기 · 북마크 · 맨 위/아래 · 번호로 이동 · 읽던 자리 복귀 …)와 빠른 굴리기: scroll 사건은 그 프레임의 스타일 · 배치 · 칠하기보다 먼저 와요 —
+//     그 자리에서 지금 보이는 메시지와 위아래 VIEW_GUARD 개에 표식을 달아, 건너뛴 자리표시가 한 프레임 보이는 일 없이 그 프레임에 그려져요(viewGuard · 읽기 먼저 · 쓰기 나중).
+//   글을 고르는 동안(html[data-bl-chat-sel])은 예전 그대로 채팅 전체가 건너뛰기를 쉬어요(이 표식과 상관없음). 브라우저 「페이지에서 찾기」는 content-visibility:auto 안의 글도 찾아요(hidden 만 못 찾음).
+export const WARM_AROUND = 160;
+export const WARM_AHEAD = 110;
+export const WARM_KEEP = 40;
+export const WARM_SCROLL_REST_MS = 200;
+export const VIEW_GUARD = 3;
+// 묶음이 조각 시간을 넘겨도 이 크기 아래로는 줄이지 않아요 — 긴 채팅은 묶음의 고정 몫(스타일 · #chat 배치)만으로 조각 시간을 넘겨 묶음 크기가 1 로 내려앉았고,
+//   그러면 메시지마다 고정 몫을 따로 치러요. 리그(폰 4배 · 500개 · 둘레 160): 묶음 138번 · 25.4초 → 40번 · 14.9초(최소 1 → 4). 처리를 기다리는 입력 · 굴리기는 예전처럼 먼저 돌아요.
+export const WARM_BATCH_MIN = 4;
+let warm = { timer: 0, job: 0, look: null, list: null, i: 0, k: 4, done: 0, slices: 0, yielded: 0, cool: false, gate: null, parked: false, gated: 0, dir: 0, lastTop: null, kids: null, kidsOf: null, cooled: 0, guarded: 0, rests: 0 };
 // (1.2.1 opt121-warm) 키 · 입력 · 누름 뒤 「그 입력의 프레임」이 칠해질 때까지는 새 묶음을 시작하지 않아요.
 //   isInputPending 은 아직 처리 안 된 입력만 알려 줘서, 입력 처리가 끝나고 그 화면이 그려지기 전 빈틈에 묶음(폰 4배 30~70ms)이 끼면
 //   글자가 화면에 나오는 것이 그만큼 늦었어요(관문 폰 타이핑: stepWarm 668ms · 입력 지연 최대 순정 27.7 → 53.8ms).
@@ -322,7 +339,11 @@ function startWarm() {
     if (!lightNow(el)) return;   // 짧은 채팅이면 고를 것도 없다
     warm.look = findAnchor(el, anchor => {
         warm.look = null;
-        warm.list = warmCandidates(el, anchor); warm.i = 0;
+const all = mesKids(el);
+        const win = warmWindow(all.length, Number.isFinite(anchor) && anchor >= 0 ? anchor : all.length - 1, warm.dir);
+        // 둘레에서 멀리 벗어난 푼 메시지는 되돌려요(쓰기만 · 자리를 재지 않음 — 화면 밖이고 크기는 기억돼 있어요)
+        for (let i = 0; i < all.length; i++) if ((i < win.lo - WARM_KEEP || i > win.hi + WARM_KEEP) && all[i].hasAttribute(WARM_ATTR)) { all[i].removeAttribute(WARM_ATTR); warm.cooled++; }
+        warm.list = warmCandidates(el, anchor, win); warm.i = 0;
         if (warm.list.length) warm.job = bgTask(stepWarm); else warm.list = null;
     });
 }
@@ -349,11 +370,22 @@ export function findAnchor(el, cb) {
     return { cancel() { if (done) return; done = true; io.disconnect(); clearTimeout(timer); index.clear(); } };
 }
 /** 건너뛰는 메시지(SKIP_SELECTOR · 표식 없음)를 anchor 에서 DOM 차례로 가까운 것부터 — 계산된 스타일 · 자리를 읽지 않아요 */
-export function warmCandidates(el, anchor = Infinity) {
+/** 보는 자리 at(:scope > .mes 안 번호 · 반 칸도 됨) 둘레의 번호 범위 { lo, hi }(둘 다 포함). dir: -1 = 위(작은 번호)로 굴리던 중 · 1 = 아래 · 0 = 모름.
+ *  굴리던 쪽으로 ahead, 반대쪽으로 around − ahead. 한쪽이 채팅 끝에 닿아 남는 몫은 반대쪽으로 넘겨요(바닥에서 열면 위로 around 개). */
+export function warmWindow(count, at, dir = 0, around = WARM_AROUND, ahead = WARM_AHEAD) {
+    if (!(count > 0)) return { lo: 0, hi: -1 };
+    const c = Math.min(Math.max(Number.isFinite(at) ? at : count - 1, 0), count - 1);
+    const up = dir < 0 ? ahead : dir > 0 ? around - ahead : around / 2, down = around - up;
+    let lo = Math.ceil(c - up), hi = Math.floor(c + down);
+    if (lo < 0) { hi += -lo; lo = 0; }
+    if (hi > count - 1) { lo -= hi - (count - 1); hi = count - 1; }
+    return { lo: Math.max(0, lo), hi };
+}
+export function warmCandidates(el, anchor = Infinity, win = null) {
     const all = mesKids(el);
     const at = Number.isFinite(anchor) && anchor >= 0 ? anchor : all.length - 1;
     const out = [];
-    all.forEach((mes, i) => { if (!mes.hasAttribute(WARM_ATTR) && mes.matches(SKIP_SELECTOR)) out.push([mes, Math.abs(i - at), i]); });
+    all.forEach((mes, i) => { if (win && (i < win.lo || i > win.hi)) return; if (!mes.hasAttribute(WARM_ATTR) && mes.matches(SKIP_SELECTOR)) out.push([mes, Math.abs(i - at), i]); });
     out.sort((a, b) => a[1] - b[1] || b[2] - a[2]);   // 같은 거리면 아래 것 먼저
     return out.map(x => x[0]);
 }
@@ -390,7 +422,7 @@ function stepWarm() {
         void el.offsetHeight;   // 풀린 안쪽의 스타일 · 배치를 지금(이 낮은 우선순위 작업 안에서) 끝낸다 — 칠하기는 다음 프레임에 묶음 여럿이 한 번
         const spent = performance.now() - t;
         if (picked.length === warm.k && spent < WARM_SLICE_MS * 0.6) warm.k = Math.min(warm.k * 2, WARM_BATCH_MAX);
-        else if (spent > WARM_SLICE_MS * 1.5) warm.k = Math.max(1, warm.k >> 1);
+        else if (spent > WARM_SLICE_MS * 1.5) warm.k = Math.max(WARM_BATCH_MIN, warm.k >> 1);
         warm.done += picked.length;
         for (const mes of picked) announce(mes);   // 알림을 받은 쪽이 미리 그리기를 멈췄을 수도 있어요(아래 warm.list 확인)
     }
@@ -504,11 +536,40 @@ export function syncSelectAhead(doc = document) {
 const onSelChange = () => syncSelectAhead();
 export const _select = { state: () => ({ watching: selActive, mode: selMode, near: !!selIo, listening: selOn }), stop: stopSelectAhead, mode(m) { stopSelectAhead(); selMode = m === 'near' ? 'near' : 'all'; } };
 
+/** 지금 보이는 메시지와 위아래 VIEW_GUARD 개 가운데 아직 건너뛰는 것에 표식 — scroll 사건(그 프레임의 스타일 · 배치 · 칠하기 전) 안에서 불러요.
+ *  자리 읽기를 모두 먼저(이분 탐색 — 메시지 수의 로그만큼 + 보이는 몇 개), 쓰기는 그 뒤에 몰아서. 돌려주는 값: 표식을 단 수 */
+export function viewGuard(el) {
+    if (warm.kidsOf !== el || !warm.kids) { warm.kids = mesKids(el); warm.kidsOf = el; }
+    const kids = warm.kids; const n = kids.length;
+    if (!n) return 0;
+    const box = el.getBoundingClientRect(); const top = el.scrollTop;
+    if (warm.lastTop !== null && top !== warm.lastTop) warm.dir = top < warm.lastTop ? -1 : 1;
+    warm.lastTop = top;
+    let lo = 0, hi = n - 1;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (kids[m].getBoundingClientRect().bottom > box.top) hi = m; else lo = m + 1; }
+    let last = lo;
+    while (last + 1 < n && kids[last + 1].getBoundingClientRect().top < box.bottom) last++;
+    const picked = [];
+    for (let i = Math.max(0, lo - VIEW_GUARD); i <= Math.min(n - 1, last + VIEW_GUARD); i++) { const mes = kids[i]; if (!mes.hasAttribute(WARM_ATTR) && mes.matches(SKIP_SELECTOR)) picked.push(mes); }
+    for (const mes of picked) mes.setAttribute(WARM_ATTR, '');
+    for (const mes of picked) announce(mes);   // 네모 단추 감시가 그 안을 재게(크롬은 auto → visible 에 알림을 안 내요)
+    warm.guarded += picked.length;
+    return picked.length;
+}
+/** #chat 이 굴렀다 — 보이는 자리를 지키고, 미리 그리기는 쉬었다가 멎은 뒤 새 자리 둘레로 */
+function onChatScroll(event) {
+    const el = event.target;
+    if (!on || !el || el.id !== 'chat' || !lightNow(el)) return;
+    if (!warm.cool && document.body?.dataset?.generating !== 'true') viewGuard(el);   // 쉬는 동안(답 받는 중 · 서랍)은 예전처럼 브라우저에 맡겨요
+    warm.rests++;
+    kickWarm(WARM_SCROLL_REST_MS);
+}
 function listenWarm() {
     if (!selOn && typeof document.addEventListener === 'function') { selOn = true; document.addEventListener('selectionchange', onSelChange); }
     if (!revealOn && typeof document.addEventListener === 'function') {
         revealOn = true;
         document.addEventListener('contentvisibilityautostatechange', onReveal, true);
+        document.addEventListener('scroll', onChatScroll, { capture: true, passive: true });
         for (const type of INPUT_GATE_EVENTS) document.addEventListener(type, onInputGate, { capture: true, passive: true });
     }
     if (warmEvents) return;
@@ -525,7 +586,7 @@ function listenWarm() {
     } catch { }
 }
 export const _warm = {
-    state: () => ({ timer: !!warm.timer, job: !!warm.job, look: !!warm.look, pending: warm.list ? warm.list.length - warm.i : null, k: warm.k, done: warm.done, slices: warm.slices, yielded: warm.yielded, cool: warm.cool, gated: warm.gated, gate: !!warm.gate, parked: warm.parked }),
+    state: () => ({ timer: !!warm.timer, job: !!warm.job, look: !!warm.look, pending: warm.list ? warm.list.length - warm.i : null, k: warm.k, done: warm.done, dir: warm.dir, cooled: warm.cooled, guarded: warm.guarded, rests: warm.rests, slices: warm.slices, yielded: warm.yielded, cool: warm.cool, gated: warm.gated, gate: !!warm.gate, parked: warm.parked }),
     stop: stopWarm, step: stepWarm, start: startWarm,
 };
 // 1.1.4 측정 도구가 묶음(dist) 밖에서 미리 그리기 상태를 읽는 길(감시 허브의 stats() 와 같은 꼴): globalThis[Symbol.for('blue-lemonade.diag.v1')].warm()

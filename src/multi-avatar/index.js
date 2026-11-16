@@ -58,6 +58,16 @@ const paintChat = s => sweep('#chat .avatar img', s);
 const paintList = s => sweep('#rm_print_characters_block .avatar img, #HotSwapWrapper .avatar img', s);
 const paintGroup = s => sweep('#rm_group_members .avatar img, #rm_group_add_members .avatar img', s);
 const paintMessage = id => { if (id === undefined || id === null) return paintChat(); sweep(`#chat .mes[mesid="${String(id).replace(/[^\w-]/g, '')}"] .avatar img`); };
+let streamKey = '';
+/** 흘러나오는 마지막 메시지(새 답 · 넘김 · 이어 쓰기)를 그 메시지마다 한 번만 칠해요 */
+export function paintStreaming() {
+    const c = ctx(), chat = Array.isArray(c?.chat) ? c.chat : [], id = chat.length - 1, m = chat[id];
+    if (!m || m.is_user) return false;
+    const key = `${typeof c.getCurrentChatId === 'function' ? c.getCurrentChatId() : ''}|${id}|${m.send_date ?? ''}|${Number(m.swipe_id) || 0}`;
+    if (key === streamKey) return false;
+    if (!document.querySelector(`#chat .mes[mesid="${id}"] .avatar img`)) return false;   // 자리가 아직 없으면 다음 토큰에
+    streamKey = key; paintMessage(id); return true;
+}
 const listVisible = () => { const block = document.getElementById('rm_characters_block'); return !!block && block.getClientRects().length > 0; };
 const listedAvatars = () => [...new Set([...document.querySelectorAll('#rm_print_characters_block .avatar img')].map(img => img.dataset[SWAP] || avatarFromSrc(srcOf(img), location.origin)).filter(Boolean))];
 
@@ -104,6 +114,9 @@ function bind() {
     eventSource.on(t.CHAT_CHANGED, onChatChanged);
     if (t.CHARACTER_PAGE_LOADED) eventSource.on(t.CHARACTER_PAGE_LOADED, onPageLoaded);
     for (const name of ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'MESSAGE_SWIPED', 'MESSAGE_UPDATED']) if (t[name]) eventSource.on(t[name], id => { if (on) paintMessage(id); });
+    // 1.6.2 스트리밍: 실리태번은 흘러나오는 새 답에 CHARACTER_MESSAGE_RENDERED 를 생성이 끝날 때에야 내요 → 답이 흘러나오는 내내 카드 원래 그림이었다가 끝나는 순간 바뀌었어요.
+    //   첫 토큰에 그 메시지를 한 번 칠해요(메시지마다 한 번 — 토큰마다 훑지 않아요 · 고르는 열쇠는 보낸 시각 · 넘김 번호라 끝난 뒤 다시 칠해도 같은 그림)
+    if (t.STREAM_TOKEN_RECEIVED) eventSource.on(t.STREAM_TOKEN_RECEIVED, () => { if (on) paintStreaming(); });
     if (t.MORE_MESSAGES_LOADED) eventSource.on(t.MORE_MESSAGES_LOADED, () => { if (on) paintChat(); });
     if (t.MESSAGE_DELETED) eventSource.on(t.MESSAGE_DELETED, () => { if (on && current().when === 'message') paintChat(); });   // 8.1.3 답변마다: 지우면 뒤 메시지 번호가 당겨져 열쇠가 바뀌어요
     if (t.GROUP_UPDATED) eventSource.on(t.GROUP_UPDATED, () => { if (on) paintGroup(); });

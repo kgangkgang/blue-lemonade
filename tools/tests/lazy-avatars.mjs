@@ -76,7 +76,7 @@ t('켜면: 템플릿 <img> 에 loading=lazy · decoding=async, 목록 뿌리 둘
     assert.deepEqual(la._forTest.state(), { on: true, io: true, roots: 2, chat: true, pending: 0 });
     assert.deepEqual(mutation.map(m => m.target.id).sort(), ['chat', 'rm_print_characters_block', 'user_avatar_block']);
     for (const m of mutation) assert.deepEqual(m.opts, { childList: true });
-    assert.deepEqual(observers.at(-1).opts, { rootMargin: la.ROOT_MARGIN, threshold: 0 });
+    assert.deepEqual(observers.at(-1).opts, { rootMargin: la.ROOT_MARGIN, scrollMargin: la.ROOT_MARGIN, threshold: 0 }, '스크롤 칸 안 그림도 한 화면 미리(scrollMargin · 버그 사냥 4)');
 });
 t('이미 목록에 있던 그림은 건드리지 않는다 (깜빡임 금지)', () => { assert.equal(existing.attrs.src, '/thumbnail?type=avatar&file=old.png'); assert.equal(existing.dataset.blSrc, undefined); });
 

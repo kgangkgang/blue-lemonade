@@ -825,6 +825,16 @@ function watchList() {
     unfind ??= watchDom(document.body, { childList: true, subtree: true, exclude: '#chat', when: 'frame', name: '프롬프트 폴더 찾기' }, () => { if (document.getElementById(CONTAINER)) watchList(); });
 }
 function onPreset() { lastIds = null; schedule(); }
+/** 11-17 버그 사냥 4: 프리셋 이름을 바꾸면 고친 폴더 칸이 옛 이름 아래 남아 폴더가 프리셋 파일 것으로 되돌아갔어요 — 칸을 새 이름으로 옮겨요(새 이름 칸이 이미 있으면 그대로) */
+function onRenamed(data) {
+    if (data?.apiId !== 'openai' || !data.oldName || !data.newName || data.oldName === data.newName) return;
+    const box = store().presets;
+    if (!Object.hasOwn(box, data.oldName) || Object.hasOwn(box, data.newName)) return;
+    box[data.newName] = box[data.oldName];
+    delete box[data.oldName];
+    saveSettings();
+    if (wanted) onPreset();
+}
 let presetBound = false;
 export async function syncPromptFolders(on) {
     wanted = !!on;
@@ -858,9 +868,10 @@ export async function syncPromptFolders(on) {
     if (!presetBound) {
         presetBound = true;
         try { const { eventSource, event_types } = SillyTavern.getContext(); if (event_types?.OAI_PRESET_CHANGED_AFTER) eventSource.on(event_types.OAI_PRESET_CHANGED_AFTER, () => { if (wanted) onPreset(); }); } catch { /* 이벤트 없음 */ }
+        try { const { eventSource, event_types } = SillyTavern.getContext(); if (event_types?.PRESET_RENAMED) eventSource.on(event_types.PRESET_RENAMED, onRenamed); } catch { /* 이벤트 없음 */ }
     }
     watchList();
 }
 
 /** 시험용 */
-export const _forTest = { apply, refold, headMarkup, setApi(next) { api = next; }, setWanted(v) { wanted = v; }, reset() { lastIds = null; lastPreset = null; } };
+export const _forTest = { apply, refold, headMarkup, onRenamed, setApi(next) { api = next; }, setWanted(v) { wanted = v; }, reset() { lastIds = null; lastPreset = null; } };

@@ -290,6 +290,8 @@ html:not(#bl-ui-parts-off) body.salty .cg-root {
 html:not(#bl-ui-parts-off) body.salty .po-dialog .po-item { background: var(--salty-shade) !important; }
 html:not(#bl-ui-parts-off) body.salty .cg-root :is(.cg-segmented, .cg-stepper) { background: var(--salty-shade) !important; }
 html:not(#bl-ui-parts-off) body.salty #lv_settings .lv-icon:not(:hover) { background: transparent !important; border-color: transparent !important; }
+/* 11-17 디자인 전수조사: 맨 위 줄 「사용 · 자동 읽기 · 요술봉 메뉴」 체크 칸 끝의 정지(■) 단추가 면 없이 네모 그림만 있어 안 고른 체크 칸처럼 보였어요 → 이 단추만 옅은 면을 둬요 */
+html:not(#bl-ui-parts-off) body.salty #lv_settings .lv-top > .lv-stop:not(:hover) { background: var(--lv-fill-hover) !important; border-color: var(--lv-border) !important; }
 
 /* ---------- 채팅 안 프리셋 상태창(데우스 V3 「DEM Active Modules」 등) 접힘 화살표도 같은 선 그림 ----------
    정규식(사용자 것)이 summary::after 에 글자 「▸」(.8em ≈ 잉크 6~7px)를 그려 너무 작았다 — 글자 대신 공용 ⌄ 선 그림 14 · 보조색, 펼치면 뒤집힘.

@@ -109,7 +109,8 @@ function enter() {
         confirmDelete();
     };
     const onKey = (event) => {
-        if (event.key === 'Escape') { event.preventDefault(); leave(); return; }
+        // 확인 창이 떠 있으면 Esc 는 그 창 몫이에요(여기서 막으면 창의 cancel 이 안 와 창이 남고 「지우기」 가 헛돌았어요)
+        if (event.key === 'Escape') { if (document.querySelector('dialog[open]')) return; event.preventDefault(); leave(); return; }
         if ((event.key === 'Enter' || event.key === ' ') && event.target?.closest?.(`#${BAR_ID} [role="button"]`)) { event.preventDefault(); event.target.click(); }
     };
     const types = c.eventTypes ?? c.event_types;
@@ -155,12 +156,19 @@ async function confirmDelete() {
     if (editingId() > hi) { toastr.info('아래 메시지를 고치는 중이라 지우지 않았어요. 편집을 끝내거나 취소한 뒤에 다시 골라 주세요.', '범위 지우기'); return; }   // 편집 번호가 밀리지 않게(shared.js editingId)
     if (hi >= (c.chat?.length ?? 0)) { toastr.warning('그사이 메시지가 줄어 지우지 않았어요. 다시 골라 주세요.', '범위 지우기'); return; }
     // 끝에서부터 — 앞 번호가 그대로라 하나씩 지워도 범위가 어긋나지 않아요. 도구 호출 메시지 묶음은 건드리지 않아요(범위 밖을 지우지 않게)
-    let done = 0;
+    // 11-17 버그 사냥 4: 하나씩 기다리며 지우는 동안 입력줄이 이미 돌아와 있어 채팅을 바꾸거나 보내기를 누를 수 있었어요 —
+    //   새로 연 채팅의 같은 번호를 지우던 것. 지울 메시지 객체를 먼저 잡아 두고, 매번 그 자리에 그 메시지가 그대로 있을 때만 지워요.
+    const targets = c.chat.slice(lo, hi + 1);
+    let done = 0, stopped = false;
     for (let id = hi; id >= lo; id--) {
+        const now = ctx();
+        if ((now.getCurrentChatId?.() ?? now.chatId) !== chatId || now.chat?.[id] !== targets[id - lo] || generating()) { stopped = true; break; }
+        const before = now.chat.length;
         await c.deleteMessage(id, undefined, false, false);
-        done++;
+        if (now.chat.length < before) done++;
     }
-    toastr.success(`메시지 ${done}개를 지웠어요.`, '범위 지우기');
+    if (stopped) toastr.warning(`지우는 도중 채팅이 바뀌어 멈췄어요. ${done}개만 지웠어요.`, '범위 지우기');
+    else toastr.success(`메시지 ${done}개를 지웠어요.`, '범위 지우기');
 }
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */

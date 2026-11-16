@@ -257,4 +257,12 @@ check('⑮ 2.8.0(11-16 사용자 폰 사진): 이름 단추가 있는 관계 카
     assert.ok(toast.length && /top:\s*auto !important/.test(toast[0].body) && /bottom:/.test(toast[0].body), '미트볼 창 안 알림은 화면 아래');
     assert.ok(find(/\.ss-tb \.ss-t-det > \.go$/).some(r => /min-height:\s*0/.test(r.body) && /border:\s*0/.test(r.body)), '띠 펼친 칸의 여는 글은 한 줄 글');
 });
+check('⑯ 설정 칸 체크 줄(11-16 「체크박스 옆에 글자들 약간 묘하게 떠 있음」): 그 확장의 글 줄 꼴은 두고 체크 칸만 첫 줄 가운데 — 위치 = (줄 높이 − 체크 칸 높이) / 2', () => {
+    const find = re => rules.filter(r => r.selectors.some(s => re.test(s)));
+    const row = find(/#ss-settings \.inline-drawer-content label\.checkbox_label:has\(> input\[type="checkbox"\]:first-child\)$/);
+    assert.ok(row.length && /line-height:\s*1\.45/.test(row[0].body) && /--bl-mb-cbox:\s*20px/.test(row[0].body), '줄 높이를 정해 둬요(체크 칸 자리 계산의 바탕)');
+    assert.ok(!/display:/.test(row[0].body), '줄 꼴(그 확장의 글 줄)은 안 바꿔요');
+    const box = find(/label\.checkbox_label > input\[type="checkbox"\]:first-child$/);   // 1.6.3: :has 없이(주어 아닌 :has 상한)
+    assert.ok(box.length && /top:\s*calc\(\(1\.45em - var\(--bl-mb-cbox\)\) \/ 2 - 0\.045em\)/.test(box[0].body) && /font-size:\s*inherit/.test(box[0].body), '체크 칸 위치는 줄 높이에서 계산(em 이 줄 글자 크기로 풀리게)');
+});
 console.log(`status-ext-css: ${passed}개 통과`);

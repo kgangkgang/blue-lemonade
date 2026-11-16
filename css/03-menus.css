@@ -49,6 +49,8 @@ html body.salty #extensionsMenu#extensionsMenu > .extension_container > div,
 html body.salty #extensionsMenu#extensionsMenu > div:not(.extension_container) {
   padding-right: 16px !important;
 }
+/* 11-17 디자인 전수조사: 다른 확장 하나가 터치 화면에서 제 항목 다섯만 44px 로 올려(#extensionsMenu > #… · id 둘) 한 메뉴 안에서 줄 높이가 36 · 44 로 섞여 보였어요(폰 360 · 384) → 메뉴 줄은 모두 같은 높이 */
+html body.salty #extensionsMenu#extensionsMenu > .list-group-item { min-height: var(--bl-h-menu); }
 body.salty :is(#options .options-content a, #extensionsMenu .list-group-item, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)) :is(i, .fa-solid, .extensionsMenuExtensionButton) {
   width: var(--bl-ic-box) !important;
   min-width: var(--bl-ic-box);

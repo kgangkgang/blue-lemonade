@@ -24,4 +24,13 @@ test('500 loaded messages render only latest 50 rows initially',()=>{const html=
 test('selected IDs survive changing pages and their count includes hidden pages',()=>{context.select(2);context.select(499);context.setPage(0);const first=context.choices('capture');assert.match(first,/data-word-message="2" checked/);assert.match(first,/선택 2개/);context.setPage(9);assert.match(context.choices('capture'),/data-word-message="499" checked/);});
 test('page clamps safely after the loaded list becomes shorter',()=>{liveIds=[1,2,3];const html=context.choices('capture');assert.equal((html.match(/data-message-row=/g)||[]).length,3);assert.match(html,/1 \/ 1쪽/);});
 test('word editing list keeps its original unpaged behavior',()=>{liveIds=messages.map((_,i)=>i);const html=context.choices('words');assert.equal((html.match(/data-message-row=/g)||[]).length,500);assert.ok(!html.includes('data-capture-page'));});
+// 버그 사냥 4: 고른 것은 번호라, 앞 메시지를 지우면 비워요(밀린 다른 메시지를 쓰지 않게) · 채팅이 그대로고 지움이 없으면 그대로 · 되돌리기(undoChat)는 남겨요
+{
+    const at=source.indexOf('function syncChat()')>=0&&source.indexOf('let deletions=')>=0?source.indexOf('let deletions='):source.indexOf('function syncChat()');
+    const sync=source.slice(at,source.indexOf('\n}\n',source.indexOf('function syncChat()'))+3);
+    const handlers=[];const sx={context:()=>({chatId:'c1',eventTypes:{MESSAGE_DELETED:'del'},eventSource:{on:(t,fn)=>handlers.push([t,fn])}})};
+    vm.createContext(sx);
+    vm.runInContext(`const selected=new Set();let chatKey,proposal=null,undoChat=null,previewGen=0,previewCache=new WeakMap(),capturePage=null;${sync}globalThis.api={syncChat,selected,set:v=>{proposal=v;undoChat=v;},get:()=>({proposal,undoChat})};`,sx);
+    test('deleting a message clears picked ids (they would point at shifted messages) but keeps chat undo',()=>{sx.api.syncChat();sx.api.selected.add(50);sx.api.selected.add(51);sx.api.set('p');sx.api.syncChat();assert.deepEqual([...sx.api.selected],[50,51],'no deletion — kept');for(const [t,fn] of handlers)if(t==='del')fn(10);sx.api.syncChat();assert.equal(sx.api.selected.size,0);assert.equal(sx.api.get().proposal,null);assert.equal(sx.api.get().undoChat,'p');});
+}
 console.log(`${passed} checks passed`);
