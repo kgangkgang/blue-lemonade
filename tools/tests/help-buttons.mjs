@@ -15,7 +15,8 @@ const h3 = c76.match(/:not\(#bl-h2\) :is\(([^)]*\)[^)]*|[^)]*)\) \{/)?.[1] || ''
 for (const cls of ['.bl-help-btn', '.lv-help-btn', '.bwr_help', '.bl-word-help', '.blzi-help', '.bl-wi-help', '#bl-deus-popover .dq-help-button']) ok(h3.includes(cls), `76 H3 공용 목록에 ${cls}`);
 ok(/\.bl-info \{[^}]*width: var\(--bl-help-d\)[^}]*background: var\(--bl-control\)/.test(c76), '정보 ⓘ(.bl-info)도 같은 지름 면 원');
 ok(/width: var\(--bl-help-d\) !important;\n  height: var\(--bl-help-d\) !important;/.test(c76) && /margin: 0 0 0 var\(--bl-help-gap\) !important;/.test(c76) && /transform: translateY\(var\(--bl-help-y\)\)/.test(c76), '테마 ? 는 공용 지름 · 간격 · 세로 값 하나');
-ok(/> i \{\n  font-size: 0 !important;[^}]*mask: var\(--bl-help-mask\) center\/contain no-repeat !important;/.test(c76), '원 안 ? 는 글꼴이 아니라 마스크(가운데)');
+ok(/> i \{\n  font-size: 0 !important;[^}]*mask: var\(--bl-help-mask\) center\/var\(--bl-help-glyph\) var\(--bl-help-glyph\) no-repeat !important;/.test(c76) && /> i \{\n  font-size: 0 !important;[^}]*width: 100% !important; height: 100% !important;/.test(c76) && !/translate: -?\.\d+px -?\.\d+px/.test(c76), '원 안 ? 는 글꼴이 아니라 마스크 — 원과 같은 상자에 가운데(올림 값 없이)');
+ok(!/translate\(0\.2%200\.3\)/.test(read('css/56-control-consistency.css')), '물음표 그림의 잉크는 그림 칸 한가운데(밀어 둔 값 없음)');
 // 과일 패널(body 밖에도 붙어 76 이 못 닿음)은 같은 값을 따로 적어요
 const c85 = strip(read('css/85-addon-unify.css'));
 ok(/\.bl-fruit-help-button \{[^}]*width: var\(--bl-help-d\); height: var\(--bl-help-d\);[^}]*border-radius: 50%; background: var\(--fill\)/.test(c85) && /\.bl-fruit-help-button > i \{[^}]*mask: var\(--bl-help-mask\)/.test(c85), '과일 ? 도 같은 지름 · 마스크');

@@ -10,6 +10,8 @@ const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const free = new Set(read('tools/fa-free-6.5.2.txt').split('\n').map(s => s.trim()).filter(s => s && !s.startsWith('#')));
 // 모양 · 크기 · 움직임 이름(아이콘이 아님) — 목록에 없어도 된다
 const MODIFIERS = new Set(['solid', 'regular', 'brands', 'light', 'thin', 'duotone', 'sharp', 'classic', 'fw', 'lg', 'xs', 'sm', 'xl', 'spin', 'pulse', 'stack', 'inverse', 'border']);
+// 1.6.1 다른 확장이 고른 이름(실리태번 글꼴에 없어 빈 칸으로 나옴)을 테마가 그림으로 채우는 선택자 — 테마가 그 아이콘을 쓰는 것이 아니라서 목록에 없어도 된다(src/ext-status.css 「속마음」 단추)
+const FILLED = new Set(['heart-circle-question']);
 const SKIP_DIRS = new Set(['vendor', 'sfx', 'sfx-extra', 'scene-music', 'node_modules']);
 const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? (SKIP_DIRS.has(e.name) ? [] : walk(path.join(dir, e.name))) : [path.join(dir, e.name)]);
 let n = 0;
@@ -28,7 +30,7 @@ t('테마 src · css · index.js 의 fa-* 이름이 모두 Free 에 있다', () 
     for (const file of files) {
         const text = fs.readFileSync(file, 'utf8');
         for (const m of text.matchAll(/(?<![\w-])fa-([a-z0-9]+(?:-[a-z0-9]+)*)(?![\w-])/g)) {
-            if (MODIFIERS.has(m[1]) || free.has(m[1])) continue;
+            if (MODIFIERS.has(m[1]) || free.has(m[1]) || FILLED.has(m[1])) continue;
             missing.push(`${path.relative(root, file).replaceAll('\\', '/')}:${text.slice(0, m.index).split('\n').length} fa-${m[1]}`);
         }
     }

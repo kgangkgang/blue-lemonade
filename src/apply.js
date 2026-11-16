@@ -826,6 +826,8 @@ export function applyAll() {
     { const on = want.has('salty') && s.chat.namePeople === true; lateSync('namePeople', () => import('./name-people.js'), on, m => m.syncNamePeople(on, { bg: /^#[0-9a-f]{6}$/i.test(String(pal.bg)) ? pal.bg : '', skipChar: !!gradientFor(s, 'name'), skipUser: !!gradientFor(s, 'userName') })); }
     // 1.6.0 눈 감긴 답을 미트볼 상태에서 빼기(src/mb-hidden.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 바뀌면 한 번 알려요(끄면 남은 표식을 바로 치워요)
     { const on = want.has('salty') && s.chat.mbHiddenSync !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-hidden-sync') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-hidden-sync', on); document.dispatchEvent(new Event('bl-mb-hidden-sync')); } }
+    // 1.6.1 뒤로 가기로 미트볼 창 닫기(src/mb-back.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 끄면 새 창부터 겹을 올리지 않아요
+    { const on = want.has('salty') && s.chat.mbBack !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-back') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-back', on); } }
     // 1.6.0 미트볼 문구: 블루레몬 추천(src/mb-prompt.js · 기본 적용 안 함): 고른 때만 모듈을 받아요 — 그 확장의 「생성 시스템 프롬프트」 끝에 테마 줄을 덧붙이고, 「적용 안 함」 으로 돌리면 그 줄만 떼요
     { const lv = want.has('salty') ? (s.chat.mbPrompt || 'off') : 'off'; let once = false; try { once = !!localStorage.getItem('bl-mb-prompt-once'); } catch { /* 표시 없이 */ } lateSync('mbPrompt', () => import('./mb-prompt.js'), want.has('salty') && (lv !== 'off' || once), m => { if (want.has('salty')) m.syncMbPrompt(lv, s.chat.mbPromptCount, s.chat.mbPromptChars, { cap: s.chat.mbPromptCap }).catch(error => console.warn('[Blue Lemonade] 미트볼 문구', error)); }); }
     const mbPlain = want.has('salty') && s.chat.mbHelpers === false;

@@ -165,6 +165,9 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     if(!mount){document.body.append(dialog);showThemeModal(dialog);}
     const alive=()=>mount?dialog.isConnected:dialog.open;
     const memory=keptFor();
+    // 버그 사냥 2차: 보관 기억(kept)은 열 때의 채팅 것이다 — 설정 창을 둔 채 채팅을 바꾼 뒤 굽거나 편집하면 새 채팅 메시지가 옛 채팅의 「만들어 둔 파일」로 들어갔다
+    const openedChat=SillyTavern.getContext().chatId;
+    const sameChat=()=>{if(SillyTavern.getContext().chatId===openedChat)return true;status.textContent='채팅이 바뀌었어요. 캡처 창을 닫았다가 다시 열어 주세요.';return false;};
     // busy: false | 'quick'(빠른 미리보기 — 필터와 무관하게 굽는다) | 'files'(파일 만들기)
     // bake: 뒤에서 바탕 그림만 굽는 중(필터 칸을 열었거나 필터를 만졌는데 바탕이 없을 때) — 버튼은 막지 않고, 다른 작업이 시작되면 멈춘다
     let revision=0,busy=false,edits=memory.edits,controller=null,outputs=[],zipURL='',stale=false,base=null,baseInfo=null,liveFrame=0,liveDraft=false,liveTimer=0,filterApi=null;
@@ -351,7 +354,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
         show();
     }
     async function generate(){
-        if(busy)return;busy='files';render.disabled=quick.disabled=true;revision++;controller?.abort();stopBake();wipe();stale=false;const current=revision;controller=new AbortController();const signal=controller.signal;
+        if(busy)return;if(!sameChat())return;busy='files';render.disabled=quick.disabled=true;revision++;controller?.abort();stopBake();wipe();stale=false;const current=revision;controller=new AbortController();const signal=controller.signal;
         const resources=createCaptureResources();
         holdFx(true); // 5.6.4: 화면 밖에서 멈춘 감정 대사를 다시 움직인 채로 — 움직임으로 잡히고, 저장 중 표시가 바뀌어 '메시지가 바뀌었어요'가 나지 않게 (dem-expressive.js)
         try{
@@ -385,7 +388,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     }
     // 빠른 미리보기: 굽지 않고 첫 화면만 멈춘 그림으로 (움직임 · 날씨 · 나머지 파일은 '파일 만들기'에서). 저장용이 아니다
     async function quickLook(){
-        if(busy)return;busy='quick';render.disabled=quick.disabled=true;revision++;controller?.abort();stopBake();const current=revision;controller=new AbortController();const signal=controller.signal;
+        if(busy)return;if(!sameChat())return;busy='quick';render.disabled=quick.disabled=true;revision++;controller?.abort();stopBake();const current=revision;controller=new AbortController();const signal=controller.signal;
         const resources=createCaptureResources();
         try{
             const captureIds=selectedIds();if(!captureIds.length)throw Error('메시지를 먼저 선택해 주세요.');
@@ -408,7 +411,7 @@ export async function openCapturePreview(ids, mount = null, selectedIds = () => 
     }
     quick.onclick=quickLook;
     clearButton.onclick=()=>{revision++;controller?.abort();stopBake();memory.files=null;memory.archive=null;memory.edits=null;memory.ids='';memory.stale=false;edits=null;stale=false;dropBase();wipe();clearButton.hidden=true;status.textContent='만든 파일과 캡처용 글 편집을 지웠어요.';};
-    dialog.querySelector('[data-capture-edit]').onclick=async()=>{try{const ids=selectedIds(),result=await(await import('./capture-editor.js')).editCaptureDraft(ids,edits);if(result){const next=[...(edits||[]).filter(m=>!ids.includes(m.id)),...(result.draft||[])];edits=next.length?next:null;memory.edits=edits;clearButton.hidden=!(memory.files?.length||memory.edits);invalidate();}}catch(error){status.textContent=error.message;}};
+    dialog.querySelector('[data-capture-edit]').onclick=async()=>{if(!sameChat())return;try{const ids=selectedIds(),result=await(await import('./capture-editor.js')).editCaptureDraft(ids,edits);if(result){const next=[...(edits||[]).filter(m=>!ids.includes(m.id)),...(result.draft||[])];edits=next.length?next:null;memory.edits=edits;clearButton.hidden=!(memory.files?.length||memory.edits);invalidate();}}catch(error){status.textContent=error.message;}};
     render.onclick=generate;
     // 열 때: 만들어 둔 파일이 있으면 그대로 보여 주고, 없으면 굽지 않고 빠른 미리보기만
     if(memory.files?.length){

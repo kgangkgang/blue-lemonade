@@ -184,4 +184,48 @@ await ok('채팅 전체 연결: 단계 다섯 · 고를 때 확인 창(취소하
     assert.ok(apply.includes("localStorage.getItem('bl-mb-prompt-once')") && apply.includes('{ cap: s.chat.mbPromptCap }'));
     assert.ok(set.includes("range('mbPromptCap', 0, 1000000, 120000)") && set.includes("'recent', 'all'].includes(s.chat.mbPrompt)"));
 });
+// ── 1.6.1 줄 꼴 규칙(본편 출력 규칙 · 별도 분석 문구에 붙는 한 덩이) ──
+const RDEF = { 'inj.output': 'Test output rule. Values in Korean, names exactly as above.', 'inj.ultra.output': 'Test short rule. Keys: {keys}', 'ai.analyze': 'Test tracker.' };   // 시험용으로 지어낸 기본 문구(원작 글 아님)
+await ok('줄 꼴 규칙: 세 칸 끝에 한 덩이 · 떼면 칸이 비워짐 · 손으로 고친 문구는 그대로 · 두 번 붙지 않아요', async () => {
+    const { c, set } = mk();
+    let r = await M.syncRules(true, { c, defs: RDEF });
+    assert.deepEqual([r.ok, r.changed, r.keys], [true, 3, M.RULE_KEYS]);
+    for (const k of M.RULE_KEYS) { assert.ok(set.prompts[k].startsWith(RDEF[k] + '\n[BL LINE RULES] ')); assert.equal(M.stripRules(set.prompts[k]), RDEF[k]); assert.equal(set.prompts[k].split('[BL LINE RULES]').length, 2); }
+    assert.equal((await M.syncRules(true, { c, defs: RDEF })).changed, 0);                 // 같은 글이면 안 건드려요
+    r = await M.syncRules(false, { c, defs: RDEF });
+    assert.equal(r.changed, 3); for (const k of M.RULE_KEYS) assert.ok(!(k in set.prompts));   // 기본값 상태로
+    const mine = 'MY OWN RULE  \n'; const h = mk({ 'inj.output': mine, 'gen.system': 'keep me' });
+    await M.syncRules(true, { c: h.c, defs: RDEF });
+    assert.ok(h.set.prompts['inj.output'].startsWith(mine + '\n[BL LINE RULES] ')); assert.ok(!/ d:[0-9a-f]{8}\]$/.test(h.set.prompts['inj.output']));   // 손으로 고친 글 위에는 지문 없이
+    h.set.prompts['inj.output'] = 'EDITED AFTER ' + h.set.prompts['inj.output'];
+    await M.syncRules(false, { c: h.c, defs: RDEF });
+    assert.equal(h.set.prompts['inj.output'], 'EDITED AFTER ' + mine); assert.equal(h.set.prompts['gen.system'], 'keep me');
+});
+await ok('줄 꼴 규칙: 판을 올려 글이 바뀌면 옛 덩이를 떼고 새로 · 원작이 기본 문구를 바꾸면 새 기본 문구로 · 없는 칸 · 못 읽음은 건너뜀', async () => {
+    const old = '[BL LINE RULES] an older wording of the same rules. [/BL LINE RULES d:' + M.mark8(RDEF['inj.output']) + ']';
+    const { c, set } = mk({ 'inj.output': RDEF['inj.output'] + '\n' + old });
+    await M.syncRules(true, { c, defs: RDEF });
+    assert.ok(!set.prompts['inj.output'].includes('older wording')); assert.equal(set.prompts['inj.output'], RDEF['inj.output'] + '\n' + M.ruleBlock(M.mark8(RDEF['inj.output'])));
+    const NEW = { ...RDEF, 'inj.output': 'Test output rule, second edition.' };
+    await M.syncRules(true, { c, defs: NEW });
+    assert.equal(set.prompts['inj.output'], NEW['inj.output'] + '\n' + M.ruleBlock(M.mark8(NEW['inj.output'])));
+    await M.syncRules(false, { c, defs: NEW }); assert.ok(!('inj.output' in set.prompts));
+    const part = mk(); const r = await M.syncRules(true, { c: part.c, defs: { 'ai.analyze': 'Only this one.' } });
+    assert.deepEqual([r.changed, r.keys], [1, ['ai.analyze']]);
+    assert.equal((await M.syncRules(true, { c: mk().c, defs: null })).ok, false); assert.equal((await M.syncRules(true, { c: {}, defs: RDEF })).ok, false);
+    assert.equal((await M.syncRules(true, { c: mk().c, doc: { querySelectorAll: () => [] } })).ok, false);   // 그 확장 주소를 못 찾으면 안 읽어요
+});
+await ok('줄 꼴 규칙의 글: 그 확장이 읽는 줄 꼴에 맞는 예시(새 값만 · 한 줄에 한 사람) · 문구 자리표시({낱말})와 안 부딪혀요 · 단계와 같이 붙고 같이 떼요', async () => {
+    const b = M.ruleBlock();
+    for (const line of ['period: Night', 'loc: Corner bakery', 'npc: Mira | florist next door']) {
+        assert.ok(b.includes('"' + line + '"'));
+        const m = /^\s*([^:：\n]{1,24}?)\s*[:：]\s*(.+?)\s*$/.exec(line); assert.ok(m && !/->|,/.test(m[2]));   // 「키: 값」 한 줄 · 화살표 · 쉼표로 여럿 없음
+    }
+    assert.ok(!/\{[a-z][a-zA-Z0-9_]*\}/.test(b)); assert.ok(!b.includes('\n')); assert.ok(M.ruleTokens() > 40 && M.ruleTokens() < 160);
+    const src = fs.readFileSync(path.join(root, 'src/mb-prompt.js'), 'utf8');
+    assert.ok(src.includes("if (r.ok) await syncRules(state.level !== 'off', { c, doc })"));                     // 「가볍게」 부터 모든 단계 · 「적용 안 함」 이면 떼요
+    assert.ok(src.includes("await syncRules(state.level !== 'off', { c, doc }).catch(() => null);\n    try { toast?.info?.(seen"));   // 「이번 한 번만」 이 끝나면 원래 단계대로
+    const panel = fs.readFileSync(path.join(root, 'src/panel.js'), 'utf8');
+    assert.ok(panel.includes('mbRuleTokens()') && panel.includes('esc(mbRuleBlock())'));                         // 설정 줄: 본편 답마다 어림 · 덧붙는 글 보기
+});
 console.log(`mb-prompt: ${n}개 통과`);

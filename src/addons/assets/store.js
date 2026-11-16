@@ -187,6 +187,11 @@ export function memberEntry(folder) {
 
 const memberFailedAt = new Map();   // 폴더 → 목록 읽기가 실패한 때 (잇달아 다시 묻지 않게)
 const MEMBER_RETRY_MS = 3000;
+// 버그 사냥 2차: 실패한 멤버 목록은 그 멤버가 다시 말할 때까지 아무도 다시 읽지 않았다(render.js 는 한 번 물은 폴더를 다시 묻지 않는다) —
+//   쉰 뒤 저절로 다시 읽는다(두 번까지 · 채팅이 바뀌면 그만). 그래도 안 되면 예전처럼 그 멤버 차례 · 다음 채팅에서
+const MEMBER_AUTO_RETRIES = 2;
+const memberRetries = new Map();   // 폴더 → 저절로 다시 읽은 횟수
+let memberEpoch = 0;
 /** 멤버 폴더 하나를 읽는다 — 이미 읽었거나 읽는 중이면 그것. 읽은 뒤 render.js 에 그 폴더의 찾아보기표를 준다 */
 export function loadMember(folder) {
     if (!folder) return Promise.resolve(null);
@@ -209,8 +214,15 @@ export function loadMember(folder) {
         setMemberIndex(folder, entry.index);
         // 목록 읽기가 실패했으면 기억해 두지 않아요 — 다음에 부르면 다시 읽어요(1:1 길의 「오류가 있으면 다시 읽기」와 같게).
         //   1.5.8 까지는 빈 목록이 「읽음」으로 굳어, 채팅을 바꿀 때까지 그 멤버의 그림이 한 장도 안 나왔어요.
-        if (sources.some(source => source.error)) { members.delete(folder); memberFailedAt.set(folder, Date.now()); }
-        else memberFailedAt.delete(folder);
+        if (sources.some(source => source.error)) {
+            members.delete(folder); memberFailedAt.set(folder, Date.now());
+            const tries = memberRetries.get(folder) ?? 0;
+            if (tries < MEMBER_AUTO_RETRIES) {
+                memberRetries.set(folder, tries + 1);
+                const epoch = memberEpoch;
+                setTimeout(() => { if (epoch === memberEpoch && !members.has(folder)) void loadMember(folder); }, MEMBER_RETRY_MS * (tries + 1) + 50);
+            }
+        } else { memberFailedAt.delete(folder); memberRetries.delete(folder); }
         return entry;
     })();
     members.set(folder, entry);
@@ -221,6 +233,7 @@ export function loadMember(folder) {
 export function clearMembers() {
     members.clear();
     memberFailedAt.clear();
+    memberRetries.clear(); memberEpoch++;
     clearMemberIndexes();
 }
 

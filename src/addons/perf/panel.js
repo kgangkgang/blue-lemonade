@@ -988,7 +988,9 @@ function approxMark(group) {
 
 function renderTable(title, groups, { sortBy = 'promptTokens', desc = true } = {}) {
     if (!groups.length) return '';
-    const sorted = [...groups].sort((a, b) => (desc ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy]) || String(a.label).localeCompare(String(b.label), 'ko'));
+    // 버그 사냥 2차: 이름표(날짜)로 줄 세울 때는 글자 비교로 — 글자끼리 빼면 NaN 이라 늘 오름차순(옛 날짜부터)이 됐다
+    const byLabel = (a, b) => String(a.label).localeCompare(String(b.label), 'ko');
+    const sorted = [...groups].sort((a, b) => (sortBy === 'label' ? (desc ? byLabel(b, a) : byLabel(a, b)) : ((desc ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy]) || byLabel(a, b))));
     return `
         <div class="rl-table-wrap">
             <div class="rl-section-head"><b>${esc(title)}</b></div>

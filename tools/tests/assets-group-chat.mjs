@@ -117,6 +117,42 @@ await test('a failed member list is not remembered — the next call (after a sh
     } finally { Date.now = realNow; console.warn = warn; }
 });
 
+// 버그 사냥 2차: 실패한 멤버 목록은 그 멤버가 다시 말할 때까지 아무도 다시 읽지 않았어요(render.js 는 한 번 물은 폴더를 다시 묻지 않아요) — 잠깐 쉰 뒤 저절로 다시 읽어요(두 번까지)
+await test('a failed member list is read again by itself after the rest (bounded) — old messages get their pictures without waiting for that member to speak', async () => {
+    const realNow = Date.now, realTimeout = globalThis.setTimeout; let clock = realNow();
+    const timers = [];
+    Date.now = () => clock;
+    globalThis.setTimeout = (fn, ms) => { timers.push({ fn, ms }); return timers.length; };
+    const warn = console.warn; console.warn = () => {};
+    try {
+        store.clearMembers(); requests.length = 0; memberCalls.length = 0;
+        failing.add('C');
+        await store.loadMember('C');
+        assert.deepEqual(requests, ['C']);
+        assert.equal(timers.length, 1, 'one retry is queued');
+        assert.ok(timers[0].ms >= 3000, 'after the rest');
+        clock += timers[0].ms + 10;
+        timers.shift().fn();
+        await new Promise(resolve => realTimeout(resolve, 20));
+        assert.deepEqual(requests, ['C', 'C'], 'read again without anyone asking');
+        assert.match(store.memberEntry('C')?.keywords || '', /sun.png/);
+        assert.ok(memberCalls.some(([f, index]) => f === 'C' && index.byName.has('sun.png')), 'render.js gets the good index');
+        assert.equal(timers.length, 0, 'no more retries after a good read');
+        // 계속 실패하면 두 번까지만
+        store.clearMembers(); requests.length = 0;
+        for (let i = 0; i < 4; i++) { failing.add('C'); if (i === 0) await store.loadMember('C'); else { const t = timers.shift(); if (!t) break; clock += t.ms + 10; t.fn(); await new Promise(resolve => realTimeout(resolve, 20)); } }
+        assert.deepEqual(requests, ['C', 'C', 'C'], 'first read + two retries, then it waits for a natural read');
+        // 채팅을 바꾸면 걸어 둔 다시 읽기는 아무 일도 안 해요
+        failing.clear(); store.clearMembers(); requests.length = 0; timers.length = 0;
+        failing.add('C'); await store.loadMember('C');
+        store.clearMembers(); failing.clear();
+        const stale = timers.shift(); clock += stale.ms + 10; stale.fn();
+        await new Promise(resolve => realTimeout(resolve, 20));
+        assert.deepEqual(requests, ['C'], 'a retry queued in the old chat does nothing');
+    } finally { Date.now = realNow; globalThis.setTimeout = realTimeout; console.warn = warn; failing.clear(); }
+    store.clearMembers(); await store.loadMember('A'); await store.loadMember('B'); await store.loadMember('C');   // 뒤 시험이 쓰는 목록을 다시
+});
+
 // ---- render.js: 메시지마다 주인 폴더의 찾아보기표
 const documentStub = { dispatchEvent() {}, getElementById: () => null, addEventListener() {}, querySelector: () => null };
 globalThis.document = documentStub;
@@ -175,6 +211,7 @@ await test('render 1:1 path is unchanged: no member lookup, fn runs with the sol
 
 // ---- after-reply.js: 그룹에서 답 주인의 목록으로 고르기
 const picked = [];
+const refreshed = [];
 let pickCalls = 0;
 const afterReply = await load('after-reply.js', {
     eventSource: { on() {} }, event_types: {}, saveChatConditional: async () => {}, updateMessageBlock: () => {},
@@ -182,7 +219,7 @@ const afterReply = await load('after-reply.js', {
     runtime: store.runtime, ensureLoaded: async () => false, loadMember: store.loadMember, memberEntry: store.memberEntry,
     pickActive: () => true, pickSettings: () => ({ count: 1, timeoutSec: 30 }),
     generatePick: async messages => { pickCalls++; picked.push(messages); return '[ASSET 1]: moon.png'; },
-    assetInfoFor: (f, name) => render.assetInfoFor(f, name), refreshSlots: () => false, slotRunning: new Set(), slotHooks: {}, shownSlotFiles: () => ({}),
+    assetInfoFor: (f, name) => render.assetInfoFor(f, name), refreshSlots: index => { refreshed.push(index); return false; }, slotRunning: new Set(), slotHooks: {}, shownSlotFiles: () => ({}),
     messageWork: () => ({ noteWrite() {} }), ownerSpellings: () => '',
 });
 render.setMemberIndex('A', indexA); render.setMemberIndex('B', indexB);
@@ -207,6 +244,17 @@ await test('pick after reply: a member without pictures gets no slots · user me
     context.chat.push({ name: 'Me', is_user: true, mes: 'ok', extra: {} });
     afterReply.onMessageReceived(3, 'normal');
     assert.equal(pickCalls, before);
+});
+
+// 버그 사냥 2차: 「그림 확장 그림을 에셋으로」가 넣은 자리는 pickSlots 가 「고르는 중」으로 적기 전에 이미 그려져 있어요 — 적은 뒤 다시 그리지 않아
+//   차례를 기다리는 메시지마다 「고르다 끊겼어요」 단추가 보였어요(눌러도 아무 일 없음)
+await test('pickSlots redraws each waiting message right after marking its slots as running', async () => {
+    const ids = slots.slotIds(context.chat[1].mes);
+    assert.ok(ids.length, 'the earlier pick left a slot in message 1');
+    refreshed.length = 0;
+    const run = afterReply.pickSlots([{ index: 1, swipe: 0, ids }]);
+    assert.ok(refreshed.includes(1), 'redrawn before the first pick call returns');
+    await run;
 });
 
 delete globalThis.__assetGroupTest;

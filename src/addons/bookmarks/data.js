@@ -254,7 +254,17 @@ const CHAT_CHANGED_MEANWHILE = '그사이 채팅이 바뀌어서 저장하지 �
  * @param {(fresh: ChatRecord) => { changed: boolean, value?: T }} mutate 최신본을 고친다. 고치기 전에 확인하고, 안 되면 던진다.
  * @returns {Promise<T>}
  */
-async function updateOtherChat(record, mutate) {
+// 버그 사냥 2차: 같은 채팅 파일에 쓰기 둘이 겹치면 둘 다 옛 파일을 읽고 통째로 저장해 먼저 끝난 쪽이 사라졌다 — 채팅 파일마다 한 줄로 세운다(앞이 실패해도 뒤는 돈다)
+const otherChatQueue = new Map();
+function updateOtherChat(record, mutate) {
+    const key = `${record?.owner?.key ?? ''}${record?.key ?? ''}`;
+    const run = (otherChatQueue.get(key) ?? Promise.resolve()).then(() => updateOtherChatNow(record, mutate));
+    const tail = run.catch(() => {});
+    otherChatQueue.set(key, tail);
+    tail.then(() => { if (otherChatQueue.get(key) === tail) otherChatQueue.delete(key); });
+    return run;
+}
+async function updateOtherChatNow(record, mutate) {
     if (record.isCurrent) throw new Error('현재 채팅은 이 방식으로 저장하지 않습니다.');
     if (becameCurrent(record)) {
         record.loaded = false;

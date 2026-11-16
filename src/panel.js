@@ -1,5 +1,5 @@
 import { deviceKind } from './device-layout-options.js';
-import { estimate as mbPromptEstimate, block as mbPromptBlock, LEVELS as MB_PROMPT_LEVELS, allText as mbPromptAllText, onceActive as mbPromptOnceActive, armOnce as mbPromptArmOnce, endOnce as mbPromptEndOnce } from './mb-prompt.js';   // 1.6.0 미트볼 문구: 블루레몬 추천 — 토큰 어림 · 덧붙는 글(순수 함수만)
+import { ruleTokens as mbRuleTokens, ruleBlock as mbRuleBlock, estimate as mbPromptEstimate, block as mbPromptBlock, LEVELS as MB_PROMPT_LEVELS, allText as mbPromptAllText, onceActive as mbPromptOnceActive, armOnce as mbPromptArmOnce, endOnce as mbPromptEndOnce } from './mb-prompt.js';   // 1.6.0 미트볼 문구: 블루레몬 추천 — 토큰 어림 · 덧붙는 글(순수 함수만)
 import { armGuard, disarmGuard } from './cheap-guards.js';
 import { trackerWeatherOn } from './weather-readability.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
@@ -689,14 +689,14 @@ function mbPromptRows(s) {
     const tok = v => { try { return mbNum(mbPromptEstimate(v, undefined, n, m, cap)); } catch { return '?'; } };
     const all = mbPromptAll(s);
     const allLine = all ? `채팅 전체: 지금 채팅 보이는 메시지 ${mbNum(all.total)}개 · ${mbBig(all.tokens)} 토큰 · 상태창 만들기 1번(5회쯤) = ${mbBig(all.tokens * 5)} 토큰${all.cut || all.dropped ? ` · 상한 때문에 오래된 ${mbNum(all.cut)}개는 앞 1,000자만${all.dropped ? ` · ${mbNum(all.dropped)}개는 뺐어요` : ''}(상한 없이는 ${mbBig(all.full)})` : ''}` : '채팅 전체: 지금 채팅을 못 읽었어요';
-    const cost = `요청 1회에 더 드는 토큰(지금 채팅 기준 어림) — 가볍게 약 ${tok('light')} · 마지막 답 전체 약 ${tok('last')} · 최근 답 여러 개 약 ${tok('recent')} · 칸 다시 생성 · AI로 수정은 1회, 상태창 만들기는 5회쯤 보내요`;
-    return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 「적용 안 함」 으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
+    const cost = `요청 1회에 더 드는 토큰(지금 채팅 기준 어림) — 가볍게 약 ${tok('light')} · 마지막 답 전체 약 ${tok('last')} · 최근 답 여러 개 약 ${tok('recent')} · 칸 다시 생성 · AI로 수정은 1회, 상태창 만들기는 5회쯤 보내요 · 어느 단계든 본편 답마다 약 ${mbNum(mbRuleTokens())}(줄 꼴 규칙: 시간 · 장소는 새 값만 · 인물은 한 줄에 한 사람)`;
+    return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 본편 「출력 규칙」 · 「별도 분석」 문구 끝에는 줄 꼴 규칙 한 덩이를 붙여요 · 「적용 안 함」 으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
             <p class="salty-note">${cost}</p>
             <p class="salty-note bl-mb-prompt-all" data-keep-note>${allLine}</p>
             ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요')}
             ${slider('chat.mbPromptCap', '채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음)', 0, 500000, 10000, 120000)}
             ${lv === 'recent' ? `${slider('chat.mbPromptCount', '마지막 답 앞의 메시지 수', 0, 30, 1, 9)}${slider('chat.mbPromptChars', '앞 메시지마다 읽을 글자 수', 500, 8000, 100, 2000)}` : ''}
-            ${lv !== 'off' ? `<details class="salty-note bl-mb-prompt-peek"><summary>덧붙는 글 보기</summary><pre>${esc(mbPromptBlock(lv))}</pre></details>` : ''}`;
+            ${lv !== 'off' ? `<details class="salty-note bl-mb-prompt-peek"><summary>덧붙는 글 보기</summary><pre>${esc(mbPromptBlock(lv))}</pre><pre>${esc(mbRuleBlock())}</pre></details>` : ''}`;
 }
 /** 「채팅 전체」 를 고르거나 한 번만 싣기 전에 한 번 묻는 글 */
 function mbPromptConfirmText(s) {
@@ -1793,6 +1793,7 @@ function tabChat(s, sub) {
             ${mesPinPicker(s)}
             ${row('미트볼 추억 앨범 단추', toggle('chat.mbAlbumBtn', s.chat.mbAlbumBtn === true), '미트볼 상태창이 답마다 이름 줄에 붙이는 「추억 앨범에 담기」 단추를 보여요 · 끄면(기본) 숨겨서 폰 이름 줄이 한 줄에 들어가요 · 앨범 기능 · 상태창의 앨범 탭은 그대로예요')}
             ${row('미트볼 상태창 편의 기능', toggle('chat.mbHelpers', s.chat.mbHelpers !== false), '미트볼 상태창 설정 칸의 「설정 찾기」와 긴 상태창의 「맨 위로」 단추를 보여요 · 끄면 둘 다 사라지고 나머지 맞춤 화면은 그대로예요')}
+            ${row('뒤로 가기로 미트볼 창 닫기', toggle('chat.mbBack', s.chat.mbBack !== false), '폰의 뒤로 가기를 누르면 열려 있는 미트볼 창(상태창 · 프로필 · 프롬프트 · 토큰 · 알림함 · 전체화면 미니홈피)이 한 겹씩 닫혀요 · 위에 물음 창이 떠 있으면 그것부터 닫아요 · 끄면 원래대로(뒤로 가기가 창을 안 닫아요)')}
             ${row('눈 감긴 답은 미트볼 상태에서 빼기', toggle('chat.mbHiddenSync', s.chat.mbHiddenSync !== false), '눈 단추로 감긴 AI 답에서 나온 인물 · 호감 · 장소 · 시간을 미트볼 상태창 계산에서 빼요 · 눈을 뜨면 그대로 돌아와요 · 눈 길게 눌러 「접기」 한 답도 같아요(이미 접어 둔 답은 채팅을 열 때 빼고 알려요) · 요약 확장 · 자동 숨김 · /hide 명령으로 감긴 답은 그대로 더해요 · 끄면 전부 원래대로 더해요')}
             ${mbPromptRows(s)}
             ${row('미트볼 글꼴 · 얼굴 표시', `<button class="salty-btn" data-act="mb-deco">열기</button>`, '미트볼 상태창 › 꾸미기 화면에 있어요(「블루레몬 꾸미기」 묶음) · 여기서도 열 수 있어요')}

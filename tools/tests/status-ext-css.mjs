@@ -240,4 +240,21 @@ check('⑭ 검수(11-15): 얼굴 동그라미는 토큰만 · 「원작 그대�
     assert.ok(apply.includes("const mbPlain = want.has('salty') && s.chat.mbHelpers === false;") && apply.includes("document.body.toggleAttribute('data-bl-mb-plain', mbPlain);"), '표식은 테마 설정을 끈 때만');
     assert.ok(!/bl-ext-(top|find|avadlg)|data-bl-mb-plain/.test(read('style.css')), '늘 붙는 시트에는 없어요');
 });
+check('⑮ 2.8.0(11-16 사용자 폰 사진): 이름 단추가 있는 관계 카드 머리줄만 줄을 나누고 · 일곱 칸 묶음 줄은 이름을 안 꺾고 · 루트 비교는 격자 · 창 안 알림은 아래 · 모두 「원작 그대로 보기」 밖', () => {
+    const find = re => rules.filter(r => r.selectors.some(s => re.test(s)));
+    const head = find(/\.ss-relc-h:has\(> \.ss-ib\[data-l\]\)$/);
+    assert.ok(head.length && /flex-wrap:\s*wrap/.test(head[0].body), '이름 단추가 있을 때만 줄 나눔(2.7.x 머리줄은 그대로)');
+    assert.ok(find(/\.ss-relc-h:has\(> \.ss-ib\[data-l\]\) > \.ss-ct-b$/).some(r => /flex:\s*1 1 calc\(100% - \d+px\)/.test(r.body)), '이름 칸이 첫 줄을 다 써요');
+    assert.ok(find(/\.ss-ct-b \.ss-stage$/).some(r => /white-space:\s*nowrap/.test(r.body)), '관계 칩은 줄바꿈 없이');
+    const groups = find(/\.ss-groups:has\(> button:nth-child\(7\)\) > button$/);
+    assert.ok(groups.length && /flex-direction:\s*column/.test(groups[0].body) && /white-space:\s*nowrap/.test(groups[0].body), '일곱 칸부터 아이콘 위 · 이름 아래 · 이름은 한 줄');
+    const race = find(/\.ss-scope \.ss-race$/);
+    assert.ok(race.length && /display:\s*grid/.test(race[0].body) && /repeat\(auto-fill, minmax\(150px, 1fr\)\)/.test(race[0].body), '루트 비교는 칸 폭 150 부터 격자(폰 두 열)');
+    assert.ok(find(/\.ss-race-n :is\(b, small\)$/).some(r => /white-space:\s*normal/.test(r.body)), '이름 · 관계 글은 자르지 않고 줄바꿈');
+    assert.ok(find(/\.ss-race-t$/).some(r => /height:\s*5px/.test(r.body)), '게이지는 얇게');
+    for (const r of [...head, ...groups, ...race]) assert.ok(r.selectors.every(s => s.includes(':not([data-bl-ext-raw])')), '원작 그대로 보기에서는 안 걸려요');
+    const toast = find(/dialog\.ss-dlg\[open\] > #toast-container$/);
+    assert.ok(toast.length && /top:\s*auto !important/.test(toast[0].body) && /bottom:/.test(toast[0].body), '미트볼 창 안 알림은 화면 아래');
+    assert.ok(find(/\.ss-tb \.ss-t-det > \.go$/).some(r => /min-height:\s*0/.test(r.body) && /border:\s*0/.test(r.body)), '띠 펼친 칸의 여는 글은 한 줄 글');
+});
 console.log(`status-ext-css: ${passed}개 통과`);

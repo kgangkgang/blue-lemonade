@@ -6,7 +6,7 @@
 import { registerPeopleSource, peopleChanged } from './people.js';
 import { parsePresetColors, colorIndex, foldName } from './preset-colors-core.js';
 
-let unregister = null, unbind = null, api = null, loading = null;
+let unregister = null, unbind = null, api = null, loading = null, wanted = false;
 let gen = 0, sig = '', table = new Map(), list = [];
 
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() || null; } catch { return null; } };
@@ -105,6 +105,7 @@ function bind() {
 }
 /** 켜고 끄기 — features.js 가 테마가 켜질 때 부른다 */
 export async function syncPresetColors(on) {
+    wanted = !!on;
     if (!on) {
         unbind?.(); unbind = null;
         unregister?.(); unregister = null;
@@ -113,6 +114,8 @@ export async function syncPresetColors(on) {
     }
     if (unregister) { onSomething(); return; }
     if (!api) try { loading ??= import('../../../../openai.js'); api = await loading; } catch { loading = null; api = null; }
+    // 버그 사냥 2차: 받는 사이 꺼졌거나(켜는 도중 끔) 겹쳐 온 다른 켜기가 이미 걸었으면 그만 — 전에는 신호를 두 벌 걸고 한 벌만 떼어, 끈 뒤에도 프리셋 글을 계속 읽었다
+    if (!wanted || unregister) { if (wanted) onSomething(); return; }
     refreshPresetColors();
     unregister = registerPeopleSource('preset', source, { rank: 100 });
     unbind = bind();

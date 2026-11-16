@@ -159,7 +159,7 @@ export function packExcerpt(pieces) {
     if (!runs.some(run => run.text && run.text.trim())) return null;
     let html = runsToHtml(runs);
     if (html.length > EXCERPT_LIMITS.html) {
-        const lighter = runs.map(run => (run.text ? { text: run.text, style: { 'background-color': run.style['background-color'], 'font-style': run.style['font-style'] } } : run));
+        const lighter = runs.map(run => (run.text ? { text: run.text, style: { 'background-color': run.style['background-color'], 'background-image': run.style['background-image'], 'font-style': run.style['font-style'] } } : run));   // 버그 사냥 2차: 형광펜 띠는 background-image 다 — 빼면 「띠만 남기기」가 띠를 지운다
         html = runsToHtml(compactRuns(lighter, EXCERPT_LIMITS.text).runs);
         if (html.length > EXCERPT_LIMITS.html) html = runsToHtml(runs, { stylesOff: true });
     }

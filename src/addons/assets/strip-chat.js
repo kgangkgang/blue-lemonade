@@ -17,6 +17,8 @@ const copy = value => (value === undefined ? undefined : JSON.parse(JSON.stringi
 export function stripText(text) {
     let count = 0, n = 0;
     const tags = [];
+    // 버그 사냥 2차: 이미 뗀 표식(img-N)이 남아 있는 글을 다시 떼면 번호가 겹쳐 숨겨 둔 원문 태그가 덮였다 — 그 글에 쓰인 가장 큰 번호 다음부터
+    for (const m of String(text ?? '').matchAll(/data-asset-was="img-(\d+)"/g)) n = Math.max(n, Number(m[1]) || 0);
     const out = String(text ?? '')
         .replace(SLOT, (_, id) => { count++; return goneMarkup(id); })
         .replace(TAG, tag => { count++; const id = `img-${++n}`; tags.push({ id, tag }); return goneMarkup(id); });

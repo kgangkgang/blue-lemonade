@@ -1,4 +1,16 @@
 // One reversible renderer for both dictionaries. No prompt values or chat text are written.
+/** 1.5.9 opt4: 한 감시 묶음 안에서 「el 또는 그 조상이 sel 에 맞나」(= el.closest(sel) !== null)를 요소마다 한 번만 물어요.
+ *  월드인포 항목 100개를 그릴 때처럼 기록 수천 개가 같은 가지에서 오면, 기록마다 조상 끝까지 선택자 열세 갈래를 다시 맞춰 봤어요(리그 폰 4배 133ms).
+ *  콜백 안에서는 DOM 이 안 바뀌니 답이 같아요 — 묶음(콜백 한 번)마다 새로 만들어 써요. */
+export function insideOnce(sel) {
+    const memo = new Map();
+    return function find(el) {
+        if (!el) return false;
+        let v = memo.get(el);
+        if (v === undefined) { v = el.matches(sel) || find(el.parentElement); memo.set(el, v); }
+        return v;
+    };
+}
 export function createPromptEngine(doc = document) {
     const sources = new Map(), changed = new Map(), hints = new Map(), titles = new Map();
     const DETAILS = Symbol('prompt-details'), detailsInputs = new Set();
@@ -161,12 +173,13 @@ export function createPromptEngine(doc = document) {
             // body · #chat 조상에 새로 붙은 가지(팝업 등)도 보기 시작한다
             for(const record of records)if(record.type==='childList'&&(record.target===doc.body||chain.has(record.target)))record.addedNodes.forEach(watch);
             if(timer)return; // render re-reads all targets; another pending record cannot add work.
+            const inSkip=insideOnce('#chat,.bl-scripts,.bl-script-hint'),inWatched=insideOnce(watched+',#saved_preset_scripts,#saved_regex_scripts,#saved_scoped_scripts');
             if(records.some(record=>{
                 const el=record.target.nodeType===1?record.target:record.target.parentElement;
-                if(!el||el.closest('#chat,.bl-scripts,.bl-script-hint'))return false;
+                if(!el||inSkip(el))return false;
                 if(record.type==='attributes'&&titles.get(el)?.after===el.getAttribute('title'))return false;
                 if(record.type!=='attributes'&&changed.has(el)&&el.textContent===changed.get(el).after)return false;
-                return !!el.closest(watched+',#saved_preset_scripts,#saved_regex_scripts,#saved_scoped_scripts')||[...record.addedNodes,...record.removedNodes].some(containsTarget);
+                return inWatched(el)||[...record.addedNodes,...record.removedNodes].some(containsTarget);
             }))schedule();
         });
         watchAll();

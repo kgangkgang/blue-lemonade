@@ -857,7 +857,8 @@ function readGroups() {
     return groups;
 }
 /** What an edit that fires no event changes: ids, switches, pattern and replacement lengths, the display flags. */
-const fingerprint = (groups) => groups.map(([, list]) => list.map(s => `${s?.id}|${s?.disabled ? 1 : 0}|${s?.findRegex?.length ?? 0}|${s?.replaceString?.length ?? 0}|${s?.markdownOnly ? 1 : 0}${s?.promptOnly ? 1 : 0}`).join()).join(';');
+// 버그 사냥 2차: 길이만 보면 같은 길이로 고친 바꿀 글 · trim · 깊이 · 자리만 고친 스크립트의 옛 결과가 캐시에서 나온다(실리태번은 저장 신호보다 먼저 다시 그린다) — 내용 해시로
+const fingerprint = (groups) => groups.map(([, list]) => list.map(s => `${s?.id}|${s?.disabled ? 1 : 0}|${fnv1a(String(s?.findRegex ?? ''))}|${fnv1a(String(s?.replaceString ?? '') + '' + (Array.isArray(s?.trimStrings) ? s.trimStrings.join('') : ''))}|${s?.minDepth ?? ''}|${s?.maxDepth ?? ''}|${Array.isArray(s?.placement) ? s.placement.join('.') : ''}|${s?.substituteRegex ?? ''}|${s?.markdownOnly ? 1 : 0}${s?.promptOnly ? 1 : 0}`).join()).join(';');
 // A replacement (with {{match}} as $0) and trim strings without macros, and without a group reference that could
 // complete one (<$1>, {$1}): the output then depends only on the input, so it can be memoized.
 const pureOf = (rep, trims) => !MACRO.test(rep) && !/[{<]\$(?:\d|<)|\$(?:\d+|<[^>]+>)[}>]/.test(rep) && !trims.some(trim => MACRO.test(String(trim)));
@@ -2028,7 +2029,8 @@ async function measureChat(without = null) {
         second = await render(null, without, over(without ? CACHES_OFF : { profiler: false }));
     } finally {
         measureBusy = false;
-        for (const [k, st] of stats) COUNTERS.forEach((c, i) => { st[c] = saved.get(k)?.[i] ?? 0; });
+        // 버그 사냥 2차: 측정 도중 처음 생긴 통계는 되돌릴 값이 없다 — spikes 는 빈 배열 · spike 는 null 로(0 이면 다음 느린 치환의 spikes.unshift 가 터진다)
+        for (const [k, st] of stats) COUNTERS.forEach((c, i) => { const v = saved.get(k)?.[i]; st[c] = c === 'spikes' ? (Array.isArray(v) ? v : []) : c === 'spike' ? (v ?? null) : (v ?? 0); });
         Object.assign(persistStats, savedPersist);
         conflicts.clear();
         for (const [k, c] of savedConflicts) conflicts.set(k, c);

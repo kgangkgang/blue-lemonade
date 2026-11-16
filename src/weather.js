@@ -512,8 +512,8 @@ export async function captureWeather(width, height, scale) {
     const { createEngine } = await loadWeatherModule(new URL('./weather-engine.js', import.meta.url), ['createEngine']);
     const canvas = document.createElement('canvas');
     const engine = createEngine(canvas.getContext('2d'));
-    const bitmap = current.mode === 'custom' ? await spriteBitmap(spriteData) : null;
     try {
+        const bitmap = current.mode === 'custom' ? await spriteBitmap(spriteData) : null;   // 버그 사냥 2차: 내 그림 읽기가 실패해도 아래 finally 가 엔진을 푼다
         engine.resize(width, height, scale);
         const liveArea = Math.max(1, layer.canvas.clientWidth * layer.canvas.clientHeight || width * window.innerHeight);
         engine.config({ ...current, capScale: width * height / liveArea, colors: colorsNow(), sprite: bitmap });
@@ -529,8 +529,11 @@ export async function captureWeatherAnimation(width,height,scale=1) {
     const current={...layer.current()},spriteData=wanted.sprite;if(current.mode==='off')return null;
     const {createEngine}=await loadWeatherModule(new URL('./weather-engine.js', import.meta.url), ['createEngine']);
     const canvas=document.createElement('canvas'),engine=createEngine(canvas.getContext('2d'));
-    const bitmap=current.mode==='custom'?await spriteBitmap(spriteData):null;
-    engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});await engine.ready();
+    // 버그 사냥 2차: 내 그림 읽기 · 엔진 준비가 실패하면 부르는 쪽은 아직 close() 를 못 받았다 — 여기서 풀고 오류는 그대로 올린다
+    try{
+        const bitmap=current.mode==='custom'?await spriteBitmap(spriteData):null;
+        engine.resize(width,height,scale);engine.config({...current,colors:colorsNow(),sprite:bitmap});await engine.ready();
+    }catch(error){engine.dispose();canvas.width=canvas.height=1;throw error;}
     return {canvas,draw(dt,now){engine.step(dt,now);engine.draw();readableCapture(canvas,current.readability);},close(){engine.dispose();canvas.width=canvas.height=1;}};
 }
 

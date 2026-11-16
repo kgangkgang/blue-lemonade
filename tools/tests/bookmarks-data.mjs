@@ -233,5 +233,32 @@ await test('설정: 처음 설치는 이전 확장(star) 설정을 옮기고 범
 });
 
 delete globalThis.__bookmarksDataTest;
+// 버그 사냥 2차: 같은 다른 채팅에 쓰기 둘이 겹치면 둘 다 옛 파일을 읽고 통째로 저장해, 먼저 끝난 쪽이 사라졌어요(카드 두 장을 잇달아 번역 · 번역이 끝날 즈음 메모 저장)
+await test('다른 채팅: 겹친 쓰기 둘은 차례로 — 둘 다 파일에 남는다', async () => {
+    openChat([msg('미나', '현재')]);
+    const owner = D.getOwner();
+    T.server.set('old-chat', [{ chat_metadata: { favorites: [{ id: 'f1', messageId: '0', note: '' }] } }, msg('미나', '첫 글'), msg('미나', '둘째 글')]);
+    const record = { key: 'old-chat', label: 'old', isCurrent: false, owner, favorites: [], messages: null, header: null, loaded: false, messageCount: 0, lastMes: '' };
+    await D.loadRecord(record);
+    const [m0, m1] = record.messages;
+    await Promise.all([
+        D.saveOtherMessageExtra(record, 0, m0, extra => { extra.display_text = '번역 가'; }),
+        D.saveOtherMessageExtra(record, 1, m1, extra => { extra.display_text = '번역 나'; }),
+        D.setNote(record, 'f1', '메모'),
+    ]);
+    const file = T.server.get('old-chat');
+    assert.equal(file[1].extra.display_text, '번역 가', '먼저 시작한 쓰기가 남아요');
+    assert.equal(file[2].extra.display_text, '번역 나');
+    assert.equal(file[0].chat_metadata.favorites[0].note, '메모');
+    // 앞 쓰기가 실패해도 뒤 쓰기는 돈다
+    T.posts.length = 0;
+    const results = await Promise.allSettled([
+        D.saveOtherMessageExtra(record, 0, { ...m0, mes: '다른 글' }, extra => { extra.display_text = 'x'; }),
+        D.saveOtherMessageExtra(record, 1, record.messages[1], extra => { extra.display_text = '번역 다'; }),
+    ]);
+    assert.equal(results[0].status, 'rejected'); assert.equal(results[1].status, 'fulfilled');
+    assert.equal(T.server.get('old-chat')[2].extra.display_text, '번역 다');
+});
+
 console.log(`bookmarks-data: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

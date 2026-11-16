@@ -8,6 +8,7 @@
 //   · 떼고 난 글이 원작 기본 문구와 같으면 고친 문구 칸을 비워요(그 확장의 「기본값」 과 같은 상태 — 원작이 문구를 바꾸면 따라가요).
 //   · 기본 문구 위에 덧붙였으면 꼬리 표식에 그때 기본 문구의 지문을 적어 둬요 → 원작이 기본 문구를 바꾼 뒤 다시 맞출 때 새 기본 문구 위로 옮겨요(손으로 고친 글이면 안 옮겨요).
 //   · 그 확장이 없거나 · 문구 자리를 못 찾으면(다른 판) 아무것도 안 바꾸고 까닭을 돌려줘요.
+// 1.6.1: 단계가 「적용 안 함」 이 아니면 본편 출력 규칙 · 별도 분석 문구 끝에 「줄 꼴 규칙」 한 덩이도 같이 붙여요(아래 RULE_KEYS · syncRules).
 // 단계: off(적용 안 함) · light(지시 줄만) · last(+ 마지막 답 전체 — 실리태번 매크로) · recent(+ 최근 답 여러 개 — 테마 매크로 {{bl_mb_recent}}) · all(+ 채팅 전체 — 테마 매크로 {{bl_mb_all}})
 // 「채팅 전체」(11-16 사용자 「채팅 전체 만들어줘」): 보이는 메시지 전부의 본문(내 메시지 포함 · 이름 붙여 · 차례대로 · 눈 감긴 메시지 · 꾸밈 태그 · 상태 블록 제외)을 실어요.
 //   토큰이 크게 느는 단계라: 설정 줄에 지금 채팅 기준 어림을 숫자로 · 요청 1회 상한(넘으면 오래된 메시지부터 앞 1,000자로 줄이고, 그래도 넘으면 오래된 것부터 뺌) · 고를 때 확인 창(src/panel.js).
@@ -36,6 +37,22 @@ const LIGHT = [
 const LAST = '\n\n--- LATEST STORY TURN (complete text of the newest reply) ---\n{{lastCharMessage}}';
 const RECENT = `\n\n--- LATEST STORY TURNS (oldest first; only the newest is complete, older ones are shortened) ---\n{{${MACRO}}}`;
 const ALL = `\n\n--- THE STORY SO FAR (every visible message, oldest first) ---\n{{${MACRO_ALL}}}`;
+
+// 1.6.1 줄 꼴 규칙 — 본편 AI 가 답 끝에 적는 변화 줄(<meatball>)의 꼴을 바로잡는 한 덩이예요(테마가 쓴 글 · 예시도 테마가 지은 것).
+//   사용자 채팅에서 본 두 가지: ① 「period: Evening -> Night」 · 「loc: 집 -> 편의점」 처럼 「앞 -> 뒤」 로 적으면 그 확장은 글 통째를 시간 · 장소 값으로 받아요(새 이름의 지도 칸까지 생겨요)
+//   ② 「npc: -A, -B, +C」 처럼 한 줄에 여럿을 적으면 줄이 통째로 버려지고, 「+A | 설명, +B | 설명」 은 첫 사람만 들어가요(그 확장의 npc 줄은 한 사람 소개 전용 · 빼기 뜻이 없어요).
+//   이 줄들은 「생성 시스템 프롬프트」 가 아니라 **출력 규칙 문구**(본편 생성마다 실리는 칸 둘)와 **별도 분석 문구**에 붙어야 들어요 → 단계가 「적용 안 함」 이 아니면 그 세 칸 끝에 같은 한 덩이를 덧붙여요.
+//   떼기 · 손으로 고친 문구 보존 · 기본 문구가 바뀌면 따라가기는 위 덩어리와 같은 방식이에요(표식만 달라요). 그 확장 판에 그 칸이 없으면 그 칸은 건너뛰어요.
+export const RULE_KEYS = ['inj.output', 'inj.ultra.output', 'ai.analyze'];
+const RULES = 'period (time) and loc lines carry only the NEW value, e.g. "period: Night" or "loc: Corner bakery"; never write "old -> new". '
+    + 'An npc line introduces exactly ONE new person, e.g. "npc: Mira | florist next door"; use a separate npc line for each person, never join several names with commas, and never write "-Name" for people who leave.';
+const R_BEGIN = '[BL LINE RULES]';
+const R_END_RE = /\[\/BL LINE RULES(?: d:([0-9a-f]{8}))?\]/;
+const R_BLOCK_RE = /(?:\r?\n)?\[BL LINE RULES\][\s\S]*?\[\/BL LINE RULES(?: d:[0-9a-f]{8})?\]/g;
+/** 줄 꼴 규칙 한 덩이 — d 는 기본 문구 위에 붙일 때의 기본 문구 지문 */
+export const ruleBlock = (d = '') => `${R_BEGIN} ${RULES} [/BL LINE RULES${d ? ` d:${d}` : ''}]`;
+export const stripRules = text => String(text ?? '').replace(R_BLOCK_RE, '');
+export const hasRules = text => String(text ?? '').includes(R_BEGIN);
 
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 const level = v => (LEVELS.includes(v) ? v : 'off');
@@ -70,6 +87,50 @@ export async function readDefault(doc = globalThis.document, load = url => impor
         return typeof text === 'string' && text ? text : null;
     } catch { return null; }
 }
+
+/** 그 확장의 기본 문구 여러 칸을 한 번에 읽어요 → { 칸: 글 } (없는 칸은 빠져요) · 못 읽으면 null */
+export async function readDefaults(keys, doc = globalThis.document, load = url => import(url)) {
+    try {
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
+        if (!src || src.includes('?')) return null;
+        const map = (await load(new URL('./src/prompts.js', src).href))?.PROMPT_MAP;
+        if (!map || typeof map !== 'object') return null;
+        const out = {};
+        for (const k of keys) { const t = map[k]?.text; if (typeof t === 'string' && t) out[k] = t; }
+        return out;
+    } catch { return null; }
+}
+/**
+ * 줄 꼴 규칙을 출력 규칙 · 별도 분석 문구에 붙이거나(on) 떼요. 돌려주는 것: { ok, changed(바뀐 칸 수), keys(붙어 있는 칸) }
+ *   그 확장 설정이 없거나 기본 문구를 못 읽으면 아무것도 안 바꿔요(ok: false).
+ */
+export async function syncRules(on, { c = ctx(), defs = undefined, doc = globalThis.document } = {}) {
+    const set = c?.extensionSettings?.[META];
+    if (!set || typeof set !== 'object' || (set.prompts != null && typeof set.prompts !== 'object')) return { ok: false, changed: 0, keys: [] };
+    const bases = defs === undefined ? await readDefaults(RULE_KEYS, doc) : defs;
+    if (!bases || typeof bases !== 'object') return { ok: false, changed: 0, keys: [] };
+    let changed = 0; const keys = [];
+    for (const key of RULE_KEYS) {
+        const base0 = bases[key];
+        if (typeof base0 !== 'string' || !base0) continue;                    // 이 판에는 그 칸이 없어요
+        const has = typeof set.prompts?.[key] === 'string';
+        const cur = has ? set.prompts[key] : base0;
+        let base = stripRules(cur);
+        const was = cur.match(R_END_RE)?.[1];
+        if (was && mark8(base) === was) base = base0;                         // 기본 문구 위에 붙여 둔 글 — 원작이 기본 문구를 바꿨으면 새 기본 문구로
+        const next = on ? `${base}\n${ruleBlock(base === base0 ? mark8(base0) : '')}` : base;
+        if (on) keys.push(key);
+        if (next === cur) continue;
+        if (next === base0) { if (set.prompts) delete set.prompts[key]; }
+        else (set.prompts ??= {})[key] = next;
+        changed++;
+    }
+    if (changed) { try { c.saveSettingsDebounced?.(); } catch { /* 다음 저장 때 */ } }
+    return { ok: true, changed, keys };
+}
+/** 줄 꼴 규칙이 본편 답마다 더하는 토큰 어림 */
+export const ruleTokens = () => tokens(ruleBlock('00000000'));
 
 /**
  * 그 확장의 문구 설정을 단계에 맞춰요. 돌려주는 것: { ok, changed, why, level }
@@ -212,6 +273,7 @@ export async function armOnce({ c = ctx(), doc = globalThis.document, toast = gl
     if (!ensureMacro(c)) { try { toast?.warning?.('이 실리태번 판은 매크로 등록이 없어 채팅 전체를 실을 수 없어요.', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } return false; }
     state.once = { until: now() + ONCE_WAIT, seen: 0 };
     const r = await syncPrompt('all', { c, doc, def });
+    if (r.ok) await syncRules(true, { c, doc }).catch(() => null);
     if (!r.ok) { state.once = null; try { toast?.warning?.(r.why === 'none' ? '미트볼 상태창 설정을 못 찾았어요.' : '미트볼의 「생성 시스템 프롬프트」 자리를 못 찾았어요(다른 판).', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } return false; }
     try { store()?.setItem(ONCE_KEY, String(state.once.until)); } catch { /* 이 세션에서만 */ }
     watchOnce();
@@ -226,6 +288,7 @@ export async function endOnce({ c = ctx(), doc = globalThis.document, toast = gl
     state.once = null; if (state.onceTimer) { try { clearTimeout(state.onceTimer); } catch { /* 그대로 */ } state.onceTimer = null; }
     try { store()?.removeItem(ONCE_KEY); } catch { /* 표시 없이 */ }
     state.last = await syncPrompt(state.level, { c, doc, def });
+    await syncRules(state.level !== 'off', { c, doc }).catch(() => null);
     try { toast?.info?.(seen ? `채팅 전체를 실어 ${seen}번 보냈어요. 미트볼 문구를 원래 단계로 돌려놨어요.` : '미트볼 생성이 없어서 채팅 전체 싣기를 거두고 원래 단계로 돌려놨어요.', '', { timeOut: 9000 }); } catch { /* 알림 없이 */ }
     return true;
 }
@@ -233,7 +296,7 @@ export async function endOnce({ c = ctx(), doc = globalThis.document, toast = gl
 export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_CHARS, { c = ctx(), doc = globalThis.document, retry = true, toast = globalThis.toastr, cap = state.cap } = {}) {
     state.level = level(want); state.count = count; state.chars = chars; state.cap = Math.max(0, Math.round(Number(cap)) || 0);
     if (readOnce()) {   // 「이번 한 번만」 이 걸려 있는 동안은 채팅 전체 그대로 — 때가 지났으면 여기서 돌려놔요
-        if (state.once.until > now()) { ensureMacro(c); watchOnce(); return (state.last = await syncPrompt('all', { c, doc })); }
+        if (state.once.until > now()) { ensureMacro(c); watchOnce(); state.last = await syncPrompt('all', { c, doc }); if (state.last.ok) await syncRules(true, { c, doc }).catch(() => null); return state.last; }
         await endOnce({ c, doc, toast, force: true });
         return state.last ?? { ok: true, changed: true, why: '', level: state.level };
     }
@@ -243,6 +306,7 @@ export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_
     }
     const r = await syncPrompt(state.level, { c, doc });
     state.last = r;
+    if (r.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null);   // 1.6.1 줄 꼴 규칙: 단계가 무엇이든(「가볍게」 부터) 같이 붙고, 「적용 안 함」 이면 같이 떼요
     if (!r.ok && retry && !state.timer && globalThis.setTimeout) state.timer = setTimeout(() => { state.timer = null; syncMbPrompt(state.level, state.count, state.chars, { retry: false }).catch(() => { /* 다음 설정 바뀜에 */ }); }, 4000);
     if (!r.ok && !retry && state.level !== 'off' && r.why === 'shape') { try { toast?.warning?.('미트볼의 「생성 시스템 프롬프트」 자리를 못 찾았어요(다른 판) — 문구는 그대로 뒀어요.', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } }
     return r;

@@ -102,7 +102,7 @@ export function ownersFor(keys, prompts, aliases = ALIASES) {
             continue;
         }
         let owners = byName(key);
-        if (!owners.length) for (const alias of aliases[key] || []) owners.push(...byAlias(alias));
+        if (!owners.length) for (const alias of (Object.hasOwn(aliases, key) && Array.isArray(aliases[key]) ? aliases[key] : [])) owners.push(...byAlias(alias));
         owners = [...new Set(owners)];
         if (!owners.length) {
             const byContent = list.filter(p => hasWords(keyOf(String(p.content || '').replace(/@/g, ' @')), key) && tagIn(String(p.content || '').toLowerCase(), key)).map(p => p.identifier);

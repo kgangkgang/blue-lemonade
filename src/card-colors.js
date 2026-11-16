@@ -19,7 +19,8 @@ export function cardColorRows(ctx) {
             const m = av && all[av];
             if (!m || typeof m !== 'object') continue;
             for (const [col, raw] of Object.entries(m)) {
-                const name = String(raw ?? '').replace(/\{\{user\}\}/gi, ctx.name1 || '').replace(/\{\{char\}\}/gi, ctx.name2 || '').trim();
+                // 버그 사냥 2차: 바꿀 글은 함수로 — 이름에 든 `$&` · `$$` · `$'` 가 치환 표시로 풀리지 않게
+                const name = String(raw ?? '').replace(/\{\{user\}\}/gi, () => ctx.name1 || '').replace(/\{\{char\}\}/gi, () => ctx.name2 || '').trim();
                 const color = String(col || '').trim().toLowerCase();
                 if (HEX.test(color) && foldName(name)) out.push({ name, color });
             }

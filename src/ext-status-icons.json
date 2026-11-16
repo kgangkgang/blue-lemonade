@@ -1,8 +1,8 @@
 {
  "_": "미트볼 상태창 화면의 그림 글자(이모지)를 테마 선 아이콘으로 보이게 하는 글꼴의 표 — src/ext-status.css 의 @font-face(unicode-range)와 같아야 해요. 글꼴은 허브 대본(build-icons.py)으로 만들어요. 테마 선 아이콘과 같은 꼴(24 칸 · 선 1.8 · 둥근 끝)로 직접 그렸고, 뜻이 겹치는 것은 테마 아이콘을 그대로 썼어요.",
  "font": "ext-status-icons.woff2",
- "bytes": 39308,
- "sha256": "a7574c1023d3baabf2c21c834c947594e92f7694306531cca33f16a1f1393381",
+ "bytes": 39748,
+ "sha256": "a72411b1b71562c4efef54dc407da34ebe6dcfbfe8a355e9c2de449420ffcfdc",
  "family": "bl-mb-icons",
  "zeroWidth": [
   "FE0F",
@@ -127,6 +127,7 @@
   "1F310": "globe",
   "1F319": "moon",
   "1F31F": "star",
+  "1F326": "raincloud",
   "1F327": "raincloud",
   "1F328": "snowcloud",
   "1F32B": "fog",
@@ -162,6 +163,7 @@
   "1F392": "backpack",
   "1F39B": "sliders",
   "1F3A5": "camera",
+  "1F3A8": "palette",
   "1F3A9": "tophat",
   "1F3AC": "clapper",
   "1F3AD": "masks",
@@ -251,10 +253,12 @@
   "1F4C1": "folder",
   "1F4C2": "folder",
   "1F4C5": "calendar",
+  "1F4C8": "trend",
   "1F4CA": "barchart",
   "1F4CB": "clipboard",
   "1F4CC": "pin",
   "1F4CD": "mappin",
+  "1F4D2": "book",
   "1F4D5": "book",
   "1F4D6": "book",
   "1F4D7": "book",
@@ -284,6 +288,7 @@
   "1F512": "lock",
   "1F513": "unlock",
   "1F514": "bell",
+  "1F517": "chain",
   "1F524": "abc",
   "1F525": "flame",
   "1F527": "wrench",
@@ -302,6 +307,7 @@
   "1F5A5": "laptop",
   "1F5B1": "mouse",
   "1F5BC": "image",
+  "1F5C2": "folder",
   "1F5D1": "trash",
   "1F5DD": "unlock",
   "1F5E1": "dagger",
@@ -359,6 +365,7 @@
   "1F98A": "fox",
   "1F98B": "butterfly",
   "1F99D": "raccoon",
+  "1F9E0": "thought",
   "1F9E9": "puzzle",
   "1F9ED": "compass",
   "1F9F0": "toolbox",
@@ -366,6 +373,7 @@
   "1F9F8": "teddy",
   "1F9F9": "broom",
   "1FA91": "chair",
+  "1FA9F": "window",
   "1FAB4": "sprout",
   "1FAB6": "feather",
   "1FAE7": "bubbles"
@@ -670,7 +678,7 @@
    ],
    [
     "1F324",
-    "1F326"
+    "1F325"
    ],
    [
     "1F329",
@@ -762,7 +770,7 @@
    ],
    [
     "1F3A6",
-    "1F3A8"
+    "1F3A7"
    ],
    [
     "1F3AA",
@@ -918,10 +926,18 @@
    ],
    [
     "1F4C6",
+    "1F4C7"
+   ],
+   [
+    "1F4C9",
     "1F4C9"
    ],
    [
     "1F4CE",
+    "1F4D1"
+   ],
+   [
+    "1F4D3",
     "1F4D4"
    ],
    [
@@ -974,6 +990,10 @@
    ],
    [
     "1F515",
+    "1F516"
+   ],
+   [
+    "1F518",
     "1F523"
    ],
    [
@@ -1045,7 +1065,7 @@
     "1F5B2"
    ],
    [
-    "1F5C2",
+    "1F5C3",
     "1F5C4"
    ],
    [
@@ -1254,6 +1274,10 @@
    ],
    [
     "1F99E",
+    "1F9DF"
+   ],
+   [
+    "1F9E1",
     "1F9E8"
    ],
    [
@@ -1286,6 +1310,10 @@
    ],
    [
     "1FA92",
+    "1FA9E"
+   ],
+   [
+    "1FAA0",
     "1FAB3"
    ],
    [
@@ -1317,11 +1345,11 @@
     "1FAF8"
    ]
   ],
-  "count": 1071,
+  "count": 1063,
   "by": {
-   "box": 334,
+   "box": 327,
    "building": 2,
-   "cloud": 26,
+   "cloud": 25,
    "dish": 99,
    "dot": 144,
    "leaf": 15,

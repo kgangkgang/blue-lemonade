@@ -1052,7 +1052,7 @@ function renderPager(totalPages) {
 function goToPage(page) {
     const total = Number($('.cg-pager').dataset.total || 1);
     const next = Math.min(total, Math.max(1, page));
-    if (next === view.page) return;
+    if (next === view.page) { renderPager(total); return; }   // 버그 사냥 2차: 범위 밖 번호(99)는 지금 쪽으로 잘린다 — 쪽 줄을 다시 그려 입력 칸(「99 / 5」)을 되돌린다
     view.page = next;
     renderMain();
     $('.cg-list').scrollTop = 0;
@@ -1153,11 +1153,18 @@ async function onCardAction(action, card, element = null) {
             const src = element?.closest('[data-image-src]')?.dataset.imageSrc;
             if (!src || fav.virtual) break;
             if (!await confirmSheet('이 그림을 북마크에서 뗄까요? 메시지와 그림 파일은 그대로예요.', { title: '그림 떼기', okLabel: '떼기', danger: true, icon: 'fa-image' })) break;
+            let removed = null;
             try {
                 // 1.5.1: 그림으로만 생긴 북마크(다른 확장의 즐겨찾기)는 마지막 그림을 떼면 북마크째 사라진다 — 그림을 붙인 확장 쪽에서 ★ 을 끈 것과 같은 결과
-                await removeImageFrom(record, fav.id, src, { dropEmpty: true, origin: location.origin });
+                removed = await removeImageFrom(record, fav.id, src, { dropEmpty: true, origin: location.origin });
             } catch (error) {
                 toastr.error(error.message, '북마크');
+                break;
+            }
+            // 버그 사냥 2차: 북마크째 사라졌으면(지우기와 같은 결과) 왼쪽 목록 개수 · 메시지의 별 아이콘도 — 전에는 별이 채워진 채 남았다
+            if (removed && removed.removed && removed.bookmark === false) {
+                if (view.open) { renderSidebar(); if (selectedRecord() === record) renderMain(); }
+                hooks.refreshMessageIcons();
                 break;
             }
             if (view.open && selectedRecord() === record) rerenderCard(fav.id);

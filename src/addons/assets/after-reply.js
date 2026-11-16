@@ -139,6 +139,8 @@ export async function pickSlots(jobs, { cancelled = () => false } = {}) {
     const chat = getContext().chat;
     const list = Array.isArray(jobs) ? jobs : [];
     for (const { ids } of list) for (const id of ids) slotRunning.add(id);   // 차례를 기다리는 자리도 「고르는 중」 (끊긴 자리로 보이지 않게)
+    // 버그 사냥 2차: 부르는 쪽(패널)은 이 표시보다 먼저 메시지를 그려 둔다 — 표시한 뒤 다시 그려야 기다리는 자리가 「고르다 끊겼어요」 단추로 남지 않는다
+    for (const { index } of list) { try { refreshSlots(index); } catch { /* 그 메시지는 다음 그리기 때 */ } }
     for (const { index, swipe, ids } of list) {
         const message = chat?.[index];
         const alive = message && getContext().chat === chat && swipeOf(message) === swipe ? ids.filter(id => slotIds(message.mes).includes(id)) : [];

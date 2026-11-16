@@ -97,4 +97,11 @@ ok('키 정규화', () => {
     assert.equal(keyOf('@Status UI - Collapsed'), 'status collapsed');
     assert.equal(keyOf('! Scene Plan !'), 'scene plan');
 });
+// 버그 사냥 2차: 모듈 키가 객체 기본 속성 이름(constructor · toString)이면 별칭 표에서 함수를 집어 와 for…of 가 터졌어요 → 맞춤 전체가 멈춤
+ok('모듈 키가 constructor · tostring 이어도 계산이 멈추지 않는다', () => {
+    const odd = [R('DEM - @Constructor UI', 'o1'), R('DEM - @toString', 'o2'), R('DEM - @Status UI', 'o3')];
+    let out;
+    assert.doesNotThrow(() => { out = plan({ scripts: odd, prompts, enabled: new Set(['status']) }); });
+    assert.ok(out, '계획이 나와요');
+});
 console.log(JSON.stringify({ passed: n }));
