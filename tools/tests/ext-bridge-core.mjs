@@ -59,6 +59,8 @@ test('② 실리태번 본체 · 다른 확장 · 테마 자신이 부른 것은
 test('② 기능: 가장 안쪽의 아는 함수 — 만들기 안의 번역은 번역으로, 모르는 이름은 빈 값', () => {
     const nested = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['trJSON', `${BASE}/${MB}/src/translate.js`], ['finJSON', `${BASE}/${MB}/src/translate.js`], ['genModule', `${BASE}/${MB}/src/ai.js`, 'async ']));
     assert.deepEqual(C.slotOf(nested, MB), { slot: 'translate', fn: 'trJSON' });
+    const truth = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['truthReply', `${BASE}/${MB}/src/ai.js`, 'async ']));
+    assert.deepEqual(C.slotOf(truth, MB), { slot: 'contact', fn: 'truthReply' }, '2.7.23 최면 어플 답장은 연락 칸');
     const unknown = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['brandNewFeature', `${BASE}/${MB}/src/ai.js`]));
     assert.deepEqual(C.slotOf(unknown, MB), { slot: '', fn: '' });
     const foreign = C.parseFrames(chrome(['genModule', `${BASE}/other/ai.js`]));

@@ -6,6 +6,7 @@
 // 짝에 붙은 호격 · 서술격 · 호칭 · 조사 · 대명사는 버린다(미나야 · 미나다 · 미나 씨 · 그녀). 의성어 · 웃음 · 되풀이꼴 · 끝 ッ · 직함 · 감탄 외래어는 짝이 아니다.
 // 바로 칩(strong) = 내 페르소나 · 지금 캐릭터 이름(낱말 하나만 맞아도) · 원문에서 호칭(さん · くん …)이 붙은 가나 이름. 그 밖은 서로 다른 메시지 둘에서 나와야 칩.
 // 칩에 보이는 것이 바뀔 때만 저장(changed) · 범위는 마지막으로 손댄 시각으로 줄 세움 · 페르소나 이름은 공통 칸(GLOBAL).
+// 1.5.9 인물표의 표기 짝(rosterPairs)도 칩으로 — 프리셋 색 표에 한글 이름이 적혀 있으면 번역 전에도.
 // 순수 함수 (시험: tools/tests/glossary-suggest.mjs)
 import { leftoverEnglish } from './leftover-fix.js';
 import { isNameLike, nameFold } from './names-bridge.js';
@@ -438,6 +439,32 @@ export function shownSuggestions(box, { have = new Set(), dstOf = () => '' } = {
     const skipped = new Set(skip);
     return items.filter(it => !have.has(nameFold(it.src)) && !skipped.has(nameFold(it.src)) && visible(it))
         .slice(0, SHOW).map(it => ({ src: it.src, dst: it.dst || String(dstOf(it.src) ?? '').trim() }));
+}
+
+// 1.5.9 인물표(src/people.js)의 표기 짝 — 프리셋 색 표의 「영문 / 한글」 줄 · TTS 별명에 한글 이름이 이미 적혀 있으면 번역이 제각각 옮기기 전에 칩으로 낸다.
+//   모으지 않는다(저장 없음 · 부를 때마다 인물표에서) — 인물표에서 빠지면 칩도 사라진다. 원문 = 이름꼴 영어 · 가타카나 · 한자 표기, 한글 = 그 사람의 첫 한글 표기.
+const HAN_NAME = /^[\p{Script=Han}々]{2,6}(?:[・ ][\p{Script=Han}々]{1,6})?$/u;
+const foreignName = n => LATIN_NAME.test(n) || KATA_NAME.test(n) || HAN_NAME.test(n);
+/**
+ * 인물표 명단 [{ names }] → [{ src, dst, persona }] — 용어집에 이미 있는 표기(have · 원문이든 한글이든) · 접어 둔 표기(skip)는 뺀다.
+ * persona: 그 사람이 나(페르소나)면 true (공통 칸). 한글 표기가 없거나 외국어 표기가 없는 사람은 짝이 아니다.
+ */
+export function rosterPairs(persons, { have = new Set(), skip = new Set(), persona = '', max = SHOW } = {}) {
+    const out = [], seen = new Set(), me = nameFold(persona);
+    for (const p of Array.isArray(persons) ? persons : []) {
+        const names = (Array.isArray(p?.names) ? p.names : []).map(n => String(n ?? '').normalize('NFKC').trim()).filter(Boolean);
+        const dst = names.find(n => HANGUL_NAME.test(n));
+        if (!dst) continue;
+        const mine = Boolean(me) && names.some(n => nameFold(n) === me);
+        for (const src of names) {
+            const k = nameFold(src);
+            if (out.length >= max) return out;
+            if (!foreignName(src) || seen.has(k) || have.has(k) || skip.has(k)) continue;
+            seen.add(k);
+            out.push({ src, dst, persona: mine });
+        }
+    }
+    return out;
 }
 
 /** 접기 — 그 표기를 다시 제안하지 않는다 */

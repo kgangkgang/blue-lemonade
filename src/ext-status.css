@@ -667,7 +667,7 @@ body.salty #ss-settings .bl-ext-more:where([data-bl-native-ext-colors], [data-bl
 body.salty #ss-settings[data-bl-view="org"] .bl-ext-start { display: flex !important; position: relative; flex-wrap: wrap; align-items: center; gap: var(--bl-s1, 4px) var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0 0; padding: var(--bl-s2, 8px) calc(var(--bl-s8, 32px) + var(--bl-s1, 4px)) var(--bl-s2, 8px) var(--bl-s3, 12px); border-radius: var(--bl-ui-radius, 8px); font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
 body.salty #ss-settings[data-bl-view="org"] .bl-ext-start[hidden] { display: none !important; }
 body.salty #ss-settings .bl-ext-start > .bl-ext-start-t { flex: 1 1 100%; }
-body.salty #ss-settings .bl-ext-start > .bl-ext-jump { display: inline-flex; align-items: center; height: 30px; margin: 0; padding: 0 10px; border: 1px solid; border-radius: var(--bl-ui-radius, 8px); box-shadow: none; font: inherit; font-size: var(--bl-ts-meta, 13px); font-weight: 400; cursor: pointer; }
+body.salty #ss-settings .bl-ext-start > .bl-ext-jump { display: inline-flex; align-items: center; height: 30px; margin: 0; padding: 0 10px; border: 1px solid; border-radius: var(--bl-ui-radius, 8px); box-shadow: none; font: inherit; font-size: var(--bl-ts-meta, 13px); font-weight: 400; line-height: normal; cursor: pointer; }   /* 1.5.7 줄 높이 normal: 물려받은 1.45(18.72px)면 브라우저가 반행간을 온 화소로 내려(1.86 → 1) 글자 상자가 단추 가운데보다 0.86px 위였어요(관문 「한 줄 가운데」) — 높이 30 고정 단추라 줄 높이는 글자 자리만 정해요 */
 body.salty #ss-settings .bl-ext-start > .bl-ext-start-x { position: absolute; top: 2px; right: 2px; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; font: inherit; font-size: var(--bl-ts-head, 18px); line-height: 1; cursor: pointer; }
 body.salty #ss-settings .bl-ext-start:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { background: var(--bl-hover); color: var(--salty-text); }
 body.salty #ss-settings .bl-ext-start:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) > .bl-ext-jump { border-color: var(--salty-line); background: var(--salty-control); color: var(--salty-text); }
@@ -753,6 +753,8 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
     height: max(100%, var(--bl-ui-touch, 44px));
     transform: translate(-50%, -50%);
   }
+  /* 2.8 준비 갈래의 이름 붙은 아이콘 단추(data-l · 「속마음」 「연락」 …)는 이름을 ::after 로 그려요 — 위의 누를 자리 상자(같은 ::after)가 그 글자를 지우지 않게 */
+  body.salty .ss-scope .ss-ib[data-l]::after { content: attr(data-l); position: static; width: auto; height: auto; transform: none; }
 }
 
 /* ---------- 간격 한 벌: 상태창 절 안(관리 · 상점 · 연락 · 기록 … 모든 탭 · 11-14 「글자랑 버튼이랑 막 붙어 있는데 간격 맞춰 줘」) ----------
@@ -1049,3 +1051,20 @@ body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t.ic b.al.al[data-bl-n="9+"]::after
 /* 1.5.2 통합: 만들기 창 난이도 「하드」 — 테마의 해골 아이콘 위험색(17-semantic)이 그 칸 글자까지 칠해 밤 4.26 · 고른 칸 밤 3.63 / 낮 4.09 : 1(리그 · 마우스 올림 아님 — 원작 따라가기 2 의 probe-hard).
    미트볼 범위의 「나쁨」 색(--ss-neg · 위험색에 본문색을 섞어 한 단계 진하게)으로만 바꿔요 — 색상은 그대로 · 원작 그대로 보기에서는 안 걸려요 */
 body.salty:not([data-bl-ext-raw]) .ss-scope [data-w="diff"] > button[data-v="hard"], body.salty:not([data-bl-ext-raw]) .ss-scope [data-w="diff"] > button[data-v="hard"] > .fa-skull { color: var(--ss-neg) !important; }
+/* ====================== 그 확장 2.8 준비 갈래 대비(2026-11-16 · next/v2.8 `4457edc` 화면 — 아직 내놓지 않은 판) ======================
+   2.8 은 「같은 모양」(기본 켬)이 띠 · 옆 미니창 · 상태창 · 전체화면에 제 색 한 벌(흰 종이 · 짙은 글자 · 분홍 강조)을 !important 로 걸어요.
+   블루레몬 아래에서는 타일 판 무늬와 같은 원칙으로 — 그 한 벌의 재료 색을 테마 팔레트로 바꿔 줘요(낮 · 밤 · 에이드 모두 따라가요). 배치 · 모양(창 · 탭 · 모서리)은 그 확장 것 그대로예요.
+   그 확장의 색이 좋으면 「원작 그대로 보기」에서 그대로 나와요. 2.7.x 에는 이 이름들이 없어 아무 일도 없어요. */
+body.salty:not([data-bl-ext-raw]) :is(.ss-root.ss-hompy, .ss-root.ss-rt, .ss-hp-pick, dialog.ss-dlg, #ss-hud, #ss-side .ss-side-mini, .ss-float) {
+  --hp-paper: var(--salty-surface); --hp-soft: var(--salty-surface-shade, var(--salty-shade)); --hp-strip: var(--salty-shade-2); --hp-bgc: var(--salty-bg, var(--salty-surface));
+  --hp-ink: var(--salty-text); --hp-dim: color-mix(in srgb, var(--salty-muted) 62%, var(--salty-text));
+  --hp-ln: var(--salty-line); --hp-gl: var(--salty-line); --hp-ol: var(--salty-line); --hp-acc: var(--salty-accent-ink, var(--salty-accent));
+}
+body.salty:not([data-bl-ext-raw]) :is(.ss-root.ss-hompy, .ss-root.ss-rt, dialog.ss-dlg, dialog.ss-dlg .ss-root, #ss-hud, #ss-side .ss-side-mini) {
+  --ss-acc: var(--salty-accent) !important; --ss-accInk: var(--salty-on-accent) !important; --ss-hi: var(--salty-accent-ink, var(--salty-accent)) !important;
+}
+/* 2.8 「같은 모양」의 주요 단추는 강조색 면 + 흰 글자를 박아 둬요 — 밤 팔레트의 밝은 강조 글자색 위에서 1.74 : 1(리그). 테마 주요 단추와 같은 면 · 글자로 */
+body.salty:not([data-bl-ext-raw]) :is(.ss-hompy, .ss-rt) .ss-body .ss-btn.pri { background: var(--salty-accent); border-color: var(--salty-accent); color: var(--salty-on-accent); }
+/* 2.7.23 변화 그래프 창: 범례의 이름이 길면 끝의 값이 한 글자씩 꺾였어요(「-1 / 5」) — 색 점 · 값은 줄지 않고 이름만 줄바꿈 */
+body.salty .ss-scope .ss-trend-legend > span { min-width: 0; }
+body.salty .ss-scope .ss-trend-legend > span > :is(i, small) { flex: none; white-space: nowrap; }

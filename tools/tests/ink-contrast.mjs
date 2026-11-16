@@ -199,6 +199,7 @@ globalThis.getComputedStyle = el => {
         backgroundColor: el === doc.documentElement ? css(pal.bg) : el.bg ? css(el.bg) : 'rgba(0, 0, 0, 0)',
         backgroundImage: el.band || 'none',
         backgroundSize: el.bandSize || 'auto',
+        webkitMaskImage: el.mask || 'none',
         getPropertyValue: k => k === '--salty-bg' ? pal.bg : '',
     };
 };
@@ -227,7 +228,20 @@ const fontWithQ = new Node('font', { color: '#424C59' }).append(bandQ, ' 그 뒤
 // 데우스 '형광펜 색': 대사 글자는 테마 잉크로 따로 그리고 물려받은 색은 띠 칠에만
 const inkQ = new Node('q', {}, { inheritQ: true, fill: '#F3F7FC' }).append('「띠 색 대사」');
 const spanWithInkQ = new Node('span', { style: 'color:#424C59' }).append(inkQ, ' 속말');
-const m2 = message(fontWithQ, ' ', spanWithInkQ);
+// 1.5.9 색 칸 안에 색 없는 칸이 한 겹 더(프리셋 말투 태그 → style 에 color 낱말만 있고 값이 빈 span) — 대사는 바깥 색 칸의 색을 물려받는다
+const toneQ = new Node('q', {}, { inheritQ: true, fill: '#F3F7FC' }).append('「말투 칸 안 대사」');
+const toneSpan = new Node('span', { style: '--shadowWidth:0 !important;text-shadow:none;color:;font-weight:500;' }).append(toneQ);
+const spanWithTone = new Node('span', { style: 'color:#424C59' }).append(toneSpan);
+// 안쪽 칸이 제 색을 적었으면 그 칸이 주인 (바깥 색과 다른 색)
+const ownQ = new Node('q', {}, { inheritQ: true, fill: '#F3F7FC' }).append('「제 색 칸 안 대사」');
+const spanWithOwn = new Node('span', { style: 'color:#424C59' }).append(new Node('span', { style: 'color:#3A2A4A;font-style:italic' }).append(ownQ));
+// 1.5.9 붓자국 마스크(투명도 0.4)로 그리는 띠: 밝힌 색으로 칠해도 글자가 읽힌다 → 띠도 밝힌 색. 말투 칸이 한 겹 더 있어도 같다
+const MASK = `linear-gradient(rgb(0, 0, 0) 0px, rgb(0, 0, 0) 0px), ${bandImage('120,170,230', '0.4')}`;
+const liftQ = new Node('q', {}, { inheritQ: true, fill: '#F3F7FC', mask: MASK }).append('「붓자국 띠 대사」');
+const spanWithLiftQ = new Node('span', { style: 'color:#424C59' }).append(liftQ);
+const liftToneQ = new Node('q', {}, { inheritQ: true, fill: '#F3F7FC', mask: MASK }).append('「말투 칸 안 붓자국 띠 대사」');
+const spanWithLiftTone = new Node('span', { style: 'color:#424C59' }).append(new Node('span', { style: '--shadowWidth:0 !important;text-shadow:none;color:;font-style:italic;' }).append(liftToneQ));
+const m2 = message(fontWithQ, ' ', spanWithInkQ, ' ', spanWithTone, ' ', spanWithOwn, ' ', spanWithLiftQ, ' ', spanWithLiftTone);
 // 내 말풍선: 바탕이 밝은 면
 const bubbleText = new Node('span', { style: 'color:#d0d0ff' }).append('말풍선 안 색 글');
 const m3 = message(bubbleText);
@@ -262,6 +276,26 @@ await test('물려받은 대사: 띠 위는 띠 바탕으로 따로 · 글자를
     assert.notEqual(getComputedStyle(bandQ).color, getComputedStyle(fontWithQ).color, '바탕이 달라 색도 다름');
     assert.ok(spanWithInkQ.classList.contains('bl-ink'));
     assert.equal(getComputedStyle(inkQ).color, 'rgb(66, 76, 89)', '띠 칠 색은 원래 프롬프트 색 그대로');
+});
+await test('1.5.9 색 칸 안에 색 없는 말투 칸이 한 겹 더 있어도 띠 색은 원래 색 — 같은 인물의 띠가 말투 태그에 따라 두 밝기로 갈리지 않는다', async () => {
+    assert.ok(spanWithTone.classList.contains('bl-ink'), '바깥 색 칸은 메시지 바탕 기준으로 밝힘');
+    assert.ok(!toneSpan.classList.contains('bl-ink'), '색 없는 말투 칸은 그대로');
+    assert.equal(getComputedStyle(toneQ).color, 'rgb(66, 76, 89)', '말투 칸 안 대사의 띠 칠 색도 원래 색');
+    assert.equal(getComputedStyle(toneQ).color, getComputedStyle(inkQ).color, '말투 태그 없는 대사와 같은 띠 색');
+    assert.equal(getComputedStyle(ownQ).color, 'rgb(58, 42, 74)', '제 색을 적은 안쪽 칸의 대사는 그 색에 묶음');
+});
+await test('1.5.9 묻히는 인물 색의 붓자국 띠는 밝힌 색으로 — 말투 태그가 있든 없든 같은 색 · 밝힌 띠가 글자를 묻는 통째 칠은 원래 색', async () => {
+    const lifted = getComputedStyle(spanWithLiftQ).color;
+    assert.notEqual(lifted, 'rgb(66, 76, 89)', '바깥 칸은 밝힘');
+    assert.equal(getComputedStyle(liftQ).color, lifted, '띠 칠 색 = 밝힌 색');
+    assert.equal(getComputedStyle(liftToneQ).color, lifted, '말투 칸 안 대사도 같은 밝힌 색');
+    assert.ok(![...liftQ.classList].length && ![...liftToneQ.classList].length, '대사에는 표시를 붙이지 않음(물려받음)');
+    assert.equal(getComputedStyle(inkQ).color, 'rgb(66, 76, 89)', '마스크 없는 통째 띠는 원래 색에 묶음');
+    const night = rgb(NIGHT), ink = rgb('#F3F7FC'), up = C.parseColor(lifted);
+    assert.equal(C.bandLiftOk(up, ink, night, 0.4), true);
+    assert.equal(C.bandLiftOk(up, ink, night, 1), false, '불투명 밝은 띠 위 밝은 글자는 묻힘');
+    assert.equal(C.bandLiftOk(up, ink, night, 0), false, '투명도를 모르면 불투명으로');
+    assert.equal(C.bandLiftOk(up, null, night, 0.4), false);
 });
 await test('라이트로 바꾸면 다시 잰다: 어두운 색은 표시를 떼고(이미 충분), 연노랑 · 연보라는 어둡게', async () => {
     usePalette('light');

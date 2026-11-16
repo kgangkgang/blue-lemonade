@@ -47,6 +47,7 @@ export const billedMaybe = reason => /(?<![\d.,])\b524\b(?![.,]\d)/.test(String(
 
 /** 스택에 남는 그 확장의 함수 이름 → 칸 (2.6.1 · 2.7.0 · 2.7.2 · 2.7.9 · 2.7.11 · 2.7.15 · 2.7.17 · 2.7.21 에서 같아요 · 판이 바뀌어 이름이 달라지면 못 알아보고 「확장 AI 전체」로)
  *  2.7.9 전수(원작 사본을 구문 분석해 aiGenerate · aiJSON · 번역 함수를 부르는 곳을 모두 뽑음): 새 길은 칩 점검(pipFix → analyzeMessage) 하나 — 안쪽 함수가 같아 그대로 걸려요.
+ *  2.7.23 대조(11-16): 새 길은 연락의 「최면 어플」 답장(truthReply) 하나 — 그 확장이 메신저 답장과 같은 모델 칸을 쓰는 길이라 연락 칸으로 걸어요. 나머지 이름은 그대로예요.
  *  2.7.21 전수(11-14 · 저장소 역사를 새로 정리함): 부르는 곳 · 기능 이름이 바로 앞 2.7.17 과 같아요(편지 답장을 부르는 곳 하나 늘고 「남은 글 번역하기」의 trJSON 두 번이 한 번으로 — 칸은 그대로).
  *    연결 프로필이 실패하면 글 한 줄로 다시 보내던 것을 원작이 뺐고(sendRequest 한 번), 「실패하면 메인으로」(aiFallbackMain) 기본이 꺼짐으로 바뀌었어요 — 다리는 그 설정을 그대로 따라요.
  *  2.7.17: 「남은 글 번역하기」가 실리 번역기가 못 바꾼 글을 묻고 나서 번역 모델로 한 번 더 보내요(같은 translateMissing → trJSON · 번역 칸) — 「실리 기본 번역」이어도 이때는 번역 요청이 나가요.
@@ -55,7 +56,7 @@ export const billedMaybe = reason => /(?<![\d.,])\b524\b(?![.,]\d)/.test(String(
  *  2.7.7 부터 메인 연결 요청은 「본편이 다 쓸 때까지 기다리기」 await 뒤에 나가요 → 기능 함수는 비동기 프레임으로만 남아요(남지 않는 엔진은 ext-bridge.js 가 받은 때의 스택으로 봐요). */
 export const FN_SLOT = Object.freeze({
     analyzeMessage: 'analyze',
-    phoneReply: 'contact', letterReply: 'contact', pingMessage: 'contact', summarizeThread: 'contact', peekMind: 'contact',
+    phoneReply: 'contact', letterReply: 'contact', pingMessage: 'contact', summarizeThread: 'contact', peekMind: 'contact', truthReply: 'contact',
     genModule: 'gen', genGroup: 'gen', instructModule: 'gen', askPrice: 'gen', detectPlay: 'gen', fillWants: 'gen',
     freshItems: 'feeds', snsReactions: 'feeds', musicPicks: 'feeds', boardReplies: 'feeds',
     askHelp: 'help',

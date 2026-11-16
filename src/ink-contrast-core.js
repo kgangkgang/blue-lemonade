@@ -107,6 +107,16 @@ export function bandOf(image, size = '') {
 // 띠가 이보다 얇으면 글자 대부분이 띠 밖(메시지 바탕)에 있다 — 그때는 띠를 바탕으로 치지 않는다
 export const BAND_MIN = 45;
 
+/** 1.5.9 글자를 따로 그리는 대사(데우스 '형광펜 색' — 인물 색은 띠 칠에만)의 띠를 밝힌 색 lifted 로 칠해도 되나.
+ *  띠(투명도 alpha)를 바탕 base 에 겹친 색 위에서 글자 ink 가 target 대비를 지킬 때만 — 통째 칠(alpha 1)처럼 밝힌 띠가 글자를 묻으면 원래 색에 묶어 둔다.
+ *  투명도를 모르면(0 · 못 읽음) 불투명으로 친다 */
+export function bandLiftOk(lifted, ink, base, alpha, target = TARGET) {
+    if (!lifted || !ink || !base) return false;
+    const a = alpha > 0 && alpha <= 1 ? alpha : 1;
+    const shown = over([lifted[0], lifted[1], lifted[2], a], base);
+    return contrast(over(ink, shown), shown) >= target;
+}
+
 /** 같은 (글자색, 바탕) 은 한 번만 계산. 넘치면 통째로 비운다 (퍼스널 컬러 수 × 바탕 수라 보통 수십 개) */
 export function makeInkCache(limit = 512) {
     const memo = new Map();

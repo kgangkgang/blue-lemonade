@@ -35,7 +35,7 @@ import { TOKEN_KEYS } from './palettes.js';   // 가로 칩 줄: 넘치는 쪽 �
 import { TONE_SHAPES, isToneShape, toneFor, toneLookup } from './log-copy-tone.js';   // 1.1.3 「깡통 로그」 틀 묶음(깡통 로그 · 미니 · 진한 바탕) — 색은 대사색 하나에서 · 에이드 색 칩 없이 밝기만
 import { people } from './people.js';   // 1.1.3 인물표의 정해 둔 대사색(없으면 화면에서 읽은 색)
 import { SITE, sitePreviewCss, siteCheck } from './log-copy-site-sim.js';
-import { speakerLetters, castLetters } from './log-copy-simple.js';   // 11-12 받은 심플 글꾸: 캐릭터 색을 아는지(「소품도 캐릭터 색」 칩이 쓸모 있는지) — renderLog 와 같은 판정
+import { castWho } from './log-copy-simple.js';   // 11-12 받은 심플 글꾸: 캐릭터 색을 아는지(「소품도 캐릭터 색」 칩이 쓸모 있는지) — renderLog 와 같은 판정
 import { GUIDE_HTML, CODE_HTML, CODE_BUTTON, STYLE as HANDOFF_STYLE, guide, showCode, selectAll, copyArea } from './log-copy-handoff.js';   // 1.2.0 붙이는 길 — 바닥 줄 위 안내 · 「코드 보기」 칸 · 복사 뒤 창 유지
 import { mineOrder, removeMine, restoreMine, countLine, infoLabel, MINE_MAX } from './log-copy-mine.js';   // 1.2.0 받은 글꾸 관리 — 즐겨찾기 · 최근 · 되돌리는 지우기 · n/20
 import { attachUndo } from './ask.js';
@@ -821,7 +821,7 @@ export async function openLogSheet(model) {
         drawPics();   // view 가 정한 이름 숨김 판단(state.picAllow)으로 칸 요약
         // 1.1.3 깡통 로그 틀 묶음: 인물표의 정해 둔 대사색을 먼저(이름 숨김 · 바꾸기로 이름이 바뀌어도 원래 이름으로 물어요) · 밝기는 고른 팔레트의 밝기
         const toneNow = toneOn(), toneMode = modeOf(state.palette);
-        const lookup = toneNow || basicOn() || simpleOn() ? toneLookup(shown.model.messages, (state.edited ?? model).messages, name => people.get(name)) : null;
+        const lookup = toneNow || basicOn() || simpleOn() ? toneLookup(shown.model.messages, (state.edited ?? model).messages, name => people.get(name), () => people.list()) : null;   // 1.5.8 대사 조각마다 인물표 색(lookup.who)
         state.tone = toneNow ? toneFor(state.shape, shown.model, { mode: toneMode, lookup }).tone : null;
         if (state.edited) { const c = own() ?? colorsOf(paletteFor(state.shape, state.palette)); for (const m of shown.model.messages) spoilerColors(m.nodes, { line: c.line, raised: c.raised, muted: c.muted, family: ui.family, tracking: ui.tracking }); }
         const fields = shown.rewriteFields(state.fields);
@@ -832,7 +832,7 @@ export async function openLogSheet(model) {
         // 칸만 비우면 그 칸을 담던 머리 박스 · 구분선이 빈 채로 남았어요(11-07 사용자 「제목 · 위 글 · 알약 다 빼면 가로 박스도 사라져야지」)
         const drop = [...(s3.titleOff ? ['title'] : []), ...(s3.dateOff ? ['date'] : []), ...(s3.tagsOff ? ['mark', 'char', 'model', 'prompt'] : [])];
         if (mine?.frame) {   // 11-12 캐릭터 색(인물표 · 화면 대사색 · 고른 화자 색)을 모르면 「소품도 캐릭터 색」은 그림을 안 바꿔요 — 칩을 흐려요(바뀌면 조절 칸만 다시)
-            const known = castLetters(speakerLetters(shown.model, { main: mine.frame.main, second: mine.frame.second, lookup }), mine.frame, mine.set?.themeCast).main != null;
+            const known = castWho(shown.model, mine.frame, lookup, mine.set?.themeCast).main != null;
             if (known !== (state.castKnown !== false)) { state.castKnown = known; drawEasy(); }
         }
         let again = null;   // 같은 글을 다른 밝기로 한 번 더 그리는 길(「전환 넣기」가 낮 판 · 밤 판을 견줘요) — 받은 심플 글꾸 · 기본 글꾸 새 틀만
@@ -1511,7 +1511,9 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
 .bl-lc-pics textarea:focus { outline:1px solid var(--salty-accent); }
 .bl-lc-chips, .bl-lc-pals { display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; padding:5px 16px; scroll-padding:0 16px; }
 .bl-lc-chip { position:relative; flex:none; box-sizing:border-box; display:inline-flex; align-items:center; gap:4px; min-height:var(--bl-ui-chip, 34px); margin:0; padding:0 10px; border:1px solid var(--salty-line); border-radius:8px; background:var(--salty-surface); color:var(--salty-text); font:inherit; font-size:13px; line-height:1.2; letter-spacing:inherit; white-space:nowrap; box-shadow:none; cursor:pointer; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
-.bl-lc-chip > i { font-size:12px; color:var(--salty-muted); translate:0 .055em; }   /* 1.5.2 칩 아이콘 잉크가 칩 가운데보다 0.5px 위(그림 열 가지 같은 값 · 폰 · PC) — 글자 칸을 몸통 가운데로 다듬은 뒤(88-ui-parts) 글자는 0.3 ~ 0.4px 아래라 차가 0.8px 이었어요 → 제 크기 비율로 내려 0.2px 안 */
+.bl-lc-chip > i { font-size:12px; color:var(--salty-muted); --bl-glyph-y:.055em; }   /* 1.5.2 칩 아이콘 잉크가 칩 가운데보다 0.5px 위(그림 열 가지 같은 값 · 폰 · PC) — 글자 칸을 몸통 가운데로 다듬은 뒤(88-ui-parts) 글자는 0.3 ~ 0.4px 아래라 차가 0.8px 이었어요 → 제 크기 비율로 내려 0.2px 안 */
+.bl-lc i:is(.fa-solid, .fa-regular)::before { display:inline-block; translate:0 var(--bl-glyph-y, 0); }
+.bl-lc i.fa-regular.fa-moon::before { scale:1.14; }   /* 1.5.7 해 · 달이 나란한 곳(밝기 스위치 · 전환 넣기 칩): 달 그림 잉크가 해보다 12% 작아요(12px 에서 10.5 vs 12 · 17px 에서 15 vs 17 — 관문 「아이콘 잉크 높이」) → 그림만 키워요(상자 그대로) */   /* 1.5.7 아이콘 잉크 밀기는 그림(::before)만 — 아이콘 상자(i)를 밀면 상자가 줄 가운데에서 0.66 · 1.66px 벗어나요(관문 「한 줄 가운데」). 그림은 제 상자 안에서만 움직이고 상자는 줄 가운데 그대로예요. top 으로 밀면 글리프가 온 화소로 붙어 1px 씩 뛰어서 translate 로 */
 .bl-lc-chip > .bl-lc-mart { color:var(--salty-muted); }
 .bl-lc-chip:is([aria-checked="true"], [aria-pressed="true"]) { background:var(--salty-accent-10, var(--salty-raised)); font-weight:650; }
 .bl-lc-chip[aria-pressed="true"] > i:first-child { color:var(--salty-accent-ink, var(--salty-accent)); }
@@ -1620,8 +1622,8 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
 .bl-lc .bl-lc-add-rule { justify-self:start; min-height:36px; }
 @media (min-width: 769px) and (pointer: fine) { .bl-lc-names input, .bl-lc-rule input, .bl-lc .bl-lc-add-rule, .bl-lc-field input { min-height:34px; } }
 .bl-lc-more { display:flex; padding:0 16px; }
-.bl-lc-more .bl-lc-chip > i { font-size:12.5px; color:inherit; translate:0 -.11em; }
-.bl-lc-more .bl-lc-chip > i.fa-chevron-up { translate:0 .11em; }   /* 「더 보기 · 접기」 꺾쇠는 테마의 다른 꺾쇠와 같은 꼴(12.5px · 글자색) — 칩 아이콘 꼴(12px · 흐린 색)이면 꺾쇠 변형이 하나 늘어요 */
+.bl-lc-more .bl-lc-chip > i { font-size:12.5px; color:inherit; --bl-glyph-y:-.11em; }
+.bl-lc-more .bl-lc-chip > i.fa-chevron-up { --bl-glyph-y:.11em; }   /* 「더 보기 · 접기」 꺾쇠는 테마의 다른 꺾쇠와 같은 꼴(12.5px · 글자색) — 칩 아이콘 꼴(12px · 흐린 색)이면 꺾쇠 변형이 하나 늘어요 */
 .bl-lc.bl-lc-less :is(.bl-lc-cats, .bl-lc-gallery, .bl-lc-pals, .bl-lc-inks, .bl-lc-tools, .bl-lc-shows, .bl-lc-fields, .bl-lc-names, .bl-lc-words) { display:none; }   /* 1.1.3 접힌 채: 「더 보기」 안의 줄 */
 .bl-lc-foot { display:grid; grid-template-columns:auto auto 1fr; gap:8px; padding:12px 16px 16px; border-top:1px solid var(--salty-line); }
 .bl-lc-foot .salty-btn { min-height:40px; }
@@ -1723,8 +1725,8 @@ button.bl-lc-pic:focus-visible { outline:2px solid var(--salty-accent); outline-
   .bl-lc-fd-h > mark { flex:none; padding:1px 8px; border-radius:999px; background:var(--salty-accent-10, var(--salty-raised)); color:var(--salty-accent-ink, var(--salty-accent)); font-size:12px; font-weight:650; }
   .bl-lc-fd-h > mark.is-on { background:var(--salty-accent); color:var(--salty-on-accent, var(--salty-bg)); }   /* 1.2.2 「켬」 = 스위치 켬과 같은 팔레트 강조색(테마 규칙: 켜짐에는 두 번째 포인트 · 팔레트 밖 노랑을 안 써요) */
   .bl-lc-fd-h > mark[hidden] { display:none; }
-  .bl-lc-fd-h > i { flex:none; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); translate:0 -.11em; transition:transform .15s, translate .15s; }   /* 1.5.2 꺾쇠 그림은 제 글자 칸 가운데보다 아래에 그려져 있어요(Font Awesome chevron-down) — 그림 몫만 제 크기 비율로 올려요(이름표 글꼴과 무관). 잰 값(꺾쇠 ↔ 굵은 이름 잉크 가운데): 안 올림 1.75px · 0.0625em 1.07px · 0.15em −0.50px(12.5px 글자) → 0.11em */   /* 1.2.2 테마의 다른 꺾쇠와 같은 꼴(12.5 · 글자색) */
-  .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); translate:0 .11em; }
+  .bl-lc-fd-h > i { flex:none; color:var(--salty-text); font-size:var(--bl-ui-ink-fa, 12.5px); --bl-glyph-y:-.11em; transition:transform .15s; }   /* 1.5.2 꺾쇠 그림은 제 글자 칸 가운데보다 아래에 그려져 있어요(Font Awesome chevron-down) — 그림 몫만 제 크기 비율로 올려요(이름표 글꼴과 무관). 잰 값(꺾쇠 ↔ 굵은 이름 잉크 가운데): 안 올림 1.75px · 0.0625em 1.07px · 0.15em −0.50px(12.5px 글자) → 0.11em */   /* 1.2.2 테마의 다른 꺾쇠와 같은 꼴(12.5 · 글자색) */
+  .bl-lc-fd.is-open > .bl-lc-fd-h > i { transform:rotate(180deg); }   /* 뒤집힌 상자 안에서 그림이 -.11em 이면 보이기엔 +.11em(아래) — 예전 상자 밀기와 같은 자리 */
   .bl-lc-fd-h:focus-visible, .bl-lc-sw:focus-visible, .bl-lc-cr-more:focus-visible { outline:1px solid var(--salty-accent); outline-offset:-1px; }
   .bl-lc-fd > :is(.bl-lc-shows, .bl-lc-names, .bl-lc-words, .bl-lc-fields, .bl-lc-sw) { margin:0 12px; }
   .bl-lc-fd > .bl-lc-names { margin-top:-4px; }

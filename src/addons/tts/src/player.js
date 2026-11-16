@@ -53,7 +53,7 @@ function recordVoice(job, chars, model) {
     } catch { /* 장부 없음 — 소리는 그대로 */ }
 }
 import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay, markJoins, joinSpeech, italicCandidates } from './text.js';
-import { resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor } from './speakers.js';
+import { resolveSpeaker, canon, knownNames as learnedNames, colorOfPerson, ownerOfColor } from './speakers.js';
 import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice } from './voices.js';
 export { voiceOfName, voiceListPublic } from './voice-public.js';
 import { usesTags } from './providers/elevenlabs.js';   // 6.1.8 다른 확장용 synth — 글 속 오디오 태그를 받는 모델인가
@@ -3088,12 +3088,12 @@ function themeInks() {
     // 테마 변수는 color-mix() 같은 식일 수 있어 그대로는 못 읽는다 → 숨긴 칸의 color 로 풀어 읽는다
     return THEME_INKS.map(name => { inkProbe.style.color = `var(${name}, transparent)`; return getComputedStyle(inkProbe).color; });
 }
-/** 6.3.9 그 줄 화자의 팔레트 색 (speakers.colorOfName — 별명 · 이름 다리를 거침, 없으면 '') */
+/** 6.3.9 그 줄 화자의 팔레트 색 (speakers.colorOfPerson — 별명 · 이름 다리를 거침 · 1.5.9 이 채팅에 없으면 인물표의 지정색, 없으면 '') */
 function speakerPalette(job) {
     try {
         const mes = job.mesId >= 0 ? msg(job.mesId) : null;
         const userName = mes ? chatCtx(mes).userName : '';
-        return colorOfName(job.speaker || '', { userName }) || '';
+        return colorOfPerson(job.speaker || '', { userName }) || '';   // 1.5.9 이 채팅 색이 없으면 인물표(카드별 색 기억 · 프리셋 색)
     } catch { return ''; }
 }
 function barNameColor(job) {

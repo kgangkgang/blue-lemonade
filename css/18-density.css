@@ -16,10 +16,10 @@
     padding: 0 !important;
   }
   /* 펼친 줄은 카드로 떠오름 — 여백은 카드 안쪽으로 되돌림 */
-  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) {
+  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer)[data-bl-row~="idro"]:is(.bl-s, *):is(.bl-s, *) {
     margin: var(--bl-s2) 0 !important;
   }
-  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer):has(> .inline-drawer-header .inline-drawer-icon.up) > .inline-drawer-header {
+  html body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer:not(.inline-drawer .inline-drawer)[data-bl-row~="idro"]:is(.bl-s, *):is(.bl-s, *) > .inline-drawer-header {
     padding: 0 10px !important;
   }
   /* 알림 한 줄: 카드 없이 시트 위 설정 줄 */

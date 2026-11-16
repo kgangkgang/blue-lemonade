@@ -19,6 +19,7 @@
 
 import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { armGuard } from './cheap-guards.js';
+import { cardColorTable, tableColor } from './card-colors.js';   // 1.5.9 카드별 색 기억(인물표 공급자와 같은 표)
 import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
@@ -26,15 +27,17 @@ import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummari
 export const SETS = [
     // 미트볼 상태창 — 2.6.1 · 2.7.0 · 2.7.1 · 2.7.2 화면에서 확인(2026-11-13 · 리그 — 2.6.1 은 재설계 앞 판에서) · 2.7.9 는 2026-11-14 리그(새 묶음 「기능 켜고 끄기」 탭 · 칩 점검 창) · 2.7.11 · 2.7.15 · 2.7.17 은 같은 날 점검 대본 대조(설정 칸 · 선택자 · 시트 그대로 · 2.7.15 는 새 묶음 「설렘 · 사건 한 스푼」 탭 · 2.7.17 은 그 묶음이 「설렘 한 스푼」으로 줄고 연락 간단하게 칸) — 리그 사진은 아직. 판이 달라도 맞춤 CSS 는 그대로 걸고, 안내 한 줄만 바뀌어요.
     //   2.7.21(11-14 · 원작이 저장소 역사를 새로 정리한 판): 점검 대본 대조 + 리그 사진(폰 384 · PC 1280 × 낮 · 밤) — 띠 · 옆 미니창이 타일 판으로 바뀜(이름이 겹친 알림 닫기 규칙을 좁힘) · 새 설정 줄 두 꼴 · 그림 글자 일곱.
+    //   2.7.22(11-15 리그 — 만들기 창 빠른 세트 · 번역 고치기 창 맞춤) · 2.7.23(11-15 대조 · 11-16 리그: 폰 384 낮 · 밤 · PC 1280 — 창 여섯 · 상태창 탭 전부 · 변화 그래프 · 최면 어플 · 새 설정 탭) — 맞춤이 기대는 이름 그대로.
     //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
-    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21'],
+    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23'],
         strips: ['.ss-scope .ss-tabs'] },   // 맞춤 시트가 「한 줄 · 스크롤바 없음」으로 바꾼 그 확장의 탭 줄 — 등록부에 넣어야 휠로 넘친 탭에 닿고, 그 확장이 판을 다시 그린 뒤에도 고른 탭이 보여요
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   1.9.61(2026-11-14 점검 대본 대조): 바뀐 것은 백그라운드 답장의 반쪽 답을 건너뛰는 사건 처리뿐 — 화면 · CSS · 선택자 39개 · 구조 표식 8개 그대로라 맞춤도 그대로예요.
     //   1.9.64(2026-11-14 저녁 점검 대본 대조): 주요 단추 색이 갈색(제 색 변수) · 설정 숫자 칸 셋 · 움직임 줄이기 규칙 — 깨진 선택자 0 · 새 AI 요청 길 0 이라 맞춤 그대로예요.
     //   1.9.66(2026-11-15 점검 대본 대조 · 1.9.65 를 덮는 판): 요약 언어를 요청 끝에 다시 알림 · 기억을 요약 언어로 맞추기(더보기 메뉴 한 줄) · 되감은 요약은 회상에서 뺌(보관함 칩 하나) — 원작 CSS 안 바뀜 · 선택자 39 · 구조 표식 8/8 그대로예요.
     //   「색 두기」 안: 그 확장의 제 색 · 글꼴은 그대로 — 설정 내용 칸(native)에 「원래 색 유지」 표식을 붙여 테마 색 규칙이 비켜 가게 하고, 낮밤 표식(mode)을 테마 밝기에 다시 맞춰요.
-    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60', '1.9.61', '1.9.64', '1.9.66'] },
+    //   1.9.67(2026-11-16 점검 대본 대조 + 리그 사진 — 폰 384 낮 · 밤 · PC 1280): 새 묶음 「작업마다 다른 모델 쓰기」(줄 여섯 · 고르기 칸) — 제 색 변수만 써서 맞춤 그대로예요 · 선택자 39 · 구조 표식 8/8.
+    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60', '1.9.61', '1.9.64', '1.9.66', '1.9.67'] },
     // Memoria — 2.0.4 화면에서 확인(2026-11-13). 원작이 실리태번 색 변수를 따라가서 선 · 머리줄만 맞춰요.
     //   2.1.0(2026-11-14 점검 대본 대조): 설정 「기본」에 같은 꼴의 숫자 칸 하나(묶어 기록 · .memoria__field) — 선택자 9개 · 구조 표식 3개 · CSS 그대로라 맞춤도 그대로예요. 리그 사진은 아직.
     { root: '#memoria_settings', mark: '.memoria__version', css: './ext-memoria.css', version: '.memoria__version', name: 'Memoria', verified: ['2.0.4', '2.1.0'] },
@@ -216,32 +219,8 @@ export function personColor(people, ...args) {
 /** 1.5.4 사용자 「대사 없어도 TTS 랑 프리셋에 정해 둔 색」: 인물표의 색은 이 채팅 대사에서 이름이 붙은 색이라 대사가 나오기 전엔 비어요.
  *  TTS 설정의 카드별 색 기억(extension_settings.lemon_voice.card_colors[카드 그림] 은 「색 → 이름」 표 — TTS 색 표에서 사용자가 이름을 정해 둔 것 · 새 채팅의 씨앗)을
  *  지금 채팅의 카드(그룹이면 구성원 카드 전부)에서 읽어 이름 → 색 표로 — 대사와 상관없이 바로 써요. 이름은 전체 · 첫 낱말로 맞춰요(대소문자 · 공백 무시). */
-const foldName = n => String(n ?? '').normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ');
-export function cardColorTable(ctx) {
-    const out = new Map();
-    try {
-        const all = ctx?.extensionSettings?.lemon_voice?.card_colors;
-        if (!all || typeof all !== 'object') return out;
-        const avatars = ctx.groupId ? ((ctx.groups || []).find(g => g?.id === ctx.groupId)?.members || []) : [ctx.characters?.[ctx.characterId]?.avatar];
-        for (const av of avatars) {
-            const m = av && all[av];
-            if (!m || typeof m !== 'object') continue;
-            for (const [col, raw] of Object.entries(m)) {
-                // 1.5.5 TTS 는 사용자 · 카드 인물을 {{user}} · {{char}} 로 기억해요(사용자 실제 설정) — 지금 페르소나 · 카드 이름으로 바꿔 맞춰요
-                const name = String(raw ?? '').replace(/\{\{user\}\}/gi, ctx.name1 || '').replace(/\{\{char\}\}/gi, ctx.name2 || '');
-                const c = String(col || '').trim().toLowerCase(), n = foldName(name);
-                if (!/^#[0-9a-f]{6}$/.test(c) || !n) continue;
-                if (!out.has(n)) out.set(n, c);
-                const first = n.split(' ')[0]; if (first && first !== n && !out.has(first)) out.set(first, c);
-            }
-        }
-    } catch { /* 표 없음 */ }
-    return out;
-}
-export function tableColor(table, ...names) {
-    for (const n of names) { const k = foldName(n); if (!k) continue; const c = table.get(k) ?? table.get(k.split(' ')[0]); if (c) return c; }
-    return null;
-}
+// 1.5.9 이 표는 이제 인물표의 공급자 'card'(src/card-colors.js)가 같이 써요 — 여기서는 그 함수를 그대로 내보내기만 해요(두 벌 아님 · 인물표가 없을 때의 안전망)
+export { cardColorTable, tableColor };
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const lumOf = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
 export const contrastOf = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
@@ -410,6 +389,43 @@ export function markBadge(tb) {
 /** 이름표 → 값 목록(프로필 · 관계 · 장소): 값이 긴 칸(열세 자 넘거나 줄바꿈 — 폰 반 폭에 한 줄로 안 들어가는 길이)에 표식 — 두 단을 가로질러 통째 한 줄(src/ext-status.css). 글자 수만 봐요(배치를 재지 않아요) */
 /** 1.5.4 사용자 「프로필 설명 왜 세로 2열 아니지」: 13자 넘는 값을 두 단 통째로 돌렸더니 문장 값뿐인 프로필은 전부 한 열이 됐어요(여러 단 흐름이라 칸 사이 간격도 들쭉날쭉).
  *  → 두 열 격자에 칸(이름표 위 · 값 아래)을 차례로 놓고, 값이 아주 길 때(마흔 자 넘거나 줄바꿈)만 그 칸이 두 열을 차지해요. 칸 자리는 변수(--bl-c · --bl-rt · --bl-rd)로 — 배치를 재지 않아요. */
+/** 칸 모서리의 빨간 점(.ss-t-dot · 그 확장의 「방금 AI 답에서 바뀐 칸」 표시 · 1.5.9 사용자 「눌러 봤는데도 남아요」): 그 확장은 다음 AI 답까지 점을 남겨요.
+ *  눌러서 펼쳐 본 칸의 점만 테마가 화면에서 숨겨요 — 본 칸 이름을 적은 작은 시트 하나(#bl-mb-dot-seen)로요. 그 확장의 파일 · 자료 · 요소는 안 건드려요(띠를 새로 그려도 시트는 그대로).
+ *  새 AI 답 · 채팅 바꾸기 신호에 비우고, 띠가 다시 그려졌을 때 그 칸에 점이 없으면(그 확장이 스스로 끔) 그 칸을 잊어요 — 다음에 켜지는 점은 다시 보여요. 「원작 그대로 보기」 에서는 안 숨겨요. */
+export const DOT_SHEET = 'bl-mb-dot-seen';
+const dotSeen = new Set();
+const dotKey = key => (/^[\w-]{1,40}$/.test(String(key ?? '')) ? String(key) : '');
+export const dotCss = keys => { const list = [...keys].map(dotKey).filter(Boolean); return list.length ? `body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t:is(${list.map(k => `[data-k="${k}"]`).join(',')}) > .ss-t-dot { display: none !important; }` : ''; };
+function writeDots(doc) {
+    const css = dotCss(dotSeen); let sheet = doc.getElementById?.(DOT_SHEET);
+    if (!sheet) { if (!css || !doc.createElement || !doc.head?.appendChild) return css; sheet = doc.createElement('style'); sheet.id = DOT_SHEET; doc.head.appendChild(sheet); }
+    if (sheet.textContent !== css) sheet.textContent = css;
+    return css;
+}
+/** 누른 요소가 점이 켜진 칸이면 그 칸을 「봤음」 으로 적어요(편집 중인 칸 · 점 없는 칸은 아님). 적었으면 칸 이름. */
+export function seeDot(doc, target) {
+    const tile = target?.closest?.('.ss-tb .ss-t[data-k]'); if (!tile || tile.classList?.contains?.('edit')) return '';
+    const key = dotKey(tile.getAttribute?.('data-k')); if (!key || dotSeen.has(key) || !tile.querySelector?.(':scope > .ss-t-dot')) return '';
+    dotSeen.add(key); writeDots(doc); return key;
+}
+/** 다시 그려진 띠: 봤다고 적은 칸에 점이 더는 없으면 잊어요. 남은 칸 수. */
+export function syncDots(doc, tb) {
+    let changed = false;
+    for (const key of [...dotSeen]) { const tile = tb?.querySelector?.(`.ss-t[data-k="${key}"]`); if (tile && !tile.querySelector?.(':scope > .ss-t-dot')) { dotSeen.delete(key); changed = true; } }
+    if (changed) writeDots(doc);
+    return dotSeen.size;
+}
+/** 새 AI 답 · 채팅 바꾸기: 모두 잊어요(새로 켜진 점은 다시 보여요). */
+export function clearDots(doc) { if (!dotSeen.size) return 0; const n = dotSeen.size; dotSeen.clear(); writeDots(doc); return n; }
+let dotsHooked = false;
+function hookDots(doc) {
+    if (dotsHooked) return true;
+    let c = null; try { c = (doc.defaultView || globalThis).SillyTavern?.getContext?.() ?? null; } catch { c = null; }
+    const on = c?.eventSource?.on?.bind(c.eventSource), types = c?.event_types; if (!on || !types) return false;
+    dotsHooked = true;
+    for (const name of ['MESSAGE_RECEIVED', 'CHAT_CHANGED']) if (types[name]) try { on(types[name], () => { try { clearDots(doc); } catch { /* 점 그대로 */ } }); } catch { /* 신호를 못 걸면 띠 다시 그리기로만 */ }
+    return true;
+}
 export const LONG_VALUE = 40;
 export function markLong(dl) {
     let n = 0, row = 1, col = 1;
@@ -560,6 +576,7 @@ export function startExtCompat(doc = globalThis.document) {
             const target = event.target;
             if (!strip) ensureStrip(doc);   // 그 확장의 판(안쪽 탭 줄)은 설정 서랍을 거치지 않고도 열려요 — 등록부가 생긴 뒤 첫 누름에 넣어요(넣은 뒤로는 안 봐요)
             if (!target?.closest) return;
+            try { if (seeDot(doc, target)) hookDots(doc); } catch { /* 점 그대로 */ }   // 1.5.9 눌러 본 칸의 빨간 점 숨기기(누름은 막지 않아요)
             { const deco = target.closest('.bl-ext-deco-act'); if (deco && deco.tagName !== 'INPUT') decoAct(deco).catch(() => { /* 설정 창 모듈을 못 받으면 그대로 */ }); }   // 미트볼 꾸미기 창에 끼운 테마 칸
             const tab = target.closest(`.${TAB}`);
             if (tab) {
@@ -625,7 +642,7 @@ export function startExtCompat(doc = globalThis.document) {
             if (event.animationName !== 'ss-pulse') return;   // 맞춤 시트가 띠 · 이름표 목록에 0.001초로 거는 그 확장의 키프레임 — 지도의 깜빡이는 고리도 같은 이름이라 아래에서 요소로 가려요
             const el = event.target;
             try {
-                if (el?.classList?.contains('ss-tb')) { fitActs(el); markBadge(el); markWeekday(el); } else if (el?.tagName === 'DL') markLong(el);
+                if (el?.classList?.contains('ss-tb')) { syncDots(doc, el); fitActs(el); markBadge(el); markWeekday(el); } else if (el?.tagName === 'DL') markLong(el);
                 else if (el?.classList?.contains('ss-wz-head') && el.parentElement?.classList?.contains('ss-tw')) decoTheme(el.parentElement);
                 else if (el?.matches?.(FACES) && !facesQueued) { facesQueued = true; queueMicrotask(() => { facesQueued = false; try { paintFaces(doc); } catch { /* 아이콘 그대로 */ } }); }   // 얼굴 여럿이 한꺼번에 그려져도 한 번만 훑어요
             } catch { /* 원래 배치 그대로 */ }

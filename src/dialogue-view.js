@@ -3,8 +3,9 @@
 //   듣기: 내장 TTS 애드온이 켜져 있을 때만 단추가 있다. 새 재생기를 만들지 않고 TTS 의 대사 누르기 길(clickplay.segmentForHit → player.speakSegments)을
 //   그대로 탄다 — 목소리 지정 · 대사 분석 · 미리 만든 소리(같은 캐시 키) · 효과음 · 재생 줄이 대사를 누를 때와 같다. 화자 이름 · 색도 TTS 판정을 쓴다.
 //   상주 관찰자 · 타이머 없음: 창이 열린 동안만 「재생이 끝났다」 알림을 받고, 칠한 자리는 2초 뒤 한 번 지운다.
-import { dialogueLines, locateLines } from './dialogue-lines.js';
+import { dialogueLines, locateLines, knownWithRoster } from './dialogue-lines.js';
 import { showThemeModal } from './modal.js';
+import { people } from './people.js';   // 1.5.9 인물표 — 그 인물의 지정색(TTS 가 꺼져 있어도)
 
 const TTS_OWNER = Symbol.for('blue-lemonade.tts.owner');
 const HIT = 'bl-dlg-hit';
@@ -64,7 +65,10 @@ function names(c, tts) {
     const group = c.groupId && Array.isArray(c.groups) ? c.groups.find(g => g.id === c.groupId) : null;
     for (const avatar of group?.members || []) { const ch = (c.characters || []).find(x => x.avatar === avatar); if (ch) out.add(ch.name); }
     try { for (const n of tts?.speakers.knownNames() || []) out.add(n); } catch { /* 채팅 메타가 없으면 넘어감 */ }
-    return [...out].filter(Boolean);
+    // 1.5.9 인물표 명단의 표기도 아는 이름 — 띄어 쓴 이름표(「Mina Park: …」)가 이름으로 읽혀 점이 그 인물의 지정색으로 나와요
+    let roster = [];
+    try { roster = people.list(); } catch { /* 인물표 없음 */ }
+    return knownWithRoster([...out].filter(Boolean), roster);
 }
 
 const fold = t => String(t || '').replace(/[\s*_~`.…⋯]/g, '').toLowerCase();
@@ -96,7 +100,8 @@ function rowsOf(mesId, mes, tts) {
         } else if (tts && line.kind === 'thought') {
             try { const who = tts.speakers.resolveSpeaker({ color: line.color, speakerHint: line.name }, { mes, userName, charName }); if (who?.name && who.source !== 'sender') name = who.name; } catch { /* 표 없음 */ }
         }
-        if (tts && !color && name) { try { color = tts.speakers.colorOfName(name, { userName }) || null; } catch { /* 표 없음 */ } }
+        // 1.5.9 그 인물의 지정색 — TTS 가 켜져 있으면 이 채팅 색 → 인물표, 꺼져 있어도 인물표(카드별 색 기억 · 프리셋에 정해 둔 색)
+        if (!color && name) { try { color = (tts ? tts.speakers.colorOfPerson(name, { userName }) : people.get(name)?.color) || null; } catch { /* 표 없음 */ } }
         return { ...line, name, color };
     });
 }

@@ -821,6 +821,8 @@ export function applyAll() {
     // 1.5.6 프로필 얼굴 「색만」(기본): 지정색이 있는 동그라미는 글자 없이 색만 — 표식 하나로 시트가 글자만 숨겨요(다시 그리기 없음 · 지정색이 없는 사람은 첫 글자 그대로)
     const mbColorOnly = !!mbFace && s.chat.mbFaceLook !== 'letter';
     if (document.body.hasAttribute('data-bl-mb-color-only') !== mbColorOnly) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-color-only', mbColorOnly); }
+    // 1.5.9 채팅 이름표를 인물 색으로(기본 끔): 켠 때만 모듈을 받아요 — 시트 한 장(name-people.js) · 이름 글자 그러데이션을 건 쪽은 빼요
+    { const on = want.has('salty') && s.chat.namePeople === true; lateSync('namePeople', () => import('./name-people.js'), on, m => m.syncNamePeople(on, { bg: /^#[0-9a-f]{6}$/i.test(String(pal.bg)) ? pal.bg : '', skipChar: !!gradientFor(s, 'name'), skipUser: !!gradientFor(s, 'userName') })); }
     const mbPlain = want.has('salty') && s.chat.mbHelpers === false;
     if (document.body.hasAttribute('data-bl-mb-plain') !== mbPlain) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-plain', mbPlain); }
     if (document.body.hasAttribute('data-bl-dem-fold') !== fold) { restyleAhead(); if (fold) document.body.setAttribute('data-bl-dem-fold', ''); else document.body.removeAttribute('data-bl-dem-fold'); }

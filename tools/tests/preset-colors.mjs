@@ -196,5 +196,35 @@ await test('코드: 이름 · 색을 박지 않아요(파서 · 연결 모듈에
     assert.match(read('src/ext-compat.js'), /personColor\(people, \{ from: 'other' \}, names\[k\], shown\[k\]\) \|\| tableColor\(cardsOf\(\), names\[k\], shown\[k\]\) \|\| personColor\(people, \{ from: 'preset' \}/);
 });
 
+// 1.5.9 유저 줄({{user}})
+await test('유저 줄: 페르소나 이름을 주면 그 이름의 색으로(맨 끝에 한 사람) · 안 주면 예전처럼 버려요', () => {
+    const out = C.parsePresetColors({ prompts: [AUTO], charNames: ['별빛여관'], userName: '하나' });
+    assert.deepEqual(pick(out), [['Orin', '#d04a5a'], ['Pella', '#4a7fd0'], ['Quill Hart', '#8f9c65'], ['하나', '#424c59']]);
+    assert.deepEqual(pick(C.parsePresetColors({ prompts: [AUTO], charNames: ['별빛여관'], userName: '' })).length, 3);
+    assert.deepEqual(pick(C.parsePresetColors({ prompts: [AUTO], charNames: ['별빛여관'], userName: '<b>{{x}}' })).length, 3, '이름답지 않은 페르소나 이름은 버려요');
+});
+await test('유저 줄: 「인물 한 줄 + {{user}}」 표도 표로 세요(한 사람 카드) · 혼자 떨어진 유저 줄은 여전히 버려요', () => {
+    const solo = ['- Colors:', '  - Vess / 베스: "#c05070"', '  - {{user}}: "#424C59"'].join('\n');
+    assert.deepEqual(pick(C.parsePresetColors({ prompts: [solo], userName: '하나' })), [['Vess', '#c05070'], ['하나', '#424c59']]);
+    assert.deepEqual(pick(C.parsePresetColors({ prompts: [solo] })), [['Vess', '#c05070']], '페르소나 이름이 없어도 인물 색은 받아요');
+    assert.deepEqual(C.parsePresetColors({ prompts: ['글 사이에\n- {{user}}: "#424C59"\n혼자 있는 줄'], userName: '하나' }), []);
+});
+await test('유저 줄: 페르소나 이름이 표의 인물과 겹치면 유저 줄만 버려요(인물 색이 먼저) · 표마다 유저 색이 다르면 버려요', () => {
+    const out = C.parsePresetColors({ prompts: [AUTO], charNames: ['별빛여관'], userName: '펠라' });
+    assert.deepEqual(pick(out), [['Orin', '#d04a5a'], ['Pella', '#4a7fd0'], ['Quill Hart', '#8f9c65']]);
+    const two = ['- A One: "#111111"', '- {{user}}: "#222222"', '', '', '', '- B Two: "#333333"', '- {{user}}: "#444444"'].join('\n');
+    assert.deepEqual(pick(C.parsePresetColors({ prompts: [two], userName: '하나' })), [['A One', '#111111'], ['B Two', '#333333']]);
+});
+await test('유저 줄 연결: 지금 페르소나 이름(name1)으로 인물표에 · 페르소나를 바꾸면 다시 뽑아요', async () => {
+    G._forTest.reset();
+    st.ctx.name1 = '하나';
+    await G.syncPresetColors(true);
+    assert.equal(P.people.get('하나').color, '#424c59'); assert.equal(P.people.get('하나').colorFrom, 'preset');
+    st.ctx.name1 = '두리'; st.fire('settings');
+    assert.equal(P.people.get('하나'), null); assert.equal(P.people.get('두리').color, '#424c59');
+    delete st.ctx.name1;
+    await G.syncPresetColors(false);
+});
+
 console.log(`preset-colors: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

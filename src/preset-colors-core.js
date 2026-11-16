@@ -6,7 +6,9 @@
 //   ① 카드별 색 표: {{setvar::<머리>_<카드 이름>::…}} 안의 줄 + 같은 글에 {{getvar::<머리>_{{char}}}} 가 있을 때 → 지금 카드 이름의 표만
 //   ② 그냥 색 표: 프롬프트 글의 줄 「- 이름 / 별칭 / …: "#rrggbb"」 (따옴표 · 글머리 · 콜론 꼴은 넉넉히) — 두 줄 이상 이어진 표만
 //   ③ 정규식: 찾기 글이 이름 낱말만의 갈래(「\b(이름|별칭)\b」 꼴)이고 바꿀 글에 색이 꼭 하나일 때
-// 버리는 것(엉뚱한 색보다 없는 편이 나아요): 매크로({{user}} 등) · 이름답지 않은 글자(CSS · 기호) · 혼자 떨어진 한 줄 ·
+//   1.5.9 유저 줄 「- {{user}}: "#rrggbb"」 은 userName(지금 페르소나 이름)을 주면 그 이름의 색으로 받아요 — 표의 한 줄로도 세요(「인물 한 줄 + {{user}}」 표).
+//     그 이름이 표의 다른 인물과 겹치면 유저 줄만 버려요(인물 색이 먼저). userName 을 안 주면 예전처럼 버려요.
+// 버리는 것(엉뚱한 색보다 없는 편이 나아요): 그 밖의 매크로({{char}} 등) · 이름답지 않은 글자(CSS · 기호) · 혼자 떨어진 한 줄 ·
 //   어느 카드 표인지 모르는 setvar 표 · 한 이름에 색이 둘 이상(그 이름이 든 사람 통째로).
 const HEX = /^#[0-9a-f]{6}$/i;
 const fold = s => String(s ?? '').normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -25,12 +27,14 @@ export function splitNames(part) {
 // 줄 한 개: 글머리(- * • ·) · 이름들 · 콜론(: ：) · 따옴표 있어도 되는 색 · 끝(쉼표 · 세미콜론 · 공백)
 //   따옴표 없는 색은 글머리가 있을 때만 — 「color: #e0e0e0;」 같은 CSS 줄을 표로 읽지 않게
 const LINE = /^\s*([-*•·]\s+)?(.+?)\s*[:：]\s*(["“'「])?\s*(#[0-9a-fA-F]{6})\s*["”'」]?\s*[,;]?\s*$/;
-/** 줄 하나 → { names, color } | null */
+const USER_MACRO = /^\{\{user\}\}$/i;
+/** 줄 하나 → { names, color } | null. 유저 줄({{user}})은 { names: [], color, user: true } — 이름은 parsePresetColors 가 채워요 */
 export function parseLine(line) {
     const m = LINE.exec(String(line ?? ''));
     if (!m) return null;
     const [, bullet, part, quote, hex] = m;
     if (!bullet && !quote) return null;
+    if (USER_MACRO.test(part.trim())) return { names: [], color: hex.toLowerCase(), user: true };
     const names = splitNames(part);
     return names ? { names, color: hex.toLowerCase() } : null;
 }
@@ -129,12 +133,17 @@ export function mergeRows(rows) {
     return people.filter(p => p.colors.size === 1).map(p => Object.freeze({ names: Object.freeze(p.names.slice()), color: [...p.colors][0] }));
 }
 
-/** 입력 전부 → [{ names, color }] */
-export function parsePresetColors({ prompts = [], scripts = [], charNames = [] } = {}) {
+/** 입력 전부 → [{ names, color }]. userName(지금 페르소나 이름)을 주면 유저 줄({{user}})의 색을 그 이름으로 — 맨 끝에 한 사람 */
+export function parsePresetColors({ prompts = [], scripts = [], charNames = [], userName = '' } = {}) {
     const rows = [];
     for (const text of prompts) if (typeof text === 'string' && text.includes('#')) rows.push(...promptRows(text, charNames));
     for (const s of scripts) { const r = scriptRow(s); if (r) rows.push(r); }
-    return mergeRows(rows);
+    const out = mergeRows(rows.filter(r => !r.user));
+    const me = splitNames(String(userName ?? '').trim());
+    const mine = new Set(rows.filter(r => r.user).map(r => r.color));
+    // 유저 색이 표마다 다르거나 · 그 이름이 표의 인물과 겹치면 유저 줄은 버려요
+    if (me?.length === 1 && mine.size === 1 && !out.some(p => p.names.some(n => fold(n) === fold(me[0])))) out.push(Object.freeze({ names: Object.freeze([me[0]]), color: [...mine][0] }));
+    return out;
 }
 
 /** 결과 → 이름(접은 표기) 찾기 표 */

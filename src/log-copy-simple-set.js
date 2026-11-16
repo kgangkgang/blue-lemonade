@@ -91,7 +91,7 @@ export const EASY_MOTION = Object.freeze([['0', '끔'], ['s', '약'], ['m', '중
 export const EASY_SIZE = Object.freeze([[-1, '작게'], [0, '보통'], [2, '크게']]);
 export const clone = v => (v == null ? v : JSON.parse(JSON.stringify(v)));
 // 1.1.5 테마에서 고른 화자 색(깡통 · 깡캐) — 마트 꼴(style.cast)과 따로 set.themeCast 에 둬요: 담아 온 화자 색은 1.1.4 처럼 안 쓰고(인물표 색이 먼저), 테마 시트에서 고른 것만 써요.
-//   값: '#rrggbb'(직접 색) · 'orig'(틀을 만든 색) · 없음(인물표 색)
+//   값: '#rrggbb'(직접 색) · 'orig'(원래 색 = 채팅에서 보이던 색 · 화면에 색이 없으면 틀을 만든 색 — 1.5.9) · 없음(인물표 색)
 const HEX6 = /^#[0-9a-f]{6}$/i;
 export function castOf(v) {
     const pick = x => (x === 'orig' ? 'orig' : HEX6.test(x || '') ? x.toLowerCase() : null);

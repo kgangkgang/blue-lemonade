@@ -68,6 +68,15 @@ await test('그 밖의 그릇 신호 — h4 · h4dep · soh · idr · odd · api
     assert.equal(toks(el('div', 'range-block', el('div', '', elA('input', '', { id: 'stream_toggle', type: 'checkbox' })))), 'stream');
     assert.equal(toks(el('div', 'flex flex-wrap', el('div', 'menu_button_icon', el('i', 'fa-folder-plus')))), 'fplus');
 });
+await test('최적화 3차: 펼친 접이식 창(idro) — 바로 아래 머리 줄 안 어디든 .inline-drawer-icon.up (옛 :has(> .inline-drawer-header .inline-drawer-icon.up))', () => {
+    const head = (...kids) => el('div', 'inline-drawer-header', ...kids);
+    assert.equal(toks(el('div', 'inline-drawer', head(el('b', ''), el('div', 'inline-drawer-icon fa-solid up')), el('div', 'inline-drawer-content'))), 'idro');
+    assert.equal(toks(el('div', 'inline-drawer', head(el('b', ''), el('div', 'inline-drawer-icon fa-solid down')), el('div', 'inline-drawer-content'))), '');
+    assert.equal(toks(el('div', 'inline-drawer', head(el('div', 'flex-container', el('i', 'inline-drawer-icon up'))), el('div', 'inline-drawer-content'))).split(' ').includes('idro'), true);   // 머리 줄 안 깊은 곳도
+    assert.equal(toks(el('div', 'inline-drawer', head(el('b', '')), el('div', 'inline-drawer-content', el('div', 'inline-drawer-icon up')))).split(' ').includes('idro'), false);   // 머리 줄 밖의 화살표는 아님
+    assert.equal(toks(el('div', 'inline-drawer', el('div', '', head(el('div', 'inline-drawer-icon up'))))).split(' ').includes('idro'), false);   // 머리 줄이 바로 아래가 아니면 아님
+    for (const f of ['15-drawers.css', '18-density.css', '99-lazy-panel.css']) assert.ok(!fs.readFileSync(path.join(root, 'css', f), 'utf8').split('\n').filter(line => line.includes('{')).some(line => line.includes(':has(> .inline-drawer-header .inline-drawer-icon.up)')), f);   // 규칙 줄에만(설명 주석에는 옛 꼴을 적어 둬요)
+});
 await test('CSS 에 옛 서랍 신호 :has 가 남아 있지 않음', () => {
     const OLD = [':has(> small:first-child + .neo-range-slider + .neo-range-input)', ':has(> .range-block-title + .range-block-range-and-counter)', ':has(> .range-block-title + .wide100p', ':has(> :is(small, label):first-child', ':has(> label + .neo-range-slider', ':has(> label.checkbox_label:first-child)', ':has(> label + .flex-container > select)', ':has(> :is(span, label) + select)', ':has(> label + select)', ':has(> select', ':has(select)', ':has(> input[type="number"])', ':has(> h4', ':has(> .range-block-title)', ':has(> .neo-range-slider)', ':has(> .inline-drawer)', ':has(> .standoutHeader)', ':has(> .oneline-dropdown)', ':has(> .api_button)', ':has(> .prompt_manager_prompt_controls)', ':has(> .bl-copyright)', ':has(> .salty-slider + .salty-slider)', ':has(> .menu_button_icon > .fa-folder-plus)', ':has(> small + .editor_maximize)', ':has(> input.peer.sr-only', ':has(> #instruct_names_behavior)', ':has(> #bl-response-range)', ':has(> #world_info_character_strategy)', ':has(> #regex_presets)', ':has(> #movingUIModeCheckBlock)', ':has(#oai_max_context_unlocked', ':has(#stream_toggle)', ':has(#openai_max_context)', ':has(#openai_max_tokens)', ':has(#n_openai)', ':has(#seed_openai)'];
     const left = [];
@@ -80,7 +89,7 @@ await test('CSS 에 옛 서랍 신호 :has 가 남아 있지 않음', () => {
 await test('표식 선택자의 특이도 보정이 조건별 특이도와 같음', () => {
     // 토큰 → 보정 꼬리(옛 :has 안 조건의 특이도). where 로 감싼 것은 (0,0,n) · (1,0,0)
     const C = ':is(.bl-s, *)', T = ':is(bl-s, *)', I = ':is(#bl-s, *)';
-    const want = { neo: C + C + T, sneo: C + C + T, lneo: C + T, range: C, num: C + C + C + T, chk: C + T, sel2: T + T, logic: T, subsel: T, pm: T, f1sel: T, numin: T, h4dep: T, title: '', slider: '', idr: '', soh: '', odd: '', api: '', pmc: '', copy: '', sl2: C, fplus: C, smax: T, max: '', peer: C + C + T + T };
+    const want = { neo: C + C + T, sneo: C + C + T, lneo: C + T, range: C, num: C + C + C + T, chk: C + T, sel2: T + T, logic: T, subsel: T, pm: T, f1sel: T, numin: T, h4dep: T, title: '', slider: '', idr: '', soh: '', odd: '', api: '', pmc: '', copy: '', sl2: C, fplus: C, smax: T, max: '', idro: C + C, peer: C + C + T + T };
     const wantWhere = { lsel: T + T, lsel2: T + T, sel: T, dsel: T, h4: T, instr: I, resp: I, wics: I, rxp: I, mui: I, 'oai-ctx-unl': I, stream: I, 'oai-ctx': I, 'oai-tok': I, 'n-openai': I, seed: I };
     let n = 0; const bad = [];
     for (const f of fs.readdirSync(path.join(root, 'css')).filter(f => f.endsWith('.css') && !f.endsWith('.gen.css'))) {

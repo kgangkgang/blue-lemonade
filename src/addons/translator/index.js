@@ -1,4 +1,5 @@
 import { maskTranslatorNotes } from './translation-notes.js';
+import { ensureTemplateButtons, markSettled, settleTemplated } from './template-buttons.js';
 import { loadSheet } from '../../focus-copies.js';
 // Modified 2026-09-24: Blue Lemonade bundled adapter; original settings and translation DB retained.
 import { isPreset, validSettings, validImport, validPromptList, validPresetList, exportPresets, restoreTranslationRows, presetEndpointFields, withoutEndpoints } from './preset-data.js';
@@ -39,7 +40,7 @@ import { registerSettingsMerge, startSettingsMerge } from '../../settings-merge.
 import { builtinTranslateState, builtinTranslateNotice, rescuePlan } from './builtin-translate.js';   // 7.9.9 실리태번 기본 「번역」 확장이 켜져 있을 때: 알림 · 지워진 번역문 되살리기
 import { linesToFix, fixNoteFor, stillLeftover } from './leftover-fix.js';
 import { NOTICE_NOTE, hasNoticeLines, NOTICE_KOREAN_TARGET } from './rp-lines.js';   // 3.1.4 이야기 속 알림 줄(【 DRAW — DOUBLE KNOCKOUT 】)도 번역 — 그런 줄이 있는 요청에만 한 줄 · 원문 그대로 온 줄은 남은 원문 다시 번역으로   // 6.4.2 다시 보낼 줄 = 남은 가나 + 원문에 있던 한자 덩이
-import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, GLOBAL as SUGGEST_GLOBAL } from './glossary-suggest.js';   // 6.4.5 새 이름 용어집 제안
+import { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, rosterPairs, suggestBox, GLOBAL as SUGGEST_GLOBAL } from './glossary-suggest.js';   // 6.4.5 새 이름 용어집 제안
 import { nameFold as suggestFold } from './names-bridge.js';
 import { publishNames } from './names-bridge.js';   // 6.3.5 이름 다리 — 용어집의 이름 짝을 TTS · 다른 확장이 쓰게 전역으로 // [2.2.9] 용어집 찾기 (+ 가타카나 표기 흔들림) · [2.3.0] TTS 듣는 언어용 줄
 import { SPEECH_LANGS, speechPrompt, speechPayload, speechLine, parseSpeechBatch, unwrapQuotes, cutEchoLine } from './speech-translate.js'; // [2.3.0] TTS 듣는 언어
@@ -4181,7 +4182,8 @@ const createTranslateButtons = (mesBlock) => {
 
 // 기존 메시지에 아이콘 추가
 function addButtonsToExistingMessages() {
-    for (const mes of document.querySelectorAll('#chat .mes')) createTranslateButtons(mes);
+    ensureTemplateButtons(translateButtonsFragment);   // 최적화 3차: 메시지 틀에도(template-buttons.js) — 새 메시지는 틀째 복제해 와요
+    for (const mes of document.querySelectorAll('#chat .mes')) if (createTranslateButtons(mes)) markSettled(mes);
 }
 
 // 번역문 수정
@@ -4964,6 +4966,11 @@ jQuery(async () => {
  * @returns {boolean} Whether the swipe is being generated
  */
 function isGeneratingSwipe(messageId) {
+    // 1.5.9 새 답을 만드는 스와이프는 글로 가린다: 실리태번은 swipe_id 만 새 칸(= swipes 길이)으로 올리고 mes 는 옛 글인 채 MESSAGE_SWIPED 를 내고,
+    //         답이 저장될 때(saveReply) 그 칸을 채운다. 아래 화면 글자 확인은 다른 확장이 그 순간 본문에 조각(상태 띠 · 표식)을 붙이면 '...' 이 아니게 되어
+    //         지나쳤고, 옛 글의 번역을 캐시에서 꺼내 '...' 위에 다시 그렸다 — 요청은 나갔는데 첫 토큰까지 화면이 옛 번역문 그대로(「첫 스와이프가 안 넘어감」).
+    const pending = getContext().chat?.[messageId];
+    if (Array.isArray(pending?.swipes) && Number(pending.swipe_id) >= pending.swipes.length) return true;
     // [1.9.5] 응답이 시작되면 실리태번(saveReply)이 자리 표시 '...' 을 마크다운으로 다시 그려 화면 글자가 '…'(한 글자)이 된다.
     //         스와이프 뒤 0.3초 안에 응답이 시작되면 그 '...' 을 번역해 붙이고(API 한 번 + 스트리밍 중 저장), 스와이프가 끊기면 그 번역이 남았다.
     // [2.1.3] 번역 진행 표시(.llmt-progress)는 빼고 본다 — 옛 번역의 표시가 '...' 에 붙으면 '번역 중 · 7초...' 가 되어
@@ -5706,6 +5713,17 @@ function suggestionChips(key) {
             shown.push({ ...item, persona: scope === SUGGEST_GLOBAL });
         }
     }
+    // 1.5.9 인물표의 표기 짝(프리셋 색 표의 「영문 / 한글」 · TTS 별명) — 모은 칩 뒤에, 저장하지 않고 그때그때. × 는 그 칸의 접은 표기에 남는다
+    try {
+        const roster = globalThis[Symbol.for('blue-lemonade.names')]?.people?.list?.() ?? [];
+        const skip = new Set([...suggestBox(all[SUGGEST_GLOBAL]).skip, ...suggestBox(all[key]).skip]);
+        for (const item of rosterPairs(roster, { have, skip, persona: String(getContext()?.name1 ?? '') })) {
+            const k = suggestFold(item.src);
+            if (seen.has(k) || shown.length >= 8) continue;
+            seen.add(k);
+            shown.push(item);
+        }
+    } catch (error) { console.warn('[LLM Translator] 인물표 표기 짝 읽기 실패', error); }
     return shown;
 }
 /** 칩 모양 — 칸 · 표기 · 한글 표기 (차례는 보지 않는다: 같은 이름이 다시 나와 앞으로 와도 저장하지 않게) */
@@ -5713,10 +5731,16 @@ function chipShape(chips) {
     return chips.map(item => `${item.persona ? 'g' : 'c'}\u0001${suggestFold(item.src)}\u0001${item.dst}`).sort().join('\u0002');
 }
 /** 칩 — 원문(→ 한글) + 넣기 · 빼기 아이콘. 글은 짧게 · 툴팁 없음. 용어집을 끄면 숨김 */
+let shownChipShape = null;   // 1.5.9 마지막으로 그린 칩 모양 (인물표가 바뀌었을 때 달라졌는지 견준다)
+/** 1.5.9 인물표가 바뀌었을 때(프리셋 색 표 · TTS 별명) — 그려 둔 칩과 모양이 달라질 때만 다시 그린다 (저장 없음) */
+function refreshRosterSuggestions() {
+    try { if (shownChipShape !== null && chipShape(suggestionChips(glossaryScopeKey())) !== shownChipShape) renderGlossarySuggestions(); } catch { /* 다음 그리기 때 */ }
+}
 function renderGlossarySuggestions() {
     const box = glossaryCard()?.querySelector('.llmt-gl-suggest');
     if (!box) return;
     const shown = suggestionChips(glossaryScopeKey());
+    shownChipShape = chipShape(shown);
     box.hidden = !shown.length;
     box.innerHTML = shown.length ? '<small class="llmt-desc">새 이름 · 넣으면 모든 캐릭터의 문단 캐시가 새로 돼요</small><div class="llmt-gl-chips">'
         + shown.map(item => `<span class="llmt-gl-chip" data-scope="${item.persona ? 'global' : 'char'}" data-src="${escapeHtmlText(item.src)}" data-dst="${escapeHtmlText(item.dst)}"><span class="llmt-gl-chip-text">${escapeHtmlText(item.src)}${item.dst ? ` → ${escapeHtmlText(item.dst)}` : ''}</span>`
@@ -6725,7 +6749,10 @@ function initializeEventHandlers() {
         window.llmTranslatorObserver = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
-                    if (node.classList?.contains('mes')) createTranslateButtons(node);
+                    if (!node.classList?.contains('mes')) continue;
+                    // 최적화 3차: 틀(#message_template)에서 단추째 복제돼 온 메시지는 끼우지 않고 자리만 확인해요 — 번역 점검 표시는 예전처럼 처음 한 번
+                    if (createTranslateButtons(node)) markSettled(node);
+                    else if (settleTemplated(node) && typeof checkView !== 'undefined') checkView.paintFromCache(node.getAttribute('mesid'));
                 }
             }
         });
@@ -6799,6 +6826,7 @@ function initializeEventHandlers() {
             if (out.moved || out.suggest) { saveSettingsDebounced(); setTimeout(() => { try { renderGlossary(); } catch { /* 다음 채팅 바꾸기에서 */ } }, 0); }   // renderGlossary 가 이름 다리도 다시 낸다
         } catch (error) { console.warn('[번역] 캐릭터 이름 바꾸기 — 용어집 범위 옮기기 실패', error); }
     });
+    document.addEventListener('bl:people-changed', refreshRosterSuggestions);   // 1.5.9 인물표의 표기 짝 칩은 저장 없이 그때그때 — 인물표가 바뀌면 칩도
     eventSource.on(event_types.CHAT_CHANGED, function () {
         publishGlossaryNames();   // 6.3.5 채팅을 바꾸면 바로 — 첫 인사말 렌더 · TTS 팔레트보다 먼저 (100ms 뒤 renderGlossary 는 같으면 아무 일 없음)
         if (typeof checkView !== 'undefined') checkView.close();   // 2.6.0 번역 점검 작은 창

@@ -1,6 +1,7 @@
 // TTS · 색 없는 대사에 화자 색 (테마 6.2.3)
 // AI 가 대사마다 <span style="color:#hex">「…」</span> 로 인물 색을 넣다가 몇 줄을 빼먹으면, 그 줄은 실리태번 따옴표 색이라 다른 인물의 대사처럼 보인다.
-// 재생기와 같은 화자(색 → 이름표 → 대사 분석의 화자 찾기 · player.dialogueSpeakers)로, 색 없는 대사를 그 인물이 이 채팅에서 쓴 색(speakers.colorOfName)으로 칠한다.
+// 재생기와 같은 화자(색 → 이름표 → 대사 분석의 화자 찾기 · player.dialogueSpeakers)로, 색 없는 대사를 그 인물이 이 채팅에서 쓴 색으로 칠한다
+//   (speakers.colorOfPerson — 1.5.9 이 채팅에 아직 없으면 인물표의 카드별 색 기억 · 프리셋에 정해 둔 색).
 //
 // - 화면에서만: 대사(q 요소, 없으면 여닫이 글자까지)를 AI 가 쓴 것과 같은 <span style="color: #hex" data-lv-paint="이름"> 으로 감싼다.
 //   메시지 원문 · 채팅 파일은 그대로. 테마의 대사 꾸밈 · 형광펜 · 톤 규칙이 [style*="color"] 로 그대로 먹고, tone.js 관찰자가 --bl-hue 를 붙인다.
@@ -16,7 +17,7 @@ import { getContext } from '../../../../../../../extensions.js';
 import { settings } from './settings.js';
 import { runtimeEnabled } from './runtime.js';
 import { textIndex, scanDialogue, colorFromBareHex, previewing } from './text-index.js';   // 7.0.2 previewing · 1.0.0 극한 최적화: 대사 클릭 묶음 없이 글 도구만
-import { colorOfName, normColor } from './speakers.js';
+import { colorOfPerson, normColor } from './speakers.js';
 import { dialogueSpeakers, analysisCfg, analysisBound } from './message-segments.js';   // 1.0.0 극한 최적화: 재생기 280KB 없이 같은 화자 판단 — 대사 분석 요청(analyzeForPaint)만 그때 재생기를 받아요
 import { log } from './log.js';
 import { PAINT_ATTR, planPaint, needsSpeakers } from './paint-core.js';
@@ -140,7 +141,7 @@ export function paintMessage(mesId, el = null) {
     try { speakers = dialogueSpeakers(mesId); } catch (e) { log('err', `화자 색: 화자 구하기 실패 ${String(e?.message || e).slice(0, 40)}`); return 0; }
     let userName = '';
     try { userName = String(getContext()?.name1 || ''); } catch { userName = ''; }
-    const colorOf = (name) => colorOfName(name, { userName });
+    const colorOf = (name) => colorOfPerson(name, { userName });   // 1.5.9 이 채팅에서 쓴 색 → 카드별 색 기억 → 프리셋에 정해 둔 색
     let plan = speakers.length ? planPaint(list, speakers, colorOf) : [];
     // 이미 그대로 칠해져 있으면 DOM 을 건드리지 않는다 (다시 그리지 않은 메시지 · 같은 결과)
     if (had.length === plan.length && plan.every(p => {

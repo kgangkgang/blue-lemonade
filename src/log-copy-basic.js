@@ -192,7 +192,7 @@ export function drawBasic(id, model, o = {}) {
     if (!frame || !model?.messages?.length) return empty;
     const mode = o.mode === 'light' ? 'light' : 'dark';
     const named = speakerLetters(model, { main: 'A', second: 'B', lookup: o.lookup });
-    const painted = retintModel(model, tone(named.main, { mode, plan: 'B' }), { font: false });
+    const painted = retintModel(model, tone(named.main, { mode, plan: 'B' }), { font: false, whoOf: o.lookup?.who });   // 1.5.8 대사마다 인물표 색을 먼저
     const who = colorLetters(named, painted, { main: 'A', second: 'B' });   // 1.4.1 한 메시지 안 다른 사람 대사는 그 사람 색 글자로
     const letterAt = hex => (hex && who.byColor?.get(hex)) || null;
     const names = o.names !== false;

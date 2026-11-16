@@ -75,19 +75,19 @@ export function renderSettingsPage(page, viewingChat, onBack) {
         <div class="cg-page-scroll">
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-palette"></i>모양</h3>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>테마</b><small>자동은 지금 실리태번 테마의 글자색·배경색을 그대로 써요. 밝게·어둡게는 대사 색이 아래 색상 설정을 따라요.</small></div>
                     ${segmented('theme', [['auto', '자동', 'fa-wand-magic-sparkles'], ['light', '밝게', 'fa-sun'], ['dark', '어둡게', 'fa-moon']], store.theme)}
                 </div>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>메시지 아이콘</b><small>채팅 메시지 오른쪽 위에 붙는 아이콘 모양</small></div>
                     ${segmented('iconStyle', [['bookmark', '북마크', 'fa-bookmark'], ['star', '별', 'fa-star']], store.iconStyle)}
                 </div>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>글 골라 북마크</b><small>채팅에서 글을 고르면 아래에 북마크 단추가 떠요.</small></div>
                     <button type="button" class="cg-switch" role="switch" aria-label="글 골라 북마크" data-setting="selectionChip" aria-checked="${store.selectionChip !== false}"><span></span></button>
                 </div>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>원문 접어서 보기</b><small>메모·발췌를 누르면 아래에 메시지가 펼쳐져요. 끄면 처음부터 함께 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" data-setting="collapseLong" aria-checked="${store.collapseLong}"><span></span></button>
                 </div>
@@ -95,11 +95,11 @@ export function renderSettingsPage(page, viewingChat, onBack) {
 
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-id-badge"></i>표시</h3><!-- ui-density-620c -->
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>프로필 사진·이름 표시</b><small>북마크에 작성자의 사진과 이름을 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" aria-label="프로필 사진·이름 표시" data-setting="showIdentity" aria-checked="${store.showIdentity !== false}"><span></span></button>
                 </div>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>날짜·시간 표시</b><small>메시지 번호와 작성 날짜·시간을 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" aria-label="날짜·시간 표시" data-setting="showTimestamp" aria-checked="${store.showTimestamp !== false}"><span></span></button>
                 </div>
@@ -107,7 +107,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
 
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-diamond"></i>데우스 엑스 마키나</h3>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>본문만 보기</b><small>카드에 본문만 보여요. 끄면 장면 계획 · 트래커 같은 정규식 카드도 같이 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" data-setting="deusProseOnly" aria-checked="${store.deusProseOnly !== false}"><span></span></button>
                 </div>
@@ -115,7 +115,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
 
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-droplet"></i>색상</h3>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>블루 레몬에이드 따라가기</b><small>테마와 색을 지금 에이드에 맞춰요. 테마를 끄면 직접 고른 색을 써요.</small></div>
                     <button type="button" class="cg-switch" role="switch" data-setting="followTheme" aria-checked="${store.followTheme}"><span></span></button>
                 </div>
@@ -144,11 +144,11 @@ export function renderSettingsPage(page, viewingChat, onBack) {
 
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-list"></i>목록</h3>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>한 페이지에 보여 줄 북마크</b><small>1개부터. 그림만 보기는 이 값의 2배(최소 24장)씩 보여요. 너무 많으면 여는 속도가 느려져요.</small></div>
                     ${stepper('itemsPerPage', 1, null, store.itemsPerPage)}
                 </div>
-                <div class="cg-setting">
+                <div class="cg-setting cg-setting-desc">
                     <div class="cg-setting-text"><b>앞뒤 문맥 범위</b><small>앞뒤 문맥 창에서 앞뒤로 몇 개씩 보여 줄지 (0이면 그 메시지만)</small></div>
                     ${stepper('contextRange', 0, null, store.contextRange)}
                 </div>

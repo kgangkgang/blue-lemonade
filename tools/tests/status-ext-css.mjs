@@ -51,6 +51,7 @@ check('③ 색 글자를 박지 않아요(팔레트 · 부품 토큰만)', () =>
         let body = r.body.replace(/var\(--bl-knob-face, #fff\)/g, '').replace(/var\(--bl-lemon-bright, #FFE23C\)/g, '').replace(/content:\s*'[^']*'/g, '');   // 둘째: 알림 숫자의 낮 판 맑은 레몬(테마에 토큰이 없어 대체값 — ⑫)
         // 2.7.21 타일 보드 — 밤 팔레트에서 밝은 무늬 보드면 뜻 색을 그 판의 짙은 잉크(--t-ink)와 섞는 다섯 줄만 — 팔레트 규칙과 같은 꼴
         if (r.selectors.includes('body.salty.salty-dark .ss-tbhost.has-img .ss-tb')) body = body.replace(/--ss-(hi|pos|neg|love|trust):\s*color-mix\(in srgb, (var\(--salty-(accent|danger)\)|#[0-9a-f]{6}) \d+%, var\(--t-ink\)\);/g, '');
+        if (r.selectors.some(s => s.includes(':is(.ss-root.ss-hompy, .ss-root.ss-rt, .ss-hp-pick,'))) body = body.replace(/--hp-dim:\s*color-mix\(in srgb, var\(--salty-muted\) 62%, var\(--salty-text\)\);/, '');   // 2.8 「같은 모양」 재료 색의 흐린 글자 — 팔레트 규칙의 --ss-dim 과 같은 꼴(11-16)
         if (r === palette) body = body.replace(/--ss-(neg|love|trust|dim|pick):\s*color-mix\(in srgb, (var\(--salty-(danger|muted)\)|var\(--salty-accent-ink, var\(--salty-accent\)\)|#[0-9a-f]{6}) \d+%, var\(--salty-text\)\);/g, '');   // pick: 미트볼 창 안 고른 칸 글자(11-15)
         assert.ok(!/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|color-mix\(/i.test(body), `${r.selectors[0]} → ${body.match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|color-mix\(/i)?.[0]}`);
     }

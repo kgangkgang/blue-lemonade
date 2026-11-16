@@ -232,5 +232,25 @@ await test('연결: 기본 켬 · 설정 줄(화자 찾기 아래, 툴팁 없음
     assert.equal(core.PAINT_ATTR, 'data-lv-paint');
 });
 
+await test('1.5.9 지정색(colorOfPerson): 이 채팅에서 쓴 색이 먼저 · 없으면 인물표의 다른 공급자(카드별 색 기억 · 프리셋 색) · 모르면 null · 세 화면이 이 함수를 써요', async () => {
+    const PP = await import(pathToFileURL(path.join(themeRoot, 'src/people.js')).href);
+    T.ctx.chatMetadata.lemon_voice = { colors: { '#d03030': { name: 'Mina', count: 5, votes: {}, tvotes: {} } }, userColor: null };
+    PP.invalidatePeople();
+    const fixed = { person: names => names.includes('Mina') ? { color: '#00aa00' } : names.includes('Vess') ? { color: '#c05070' } : null, names: () => [], stamp: () => 1 };
+    const off = PP.registerPeopleSource('fixed-test', fixed, { rank: 100 });
+    assert.equal(SP.colorOfPerson('Mina'), '#d03030', '이 채팅 색이 먼저');
+    assert.equal(SP.colorOfName('Vess'), null);
+    assert.equal(SP.colorOfPerson('Vess'), '#c05070', '대사에 아직 없는 인물은 인물표의 정해 둔 색');
+    assert.equal(SP.colorOfPerson('Nobody'), null); assert.equal(SP.colorOfPerson(''), null);
+    // 색 없는 대사 칠하기 계획이 그 색으로
+    const q = [{ text: 'Wait!', colored: false }], sp = [{ text: 'Wait!', color: null, name: 'Vess', source: 'analysis' }];
+    assert.deepEqual(core.planPaint(q, sp, n => SP.colorOfPerson(n)), [{ index: 0, color: '#c05070', name: 'Vess' }]);
+    off();
+    assert.equal(SP.colorOfPerson('Vess'), null);
+    assert.match(read('src/addons/tts/src/paint.js'), /const colorOf = \(name\) => colorOfPerson\(name, \{ userName \}\);/);
+    assert.match(read('src/addons/tts/src/player.js'), /return colorOfPerson\(job\.speaker \|\| '', \{ userName \}\) \|\| '';/);
+    assert.match(read('src/dialogue-view.js'), /tts \? tts\.speakers\.colorOfPerson\(name, \{ userName \}\) : people\.get\(name\)\?\.color/);
+});
+
 console.log(`\nTTS 색 없는 대사에 화자 색: ${pass} 통과, ${fail} 실패`);
 process.exit(fail ? 1 : 0);

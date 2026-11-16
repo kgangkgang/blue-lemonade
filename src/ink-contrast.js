@@ -7,7 +7,7 @@
 // · 팔레트 · 라이트/나이트 · 대사 표시가 바뀌면(apply.js 의 변수 글 · body 클래스) 표시를 모두 떼고 한 번에 다시 잰다.
 // · 읽기(계산 스타일)를 모두 한 뒤 쓰기(클래스)를 한꺼번에 — 요소마다 스타일 재계산을 강제하지 않는다. 같은 색 · 같은 바탕의 답은 캐시에서.
 import { setTypesetHook } from './typography.js';
-import { parseColor, sourceColor, sameRgb, stack, bandOf, BAND_MIN, makeInkCache } from './ink-contrast-core.js';
+import { parseColor, sourceColor, sameRgb, stack, bandOf, BAND_MIN, makeInkCache, bandLiftOk } from './ink-contrast-core.js';
 import { hiddenQueue, mayHide } from './hidden-details.js';
 import { booting, afterBoot } from './boot-gate.js';   // 1.2.2 덮개 동안은 재지 않아요 — 그때 꺼 둔 시트(채팅 모양 · 마크다운 모양)의 바탕 · 글자색이 빠진 채 재면 틀린 표시가 남아요
 
@@ -146,13 +146,15 @@ function run(roots, { force = false } = {}) {
             const cs = styleOf(el), color = parseColor(cs.color);
             // 테마 규칙이 이미 다른 색으로 덮었다(색 통일 · 톤 · 데우스) — 손대지 않는다. 글자 채움(-webkit-text-fill-color)이 따로면(그라데이션 글자) 그것도
             if (!sameRgb(seenColor(el, color, want), want) || !drawnBy(cs, color)) { writes.push([el, '']); continue; }
-            const fix = cache.get(want, bgAt(el, box, memo, styleOf));
+            const base = bgAt(el, box, memo, styleOf);
+            const fix = cache.get(want, base);
             writes.push([el, fix?.hex || '']);
             // 이 색을 물려받은 대사(<font color> 안 · 데우스 '프롬프트 색 그대로'): 바탕이 다르면 따로 맞춘다.
             // · 글자를 그 색으로 그리면: 형광펜 띠 위라면 띠를 바탕으로 — 메시지 바탕용으로 밝힌 색이 띠에서 묻히거나, 띠 위에선 원래 색이 충분할 수 있다
-            // · 글자는 따로 그리고(-webkit-text-fill-color, 데우스 '형광펜 색') 그 색은 띠 칠에만 쓰면: 띠 색이 바뀌지 않게 원래 색으로 묶어 둔다
+            // · 글자는 따로 그리고(-webkit-text-fill-color, 데우스 '형광펜 색') 그 색은 띠 칠에만 쓰면: 1.5.9 바탕에 묻히는 색(나이트의 #424C59)은 띠도 밝힌 색으로 —
+            //   원래 색 띠는 바탕과 구분이 안 됐다. 밝힌 띠 위에서 글자가 묻히면(통째 칠) 예전처럼 원래 색으로 묶어 둔다 (liftsBand)
             for (const q of el.getElementsByTagName('q')) {
-                if (q.parentElement.closest(SEL) !== el) continue;
+                if (colorOwner(q) !== el) continue;
                 const qs = styleOf(q), qc = parseColor(qs.color);
                 // 물려받나: 원래 색이 보이거나(제 표시 포함), 제 표시 없이 바깥 요소의 지금 색(바깥 표시 색)과 같다
                 const inherits = sameRgb(seenColor(q, qc, want), want) || (!markOf(q) && sameRgb(qc, color));
@@ -160,7 +162,7 @@ function run(roots, { force = false } = {}) {
                 seen.set(q, sig);
                 const drawn = drawnBy(qs, qc);
                 const own = drawn ? cache.get(want, bgAt(q, box, memo, styleOf)) : null;
-                const paintColor = drawn ? (own?.hex === fix?.hex ? '' : own ? own.hex : fix ? paint(want) : '') : fix ? paint(want) : '';
+                const paintColor = drawn ? (own?.hex === fix?.hex ? '' : own ? own.hex : fix ? paint(want) : '') : fix && !liftsBand(fix, qs, base) ? paint(want) : '';
                 if (paintColor || markOf(q)) writes.push([q, paintColor]);
             }
         }
@@ -171,6 +173,21 @@ function run(roots, { force = false } = {}) {
     for (const [el, cls] of writes) setMark(el, cls);
     const ms = performance.now() - t0;
     stats.runs++; stats.elements += count; stats.fixed += writes.filter(w => w[1]).length; stats.ms += ms; stats.last = ms;
+}
+// 1.5.9 대사(q)에 색을 물려주는 칸: 색을 실제로 적은 가장 가까운 조상. 색 칸 안에 색 없는 칸이 한 겹 더 있으면(프리셋 말투 태그가 바뀐
+// style="…;color:;font-weight:500" — color 낱말만 있고 값이 빈 칸 · 배경색만 있는 칸) 그 칸을 주인으로 치면 바깥 색 칸과도 안쪽 칸과도 짝이 안 맞아
+// 대사를 건너뛰었다 → 띠가 원래 색에 묶이지 않고 바깥 칸의 밝힌 색을 물려받아, 같은 인물의 띠가 말투 태그가 있는 대사만 밝았다
+function colorOwner(q) {
+    for (let p = q.parentElement?.closest(SEL); p; p = p.parentElement?.closest(SEL)) {
+        if (sourceColor(p.getAttribute('color'), p.getAttribute('style'))) return p;
+    }
+    return null;
+}
+// 1.5.9 글자를 따로 그리는 대사의 띠를 바깥 칸의 밝힌 색으로 둘까 — 띠 투명도: 붓자국 마스크(css/37-prompt-ink.css)의 칠 투명도, 마스크가 없으면 바탕색의 투명도
+function liftsBand(fix, qs, base) {
+    const mask = qs.webkitMaskImage || qs.maskImage || '';
+    const alpha = mask && mask !== 'none' ? bandOf(mask)?.rgba[3] : parseColor(qs.backgroundColor)?.[3];
+    return bandLiftOk(fix.rgb, parseColor(qs.webkitTextFillColor), base, alpha);
 }
 const paint = rgb => '#' + rgb.slice(0, 3).map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 // 이미 붙은 표시(팔레트를 바꾼 뒤 다시 잴 때 · 복사된 메시지) — 화면 색이 그 표시 색이면 원래 색이 보이는 셈으로 친다

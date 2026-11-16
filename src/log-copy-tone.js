@@ -36,6 +36,8 @@ function bandOf(style) {
 }
 const hasBand = nodes => (nodes ?? []).some(n => n.t === 'el' && !n.block && (bandOf(n.style) || hasBand(n.children)));
 const textOf = nodes => nodes.map(n => (n.t === 'text' ? n.text : n.children ? textOf(n.children) : '')).join('');
+/** 같은 줄에서 이 조각 바로 앞 글(줄바꿈 · 앞 대사 뒤부터) — 「이름: 대사」 꼴의 이름을 찾을 때만 써요 */
+const leadText = (nodes, at) => { let out = ''; for (let i = at - 1; i >= 0 && out.length < 40; i--) { const n = nodes[i]; if (n.t === 'text') out = n.text + out; else if (n.t === 'el' && !n.block && !n.style?.['background-image'] && !n.style?.['background-color']) out = textOf(n.children ?? []) + out; else break; } return out; };
 
 /** 메시지 한 개의 화자 색: ① 띠 색 ② 따옴표로 시작하는 색 글자 ③ (1.4.1) 본문과 다른 회색 대사색 ④ 이름표 색이 색 글자면 그것 — 없으면 null */
 export function messageSpeakerColor(message) {
@@ -84,7 +86,10 @@ export function speakersOf(model, lookup = null) {
  *  - 띠 없이 따옴표로 시작하는 색 글자(화면이 「글자 색」 대사 표시)는 띠로 바꿔요(대사색은 띠에)
  *  - 그 밖 글자색(속마음 · 강조 · 색 문단)은 본문 무채로 · 굵기 · 기울임은 그대로 · 문단 바탕은 걷어요(로그 면이 대신)
  */
-export function retintModel(model, t, { speakers = null, font = true } = {}) {
+export function retintModel(model, t, { speakers = null, font = true, whoOf = null } = {}) {
+    // 1.5.8 대사 조각의 화자 색: 인물표에서 찾으면(whoFinder — TTS 가 적어 둔 화자 · 화면 색이 같은 인물 · 「이름:」 머리) 그 색, 못 찾으면 화면에서 읽은 색(예전 그대로)
+    let cur = null;
+    const castOf = (children, seen, before) => { if (!whoOf) return null; try { return speakerColor(whoOf(textOf(children ?? []), seen, cur, before)); } catch { return null; } };
     const band = color => { const c = bandColor(color, t.mode); return `linear-gradient(transparent 5%, ${c} 5%, ${c} 100%, transparent 100%)`; };
     // 대사가 아닌 글자는 색이 있어도 틀 본문색(무채)으로 — 속마음 · 강조는 색 없이 굵기 · 기울임으로 구분해요(대사색은 띠 · 이름표 · 제목 밑줄에만)
     const ink = color => (!color ? color : t.text);
@@ -96,8 +101,9 @@ export function retintModel(model, t, { speakers = null, font = true } = {}) {
     };
     // base = 둘레 본문색(화면) — 회색 대사색이 본문과 다른지 견줘요. 띠를 단 조각에는 그 띠를 정한 화자 색(who)을 적어 둬요 —
     //   한 메시지 안에 여러 사람 대사가 섞이면(인물 대사 + 사용자 대사) 줄 꼴 틀(심플 · 기본)이 대사마다 화자 글자를 골라요(log-copy-simple.js colorLetters)
-    const fix = (nodes, fallback, base) => (nodes ?? []).map((node) => {
+    const fix = (nodes, fallback, base) => (nodes ?? []).map((node, at) => {
         if (node.t !== 'el') return node;
+        const before = whoOf && !node.block ? leadText(nodes, at) : '';
         const style = { ...node.style };
         if (t.mode === 'light') delete style['text-shadow'];
         unify(style);
@@ -110,7 +116,7 @@ export function retintModel(model, t, { speakers = null, font = true } = {}) {
         }
         const b = bandOf(style);
         if (b) {
-            const who = chromatic(b) ? b : fallback;
+            const who = castOf(children, chromatic(b) ? b : null, before) ?? (chromatic(b) ? b : fallback);
             delete style['background-color'];
             style['background-image'] = band(who);
             style.color = t.dialogue;
@@ -121,7 +127,7 @@ export function retintModel(model, t, { speakers = null, font = true } = {}) {
             return { ...node, style, children: fix(children, hexOf(node.style.color) ?? fallback, base) };
         }
         if (style.color && speakerInk(style.color, base) && QUOTE_START.test(textOf(children))) {
-            const who = hexOf(style.color);
+            const who = castOf(children, hexOf(style.color), before) ?? hexOf(style.color);
             style['background-image'] = band(who);
             style.color = t.dialogue;
             return { ...node, style, children: strip(children), who };
@@ -135,6 +141,7 @@ export function retintModel(model, t, { speakers = null, font = true } = {}) {
     const messages = (model?.messages ?? []).map((message) => {
         const who = speakers?.byName?.get(String(message.name ?? '').trim()) ?? messageSpeakerColor(message);
         baseKeys = message.font ?? {};
+        cur = message;
         const base = { ...message.font, color: t.text, ...(font ? LOG_FONT : {}) };
         return { ...message, font: base, bubble: null, nodes: fix(message.nodes, who, message.font?.color), speaker: who };
     });
@@ -168,7 +175,7 @@ export function drawTone(shape, model, o = {}) {
     const plan = shape === 'kkangtong-deep' ? 'C' : 'B';
     const speakers = speakersOf(model, o.lookup);
     const t = tone(speakers.main, { mode: o.mode === 'light' ? 'light' : 'dark', plan });
-    const painted = retintModel(model, t, { speakers, font: o.font !== false });
+    const painted = retintModel(model, t, { speakers, font: o.font !== false, whoOf: o.lookup?.who });
     const body = logBody(painted, t, o, speakers);
     const ui = o.ui ?? {};
     const outerStyle = { 'box-sizing': 'border-box', 'max-width': '100%', 'background-color': t.card, border: `1px solid ${t.line}`, 'border-radius': '12px', overflow: 'clip', color: t.text, 'font-family': family(ui), 'letter-spacing': ui.tracking || '-0.025em', 'text-align': 'left' };
@@ -194,10 +201,42 @@ export function toneFor(shape, model, o = {}) {
 /**
  * 인물표 색 찾기(lookup) 만들기 — 「이름 숨김 · 바꾸기」로 이름이 바뀐 뒤에도 원래 이름으로 물어요.
  * @param {object[]} shown 지금 그릴 메시지(이름이 바뀌었을 수 있음) · @param {object[]} source 같은 차례의 원래 메시지 · @param {(name: string) => any} get people.get
+ * @param {() => any[]} [list] people.list — 주면 lookup.who(대사 조각 → 인물표 색 · whoFinder)를 같이 달아요
  */
-export function toneLookup(shown, source, get) {
+export function toneLookup(shown, source, get, list = null) {
     const real = new Map();
     const same = Array.isArray(source) && source.length === shown?.length;
     (shown ?? []).forEach((message, i) => { const key = String(message?.name ?? '').trim(); if (key && !real.has(key)) real.set(key, String((same ? source[i]?.name : message?.name) ?? '').trim()); });
-    return (name) => { try { return get?.(real.get(String(name ?? '').trim()) ?? name)?.color ?? null; } catch { return null; } };
+    const lookup = (name) => { try { return get?.(real.get(String(name ?? '').trim()) ?? name)?.color ?? null; } catch { return null; } };
+    if (typeof list === 'function') lookup.who = whoFinder({ get, list });   // 1.5.8 대사 조각마다 인물 찾기(다시 칠하기가 써요)
+    return lookup;
+}
+
+// ── 1.5.8 대사 조각 → 인물표 색 ─────────────────────────────
+//   사용자(11-16): 「다른 컨셉으로 가면 색깔 다 빠짐 · 인물표 색도 TTS 나 프리셋 불러오게끔 해 줘 자동으로」
+//   인물표(src/people.js — 이 채팅 TTS 대사 색 → 카드별 색 기억 → 프리셋 색 공급자)에 정해 둔 색을 손으로 넣지 않아도 대사마다 입혀요.
+//   찾는 차례: ① TTS 대사 분석이 메시지에 적어 둔 화자(captureLog 의 message.said) ② 화면에서 읽은 대사 색과 같은 색을 가진 인물 ③ 바로 앞 「이름:」 머리 — 못 찾으면 null(화면 색 그대로).
+/** TTS 대사 분석의 줄 열쇠와 같은 셈(addons/tts/src/analysis.js hash · normText) — 순수 모듈이라 따로 둬요 */
+export const saidKey = (text) => {
+    const s = String(text ?? '').replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(36);
+};
+const NAME_HEAD = /(?:^|[\s\[【(（])([^\s:：|\[\]【】()（）]{1,20})\s*[\]】)）]?\s*[:：|]\s*$/;
+/**
+ * @param {{ get?: (name: string) => any, list?: () => any[] }} book 인물표(people.get · people.list)
+ * @returns {(text: string, seen: string|null, message: object, before?: string) => string|null} 그 대사의 인물표 색(#rrggbb) — 모르면 null
+ */
+export function whoFinder({ get = null, list = null } = {}) {
+    const colorOf = (name) => { try { return speakerColor(get?.(String(name ?? '').trim())?.color); } catch { return null; } };
+    let folk = null;
+    const people = () => { if (!folk) { try { folk = (list?.() ?? []).map(p => speakerColor(p?.color)).filter(Boolean); } catch { folk = []; } } return folk; };
+    return (text, seen, message, before = '') => {
+        const said = message?.said;
+        if (Array.isArray(said) && said.length) { const hit = said.find(([h]) => h === saidKey(text)); const c = hit && colorOf(hit[1]); if (c) return c; }
+        if (seen) { const same = people().find(c => sameSpeaker(c, seen)); if (same) return same; }
+        const head = NAME_HEAD.exec(String(before ?? '')); const named = head && colorOf(head[1]);
+        return named || null;
+    };
 }

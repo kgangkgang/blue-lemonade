@@ -385,9 +385,18 @@ function addButtonsTo(el) {
         edit.className = 'mes_button lv_script fa-solid fa-file-audio interactable';
         edit.tabIndex = 0; edit.setAttribute('role', 'button'); edit.setAttribute('aria-label', '소리 대본 편집');
         // 읽기 단추가 이미 있으면 그 뒤가 아니라 맨 앞 (예전 순서: 대본을 먼저 맨 앞에 · 그다음 읽기를 맨 앞에)
-        if (add.length) add.push(edit); else box.prepend(edit);
+        if (add.length) add.push(edit); else putFirst(el, box, [edit]);
     }
-    if (add.length) box.prepend(...add);
+    if (add.length) putFirst(el, box, add);
+}
+// 최적화 3차: 번역 단추 여섯 개가 메시지 틀에서 같이 온 메시지(번역 쪽 감시가 아직 자리를 확인하기 전)에는 그 여섯 개 바로 뒤에 끼워요 —
+//   예전에는 여기서 맨 앞에 끼운 뒤 번역 쪽이 나중에 돌며 여섯 개를 그 앞에 끼워 끝 차례가 [번역 여섯][읽기 · 대본][원래 단추]였어요. 같은 끝 차례를 옮기는 일 없이 만들어요.
+//   번역 쪽이 먼저 돈 메시지 · 번역 단추가 없는 메시지 · 번역 애드온이 꺼진 때는 예전처럼 맨 앞(src/addons/translator/template-buttons.js pendingTail).
+const TRANSLATOR_TEMPLATED = Symbol.for('blue-lemonade.translator.templated');
+function putFirst(el, box, nodes) {
+    let tail = null;
+    try { tail = globalThis[TRANSLATOR_TEMPLATED]?.pendingTail?.(el, box) ?? null; } catch { tail = null; }
+    if (tail) tail.after(...nodes); else box.prepend(...nodes);
 }
 function addButtons() {
     if (!runtimeEnabled()) return;

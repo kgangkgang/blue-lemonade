@@ -349,6 +349,9 @@ export function captureLog(target, { context = globalThis.SillyTavern?.getContex
         const inh = { ...font };
         walk(root, nodes, inh, { weight: Number.parseInt(style.fontWeight, 10) || 400, italic: style.fontStyle !== 'normal' });
         const pics = picsOf(root, mes, root === roots[0] ? fromTop : true);
+        // 1.5.8 TTS 대사 분석이 이 메시지에 적어 둔 화자(줄 열쇠 → 이름) — 다른 틀이 대사마다 인물표 색을 입힐 때 먼저 봐요(log-copy-tone.js whoFinder · 읽기만)
+        const said = [];
+        try { for (const seg of data?.extra?.lemon_voice?.analysis?.segs ?? []) if (seg && typeof seg.h === 'string' && typeof seg.speaker === 'string' && seg.speaker.trim()) said.push([seg.h, seg.speaker.trim()]); } catch { /* 분석 없음 */ }
         if (!nodes.length && !pics.length) continue;   // 검토 보3: 글 없이 그림만 있는 메시지(그림 생성 결과 · 첨부만)도 남겨요 — 그림이 안 들어가면 시트가 이름 줄을 비워요
         opaque(nodes, own);
         messages.push({
@@ -361,6 +364,7 @@ export function captureLog(target, { context = globalThis.SillyTavern?.getContex
             bubble,
             nodes,
             ...(pics.length ? { pics } : {}),
+            ...(said.length ? { said } : {}),
         });
     }
     if (!messages.length) return null;

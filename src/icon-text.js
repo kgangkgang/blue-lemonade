@@ -4,6 +4,7 @@ import { addMessageDecorator } from './message-decor.js';
 import { afterBoot } from './boot-gate.js';
 import { afterSettle } from './boot-layers.js';
 import { streamingNow } from './stream-window.js';
+import { onChatOutsideMessages } from './layout.js';
 // 아이콘 단추 표식 — CSS :has() 대신 JS 가 .menu_button · 체크 줄 label 에 표식을 단다
 // 1) data-bl-icon-text: css/02-controls.css 의 '아이콘만 있는 버튼' 규칙은 `> i` 하나뿐인 .menu_button 을 면 없는 아이콘으로 칠한다.
 //    CSS 는 글자 노드를 못 봐서 `<i class="fa-…"></i> 독서 패널 열기` 같은 다른 확장의 글자 버튼도 거기 걸려
@@ -25,6 +26,8 @@ import { streamingNow } from './stream-window.js';
 //      그 밖의 토큰(ROW_TOKENS 표): sneo · lneo · num · numd · chk · title · slider · idr · soh · odd · api · pmc · copy · sl2 · fplus · sel · logic · subsel · pm · lsel · lsel2 · sel2 ·
 //      f1sel · numin · smax · peer · h4 · h4dep · instr · resp · wics · rxp · mui, 자손 신호 dsel(label 안 select) · oai-ctx-unl 등(.range-block 안 생성 설정 칸).
 //      표식은 요소 자식이 있는 그릇(div · form · label · span · li …)에 붙고, CSS 는 주어 클래스를 그대로 둔 채 `[data-bl-row~="…"]` 로 고른다.
+// 6) 휴지통 감싼 요소 표식 (최적화 3차) — data-bl-trash-wrap: 요소 자식이 휴지통 · 해골 아이콘(<i> · <span> 의 .fa-trash · .fa-trash-can · .fa-trash-alt · .fa-skull) 하나뿐인 요소.
+//      css/17-semantic.css 「지우기는 빨강」의 `:where(:not(#chat .mes_text *)):has(> :is(i, span):only-child:is(.fa-trash, …))` 대신(아래 TRASH_WRAP 주석).
 // 관찰자 콜백은 그리기 전에 돈다 — 새로 붙은 요소가 한 프레임도 다른 모양으로 보이지 않는다.
 const MARK = 'data-bl-icon-text';
 const ICON_ONLY = 'data-bl-icon-only';
@@ -127,6 +130,8 @@ export function metaTokens(mes) {
 // 서랍 줄 표식 표 — 이름 · 조건(요소 자식 순서). CSS 의 옛 :has 조건과 하나씩 같다(토큰 이름은 src/icon-text.js 머리 주석 5) 참고)
 const has = (el, c) => el.classList.contains(c);
 const tag = (el, t) => el.localName === t;
+// 요소 아래(자신은 빼고) 어디든 pred 에 맞는 요소가 있나 — 머리 줄처럼 작은 가지에만 써요
+function deepSome(el, pred) { for (const c of el.children) if (pred(c) || deepSome(c, pred)) return true; return false; }
 const numOnly = w => w.childElementCount === 1 && tag(w.firstElementChild, 'input') && w.firstElementChild.type === 'number';
 const ROW_TOKENS = [
     ['neo', k => k.length >= 3 && tag(k[0], 'small') && has(k[1], 'neo-range-slider') && has(k[2], 'neo-range-input')],
@@ -158,6 +163,8 @@ const ROW_TOKENS = [
     ['smax', k => k.some((c, i) => tag(c, 'small') && k[i + 1] && has(k[i + 1], 'editor_maximize'))],
     // 2차 opt(스트리밍): 1.5.2 의 `body.salty :has(> .editor_maximize)`(주어 *) 대신 — 크게 보기 아이콘이 바로 아래에 있는 줄
     ['max', k => k.some(c => has(c, 'editor_maximize'))],
+    // 최적화 3차: 확장 서랍의 `.inline-drawer:has(> .inline-drawer-header .inline-drawer-icon.up)`(펼친 접이식 창) 대신 — 바로 아래 머리 줄 안 어디든 .inline-drawer-icon.up 이 있는 그릇
+    ['idro', k => k.some(c => has(c, 'inline-drawer-header') && deepSome(c, e => has(e, 'inline-drawer-icon') && has(e, 'up')))],
     ['peer', k => k.some((c, i) => tag(c, 'input') && c.type === 'checkbox' && has(c, 'peer') && has(c, 'sr-only') && k[i + 1] && tag(k[i + 1], 'label'))],
     ['h4', k => k.some(c => tag(c, 'h4'))],
     ['h4dep', k => k.some(c => tag(c, 'h4') && [...c.children].some(g => g.getAttribute('data-i18n') === '(DEPRECATED)'))],
@@ -172,7 +179,7 @@ const DEEP_IDS = [['oai-ctx-unl', 'oai_max_context_unlocked'], ['stream', 'strea
 // 8.2.6 성능: 위 35가지 검사는 모두 「자식 가운데 이 클래스 · 태그 · 아이디를 가진 것이 하나는 있다」를 전제로 해요(검사마다 꼭 필요한 자식 특징을 모은 표).
 //   그런 자식이 하나도 없는 요소(프롬프트 목록 줄 · 아이콘 칸처럼 대부분)는 35가지를 돌리지 않고 바로 건너뛰어요 — 결과는 같아요(tools/tests/icon-text-scope.mjs 가 옛 표와 견줘요).
 //   토글 한 번에 프롬프트 목록 139줄이 통째로 다시 그려질 때 줄마다 35가지 검사가 돌던 것이 이 감시의 가장 큰 몫이었어요(전수조사 4절 2).
-const ROW_CHILD_CLASSES = new Set(['neo-range-slider', 'range-block-title', 'checkbox_label', 'inline-drawer', 'standoutHeader', 'oneline-dropdown', 'api_button', 'prompt_manager_prompt_controls', 'bl-copyright', 'salty-slider', 'menu_button_icon', 'flex-container', 'flex1', 'editor_maximize']);
+const ROW_CHILD_CLASSES = new Set(['neo-range-slider', 'range-block-title', 'checkbox_label', 'inline-drawer', 'standoutHeader', 'oneline-dropdown', 'api_button', 'prompt_manager_prompt_controls', 'bl-copyright', 'salty-slider', 'menu_button_icon', 'flex-container', 'flex1', 'editor_maximize', 'inline-drawer-header']);
 const ROW_CHILD_TAGS = new Set(['select', 'input', 'h4']);
 const ROW_CHILD_IDS = new Set(['instruct_names_behavior', 'bl-response-range', 'world_info_character_strategy', 'regex_presets', 'movingUIModeCheckBlock']);
 // 1.2.1 opt: 자식 특징은 글자 묶음(Set) 대신 비트로 모아요 — 줄 후보마다 Set 하나 · 「'.' + 클래스」 글자를 만들던 것(부팅 · 토글 장면 rowFeatures 자기 시간 1위).
@@ -215,7 +222,7 @@ const ROW_NEED = {
     neo: '.neo-range-slider', sneo: '.neo-range-slider', lneo: '.neo-range-slider', range: '.range-block-title', num: '.range-block-title', numd: '.range-block-title',
     chk: '.checkbox_label', title: '.range-block-title', slider: '.neo-range-slider', idr: '.inline-drawer', soh: '.standoutHeader', odd: '.oneline-dropdown', api: '.api_button',
     pmc: '.prompt_manager_prompt_controls', copy: '.bl-copyright', sl2: '.salty-slider', fplus: '.menu_button_icon', sel: 'select', logic: 'select', subsel: 'select', pm: 'select',
-    lsel: 'select', lsel2: 'select', sel2: '.flex-container', f1sel: '.flex1', numin: 'input', smax: '.editor_maximize', max: '.editor_maximize', peer: 'input', h4: 'h4', h4dep: 'h4',
+    lsel: 'select', lsel2: 'select', sel2: '.flex-container', f1sel: '.flex1', numin: 'input', smax: '.editor_maximize', max: '.editor_maximize', idro: '.inline-drawer-header', peer: 'input', h4: 'h4', h4dep: 'h4',
     instr: '#instruct_names_behavior', resp: '#bl-response-range', wics: '#world_info_character_strategy', rxp: '#regex_presets', mui: '#movingUIModeCheckBlock',
 };
 /** 자식 특징 열쇠 묶음(진단 · 시험용 — 판정은 rowFeatureBits 비트로 해요) */
@@ -255,6 +262,51 @@ export function markBeforeMax(el) {
         if (want !== c.hasAttribute(BEFORE_MAX)) { if (want) c.setAttribute(BEFORE_MAX, ''); else c.removeAttribute(BEFORE_MAX); }
     }
 }
+// 최적화 3차: 「지우기는 빨강」 규칙의 주어 * 갈래 `:where(:not(#chat .mes_text *)):has(> :is(i, span):only-child:is(.fa-trash, .fa-trash-can, .fa-trash-alt, .fa-skull))` 대신
+//   — 요소 자식이 휴지통 · 해골 아이콘 하나뿐인 요소에 data-bl-trash-wrap. 주어가 * 인 :has 는 크롬이 메시지 글 밖 모든 요소에서 따지고 「:has 영향」 표식을 남겨요:
+//   메시지 단추 줄에 단추가 붙을 때마다(번역 · 핀 · 북마크) 그 줄 · #chat 의 :has 를 다시 보고 딸린 요소를 다시 계산했고, 선택자 시간도 1위였어요
+//   (리그 세는 값 · 재계산 요소: 채팅 300 열기 3,708 → 2,768 · 설정 서랍 1,026 → 729 · 스트리밍 808 → 657 — 3차 보고).
+//   조건은 CSS 와 하나씩 같아요: :only-child 처럼 글자 · 주석 노드는 세지 않고, 빌드가 넓힌 꼴 그대로 채팅 글(:is(#chat, .bl-chat-like) .mes_text) 안 요소에는 달지 않아요
+//   (나머지 빼기 — .salty-panel · #nonQRFormItems · #toast-container · .popup-controls — 는 CSS 뒤쪽 :where(:not(…)) 가 그대로 해요).
+//   범위: 채팅 밖은 아래 body 감시(자식 · class), 메시지 안은 메시지 꾸미기(scan), 채팅 칸의 메시지 밖(환영 화면 등)은 layout.js 의 구독을 나눠 써요(startIconTextMark).
+const TRASH_WRAP = 'data-bl-trash-wrap';
+const TRASH_CLASSES = ['fa-trash', 'fa-trash-can', 'fa-trash-alt', 'fa-skull'];
+const TRASH_SCAN_SELECTOR = ['[' + TRASH_WRAP + ']', ...['i', 'span'].flatMap(t => TRASH_CLASSES.map(c => t + '.' + c))].join(',');
+const iconTag = el => el.localName === 'i' || el.localName === 'span';
+function isTrashIcon(el) {
+    if (!iconTag(el)) return false;
+    const list = el.classList; if (!list) return false;
+    for (const c of TRASH_CLASSES) if (list.contains(c)) return true;
+    return false;
+}
+/** 요소 자식이 휴지통 · 해골 아이콘 하나뿐인가 — `:has(> :is(i, span):only-child:is(.fa-trash, …))` 와 같은 판정 */
+export function trashWrap(el) { const c = el.firstElementChild; return !!c && !c.nextElementSibling && isTrashIcon(c); }
+// 채팅 글 안인가 — `:is(#chat, .bl-chat-like) .mes_text *`(가장 가까운 .mes_text 조상 하나만 보면 돼요: 더 먼 .mes_text 의 채팅 조상은 가까운 것의 조상이기도 해요)
+const inChatText = el => { const t = el.parentElement?.closest?.('.mes_text'); return !!t && !!t.parentElement?.closest?.('#chat, .bl-chat-like'); };
+export function checkTrashWrap(el) {
+    const want = trashWrap(el) && !inChatText(el);
+    if (want !== el.hasAttribute(TRASH_WRAP)) { if (want) el.setAttribute(TRASH_WRAP, ''); else el.removeAttribute(TRASH_WRAP); }
+}
+// 바뀐 요소 하나 — 자식이 바뀌었으면 그 요소, 아이콘(class 바뀜)이면 그 부모. 표식이 없고 요소 자식이 하나가 아니면 볼 것이 없어요
+export function touchTrashWrap(el) {
+    if (el.childElementCount === 1 || el.hasAttribute(TRASH_WRAP)) checkTrashWrap(el);
+    if (iconTag(el)) { const p = el.parentElement; if (p) checkTrashWrap(p); }
+}
+// 뿌리와 그 아래 — 표식이 이미 있는 요소(지울지)와 휴지통 아이콘의 부모(달지)만 봐요
+function* scanTrashSteps(node, skip = null, sliced = false) {
+    if (typeof node.hasAttribute !== 'function') return;
+    if (node.hasAttribute(TRASH_WRAP)) checkTrashWrap(node);
+    if (isTrashIcon(node)) { const p = node.parentElement; if (p && !(skip && skip(p))) checkTrashWrap(p); }
+    if (!node.firstElementChild || typeof node.querySelectorAll !== 'function') return;
+    for (const el of node.querySelectorAll(TRASH_SCAN_SELECTOR)) {
+        if (!(sliced && !el.isConnected) && !(skip && skip(el))) {
+            if (el.hasAttribute(TRASH_WRAP)) checkTrashWrap(el);
+            if (isTrashIcon(el)) { const p = el.parentElement; if (p) checkTrashWrap(p); }
+        }
+        yield;
+    }
+}
+export function scanTrashWraps(node, skip = null) { drain(scanTrashSteps(node, skip)); }
 function checkMes(mes) { setAttr(mes, EDITING, editingTokens(mes)); setAttr(mes, META, metaTokens(mes)); }
 function checkReasoning(details) {
     const want = details.getElementsByClassName('reasoning_edit_textarea').length > 0;
@@ -316,13 +368,14 @@ function* scanBodySteps(node, skip, sliced = false) {
     else if (node.localName === 'label') checkLabel(node);
     if (node.classList?.contains('mes')) checkMes(node);
     if (node.classList?.contains('mes_reasoning_details')) checkReasoning(node);
-    if (!node.firstElementChild) { if (node.hasAttribute(ROW) && isRowHost(node) && !inMessage(node)) checkRow(node); return; }
+    if (!node.firstElementChild) { if (node.hasAttribute(ROW) && isRowHost(node) && !inMessage(node)) checkRow(node); yield* scanTrashSteps(node, skip, sliced); return; }
     const list = c => sliced ? Array.from(c) : c, gone = el => sliced && !el.isConnected;
     for (const el of list(node.getElementsByClassName('menu_button'))) { if (!gone(el) && (!skip || !skip(el))) check(el); yield; }
     for (const el of list(node.getElementsByTagName('label'))) { if (!gone(el) && (!skip || !skip(el))) checkLabel(el); yield; }
     for (const el of list(node.getElementsByClassName('mes'))) { if (!gone(el)) checkMes(el); yield; }
     for (const el of list(node.getElementsByClassName('mes_reasoning_details'))) { if (!gone(el)) checkReasoning(el); yield; }
     yield* scanRowsSteps(node, skip, sliced);
+    yield* scanTrashSteps(node, skip, sliced);
 }
 function scanBody(node, skip) { drain(scanBodySteps(node, skip)); }
 // 8.0.5: 서랍 줄 표식은 채팅 메시지(.mes) 안을 보지 않아요 — 표식을 쓰는 CSS 는 전부 설정 서랍 · 확장 창 쪽이라 메시지 안 요소엔 맞는 규칙이 없고,
@@ -371,10 +424,13 @@ export function touchedAll(targets) {
         if (el.classList.contains('menu_button')) check(el);
         else if (el.localName === 'label') checkLabel(el);
         else if (el.localName === 'input' && el.parentElement?.localName === 'label') checkLabel(el.parentElement);
+        touchTrashWrap(el);   // 최적화 3차: 휴지통 감싼 요소 표식(자식 · 아이콘 class 가 바뀐 요소)
         // 메시지 안이 바뀌면(편집칸 넣고 빼기 · 타이머 · 토큰 글자) 그 메시지 표식을 다시
         const mes = el.closest('.mes'); if (mes) mesSet.add(mes);
         const details = el.closest('.mes_reasoning_details'); if (details) detailsSet.add(details);
         if (mes || inMessage(el)) continue;   // 채팅 · 메시지 안은 줄 표식을 보지 않아요(scanRows 와 같은 범위)
+        // 최적화 3차: 접이식 창의 화살표(.inline-drawer-icon)가 up ↔ down 으로 바뀌거나 머리 줄 안이 바뀌면 그 창의 줄 표식(idro)을 다시 — 창은 바뀐 요소의 부모가 아니라 머리 줄의 부모라 따로 찾아요
+        { const head = el.closest('.inline-drawer-header'); const host = head?.parentElement; if (host && isRowHost(host) && !inMessage(host)) rows.add(host); }
         // 자식 줄이 바뀐 .flex-container · .range-block 과, 클래스가 바뀐 자식의 부모
         if (isRowHost(el)) rows.add(el);
         const p = el.parentElement; if (p && isRowHost(p)) rows.add(p);
@@ -452,5 +508,14 @@ export function startIconTextMark() {
         for (const node of work.roots) scan(node);
         touchedAll(work.targets);
         refreshPopupMarks(records);
+    });
+    // 최적화 3차: 휴지통 감싼 요소 표식 — 채팅 칸의 메시지 밖(환영 화면 판의 「채팅 지우기」 단추 등)은 위 둘(body 감시는 #chat 밖 · 메시지 꾸미기는 .mes)이 안 봐요.
+    //   layout.js 가 이미 가진 「#chat 의 메시지 밖 자식 목록」 구독을 나눠 써요(허브 채팅 구독을 늘리지 않게 — perf-budget-static).
+    //   알려진 한계: 채팅 안에서 아이콘(<i> · <span>)의 class 만 휴지통으로(또는 휴지통에서) 바뀌는 경우는 다음에 그 메시지가 꾸며질 때 맞춰져요(메시지 꾸미기는 자식 목록 변화 · 메시지 이벤트에 돌아요).
+    onChatOutsideMessages((records, chat) => {
+        for (const r of records) {
+            if (r.target.nodeType === 1 && r.target !== chat) touchTrashWrap(r.target);
+            for (const node of r.addedNodes) if (node.nodeType === 1 && node.isConnected !== false && !node.classList.contains('mes')) scanTrashWraps(node);
+        }
     });
 }

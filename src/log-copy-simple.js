@@ -161,15 +161,29 @@ export function colorLetters(who, painted, { main = 'A', second = main === 'A' ?
 }
 
 /**
- * 1.1.5 시트에서 고른 화자 색을 얹어요 — cast: { main?, other? } 값은 '#rrggbb'(직접 색) · 'orig'(틀을 만든 색 = 색 모름과 같은 길) · 없으면 인물표 색 그대로.
+ * 1.1.5 시트에서 고른 화자 색을 얹어요 — cast: { main?, other? } 값은 '#rrggbb'(직접 색) · 'orig'(원래 색) · 없으면 인물표 색 그대로.
+ * 1.5.9 「원래 색」 = 채팅에서 보이던 색(screen: 글자 → 화면에서 읽은 그 화자 색 · screenColors) — 화면에 색이 없던 화자만 예전처럼 틀을 만든 색(색 모름과 같은 길)이에요.
  * 깡캐(other)는 틀의 second 글자예요(로그에 둘째 화자가 없어도 틀 규칙의 색만 바뀌어요).
  */
-export function castLetters(who, frame, cast) {
+export function castLetters(who, frame, cast, screen = null) {
     if (!cast || (!cast.main && !cast.other)) return who;
     const colors = new Map(who.colors), second = frame.second ?? (frame.main === 'A' ? 'B' : 'A');
-    const put = (letter, v) => { if (v === 'orig') { if (colors.has(letter)) colors.set(letter, null); } else if (/^#[0-9a-f]{6}$/i.test(v || '')) colors.set(letter, v.toLowerCase()); };
+    const put = (letter, v) => { if (v === 'orig') { if (colors.has(letter)) colors.set(letter, screen?.get(letter) ?? null); } else if (/^#[0-9a-f]{6}$/i.test(v || '')) colors.set(letter, v.toLowerCase()); };
     put(frame.main, cast.main); put(second, cast.other);
     return { ...who, colors, main: colors.get(frame.main) ?? null };
+}
+/** 1.5.9 「원래 색」 을 둘 다 골랐나(시트의 「원래 색」 칩) — 그러면 인물표를 아예 안 물어요(대사 조각 · 셋째 화자까지 채팅에서 보이던 색) */
+export const castIsScreen = cast => cast?.main === 'orig' && cast?.other === 'orig';
+/** 채팅에서 보이던 화자 색(글자 → 색 · 인물표를 안 묻고 화면에서 읽은 대사 색만) — castLetters 의 screen */
+export function screenColors(model, who) {
+    const by = speakersOf(model, null).byName, out = new Map();
+    for (const [name, letter] of who?.letterOf ?? []) if (!out.has(letter)) out.set(letter, by.get(name) ?? null);
+    return out;
+}
+/** 고른 화자 색까지 얹은 화자 글자 · 색(그리기 drawSimple 과 「캐릭터 색을 아는지」 판정이 같은 셈을 써요) */
+export function castWho(model, frame, lookup, cast) {
+    const named = speakerLetters(model, { main: frame.main, second: frame.second, lookup: castIsScreen(cast) ? null : lookup });
+    return castLetters(named, frame, cast, cast ? screenColors(model, named) : null);
 }
 
 /**
@@ -348,12 +362,14 @@ export function drawSimple(frame, model, o = {}) {
     if (!model?.messages?.length) return empty;
     const parts = splitFrame(frame?.html);
     if (!parts || parts.blocks.length < 2) return empty;
-    const named = speakerLetters(model, { main: frame.main, second: frame.second, lookup: o.lookup });
+    const lookup = castIsScreen(o.cast) ? null : o.lookup;   // 1.5.9 「원래 색」 = 채팅에서 보이던 색 — 인물표를 안 물어요
+    const named = speakerLetters(model, { main: frame.main, second: frame.second, lookup });
+    const screen = o.cast ? screenColors(model, named) : null;
     // 메시지 글: 깡통 로그 틀과 같은 다시 칠하기(띠 · 따옴표 색 글자 → 대사, 속마음 · 강조 색 → 본문) 뒤 문단으로 · 글꼴은 틀이 맡아요
-    const t = tone(castLetters(named, frame, o.cast).main, { mode, plan: 'B' });
-    const painted = retintModel(model, t, { font: false });
+    const t = tone(castLetters(named, frame, o.cast, screen).main, { mode, plan: 'B' });
+    const painted = retintModel(model, t, { font: false, whoOf: lookup?.who });   // 1.5.8 대사마다 인물표 색(TTS · 프리셋에 정해 둔 색)을 먼저
     // 1.4.1 한 메시지 안 다른 사람 대사는 그 사람 색 글자로(colorLetters) — 고른 화자 색(cast)은 그 뒤에 얹어요(깡캐 = 둘째 글자)
-    const who = castLetters(colorLetters(named, painted, { main: frame.main, second: frame.second }), frame, o.cast);
+    const who = castLetters(colorLetters(named, painted, { main: frame.main, second: frame.second }), frame, o.cast, screen);
     const letterAt = (hex, fallback) => (hex && who.byColor?.get(hex)) || fallback;
     const showNames = o.names !== false && who.count > 1;
     const bandForm = frame.rows.띠 ?? SIMPLE.band;

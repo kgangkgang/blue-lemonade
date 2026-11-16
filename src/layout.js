@@ -68,6 +68,11 @@ export function startFavoritesHeading() {
     if (favorites) new MutationObserver(refreshFavorites).observe(favorites, { childList: true, subtree: true });
 }
 
+// 최적화 3차: 아래 「환영 화면 판 표시」 구독(#chat 의 메시지 밖 자식 목록)을 다른 모듈이 나눠 써요 — 같은 기록을 보려고 허브 채팅 구독을 하나 더 걸지 않게.
+//   fn(records, chat) 은 그 구독이 받는 기록 그대로(메시지 .mes 안 기록은 안 와요). 돌려주는 함수로 뗘요.
+const outsideMessages = new Set();
+export function onChatOutsideMessages(fn) { outsideMessages.add(fn); return () => outsideMessages.delete(fn); }
+
 export function startCompactLayout() {
 
     // Chat Completion의 숫자 전용 응답 길이에 원래 입력값을 사용하는 슬라이더를 붙인다.
@@ -425,6 +430,7 @@ export function startCompactLayout() {
     // 환영 화면은 메시지 안에 안 생긴다 — 답변이 자라며 들어오는 문단은 들여다보지 않는다 (2.5.2 · 9.0.4 메시지 안은 구독 거르개로)
     // 9.0.4: 공용 감시 허브 구독(#chat 구역 — 채팅을 보는 감시자는 문서마다 하나)
     if (chat) watchDom(chat, { childList: true, subtree: true, exclude: '.mes', name: '환영 화면 판 표시' }, mutations => {
+        for (const fn of outsideMessages) { try { fn(mutations, chat); } catch (error) { console.warn('[Blue Lemonade] 채팅 칸 메시지 밖 변화', error); } }   // 최적화 3차: 이 구독을 나눠 쓰는 곳(icon-text.js)
         if (mutations.some(m => [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches?.('.welcomePanel, .welcomeHeaderVersionDisplay') || n.querySelector?.('.welcomeHeaderVersionDisplay'))))) refreshWelcome();
     });
     startFavoritesHeading();

@@ -179,5 +179,19 @@ await test('TTS 연결 · 알림: 켜질 때 등록 · 채팅 · 켜고 끔 · �
 });
 
 delete globalThis.__peopleTest;
+await test('1.5.9 다른 표기 도우미(name-aliases): 용어집 이름 짝 다음에 인물표의 표기(TTS 별명 · 프리셋 별칭) · 한 글자 표기는 안 더함 · 번역 애드온이 꺼져 있어도', () => {
+    delete globalThis[KEY];
+    const src = { person: names => names.some(n => ['Quill Hart', '퀼 하트', 'Rowan', '로완'].includes(n)) && !names.includes('Rowan') ? { names: ['Quill Hart', 'Quill', '퀼 하트', '퀼', 'クィル'] } : names.includes('Rowan') ? { names: ['Ro', '로'] } : null, names: () => [], stamp: () => 1 };
+    const off = P.registerPeopleSource('alias-test', src);
+    assert.deepEqual(A.nameAliases('Quill Hart'), ['Quill', '퀼 하트', 'クィル'], '짝 없는 다리(번역 끔)에서도 인물표 표기 · 한 글자 「퀼」 은 빼요');
+    assert.deepEqual(A.nameAliases('퀼 하트'), ['Quill Hart', 'Quill', 'クィル']);
+    assert.deepEqual(A.nameAliases('Nobody'), []);
+    assert.deepEqual(A.withNameAliases(['퀼 하트', 'Nobody']), ['퀼 하트', 'Nobody', 'Quill Hart', 'Quill', 'クィル']);
+    globalThis[KEY] = B.buildNames(B.namePairs([E('Rowan', '로완')]));
+    assert.equal(globalThis[KEY].people, P.people);
+    assert.deepEqual(A.nameAliases('Rowan'), ['로완', 'Ro'], '용어집 짝이 먼저(한 글자여도 예전 그대로) · 그 뒤 인물표 표기');
+    off(); delete globalThis[KEY];
+});
+
 console.log(`people: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

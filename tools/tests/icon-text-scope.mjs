@@ -57,6 +57,7 @@ const REF_TOKENS = [
     ['numin', k => k.some(c => tag(c, 'input') && c.type === 'number')],
     ['smax', k => k.some((c, i) => tag(c, 'small') && k[i + 1] && has(k[i + 1], 'editor_maximize'))],
     ['max', k => k.some(c => has(c, 'editor_maximize'))],
+    ['idro', k => k.some(c => has(c, 'inline-drawer-header') && (function deep(e) { return [...e.children].some(g => (has(g, 'inline-drawer-icon') && has(g, 'up')) || deep(g)); })(c))],
     ['peer', k => k.some((c, i) => tag(c, 'input') && c.type === 'checkbox' && has(c, 'peer') && has(c, 'sr-only') && k[i + 1] && tag(k[i + 1], 'label'))],
     ['h4', k => k.some(c => tag(c, 'h4'))],
     ['h4dep', k => k.some(c => tag(c, 'h4') && [...c.children].some(g => g.getAttribute('data-i18n') === '(DEPRECATED)'))],

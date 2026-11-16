@@ -4596,11 +4596,11 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-7) .cg-root details.cg-section[open] > summary .cg-fold-caret { transform: rotate(180deg); }
 :where(html.bl-asc-7) .cg-root .cg-page-scroll > details.cg-section:not([open]) { padding-bottom: 0; }
 :where(html.bl-asc-7) .cg-root .cg-page-scroll > details.cg-section:not([open]) > .cg-section-title { margin-bottom: -2px; border-bottom: 0; }
-:where(html.bl-asc-7) body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 2px; }
-:where(html.bl-asc-7) body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > .cg-setting-text { display: contents; }
-:where(html.bl-asc-7) body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > .cg-setting-text > b { flex: 1 1 auto; min-width: 0; }
-:where(html.bl-asc-7) body.salty .cg-root .cg-setting > :where(.cg-setting > *):not(.cg-setting-text):is(:has(~ .cg-setting-text > small), .cg-setting-text:has(> small) ~ *) { order: 1; flex: 0 1 auto; margin-left: auto; }
-:where(html.bl-asc-7) body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > .cg-setting-text > small { order: 2; flex: 1 1 100%; min-width: 0; }
+:where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 2px; }
+:where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc > .cg-setting-text { display: contents; }
+:where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc > .cg-setting-text > b { flex: 1 1 auto; min-width: 0; }
+:where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc > :not(.cg-setting-text) { order: 1; flex: 0 1 auto; margin-left: auto; }
+:where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc > .cg-setting-text > small { order: 2; flex: 1 1 100%; min-width: 0; }
 :root:where(.bl-asc-8) {
     --bl-notes-css-version: "1.3.8";
     --bl-notes-surface: var(--salty-surface, var(--bl-opaque-tint, var(--SmartThemeBlurTintColor, #25262a)));

@@ -20,6 +20,8 @@ import * as ttsModels from './providers/_models.js';   // 1.3.7 엔진 모델 �
 import { koModelLabel } from './model-names.js';         // 1.3.7 모델 이름 한국어
 import { ttsCreditsHtml } from '../credits.js';
 import { booting } from '../../../boot-gate.js';   // 7.7.4 시작 덮개 동안엔 엔진 카드가 보일 수 없다 — 크기를 재지 않는다
+import { people } from '../../../people.js';   // 1.5.9 「이 채팅의 캐릭터」 줄에 인물표 명단
+import { rosterSpeakers } from './roster-core.js';
 
 const TEST_LINE = { ko: '안녕, 잘 부탁해.', ja: 'こんにちは、よろしくね。', en: 'Hi there, nice to meet you.', zh: '你好，请多关照。' };
 const TAB_IDS = ['read', 'voices', 'engine', 'data'];   // 탭 버튼은 settings.html 에 고정
@@ -1627,6 +1629,8 @@ function chatSpeakers(s, taken) {
         const ft = foldName(text);
         for (const [k, n] of known) if (k.length >= 2 && startsWord(ft, k)) add(n, 1);
     }
+    // 1.5.9 인물표 명단(프리셋 색 표 · 카드별 색 기억에만 있는 새 인물)도 — 아직 말하지 않았어도 목소리 칸이 나와요. 메시지에 나온 사람이 먼저(무게 1)
+    try { for (const n of rosterSpeakers(people.list(), { fold: foldName, taken: new Set([...taken.names, ...(taken.hints || [])]), scored: score.keys(), mapped: Object.keys(s.char_map || {}), persona: ctx.name1 })) add(n, 1); } catch { /* 인물표 없음 */ }
     // 같은 사람 묶기: 연결표 · 이름으로 이어지는 목소리(엔진 자동 맞춤이면 실제로 읽는 목소리)가 같으면 한 줄
     const voiceKey = (n) => { const uid = (s.char_map || {})[n] || voices.voiceByName(n)?.uid || ''; return uid ? `v:${effUid(uid, n)}` : `n:${foldName(n)}`; };
     const persona = foldName(ctx.name1);
@@ -1646,6 +1650,8 @@ function chatSpeakers(s, taken) {
 }
 function chatSpeakersHtml(s, colorRowsList) {
     const taken = { names: new Set(), keys: new Set() };
+    // 1.5.9 이름 없는 색 줄이 추천하는 이름(카드별 색 기억의 씨앗 · 가까운 색)은 그 줄에서 ✓ 로 받아요 — 인물표 명단으로 한 번 더 줄을 만들지 않아요
+    taken.hints = new Set(colorRowsList.filter(r => !r.name).map(r => foldName(topVote(r) || (r.near && r.near.name) || '')).filter(Boolean));
     const keyOf = (n) => { const uid = (s.char_map || {})[n] || voices.voiceByName(n)?.uid || ''; return uid ? `v:${effUid(uid, n)}` : `n:${foldName(n)}`; };
     for (const n of [...colorRowsList.map(r => r.name).filter(Boolean), ...chatNames()]) { taken.names.add(foldName(n)); taken.keys.add(keyOf(n)); }
     const names = chatSpeakers(s, taken);

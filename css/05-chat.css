@@ -85,6 +85,15 @@ body.salty #chat .last_mes {
      실제 내용이 있는 메시지는 어차피 내용 아래로 줄어들지 않으니 flex-shrink:0 은 그려진 메시지의 모양을 바꾸지 않는다 */
   flex-shrink: 0;
 }
+/* (1.5.9 select-keep) 고른 동안에는 content-visibility 만 빠지고 크기 기억(contain-intrinsic-size) · flex-shrink 는 그대로 둬요.
+   1.4.8 은 고르는 순간 세 속성이 한꺼번에 빠졌는데, 그러면 화면에 보이는 메시지의 크기 속성까지 바뀌어 크롬이 스크롤 고정을 쉬어요 —
+   위쪽의 아직 못 그린 메시지(160px 자리표시)가 한꺼번에 제 높이로 커지며 손가락 밑 글이 수천 px 밀렸고(리그: 4,301px · 고른 글 3 → 3,960자),
+   누르고 있던 손가락 · 손잡이가 엉뚱한 글에 닿아 메시지 여러 개가 통째로 골라졌어요. 기억해 둔 크기도 지워져 고르기를 풀 때 다시 튀고 다음 고르기에 또 튀었어요.
+   주어는 위 규칙과 같은 메시지 · 표식만 반대예요(시험 chat-light-select-keep 이 두 규칙을 맞춰 봐요). */
+:where(html.bl-chat-light[data-bl-chat-sel]) body.salty [id="chat"]:not(#salty-none) > .mes:not(.last_mes, .bl-menu-open, .selected):not([data-bl-tail]) {
+  contain-intrinsic-size: auto 160px;
+  flex-shrink: 0;
+}
 /* (10-30 perf-chatlight) 쉴 때 미리 그린 메시지(src/chat-light.js 가 쉬는 시간에 data-bl-warm 을 달아요): 건너뛰지 않고 그대로 그린다 — 빨리 굴려도 들어오는 프레임마다
    스타일 · 배치 · 칠하기를 하지 않게(관문 스크롤 50ms 넘는 프레임 33 → 끈 것만큼). 서랍이 열리거나 답장을 받는 동안은 화면 밖 것만 표식을 떼 다시 건너뛴다. */
 body.salty #chat > .mes[data-bl-warm] {

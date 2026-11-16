@@ -63,6 +63,12 @@ t('다른 색은 그대로 캐릭터 (회귀 없음)', () => {
     assert.equal(c.source, 'sender'); assert.equal(c.name, '미나');
 });
 
+t('1.5.9 인물표 명단 후보: 「{{user}}」 줄은 페르소나 이름으로 (매크로 글자가 사람으로 나오지 않는다)', () => {
+    const names = SP.peopleNames();
+    assert.ok(!names.some(n => /\{\{user\}\}/i.test(n)), names.join(','));
+    assert.ok(names.includes('하람') && names.includes('미나') && names.includes('렉스'), names.join(','));
+});
+
 t('색 표 · 내 색 · 색 임자도 나로 본다', () => {
     assert.equal(row('#424c59').isUser, true, 'colorTable isUser');
     assert.equal(SP.userColor(), '#424c59', '잠긴 「{{user}}」 색이 내 색');

@@ -22,6 +22,18 @@ export function shownText(mes) {
     return { text: raw, translated: false };
 }
 
+/**
+ * 1.5.9 아는 이름 목록에 인물표 명단(people.list() — 카드별 색 기억 · 프리셋 색 표 · TTS 색 표)의 표기를 모두 더한다.
+ *   띄어 쓴 이름표(「Mina Park: "…"」)는 아는 이름일 때만 이름으로 읽어서(text.js linePrefixName), 인물표에만 있는 인물은 이름 · 점 색이 비었어요.
+ */
+export function knownWithRoster(base, persons) {
+    const out = [], seen = new Set();
+    const add = (n) => { const t = String(n ?? '').trim(), k = t.toLowerCase().replace(/\s+/g, ''); if (t && k && !seen.has(k)) { seen.add(k); out.push(t); } };
+    for (const n of Array.isArray(base) ? base : []) add(n);
+    for (const p of Array.isArray(persons) ? persons : []) for (const n of Array.isArray(p?.names) ? p.names : [p?.name]) add(n);
+    return out;
+}
+
 function optsOf(o = {}) {
     return {
         skipTags: o.skipTags ?? DEFAULT_SKIP_TAGS,

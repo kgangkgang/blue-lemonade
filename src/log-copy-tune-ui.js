@@ -15,7 +15,7 @@ export const GROUPS = Object.freeze([['color', '색'], ['text', '글'], ['motion
 /** 「글」 갈래의 작은 칩(마트 LOOK_TABS 차례 — 색은 「색」 갈래가 맡아요) */
 export const TEXT_TABS = Object.freeze(LOOK_TABS.filter(([id]) => id !== 'color'));
 
-const chip = (action, label, pressed, { off = false, lead = '' } = {}) => `<button type="button" class="bl-lc-chip" data-lt="${action}" aria-pressed="${!!pressed}"${off ? ' disabled' : ''}>${lead}<span>${esc(label)}</span></button>`;
+const chip = (action, label, pressed, { off = false, lead = '', tip = '' } = {}) => `<button type="button" class="bl-lc-chip" data-lt="${action}" aria-pressed="${!!pressed}"${off ? ' disabled' : ''}${tip ? ` title="${esc(tip)}"` : ''}>${lead}<span>${esc(label)}</span></button>`;
 const head = (label, why = '') => `<span class="bl-lt-h">${esc(label)}${why ? `<small>${esc(why)}</small>` : ''}</span>`;
 const undo = (action, label) => `<button type="button" class="bl-lt-undo" data-lt="${action}" aria-label="${esc(label)} — 틀 그대로" title="틀 그대로"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>`;
 const note = (label, chips, small = '') => `<div class="bl-lt-row" role="group" aria-label="${esc(label)}">${head(label, small)}<div class="bl-lt-chips">${chips}</div></div>`;   // 줄 이름 옆 작은 글(흐리지 않아요)
@@ -107,7 +107,7 @@ export function easyExtra(set, frame, mode = 'dark', caps = null, { castKnown = 
     const f = fineOf(set, probeOf(frame), frame.key, mode, caps), c = f.cast || {};
     const who = (id, label) => { const v = c[id], hex = v && v !== 'orig' ? v : ''; return `<button type="button" class="bl-lc-chip bl-lt-ink${hex ? '' : ' is-unset'}" data-lt-color="cast|${id}" data-value="${esc(hex)}" aria-pressed="${!!hex}"${hex ? ` style="--ink:${esc(hex)}"` : ''}><i aria-hidden="true"></i><span>${label}</span></button>`; };
     const orig = c.main === 'orig' && c.other === 'orig';
-    const color = easyRow('색', chip(act('cast', 'all', null), '인물표 색', !f.cast) + chip(act('cast', 'all', 'orig'), '원래 색', orig) + who('main', '깡통') + who('other', '깡캐')
+    const color = easyRow('색', chip(act('cast', 'all', null), '인물표 색', !f.cast) + chip(act('cast', 'all', 'orig'), '원래 색', orig, { tip: '채팅에서 보이던 색' }) + who('main', '깡통') + who('other', '깡캐')
         + (f.own ? `<i class="bl-lt-sep" aria-hidden="true"></i>${chip(act('cover', '', !f.cover), '소품도 캐릭터 색', f.cover, { off: !castKnown })}` : ''), !f.cast || orig ? (f.own && !castKnown ? COVER_WHY : '') : '직접 색');
     const texture = texRows(f.tex, f.texture, mode, (label, chips, why) => (why ? `${easyRow(label, chips)}<p class="bl-lt-note bl-lc-easy-note">${esc(why)}.</p>` : easyRow(label === '바탕 질감' ? '질감' : label, chips)));
     const words = f.words.slice(0, 5).join(' · ') + (f.words.length > 5 ? ' …' : '');

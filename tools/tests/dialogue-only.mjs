@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-const { dialogueLines, shownText, dropThinkingBlocks, locateLines, DEFAULT_SKIP_TAGS } = await import(pathToFileURL(path.join(root, 'src/dialogue-lines.js')).href);
+const { dialogueLines, shownText, dropThinkingBlocks, locateLines, knownWithRoster, DEFAULT_SKIP_TAGS } = await import(pathToFileURL(path.join(root, 'src/dialogue-lines.js')).href);
 
 let passed = 0;
 const test = (name, fn) => { fn(); passed++; console.log(`ok - ${name}`); };
@@ -33,6 +33,21 @@ test('여러 줄 대사는 한 줄로 · "이름: 「" 은 이름으로', () => 
     assert.equal(lines.length, 1);
     assert.equal(lines[0].text, '첫째 줄이고 둘째 줄까지 이어지는 긴 대사예요.');
     assert.equal(lines[0].name, '누리');
+});
+
+test('1.5.9 띄어 쓴 이름표: 인물표 명단에 있는 인물이면 이름으로 읽어요 (명단에 없으면 예전처럼 이름 없음)', () => {
+    const text = 'Mina Park: "I will go first."\nShe said softly: "Wait here."\n박 미나: 「먼저 갈게요.」';
+    const before = dialogueLines(msg(text), { knownNames: ['가람'] });
+    assert.deepEqual(before.map(x => x.name), [null, null, null]);
+    const known = knownWithRoster(['가람', '가람', ''], [{ name: 'Mina Park', names: ['Mina Park', '박 미나'] }, { name: 'Rex' }, null, {}]);
+    assert.deepEqual(known, ['가람', 'Mina Park', '박 미나', 'Rex']);
+    const after = dialogueLines(msg(text), { knownNames: known });
+    assert.deepEqual(after.map(x => x.name), ['Mina Park', null, '박 미나'], '지문 줄(She said softly:)은 이름이 아니에요');
+    assert.deepEqual(texts(after), ['I will go first.', 'Wait here.', '먼저 갈게요.']);
+    const view = read('src/dialogue-view.js');
+    const body = view.slice(view.indexOf('function names(c, tts) {'), view.indexOf('const fold = t =>'));
+    assert.match(body, /roster = people\.list\(\)/);
+    assert.match(body, /return knownWithRoster\(\[\.\.\.out\]\.filter\(Boolean\), roster\);/);
 });
 
 test('속마음은 「속마음」 줄로 (true_thoughts · 이름)', () => {

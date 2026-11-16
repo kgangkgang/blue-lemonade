@@ -10,6 +10,7 @@ import { GENERIC, PAIRS, PAIRED, PIN_LIMIT, KNOWN_PINS, tidyPins } from './mes-p
 export { PIN_LIMIT, tidyPins };
 
 const slots = new WeakMap();
+const TEMPLATED_ADDON = new Set(['mes_legacy_translate', 'mes_llm_translate', 'mes_toggle_original', 'mes_edit_translation', 'mes_paragraph_correction', 'mes_delete_translation']);
 let pins = [];
 let order = [];
 let active = false;
@@ -56,7 +57,8 @@ const wantedKey = (el, wanted) => {
 /** 설정 창의 고르기 목록: 메시지 틀과 지금 채팅의 마지막 메시지에서 메뉴 버튼을 모은다 (다른 확장이 메시지마다 붙이는 버튼 포함) */
 export function listMenuButtons() {
     const found = new Map();
-    const template = [...document.querySelectorAll('#message_template .mes_buttons > .extraMesButtons > *')];
+    // 최적화 3차: 번역 단추는 이제 메시지 틀에도 있어요(translator/template-buttons.js) — 예전처럼 「메시지에 붙은 다른 확장 단추」로 다뤄요(틀의 기본 단추로 치면 번역 설정으로 숨긴 단추가 목록에 나와요)
+    const template = [...document.querySelectorAll('#message_template .mes_buttons > .extraMesButtons > *')].filter(el => !TEMPLATED_ADDON.has(basePinKey(el)));
     const stock = new Set(template.map(pinKey));
     const take = (el) => {
         const key = pinKey(el);

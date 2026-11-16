@@ -6,7 +6,7 @@
 import { getContext, saveMetadataDebounced } from '../../../../../../../extensions.js';
 import { settings, save } from './settings.js';
 import { segmentMessage, parseRegexLines } from './text.js';
-import { peopleChanged, invalidatePeople, peopleStamp, peopleMemoOn } from '../../../people.js';   // 6.9.5 인물표 — 색 표가 바뀌면 알린다 · 7.2.8 기억 비우기
+import { people, peopleChanged, invalidatePeople, peopleStamp, peopleMemoOn } from '../../../people.js';   // 6.9.5 인물표 — 색 표가 바뀌면 알린다 · 7.2.8 기억 비우기
 
 // 투표 가중치 (연구 deus.md 와 같게)
 const W = { label: 5, thought: 3, sameLine: 2, prevNarr: 1 };
@@ -305,7 +305,8 @@ export function namesOf(name) {
 }
 /** 6.9.5 인물표 목록의 후보: 이 채팅 색 표의 이름(정해 둔 것 → 많이 나온 것) · 지금 카드(그룹이면 멤버) · 나 */
 export function peopleNames() {
-    const out = colorTable().map(row => row.name).filter(Boolean);
+    // 1.5.9 「{{user}}」 로 잠긴 내 색 줄은 지금 페르소나 이름으로 — 매크로 글자가 명단에 「{{user}}」 라는 사람으로 따로 나왔어요(나와 같은 색 · 두 줄)
+    const out = colorTable().map(row => (isUserMacro(row.name) ? personaName() : row.name)).filter(Boolean);
     for (const card of currentCards()) if (card?.name) out.push(String(card.name));
     const u = personaName(); if (u) out.push(u);
     return out;
@@ -703,6 +704,17 @@ export function colorOfName(name, { userName = '' } = {}) {
     const me = String(userName || personaName() || '').trim();
     if (!best && me && st.userColor && fold(canonWith(map, me)) === k) best = st.userColor;
     return best;
+}
+
+/**
+ * 1.5.9 그 인물의 지정색 ('#rrggbb' | null): 이 채팅에서 쓴 색(colorOfName)이 먼저, 없으면 인물표(src/people.js)의 다른 공급자가 아는 색 —
+ * 카드별 색 기억 → 프리셋에 정해 둔 색. 색 없는 대사 칠하기 · 재생 막대 이름 · 대사만 보기가 써요(대사에 아직 안 나온 인물도 정해 둔 색으로).
+ * 인물표의 TTS 공급자는 colorOfName 만 부르니 서로 돌지 않아요.
+ */
+export function colorOfPerson(name, opts = {}) {
+    const own = colorOfName(name, opts);
+    if (own) return own;
+    try { const c = people.get(String(name ?? ''))?.color; return typeof c === 'string' && /^#[0-9a-f]{6}$/.test(c) ? c : null; } catch { return null; }
 }
 
 /** 이름 있는 색 가운데 ΔE < 8 로 가까운 것 (UI 제안용; 자동 배정에는 쓰지 않는다) */

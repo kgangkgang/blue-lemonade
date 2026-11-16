@@ -15,6 +15,7 @@ import { chatGlossaryEntries } from './chat-glossary.js';
 import { publishNames } from './names-bridge.js';
 import { syncTranslatorMenus } from './menu-visibility.js';
 import { builtinTranslateState, builtinTranslateNotice } from './builtin-translate.js';
+import { ensureTemplateButtons, markSettled, settleTemplated } from './template-buttons.js';
 
 const SHELL = Symbol.for('blue-lemonade.translator.shell');
 const API = Symbol.for('blue-lemonade.translator');
@@ -63,7 +64,8 @@ const createTranslateButtons = (mesBlock) => {
     return !!extraMesButtons;
 };
 function addButtonsToExistingMessages() {
-    for (const mes of document.querySelectorAll('#chat .mes')) createTranslateButtons(mes);
+    ensureTemplateButtons(translateButtonsFragment);   // 최적화 3차: 메시지 틀에도(template-buttons.js) — 새 메시지는 틀째 복제해 와요
+    for (const mes of document.querySelectorAll('#chat .mes')) if (createTranslateButtons(mes)) markSettled(mes);
 }
 function updateButtonVisibility(root = document) {
     const pairs = [
@@ -216,7 +218,8 @@ export const ready = new Promise((resolve, reject) => jQuery(async () => { try {
     addSlashCommands();
     publishGlossaryNames();
     const chatEl = document.getElementById('chat');
-    if (chatEl) { observer = new MutationObserver(mutations => { if (body) return; for (const mutation of mutations) for (const node of mutation.addedNodes) if (node.classList?.contains('mes')) createTranslateButtons(node); }); observer.observe(chatEl, { childList: true, subtree: false }); }
+    // 최적화 3차: 틀(#message_template)에서 단추째 복제돼 온 메시지는 끼우지 않고 자리만 확인해요(template-buttons.js)
+    if (chatEl) { observer = new MutationObserver(mutations => { if (body) return; for (const mutation of mutations) for (const node of mutation.addedNodes) if (node.classList?.contains('mes')) { if (createTranslateButtons(node)) markSettled(node); else settleTemplated(node); } }); observer.observe(chatEl, { childList: true, subtree: false }); }
     addButtonsToExistingMessages();
     updateButtonVisibility();
     document.addEventListener('click', onButton);

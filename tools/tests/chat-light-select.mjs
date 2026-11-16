@@ -203,7 +203,10 @@ await test('CSS: 건너뛰기 규칙은 html[data-bl-chat-sel] 이 없을 때만
     const rule = css.match(/^:where\(html\.bl-chat-light:not\(\[data-bl-chat-sel\]\)\) body\.salty \[id="chat"\]:not\(#salty-none\) > (\.mes[^{]*?) \{\n  content-visibility: auto;/m);
     assert.ok(rule, '고르는 동안 빠지는 건너뛰기 규칙');
     assert.equal(rule[1], M.SKIP_SELECTOR);
-    assert.ok(!/data-bl-chat-sel/.test(css.replace(rule[0], '').replace(/\/\*[\s\S]*?\*\//g, '')), '다른 규칙은 이 표식을 안 봐요');
+    // (1.5.9 select-keep) 고른 동안 크기 기억 · flex-shrink 를 지키는 짝 규칙 하나만 이 표식을 더 봐요 — chat-light-select-keep 이 그 꼴을 봐요
+    const keep = css.match(/^:where\(html\.bl-chat-light\[data-bl-chat-sel\]\) body\.salty \[id="chat"\]:not\(#salty-none\) > \.mes[^{]*\{[^}]*\}/m);
+    assert.ok(keep, '고른 동안 크기를 지키는 짝 규칙');
+    assert.ok(!/data-bl-chat-sel/.test(css.replace(rule[0], '').replace(keep[0], '').replace(/\/\*[\s\S]*?\*\//g, '')), '다른 규칙은 이 표식을 안 봐요');
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/chat-light-select\.mjs \./);
 });
 console.log(`chat-light-select: ${n}/${n + failed} 통과`);

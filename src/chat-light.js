@@ -454,6 +454,8 @@ function onReveal(event) {
 //   selectionchange 는 글을 칠 때마다 와요 — 긴 채팅이 아니면(표식 없음) Selection 을 읽지 않고, 메시지 편집 칸에 초점이 있으면(고른 글은 그 칸 안) 읽지 않아요.
 //   보내기 칸에 초점이 남아 있어도 채팅 글은 고를 수 있어서(리그: 고른 뒤에도 초점은 보내기 칸) 그때는 읽되, isCollapsed 대신 범위 하나의 collapsed 만(배치 강제 없음 · dem-selection.js 와 같은 길).
 //   자리 · 계산된 스타일은 읽지 않아요.
+// (1.5.9 select-keep) 표식이 붙을 때 빠지는 것은 content-visibility 하나뿐이에요 — 크기 기억(contain-intrinsic-size) · flex-shrink 는 css/05-chat.css 의 짝 규칙이 그대로 지켜요.
+//   1.4.8 은 셋이 같이 빠져 보이는 메시지의 크기 속성이 바뀌었고, 그러면 크롬이 스크롤 고정을 쉬어 고르는 순간 화면이 튀며 고른 글이 메시지 여러 개로 번졌어요(제보 11-16 「계속 전체선택됨」).
 export const SEL_ATTR = 'data-bl-chat-sel';
 export const SELECT_MODE = 'all';
 export const SELECT_NEAR = '600%';

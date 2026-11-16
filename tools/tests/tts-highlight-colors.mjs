@@ -281,8 +281,8 @@ test('6.3.9 bar name colour: the speaker palette colour wins when it is on the l
     assert.equal(ownSpeakerColor([{ color: YELLOW }], ''), '', 'no palette colour for the speaker');
     assert.equal(ownSpeakerColor([{ color: '#e63946', text: '…' }], '#e63946'), '#e63946', 'source markup colours (off screen) too');
     const player = read('src/addons/tts/src/player.js');
-    assert.match(player, /function speakerPalette\(job\) \{[\s\S]*?return colorOfName\(job\.speaker \|\| '', \{ userName \}\) \|\| '';/);
-    assert.match(player, /import \{ resolveSpeaker, canon, knownNames as learnedNames, colorOfName, ownerOfColor \} from '\.\/speakers\.js';/);
+    assert.match(player, /function speakerPalette\(job\) \{[\s\S]*?return colorOfPerson\(job\.speaker \|\| '', \{ userName \}\) \|\| '';/);
+    assert.match(player, /import \{ resolveSpeaker, canon, knownNames as learnedNames, colorOfPerson, ownerOfColor \} from '\.\/speakers\.js';/);
 });
 
 // ---------- 6.5.4 막대 이름 색: 화자 자신의 색이 먼저 · 막대 배경에서 읽히게 밝기만 조절 · 남의 색은 절대 안 집음 — 어두운 슬레이트(#424c59) 인물의 줄이 옆 인물의 빨강으로 칠해져 막대 이름도 빨강

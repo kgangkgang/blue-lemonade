@@ -89,7 +89,7 @@
  ],
  [
   "body.salty .cg-root .cg-setting:has(> .cg-setting-text > small) > :not(.cg-setting-text)",
-  "body.salty .cg-root .cg-setting > :where(.cg-setting > *):not(.cg-setting-text):is(:has(~ .cg-setting-text > small), .cg-setting-text:has(> small) ~ *)"
+  "body.salty .cg-root div.cg-setting.cg-setting-desc > :not(.cg-setting-text)"
  ],
  [
   ".fh-sect:has(> .bl-fruit-reading-tools) > :not(.bl-fruit-reading-tools)",

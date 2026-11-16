@@ -180,18 +180,84 @@ function rowGroups(root) {
     walk(root);
     return Array.from(out, list => list ?? []);
 }
-/** 고친 글 거두기(시트 harvest) — 메시지 수가 같을 때만, 막 그린 글(drawn)과 견줘 글이 달라진 메시지의 노드만 갈아 끼운 새 모델 · 바뀐 게 없으면 null */
+// 1.5.8 고친 글을 거둘 때 원래 서식 지키기 — 전엔 글자를 한 자만 고쳐도(폰은 미리보기를 눌러 자판만 떠도 빈칸이 줄 안 바꿈 빈칸으로 바뀔 수 있어요) 그 메시지를
+//   서식 없는 미리보기 노드로 통째 갈아 끼워, 밝기 · 틀을 바꿔 다시 그리면 대사 색 · 띠 · 기울임 · 문단 간격이 다 빠지고 다른 틀은 화자 색을 못 읽었어요(11-16 사용자 제보).
+//   글자만 바뀐 메시지는 떠 온 노드 나무(색 · 띠 · 문단 모양 · 화자 표시)를 그대로 두고 바뀐 글자만 그 자리에 끼워요.
+const soft = text => String(text ?? '').replace(/ /g, ' ');   // 편집기가 바꿔 넣는 줄 안 바꿈 빈칸은 보통 빈칸으로 봐요
+const GAP = /[\s​⁠﻿]/;
+const bare = text => String(text ?? '').replace(/[\s​⁠﻿]+/g, '');
+/** 굵게 · 기울임 · 취소선의 뼈대만(글자는 빼요) — 글자를 고쳐도 꾸밈 자리가 그대로인지 견줘요(nodesMark 의 표지 \x02 kind \x03 … \x02) */
+const markShape = text => String(text ?? '').replace(/\x02([a-z ]+)\x03|[^\x02]+/g, (all, kind) => (kind ? `<${kind}>` : ''));
+/**
+ * 글자만 바뀐 메시지: 원래 노드 나무에 바뀐 글자만 끼운 새 나무 — 막 그린 글(drawn)이 원래 글과 다르면(이름 숨김 · 바꾸기 · 틀이 글자를 바꿈) null.
+ * @param {object[]} nodes 원래 노드 나무(captureLog · 앞서 거둔 것) · @param {string} drawn 막 그린 미리보기 글 · @param {string} now 지금 미리보기 글
+ */
+export function graftText(nodes, drawn, now) {
+    const D = soft(drawn), N = soft(now), O = nodesText(nodes);
+    if (!nodes?.length || bare(O) !== bare(D)) return null;
+    const high = ch => ch >= '\ud800' && ch <= '\udbff', low = ch => ch >= '\udc00' && ch <= '\udfff';
+    let p = 0, s = 0;
+    const max = Math.min(D.length, N.length);
+    while (p < max && D[p] === N[p]) p++;
+    if (p && high(D[p - 1])) p--;   // 짝 글자(이모지) 가운데를 가르지 않아요
+    while (s < max - p && D[D.length - 1 - s] === N[N.length - 1 - s]) s++;
+    if (s && low(D[D.length - s])) s--;
+    const ins = N.slice(p, N.length - s);
+    // 막 그린 글의 자리 → 원래 글의 자리: 빈칸이 아닌 글자 수로 맞춰요(두 글은 빈칸 · 줄바꿈만 다를 수 있어요)
+    const at = (q) => {
+        let need = bare(D.slice(0, q)).length, x = 0;
+        while (need && x < O.length) { if (!GAP.test(O[x])) need--; x++; }
+        if (q && GAP.test(D[q - 1])) while (x < O.length && GAP.test(O[x])) x++;
+        return x;
+    };
+    const a = at(p), b = Math.max(a, at(D.length - s));
+    const bits = text => text.split('\n').flatMap((t, i) => [...(i ? [{ t: 'br' }] : []), ...(t ? [{ t: 'text', text: t }] : [])]);
+    let pos = 0, put = false;
+    const walk = (list) => {
+        const out = [];
+        for (const n of list || []) {
+            if (n.t === 'text') {
+                const from = pos, len = n.text.length;
+                pos += len;
+                const here = !put && pos >= a;   // 바뀐 글자는 그 자리가 든 첫 글 조각에(조각 끝에 이어 치면 그 조각 모양으로)
+                if (here) put = true;
+                const cut = v => Math.max(0, Math.min(len, v - from));
+                const text = n.text.slice(0, cut(a)) + (here ? ins : '') + n.text.slice(cut(b));
+                if (text === n.text) out.push(n); else out.push(...bits(text));
+            } else if (n.t === 'br') { const from = pos++; if (!(from >= a && from < b)) out.push(n); }
+            else if (n.t === 'el') { const had = (n.children || []).length, kids = walk(n.children); if (kids.length || !had) out.push({ ...n, children: kids }); }   // 글이 다 지워진 조각 · 문단은 같이 걷어요
+            else out.push(n);
+        }
+        return out;
+    };
+    const next = walk(nodes);
+    if (!put && ins) {   // 끝에 글 조각이 없으면(줄바꿈 · 그림으로 끝남) 마지막 문단 끝에
+        const tail = list => (list.length && list[list.length - 1].t === 'el' && list[list.length - 1].kind !== 'spoiler' ? [...list.slice(0, -1), { ...list[list.length - 1], children: tail(list[list.length - 1].children || []) }] : [...list, ...bits(ins)]);
+        return tail(next);
+    }
+    return next;
+}
+/** 고친 글 거두기(시트 harvest) — 메시지 수가 같을 때만, 막 그린 글(drawn)과 견줘 달라진 메시지만 고친 새 모델 · 바뀐 게 없으면 null.
+ *  1.5.8 글자만 바뀐 메시지는 원래 노드에 바뀐 글자만 끼워요(graftText — 서식 유지) · 숨기기 · 굵게 · 기울임 자리가 바뀐 메시지는 예전처럼 미리보기 노드로 */
 export function harvestEdits(got, base, drawn, marks) {
     if (!got || !base || got.messages.length !== base.messages.length) return null;   // 틀이 메시지를 합치거나 나눴으면 못 잇기 — 원래 글로
     // 숨긴 자리: 글자는 그대로 두고 숨기기 · 풀기만 해도 고친 것이에요(막 그린 글 drawn 은 글자뿐이라 지금까지 거둔 모델 base 의 숨긴 글과 견줘요)
     const hid = nodes => (nodes || []).map(n => (n.t !== 'el' ? '' : n.kind === 'spoiler' ? `\x01${nodesText(n.children).replace(/\s/g, '')}` : hid(n.children))).join('');
-    const edited = (m, i) => {
+    const fromDrawn = drawn?.length === got.messages.length, fromMarks = marks?.length === got.messages.length;
+    const one = (m, i) => {
         const now = nodesText(got.messages[i].nodes).trim();
-        return (drawn?.length === got.messages.length ? now !== drawn[i] : now !== nodesText(m.nodes).trim()) || hid(got.messages[i].nodes) !== hid(m.nodes)
-            || (marks?.length === got.messages.length && nodesMark(got.messages[i].nodes) !== marks[i]);   // 글자는 그대로 두고 굵게 · 기울임 · 취소선만 바꾼 것(막 그린 미리보기의 꾸밈 자리 marks 와 견줘요)
+        const was = fromDrawn ? drawn[i] : nodesText(m.nodes).trim();
+        const text = soft(now) !== soft(was);   // 빈칸 종류만 바뀐 것(줄 안 바꿈 빈칸)은 고친 것이 아니에요
+        const hide = hid(got.messages[i].nodes) !== hid(m.nodes);
+        const mark = fromMarks && soft(nodesMark(got.messages[i].nodes)) !== soft(marks[i]);   // 글자는 그대로 두고 굵게 · 기울임 · 취소선만 바꾼 것(막 그린 미리보기의 꾸밈 자리 marks 와 견줘요)
+        if (!text && !hide && !mark) return m;
+        // 글자만 바뀜(숨긴 자리 · 꾸밈 뼈대는 그대로): 원래 노드에 끼워요 — 못 맞추면 예전 길
+        const shapeSame = !fromMarks || markShape(nodesMark(got.messages[i].nodes)) === markShape(marks[i]);
+        if (text && !hide && shapeSame) { const kept = graftText(m.nodes, was, now); if (kept) return { ...m, nodes: kept }; }
+        return { ...m, nodes: got.messages[i].nodes };
     };
-    if (!base.messages.some((m, i) => edited(m, i))) return null;
-    return { ...base, messages: base.messages.map((m, i) => (edited(m, i) ? { ...m, nodes: got.messages[i].nodes } : m)) };
+    const messages = base.messages.map(one);
+    return messages.some((m, i) => m !== base.messages[i]) ? { ...base, messages } : null;
 }
 /** 미리보기 표지 걷기(받은 심플 글꾸의 복사 글) — 줄 표지 주석 · 제목 · 숨은 줄 칸 표시(log-copy-simple.js rowMarks) */
 export const stripRowMarks = html => String(html ?? '').replace(/<!--blm:(?:\d+|e)-->\n?/g, '').replace(/(<[a-zA-Z][\w-]*\b(?:[^<>"']|"[^"]*"|'[^']*')*?)\sdata-f="(?:title|hidden)"/g, '$1');

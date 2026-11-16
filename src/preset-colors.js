@@ -68,10 +68,11 @@ export function refreshPresetColors() {
     let preset = '';
     try { preset = String(c?.getPresetManager?.('openai')?.getSelectedPresetName?.() || ''); } catch { /* 없음 */ }
     const prompts = enabledPrompts(), scripts = enabledScripts(c), names = charNames(c);
-    const next = [preset, names.join('\u0001'), prompts.map(p => `${p.id}:${hash(p.text)}`).join(','), scripts.map(s => `${s.id || ''}:${hash(String(s.findRegex || '') + '\u0001' + String(s.replaceString || ''))}`).join(',')].join('|');
+    const me = String(c?.name1 || '');   // 1.5.9 유저 줄({{user}})의 색을 지금 페르소나 이름으로
+    const next = [preset, names.join('\u0001'), me, prompts.map(p => `${p.id}:${hash(p.text)}`).join(','), scripts.map(s => `${s.id || ''}:${hash(String(s.findRegex || '') + '\u0001' + String(s.replaceString || ''))}`).join(',')].join('|');
     if (next === sig) return false;
     sig = next;
-    list = parsePresetColors({ prompts: prompts.map(p => p.text), scripts, charNames: names });
+    list = parsePresetColors({ prompts: prompts.map(p => p.text), scripts, charNames: names, userName: me });
     table = colorIndex(list);
     gen++;
     return true;

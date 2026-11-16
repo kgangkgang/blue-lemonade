@@ -43,6 +43,7 @@ jobs:
           node tools/tests/char-tone-ladder.mjs .
           node tools/tests/log-copy-tone.mjs .
           node tools/tests/log-copy-user-color.mjs .
+          node tools/tests/log-copy-cast-people.mjs .
           node tools/tests/log-copy-day-ink.mjs .
           node tools/tests/log-copy-audit-113.mjs .
           node tools/tests/log-copy-connect-113.mjs .
@@ -230,6 +231,8 @@ jobs:
           node tools/tests/weather-status.mjs .
           node tools/tests/weather-status-ko.mjs .
           node tools/tests/weather-meatball.mjs .
+          node tools/tests/mb-dot-seen.mjs .
+          node tools/tests/name-people.mjs .
           node tools/tests/translator-stub.mjs .
           node tools/tests/translator-cancel-reason.mjs .
           node tools/tests/translator-group-guard.mjs .
@@ -283,6 +286,7 @@ jobs:
           node tools/tests/chat-light-warm.mjs .
           node tools/tests/chat-light-layout.mjs .
           node tools/tests/chat-light-select.mjs .
+          node tools/tests/chat-light-select-keep.mjs .
           node tools/tests/model-register-panel.mjs .
           node tools/tests/model-register-picks.mjs .
           node tools/tests/model-register-state.mjs .
@@ -314,7 +318,9 @@ jobs:
           node tools/tests/zipinstall-batch.mjs .
           node tools/tests/translation-tag-pairs.mjs .
           node tools/tests/translator-auto-skip.mjs .
+          node tools/tests/translator-swipe-pending.mjs .
           node tools/tests/translator-buttons-template.mjs .
+          node tools/tests/translator-message-template.mjs . tools
           node tools/tests/translator-send-button-keys.mjs .
           node tools/tests/tts-buttons-added.mjs .
           node tools/tests/head-signature-watch.mjs .
@@ -410,6 +416,8 @@ jobs:
           node tools/tests/names-bridge.mjs .
           node tools/tests/people.mjs .
           node tools/tests/people-cache-728.mjs .
+          node tools/tests/card-colors.mjs .
+          node tools/tests/tts-roster.mjs .
           node tools/tests/phone-speed-728.mjs .
           node tools/tests/tts-usage-728.mjs .
           node tools/tests/tts-picture-markers-729.mjs .
@@ -772,6 +780,7 @@ jobs:
           node tools/tests/icon-text-hosts.mjs .
           node tools/tests/icon-text-row-bits.mjs .
           node tools/tests/icon-text-prescan-slices.mjs . tools
+          node tools/tests/trash-wrap-marks.mjs . tools
           node tools/tests/mes-pins-one.mjs .
           node tools/tests/mes-pins-addon-late.mjs .
           node tools/tests/fruit-watch-perf.mjs .

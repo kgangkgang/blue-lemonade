@@ -260,7 +260,7 @@ function harness({ enabled = true, persona = 'Mina', character = 'Corvin', entri
     const env = { saves: 0, renders: 0, extensionSettings: { glossary_enabled: enabled, glossary_entries: entries, glossary_suggest: {} }, ctx: { name1: persona, name2: character } };
     const fold = s => String(s ?? '').trim().toLowerCase();
     const make = new Function('G', 'NB', 'env', `
-        const { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes } = G;
+        const { fixPairs, leftoverNameWords, markPairs, textKey, mergeSuggestions, shownSuggestions, skipSuggestion, dropSuggestion, trimScopes, rosterPairs, suggestBox } = G;
         const SUGGEST_GLOBAL = G.GLOBAL, suggestFold = NB.nameFold;
         const extensionSettings = env.extensionSettings;
         let scopeKey = 'c1.png';
@@ -308,7 +308,7 @@ function harness({ enabled = true, persona = 'Mina', character = 'Corvin', entri
         ${funcs}
         ${handlerCode}
         ${submitCode}
-        return { noteGlossarySuggestions, renderGlossarySuggestions, noteFixPairs, submit, srcInput, dstInput, setScope: k => { scopeKey = k; },
+        return { refreshRoster: refreshRosterSuggestions, noteGlossarySuggestions, renderGlossarySuggestions, noteFixPairs, submit, srcInput, dstInput, setScope: k => { scopeKey = k; },
             pending: () => glossaryPendingSuggest, editing: () => glossaryEditingId, reset: resetGlossaryEditor,
             chatChanged: () => listeners.chat(), flushTimers: () => { while (timers.length) timers.shift()(); },
             tab: scope => listeners['.llmt-gl-scopes']({ target: { closest: sel => sel === '.llmt-gl-scope' ? { dataset: { scope } } : null } }),
@@ -623,6 +623,82 @@ await test('v4.1: choosing a new suggestion or cancelling the selected suggestio
     api.click({ dataset: { scope: 'char', src: 'Rex', dst: '' } }, 'sg-skip');
     assert.equal(api.pending(), null);
     assert.equal(api.srcInput.value, '');
+});
+
+// 1.5.9 인물표의 표기 짝 → 칩
+const person = (...names) => ({ name: names[0], names });
+await test('1.5.9 인물표 표기 짝: 프리셋 색 표의 「영문 / 한글」 · 가타카나 · 한자 표기 → 첫 한글 표기', () => {
+    assert.deepEqual(G.rosterPairs([person('Mina Park', '박미나'), person('レックス', '렉스', 'Rex'), person('黒川', '쿠로카와')]),
+        [{ src: 'Mina Park', dst: '박미나', persona: false }, { src: 'レックス', dst: '렉스', persona: false }, { src: 'Rex', dst: '렉스', persona: false }, { src: '黒川', dst: '쿠로카와', persona: false }]);
+});
+await test('1.5.9 인물표 표기 짝: 한글 표기가 없거나 · 외국어 표기가 없거나 · 이름꼴이 아니면 짝이 아니다', () => {
+    assert.deepEqual(G.rosterPairs([person('Mina'), person('미나', '민아'), person('mina', '미나'), person('the boss', '보스'), person('M1-NA', '미나'), null, {}]), []);
+});
+await test('1.5.9 인물표 표기 짝: 용어집에 있는 표기 · 접어 둔 표기는 빼고 · 나(페르소나)는 공통 칸 · 같은 표기는 한 번 · 개수 한도', () => {
+    const fold = NB.nameFold;
+    assert.deepEqual(G.rosterPairs([person('Mina', '미나'), person('Rex', '렉스')], { have: new Set([fold('Mina')]) }), [{ src: 'Rex', dst: '렉스', persona: false }]);
+    assert.deepEqual(G.rosterPairs([person('Mina', '미나'), person('Rex', '렉스')], { skip: new Set([fold('Rex')]) }), [{ src: 'Mina', dst: '미나', persona: false }]);
+    assert.deepEqual(G.rosterPairs([person('Noel', '노엘')], { persona: '노엘' }), [{ src: 'Noel', dst: '노엘', persona: true }]);
+    assert.deepEqual(G.rosterPairs([person('Mina', '미나'), person('Mina', '민아')]).map(x => x.dst), ['미나']);
+    assert.equal(G.rosterPairs(Array.from({ length: 30 }, (_, i) => person(`Name${'abcdefghijklmnopqrstuvwxyzabcd'[i]}x`, '이름'))).length, G.SHOW);
+});
+await test('1.5.9 칩: 인물표 표기 짝이 모은 칩 뒤에 · 저장 없이 · × 는 접은 표기에 남고 · ＋ 는 용어집에 들어가 다시 안 나온다', () => {
+    const KEY = Symbol.for('blue-lemonade.names'), old = globalThis[KEY];
+    try {
+        let roster = [person('Rex', '렉스'), person('Mina', '미나'), person('Vera', '베라')];   // 페르소나 = Mina
+        globalThis[KEY] = { version: 1, aliasesOf: () => [], people: { version: 1, list: () => roster } };
+        const { env, api } = harness();
+        env.extensionSettings.glossary_suggest['c1.png'] = { items: [{ src: 'Corvin', dst: '코르빈', n: 2, at: 5 }], skip: [] };
+        api.renderGlossarySuggestions();
+        assert.equal(env.box.hidden, false);
+        assert.equal(chipsOf(env.box.innerHTML), 'Corvin→코르빈|Mina→미나|Rex→렉스|Vera→베라');
+        assert.ok(env.box.innerHTML.indexOf('data-src="Corvin"') < env.box.innerHTML.indexOf('data-src="Rex"'), '모은 칩이 먼저');
+        assert.match(env.box.innerHTML, /data-scope="global" data-src="Mina"/, '나는 공통 칸');
+        assert.match(env.box.innerHTML, /data-scope="char" data-src="Rex"/);
+        assert.equal(env.saves, 0, '그리기만으로 저장하지 않는다');
+        assert.deepEqual(env.extensionSettings.glossary_suggest['c1.png'].items.map(x => x.src), ['Corvin'], '인물표 짝은 저장에 넣지 않는다');
+        api.click({ dataset: { scope: 'char', src: 'Rex', dst: '렉스' } }, 'sg-skip');
+        assert.equal(chipsOf(env.box.innerHTML), 'Corvin→코르빈|Mina→미나|Vera→베라');
+        api.click({ dataset: { scope: 'char', src: 'Vera', dst: '베라' } }, 'sg-add');
+        assert.deepEqual(env.extensionSettings.glossary_entries.map(e => `${e.scope}:${e.src}→${e.dst}`), ['c1.png:Vera→베라']);
+        assert.equal(chipsOf(env.box.innerHTML), 'Corvin→코르빈|Mina→미나');
+        api.click({ dataset: { scope: 'global', src: 'Mina', dst: '미나' } }, 'sg-add');
+        assert.deepEqual(env.extensionSettings.glossary_entries.map(e => `${e.scope}:${e.src}→${e.dst}`), ['c1.png:Vera→베라', 'global:Mina→미나']);
+        roster = [];
+        env.box.innerHTML = env.box.innerHTML + '<!-- 그대로 -->';
+        const kept = env.box.innerHTML;
+        globalThis[KEY] = { version: 1, aliasesOf: () => [], people: { version: 1, list: () => [person('Rex', '렉스')] } };   // Rex 는 접어 둔 표기 — 칩 모양 그대로
+        api.refreshRoster();
+        assert.equal(env.box.innerHTML, kept, '칩 모양이 같으면 다시 그리지 않는다');
+        globalThis[KEY] = { version: 1, aliasesOf: () => [], people: { version: 1, list: () => [person('Nell', '넬')] } };
+        api.refreshRoster();
+        assert.equal(chipsOf(env.box.innerHTML), 'Corvin→코르빈|Nell→넬', '인물표가 바뀌면 칩도 다시');
+        globalThis[KEY] = { version: 1, aliasesOf: () => [], people: { version: 1, list: () => roster } };
+        api.refreshRoster();
+        assert.equal(chipsOf(env.box.innerHTML), 'Corvin→코르빈', '인물표에서 빠지면 칩도 사라진다');
+        assert.equal(env.saves, 3, '저장은 × · ＋ · ＋ 세 번뿐');
+        assert.match(js, /document\.addEventListener\('bl:people-changed', refreshRosterSuggestions\);/);
+    } finally { if (old === undefined) delete globalThis[KEY]; else globalThis[KEY] = old; }
+});
+await test('1.5.9 칩: 용어집을 끄면 인물표 짝도 없음 · 인물표가 없거나 던져도 모은 칩은 그대로', () => {
+    const KEY = Symbol.for('blue-lemonade.names'), old = globalThis[KEY];
+    try {
+        globalThis[KEY] = { version: 1, people: { version: 1, list: () => [person('Rex', '렉스')] } };
+        const off = harness({ enabled: false });
+        off.api.renderGlossarySuggestions();
+        assert.equal(off.env.box.hidden, true);
+        const warn = console.warn; console.warn = () => {};
+        try {
+            globalThis[KEY] = { version: 1, people: { version: 1, list: () => { throw new Error('x'); } } };
+            const { env, api } = harness();
+            env.extensionSettings.glossary_suggest['c1.png'] = { items: [{ src: 'Corvin', dst: '코르빈', n: 2, at: 5 }], skip: [] };
+            api.renderGlossarySuggestions();
+            assert.equal(chipsOf(env.box.innerHTML), 'Corvin→코르빈');
+            delete globalThis[KEY];
+            api.renderGlossarySuggestions();
+            assert.equal(chipsOf(env.box.innerHTML), 'Corvin→코르빈');
+        } finally { console.warn = warn; }
+    } finally { if (old === undefined) delete globalThis[KEY]; else globalThis[KEY] = old; }
 });
 
 console.log(`glossary-suggest: ${pass} passed, ${fail} failed`);
