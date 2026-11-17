@@ -108,6 +108,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         let row = slot.root.querySelector(`.${ROW}`);
         try { chat = (await settings())?.chat || {}; } catch { chat = {}; }
         try { P = await load(); } catch { return null; }   // 문구 모듈을 못 받으면 줄을 놓지 않아요
+        try { P.cleanupDupes?.().catch?.(() => { /* 그대로 */ }); } catch { /* 그대로 */ }   // 1.6.8 이미 생긴 중복 프로필(블루레몬이 더한 것만) 정리 — 채팅마다 한 번
         if (!heard && P.onFill) { heard = true; P.onFill(() => { if (lastRow) refresh(lastRow); }); }   // 요청이 실릴 때마다 어림 줄을 「보냈어요」 로
         row = slot.root.querySelector(`.${ROW}`);
         if (!row) {

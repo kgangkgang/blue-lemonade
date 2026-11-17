@@ -257,6 +257,7 @@ jobs:
           node tools/tests/mb-read.mjs .
           node tools/tests/mb-prompt.mjs .
           node tools/tests/mb-arrow.mjs .
+          node tools/tests/mb-map-floors.mjs .
           node tools/tests/mb-rowbtn-gap.mjs .
           node tools/tests/mb-face-now.mjs .
           node tools/tests/name-people.mjs .
@@ -648,6 +649,8 @@ jobs:
           node tools/tests/addon-icon-race.mjs .
           # 버그 사냥 7: 알림 본문 · 퀵 리플라이 찾기 · 생성 중 미리보기를 자를 때 이모지 반쪽이 안 남아요
           node tools/tests/emoji-cut.mjs .
+          # 버그 사냥 8: 사파리 연결 끊김 「Load failed」 도 연결 오류 · 일시 오류로 알아봐요
+          node tools/tests/safari-load-failed.mjs .
           node tools/tests/translation-segments-store.mjs .
           node tools/tests/translator-footnotes.mjs .
           node tools/tests/translation-display.mjs .

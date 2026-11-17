@@ -1564,7 +1564,7 @@ async function streamedReply({ body, source, onText, onState = null, signal = nu
     } catch (error) {
         if (signal?.aborted) throw signal.reason;
         if (controller.signal.aborted) throw timedOut?.(idle ? idleMs : timeoutMs, idle) ?? error;
-        trouble(error?.streamFailed ? String(error.why || error.message) : /failed to fetch|network/i.test(String(error?.message)) ? '연결이 끊겼어요' : String(error?.message || '알 수 없는 오류').slice(0, 60), { strike: !!error?.unsupported });
+        trouble(error?.streamFailed ? String(error.why || error.message) : /failed to fetch|load failed|network/i.test(String(error?.message)) ? '연결이 끊겼어요' : String(error?.message || '알 수 없는 오류').slice(0, 60), { strike: !!error?.unsupported });
         console.warn('[LLM Translator] 묶음 번역을 흘려받지 못해 예전처럼 한꺼번에 받아요:', error?.message);
         return null;
     } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
@@ -1783,8 +1783,8 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
         if (fetchError?.name === 'AbortError') { // 5.3.4: 시간 초과는 다시 보내지 않는다 (timeout — isTransientError)
             throw timedOut();
         }
-        // 네트워크 에러 처리
-        if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
+        // 네트워크 에러 처리 (크롬 「Failed to fetch」 · 사파리 · iOS 「Load failed」)
+        if (fetchError.name === 'TypeError' && /Failed to fetch|Load failed/.test(fetchError.message)) {
             throw Object.assign(new Error('네트워크 연결에 실패했어요. 인터넷 연결을 확인해주세요.'), { transient: true });
         }
         throw Object.assign(new Error(`요청 실패: ${fetchError.message}`), { transient: fetchError?.name === 'TypeError' });
@@ -2719,7 +2719,7 @@ async function translate(text, options = {}) {
             throw new Error(`API 키 설정 오류: ${error.message}`);
         }
         // 네트워크 오류
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        if (/Failed to fetch|Load failed|NetworkError/.test(error.message)) {
             throw new Error('네트워크 연결 오류: 인터넷 연결을 확인해주세요.');
         }
         // 일반적인 에러

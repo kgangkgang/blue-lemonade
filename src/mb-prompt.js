@@ -317,6 +317,82 @@ export function memoText(c = ctx(), cap = DEFAULT_CAP) {
  *   사용자 채팅(11-17): 답마다 「aff 이름 +N」 이 쌓여 사람마다 +12 ~ +19 인데, 만들기는 「시작 값(−10 ~ 10)」 으로 채워 숫자가 이야기를 안 따랐어요. 이 장을 실어 숫자 · 장소 · 날짜가 쌓인 변화를 따르게 해요.
  *   숨긴 메시지 · 고르지 않은 다른 답(스와이프)은 빼요. 돌려주는 것: { text, people, events, msgs } · 줄이 없으면 text ''
  */
+// ── 1.6.8 이름 장부: 변화 줄에 직함으로 적힌 사람 → 카드 · 로어북 · 지금 상태창의 이름(짝) ─────────────────────────────
+// 진짜 모델 시험(11-17): 본편 AI 가 변화 줄에 사람 이름 대신 직함을 적었고, 로어북 그 사람 항목의 「이름」 칸에도 직함이 먼저 적혀 있어
+//   만들기 AI 가 관계 칸 이름을 직함으로 적었어요(다른 판에서는 이름으로 — 흔들림). 같은 직함이 다른 사람 항목의 열쇠에도 있어 코드로 아무렇게나 바꾸면 사람이 섞여요.
+//   그래서 ① 변화 장에 「이름 (적힌 직함)」 짝을 분명히 적어 넘기고(한 사람에게만 속할 때) · 여럿이면 후보를 다 적고 AI 가 고르게 하고
+//   ② 만든 뒤에는 그 직함이 **정확히 한 사람에게만** 속하고 그 사람 칸이 따로 없을 때만 이름으로 바꿔요. 둘 이상 · 모르는 항목이 섞이면 손대지 않아요.
+//   「속한다」 = 로어북 항목의 열쇠(또는 상태창 한 사람의 이름 · 별칭 묶음)에 그 낱말과 그 사람 이름이 같이 있어요. 그 낱말이 든 항목에 아는 이름이 없으면(설정 항목 등) 「모름」 으로 세어 바꾸지 않아요.
+const nmKey = s => String(s ?? '').normalize('NFC').trim().toLowerCase();
+const panelRows = base => [...(base?.data?.rel?.user || []), ...(base?.data?.profile?.list || [])].filter(r => r && typeof r === 'object' && r.role !== 'user');
+/** 이 채팅의 카드(그룹이면 사람마다) */
+function cardsOf(c) {
+    const all = Array.isArray(c?.characters) ? c.characters : [];
+    if (c?.groupId) { const g = (Array.isArray(c?.groups) ? c.groups : []).find(x => x?.id === c.groupId); return (g?.members || []).map(a => all.find(x => x?.avatar === a)).filter(Boolean); }
+    const one = all[Number(c?.characterId)]; return one ? [one] : [];
+}
+/** 확실한 사람 이름: 그때 상태창(관계 · 프로필)의 이름 · 카드 이름 — 사용자 이름은 빼요. 소문자 → 적힌 꼴 */
+//   1.6.8 진짜 모델 시험(11-17 10:08): 앞 판 상태창에 직함이 이름으로 남아 있으면(관계 칸에 직함 줄 · 이름 줄 둘 다) 그 직함을 「확실한 이름」 으로 넘겨
+//     AI 가 직함을 그대로 썼어요. 그래서 열쇠 묶음(sets)을 주면, 서로 다른 둘 이상의 사람 항목 열쇠에 같이 나오는 이름은 직함으로 보고 빼요
+//     (사람 이름은 대개 자기 항목에만 나와요 — 남의 항목에 나와도 그 사람이 하나뿐이면 그대로 둬요). cards = false 면 카드 이름은 빼요(AI 에 넘기는 이름 목록).
+export function knownNames(c = ctx(), base = metaMb(c)?.base, sets = null, { cards = true } = {}) {
+    const out = new Map(); const put = v => { const s = String(v ?? '').trim(); if (s && !out.has(nmKey(s))) out.set(nmKey(s), s); };
+    for (const r of panelRows(base)) put(r.name);
+    if (cards) for (const ch of cardsOf(c)) put(ch?.name);
+    if (c?.name1) out.delete(nmKey(c.name1));
+    if (sets?.length) {
+        const all = new Map(out);
+        for (const k of [...out.keys()]) { const rest = new Map(all); rest.delete(k); if (holdersOf(k, rest, sets).names.length >= 2) out.delete(k); }
+    }
+    return out;
+}
+/** 열쇠 묶음: 로어북 항목마다 열쇠(정규식 열쇠는 빼요) + 그때 상태창 사람마다 [이름, ...별칭] */
+export function keySets(books = [], base = null) {
+    const sets = [];
+    for (const b of books) for (const e of Object.values(b?.entries || {})) { const k = (Array.isArray(e?.key) ? e.key : []).map(x => String(x ?? '').trim()).filter(x => x && !/^\/.*\/[a-z]*$/i.test(x)); if (k.length) sets.push(k); }
+    for (const r of panelRows(base)) if (Array.isArray(r.aliases) && r.aliases.length) sets.push([r.name, ...r.aliases].map(String));
+    return sets;
+}
+/** 그 낱말이 누구의 것인지: self = 그 자체가 확실한 이름 · names = 같은 묶음에 든 확실한 이름들 · unknown = 아는 이름이 없는 묶음 수 */
+export function holdersOf(word, known, sets) {
+    const w = nmKey(word); if (!w) return { self: false, names: [], unknown: 0 };
+    if (known?.has(w)) return { self: true, names: [known.get(w)], unknown: 0 };
+    const names = new Set(); let unknown = 0;
+    for (const s of sets || []) {
+        const ks = s.map(nmKey); if (!ks.includes(w)) continue;
+        const hit = [...new Set(ks.filter(k => k !== w && known?.has(k)).map(k => known.get(k)))];
+        if (!hit.length) unknown++; for (const h of hit) names.add(h);
+    }
+    return { self: false, names: [...names], unknown };
+}
+/** 정확히 한 사람에게만 속할 때 그 이름 · 아니면 '' */
+export const onlyHolder = h => (h && !h.self && h.names.length === 1 && !h.unknown ? h.names[0] : '');
+const book = { key: '', books: [] };   // 로어북은 받아 오는 게 느려(비동기) 고를 때 미리 받아 둬요 — 매크로(동기)는 받아 둔 것만 써요
+const bookKey = c => `${c?.groupId ?? ''}|${c?.characterId ?? ''}|${(typeof c?.getCurrentChatId === 'function' ? c.getCurrentChatId() : '') ?? ''}`;
+/** 이 채팅에 걸린 로어북(카드의 것 · 카드 안 책 · 채팅 로어북)을 읽어 둬요. 못 읽으면 빈 목록 */
+export async function primeBooks(c = ctx()) {
+    const books = [];
+    try {
+        const names = new Set();
+        for (const ch of cardsOf(c)) { const w = ch?.data?.extensions?.world; if (w) names.add(String(w)); const cb = ch?.data?.character_book; if (Array.isArray(cb?.entries)) books.push({ entries: Object.fromEntries(cb.entries.map((e, i) => [i, { key: e?.keys || e?.key || [] }])) }); }
+        if (c?.chatMetadata?.world_info) names.add(String(c.chatMetadata.world_info));
+        if (typeof c?.loadWorldInfo === 'function') for (const n of names) { try { const b = await c.loadWorldInfo(n); if (b?.entries) books.push(b); } catch { /* 그 책은 빼요 */ } }
+    } catch { /* 빈 목록 */ }
+    book.key = bookKey(c); book.books = books;
+    return books;
+}
+const booksFor = c => (book.key === bookKey(c) ? book.books : []);
+/** 변화 장의 이름 하나를 적는 꼴: 이름이면 그대로 · 한 사람의 직함이면 「이름 (written as "직함")」 · 여럿이면 후보를 적어 AI 가 고르게 */
+//   그 사람 이름도 변화 줄에 따로 있으면(본편 AI 가 둘을 다른 사람으로 셈 — 예: 함께 사는 동물 이름이 주인 항목 열쇠에 든 것) 짝을 짓지 않아요.
+function ledgerName(n, known, sets, seen = new Set()) {
+    if (!known?.size) return n;
+    const h = holdersOf(n, known, sets);
+    if (h.self) return n;
+    const one = onlyHolder(h); if (one) return seen.has(nmKey(one)) ? n : `${one} (written as "${n}")`;
+    if (h.names.length) return `"${n}" (a title or nickname shared in the lorebook by ${h.names.join(', ')}${h.unknown ? ' and other entries' : ''} — write the real name of the one the story means, never "${n}")`;
+    if (h.unknown) return `"${n}" (a title or nickname, not a name in the current panel — write that person's real name from the card or lorebook, never "${n}")`;
+    return n;
+}
 export function opsLedger(c = ctx()) {
     const chat = Array.isArray(c?.chat) ? c.chat : [];
     const sum = new Map(), events = [], last = {}; let msgs = 0;
@@ -336,16 +412,25 @@ export function opsLedger(c = ctx()) {
     });
     if (!msgs) return { text: '', people: 0, events: 0, msgs: 0, sums: new Map() };
     const sign = n => (n > 0 ? `+${n}` : String(n));
-    const rows = [...sum].filter(([, r]) => r.aff || r.trust).map(([n, r]) => `${n}: aff ${sign(r.aff)}, trust ${sign(r.trust)}`);
+    let known = new Map(), sets = [];
+    let shown = [];
+    try { const base = metaMb(c)?.base; sets = keySets(booksFor(c), base); known = knownNames(c, base, sets); shown = [...knownNames(c, base, sets, { cards: false }).values()]; } catch { /* 이름 짝 없이 */ }
+    const seen = new Set([...sum.keys()].map(nmKey));
+    const rows = [...sum].filter(([, r]) => r.aff || r.trust).map(([n, r]) => `${ledgerName(n, known, sets, seen)}: aff ${sign(r.aff)}, trust ${sign(r.trust)}`);
+    const real = shown.slice(0, 80);
     const text = ['--- STATUS CHANGES RECORDED DURING THE STORY (written by the story AI after each reply; they are already part of the story — current values must include them) ---',
         'Profiles: write a profile (role "main") for EVERY person in the relationship changes above, not only two or three — the "at most 3" limit in the task is only for extra background people.',
         'Names here are as the story AI wrote them and may be a title, rank or nickname; in every panel use each person’s real name exactly as in the card, lorebook or current panel data, never the title.',
+        real.length ? `Real names already used for these people (current panel) — keep exactly these names in the "name" fields; a title goes in the label, never in the name: ${real.join(', ')}` : '',
         rows.length ? `Total relationship changes since the first message (aff = romance, trust = friendship): ${rows.join('; ')}` : '',
         last.place ? `Latest location: ${last.place}` : '', last.time ? `Latest time of day: ${last.time}` : '', last.date ? `Latest date change: ${last.date}` : '',
         events.length ? `Events in order (#N = message number):\n${events.join('\n')}` : ''].filter(Boolean).join('\n');
     return { text, people: rows.length, events: events.length, msgs, sums: sum, time: last.timeRaw || '' };
 }
-const withLedger = (c, body) => { try { const l = opsLedger(c); return l.text ? `${l.text}\n\n--- STORY TEXT ---\n${body}` : body; } catch { return body; } };
+const withLedger = (c, body) => {
+    if (book.key !== bookKey(c)) primeBooks(c).catch(() => { /* 다음 요청에 */ });   // 평소 단계가 「채팅 전체」 라 고르기를 안 거친 때: 다음 요청부터 이름 짝이 붙어요
+    try { const l = opsLedger(c); return l.text ? `${l.text}\n\n--- STORY TEXT ---\n${body}` : body; } catch { return body; }
+};
 const kNum = n =>Math.round(Number(n) || 0).toLocaleString('ko-KR');
 const kBig = n => { const v = Math.round(Number(n) || 0); return v >= 10000 ? `${(v / 10000).toFixed(v >= 100000 ? 0 : 1).replace(/\.0$/, '')}만` : kNum(v); };
 /** 실은 양 한 줄(만들기 화면 어림 줄 · 다 보낸 뒤 알림이 같이 써요) — f = allText · memoText 결과 */
@@ -442,6 +527,7 @@ function onceSeen() {
 export async function armOnce({ c = ctx(), doc = globalThis.document, toast = globalThis.toastr, def = undefined, level: want = 'all', quiet = false } = {}) {
     const lv = level(want);
     if (lv !== 'off' && lv !== 'light' && !ensureMacro(c)) { try { toast?.warning?.('이 실리태번 판은 매크로 등록이 없어 채팅 전체를 실을 수 없어요.', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } return false; }
+    if (lv === 'all' || lv === 'memo') await primeBooks(c).catch(() => null);   // 1.6.8 변화 장의 이름 짝에 쓸 로어북 열쇠
     state.once = { until: now() + ONCE_WAIT, seen: 0, level: lv };
     const r = await syncPrompt(onceBlock(lv), { c, doc, def });
     if (r.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null);   // 줄 꼴 규칙은 본편 쪽이라 「이번 한 번만」 과 상관없이 평소 단계를 따라요
@@ -471,6 +557,7 @@ export async function endOnce({ c = ctx(), doc = globalThis.document, toast = gl
 /** 설정이 바뀔 때마다(src/apply.js) — 그 확장이 아직 안 떴으면 조금 뒤 한 번 더 */
 export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_CHARS, { c = ctx(), doc = globalThis.document, retry = true, toast = globalThis.toastr, cap = state.cap } = {}) {
     state.level = level(want); state.count = count; state.chars = chars; state.cap = Math.max(0, Math.round(Number(cap)) || 0);
+    watchDupes(c);
     if (readOnce()) {   // 「이번 한 번만」 이 걸려 있는 동안은 채팅 전체 그대로 — 때가 지났으면 여기서 돌려놔요
         if (state.once.until > now()) { ensureMacro(c); watchOnce(); state.last = await syncPrompt(onceBlock(state.once.level || 'all'), { c, doc }); if (state.last.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null); return state.last; }
         await endOnce({ c, doc, toast, force: true });
@@ -519,6 +606,14 @@ export function sumFor(r, sums, list = [r]) {
     }
     return null;
 }
+/** 1.6.8 알림에 보일 시간대 이름: 화면 언어가 한국어면 영어 시간대를 아침 · 낮 · 저녁 · 밤 · 심야 · 새벽으로(달력 값은 그대로 · 보이는 글만) */
+export function timeLabel(t, c = ctx()) {
+    const s = String(t ?? ''); let ko = false;
+    try { ko = /^ko(?:[-_]|$)/i.test(String(c?.getCurrentLocale?.() ?? globalThis.document?.documentElement?.lang ?? '')); } catch { ko = false; }
+    if (!ko || /[ㄱ-힣]/.test(s)) return s;
+    for (const [re, word] of TIME_WORDS) if (re.test(s)) return word;
+    return s;
+}
 /** 마지막 시간대 글(「Evening -> Night」 면 화살표 뒤) → 그 확장 달력의 시간대 이름(달력 times 에 있을 때만) */
 const TIME_WORDS = [[/late\s*night|midnight|심야|한밤/i, '심야'], [/dawn|새벽/i, '새벽'], [/morning|아침/i, '아침'], [/noon|afternoon|day|lunch|낮|점심|오후/i, '낮'], [/evening|dusk|sunset|저녁|해질/i, '저녁'], [/night|밤/i, '밤']];
 export function timeOfDay(raw, times = []) {
@@ -547,18 +642,137 @@ export function reconcileRel(c = ctx()) {
     }
     // 1.6.6 (11-17 사용자 「나에 나오는 사람이 왜 이렇게 적음?」): 그 확장의 프로필 지시는 「주요 인물 + NPC 는 많아야 3」 이라, 관계 칸에는 15명이 있어도 프로필은 6명만 만들기도 해요.
     //   이야기에 변화 줄이 남은 사람(관계 칸에 있고 변화 합이 맞는 사람)인데 프로필이 없으면, 그 사람 관계 칸의 이름표 · 메모로 짧은 프로필을 더해요(AI 호출 없음 · 지어내는 글 없음).
+    // 1.6.8 (11-17 사용자: 직함과 이름이 같은 사람인데 프로필에 다른 사람으로 나와요): 관계 칸에 직함으로 적힌 사람을 다른 사람으로 보고 프로필을 더했어요.
+    //   더하기 전에 같은 사람일 수 있는지 봐요(maybeSame) — 그럴 수 있으면 더하지 않아요. 더한 프로필에는 표식(FILL_MARK)을 남겨 나중에 중복을 정리할 수 있게 해요.
     const added = [], prof = meta?.base?.data?.profile;
     if (prof && Array.isArray(prof.list)) {
         const has = new Set(prof.list.flatMap(p => namesOf(p)));
+        const sets = keySets(booksFor(c), meta?.base);
         for (const r of list) {
             if (!sumFor(r, sums, list) || namesOf(r).some(n => has.has(n))) continue;
-            const summary = [r.label, r.memo].map(x => String(x ?? '').trim()).filter(Boolean).join(' — ').slice(0, 200);
-            const p = { name: r.name, role: 'npc', summary, fields: [], home: '', sched: '' };
+            if (maybeSame(r.name, meta.base, sets, r)) continue;
+            const p = { name: r.name, role: 'npc', summary: fillSummary(r), fields: [], home: '', sched: '', [FILL_MARK]: 1 };
             prof.list.push(p); added.push(r.name); for (const n of namesOf(r)) has.add(n);
             const op = meta.origin?.data?.profile?.list; if (Array.isArray(op) && !op.some(x => x?.name === r.name)) op.push(structuredClone(p));
         }
     }
     return { changed, checked, time, added };
+}
+const FILL_MARK = 'blFill';   // 1.6.8 테마가 관계 칸으로 더한 프로필 표식
+const fillSummary = r => [r?.label, r?.memo].map(x => String(x ?? '').trim()).filter(Boolean).join(' — ').slice(0, 200);
+const profText = p => [p?.summary, ...(Array.isArray(p?.fields) ? p.fields.flatMap(f => [f?.k, f?.v]) : [])].map(x => String(x ?? '')).join(' ');
+/**
+ * 1.6.8 관계 칸 이름이 이미 있는 다른 사람과 같은 사람일 수 있나(프로필을 더하기 전에 — 그럴 수 있으면 안 더해요).
+ *   ① 로어북 열쇠 묶음에서 그 낱말이 상태창의 다른 사람(관계 · 프로필) 이름과 같이 나오면(직함 · 별명일 수 있어요)
+ *   ② 로어북을 못 읽었으면: 다른 프로필의 글(요약 · 칸)에 그 낱말이 낱말로 나오면
+ */
+export function maybeSame(name, base, sets, self = null) {
+    const w = nmKey(name); if (!w) return true;
+    const others = new Map();
+    for (const r of panelRows(base)) if (r !== self && r.name && nmKey(r.name) !== w) others.set(nmKey(r.name), String(r.name));
+    if (sets?.length) return holdersOf(name, others, sets).names.length > 0;
+    const re = new RegExp(`(^|[^\\p{L}\\p{N}])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}\\p{N}])`, 'iu');
+    return (base?.data?.profile?.list || []).some(p => p && p !== self && nmKey(p.name) !== w && re.test(profText(p)));
+}
+/** 테마가 관계 칸으로 더한 프로필인가: 표식이 있거나 · 1.6.6 꼴(표식 전) 그대로 — npc · 칸 없음 · 요약이 그 이름 관계 칸의 「이름표 — 메모」 와 글자 하나 안 다름 */
+export function isFilled(p, rel = []) {
+    if (!p || typeof p !== 'object' || p.role !== 'npc') return false;
+    if (p[FILL_MARK]) return true;
+    if ((Array.isArray(p.fields) ? p.fields.length : 1) || String(p.home ?? '') || String(p.sched ?? '')) return false;
+    const r = (Array.isArray(rel) ? rel : []).find(x => x?.name === p.name);
+    return !!r && String(p.summary ?? '') === fillSummary(r) && String(p.summary ?? '') !== '';
+}
+/**
+ * 1.6.8 이미 생긴 중복 프로필 정리 — 테마가 더한 프로필(isFilled)만 보고, 사용자가 만든 프로필 · AI 가 만든 프로필은 손대지 않아요.
+ *   지우는 때(같은 사람으로 확인될 때만): 그 이름이 다른 프로필 이름과 같거나, 로어북 열쇠 묶음에서 그 낱말이 나오는 항목 **모두**에
+ *   프로필이 있는 사람 이름이 들어 있고(아는 이름 없는 항목이 하나라도 있으면 안 지워요) — 그 낱말이 누구를 가리키든 그 사람 프로필이 이미 있어요.
+ *   로어북을 못 읽었으면 지우지 않아요. 돌려주는 것: 지운 이름 목록(base · origin 같이)
+ */
+export function dedupeFilled(c = ctx(), { books = booksFor(c) } = {}) {
+    const meta = metaMb(c), list = meta?.base?.data?.profile?.list, rel = meta?.base?.data?.rel?.user;
+    const out = []; if (!Array.isArray(list)) return out;
+    const sets = keySets(books, meta.base);
+    for (const p of [...list]) {
+        if (!isFilled(p, rel)) continue;
+        const w = nmKey(p.name), rest = list.filter(x => x && x !== p && x.role !== 'user' && !out.includes(x));
+        let same = rest.some(x => namesOf(x).includes(w));
+        if (!same && sets.length) {
+            const profs = new Map(rest.filter(x => x.name).map(x => [nmKey(x.name), String(x.name)]));
+            const h = holdersOf(p.name, profs, sets);
+            same = !h.self && h.names.length > 0 && h.unknown === 0;
+        }
+        if (!same) continue;
+        out.push(p); list.splice(list.indexOf(p), 1);
+        const ol = meta.origin?.data?.profile?.list; if (Array.isArray(ol)) { const i = ol.findIndex(x => x?.name === p.name && isFilled(x, meta.origin?.data?.rel?.user || rel)); if (i >= 0) ol.splice(i, 1); }
+    }
+    return out.map(p => p.name);
+}
+/** 1.6.8 채팅이 바뀔 때마다 중복 프로필 정리(한 번만 걸어요 · 지금 채팅도 바로) */
+let dupeWatch = false;
+function watchDupes(c = ctx()) {
+    if (dupeWatch) return; dupeWatch = true;
+    const run = () => { cleanupDupes().catch(() => { /* 다음 채팅에 */ }); };
+    try { const ev = c?.eventTypes?.CHAT_CHANGED ?? c?.event_types?.CHAT_CHANGED; if (ev && c?.eventSource?.on) c.eventSource.on(ev, () => setTimeout(run, 1500)); } catch { /* 만들기 창 · 만든 뒤에만 */ }
+    Promise.resolve().then(run);
+}
+/** 채팅을 열 때 · 만들기 창이 뜰 때: 중복 프로필을 정리하고 저장 · 새로고침 · 한 줄 알려요(채팅마다 한 번)
+ *   재현(11-17): 알림이 두 번 떴어요(채팅 열 때 + 만들기 창). 그래서 알린 이름 · 도는 중인 정리를 globalThis 에 두고(모듈이 두 벌 떠도 같이 봐요),
+ *   같은 채팅에서 이미 알린 이름은 다시 지워져도(그 확장이 화면 자료로 되살렸다 다시 걸리는 때) 알림 없이 정리만 해요. */
+const DEDUP = (globalThis.__blMbDedupe ||= { seen: new Set(), told: new Set(), run: null });
+export async function cleanupDupes({ c = undefined, toast = globalThis.toastr, doc = globalThis.document, core = undefined, force = false } = {}) {
+    const cx = c || ctx(); if (!metaMb(cx)?.base) return [];
+    const key = bookKey(cx); if (!force && DEDUP.seen.has(key)) return [];
+    while (DEDUP.run) { try { await DEDUP.run; } catch { /* 앞 정리 실패해도 이어서 */ } }   // 한 번에 하나씩
+    if (!force && DEDUP.seen.has(key)) return [];
+    DEDUP.seen.add(key);
+    let done; DEDUP.run = new Promise(r => { done = r; });
+    let gone = [];
+    try {
+        if (book.key !== key) await primeBooks(cx);
+        gone = dedupeFilled(cx);
+        if (gone.length) {
+            try { await cx.saveMetadata?.(); } catch { /* 다음 저장 때 */ }
+            try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
+            const fresh = gone.filter(n => !DEDUP.told.has(`${key}|${nmKey(n)}`));
+            for (const n of gone) DEDUP.told.add(`${key}|${nmKey(n)}`);
+            if (fresh.length) { try { toast?.info?.(`같은 사람이 프로필에 둘로 나뉘어 있어 블루레몬이 더했던 프로필 ${fresh.length}개를 정리했어요(${fresh.join(' · ')}). 직접 만든 프로필은 그대로예요.`, '', { timeOut: 10000 }); } catch { /* 알림 없이 */ } }
+        }
+    } finally { DEDUP.run = null; done(); }
+    return gone;
+}
+/**
+ * 1.6.8 만든 뒤 이름 칸이 직함이면 이름으로 — 아주 좁게(사람이 섞이지 않게):
+ *   ① 그 이름이 만들기 전 상태창 · 카드에 있던 이름이 아니고(before = 만들기 전 기준 자료) ② 그 낱말이 든 열쇠 묶음(로어북 항목 · 그때 상태창의 이름 · 별칭)을 다 모아
+ *   확실한 이름이 정확히 한 사람만 나오고 · 아는 이름이 없는 묶음도 없고 ③ 새 상태창에 그 사람 칸이 따로 없을 때만 바꿔요(둘을 합치지 않아요).
+ *   바꾸는 자리: 관계 칸 · 관계 짝(a · b) · 프로필 — origin 도 같은 이름이면 같이. 돌려주는 것: [{ from, to }]
+ */
+export function renameTitles(c = ctx(), { before = null, books = booksFor(c) } = {}) {
+    const meta = metaMb(c), d = meta?.base?.data, out = [];
+    if (!d) return out;
+    const sets = keySets(books, before), known = knownNames(c, before, sets);
+    if (!known.size || !sets.length) return out;
+    let seen = new Set(); try { seen = new Set([...opsLedger(c).sums.keys()].map(nmKey)); } catch { /* 변화 줄 없이 */ }   // 본편 AI 가 따로 센 사람끼리는 안 합쳐요
+    const odata = meta.origin?.data;
+    const lists = [[d.rel?.user, odata?.rel?.user], [d.profile?.list, odata?.profile?.list]];
+    const rows = lists.flatMap(([list, olist]) => [...(Array.isArray(list) ? list : []), ...(Array.isArray(olist) ? olist : [])]).filter(r => r && typeof r === 'object');
+    const swap = new Map();
+    for (const r of rows) {
+        if (!r.name || r.role === 'user' || swap.has(r.name)) continue;
+        const from = r.name, t = onlyHolder(holdersOf(from, known, sets)); if (!t || seen.has(nmKey(t))) continue;
+        if (rows.some(x => x.name !== from && namesOf(x).includes(nmKey(t)))) continue;   // 그 사람 칸이 어디든 따로 있으면 손대지 않아요(둘을 합치지 않아요)
+        swap.set(from, t);
+    }
+    const vals = [...swap.values()];
+    for (const [from, to] of [...swap]) if (vals.filter(v => v === to).length > 1) swap.delete(from);   // 두 직함이 한 사람으로 모이면 둘 다 그대로
+    const unsure = new Map();   // 직함으로 보이는데 후보가 둘 이상이라 그대로 둔 이름 → 후보(알림에만 써요)
+    for (const r of rows) { if (!r.name || r.role === 'user' || swap.has(r.name) || unsure.has(r.name)) continue; const h = holdersOf(r.name, known, sets); if (!h.self && h.names.length >= 2) unsure.set(r.name, h.names); }
+    Object.defineProperty(out, 'unsure', { value: [...unsure].map(([name, of]) => ({ name, of })) });   // 목록 비교에 안 섞이게(숨은 칸)
+    for (const [from, to] of swap) {
+        for (const r of rows) if (r.name === from) r.name = to;
+        for (const p of [...(d.rel?.pairs || []), ...(odata?.rel?.pairs || [])]) { if (p?.a === from) p.a = to; if (p?.b === from) p.b = to; }
+        out.push({ from, to });
+    }
+    return out;
 }
 async function mbCore(doc = globalThis.document, load = url => import(url)) {
     try {
@@ -578,13 +792,18 @@ export async function afterWizard({ before = null, level = '', c = undefined, to
     let base = baseRef(cx());
     for (let t = 0; (!base || base === before) && t < waitMs; t += step) { await new Promise(r => setTimeout(r, step)); base = baseRef(cx()); }
     if (!base || base === before) return null;
+    try { if (book.key !== bookKey(cx())) await primeBooks(cx()); } catch { /* 로어북 없이 */ }   // 1.6.8 프로필을 더하기 전 같은 사람 확인 · 직함 이름 바꾸기에 써요
     const res = reconcileRel(cx());
-    if (res.changed.length || res.time || res.added?.length) {
+    try { res.renamed = renameTitles(cx(), { before }); } catch { res.renamed = []; }   // 숫자를 맞춘 뒤에(직함 이름으로 변화 합을 찾고 나서) 이름을 바꿔요
+    if (res.changed.length || res.time || res.added?.length || res.renamed.length) {
         try { await cx().saveMetadata?.(); } catch { /* 다음 저장 때 */ }
         try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
     }
     try {
-        const tm = (res.time ? ` 시간대도 채팅의 마지막 시간대 「${res.time.to}」 로 맞췄어요.` : '') + (res.added?.length ? ` 프로필이 없던 ${res.added.length}명은 관계 칸의 이름표 · 메모로 프로필을 더했어요.` : '');
+        const tw = res.time ? timeLabel(res.time.to, cx()) : '';
+        const tm = (res.time ? ` 시간대도 채팅의 마지막 시간대 「${tw}」${josa(tw, '으로', '로')} 맞췄어요.` : '') + (res.added?.length ? ` 프로필이 없던 ${res.added.length}명은 관계 칸의 이름표 · 메모로 프로필을 더했어요.` : '')
+            + (res.renamed.length ? ` 이름 칸에 직함으로 적힌 ${res.renamed.length}명은 카드 · 로어북 이름으로 바꿨어요(${res.renamed.map(x => `${x.from} → ${x.to}`).join(' · ')}).` : '')
+            + (res.renamed.unsure?.length ? ` 「${res.renamed.unsure.map(x => x.name).join('」 · 「')}」${josa(res.renamed.unsure.at(-1).name, '은', '는')} 여러 사람의 직함이라(후보 ${res.renamed.unsure.map(x => x.of.join(' · ')).join(' / ')}) 누구인지 몰라 그대로 뒀어요 — 미트볼에서 이름을 고쳐 주세요.` : '');
         if (res.changed.length) toast?.success?.(`관계 숫자를 채팅 기록(${res.changed.length}명)에 맞췄어요 — 본편 AI 가 답마다 남긴 애정 · 우정 변화 합보다 낮게 만들어진 사람만 그 합까지 올렸어요.${tm}`, '', { timeOut: 12000 });
         else if (res.checked) toast?.info?.(`관계 숫자가 채팅 기록을 따라요(${res.checked}명 확인).${tm}`, '', { timeOut: 6000 });
         else if (tm) toast?.info?.(tm.trim(), '', { timeOut: 6000 });

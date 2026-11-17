@@ -5,7 +5,7 @@
 // 5.3.7: 코드는 떨어진 숫자일 때만 — "at position 502" · "line 3 column 429" 같은 파싱 오류 위치를 상태 코드로 오해해 다시 보냈다
 const CODE=String.raw`(?<!(?:position|pos|line|column|col|offset|char(?:acter)?|index|byte|length)[\s:#=]*)(?<![\d.,])\b`;
 const TRANSIENT_CODE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,]\d)`);
-const TRANSIENT_MESSAGE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,]\d)|too many requests|rate.?limit|resource.?exhausted|overloaded|unavailable|bad gateway|internal server error|failed to fetch|networkerror|network error|econnreset|socket hang up`,'i');
+const TRANSIENT_MESSAGE=new RegExp(String.raw`${CODE}(?:429|50[0-3]|529)\b(?![.,]\d)|too many requests|rate.?limit|resource.?exhausted|overloaded|unavailable|bad gateway|internal server error|failed to fetch|load failed|networkerror|network error|econnreset|socket hang up`,'i');
 const CLOUDFLARE_524=new RegExp(String.raw`${CODE}524\b(?![.,]\d)`);
 const PARSE_FAILURE=/unexpected token|not valid json|unexpected end of json|<!doctype|<html/i;
 // 7.7.4 실리태번이 넘긴 파서 · 연결 오류 원문(영어)을 알 수 있는 말로 — 다시 보내기 여부(isTransient)는 그대로
@@ -77,7 +77,7 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
         }
         const transient = isTransient(error,reason);
         const message = transient && /too many requests|rate.?limit|resource.?exhausted|\b429\b/i.test(reason) ? '요청 한도를 넘었어요. 잠시 뒤 다시 시도해 주세요.'
-            : transient && /failed to fetch|networkerror|network error|econnreset|socket hang up/i.test(reason) ? '서버에 연결하지 못했어요. 연결 상태를 확인해 주세요.'
+            : transient && /failed to fetch|load failed|networkerror|network error|econnreset|socket hang up/i.test(reason) ? '서버에 연결하지 못했어요. 연결 상태를 확인해 주세요.'
             : transient ? '서버가 일시적으로 응답하지 못했어요. 잠시 뒤 다시 시도해 주세요.' : readable(reason);
         throw Object.assign(new Error(message),{transient});
     }finally{clearTimeout(timer);overrides.signal?.removeEventListener('abort',abort);release?.();}

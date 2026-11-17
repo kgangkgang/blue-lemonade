@@ -1011,6 +1011,17 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-ava.emo.xs { font-size: 16px; }
 /* 지도 마디 안 그림: 마디 지름(5.6)의 6할 → 7할 */
 body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .node text.ico { font-size: 4px; fill: var(--ss-ink); }
 body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .node.here text.ico { fill: var(--ss-bg); }
+/* 1.6.8 지도 층별 보기(src/mb-map-floors.js): 층 띠 · 이름표 · 승강기 줄 · 땅 선 · 꺾인 선 — 그림은 SVG 안 테마 요소(.bl-floors · path.bl-route)만 */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .edges path.bl-route { fill: none; stroke: var(--ss-ink); stroke-opacity: .38; stroke-width: .5; stroke-linejoin: round; stroke-linecap: round; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .edges path.bl-route.unk { stroke-dasharray: 1.2 1.2; opacity: .5; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-bldg { fill: none; stroke: var(--ss-ink); stroke-opacity: .34; stroke-width: .5; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-bldg.ghost { fill: var(--ss-ink); fill-opacity: .03; stroke-opacity: .2; stroke-dasharray: 1.4 1; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-band { fill: var(--ss-ink); fill-opacity: .03; stroke: var(--ss-ink); stroke-opacity: .14; stroke-width: .25; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-band.alt { fill-opacity: .065; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-band.under { fill-opacity: .1; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-shaft { fill: var(--ss-hi); fill-opacity: .09; stroke: var(--ss-hi); stroke-opacity: .3; stroke-width: .25; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-ftag { fill: var(--ss-dim); font-size: 2.9px; font-weight: 700; text-anchor: middle; letter-spacing: .05px; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map .bl-floors .bl-ground { stroke: var(--ss-ink); stroke-opacity: .4; stroke-width: .5; stroke-dasharray: 1.6 .9; }
 /* 프로필 · 관계 · 장소의 「이름표 → 값」 목록: 폰에서 한 줄에 하나씩이라 짧은 값(나이 · 생일 …) 옆 절반이 비고 한 사람이 화면 한 장을 넘었어요 → 두 단으로 흘려요.
    값이 긴 칸(표식 data-bl-long — 열세 자 넘거나 줄바꿈이 있는 값)은 두 단을 가로질러 통째 한 줄. 이름표와 값은 같은 단에 붙어 다녀요. */
 

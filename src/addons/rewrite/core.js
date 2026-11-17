@@ -877,7 +877,7 @@ export function promptHasMarker(messages, compiled) {
 export function rerollErrorKind(error) {
     if (error?.name === 'AbortError') return 'timeout';
     const text = String(error?.message ?? error ?? '').toLowerCase();
-    if (/premature close|socket hang up|econnreset|econnrefused|failed to fetch|network|unexpected token|unexpected end of json/.test(text)) return 'transient';
+    if (/premature close|socket hang up|econnreset|econnrefused|failed to fetch|load failed|network|unexpected token|unexpected end of json/.test(text)) return 'transient';
     if (/rate.?limit|too many requests|resource.?exhausted|overloaded|(?<!(?:position|pos|line|column|col|offset|index|byte|length)[\s:#=]*)(?:^|\D)429(?!\d)/.test(text)) return 'busy';
     if (/unauthori[sz]ed|forbidden|api.?key|permission|authenticat|insufficient|quota|billing|credit|balance|payment|bad request|invalid|not found|prohibited|safety|content.?filter|context.?length|maximum context|too long|too large|(?:status|code|http|error|^)\D{0,10}4(?:0[0-4]|13|22)(?!\d)/.test(text)) return 'permanent';
     return 'transient';

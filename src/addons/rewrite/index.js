@@ -609,7 +609,7 @@ function friendlyError(error) {
         return '모델 쪽 서버가 붐벼요. 잠시 뒤에 다시 해 주세요.';
     if (status('429')) return '요청이 너무 잦아요. 잠깐 쉬었다 다시 해 주세요.';
     if (has('deadline', 'timed out', 'timeout', 'etimedout')) return '시간 안에 답이 오지 않았어요.';
-    if (has('failed to fetch', 'network error', 'networkerror', 'err_network', 'econnrefused', 'enotfound'))
+    if (has('failed to fetch', 'load failed', 'network error', 'networkerror', 'err_network', 'econnrefused', 'enotfound'))
         return '연결이 끊겼어요. 인터넷과 주소를 확인해 주세요.';
     if (has('internal error', 'internal server error', 'internal_server_error') || status('500'))
         return '모델 쪽에서 오류가 났어요. 다시 해 주세요.';

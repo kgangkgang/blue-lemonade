@@ -52,10 +52,12 @@ export function skipPart(part) {
  * 화면에 보일 글 목록 → { list: 보낼 덩이(겹침 없음), owners: 덩이 → 원래 글들 }
  * shown(text): 그 확장 사전으로 바꾼 화면 글(trString) · has(part): 사전에 이미 있나 · tried: 이번 접속에 못 바꾼 덩이
  */
-export function collectGaps(texts, { shown = t => t, has = () => false, tried = new Set() } = {}) {
+export function collectGaps(texts, { shown = t => t, has = () => false, tried = new Set(), full = () => null } = {}) {
     const owners = new Map();
     for (const raw of texts) {
-        const text = String(raw ?? '').trim();
+        let text = String(raw ?? '').trim();
+        // 1.6.8: 그 확장이 70자로 자른 알림 글(「화면 밖 — 이름」 · 「…」로 끝남) — 상태에 원문 통째가 있으면 그 원문을 보내요(잘린 조각을 번역하면 반쪽 짝이 남았어요)
+        if (text.endsWith('…') && text.length >= 12) { const whole = full(text.slice(0, -1).trimEnd()); if (whole) text = whole; }
         if (!text || !/[A-Za-z]/.test(text)) continue;
         if (!/[A-Za-z]/.test(String(shown(text) ?? text))) continue;   // 그 확장 사전으로 이미 다 바뀌어 보여요
         // 덩이는 원래 글에서 — 화면 글에서 자르면 이름만 바뀐 「카이's Blue …」처럼 반쪽이 돼요. 아는 이름이 든 덩이도 통째로 보내요(번역 지시에 그 이름이 실려요)
@@ -107,6 +109,8 @@ export function visibleTexts(current, meta) {
     const snaps = current?.snaps;
     if (snaps && typeof snaps.values === 'function') for (const snap of snaps.values()) for (const label of snap?.labels ?? []) if (typeof label === 'string') out.push(label);
     for (const label of current?.state?.recent ?? []) if (typeof label === 'string') out.push(label);
+    // 1.6.8: 플레이 기록 「지난 하루들」(state.days · 최근 30일 · 하루 30줄) — 지난 답의 칩 글이 그대로 남아요(「날씨: Sunny」 · 「상태: Tired」). 그날 칩이 지금 상태에 없으면 번역 요청에도 안 실렸어요
+    for (const day of Array.isArray(current?.state?.days) ? current.state.days : []) for (const label of Array.isArray(day?.labels) ? day.labels : []) if (typeof label === 'string') out.push(label);
     for (const note of Array.isArray(meta?.notes) ? meta.notes : []) if (isObj(note)) for (const key of ['title', 'text', 'hint']) if (typeof note[key] === 'string') out.push(note[key]);
     // 1.5.1: 추억 앨범 — 속마음 글 · 장소 · 내가 단 한 줄(장면 글은 본편 답을 옮긴 것이라 본편처럼 그대로 둬요)
     for (const item of Array.isArray(meta?.album) ? meta.album : []) if (isObj(item)) for (const key of ['here', 'note', ...(item.kind === 'peek' ? ['text'] : [])]) if (typeof item[key] === 'string') out.push(item[key]);
@@ -246,6 +250,10 @@ export function fixedPairs(items, dict, names = new Set()) {
         if (!value) continue;
         const whole = fixedValue(value, key);   // 1.5.3: 정해진 칸(요일 · 시간대 · 달 · 날씨 · 계절)의 값 전체만
         if (whole) { add(value, whole, key); continue; }
+        // 1.6.8: 그림 글자가 앞에 붙은 날씨 · 시간대(그 확장 자동 날씨가 영어 저장에서 고르는 「🌧 Rain」 꼴) — 낱말 짝과 붙은 꼴 짝을 둘 다
+        const part = FIXED_SLOT_KEYS.has(key) && /^[^A-Za-z0-9]/.test(value) ? englishPart(value) : '';
+        const ko = part && part !== value ? fixedValue(part, key) : null;
+        if (ko) { add(part, ko, key); add(value, value.replace(part, () => ko), key); continue; }
         if (key !== 'sched') continue;   // 「이름표:값」 조각은 일과 칸에서만(이름표 = 시간대)
         const parts = value.split(PIECE_SEP);
         if (parts.length < 3 || !parts.some((s, i) => i % 2 && /[:→]|->/.test(s))) continue;
@@ -356,7 +364,23 @@ export function chipText(shown, dict = {}, label = shown) {
     return s.replace(/([가-힣])['’]s(?=\s|$)/g, '$1의');
 }
 /**
- * 1.5.8 칩 글 → 화면 글: 「💞 이름 = 설명」 · 「🗺️ 새 장소: 장소」처럼 나눔표가 있으면 덩이마다, 없으면 칩 글 통째를 한 덩이로 —
+ * 1.6.8 시간대 · 날씨 칩 글 통째 짝(AI 0): 「날씨: Sunny」 → 「날씨: 맑음」 · 「🕐 Afternoon」 → 「🕐 오후」.
+ *   칩은 테마가 다시 적지만(chipText), 같은 글이 칩 밖(플레이 기록 「지난 하루들」 줄)에 그대로 그려지면 그 확장 화면 번역만 거쳐요.
+ *   낱말 열쇠(Sunny)는 글 속 낱말 바꾸기에서 뺀 고정 낱말이라(hideFixedKeys) 「날씨: Sunny」 안에서 안 바뀌었어요 — 머리(「날씨:」 · 🕐)가 붙은 통째 열쇠를 따로 넣어요.
+ *   사전에 이미 있는 글 · 바꿀 것이 없는 글 · 다른 칩은 빼요.
+ */
+export function chipSlotPairs(texts, dict = {}) {
+    const out = new Map();
+    for (const raw of texts) {
+        const text = String(raw ?? '').trim();
+        if (!text || !chipSlot(text) || out.has(text) || Object.hasOwn(dict ?? {}, text) || !/[A-Za-z]/.test(text)) continue;
+        const ko = chipText(text, dict ?? {});
+        if (ko !== text && /[가-힣]/.test(ko.replace(/^\s*(?:🕐|날씨\s*:)\s*/u, ''))) out.set(text, ko);
+    }
+    return [...out];
+}
+/**
+ * 1.5.8 칩 글 → 화면 글:「💞 이름 = 설명」 · 「🗺️ 새 장소: 장소」처럼 나눔표가 있으면 덩이마다, 없으면 칩 글 통째를 한 덩이로 —
  *   ① 덩이의 영어가 사전에 통째로 있으면(길이 상관없이) 그 번역 ② 통째 짝이 없는 문장(영어 낱말 셋 이상)은 조각으로 바꾸지 않고 원문 그대로
  *      (통째 번역이 오면 바뀌어요) ③ 그 밖(이름 · 짧은 이름 묶음)은 그 확장 화면 번역(trs) 그대로.
  *   그 확장 화면 번역은 40자 넘는 열쇠를 글 속에서 안 바꾸고 짧은 열쇠만 끼워 넣어서, 관계 칩이 「그녀를 목격함 April 만우절 장난 망신」처럼
@@ -374,6 +398,101 @@ export function chipShown(label, dict = {}, trs = t => t) {
         try { return trs(piece); } catch { return piece; }
     });
     return chipText(out.join(''), dict, raw);
+}
+
+/**
+ * 1.6.8 굳힌 옛 답의 날 칩: 그 확장은 굳힌 답(다시 계산하지 않는 옛 답)에 굳힐 때 적어 둔 칩 글을 보여 주는데(2.7.23~),
+ *   그 글이 없는 답(2.7.23 전에 굳힌 답 · 다른 스와이프)은 변화 줄을 「키 값」 그대로 그려요 — 「aff 이름 +4」 · 「trust 이름 +5」.
+ *   실시간 칩은 「♥ 이름 +4」 · 「🤝 이름 +5」라서, 같은 답이 굳은 뒤에만 영어 키가 보였어요.
+ *   그 확장 KEYMAP 가운데 날 칩으로 보이는 키(RAW_CHIP)의 다른 이름 → 키.
+ */
+const RAW_KEYS = {
+    stat: 'stat', '수치': 'stat', '게이지': 'stat', gauge: 'stat', hp: 'stat', attr: 'attr', '능력치': 'attr', '능력': 'attr',
+    cond: 'cond', '상태': 'cond', '상태이상': 'cond', buff: 'cond', '버프': 'cond', condition: 'cond',
+    cash: 'cash', money: 'cash', '돈': 'cash', '재산': 'cash', '소지금': 'cash', gold: 'cash', item: 'item', items: 'item', '아이템': 'item', '소지품': 'item',
+    loc: 'loc', '위치': 'loc', '장소': 'loc', location: 'loc',
+    aff: 'aff', '호감': 'aff', '호감도': 'aff', '애정': 'aff', '애정도': 'aff', trust: 'trust', '신뢰': 'trust', '신뢰도': 'trust', '우정': 'trust', '우정도': 'trust',
+    date: 'date', '날짜': 'date', day: 'date', '일': 'date', days: 'date', '날짜이동': 'date', time: 'time', '시간': 'time', '시간대': 'time', period: 'time', slot: 'time',
+    weather: 'weather', '날씨': 'weather',
+};
+const MB_MODULE = 'statussim';
+/** 변화 줄 [키, 값] 가운데 날 칩으로 보이는 것만(그 확장 bakedLabels 와 같은 고르기 · 앞 14개) */
+export function rawChipKeys(ops) {
+    return (Array.isArray(ops) ? ops : []).filter(op => Array.isArray(op) && RAW_KEYS[String(op[0]).trim().toLowerCase()]).slice(0, 14);
+}
+/** 날 칩 한 줄 → 그 확장 실시간 칩 꼴(ops.js 의 칩 글) */
+export function rawChipLabel(k, v, { currency = '' } = {}) {
+    const word = String(k).trim(), key = RAW_KEYS[word.toLowerCase()];
+    const val = String(v).trim().replace(/(^|\s)-(?=\d)/g, '$1−');   // 실시간 칩의 빼기 글자(signed)와 같게
+    const named = !/^[+\-−]?\d/.test(val);   // 「체력 -5」처럼 이름이 앞에 있음
+    switch (key) {
+        case 'aff': return `♥ ${val}`;
+        case 'trust': return `🤝 ${val}`;
+        case 'loc': return `📍 ${val}`;
+        case 'time': return `🕐 ${val}`;
+        case 'weather': return `날씨: ${val}`;
+        case 'cond': return `상태: ${val}`;
+        case 'date': return /^[+\-−]?\d+$/.test(val) ? `📅 ${/^[\-−]/.test(val) ? val : `+${val.replace(/^\+/, '')}`}일` : `📅 ${val}`;
+        case 'cash': return `${String(currency || '').trim() || '💰'} ${val}`;
+        case 'stat': case 'attr': return named ? val : `${/^hp$/i.test(word) ? 'HP' : word} ${val}`;
+        case 'item': {
+            const m = /^([+\-−]?)\s*(.+?)(?:\s+(\d+))?\s*\|?\s*$/.exec(val);
+            if (!m) return `${word} ${val}`;
+            const q = Number(m[3] || 1);
+            return `${m[1] && m[1] !== '+' ? '−' : '+'}${m[2]}${q > 1 ? `×${q}` : ''}`;
+        }
+        default: return `${word} ${val}`;
+    }
+}
+/** 굳힌 답의 칩 글 — 적어 둔 칩 글이 있으면 그것(🎲 빼고), 없으면 날 칩을 실시간 칩 꼴로 · 없으면 null */
+export function bakedChips(m, opts = {}) {
+    if (!m || m.is_user) return null;
+    const ext = m.extra?.[MB_MODULE], sw = m.swipe_id ?? 0;
+    const saved = ext?.chips?.[sw];
+    if (Array.isArray(saved) && saved.length) return saved.map(String).filter(l => !l.startsWith('🎲')).slice(0, 14);
+    const raw = rawChipKeys(ext?.bySwipe?.[sw]);
+    return raw.length ? raw.map(([k, v]) => rawChipLabel(k, v, opts).slice(0, 60)) : null;
+}
+
+/**
+ * 1.6.8 그 확장이 실리 기본 알림(toastr)으로 바로 띄우는 글: 「Leon와(과) 연인이 되었어요」 · 「🔕 Leon은(는) 지금 연락이 안 돼요」 ·
+ *   「Bread 구매!」 · 알림 방식 「실리태번 기본 알림」의 모든 알림. 그 확장 화면 번역은 자기 화면(.ss-scope · #ss-toasts …)만 훑어서
+ *   #toast-container 의 알림은 사전에 번역이 있어도 영어로 남았어요.
+ *   → 제목이 그 확장 이름(TITLE)인 알림만, 태그 밖 글 조각마다 그 확장 trString(사전) 그대로 바꿔요. 태그 · 속성은 그대로 · 바뀐 것이 없으면 글 그대로.
+ *   html: 글에 HTML 이 들어 있다고 보고 엔티티(&amp; …)를 풀었다 다시 싸요.
+ */
+const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&#039;': "'" };
+const unEnt = s => s.replace(/&(?:amp|lt|gt|quot|#0?39);/g, m => ENT[m]);
+const enEnt = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+export function trToastMessage(message, trs, { html = true } = {}) {
+    if (typeof message !== 'string' || !/[A-Za-z]/.test(message) || typeof trs !== 'function') return message;
+    const parts = html ? message.split(/(<[^>]*>)/) : [message];
+    let changed = false;
+    const out = parts.map((piece, i) => {
+        if ((html && i % 2) || !/[A-Za-z]/.test(piece)) return piece;
+        const plain = html ? unEnt(piece) : piece;
+        let got;
+        try { got = trs(plain); } catch { return piece; }
+        if (typeof got !== 'string' || got === plain) return piece;
+        changed = true;
+        return html ? enEnt(got) : got;
+    });
+    return changed ? out.join('') : message;
+}
+/** toastr 네 가지 알림을 한 번 감싸요 — 제목이 title 인 알림만 · on() 일 때만 trs 로 */
+export function wrapMbToasts(toastr, { title, trs, on = () => true } = {}) {
+    if (!toastr || toastr.__blMbTr || !title) return false;
+    for (const kind of ['info', 'success', 'warning', 'error']) {
+        const original = toastr[kind];
+        if (typeof original !== 'function') continue;
+        toastr[kind] = function (message, t, options) {
+            let m = message;
+            try { if (t === title && on()) m = trToastMessage(message, trs, { html: options?.escapeHtml === false || toastr.options?.escapeHtml !== true }); } catch { m = message; }
+            return original.call(this, m, t, options);
+        };
+    }
+    Object.defineProperty(toastr, '__blMbTr', { value: true });
+    return true;
 }
 
 /** 그 확장 폴더(실리태번이 붙인 모듈 script 주소) — 이름으로 먼저, 없으면 manifest 의 이름으로 */
@@ -404,7 +523,8 @@ async function loadTarget(doc) {
 export const trRepairLog = [];
 try { globalThis.__blMbTrRepair = trRepairLog; } catch { /* 기록만 못 걸어요 */ }
 const stChatId = () => { try { return globalThis.SillyTavern?.getContext?.()?.getCurrentChatId?.() ?? null; } catch { return null; } };
-export function createTrFill(mb, { doc = globalThis.document, toast = globalThis.toastr, now = () => Date.now(), timers = globalThis, chatId = stChatId, faces = () => {} } = {}) {
+const stChat = () => { try { return globalThis.SillyTavern?.getContext?.()?.chat ?? []; } catch { return []; } };
+export function createTrFill(mb, { doc = globalThis.document, toast = globalThis.toastr, now = () => Date.now(), timers = globalThis, chatId = stChatId, faces = () => {}, chat = stChat } = {}) {
     const { tr, core } = mb;
     const tried = new Set();
     let filling = false, watch = null, autoTimer = 0;
@@ -417,18 +537,25 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
      *    칩 차례는 그 메시지 칩 글(snaps · 🎲 뺀 앞 14개)과 같아요 — 수가 다르면 그 확장 화면 번역만 불러요. 메시지 꾸미기가 다음 프레임 · 그리기 전에 불러요.
      */
     function paint(list) {
-        if (!view()) return;
+        const on = view();
         const snaps = core.app.current?.snaps;
         for (const mes of list) {
             const slots = mes?.querySelectorAll?.(SLOTS);
             if (!slots?.length) continue;
-            const labels = (snaps?.get?.(Number(mes.getAttribute('mesid')))?.labels ?? []).filter(l => typeof l === 'string' && !l.startsWith('🎲')).slice(0, 14);
+            const id = Number(mes.getAttribute('mesid'));
+            const snap = snaps?.get?.(id);
+            // 1.6.8 굳힌 옛 답(그 답의 snaps 가 없음): 그 확장이 그린 날 칩(「aff 이름 +4」)을 실시간 칩 꼴(「♥ 이름 +4」)로 — 한국어 저장에서도
+            let baked = null;
+            if (!snap) { try { baked = bakedChips(chat()?.[id], { currency: core.app.current?.state?.data?.wallet?.currency }); } catch { baked = null; } }
+            // 한국어 저장이어도 시간대 · 날씨 칩(「🕐 Evening」 · 「날씨: Light rain」)은 고정 낱말 사전으로(AI 0 · chipText 는 그 두 칩만 바꿔요)
+            const labels = baked ?? (snap?.labels ?? []).filter(l => typeof l === 'string' && !l.startsWith('🎲')).slice(0, 14);
+            if (!on && !baked && !labels.some(l => chipSlot(l))) continue;
             for (const slot of slots) {
                 const chips = slot.querySelectorAll('span.ss-mchip');
                 if (!chips.length) continue;
-                if (chips.length !== labels.length) { try { tr.translateView(slot); } catch { /* 다음 그리기 때 */ } continue; }
+                if (chips.length !== labels.length) { if (on) { try { tr.translateView(slot); } catch { /* 다음 그리기 때 */ } } continue; }
                 const dict = (() => { try { const d = core.getMeta()?.tr; return isObj(d) ? d : {}; } catch { return {}; } })();
-                chips.forEach((chip, k) => { let want; try { want = chipShown(labels[k], dict, t => tr.trString(t)); } catch { return; } if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
+                chips.forEach((chip, k) => { let want; try { want = on ? chipShown(labels[k], dict, t => tr.trString(t)) : chipText(labels[k]); } catch { return; } if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
             }
         }
     }
@@ -457,7 +584,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         if (fixOpen) return 0;   // 1.5.3: 「번역 고치기」 창이 열린 동안은 숨기지 않아요(창이 닫히면 다시)
         const items = stateTexts(state, isOn);
         // 칩 · 기록 · 알림 · 앨범 글: 시간대 · 날씨 칩만 그 종류로(「🕐 …」 · 「날씨: …」) — 다른 칩(이름 · 장소 · 관계)은 고정 낱말 사전을 안 걸어요
-        for (const text of visibleTexts(core.app.current, meta)) { const slot = chipSlot(text); const part = slot && englishPart(text.replace(/^\s*(?:🕐|날씨\s*:)\s*/u, '')); if (part) items.push({ text: part, key: slot }); }
+        const shownTexts = visibleTexts(core.app.current, meta);
+        for (const text of shownTexts) { const slot = chipSlot(text); const part = slot && englishPart(text.replace(/^\s*(?:🕐|날씨\s*:)\s*/u, '')); if (part) items.push({ text: part, key: slot }); }
         const texts = items.map(x => x.text.trim());
         const lock = isObj(meta?.trLock) ? meta.trLock : {};
         // 1.5.3: 사람 이름(인물 · 페르소나 · 캐릭터)은 고정 낱말 짝을 만들지도 · 숨기지도 않아요 · 📌 고정한 짝은 늘 사용자 것
@@ -470,6 +598,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const base = new Map([...fixedPairs(items, dict, names), ...piecePairs(dict, new Set(texts))]);   // 같은 조각이면 이 채팅 번역(조각 짝)이 이겨요
         const koOf = (word, key) => { if (names.has(word)) return null; const v = Object.hasOwn(dict, word) && !keep.has(word) ? dict[word] : (base.get(word) ?? fixedValue(word, key)); return !v || /[A-Za-z]{2,}/.test(v) ? null : key === 'week' ? shortWeek(v) : v; };
         for (const [k, v] of slotPairs(items, koOf)) base.set(k, v);
+        for (const [k, v] of chipSlotPairs(shownTexts, dict)) if (!names.has(k)) base.set(k, v);   // 1.6.8 「날씨: Sunny」 통째(플레이 기록 줄)
         const pairs = [...base].filter(([en]) => !keep.has(en) && !lock[en] && !Object.hasOwn(dict, en));
         // 1.6.6 나눔표를 괄호로 싼 번역 짝(sepQuoteValue)은 그 확장 addPairs 로 덮어요 — 사전 판이 올라 화면 번역이 다시 읽고 · 채팅 메타에 저장돼요
         pairs.push(...sepQuotePairs(dict, lock));
@@ -541,7 +670,9 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const tidied = tidy({ draw: false });
         const meta = core.getMeta();
         const dict = isObj(meta?.tr) ? meta.tr : {};
-        const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => Object.hasOwn(dict, part), tried });
+        const longs = stateTexts(current.state, isOn).map(x => x.text.replace(/\s+/g, ' ').trim()).filter(t => t.length >= 12);
+        const full = pre => longs.find(t => t.length > pre.length && t.startsWith(pre)) ?? null;   // 잘린 알림 글 → 상태의 원문(화면 밖 기록 rel.life 등)
+        const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => Object.hasOwn(dict, part), tried, full });
         const { miss, half } = stateGaps(current.state, dict);
         const list = [...new Set([...chipList, ...miss, ...half])];
         if (!list.length) { if (tidied) repaint(); return 0; }
@@ -636,6 +767,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         if (!t?.closest) return;
         // 1.5.1: 그 확장이 번역할 글을 모으기 전에(이 누름은 문서 잡기 단계라 그 확장 손잡이보다 먼저예요) 고정 낱말을 사전에 넣어 둬요 — 그 확장도 사전에 있는 글은 안 보내요
         if (t.closest(TRIGGER)) { try { tidy({ draw: false }); } catch (e) { console.warn('[Blue Lemonade] 미트볼 번역 조각', e); } arm(); }
+        // 1.6.8: 알림함을 열면 쌓인 알림 글(화면 밖 · 단계 …)도 — 그 확장 자동 번역 규칙(끔 · 실리 기본 번역일 때만 · 항상) 그대로
+        else if (t.closest('[data-hud="inbox"]') && view() && autoOn()) { timers.clearTimeout(autoTimer); autoTimer = timers.setTimeout(() => { if (!mb.busy()) fill('auto').catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e)); }, 300); }
         // 번역을 묻는 창에서 사람이 누른 취소만(「남은 글 번역하기」는 번역 고치기 창을 스스로 닫아요 — 그 누름은 isTrusted 가 false) · 이미 번역이 늘었으면 그건 메워요
         else if (watch && event.isTrusted && t.closest('dialog[open] .popup-button-cancel')) watch.cancelled = true;
     }
@@ -657,11 +790,15 @@ export function startTrFill(doc = globalThis.document) {
         import('./ext-compat.js').then(m => { compat = m; m.setFaceName(name => (fill.view() ? mb.tr.trString(name) : name)); faces(); }).catch(() => { /* 얼굴은 원문 이름 첫 글자 그대로 */ });
         fill.guardTrFix();   // 1.5.3 「번역 고치기」 동안 숨긴 열쇠를 되돌려 고친 값이 저장되게(검토 1)
         doc.addEventListener('click', fill.onClick, true);
+        // 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는 글도 화면만 번역일 때 사전으로(그 확장 화면 번역 범위 밖이에요)
+        try { wrapMbToasts(globalThis.toastr, { title: typeof mb.core.TITLE === 'string' ? mb.core.TITLE : '미트볼 상태창', trs: t => mb.tr.trString(t), on: () => fill.view() }); } catch { /* 알림은 원문 그대로 */ }
         // 감시자를 새로 걸지 않고 메시지 꾸미기(공용 #chat 구독 하나)에 얹어요 — 칩 자리 안이 바뀐 기록만 · 답이 오는 동안에도 · 다음 프레임(그리기 전)
-        addMessageDecorator('미트볼 칩 번역', list => fill.paint(list), { settle: 0, live: true, order: 90, filter: fill.slotRecord, enabled: fill.view });
+        addMessageDecorator('미트볼 칩 번역', list => fill.paint(list), { settle: 0, live: true, order: 90, filter: fill.slotRecord });   // 1.6.8: 굳힌 옛 답 날 칩은 한국어 저장에서도 다시 적어요(화면만 번역 확인은 paint 안에서)
         try {
             const { eventSource, event_types: types } = globalThis.SillyTavern.getContext();
             if (types?.GENERATION_ENDED) eventSource.on(types.GENERATION_ENDED, () => fill.afterReply());
+            // 1.6.8 생성 없이 상태가 바뀌는 때(/sendas · 답 고치기 · 이미 있는 스와이프로 넘기기)도 고정 낱말 짝만(AI 0) — 「Afternoon」이 다음 답까지 영어로 남았어요
+            for (const type of [types?.MESSAGE_RECEIVED, types?.MESSAGE_EDITED, types?.MESSAGE_SWIPED]) if (type) eventSource.on(type, () => fill.tidySoon(TIDY_REPLY_MS));
             eventSource.on('EXTENSION_LLM_TRANSLATE_DONE', data => fill.afterTranslate(data));   // 1.5.8 테마 번역기가 답을 번역해 끝내면 그 답의 칩 · 새 상태 글도
             // 1.5.2: 고정 낱말 열쇠는 채팅 파일에 안 적혀서 열 때마다 다시 넣어요 — 상태가 늦게 계산돼도 되게 0.8초 · 3초 두 번(바뀐 게 없으면 아무것도 안 해요)
             if (types?.CHAT_CHANGED) eventSource.on(types.CHAT_CHANGED, () => { fill.tidySoon(800); globalThis.setTimeout(() => fill.tidySoon(0), 3000); });

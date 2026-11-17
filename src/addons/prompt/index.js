@@ -994,7 +994,7 @@ function isRetryableError(e) {
     if (typeof e.transient === 'boolean') return e.transient;
     const s = e.status;
     if (typeof s === 'number') return s !== 524 && (s === 429 || (s >= 500 && s <= 599));
-    return /network|failed to fetch|networkerror|econnreset|socket hang up|timeout|timed out/i.test(e.message || '');
+    return /network|failed to fetch|load failed|networkerror|econnreset|socket hang up|timeout|timed out/i.test(e.message || '');
 }
 
 // 서버가 Retry-After를 주면 그걸 따르고, 없으면 지수 백오프 + 약간의 지터.

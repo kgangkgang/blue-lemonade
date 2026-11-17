@@ -6,7 +6,7 @@ export function perfStartError(phase, error) {
     if (!Object.hasOwn(phases, phase)) phase = 'ENTRY';
     const message = typeof error?.message === 'string' ? error.message : '';
     const kind = /does not provide an export|doesn't provide an export|export .* not found/i.test(message) ? 'EXPORT'
-        : /failed to fetch|fetch.*module|importing a module script|loading.*module|module.*failed to load/i.test(message) ? 'FETCH' : 'INIT';
+        : /failed to fetch|load failed|fetch.*module|importing a module script|loading.*module|module.*failed to load/i.test(message) ? 'FETCH' : 'INIT';
     return Object.assign(new Error(`${phases[phase]}: ${kinds[kind]} [PERF-${phase}-${kind}]`), { perfPhase: phase, perfKind: kind });
 }
 

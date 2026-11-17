@@ -478,4 +478,120 @@ await test('㉑ 1.5.8 칩 「이름 = 긴 설명」: 사전의 통째 번역(40�
     assert.deepEqual([...mes.querySelectorAll('.ss-mchip')].map(e => e.textContent), ['♥ 말로 +2', '💞 말로 = 새벽에 그녀가 항구 장난으로 망신당하는 모습을 목격함', '🗺️ 새 장소: 말로의 Penthouse', '+Silver Key']);
 });
 
+await test('㉒ 1.6.8 굳힌 옛 답의 날 칩(「aff 이름 +4」): 그 확장 실시간 칩처럼 아이콘으로(♥ · 🤝 · 📍 · 🕐 …) · 한국어 저장 · 화면만 번역 둘 다', async () => {
+    const ops = [['aff', 'Nora +4'], ['trust', 'Nora +5'], ['호감', 'Nora +1'], ['Loc', 'Harbor'], ['time', 'Morning'], ['weather', 'Rain'], ['cash', '+300'],
+        ['item', 'Plum Tea 2'], ['item', '-Old Key 1|'], ['stat', '체력 -5'], ['hp', '-3'], ['cond', '독'], ['date', '+1'], ['mind', 'Nora: 속마음'], ['memo', 'x']];
+    const m = { is_user: false, swipe_id: 0, extra: { statussim: { bySwipe: { 0: ops } } } };
+    const want = ['♥ Nora +4', '🤝 Nora +5', '♥ Nora +1', '📍 Harbor', '🕐 Morning', '날씨: Rain', '골드 +300', '+Plum Tea×2', '−Old Key', '체력 −5', 'HP −3', '상태: 독', '📅 +1일'];
+    assert.deepEqual(T.bakedChips(m, { currency: '골드' }), want);
+    assert.equal(T.bakedChips(m)[6], '💰 +300', '화폐 이름이 없으면 돈 아이콘');
+    // 굳힐 때 적어 둔 칩 글이 있으면 그것 그대로(🎲 빼고) · 사람 답 · 변화 줄 없음은 없음
+    assert.deepEqual(T.bakedChips({ swipe_id: 0, extra: { statussim: { chips: { 0: ['♥ Nora +2', '🎲 x'] }, bySwipe: { 0: ops } } } }), ['♥ Nora +2']);
+    assert.equal(T.bakedChips({ is_user: true, extra: { statussim: { bySwipe: { 0: ops } } } }), null);
+    assert.equal(T.bakedChips({ extra: {} }), null);
+    // 칩 줄: 그 확장이 그린 날 칩 글(「키 값」)을 다시 적어요 — 한국어 저장(화면만 번역 꺼짐)에서도
+    const raw = T.rawChipKeys(ops).map(([k, v]) => `${k} ${v}`.slice(0, 60));
+    const mes = window.document.querySelector('.mes'); mes.setAttribute('mesid', '2');
+    const slot = mes.querySelector('.custom-ss-slot');
+    const draw = () => { slot.innerHTML = `<div class="ss-msgcard ss-scope">${raw.map(l => `<span class="ss-mchip">${l}</span>`).join('')}</div>`; };
+    const chips = () => [...slot.querySelectorAll('.ss-mchip')].map(e => e.textContent);
+    for (const view of [false, true]) {
+        const f = fakeTarget({ view });
+        f.app.current.state.data = { wallet: { currency: '골드' } };
+        draw();
+        T.createTrFill(f.mb, { doc: window.document, chat: () => [{}, {}, m] }).paint([mes]);
+        const fixedKo = t => t.replace('🕐 Morning', '🕐 아침').replace('날씨: Rain', '날씨: 비');
+        assert.deepEqual(chips(), view ? want.map(t => fixedKo(t.replace('Nora', '노라'))) : want.map(fixedKo), view ? '화면만 번역: 아이콘 + 사전 이름 · 시간대 · 날씨 고정 낱말' : '한국어 저장: 아이콘 + 시간대 · 날씨 고정 낱말');
+    }
+    // 한국어 저장 · 실시간 칩: 시간대 · 날씨 칩만 고정 낱말로(AI 0) · 다른 칩 · 이름은 그대로
+    const liveKo = fakeTarget({ view: false });
+    liveKo.app.current.snaps = new Map([[2, { labels: ['🕐 Evening', '날씨: Light rain', '♥ Nora +1', '📍 Harbor Street'] }]]);
+    slot.innerHTML = `<div class="ss-msgcard ss-scope">${['🕐 Evening', '날씨: Light rain', '♥ Nora +1', '📍 Harbor Street'].map(l => `<span class="ss-mchip">${l}</span>`).join('')}</div>`;
+    T.createTrFill(liveKo.mb, { doc: window.document, chat: () => [{}, {}, m] }).paint([mes]);
+    assert.deepEqual(chips(), ['🕐 저녁', '날씨: 약한 비', '♥ Nora +1', '📍 Harbor Street']);
+    // 실시간 칩(그 답의 snaps 가 있음)의 다른 칩은 건드리지 않아요 · 칩 수가 다르면 그대로
+    const live = fakeTarget({ view: false });
+    live.app.current.snaps = new Map([[2, { labels: ['aff 놀이 +1'] }]]);
+    slot.innerHTML = '<div class="ss-msgcard ss-scope"><span class="ss-mchip">aff 놀이 +1</span></div>';
+    T.createTrFill(live.mb, { doc: window.document, chat: () => [{}, {}, m] }).paint([mes]);
+    assert.deepEqual(chips(), ['aff 놀이 +1']);
+    slot.innerHTML = '<div class="ss-msgcard ss-scope"><span class="ss-mchip">aff Nora +4</span></div>';
+    T.createTrFill(fakeTarget({ view: false }).mb, { doc: window.document, chat: () => [{}, {}, m] }).paint([mes]);
+    assert.deepEqual(chips(), ['aff Nora +4']);
+    mes.setAttribute('mesid', '1');
+});
+
+await test('㉓ 1.6.8 그림 글자가 붙은 날씨 · 시간대(「🌧 Rain」): 낱말 짝(Rain → 비)과 붙은 꼴 짝(🌧 Rain → 🌧 비)을 AI 없이 · 자유 글 · 이름은 그대로', () => {
+    const items = [{ text: '🌧 Rain', key: 'weather' }, { text: '☀️ Clear', key: 'weather' }, { text: '🕐 Evening', key: 'time' }, { text: '🌧 Rain', key: 'note' }, { text: '🌸 Nora', key: 'weather' }];
+    assert.deepEqual(T.fixedPairs(items, {}), [['Rain', '비'], ['🌧 Rain', '🌧 비'], ['Clear', '맑음'], ['☀️ Clear', '☀️ 맑음'], ['Evening', '저녁'], ['🕐 Evening', '🕐 저녁']]);
+    assert.deepEqual(T.fixedPairs(items, { '🌧 Rain': '🌧 비' }).slice(0, 1), [['Rain', '비']], '사전에 있는 짝은 그대로');
+});
+
+await test('㉔ 1.6.8 70자로 잘린 알림 글(「화면 밖 — 이름」 · 「…」): 상태에 원문 통째가 있으면 원문을 번역 요청에 · 없으면 예전처럼 덩이 · 알림함을 열면 자동 번역 규칙대로', async () => {
+    const LONG = 'Checked the old harbor lighthouse lamp at dawn to make sure the wick was dry and polished the brass rail.';
+    const cut = LONG.slice(0, 69) + '…';
+    const full = pre => (LONG.startsWith(pre) ? LONG : null);
+    assert.deepEqual(T.collectGaps([cut], { full }).list, [LONG]);
+    assert.deepEqual(T.collectGaps([cut], { full, has: p => p === LONG }).list, [], '원문이 사전에 있으면 안 보냄');
+    assert.deepEqual(T.collectGaps([cut]).list, [LONG.slice(0, 69).trim()]);
+    // 알림함을 열면: 그 확장 자동 번역이 켜져 있을 때만(실리 기본 번역 · 항상) 원문을 한 번에 · 꺼져 있으면 안 함
+    const btn = Object.assign(window.document.createElement('button'), {}); btn.dataset.hud = 'inbox'; window.document.body.append(btn);
+    for (const [auto, engine, want] of [['st', 'st', 1], ['st', 'llm', 0], ['always', 'llm', 1], ['off', 'st', 0]]) {
+        const f = fakeTarget({ auto, engine, ko: { [LONG]: '새벽에 낡은 등대 등을 점검했다.' } });
+        f.meta.notes = [{ title: '화면 밖 — Nora', text: cut }];
+        f.app.current.state = { recent: [], data: { rel: { life: [{ who: 'Nora', text: LONG }] } } };
+        const tm = fakeTimers();
+        const fill = T.createTrFill(f.mb, { doc: window.document, now: tm.now, timers: tm.timers });
+        fill.onClick({ target: btn, isTrusted: true });
+        await tm.run(1000);
+        assert.equal(f.calls.json.length, want, `${auto}/${engine}`);
+        if (want) assert.equal(f.meta.tr[LONG], '새벽에 낡은 등대 등을 점검했다.');
+    }
+    btn.remove();
+});
+
+await test('㉕ 1.6.8 플레이 기록 「지난 하루들」 줄(state.days 의 칩 글): 「날씨: Sunny」 통째 짝을 AI 없이 · 그날 칩의 영어 글도 번역 요청에 · 이름 칩은 그대로', async () => {
+    // 모으기: 지난 하루들 줄도 화면에 보일 글이에요
+    const cur = { state: { recent: [], days: [{ date: '1년 Mar 2일 (Fri)', labels: ['날씨: Sunny', '상태: Tired', '♥ Nora +3'] }, null, { labels: 'x' }] } };
+    assert.deepEqual(T.visibleTexts(cur, {}), ['날씨: Sunny', '상태: Tired', '♥ Nora +3']);
+    // 통째 짝: 시간대 · 날씨 칩만 · 사전에 있는 것 · 못 읽는 낱말 · 다른 칩은 빼요 · 사전 값(📌 고친 값)이 먼저
+    assert.deepEqual(T.chipSlotPairs(['날씨: Sunny', '🕐 Afternoon', '🕐 Late Afternoon', '날씨: Sunny', '날씨: Purple haze', '상태: Tired', '♥ April +3', '날씨: 비'], {}),
+        [['날씨: Sunny', '날씨: 맑음'], ['🕐 Afternoon', '🕐 오후'], ['🕐 Late Afternoon', '🕐 늦은 오후']]);
+    assert.deepEqual(T.chipSlotPairs(['날씨: Sunny', '🕐 Afternoon'], { '날씨: Sunny': '날씨: 해' , Afternoon: '한낮' }), [['🕐 Afternoon', '🕐 한낮']]);
+    // tidy(답 끝 · 채팅 열기): 지난 하루들 줄의 통째 짝이 사전에 들어가요(그 확장 화면 번역이 통째로 맞춰요)
+    const f = fakeTarget();
+    f.app.current.state = { recent: [], days: [{ labels: ['날씨: Sunny', '상태: Tired'] }], data: {} };
+    f.app.current.snaps = new Map();
+    const fill = T.createTrFill(f.mb, { doc: window.document });
+    fill.tidy({ draw: false });
+    assert.equal(f.meta.tr['날씨: Sunny'], '날씨: 맑음');
+    assert.equal(Object.hasOwn(f.meta.tr, '상태: Tired'), false, '상태 이름은 번역기 몫');
+    // 번역 단추: 그날 칩 글의 영어(지금 상태에 없는 상태 이름)도 번역 요청에 실려요 · 고정 낱말은 안 실려요
+    const g = fakeTarget({ ko: { Tired: '피곤' } });
+    g.app.current.state = { recent: [], days: [{ labels: ['날씨: Sunny', '상태: Tired'] }], data: {} };
+    g.app.current.snaps = new Map();
+    await T.createTrFill(g.mb, { doc: window.document }).fill('auto');
+    assert.deepEqual(g.calls.json, [['Tired']]);
+    assert.equal(g.meta.tr.Tired, '피곤');
+});
+
+await test('㉖ 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는 글: 제목이 그 확장 이름일 때만 · 화면만 번역일 때만 사전으로 · 태그 · 엔티티 그대로', () => {
+    const dict = { Leon: '레온', Bread: '빵', "Ann's Ledger": '앤의 장부' };
+    const trs = t => { let out = t; for (const [en, ko] of Object.entries(dict)) out = out.split(en).join(ko); return out; };
+    assert.equal(T.trToastMessage('Leon와(과) 연인이 되었어요 💞', trs), '레온와(과) 연인이 되었어요 💞');
+    assert.equal(T.trToastMessage('💬 <b>Leon</b>: hi<br><small>Ann&#39;s Ledger</small>', trs), '💬 <b>레온</b>: hi<br><small>앤의 장부</small>');
+    assert.equal(T.trToastMessage('<a href="Leon">x</a>', trs), '<a href="Leon">x</a>', '태그 속성은 안 건드려요');
+    assert.equal(T.trToastMessage('상태창을 만들었어요!', trs), '상태창을 만들었어요!');
+    const seen = [];
+    const fake = { options: { escapeHtml: true } };
+    for (const k of ['info', 'success', 'warning', 'error']) fake[k] = (m, t) => { seen.push([k, m, t]); return k; };
+    let view = true;
+    assert.equal(T.wrapMbToasts(fake, { title: '미트볼 상태창', trs, on: () => view }), true);
+    assert.equal(T.wrapMbToasts(fake, { title: '미트볼 상태창', trs }), false, '한 번만 감싸요');
+    assert.equal(fake.success('Bread 구매!', '미트볼 상태창'), 'success', '돌려준 값 그대로');
+    fake.info('Leon joined', 'Other');
+    view = false; fake.info('Leon와(과) 연인이 되었어요', '미트볼 상태창');
+    assert.deepEqual(seen, [['success', '빵 구매!', '미트볼 상태창'], ['info', 'Leon joined', 'Other'], ['info', 'Leon와(과) 연인이 되었어요', '미트볼 상태창']]);
+});
+
 console.log(`ext-bridge-tr: ${passed} 통과`);

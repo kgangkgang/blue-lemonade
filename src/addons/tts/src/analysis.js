@@ -871,7 +871,7 @@ export function neutralMacros(text) {
         .replace(/<(user|bot|char|charifnotgroup|group)>/gi, '<\u200b$1>');
 }
 /** 잠깐의 문제(잦은 요청 · 서버 · 시간 · 끊김 · 멈춤)로 보이는 오류 — 이땐 같은 글을 날 응답으로 또 보내지 않는다 (생성이 됐을 수 있어 값을 두 번 치름) */
-const TRANSIENT = /\b(?:408|429|5\d\d)\b|time.?out|timed out|overload|rate.?limit|network|failed to fetch|cancel|abort|시간/i;
+const TRANSIENT = /\b(?:408|429|5\d\d)\b|time.?out|timed out|overload|rate.?limit|network|failed to fetch|load failed|cancel|abort|시간/i;
 const errText = (e) => (typeof e === 'string' ? e : String(e?.error?.message || e?.message || ''));
 
 /**

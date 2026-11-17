@@ -830,6 +830,8 @@ export function applyAll() {
     { const on = want.has('salty') && s.chat.mbBack !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-back') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-back', on); } }
     // 1.6.6 미트볼 영어 저장 전환 바로 하기(src/mb-auto-en.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 그 확장이 물을 때마다 이 표식을 봐요(시트는 이 표식을 안 써요)
     { const on = want.has('salty') && s.chat.mbAutoEn !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-auto-en') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-auto-en', on); } }
+    // 1.6.8 미트볼 지도 층별 보기(src/mb-map-floors.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 바뀌면 떠 있는 지도를 다시 그려요
+    { const on = want.has('salty') && s.chat.mbMapFloors !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-floors') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-floors', on); } }
     // 1.6.0 미트볼 문구: 블루레몬 추천(src/mb-prompt.js · 기본 적용 안 함): 고른 때만 모듈을 받아요 — 그 확장의 「생성 시스템 프롬프트」 끝에 테마 줄을 덧붙이고, 「적용 안 함」 으로 돌리면 그 줄만 떼요
     { const lv = want.has('salty') ? (s.chat.mbPrompt || 'off') : 'off'; let once = false; try { once = !!localStorage.getItem('bl-mb-prompt-once'); } catch { /* 표시 없이 */ } lateSync('mbPrompt', () => import('./mb-prompt.js'), want.has('salty') && (lv !== 'off' || once), m => { if (want.has('salty')) m.syncMbPrompt(lv, s.chat.mbPromptCount, s.chat.mbPromptChars, { cap: s.chat.mbPromptCap }).catch(error => console.warn('[Blue Lemonade] 미트볼 문구', error)); }); }
     const mbPlain = want.has('salty') && s.chat.mbHelpers === false;

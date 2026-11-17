@@ -433,9 +433,168 @@ await ok('1.6.6 프로필 채우기: 변화 줄이 남은 사람인데 프로필
     c.chatMetadata.statussim.base.data.rel.user[1].aliases = ['Jo'];
     const r = M.reconcileRel(c);
     assert.deepEqual(r.added, ['Bo']);
-    assert.deepEqual(c.chatMetadata.statussim.base.data.profile.list.at(-1), { name: 'Bo', role: 'npc', summary: 'Baker — Gave her bread.', fields: [], home: '', sched: '' });
+    assert.deepEqual(c.chatMetadata.statussim.base.data.profile.list.at(-1), { name: 'Bo', role: 'npc', summary: 'Baker — Gave her bread.', fields: [], home: '', sched: '', blFill: 1 });
     assert.equal(c.chatMetadata.statussim.origin.data.profile.list.length, 1);
     assert.deepEqual(M.reconcileRel(c).added, [], '두 번 해도 한 번만');
     assert.ok(M.opsLedger({ chat }).text.includes('Profiles: write a profile (role "main") for EVERY person in the relationship changes above'));
+});
+// 1.6.8 이름 칸이 직함으로 나오던 것(진짜 모델 시험) — 시험용으로 지어낸 이름 · 직함 · 로어북이에요
+const LORE = { entries: {   // 지어낸 로어북: 「Captain」 은 두 사람 항목의 열쇠 · 「Warden」 은 한 사람만 · 「Harbor」 는 사람 없는 설정 항목 · 「Pip」 은 Mira 항목에 든 다른 이(동물)
+    0: { key: ['Captain', 'Mira', '/mi+ra/i'] },
+    1: { key: ['Captain', 'Joon', 'old guard'] },
+    2: { key: ['Warden', 'Bo'] },
+    3: { key: ['Harbor', 'Docks'] },
+    4: { key: ['Pip', 'Mira'] },
+    5: { key: ['Keeper', 'Ria'] }, 6: { key: ['Keeper', 'Harbor'] },
+} };
+const loreCtx = (extra = {}) => ({ characterId: 0, characters: [{ name: 'Narrator', avatar: 'n.png', data: { extensions: { world: 'book-a' } } }], getCurrentChatId: () => 'chat-1', name1: 'Me',
+    loadWorldInfo: async n => (n === 'book-a' ? structuredClone(LORE) : null), ...extra });
+await ok('1.6.8 직함 → 이름 짝: 같은 직함을 둘이 가지면 정하지 않아요 · 한 사람만 가지면 그 사람 · 이름과 직함이 같으면 이름 그대로 · 사람 없는 항목이 섞이면 모름 · 정규식 열쇠는 안 써요', async () => {
+    const base = { data: { rel: { user: [{ name: 'Mira' }, { name: 'Joon' }, { name: 'Bo' }, { name: 'Ria' }, { name: 'Chief', label: 'Head of the Watch' }] }, profile: { list: [{ name: 'Me', role: 'user' }, { name: 'Tam', aliases: ['Tammy'] }] } } };
+    const c = loreCtx();
+    const known = M.knownNames(c, base);
+    assert.deepEqual([...known.values()], ['Mira', 'Joon', 'Bo', 'Ria', 'Chief', 'Tam', 'Narrator'], '사용자 이름(프로필 user)은 빼요');
+    const sets = M.keySets([LORE], base);
+    const h = w => M.holdersOf(w, known, sets);
+    assert.deepEqual(h('Captain'), { self: false, names: ['Mira', 'Joon'], unknown: 0 }); assert.equal(M.onlyHolder(h('Captain')), '', '둘이면 안 정해요');
+    assert.equal(M.onlyHolder(h('warden')), 'Bo', '한 사람만 — 대소문자 무시');
+    assert.deepEqual(h('Chief'), { self: true, names: ['Chief'], unknown: 0 }, '그 이름의 사람이 있으면 다른 사람 이름표의 직함과 같아도 이름 그대로'); assert.equal(M.onlyHolder(h('Chief')), '');
+    assert.equal(M.onlyHolder(h('Tammy')), 'Tam', '상태창 별칭 묶음도 열쇠로');
+    assert.deepEqual(h('Keeper'), { self: false, names: ['Ria'], unknown: 1 }); assert.equal(M.onlyHolder(h('Keeper')), '', '사람 없는 항목에도 있으면 모름');
+    assert.equal(M.onlyHolder(h('Harbor')), '', '사람 없는 설정 항목뿐이면 모름');
+    assert.deepEqual(h('mi+ra'), { self: false, names: [], unknown: 0 }, '정규식 열쇠는 빼요');
+    assert.equal(M.onlyHolder(M.holdersOf('Warden', new Map(), sets)), '', '아는 이름이 없으면 안 정해요');
+});
+await ok('1.6.8 변화 장에 이름 짝: 한 사람 직함이면 「이름 (written as 직함)」 · 여럿이면 후보와 「직함을 쓰지 말 것」 · 이름이면 그대로 · 그 사람 이름도 변화 줄에 따로 있으면 짝 안 지음 · 쓸 이름 목록 · 로어북을 못 받았으면 예전 꼴', async () => {
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });
+    const chat = [{ name: 'A', mes: 'a', swipe_id: 0, extra: op(['aff', 'Captain +5, Warden +3, Chief +2, Pip +1, Mira +1'], ['trust', 'Captain +2']) }];
+    const base = { data: { rel: { user: [{ name: 'Mira' }, { name: 'Joon' }, { name: 'Bo' }, { name: 'Chief' }] } } };
+    const c = loreCtx({ chat, chatMetadata: { statussim: { base } } });
+    const plain = M.opsLedger({ ...c, getCurrentChatId: () => 'other-chat' }).text;
+    assert.ok(plain.includes('Captain: aff +5, trust +2; Warden: aff +3, trust 0'), '로어북을 받기 전엔 짝 없이(이름 목록만)');
+    await M.primeBooks(c);
+    const t = M.opsLedger(c).text;
+    assert.ok(t.includes('"Captain" (a title or nickname shared in the lorebook by Mira, Joon — write the real name of the one the story means, never "Captain"): aff +5, trust +2'), t);
+    assert.ok(t.includes('Bo (written as "Warden"): aff +3, trust 0'), t);
+    assert.ok(t.includes('; Chief: aff +2, trust 0'), '이름과 직함이 같은 사람은 그대로');
+    assert.ok(t.includes('; Pip: aff +1, trust 0'), '그 사람(Mira) 이름도 변화 줄에 있으면 짝 안 지어요');
+    assert.ok(t.includes('Real names already used for these people (current panel) — keep exactly these names in the "name" fields; a title goes in the label, never in the name: Mira, Joon, Bo, Chief'), '카드 이름은 목록에 안 넣어요');
+    assert.deepEqual([...M.opsLedger(c).sums.keys()], ['Captain', 'Warden', 'Chief', 'Pip', 'Mira'], '바로잡기에 쓰는 합은 적힌 이름 그대로');
+    const none = M.opsLedger({ chat }).text; assert.ok(none.includes('Captain: aff +5') && !none.includes('Real names'), '상태창 · 카드가 없으면 예전 꼴');
+});
+await ok('1.6.8 만든 뒤 이름 칸 바로잡기: 직함이 정확히 한 사람 것이고 그 사람 칸이 따로 없을 때만(관계 · 짝 · 프로필 · origin) · 같은 직함 둘이면 · 이름과 직함이 같으면 · 그 사람 칸이 있으면 · 두 직함이 한 사람으로 모이면 · 그 사람도 변화 줄에 따로 있으면 그대로', async () => {
+    const before = { data: { rel: { user: [{ name: 'Mira' }, { name: 'Joon' }, { name: 'Bo' }, { name: 'Ria' }, { name: 'Chief' }] }, profile: { list: [{ name: 'Me', role: 'user' }] } } };
+    const mk3 = (rel, prof = [], pairs = [], ops = []) => {
+        const c = loreCtx({ chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: { statussim: { bySwipe: { 0: ops } } } }], chatMetadata: { statussim: {
+            base: { data: { rel: { user: rel.map(n => ({ name: n, aff: 1, trust: 1 })), pairs }, profile: { list: [{ name: 'Me', role: 'user' }, ...prof.map(n => ({ name: n, role: 'main' }))] } } },
+            origin: { data: { rel: { user: rel.map(n => ({ name: n })), pairs: structuredClone(pairs) }, profile: { list: prof.map(n => ({ name: n })) } } } } } });
+        return c;
+    };
+    const names = c => [c.chatMetadata.statussim.base.data.rel.user.map(r => r.name), c.chatMetadata.statussim.base.data.profile.list.map(r => r.name)];
+    await M.primeBooks(loreCtx());
+    { const c = mk3(['Warden', 'Mira'], ['Warden'], [{ a: 'Warden', b: 'Mira' }]); const r = M.renameTitles(c, { before });
+        assert.deepEqual(r, [{ from: 'Warden', to: 'Bo' }]); assert.deepEqual(names(c), [['Bo', 'Mira'], ['Me', 'Bo']]);
+        assert.deepEqual(c.chatMetadata.statussim.base.data.rel.pairs[0], { a: 'Bo', b: 'Mira' }); assert.equal(c.chatMetadata.statussim.origin.data.rel.user[0].name, 'Bo'); assert.equal(c.chatMetadata.statussim.origin.data.profile.list[0].name, 'Bo');
+        assert.equal(c.chatMetadata.statussim.base.data.rel.user[0].aff, 1, '숫자 · 다른 칸은 그대로'); assert.deepEqual(M.renameTitles(c, { before }), [], '두 번 해도 한 번만'); }
+    { const c = mk3(['Captain', 'Mira']); assert.deepEqual(M.renameTitles(c, { before }), []); assert.deepEqual(names(c)[0], ['Captain', 'Mira'], '같은 직함 둘(사람 섞임 위험) — 그대로'); }
+    { const c = mk3(['Captain']); assert.deepEqual(M.renameTitles(c, { before }), [], '둘 중 한 사람 칸이 비어 있어도 그대로'); }
+    { const c = mk3(['Chief', 'Mira']); assert.deepEqual(M.renameTitles(c, { before }), [], '이름과 직함이 같은 사람 — 그대로'); }
+    { const c = mk3(['Warden', 'Bo']); assert.deepEqual(M.renameTitles(c, { before }), []); assert.deepEqual(names(c)[0], ['Warden', 'Bo'], '그 사람 칸이 따로 있으면 합치지 않아요'); }
+    { const c = mk3(['Warden'], ['Bo']); assert.deepEqual(M.renameTitles(c, { before }), [], '프로필에만 그 사람이 있어도 그대로'); }
+    { const lore2 = { entries: { 0: { key: ['Warden', 'Bo'] }, 1: { key: ['Gatekeeper', 'Bo'] } } };
+        const c = mk3(['Warden', 'Gatekeeper']); assert.deepEqual(M.renameTitles(c, { before, books: [lore2] }), [], '두 직함이 한 사람으로 모이면 둘 다 그대로'); }
+    { const c = mk3(['Pip', 'Joon'], [], [], [['aff', 'Pip +1, Mira +2']]); assert.deepEqual(M.renameTitles(c, { before }), [], '그 사람(Mira)도 변화 줄에 따로 있으면 그대로'); }
+    { const c = mk3(['Warden']); assert.deepEqual(M.renameTitles(c, { before, books: [] }), [], '로어북이 없으면 그대로');
+        assert.deepEqual(M.renameTitles(c, { before: null }), [], '만들기 전 상태창이 없고 카드 이름뿐이면 그대로'); }
+});
+await ok('1.6.8 창이 닫힌 뒤: 숫자를 직함 이름으로 맞춘 다음 이름을 바꾸고 알려요 · 같은 직함 둘이면 이름은 그대로 두고 숫자만', async () => {
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });
+    const before = { data: { rel: { user: [{ name: 'Mira' }, { name: 'Bo' }, { name: 'Joon' }] } } };
+    const mkc = rel => { const c = loreCtx({ chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: op(['aff', 'Warden +9, Captain +7']) }], saveMetadata() { this.saved = (this.saved || 0) + 1; }, chatMetadata: { statussim: { base: before } } });
+        setTimeout(() => { c.chatMetadata.statussim.base = { data: { rel: { user: rel.map(n => ({ name: n, aff: 0, trust: 0, stage: 0 })) } } }; }, 10); return c; };
+    const toasts = []; const toast = { success: m => toasts.push('ok ' + m), info: m => toasts.push('i ' + m) }; const core = { app: { refreshNow() { } } };
+    const c = mkc(['Warden', 'Captain', 'Mira']);
+    const res = await M.afterWizard({ before, level: 'all', c, toast, waitMs: 500, step: 5, core });
+    assert.deepEqual(res.renamed, [{ from: 'Warden', to: 'Bo' }]);
+    assert.deepEqual(c.chatMetadata.statussim.base.data.rel.user.map(r => [r.name, r.aff]), [['Bo', 9], ['Captain', 7], ['Mira', 0]], '숫자는 직함 이름으로 맞춘 뒤 이름만 바꿔요 · 같은 직함 둘은 그대로');
+    assert.match(toasts.at(-1), /이름 칸에 직함으로 적힌 1명은 카드 · 로어북 이름으로 바꿨어요\(Warden → Bo\)\. 「Captain」는 여러 사람의 직함이라\(후보 Mira · Joon\) 누구인지 몰라 그대로 뒀어요/);
+});
+await ok('1.6.8 프로필 채우기 전 같은 사람 확인: 관계 칸이 직함으로만 적혀 있고 그 직함이 로어북에서 프로필 있는 사람과 같이 나오면 안 더해요(같은 직함 여럿 · 한 명 모두) · 로어북 없으면 다른 프로필 글에 그 낱말이 나오면 안 더해요 · 상관없는 사람은 더해요(표식)', async () => {
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });
+    const mkp = (relNames, profs, chatId) => loreCtx({ getCurrentChatId: () => chatId, chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: op(['aff', relNames.map(n => `${n} +2`).join(', ')]) }], chatMetadata: { statussim: { base: { data: {
+        profile: { list: [{ name: 'Me', role: 'user', summary: '' }, ...profs] }, rel: { user: relNames.map(n => ({ name: n, label: 'Boss', memo: 'Kind to her.', aff: 0, trust: 0, stage: 0 })) } } } } } });
+    { const c = mkp(['Captain', 'Kai'], [{ name: 'Mira', role: 'main', summary: 'm', fields: [] }, { name: 'Joon', role: 'npc', summary: 'j', fields: [] }], 'p1'); await M.primeBooks(c);
+        assert.deepEqual(M.reconcileRel(c).added, ['Kai'], '같은 직함 여럿(둘 다 프로필 있음) — 직함 칸은 안 더하고 상관없는 사람만'); assert.equal(c.chatMetadata.statussim.base.data.profile.list.at(-1).blFill, 1); }
+    { const c = mkp(['Warden'], [{ name: 'Bo', role: 'main', summary: 'b', fields: [] }], 'p2'); await M.primeBooks(c);
+        assert.deepEqual(M.reconcileRel(c).added, [], '한 명만 가진 직함 — 그 사람 프로필이 있으면 안 더해요'); }
+    { const c = mkp(['Warden'], [{ name: 'Mira', role: 'main', summary: 'm', fields: [] }], 'p3'); await M.primeBooks(c);
+        assert.deepEqual(M.reconcileRel(c).added, ['Warden'], '그 직함의 사람이 상태창에 없으면 더해요'); }
+    { const c = mkp(['Warden', 'Kai'], [{ name: 'Bo', role: 'main', summary: 'The gentle Warden of the gate.', fields: [] }], 'p4'); c.loadWorldInfo = async () => null; await M.primeBooks(c);
+        assert.deepEqual(M.reconcileRel(c).added, ['Kai'], '로어북이 없으면 다른 프로필 글에 그 낱말이 나오면 안 더해요'); }
+});
+await ok('1.6.8 이미 생긴 중복 정리: 블루레몬이 더한 프로필(표식 · 1.6.6 꼴)만 · 같은 사람으로 확인될 때만 지워요(같은 직함 여럿이어도 모두 프로필이 있으면 · 한 명이면) · 사용자 · AI 프로필은 그대로 · 모르는 항목이 섞이면 그대로 · 알림 한 줄', async () => {
+    const row = n => ({ name: n, label: 'Boss', memo: 'Kind to her.', aff: 0, trust: 0, stage: 0 });
+    const old166 = n => ({ name: n, role: 'npc', summary: 'Boss — Kind to her.', fields: [], home: '', sched: '' });   // 1.6.6 이 더한 꼴(표식 전)
+    const mkd = (profs, rel, chatId) => loreCtx({ getCurrentChatId: () => chatId, saveMetadata() { this.saved = (this.saved || 0) + 1; }, chatMetadata: { statussim: {
+        base: { data: { profile: { list: [{ name: 'Me', role: 'user' }, ...profs] }, rel: { user: rel.map(row) } } },
+        origin: { data: { profile: { list: structuredClone(profs) }, rel: { user: rel.map(row) } } } } } });
+    const names = c => c.chatMetadata.statussim.base.data.profile.list.map(p => p.name);
+    { const c = mkd([{ name: 'Mira', role: 'main', summary: 'm', fields: [] }, { name: 'Joon', role: 'npc', summary: 'Old guard.', fields: [] }, old166('Captain')], ['Captain', 'Mira'], 'd1'); await M.primeBooks(c);
+        assert.deepEqual(M.dedupeFilled(c), ['Captain'], '같은 직함 둘 — 둘 다 프로필이 있으니 누구든 중복'); assert.deepEqual(names(c), ['Me', 'Mira', 'Joon']); assert.deepEqual(c.chatMetadata.statussim.origin.data.profile.list.map(p => p.name), ['Mira', 'Joon']); }
+    { const c = mkd([{ name: 'Mira', role: 'main', summary: 'm', fields: [] }, old166('Captain')], ['Captain', 'Mira'], 'd2'); await M.primeBooks(c);
+        assert.deepEqual(M.dedupeFilled(c), [], '같은 직함의 다른 사람(Joon) 프로필이 없으면 — 그 사람일 수 있어 그대로'); }
+    { const c = mkd([{ name: 'Bo', role: 'main', summary: 'b', fields: [] }, { ...old166('Warden'), blFill: 1, summary: 'edited later' }], ['Warden'], 'd3'); await M.primeBooks(c);
+        assert.deepEqual(M.dedupeFilled(c), ['Warden'], '한 명 직함 · 표식 있음(요약을 바꿨어도)'); }
+    { const user = { name: 'Warden', role: 'npc', summary: 'My own note.', fields: [], home: '', sched: '' };
+        const c = mkd([{ name: 'Bo', role: 'main', summary: 'b', fields: [] }, user], ['Warden'], 'd4'); await M.primeBooks(c);
+        assert.deepEqual(M.dedupeFilled(c), [], '사용자가 쓴 프로필(표식 없고 1.6.6 꼴이 아님) — 그대로'); }
+    { const ai = { name: 'Warden', role: 'npc', summary: 'Boss — Kind to her.', fields: [{ k: 'Job', v: 'Guard' }] };
+        const c = mkd([{ name: 'Bo', role: 'main', summary: 'b', fields: [] }, ai], ['Warden'], 'd5'); await M.primeBooks(c); assert.deepEqual(M.dedupeFilled(c), [], '칸이 있는 프로필(AI · 사용자) — 그대로'); }
+    { const c = mkd([{ name: 'Ria', role: 'main', summary: 'r', fields: [] }, old166('Keeper')], ['Keeper'], 'd6'); await M.primeBooks(c);
+        assert.deepEqual(M.dedupeFilled(c), [], '사람 없는 설정 항목에도 나오는 낱말 — 그대로'); }
+    { const c = mkd([{ name: 'Bo', role: 'main', summary: 'b', fields: [] }, old166('Warden')], ['Warden'], 'd7'); c.loadWorldInfo = async () => null; await M.primeBooks(c);
+        assert.deepEqual(M.dedupeFilled(c), [], '로어북이 없으면 안 지워요'); }
+    { const c = mkd([{ name: 'Mira', role: 'main', summary: 'm', fields: [] }, old166('Kai')], ['Kai'], 'd8'); await M.primeBooks(c); assert.deepEqual(M.dedupeFilled(c), [], '상관없는 사람 — 그대로'); }
+    const toasts = []; let refreshed = 0;
+    const c = mkd([{ name: 'Bo', role: 'main', summary: 'b', fields: [] }, old166('Warden')], ['Warden'], 'd9');
+    assert.deepEqual(await M.cleanupDupes({ c, toast: { info: m => toasts.push(m) }, core: { app: { refreshNow: () => refreshed++ } } }), ['Warden']);
+    assert.equal(c.saved, 1); assert.equal(refreshed, 1); assert.match(toasts[0], /블루레몬이 더했던 프로필 1개를 정리했어요\(Warden\)\. 직접 만든 프로필은 그대로예요\./);
+    assert.deepEqual(await M.cleanupDupes({ c, toast: { info: m => toasts.push(m) }, core: null }), [], '채팅마다 한 번'); assert.equal(toasts.length, 1);
+});
+await ok('1.6.8 진짜 모델 시험에서 찾은 것: 앞 판 상태창에 직함이 이름으로 남아 있어도(직함 줄 · 이름 줄 둘 다) 둘 이상 사람 항목에 나오는 낱말은 이름으로 안 넘겨요 · 자기 항목에만 나오는 이름은 그대로 · 후보 둘이면 바꾸지 않고 알림에 후보를 적어요', async () => {
+    const base = { data: { rel: { user: [{ name: 'Captain' }, { name: 'Mira' }, { name: 'Joon' }, { name: 'Bo' }] } } };
+    const sets = M.keySets([LORE], base);
+    assert.deepEqual([...M.knownNames(loreCtx(), base, sets).values()], ['Mira', 'Joon', 'Bo', 'Narrator'], '두 사람 항목에 나오는 낱말(직함)은 빼요');
+    assert.deepEqual([...M.knownNames(loreCtx(), base, sets, { cards: false }).values()], ['Mira', 'Joon', 'Bo']);
+    assert.deepEqual([...M.knownNames(loreCtx(), base).values()], ['Captain', 'Mira', 'Joon', 'Bo', 'Narrator'], '열쇠 묶음이 없으면 예전 그대로');
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });
+    const c = loreCtx({ getCurrentChatId: () => 'r1', chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: op(['aff', 'Captain +5']) }], chatMetadata: { statussim: { base } } }); await M.primeBooks(c);
+    const t = M.opsLedger(c).text;
+    assert.ok(t.includes('"Captain" (a title or nickname shared in the lorebook by Mira, Joon') && t.includes('never in the name: Mira, Joon, Bo\n'), t);
+    const toasts = []; const toast = { success: m => toasts.push(m), info: m => toasts.push(m) };
+    setTimeout(() => { c.chatMetadata.statussim.base = { data: { rel: { user: [{ name: 'Captain', aff: 5, trust: 0, stage: 0 }, { name: 'Mira', aff: 0, trust: 0, stage: 0 }, { name: 'Bo', aff: 0, trust: 0, stage: 0 }] } } }; }, 10);
+    const res = await M.afterWizard({ before: base, level: 'all', c, toast, waitMs: 500, step: 5, core: null });
+    assert.deepEqual(res.renamed, []); assert.deepEqual(res.renamed.unsure, [{ name: 'Captain', of: ['Mira', 'Joon'] }]);
+    assert.equal(c.chatMetadata.statussim.base.data.rel.user[0].name, 'Captain', '후보 둘(한 명은 새 상태창에 없어도) — 그대로');
+    assert.match(toasts.at(-1), /「Captain」는 여러 사람의 직함이라\(후보 Mira · Joon\) 누구인지 몰라 그대로 뒀어요 — 미트볼에서 이름을 고쳐 주세요\.$/);
+});
+await ok('1.6.8 재현에서 찾은 것: 중복 정리 알림은 채팅마다 한 번(같은 프로필이 되살아나 다시 지워도 · 동시에 둘이 불려도) · 바로잡기 알림의 시간대는 화면이 한국어면 한국어로 · 조사 맞춤', async () => {
+    const old166 = n => ({ name: n, role: 'npc', summary: 'Boss — Kind to her.', fields: [], home: '', sched: '' });
+    const c = loreCtx({ getCurrentChatId: () => 'once-1', saveMetadata() { }, chatMetadata: { statussim: { base: { data: { profile: { list: [{ name: 'Bo', role: 'main', summary: 'b', fields: [] }, old166('Warden')] }, rel: { user: [{ name: 'Warden', label: 'Boss', memo: 'Kind to her.' }] } } } } } });
+    const toasts = []; const toast = { info: m => toasts.push(m) };
+    const [a, b] = await Promise.all([M.cleanupDupes({ c, toast, core: null }), M.cleanupDupes({ c, toast, core: null })]);
+    assert.deepEqual([a, b], [['Warden'], []], '동시에 불려도 한 번만 정리');
+    c.chatMetadata.statussim.base.data.profile.list.push(old166('Warden'));   // 그 확장이 화면 자료로 되살린 때
+    assert.deepEqual(await M.cleanupDupes({ c, toast, core: null, force: true }), ['Warden'], '되살아나면 다시 정리하되');
+    assert.equal(toasts.length, 1, '알림은 한 번만');
+    const ko = { getCurrentLocale: () => 'ko-kr' }, en = { getCurrentLocale: () => 'en-us' };
+    assert.deepEqual(['Morning', 'Late Night', 'Evening', 'Noon', '밤', 'Teatime'].map(t => M.timeLabel(t, ko)), ['아침', '심야', '저녁', '낮', '밤', 'Teatime']);
+    assert.equal(M.timeLabel('Morning', en), 'Morning', '한국어 화면이 아니면 그대로');
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });
+    const T = ['Dawn', 'Morning', 'Night'];
+    const cx = { getCurrentLocale: () => 'ko-kr', chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: op(['period', 'Night -> Morning'], ['aff', 'Mira +1']) }], chatMetadata: { statussim: { base: { data: { calendar: { time: 'Night', times: T }, rel: { user: [{ name: 'Mira', aff: 5, trust: 0, stage: 0 }] } } } } } };
+    const before = cx.chatMetadata.statussim.base; setTimeout(() => { cx.chatMetadata.statussim.base = structuredClone(before); }, 10);
+    const tt = []; await M.afterWizard({ before, level: 'all', c: cx, toast: { info: m => tt.push(m), success: m => tt.push(m) }, waitMs: 500, step: 5, core: null });
+    assert.match(tt.at(-1), /시간대도 채팅의 마지막 시간대 「아침」으로 맞췄어요\./); assert.equal(cx.chatMetadata.statussim.base.data.calendar.time, 'Morning', '달력 값은 그 확장 이름 그대로');
 });
 console.log(`mb-prompt: ${n}개 통과`);
