@@ -18,7 +18,7 @@ const LINE_H = 3.4;          // 이름표 두 줄 사이
 const TAG_W = 9;             // 층 이름표 칸
 const LANE = 1.3;            // 같은 길로 가는 선끼리 벌리는 폭
 const CORRIDOR = 4.2;        // 점 아래 복도 선
-export const RESERVE = 0.2;  // 처음 보기 칸 오른쪽에 비워 두는 몫(그 확장의 확대 단추 줄 자리)
+export const RESERVE = 0.22; // 처음 보기 칸 오른쪽에 비워 두는 몫 — 칸 너비에 대한 비율(그 확장의 확대 단추 줄 ≈ 폰 칸의 17%)
 const ROOM_MAX = 2.4;        // 칸 너비를 채우려고 방 칸을 넓힐 때 상한(기본 칸의 배수)
 
 // ── 층 읽기 ─────────────────────────────────────────────
@@ -71,6 +71,28 @@ export function zoneOf(p, tr = null) {
     return 'out';
 }
 
+// ── 같은 곳 · 건물 이름 판정(1.7.0 · 그림만 · 자료는 안 바꿔요) ─────────────────────
+// 조직 꼬리말: 「부 · 팀 · 과 · 국 · 실 · 처」 · dept/department/team/division/section/bureau/office · 部/課/室/局 — 이것만 떼고 비교해요(방 · 홀 같은 말은 안 떼요 · 다른 방을 합치지 않게)
+const ORG_EN = /^(?:dept|department|team|division|section|bureau|office)$/;
+const ORG_KO = /[부팀과국실처部課室局]$/u;
+const words = s => String(s ?? '').toLowerCase().replace(/\([^)]*\)|（[^）]*）/g, ' ').split(/[^\p{L}\p{N}]+/u).filter(Boolean).filter(w => floorIn(w.toUpperCase()) === null && !/^\d+$/.test(w));
+/** 이름의 비교 열쇠: 괄호 · 층 표기 · 조직 꼬리말을 뗀 낱말들 */
+const MODIFIER = /^(?:main|central|front|grand|메인|중앙|정문)$/u;   // 같은 곳을 꾸미는 말(「메인 로비」 ↔ 「1층 로비」)
+export function placeKey(name, drop = null) {
+    let ws = words(labelOf(name));
+    if (drop) { ws = ws.filter(w => !drop.has(w)); while (ws.length > 1 && MODIFIER.test(ws[0])) ws = ws.slice(1); }
+    while (ws.length > 1 && ORG_EN.test(ws[ws.length - 1])) ws = ws.slice(0, -1);
+    if (ws.length) { const last = ws[ws.length - 1]; if ([...last].length >= 3 && ORG_KO.test(last)) ws[ws.length - 1] = [...last].slice(0, -1).join(''); }
+    return ws;
+}
+/** 두 이름이 같은 곳인가(좁게): 열쇠가 같거나 · 한쪽이 다른 쪽 낱말 머리글자(IT ↔ Information Technology) */
+export function sameName(a, b) {
+    const ka = placeKey(a), kb = placeKey(b); if (!ka.length || !kb.length) return false;
+    const ja = ka.join(''), jb = kb.join('');
+    if (ja === jb) return [...ja].length >= 2;
+    const ini = ws => ws.length >= 2 ? ws.map(w => [...w][0]).join('') : null;
+    return (ka.length === 1 && /^[a-z]{2,}$/.test(ja) && ini(kb) === ja) || (kb.length === 1 && /^[a-z]{2,}$/.test(jb) && ini(ka) === jb);
+}
 const normName = s => String(s ?? '').toLowerCase().replace(/[\s·・_\-.,'"()（）[\]]+/g, '');
 const simpleFind = (list, name) => { const k = normName(name); return list.find(p => normName(p.name) === k) || null; };
 const r1 = v => Math.round(v * 10) / 10;
@@ -85,16 +107,53 @@ const tagOf = r => (r >= 1 ? `${r}F` : `B${1 - r}`);
 export function floorLayout(places, { find = simpleFind, tr = null, tall = null } = {}) {
     const list = (Array.isArray(places) ? places : []).filter(p => p && p.name);
     if (list.length < 2) return null;
-    const info = new Map(list.map((p, i) => [p.name, { p, i, f: floorOf(p, tr) }]));
+    const info = new Map(list.map((p, i) => [p.name, { p, i, f: floorOf(p, tr), area: String(p.area ?? '') }]));
+    // 1.7.0 구역(area) 이름과 같은 장소(「본부 | 7F 비서실」 같은 지금 장소 줄에서 그 확장이 앞 조각으로 만든 곳)는 방이 아니라 건물 머리 — 층을 안 읽어요
+    const tx = s => [s, tr?.(s)].filter(Boolean);
+    const areaKeys = new Map();
+    for (const it of info.values()) if (it.area) for (const t of tx(it.area)) areaKeys.set(placeKey(t).join(''), it.area);
+    const headOf = new Map();
+    for (const it of info.values()) for (const t of tx(it.p.name)) { const a = areaKeys.get(placeKey(t).join('')); if (a && a !== undefined) { headOf.set(it.p.name, a); it.f = null; break; } }
+    // 1.7.0 구역이 빈 층 장소(본편 AI 가 새로 더한 곳 등)는 이어진 층 장소들의 구역이 하나면 그 구역 건물로
+    const linkedOf = n => { const p = info.get(n).p, out = new Set(); for (const l of (Array.isArray(p.links) ? p.links : [])) { const q = find(list, l); if (q) out.add(q.name); } for (const q of list) if ((q.links || []).some(l => find(list, l)?.name === n)) out.add(q.name); return out; };
+    for (const it of info.values()) {
+        if (it.f === null || it.area) continue;
+        const as = new Set([...linkedOf(it.p.name)].map(n => info.get(n)).filter(x => x && x.f !== null && x.area).map(x => x.area));
+        if (as.size === 1) it.area = [...as][0];
+    }
     // 건물 = 같은 구역(area)에서 층이 적힌 장소 묶음 · 서로 다른 층이 둘 넘어야 건물로 봐요
     const groups = new Map();
-    for (const it of info.values()) if (it.f !== null) { const k = String(it.p.area ?? ''); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(it); }
+    for (const it of info.values()) if (it.f !== null) { const k = it.area; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(it); }
     const ax = it => (Number.isFinite(it.p.x) ? it.p.x : it.i * 10);
     const buildings = [...groups.values()].filter(g => new Set(g.map(it => it.f)).size >= 2)
         .sort((a, b) => a.reduce((s, it) => s + ax(it), 0) / a.length - b.reduce((s, it) => s + ax(it), 0) / b.length);
     if (!buildings.length) return null;
     const inB = new Map(); buildings.forEach((g, bi) => g.forEach(it => inB.set(it.p.name, bi)));
     for (const it of info.values()) if (it.f !== null && !inB.has(it.p.name)) it.f = null;   // 외딴 층 하나짜리는 바깥 장소로
+    // 1.7.0 같은 건물 · 같은 층에서 이름이 거의 같은 곳(원문 · 번역 이름 어느 쪽이든)은 한 점으로 — 먼저 나온 장소가 대표 · 나머지는 그 점에 겹쳐 그려요(alias)
+    const alias = new Map();
+    buildings.forEach((g, bi) => {
+        const keep = [];
+        for (const it of g) {
+            const twin = keep.find(k => k.f === it.f && tx(k.p.name).some(a => tx(it.p.name).some(b => sameName(a, b))));
+            if (twin) { alias.set(it.p.name, twin.p.name); inB.delete(it.p.name); } else keep.push(it);
+        }
+        buildings[bi] = keep;
+    });
+    // 1.7.0 건물 밖 장소인데 그 건물 방과 같은 곳(「<건물 이름> 메인 로비」 ↔ 「1층 로비」 — 지금 장소 줄에서 생긴 곳): 구역이 비었거나 그 건물 구역일 때만 ·
+    //   건물(구역) 이름 낱말과 꾸미는 말(메인 · 중앙 · 정문 · main …)을 뗀 열쇠가 그 건물 방 하나와만 같으면 그 방 점에 겹쳐요
+    buildings.forEach(g => {
+        const area = g[0]?.area; if (!area) return;
+        const drop = new Set(tx(area).flatMap(a => words(a)));
+        const keyOf = n => tx(n).map(t => placeKey(t, drop).join('')).filter(k => [...k].length >= 2);
+        for (const it of info.values()) {
+            if (inB.has(it.p.name) || alias.has(it.p.name) || headOf.has(it.p.name) || it.f !== null || (it.area && it.area !== area)) continue;
+            const mine = keyOf(it.p.name); if (!mine.length) continue;
+            const hits = g.filter(r => keyOf(r.p.name).some(k => mine.includes(k)));
+            if (hits.length === 1) alias.set(it.p.name, hits[0].p.name);
+        }
+    });
+    const real = n => alias.get(n) ?? n;
     // 줄: 건물마다 맨 위 ~ 맨 아래 층을 빈 층까지 다 넣어요(15층 넘게 벌어지면 장소가 있는 층만)
     const rowSet = new Set();
     for (const g of buildings) {
@@ -116,12 +175,14 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     const pairs = []; const seen = new Set();
     for (const p of list) for (const l of (Array.isArray(p.links) ? p.links : [])) {
         const q = find(list, l); if (!q || q === p || !info.has(q.name)) continue;
-        const key = [p.name, q.name].sort().join('|'); if (seen.has(key)) continue; seen.add(key);
-        pairs.push([p.name, q.name]);
+        const a = real(p.name), b = real(q.name); if (a === b) continue;   // 겹친 점의 링크는 대표 점으로 합쳐요
+        const key = [a, b].sort().join('|'); if (seen.has(key)) continue; seen.add(key);
+        pairs.push([a, b]);
     }
     const fOf = n => info.get(n)?.f ?? null;
     // 층 없는 장소: 위 · 아래 · 바깥
-    const zone = new Map(list.filter(p => !inB.has(p.name)).map(p => [p.name, zoneOf(p, tr)]));
+    const bAreas = new Set(buildings.map(g => g[0]?.area));
+    const zone = new Map(list.filter(p => !inB.has(p.name) && !alias.has(p.name)).map(p => [p.name, headOf.has(p.name) && bAreas.has(headOf.get(p.name)) ? 'above' : zoneOf(p, tr)]));   // 건물 머리는 지붕 위
     // 승강기 줄: 건물 안 먼 층 사이 선 · 하늘 · 땅 밑 장소가 건물로 오는 선(지붕 위 · 바닥 아래로 곧게 나가요) — 선마다 줄 하나
     const shaftN = buildings.map(() => 0), laneIdx = new Map();
     const pkey = (a, b) => [a, b].sort().join('|');
@@ -136,7 +197,7 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     const outN = [...zone.values()].filter(z => z === 'out').length;
     // 바깥 장소: 땅 위 1층 가게 · 집이라 모두 1층 줄(땅 선 바로 위) 한 줄에 둬요 — 다른 층 높이에 두면 「3층 가게」 처럼 읽혀요
     const fixedW = 4 + buildings.length * TAG_W + shaftN.reduce((s2, n2) => s2 + (n2 ? 3 + n2 * LANE : 0), 0) + (buildings.length - 1) * 10 + (outN ? 4 + outN * OUT_W + 10 - OUT_W / 2 : 2);
-    const wantW = contentH / TALL / (1 + RESERVE);
+    const wantW = contentH / TALL * (1 - RESERVE);
     // 건물 가로: 한 층에 가장 많은 방 수만큼 칸
     const pos = new Map(); const bInfo = [];
     const baseSum = buildings.reduce((s2, g) => { const c = new Map(); for (const it of g) c.set(rowOf(it.f), (c.get(rowOf(it.f)) || 0) + 1); return s2 + Math.max(Math.max(1, ...c.values()), 1.4) * SLOT_W; }, 0);
@@ -149,14 +210,14 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
         for (const [r, a] of byRow) {
             a.sort((p, q) => ax(p) - ax(q));
             const w = roomW / a.length;
-            a.forEach((it, j) => pos.set(it.p.name, { x: r1(roomL + (j + 0.5) * w), y: dotY(r), zone: 'b', row: r, b: bi, w }));
+            a.forEach((it, j) => pos.set(it.p.name, { x: r1(roomL + (j + 0.5) * w), y: r1(dotY(r)), zone: 'b', row: r, b: bi, w }));
         }
         const rs = rows.filter(r => r <= Math.max(...byRow.keys()) && r >= Math.min(...byRow.keys()));
         bInfo.push({ left, right, roomL, roomR: roomL + roomW, shaftL: roomL + roomW, shaftW, rows: rs, top: rowTop.get(rs[0]), bottom: rowTop.get(rs[rs.length - 1]) + rowH(rs[rs.length - 1]), lanes: 0 });
         x = right + 10;
     });
     const bLeft = bInfo[0].left, bRight = bInfo[bInfo.length - 1].right;
-    const rest = list.filter(p => !pos.has(p.name));
+    const rest = list.filter(p => !pos.has(p.name) && !alias.has(p.name));
     const lane = new Map([...laneIdx].map(([k, [bi, i]]) => [k, r1(bInfo[bi].shaftL + 1.5 + i * LANE)]));
     // 바깥 장소 차례: 건물에서 링크로 몇 걸음인지(가까운 것부터) → 그 확장 x
     const adj = new Map(list.map(p => [p.name, new Set()]));
@@ -166,8 +227,13 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     const outs = rest.filter(p => zone.get(p.name) === 'out').sort((p, q2) => (depth.get(p.name) ?? 99) - (depth.get(q2.name) ?? 99) || ax(info.get(p.name)) - ax(info.get(q2.name)));
     const outLaneN = pairs.filter(([a, b]) => (zone.get(a) === 'out' && pos.get(b)?.zone === 'b' && pos.get(b).row !== groundRow) || (zone.get(b) === 'out' && pos.get(a)?.zone === 'b' && pos.get(a).row !== groundRow)).length;
     const outL = bRight + 4 + outLaneN * LANE;
-    outs.forEach((p, k) => pos.set(p.name, { x: r1(outL + (k + 0.5) * OUT_W), y: dotY(groundRow), zone: 'out', row: groundRow, b: null, w: OUT_W }));
-    const outR = outs.length ? outL + outs.length * OUT_W : bRight;
+    // 1.7.0 바깥 칸 너비는 이름표 폭 기준(두 줄로 접은 뒤 가장 긴 줄 + 2) — 이름표끼리 겹치지 않게 · 좁으면 그만큼 옆으로 밀어요
+    let ox = outL;
+    outs.forEach(p => {
+        const lines = wrapLabel(tr?.(p.name) || p.name, OUT_W - 1.5), w = Math.max(OUT_W, Math.min(40, Math.max(...lines.map(textW)) + 2));
+        pos.set(p.name, { x: r1(ox + w / 2), y: r1(dotY(groundRow)), zone: 'out', row: groundRow, b: null, w }); ox += w;
+    });
+    const outR = outs.length ? ox : bRight;
     // 하늘 장소는 승강기 줄 꼭대기 위, 땅 밑 장소는 바닥 아래 — 그 장소의 첫 승강기 줄 x(건물로 가는 선이 없으면 건물 가운데)
     const mid = (bLeft + bRight) / 2;
     for (const [z, y] of [['above', top - 11], ['below', bottom + 13]]) {
@@ -179,7 +245,8 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
             used.push(px); pos.set(p.name, { x: r1(px), y, zone: z, row: null, b: null, w: SLOT_W });
         });
     }
-    const out = { pos, rows, rowTop, rowH, dotY, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, lane, tall: tall || new Set() };
+    for (const [a, b] of alias) if (pos.has(b)) pos.set(a, { ...pos.get(b), twin: b });   // 겹친 장소는 대표 점 자리
+    const out = { pos, alias, rows, rowTop, rowH, dotY, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, lane, tall: tall || new Set() };
     if (tall) return out;
     // 이름표가 두 줄로 접힐 층(입히기와 같은 규칙: 보이는 이름 = 번역 보기 글 · 칸 너비 - 1.5)을 모아 한 번 더 놓아요
     const need = new Set();
@@ -228,10 +295,11 @@ export function fitFloors(L, shown) {
     for (const b of L.buildings) if (bShown(L, b, shown) || ghostOf(L, shown)) { xs.push(b.left - 4, b.right + 2); ys.push(b.top - 3, b.bottom + 3); }
     if (!xs.length) return [-6, -8, 112, 114];
     // 오른쪽은 그 확장의 확대 단추 줄(지도 오른쪽 아래에 떠 있어요)이 덮어서 조금 비워 둬요 — 건물 옆 바깥 장소(대개 지금 위치)가 단추 밑에 숨지 않게
-    const x0 = Math.min(...xs), xr = Math.max(...xs), x1 = xr + (xr - x0) * RESERVE, y0 = Math.min(...ys), y1 = Math.max(...ys);
-    const w = Math.max(40, x1 - x0), h = Math.max(40, y1 - y0);
-    const W = Math.max(w, h / TALL), H = Math.max(h, W);   // 가로가 길면 그 확장처럼 정사각형 · 세로가 길면 세로 ÷ 가로 ≤ TALL
-    return [x0 - (W - w) / 2, y0 - (H - h) / 2, W, H].map(r1);
+    //   1.7.0: 비움 몫을 「장소 폭의 몇 %」 가 아니라 「칸 너비의 몫」 으로 — 장소가 가로로 넓게 퍼진 배치(바깥 장소가 많거나 건물이 둘)에서도 확대 단추 줄 밑이 늘 비어요
+    const x0 = Math.min(...xs), xr = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const wc = Math.max(40 * (1 - RESERVE), xr - x0), h = Math.max(40, y1 - y0);
+    const W = Math.max(wc / (1 - RESERVE), h / TALL), H = Math.max(h, W);   // 가로가 길면 그 확장처럼 정사각형 · 세로가 길면 세로 ÷ 가로 ≤ TALL
+    return [x0 - (W * (1 - RESERVE) - wc) / 2, y0 - (H - h) / 2, W, H].map(r1);   // 장소는 오른쪽 비움을 뺀 몫의 가운데
 }
 /** 건물은 하나도 안 보이고 하늘 · 땅 밑 장소만 보일 때(구역 탭) — 가운데에 흐린 건물 윤곽 */
 const ghostOf = (L, shown) => !!shown && !L.buildings.some(b => bShown(L, b, shown)) && [...L.pos].some(([n, o]) => shown.has(n) && (o.zone === 'above' || o.zone === 'below'));
@@ -241,12 +309,21 @@ const bShown = (L, b, shown) => { const bi = L.buildings.indexOf(b); return [...
 /** 이름표 글자 너비 어림(글자 크기 3.2 기준): 한글 · 한자 · 가나 3.2 · 공백 1 · 나머지 1.9 */
 export const textW = t => [...String(t ?? '')].reduce((s, c) => s + (/[ᄀ-ᇿ　-鿿가-힯＀-￯]/.test(c) ? 3.2 : c === ' ' ? 1 : 1.9), 0);
 /** 칸 너비 w 에 맞게 이름을 한 줄 또는 두 줄로 — 띄어쓰기에서 가운데 가까운 곳을 먼저, 없으면 글자 가운데에서 끊어요(줄임표 없이 전체 이름) */
+/** 1.7.0 이름표에 쓸 이름: 「장소 — 설명」 · 「장소 | 설명」 꼴(지금 장소 줄이 그대로 장소 이름이 된 것)은 앞 조각만 */
+export function labelOf(name) {
+    const t = String(name ?? '').trim(), head = t.split(/\s+[—–|]\s+|,\s+/)[0].trim();   // 1.7.0 쉼표 뒤 묘사도 떼요
+    return head && [...head].length >= 2 ? head : t;
+}
 export function wrapLabel(text, w) {
-    const t = String(text ?? '').trim(); if (!t || textW(t) <= w) return [t];
+    const t = labelOf(text); if (!t || textW(t) <= w) return [t];
     const sp = [...t.matchAll(/ /g)].map(m => m.index);
-    if (sp.length) { const cut = sp.reduce((b, i) => (Math.abs(textW(t.slice(0, i)) - textW(t.slice(i + 1))) < Math.abs(textW(t.slice(0, b)) - textW(t.slice(b + 1))) ? i : b)); return [t.slice(0, cut), t.slice(cut + 1)]; }
-    const cs = [...t]; let k = 1; while (k < cs.length - 1 && textW(cs.slice(0, k + 1).join('')) <= textW(t) / 2) k++;
-    return [cs.slice(0, k).join(''), cs.slice(k).join('')];
+    if (!sp.length && textW(t) <= w * 1.35) return [t];   // 1.7.0 띄어쓰기 없는 한 낱말은 조금 넘쳐도 안 끊어요(「Secre / tariat」 처럼 낱말 가운데가 갈리지 않게)
+    let lines;
+    if (sp.length) { const cut = sp.reduce((b, i) => (Math.abs(textW(t.slice(0, i)) - textW(t.slice(i + 1))) < Math.abs(textW(t.slice(0, b)) - textW(t.slice(b + 1))) ? i : b)); lines = [t.slice(0, cut), t.slice(cut + 1)]; }
+    else { const cs = [...t]; let k = 1; while (k < cs.length - 1 && textW(cs.slice(0, k + 1).join('')) <= textW(t) / 2) k++; lines = [cs.slice(0, k).join(''), cs.slice(k).join('')]; }
+    // 두 줄로도 칸을 한참 넘는 아주 긴 이름만 줄 끝을 「…」 로(옆 이름표와 겹치지 않게)
+    const fit = s => { if (textW(s) <= w * 2) return s; const cs = [...s]; while (cs.length > 1 && textW(cs.join('') + '…') > w * 2) cs.pop(); return cs.join('').trimEnd() + '…'; };
+    return lines.map(fit);
 }
 
 // ── SVG 에 입히기 ─────────────────────────────────────────
@@ -279,6 +356,21 @@ export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null 
             }
         }
     }
+    // 1.7.0 겹친 같은 곳(대표 + 쌍둥이): 한 점 · 이름표 하나만 보이고(지금 위치 · 고른 곳이 쌍둥이면 그쪽을 보여요), 나머지 이름은 점 옆 「+N」 — 누르면 그곳 카드가 열려요(그 확장의 selplace)
+    const nameOf = g => find(map.places, g.getAttribute('data-arg'))?.name ?? g.getAttribute('data-arg');
+    const sets = new Map();
+    for (const g of nodes) { const n = nameOf(g), head = L.alias?.get(n) ?? n; if (!sets.has(head)) sets.set(head, []); sets.get(head).push(g); }
+    for (const [, gs] of sets) {
+        if (gs.length < 2) continue;
+        const vis = gs.find(g => /\bhere\b/.test(g.getAttribute('class') || '')) || gs.find(g => /\bsel\b/.test(g.getAttribute('class') || '')) || gs.find(g => !L.alias?.has(nameOf(g))) || gs[0];
+        const others = gs.filter(g => g !== vis);
+        for (const g of others) { g.setAttribute('display', 'none'); g.setAttribute('data-bl-twin', nameOf(vis)); }
+        const dot = vis.querySelector('circle.dot'), cx = Number(dot?.getAttribute('cx')), cy = Number(dot?.getAttribute('cy'));
+        const badge = el(doc, 'text', { class: 'bl-twin', x: r1(cx - 4.1), y: r1(cy + 1.2), 'data-act': 'selplace', 'data-arg': others[0].getAttribute('data-arg') }, `+${others.length}`);
+        badge.appendChild(el(doc, 'title', {}, others.map(g => tr?.(nameOf(g)) || nameOf(g)).join(' · ')));
+        vis.appendChild(badge);
+    }
+    for (const n of [...shown]) if (L.alias?.has(n)) shown.add(L.alias.get(n));   // 쌍둥이만 보이는 구역 탭이면 대표 이름으로 선을 그려요
     // 선: 그 확장이 그린 곧은 선을 걷고 꺾인 선으로
     const edges = svg.querySelector('g.edges');
     if (edges) {

@@ -25,6 +25,12 @@ html:not(#bl-tab-scroll-off) body.salty [data-bl-fade-y="both"] { -webkit-mask-i
    .drawer-content 는 제 바탕을 칠하는 면이라 mask 가 바탕까지 투명하게 만들어요. 아래 ② 의 받침은 위 막대 묶음(#top-settings-holder) 안 서랍에만 깔리는데,
    프롬프트 편집 창(#completion_prompt_manager_popup)과 이동 UI 로 옮긴 창(#movingDivs)은 그 밖이라 받침 없이 mask 만 걸려 뒤가 그대로 비쳤어요. 묶음 밖의 서랍 꼴 창은 mask 없이(불투명 그대로). */
 html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y]:not(#top-settings-holder .drawer-content) { -webkit-mask-image: none; mask-image: none; }
+/* 1.6.9 미트볼 상태창 창(과 그 안 스크롤 칸)은 흐림을 걸지 않아요 — 11-17 사용자 폰 「또」(1.5.1 · 1.6.8 두 번): 관계 카드 하나에서
+   위치 지정 요소(단추 넷 · 막대 길과 막대 — 손가락 화면에서 단추는 누를 자리 상자 때문에 position: relative)만 통째로 안 칠해지고 글자 · 얼굴 · 단계 딱지는 보였어요.
+   그 카드 안 요소를 하나씩 대 보면 빠진 것 = 위치 지정 요소 전부 · 보인 것 = 아닌 것 전부예요. 원작 창에는 mask 가 없고, 테마만 그 스크롤 칸에 mask(넘친 쪽 흐림)를 걸고
+   스크롤할 때마다 top · bottom · both 로 바꿔 다시 칠하게 해요 — 폰 크롬의 mask 스크롤 칸 안 위치 지정 층 덜 칠하기로 봐요(PC 리그 · 같은 자료로는 안 생겨 폰 확인은 사용자 몫). */
+/*   상태창 창(.ss-panel-pop 를 담은 창)만 — 만들기 창 등 다른 미트볼 창은 그대로(mask 를 빼면 만들기 창 머리 아이콘이 관문에서 0.81px 어긋나 재요). */
+html:not(#bl-tab-scroll-off) body.salty dialog.ss-dlg .popup-content[data-bl-fade-y]:has(> .ss-panel-pop), html:not(#bl-tab-scroll-off) body.salty .ss-panel-pop [data-bl-fade-y] { -webkit-mask-image: none; mask-image: none; }
 /* ② 서랍 받침 — 위 막대 묶음 안의 서랍만(이동 UI 로 #movingDivs 에 옮긴 서랍은 다른 쌓임 맥락이라 받침이 위로 올라올 수 있어 제외) */
 @supports (anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)) {
   html:not(#bl-tab-scroll-off) body.salty #top-settings-holder .drawer-content:is([data-bl-fade-y="top"], [data-bl-fade-y="bottom"], [data-bl-fade-y="both"]) { anchor-name: --bl-drawer; }

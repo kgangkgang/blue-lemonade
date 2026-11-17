@@ -146,10 +146,21 @@ await test('킨들링 설명: 사전에 없으면 본문 맨 앞 도움말 주�
     assert.deepEqual(d.items, [{ label: '가 서술 · 가 대사', text: '가 언어로 써요. 하나만 켜요.' }, { label: '나 서술 · 나 대사', text: '나 언어로 써요. 하나만 켜요.' }]);
     assert.equal(d.verified, true);
 });
-await test('입력줄 단추 · 창 머리 표지: 데우스 🔹 · 솔라 V4 Flame 🔥 · 킨들링 🧡(가는 선)', () => {
+await test('입력줄 단추 · 창 머리 표지: 데우스 🔹 · 솔라 V4 Flame 🔥 · 킨들링 🧡(흐린 색)', () => {
     assert.equal(api.solaVariant(solaFixturePreset()).mark, 'flame');
     assert.equal(api.quickVariant(kindlingFixture()).mark, 'kindling');
     assert.ok(/mark:'deus'/.test(bundled) && /deus: '<path/.test(bundled) && /flame: '<path/.test(bundled) && /kindling: '<path/.test(bundled));
-    assert.ok(bundled.includes('#bl-deus-quick[data-mark=kindling] svg') && bundled.includes("node('span',null,'dq-mark')"), '킨들링은 가는 선 · 창 머리에 같은 표지');
+    assert.ok(bundled.includes('#bl-deus-quick[data-mark=kindling]:not([aria-expanded=true])') && bundled.includes("node('span',null,'dq-mark')"), '킨들링은 흐린 색 · 창 머리에 같은 표지');
+});
+await test('1.6.9 표지 굵기 · 눈크기: 옆 선 아이콘(24칸 · 선 1.8 · 가장 긴 변 16.25)과 같게 그려져요', () => {
+    const box = bundled.match(/const QUICK_MARK_BOX = (\{[^;]*\});/); assert.ok(box, '표지마다 보는 칸 · 선 굵기 표');
+    const table = Function(`return ${box[1]}`)(), geo = { deus: 18.4, flame: 18.8, kindling: 15.2 };
+    for (const [mark, [view, sw]] of Object.entries(table)) {
+        const v = +view.split(' ')[2];
+        assert.ok(Math.abs(sw / v - 1.8 / 24) < 0.0015, `${mark}: 그려진 선 굵기 = 1.8/24 em`);
+        assert.ok(Math.abs(geo[mark] / v - 16.25 / 24) < 0.004, `${mark}: 가장 긴 변 = ✦ 와 같은 16.25/24 em`);
+    }
+    assert.ok(bundled.includes('stroke-width:var(--dq-mark-sw,1.8)') && !bundled.includes('stroke-width:1.4}'), '가는 선 따로 두지 않음');
+    assert.ok(bundled.includes('width:var(--bottomFormIconSize,24px)'), '입력줄 단추 그림 = ✦ 와 같은 아이콘 크기');
 });
 console.log(`Sola quick settings: ${passed} passed`);

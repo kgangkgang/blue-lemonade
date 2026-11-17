@@ -191,10 +191,14 @@ await ok('하늘 · 땅 밑 장소만 보일 때 흐린 건물 윤곽', () => {
 await ok('처음 보기 칸: 오른쪽 확대 단추 자리 비움 · 가운데', () => {
     const L = m.floorLayout(office()), vb = m.fitFloors(L, null);
     const xr = Math.max(...[...L.pos.values()].map(o => o.x + 10));
-    assert.ok(vb[0] + vb[2] >= xr + (xr - vb[0]) * m.RESERVE * 0.9, JSON.stringify(vb));
+    assert.ok(vb[0] + vb[2] - xr >= vb[2] * m.RESERVE - 0.2, JSON.stringify(vb));
 });
 await ok('이름표: 줄임표 대신 두 줄 접기', () => {
     assert.deepEqual(m.wrapLabel('Cafe', 15), ['Cafe']);
+    assert.deepEqual(m.wrapLabel('Front Gate — wet canopy at dusk in the rain', 15), ['Front', 'Gate'], '「장소 — 설명」 은 앞 조각만');
+    assert.equal(m.labelOf('Hall | 7F Desk'), 'Hall');
+    assert.deepEqual(m.wrapLabel('Reception', 15), ['Reception'], '한 낱말은 조금 넘쳐도 안 끊어요');
+    assert.deepEqual(m.wrapLabel('Records Maintenance Dept', 15), ['Records', 'Maintenance Dept'], '보통 긴 이름은 줄임표 없이');
     assert.deepEqual(m.wrapLabel('CORNER-SHOP 24', 15), ['CORNER-SHOP', '24']);
     assert.deepEqual(m.wrapLabel('가나다 라마바사', 15), ['가나다', '라마바사']);
     const two = m.wrapLabel('가나다라마바사아', 15); assert.equal(two.length, 2); assert.equal(two.join(''), '가나다라마바사아');
@@ -237,6 +241,59 @@ await ok('버그 사냥 9: 지하층만 있는 건물이면 땅 선은 건물 �
     assert.deepEqual(b.rows, [0, -1, -2], '건물 띠는 B1 ~ B3 만');
     const doc = makeDoc(), svg = drawn(doc, places); m.applyFloors(svg, { places });
     assert.ok(!svg.querySelectorAll('text.bl-ftag').some(t => t.textContent === '1F'), '빈 1F 이름표 없음');
+});
+await ok('같은 곳 판정은 좁게(원문 · 번역 둘 다)', () => {
+    for (const [x, y] of [['Data Dept', 'Data Department (B2)'], ['QA Team', 'Quality Assurance Department'], ['자료관리부', '자료관리팀 (B2)'], ['Archive Office', 'Archive (3F)']]) assert.equal(m.sameName(x, y), true, x + ' ' + y);
+    for (const [x, y] of [['Server Room', 'Server Hall'], ['Room A', 'Room B'], ['PR Dept', 'Planning Dept'], ['1실', '2실'], ['Staff Canteen', 'Staff Lounge'], ['North Wing', 'South Wing'], ['Gym', 'Gallery']]) assert.equal(m.sameName(x, y), false, x + ' ' + y);
+});
+await ok('구역 없는 새 장소 · 구역 이름 장소 · 같은 층 같은 곳', () => {
+    const list = [...office(),
+        P('Office', 'head of 3F', { area: '', kind: '', links: ['Studio'] }),                         // 구역 이름과 같은 장소 → 건물 머리(지붕 위)
+        P('Garage Team (B1)', 'second record of the B1 parking', { area: '', kind: '', links: ['Board Room'] }),   // 구역 없음 · 이어진 곳이 그 건물 → 그 건물 B1 · Garage 와 같은 곳
+        P('Rooftop Garden', 'on 3F', { area: '', links: [] })];                                        // 구역 없고 이어진 곳도 없음 → 건물에 안 들어가요(외딴 층 하나짜리 → 바깥)
+    list.find(p => p.name === 'Garage').name = 'Garage Dept';
+    list.find(p => p.name === 'Reception').links = ['Studio', 'Garage Dept', 'Bakery'];
+    const L = m.floorLayout(list);
+    assert.equal(L.buildings.length, 1, '건물이 둘로 갈라지지 않아요');
+    assert.equal(L.pos.get('Office').zone, 'above', '건물 머리는 방이 아니라 지붕 위');
+    assert.equal(L.alias.get('Garage Team (B1)'), 'Garage Dept');
+    assert.deepEqual([L.pos.get('Garage Team (B1)').x, L.pos.get('Garage Team (B1)').y], [L.pos.get('Garage Dept').x, L.pos.get('Garage Dept').y], '같은 점');
+    assert.ok(L.pairs.some(([a, b]) => [a, b].includes('Garage Dept') && [a, b].includes('Board Room')), '쌍둥이 링크는 대표 점으로 합쳐요');
+    assert.ok(!L.pairs.some(([a, b]) => a === 'Garage Team (B1)' || b === 'Garage Team (B1)'));
+    assert.equal(L.pos.get('Rooftop Garden').zone, 'out');
+    // 다른 층 · 다른 건물의 같은 이름은 합치지 않아요
+    const two = m.floorLayout([P('Data Dept', '2F'), P('Data Team', '3F', { links: ['Data Dept'] }), P('Hall', '1F'), P('Data Dept ', '2F', { area: 'Other' }), P('Shed', '1F', { area: 'Other' })]);
+    assert.equal(two.alias.size, 0);
+    // SVG: 쌍둥이 점은 숨기고 대표 점 옆 「+1」(누르면 쌍둥이 카드)
+    const doc = makeDoc(), svg = drawn(doc, list);
+    m.applyFloors(svg, { places: list }, { ui: null });
+    const g2 = svg.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Garage Team (B1)'), g1 = svg.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Garage Dept');
+    assert.equal(g2.getAttribute('display'), 'none'); assert.equal(g1.getAttribute('display'), null);
+    const badge = g1.querySelectorAll('text.bl-twin')[0]; assert.ok(badge); assert.equal(badge.getAttribute('data-act'), 'selplace'); assert.equal(badge.getAttribute('data-arg'), 'Garage Team (B1)');
+    assert.equal(svg.querySelectorAll('rect.bl-bldg').length, 1);
+});
+await ok('건물 밖 「건물 이름 메인 + 방」 은 그 방 점에 · 바깥 이름표는 겹치지 않게 · 쉼표 뒤 묘사는 이름표에서 떼요', () => {
+    const list = [...office(),
+        P('Office Main Reception, wet canopy at dusk in heavy rain', '', { area: '', kind: '', links: ['Bakery'] }),   // 구역 없음 · 건물 이름(Office) + 꾸밈(Main) + 방(Reception)
+        P('Main Hall', 'a hall', { area: 'Street', kind: '', links: ['Bakery'] }),                                      // 다른 구역 → 안 합쳐요
+        P('Riverside Botanical Conservatory Annex', 'long name shop', { area: 'Street', kind: 'shop', links: ['Bakery'] })];
+    const L = m.floorLayout(list);
+    assert.equal(L.alias.get('Office Main Reception, wet canopy at dusk in heavy rain'), 'Reception');
+    assert.ok(!L.alias.has('Main Hall'));
+    assert.equal(m.labelOf('Office Main Reception, wet canopy at dusk'), 'Office Main Reception');
+    // 바깥 1층 줄 이름표: 이웃 이름표와 가로로 안 겹쳐요(두 줄로 접은 뒤 가장 긴 줄 폭)
+    const outs = [...L.pos].filter(([, o]) => o.zone === 'out' && !o.twin).sort((a, b) => a[1].x - b[1].x);
+    for (let i = 1; i < outs.length; i++) {
+        const half = ([n, o]) => Math.max(...m.wrapLabel(n, o.w - 1.5).map(m.textW)) / 2;
+        assert.ok(outs[i][1].x - half(outs[i]) >= outs[i - 1][1].x + half(outs[i - 1]) - 0.01, outs[i - 1][0] + ' / ' + outs[i][0]);
+    }
+});
+await ok('넓은 배치에서도 오른쪽 확대 단추 자리 비움', () => {
+    const list = [...office(), ...[1, 2, 3, 4, 5, 6].map(i => P('Shop ' + i, 'shop', { area: 'Street', kind: 'shop', links: ['Reception'] }))];
+    const L = m.floorLayout(list), vb = m.fitFloors(L, null);
+    const xr = Math.max(...[...L.pos.values()].map(o => o.x + 10));
+    assert.ok(vb[2] > vb[3] * 0.99, '가로가 넓은 배치');
+    assert.ok(vb[0] + vb[2] - xr >= vb[2] * m.RESERVE - 0.2, JSON.stringify(vb));
 });
 await ok('층 정보가 없는 지도는 손대지 않아요', () => {
     const doc = makeDoc(), places = [P('A', 'a', { links: ['B'] }), P('B', 'b'), P('Heaven', 'c', { kind: 'realm' })], svg = drawn(doc, places);

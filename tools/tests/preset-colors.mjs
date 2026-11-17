@@ -193,7 +193,9 @@ await test('인물표 차례: TTS(차례 0)가 먼저 · 프리셋(100)은 뒤 �
 await test('코드: 이름 · 색을 박지 않아요(파서 · 연결 모듈에 #색 글자 없음) · features 가 테마와 함께 켬 · 얼굴 색 차례 줄', () => {
     for (const f of ['src/preset-colors-core.js', 'src/preset-colors.js']) assert.doesNotMatch(read(f).replace(/^\s*\/\/.*$/gm, ''), /#[0-9a-fA-F]{6}\b/, f);
     assert.match(read('src/features.js'), /load\('presetcolors', '\.\/preset-colors\.js'\)\.then\(m => m\?\.syncPresetColors\(on\)\)/);
-    assert.match(read('src/ext-compat.js'), /personColor\(people, \{ from: 'other' \}, names\[k\], shown\[k\]\) \|\| tableColor\(cardsOf\(\), names\[k\], shown\[k\]\) \|\| personColor\(people, \{ from: 'preset' \}/);
+    // 1.6.9 차례는 faceColorOf 한 곳(얼굴 · 변화 그래프가 같이 써요) — 얼굴 칠하기는 그 함수를 원문 · 화면 이름으로 불러요
+    assert.match(read('src/ext-compat.js'), /personColor\(people, \{ from: 'other' \}, \.\.\.names\) \|\| tableColor\(cardsOf\(\), \.\.\.names\) \|\| personColor\(people, \{ from: 'preset' \}, \.\.\.names\)/);
+    assert.match(read('src/ext-compat.js'), /const fc = faceColorOf\(people, cardsOf, names\[k\], shown\[k\]\)/);
 });
 
 // 1.5.9 유저 줄({{user}})

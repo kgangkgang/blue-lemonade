@@ -272,4 +272,20 @@ check('⑰ 미트볼 「번역 전체 삭제」 같은 쓰레기통 단추(11-17
     assert.ok(trash.length && /color:\s*var\(--ss-neg\) !important/.test(trash[0].body), '글자 · 아이콘은 「나쁨」 색');
     assert.ok(trash[0].selectors.every(s => s.includes(':not([data-bl-ext-raw])')), '원작 그대로 보기에서는 안 걸려요');
 });
+check('⑱ 부가 기능 탭(11-17 「버튼 글자 붙어 있는 거랑 버튼끼리 배열 안 맞는 거 싹 다 고쳐」): 여섯 칸 묶음 탭도 이름 한 줄 · 방명록 단추 → 설명 8 · 장치 줄 바닥선 맞춤 + 단추 36 · 접힘 판 몸 위 12 · 원작 그대로 보기 밖', () => {
+    const at = sel => rules.filter(r => r.selectors.includes(sel)).map(r => r.body).join(' ');
+    const X = 'body.salty:not([data-bl-ext-raw]) .ss-scope';
+    assert.match(at(`${X} .ss-groups`), /grid-auto-columns:\s*auto/, '묶음 탭 칸 폭은 이름 길이대로(원작 1fr 이면 「부가 기능」이 두 줄)');
+    assert.match(at(`${X} .ss-groups > button > span`), /white-space:\s*nowrap/, '묶음 탭 이름은 한 줄');
+    assert.ok(rules.some(r => r.selectors.some(s => s.endsWith('.ss-groups > button > i:first-child:is(.fa-house, .fa-user, .fa-earth-asia, .fa-user-group, .fa-bullhorn, .fa-sliders, .fa-star, .fa-puzzle-piece)'))), '「부가 기능」 아이콘도 다른 묶음과 같은 선 아이콘 글꼴');
+    assert.match(at(`${X} .ss-groups > button > i.fa-puzzle-piece::before`), /content:\s*'\\1F9E9'/);
+    assert.match(at(`${X} .ss-mg-b > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns) + .ss-hint`), /margin-top:\s*var\(--bl-s2, 8px\)/, '접힘 판 몸 안 단추 줄 → 설명 8');
+    assert.match(at(`${X} .ss-story .ss-row-btns`), /align-items:\s*flex-end/, '이름표가 위에 얹힌 고르기 칸과 단추는 바닥선 맞춤');
+    assert.match(at(`${X} .ss-story :is(.ss-row-btns, .ss-st-add) > .ss-btn.sm`), /min-height:\s*var\(--bl-ui-ctl, 36px\)/, '장치 줄 단추 높이 = 고르기 · 입력칸(36)');
+    assert.match(at(`${X} .ss-story .ss-st-add > .ss-btn.sm`), /align-self:\s*stretch/, '같은 줄 칸이 37.3(PC)이어도 단추가 따라가요');
+    assert.match(at(`${X} .ss-fold > :is(.ss-mg-b, .ss-mods)`), /padding-top:\s*var\(--bl-s3, 12px\)/, '접힘 판 몸 위 안쪽 12(= 옆 · 아래)');
+    assert.match(at(`${X} .ss-fold > .ss-mg-b > :first-child`), /margin-top:\s*0/, '첫 칸의 제 위 여백은 0 — 판마다 4 · 18 · 30 으로 달랐어요');
+    assert.match(at(`${X} .ss-gd-who > .ss-pill`), /padding-block:\s*5px/, '공략 「누구」 칩 위아래 안쪽 5');
+    for (const r of rules.filter(r => r.selectors.some(s => /\.ss-(story|fold|mg-b|gd-who)\b/.test(s) || /\.ss-groups(?: > button > span)?$/.test(s) && /grid-auto-columns|nowrap/.test(r.body)))) assert.ok(r.selectors.every(s => s.includes(':not([data-bl-ext-raw])')), `원작 그대로 보기에서는 안 걸려요: ${r.selectors[0]}`);
+});
 console.log(`status-ext-css: ${passed}개 통과`);

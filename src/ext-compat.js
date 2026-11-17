@@ -234,6 +234,18 @@ export function faceColors(color) {
     for (let i = 0; i < 12 && contrastOf(c, ink) < 4.5; i++) c = c.map(v => v + (to - v) * 0.05);
     return { bg: toHex(c), ink: toHex(ink) };
 }
+/** 한 사람의 프로필 얼굴 색({ bg, ink } · 모르면 null) — 차례(1.5.6): 이 채팅 대사 색(TTS 색 표) → TTS 카드별 색 기억 → 프리셋에 정해 둔 색(프리셋 인물 색 공급자).
+ *  1.6.9 얼굴(paintFaces) · 변화 그래프(src/mb-trend.js)가 같은 값을 쓰게 한 곳에서. cardsOf = 카드별 색 기억 표를 주는 함수(한 번만 읽게) */
+export function faceColorOf(people, cardsOf, ...names) {
+    const color = personColor(people, { from: 'other' }, ...names) || tableColor(cardsOf(), ...names) || personColor(people, { from: 'preset' }, ...names);
+    return color ? faceColors(color) : null;
+}
+/** 문서의 인물표 · 카드별 색 기억으로 이름들의 얼굴 색 고르개를 만들어요(그래프처럼 한 번에 여러 사람을 물을 때) */
+export function faceColorPicker(doc) {
+    const people = peopleOf(doc);
+    let cards = null; const cardsOf = () => (cards ??= cardColorTable((() => { try { return doc?.defaultView?.SillyTavern?.getContext?.(); } catch { return null; } })()));
+    return (...names) => faceColorOf(people, cardsOf, ...names);
+}
 let peopleHooked = false;
 /** 화면의 얼굴 요소 전부에 첫 글자 · 톤 · 인물 색 표식 — 설정이 「아이콘」이면 아무것도 안 해요(표식이 남아 있어도 시트가 안 봐요) */
 export function paintFaces(doc) {
@@ -248,9 +260,7 @@ export function paintFaces(doc) {
         // 1.5.6 얼굴 그림 글자 · 첫 글자를 숨기면(색만) 화면 읽기에 남는 게 없어요 — 이름을 그림 이름으로(role=img · aria-label · 화면 이름)
         const label = String(shown[k] || names[k] || ''); if (label && el.getAttribute('aria-label') !== label) { el.setAttribute('role', 'img'); el.setAttribute('aria-label', label); }
         const tone = String(toneOf(names[k])); if (el.getAttribute('data-bl-tone') !== tone) el.setAttribute('data-bl-tone', tone);
-        // 차례(1.5.6): 이 채팅 대사 색(TTS 색 표) → TTS 카드별 색 기억 → 프리셋에 정해 둔 색(프리셋 인물 색 공급자)
-        const color = personColor(people, { from: 'other' }, names[k], shown[k]) || tableColor(cardsOf(), names[k], shown[k]) || personColor(people, { from: 'preset' }, names[k], shown[k]);
-        const fc = color ? faceColors(color) : null;
+        const fc = faceColorOf(people, cardsOf, names[k], shown[k]);
         if (fc) { if (el.getAttribute('data-bl-pc') !== fc.bg) { el.setAttribute('data-bl-pc', fc.bg); el.style?.setProperty?.('--bl-face', fc.bg); el.style?.setProperty?.('--bl-face-ink', fc.ink); } }
         else if (el.hasAttribute?.('data-bl-pc')) { el.removeAttribute('data-bl-pc'); el.style?.removeProperty?.('--bl-face'); el.style?.removeProperty?.('--bl-face-ink'); }
     });

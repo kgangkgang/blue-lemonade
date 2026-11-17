@@ -401,3 +401,14 @@ html body.salty .bl-assets-dialog .eh-segmented > button { min-height: 32px !imp
 
 /* 8.1.x 애드온 창 안 글 속 링크(ZIP 설치 「자세한 준비 안내」 · 커스텀 CSS 저작권 줄)는 포인트 잉크 — 밝은 팔레트 흰 면 위 포인트 그대로는 4.43:1 */
 html body.salty dialog:not(.bl-settings-dialog) a[href]:not([class]) { color: var(--salty-accent-ink, var(--salty-accent)); }
+
+/* 1.6.9 빠른 설정 셋(솔라 · 데우스 · 청과) 한 규칙: 청과 「과일의 마음」 창을 솔라 · 데우스 빠른 설정 창(#bl-deus-popover)과 같은 값으로.
+   창 모서리 16(--bl-r-lg) · 이름 1em 700 · 머리 표지 1.3em · 탭 글자 = 공용 글자 탭(--bl-ui-tab-fs) · 탭 아이콘 15(--bl-ui-ink-fa) · 고르기 칸 글자 400 · 왼쪽 12 · 묶음 머리 위아래 10.
+   ? 는 H3 공용 규칙이 옆 글자 크기를 따라가서 이름이 같아지면 같은 크기가 돼요. 전체 화면일 때 모서리는 원래대로 */
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6):not(.fh-is-fullscreen) .fh-shell { border-radius: var(--bl-r-lg, 16px); }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand strong { font-size: 1em; font-weight: 700; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand-mark { width: 1.3em; height: 1.3em; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item { font-size: var(--bl-ui-tab-fs, 13px); }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item > b { font-size: var(--bl-ui-ink-fa, 15px); }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sel { font-weight: 400; padding-left: 12px; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-ch { padding-top: 10px; padding-bottom: 10px; }
