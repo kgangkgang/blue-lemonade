@@ -1,4 +1,4 @@
-// 10-29 상태창 한글 표시 정규식(bl-status-ko-weather) 뒤에도 「트래커 따라」 날씨가 데우스 · 레모나 트래커 날씨 칸을 읽어요.
+// 10-29 상태창 한글 표시 정규식(bl-status-ko-weather) 뒤에도 「트래커 따라」 날씨가 데우스 · 다른 프리셋 트래커 날씨 칸을 읽어요.
 //   그 정규식은 날씨 낱말을 빈 <span class="bl-sko" data-en="Light rain"></span> 으로 바꾸고 CSS ::before 가 한글을 그려요 —
 //   칸의 글자(textContent)에는 그림 글자(🌧️)만 남아서 비 · 눈 · 안개가 모두 꺼졌어요. 원래 영어 낱말은 data-en 에 있어요.
 //   node tools/tests/weather-status-ko.mjs <테마 루트>

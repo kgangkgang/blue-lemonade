@@ -97,10 +97,10 @@ function loadDisplayProcessor() {
         if (!loaded) return null;
         const module = await import(url);
         if (typeof module.processTranslationText === 'function') return module.processTranslationText;
-        console.warn('[북마크] 번역기가 번역문 가공(원문 병기)을 내보내지 않아 번역문을 그대로 씁니다. 번역기를 1.8.13 이상으로 올려 주세요.');
+        console.warn('[북마크] 번역기가 번역문 가공(원문 병기)을 내보내지 않아 번역문을 그대로 써요. 번역기를 1.8.13 이상으로 올려 주세요.');
         return null;
     })().catch((error) => {
-        console.warn('[북마크] 번역기 모듈을 읽지 못해 번역문을 그대로 씁니다:', error);
+        console.warn('[북마크] 번역기 모듈을 읽지 못해 번역문을 그대로 써요:', error);
         return null;
     });
     return displayProcessor;
@@ -113,7 +113,7 @@ async function displayTextOf(original, translation) {
     try {
         return process(original, translation);
     } catch (error) {
-        console.warn('[북마크] 번역문을 가공하지 못해 그대로 씁니다:', error);
+        console.warn('[북마크] 번역문을 가공하지 못해 그대로 써요:', error);
         return translation;
     }
 }
@@ -144,8 +144,8 @@ function openDb() {
             for (const name of ['originalText', 'provider', 'model', 'date']) store.createIndex(name, name, { unique: false });
         };
         request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error ?? new Error('IndexedDB를 열지 못했습니다.'));
-        request.onblocked = () => reject(new Error('IndexedDB가 다른 탭에서 쓰이고 있습니다.'));
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB를 열지 못했어요.'));
+        request.onblocked = () => reject(new Error('IndexedDB를 다른 탭에서 쓰고 있어요.'));
     });
 }
 
@@ -216,7 +216,7 @@ async function quietly(task, what) {
     try {
         return await task();
     } catch (error) {
-        console.warn(`[북마크] 번역기 DB ${what}에 실패했습니다:`, error);
+        console.warn(`[북마크] 번역기 DB ${what}에 실패했어요:`, error);
         return null;
     }
 }
@@ -291,7 +291,7 @@ function emitTranslated(record, index, original, translation) {
 export async function translateMessage(record, index, { fresh = false } = {}) {
     await loadRecord(record);
     const message = record.messages[index];
-    if (!message) throw new Error('메시지를 찾을 수 없습니다.');
+    if (!message) throw new Error('메시지를 찾을 수 없어요.');
     const expected = expectationOf(message);
     const { original } = expected;
     if (!original.trim()) throw new Error('번역할 원문이 비어 있어요.');
@@ -382,7 +382,7 @@ export async function editableTranslation(record, index) {
 export async function setTranslation(record, index, text, expected = null) {
     await loadRecord(record);
     const message = record.messages[index];
-    if (!message) throw new Error('메시지를 찾을 수 없습니다.');
+    if (!message) throw new Error('메시지를 찾을 수 없어요.');
     expected ??= expectationOf(message);
     const { original } = expected;
     const display = await displayTextOf(original, text);
@@ -404,7 +404,7 @@ export async function setTranslation(record, index, text, expected = null) {
 export async function clearTranslation(record, index, expected = null) {
     await loadRecord(record);
     const message = record.messages[index];
-    if (!message) throw new Error('메시지를 찾을 수 없습니다.');
+    if (!message) throw new Error('메시지를 찾을 수 없어요.');
     if (!hasTranslation(message)) return false;
     expected ??= expectationOf(message);
     await writeExtra(record, index, (extra) => {

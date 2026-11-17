@@ -22,6 +22,10 @@
 //     읽는 자리(자료 모양만 읽어요 · 그 확장 코드는 안 불러요): chatMetadata.memoria.turns[]{ mesId, summary } · chatMetadata.long_memory.timeline[] / archive[]{ from, to, title, text }(가장 잘게 쪼갠 것만).
 //     둘 다 있으면 턴마다 쪼갠 쪽(memoria)만 — 같은 이야기를 두 번 싣지 않게. 짧은 전체 요약(줄거리 한 덩이 · 실리태번 기본 요약)은 안 써요.
 //   · 본문의 U+2800(점자 빈칸 — 일부 프리셋이 띄어쓰기 대신 씀)은 보통 띄어쓰기로 바꿔 실어요(읽기 쉽고 토큰이 덜 들어요).
+import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치(줄 꼴 규칙 · 변화 장부 · 만든 뒤 바로잡기 · 프로필 채우기 · 직함 이름 · 합치기 · 중복 정리 — 끈 것은 더는 고치지 않아요)
+const swOn = (key, doc = globalThis.document) => !mbOff(key, doc);
+/** 줄 꼴 규칙을 붙일 때인가 — 단계가 「적용 안 함」 이 아니고 스위치 「줄 꼴 규칙 덧붙이기」 가 켜져 있을 때 */
+export const rulesOn = (lv, doc = globalThis.document) => lv !== 'off' && swOn('rules', doc);
 const META = 'statussim';        // 그 확장의 설정 칸 이름(읽고 · prompts 한 칸만 씀)
 export const KEY = 'gen.system'; // 「생성 시스템 프롬프트」 — 상태창 만들기 · 칸 다시 생성 · AI로 수정이 모두 쓰는 칸
 export const LEVELS = ['off', 'light', 'last', 'recent', 'all', 'memo'];   // memo 는 만들기 화면의 이번 한 번만(테마 설정 단계로는 안 골라요)
@@ -444,7 +448,8 @@ export function opsLedger(c = ctx()) {
         events.length ? `Events in order (#N = message number):\n${events.join('\n')}` : ''].filter(Boolean).join('\n');
     return { text, people: rows.length, events: events.length, msgs, sums: sum, time: last.timeRaw || '' };
 }
-const withLedger = (c, body) => {
+export const withLedger = (c, body) => {
+    if (!swOn('ledger')) return body;   // 1.7.3 스위치 「변화 장부 · 이름 장부 싣기」 를 끔 — 본문만
     if (!booksFresh(c)) primeBooks(c).catch(() => { /* 다음 요청에 */ });   // 평소 단계가 「채팅 전체」 라 고르기를 안 거친 때: 다음 요청부터 이름 짝이 붙어요
     try { const l = opsLedger(c); return l.text ? `${l.text}\n\n--- STORY TEXT ---\n${body}` : body; } catch { return body; }
 };
@@ -547,7 +552,7 @@ export async function armOnce({ c = ctx(), doc = globalThis.document, toast = gl
     if (lv === 'all' || lv === 'memo') await primeBooks(c).catch(() => null);   // 1.6.8 변화 장의 이름 짝에 쓸 로어북 열쇠
     state.once = { until: now() + ONCE_WAIT, seen: 0, level: lv };
     const r = await syncPrompt(onceBlock(lv), { c, doc, def });
-    if (r.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null);   // 줄 꼴 규칙은 본편 쪽이라 「이번 한 번만」 과 상관없이 평소 단계를 따라요
+    if (r.ok) await syncRules(rulesOn(state.level, doc), { c, doc }).catch(() => null);   // 줄 꼴 규칙은 본편 쪽이라 「이번 한 번만」 과 상관없이 평소 단계를 따라요
     if (!r.ok) { state.once = null; try { toast?.warning?.(r.why === 'none' ? '미트볼 상태창 설정을 못 찾았어요.' : '미트볼의 「생성 시스템 프롬프트」 자리를 못 찾았어요(다른 판).', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } return false; }
     try { store()?.setItem(ONCE_KEY, String(state.once.until)); if (lv === 'all') store()?.removeItem(ONCE_LV_KEY); else store()?.setItem(ONCE_LV_KEY, lv); } catch { /* 이 세션에서만 */ }
     watchOnce();
@@ -566,7 +571,7 @@ export async function endOnce({ c = ctx(), doc = globalThis.document, toast = gl
     state.once = null; if (state.onceTimer) { try { clearTimeout(state.onceTimer); } catch { /* 그대로 */ } state.onceTimer = null; }
     try { store()?.removeItem(ONCE_KEY); store()?.removeItem(ONCE_LV_KEY); } catch { /* 표시 없이 */ }
     state.last = await syncPrompt(state.level, { c, doc, def });
-    await syncRules(state.level !== 'off', { c, doc }).catch(() => null);
+    await syncRules(rulesOn(state.level, doc), { c, doc }).catch(() => null);
     if (quiet) return true;
     try { toast?.info?.(seen ? (name === ONCE_NAME.all ? `채팅 전체를 실어 ${seen}번 보냈어요${amount}. 미트볼 문구를 원래 단계로 돌려놨어요.` : `「${name}」 ${josa(name, '으로', '로')} ${seen}번 보냈어요${amount}. 미트볼 문구를 원래 단계로 돌려놨어요.`) : (name === ONCE_NAME.all ? '미트볼 생성이 없어서 채팅 전체 싣기를 거두고 원래 단계로 돌려놨어요.' : `미트볼 생성이 없어서 「${name}」 ${josa(name, '을', '를')} 거두고 원래 단계로 돌려놨어요.`), '', { timeOut: amount ? 15000 : 9000 }); } catch { /* 알림 없이 */ }
     return true;
@@ -576,7 +581,7 @@ export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_
     state.level = level(want); state.count = count; state.chars = chars; state.cap = Math.max(0, Math.round(Number(cap)) || 0);
     watchDupes(c);
     if (readOnce()) {   // 「이번 한 번만」 이 걸려 있는 동안은 채팅 전체 그대로 — 때가 지났으면 여기서 돌려놔요
-        if (state.once.until > now()) { ensureMacro(c); watchOnce(); state.last = await syncPrompt(onceBlock(state.once.level || 'all'), { c, doc }); if (state.last.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null); return state.last; }
+        if (state.once.until > now()) { ensureMacro(c); watchOnce(); state.last = await syncPrompt(onceBlock(state.once.level || 'all'), { c, doc }); if (state.last.ok) await syncRules(rulesOn(state.level, doc), { c, doc }).catch(() => null); return state.last; }
         await endOnce({ c, doc, toast, force: true });
         return state.last ?? { ok: true, changed: true, why: '', level: state.level };
     }
@@ -586,7 +591,7 @@ export async function syncMbPrompt(want, count = DEFAULT_COUNT, chars = DEFAULT_
     }
     const r = await syncPrompt(state.level, { c, doc });
     state.last = r;
-    if (r.ok) await syncRules(state.level !== 'off', { c, doc }).catch(() => null);   // 1.6.1 줄 꼴 규칙: 단계가 무엇이든(「가볍게」 부터) 같이 붙고, 「적용 안 함」 이면 같이 떼요
+    if (r.ok) await syncRules(rulesOn(state.level, doc), { c, doc }).catch(() => null);   // 1.6.1 줄 꼴 규칙: 단계가 무엇이든(「가볍게」 부터) 같이 붙고, 「적용 안 함」 이면 같이 떼요
     if (!r.ok && retry && !state.timer && globalThis.setTimeout) state.timer = setTimeout(() => { state.timer = null; syncMbPrompt(state.level, state.count, state.chars, { retry: false }).catch(() => { /* 다음 설정 바뀜에 */ }); }, 4000);
     if (!r.ok && !retry && state.level !== 'off' && r.why === 'shape') { try { toast?.warning?.('미트볼의 「생성 시스템 프롬프트」 자리를 못 찾았어요(다른 판) — 문구는 그대로 뒀어요.', '', { timeOut: 8000 }); } catch { /* 알림 없이 */ } }
     return r;
@@ -641,15 +646,15 @@ export function timeOfDay(raw, times = []) {
     return null;
 }
 /** 관계 숫자 바로잡기 — 바꾼 사람 목록을 돌려줘요. 자료는 그 자리에서 고쳐요(origin 도 같은 사람이면 같이) */
-export function reconcileRel(c = ctx()) {
+export function reconcileRel(c = ctx(), { rel = true, fill = true } = {}) {   // 1.7.3 rel = 관계 숫자 · 시간대 바로잡기(스위치 relfix) · fill = 빈 프로필 채우기(스위치 fill)
     const meta = metaMb(c), list = meta?.base?.data?.rel?.user, cal = meta?.base?.data?.calendar;
     const led = opsLedger(c), sums = led.sums;
     const changed = []; let checked = 0, time = null;
     // 시간대: 본편 AI 가 마지막으로 적은 시간대(그 확장 달력의 시간대 이름으로 바꿀 수 있을 때만) — 기본 틀 달력이 「아침」 에 머무는 것
-    if (cal && led.time) { const t = timeOfDay(led.time, cal.times); if (t && t !== cal.time) { time = { from: cal.time, to: t }; cal.time = t; } }
+    if (rel && cal && led.time) { const t = timeOfDay(led.time, cal.times); if (t && t !== cal.time) { time = { from: cal.time, to: t }; cal.time = t; } }
     if (!Array.isArray(list) || !list.length || !sums?.size) return { changed, checked, time, added: [] };
     const fix = (r, k, d) => { const v = Number(r[k]) || 0; if (!d) return v; return d > 0 ? Math.max(v, clampRel(d)) : Math.min(v, clampRel(d)); };
-    for (const r of list) {
+    if (rel) for (const r of list) {
         const s = sumFor(r, sums, list); if (!s) continue; checked++;
         const aff = fix(r, 'aff', s.aff), trust = fix(r, 'trust', s.trust);
         if (aff === r.aff && trust === r.trust) continue;
@@ -662,7 +667,7 @@ export function reconcileRel(c = ctx()) {
     // 1.6.8 (11-17 사용자: 직함과 이름이 같은 사람인데 프로필에 다른 사람으로 나와요): 관계 칸에 직함으로 적힌 사람을 다른 사람으로 보고 프로필을 더했어요.
     //   더하기 전에 같은 사람일 수 있는지 봐요(maybeSame) — 그럴 수 있으면 더하지 않아요. 더한 프로필에는 표식(FILL_MARK)을 남겨 나중에 중복을 정리할 수 있게 해요.
     const added = [], prof = meta?.base?.data?.profile;
-    if (prof && Array.isArray(prof.list)) {
+    if (fill && prof && Array.isArray(prof.list)) {
         const has = new Set(prof.list.flatMap(p => namesOf(p)));
         const sets = keySets(booksFor(c), meta?.base);
         for (const r of list) {
@@ -740,6 +745,7 @@ function watchDupes(c = ctx()) {
 const DEDUP = (globalThis.__blMbDedupe ||= { seen: new Set(), told: new Set(), run: null });
 export async function cleanupDupes({ c = undefined, toast = globalThis.toastr, doc = globalThis.document, core = undefined, engine = undefined, force = false } = {}) {
     const cx = c || ctx(); if (!metaMb(cx)?.base) return [];
+    if (!swOn('dedupe', doc) && !swOn('merge', doc)) return [];   // 1.7.3 스위치 둘 다 끔 — 손대지 않고 「한 번 함」 으로도 안 적어요(다시 켜고 열면 해요)
     if (themeOff(doc)) return [];   // 버그 사냥 9b: 테마를 꺼 뒀으면(「블루레몬에이드 사용」 끔) 그 확장 자료를 고치지 않아요 — 「한 번 함」 으로도 안 적어 다시 켜고 열면 해요
     const key = bookKey(cx); if (!force && DEDUP.seen.has(key)) return [];
     while (DEDUP.run) { try { await DEDUP.run; } catch { /* 앞 정리 실패해도 이어서 */ } }   // 한 번에 하나씩
@@ -751,8 +757,8 @@ export async function cleanupDupes({ c = undefined, toast = globalThis.toastr, d
         if (!booksFresh(cx)) await primeBooks(cx);
         // 버그 사냥 9: 기다리는 사이(앞 정리 · 로어북 받기) 채팅이 바뀌었으면 손대지 않아요 — 앞 채팅 자료를 고쳐 놓고 새 채팅을 저장 · 알리던 것. 그 채팅을 다시 열면 그때 해요
         if (bookKey(cx) !== key) { DEDUP.seen.delete(key); return []; }
-        gone = dedupeFilled(cx);
-        try { merged = mergeTitles(cx); } catch { merged = []; }   // 1.6.9 관계 칸의 직함 줄 · 이름 줄 합치기(그 확장의 「합치기」 와 같은 기록으로)
+        gone = swOn('dedupe', doc) ? dedupeFilled(cx) : [];   // 1.7.3 스위치 「중복 프로필 정리」
+        try { merged = swOn('merge', doc) ? mergeTitles(cx) : []; } catch { merged = []; }   // 1.7.3 스위치 「직함 줄 · 이름 줄 합치기」   // 1.6.9 관계 칸의 직함 줄 · 이름 줄 합치기(그 확장의 「합치기」 와 같은 기록으로)
         if (merged.length) await fitAdjust(metaMb(cx), doc, engine);
         if (gone.length || merged.length) {
             try { await cx.saveMetadata?.(); } catch { /* 다음 저장 때 */ }
@@ -934,9 +940,9 @@ export async function afterWizard({ before = null, level = '', chat = undefined,
     if (!base || base === before || !same()) return null;
     try { if (!booksFresh(cx())) await primeBooks(cx()); } catch { /* 로어북 없이 */ }   // 1.6.8 프로필을 더하기 전 같은 사람 확인 · 직함 이름 바꾸기에 써요
     if (!same()) return null;
-    const res = reconcileRel(cx());
-    try { res.renamed = renameTitles(cx(), { before }); } catch { res.renamed = []; }   // 숫자를 맞춘 뒤에(직함 이름으로 변화 합을 찾고 나서) 이름을 바꿔요
-    try { res.merged = mergeTitles(cx()); } catch { res.merged = []; }   // 1.6.9 그래도 직함 줄 · 이름 줄이 둘 다 남았으면 합치기 기록으로(채팅을 열 때와 같은 규칙)
+    const res = reconcileRel(cx(), { rel: swOn('relfix', doc), fill: swOn('fill', doc) });   // 1.7.3 스위치 「만든 뒤 관계 숫자 · 시간대 바로잡기」 · 「만든 뒤 빈 프로필 채우기」
+    try { res.renamed = swOn('rename', doc) ? renameTitles(cx(), { before }) : []; } catch { res.renamed = []; }   // 숫자를 맞춘 뒤에(직함 이름으로 변화 합을 찾고 나서) 이름을 바꿔요 · 1.7.3 스위치 「만든 뒤 직함 이름 바꾸기」
+    try { res.merged = swOn('merge', doc) ? mergeTitles(cx()) : []; } catch { res.merged = []; }   // 1.6.9 그래도 직함 줄 · 이름 줄이 둘 다 남았으면 합치기 기록으로(채팅을 열 때와 같은 규칙)
     if (res.merged.length) await fitAdjust(metaMb(cx()), doc, engine);   // 버그 사냥 9b: 그 확장 addAdjust 처럼 80개를 넘으면 정리
     if (res.changed.length || res.time || res.added?.length || res.renamed.length || res.merged.length) {
         try { await cx().saveMetadata?.(); } catch { /* 다음 저장 때 */ }

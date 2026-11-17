@@ -187,7 +187,7 @@ export function createChatGraph(popup, showList) {
     async function post(url, body, signal) {
         const response = await fetch(url, { method: 'POST', headers: context().getRequestHeaders(), body: JSON.stringify(body), signal });
         if (!response.ok) throw Error(`HTTP ${response.status}`);
-        const result = await response.json(); if (result?.error) throw Error('채팅 목록을 읽지 못했습니다'); return result;
+        const result = await response.json(); if (result?.error) throw Error('채팅 목록을 읽지 못했어요'); return result;
     }
     async function refresh() {
         request?.abort(); const controller = new AbortController(); request = controller; const token = ++revision;

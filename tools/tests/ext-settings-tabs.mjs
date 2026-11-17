@@ -147,7 +147,7 @@ test('⑥ 감시자 · 타이머가 없고 맞춤 시트는 한 번만 붙여요
     assert.equal(attachSheet(d, SET, 'http://x/scripts/extensions/third-party/t/src/ext-compat.js'), true);
     assert.equal(attachSheet(d, SET, 'http://x/scripts/extensions/third-party/t/src/ext-compat.js'), false, '두 번째는 붙이지 않아요');
     assert.equal(head.children.length, 1);
-    assert.equal(head.children[0].href, 'http://x/scripts/extensions/third-party/t/src/ext-status.css');
+    assert.equal(head.children[0].href, 'http://x/scripts/extensions/third-party/t/src/ext-status.gen.css');   // 1.7.3 묶음 스위치 문을 단 사본(원본 src/ext-status.css)
     assert.ok(fs.existsSync(path.join(root, 'src/ext-status.css')));
 });
 test('⑦ 누름 길: 머리줄을 누르면 늦게 그려진 칸에 탭을 만들고, 탭을 누르면 그 묶음만 보이고 원래 이름으로 기억해요', () => {

@@ -159,7 +159,7 @@ export function buildBody(doc, facts, names, goto) {
     const ok = !missing(facts);
     step('문맥 크기(최대 토큰)를 올려요.', ok ? contextAdvice(facts) : '모델이 받아 주는 만큼 올릴 수 있어요.', '#openai_max_context');
     step('최대 응답 길이를 줄여요.', ok ? replyAdvice(facts) : '응답이 짧아도 되면 줄일수록 기록 자리가 늘어요.', '#openai_max_tokens');
-    step('안 쓰는 프롬프트를 꺼요.', '위 목록에서 토큰을 많이 쓰는 것부터 보세요. 프롬프트 안에 들어가는 캐릭터·페르소나·월드인포의 토큰을 줄여도 돼요.');
+    step('안 쓰는 프롬프트를 꺼요.', '위 목록에서 토큰을 많이 쓰는 것부터 보세요. 프롬프트 안에 들어가는 캐릭터 · 페르소나 · 월드인포의 토큰을 줄여도 돼요.');
     box.append(steps);
     return box;
 }

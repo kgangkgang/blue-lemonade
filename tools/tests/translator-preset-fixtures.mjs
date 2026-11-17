@@ -1,5 +1,5 @@
 // 시험 고정물 (시험 아님): 프리셋별 모델 답 꼴 그대로 지어낸 메시지 + 그 프리셋의 표시 정규식(데우스는 찾기가 원작 그대로 · 바꿀 글은 style · 그림을 뺀 뼈대, 과일 계열은 Blue Lemonade 가 지어낸 대체 식).
-//   인물 · 장소는 지어낸 것이에요. 데우스 2.5 · 데우스 V3 · 레모나(데우스식 시간 상태창) · 과일 6.4 · 청과 2.0 · 야한 과일 2.0.
+//   인물 · 장소는 지어낸 것이에요. 데우스 2.5 · 데우스 V3 · 시트라(지어낸 이름 · 데우스식 시간 상태창) · 과일 6.4 · 청과 2.0 · 야한 과일 2.0.
 
 // 출처 · 라이선스: 이 파일의 표시 정규식(찾기 식 · 바꿀 글의 뼈대)은 데우스 엑스 마키나(Deus ex Machina, lsennn — 아래 데우스 2.5 · V3 정규식,
 //   https://github.com/lsennn/Deus-ex-machina) 프리셋에서 옮긴 것이에요. 원작은 CC BY-NC-SA 4.0
@@ -8,7 +8,7 @@
 //   과일 · 청과 · 야한 과일 줄의 찾기 식 넷(상태창 둘 · 요약 · 숨기는 칸)은 원작 정규식이 아니에요: 같은 꼬리표(<status_bar> · <meow_FM> · <disclaimer> · 주석)를
 //   같은 자리로 잡도록 Blue Lemonade 가 새로 쓴 대체 식이에요. 원작 식은 저장소에 담지 않아요(과일 원작 @KKM · 청과 「赫斯帕里德斯」의 이용 조건 — THIRD-PARTY-NOTICES.md).
 //   원작과 같은 자리를 잡는지는 원작 사본을 가진 기기에서만 봐요: tools/tests/translator-preset-local.mjs (BL_PRESET_ORIGINALS).
-//   레모나 줄은 레모나 프리셋에서 옮긴 것이 없어요: 지어낸 메시지에 위 데우스 V3 정규식을 그대로 써요(레모나는 CC BY-NC-ND 4.0 · 외부 배포 금지라 본문 · 이름 · 정규식을 담지 않아요).
+//   시트라 줄은 실제 프리셋에서 옮긴 것이 없어요: 지어낸 메시지에 위 데우스 V3 정규식을 그대로 써요(외부 배포 금지 프리셋의 본문 · 이름 · 정규식은 담지 않아요).
 const prose = (open = '<prose>', close = '</prose>') => `${open}
 Rain needled the window. Rex leaned against the doorframe, arms folded, watching the city lights blur into long streaks of gold.
 
@@ -58,8 +58,8 @@ ${prose()}`,
 ${TRACKER}
 
 ${prose()}`,
-    // 레모나 5.15: 데우스식 시간 상태창 + 본문(prose 감싸개 없음)
-    lemona: `${TRACKER.replace('🌙 11:42 PM', '🕖 7:40 PM').replace('October 27, Tuesday, 2026', 'March 14, 2026, Saturday')}
+    // 시트라 5.15: 데우스식 시간 상태창 + 본문(prose 감싸개 없음)
+    citra: `${TRACKER.replace('🌙 11:42 PM', '🕖 7:40 PM').replace('October 27, Tuesday, 2026', 'March 14, 2026, Saturday')}
 
 ${prose('', '').trim()}`,
     // 과일 6.4: ECoT 생각 + 숨은 주석 + 상태창(日期： 꼴, 영어 값) + <content> 본문 + 숨는 disclaimer
@@ -165,7 +165,7 @@ const HIDE_FRUIT = { find: String.raw`/\s?<(finish|disclaimer)>[\s\S]*<\/\1>|\s?
 export const DISPLAY_REGEX = {
     deus25: [D25_TRACKER, D25_FALLBACK, COLOR],
     deusV3: [V3_UNWRAP, V3_TRACKER, V3_CRUMBS, V3_FALLBACK, COLOR],
-    lemona: [V3_UNWRAP, V3_TRACKER, V3_CRUMBS, V3_FALLBACK, COLOR],
+    citra: [V3_UNWRAP, V3_TRACKER, V3_CRUMBS, V3_FALLBACK, COLOR],
     fruit64: [HIDE_FRUIT, FRUIT_STATUS, COLOR],
     qingguo: [HIDE_FRUIT, MEOW, INFO_STATUS, COLOR],
     yahan: [HIDE_FRUIT, MEOW, INFO_STATUS, COLOR],

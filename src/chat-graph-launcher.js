@@ -60,7 +60,7 @@ export function startChatGraph() {
         } catch (error) {
             if (token !== generation) return;
             select('list');
-            console.warn('[블루 레몬에이드] 분기 지도를 열지 못했습니다', error);
+            console.warn('[블루 레몬에이드] 분기 지도를 열지 못했어요', error);
             globalThis.toastr?.error('분기 지도를 열지 못했어요. 목록에서 채팅을 확인해 주세요.');
         }
     }

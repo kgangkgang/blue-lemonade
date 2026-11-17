@@ -128,7 +128,7 @@ export function buildDrawer() {
             </div>
             <div class="inline-drawer-content">
                 <div class="rl-body">
-                    <small class="rl-hint">실리태번과 확장이 보내는 API 요청을 이 기기에 기록해요. 마법봉 메뉴의 ${TITLE}에서 봐요.</small>
+                    <small class="rl-hint">실리태번과 확장이 보내는 API 요청을 이 기기에 기록해요. 요술봉 메뉴의 ${TITLE}에서 봐요.</small>
                     <div class="rl-row">
                         <label class="checkbox_label rl-check" for="rl_enabled"><input type="checkbox" id="rl_enabled"><span>기록하기</span></label>
                         <div class="menu_button menu_button_icon rl-open"><i class="fa-solid fa-receipt"></i><span>열기</span></div>
@@ -138,7 +138,7 @@ export function buildDrawer() {
                         <label><span>기록 보관</span><input type="number" class="text_pole rl-max" min="20" step="10"><span>개</span></label>
                     </div>
                     <small class="rl-hint rl-keep-warn" hidden></small>
-                    <small class="rl-hint">본문 보관 수를 넘긴 요청은 프롬프트·응답 글은 지워지고 토큰 수만 남아요. 날짜별 집계는 지워지지 않아요.</small>
+                    <small class="rl-hint">본문 보관 수를 넘긴 요청은 프롬프트 · 응답 글은 지워지고 토큰 수만 남아요. 날짜별 집계는 지워지지 않아요.</small>
                     <div class="rl-price-head">
                         <b>직접 지정 가격표</b><small>공식 API 외 연결용 · 100만 토큰당</small>
                         <label class="rl-unit"><span>단위</span><input type="text" class="text_pole rl-unit-input" maxlength="4"></label>
@@ -150,9 +150,9 @@ export function buildDrawer() {
                         <input type="number" class="text_pole rl-price-out" placeholder="출력" min="0" step="0.01" inputmode="decimal">
                         <div class="menu_button menu_button_icon rl-price-save"><i class="fa-solid fa-plus"></i></div>
                     </div>
-                    <small class="rl-hint">연결한 제공처의 확인된 공식 단가를 자동 적용해요. 정액제·직접 운영 서버는 과금 방식을 안내해요. 이 표는 공식 단가를 확인하지 못한 연결에 써요. "자동"은 중계 서버에서 받은 가격으로, 같은 서버에만 적용해요. 새 로그는 요청 당시 단가를 보존하고, 예전 집계만 수정한 가격으로 다시 계산해요.</small>
+                    <small class="rl-hint">연결한 제공처의 확인된 공식 단가를 자동 적용해요. 정액제 · 직접 운영 서버는 과금 방식을 안내해요. 이 표는 공식 단가를 확인하지 못한 연결에 써요. "자동"은 중계 서버에서 받은 가격으로, 같은 서버에만 적용해요. 새 로그는 요청 당시 단가를 보존하고, 예전 집계만 수정한 가격으로 다시 계산해요.</small>
                     <div class="rl-price-head rl-budget-head">
-                        <b>예산</b><small>중계 서버(new-api 계열)의 실제 과금·잔액</small>
+                        <b>예산</b><small>중계 서버(new-api 계열)의 실제 과금 · 잔액</small>
                     </div>
                     <label class="checkbox_label rl-check" for="rl_budget_enabled"><input type="checkbox" id="rl_budget_enabled"><span>중계 서버에서 사용량 가져오기</span></label>
                     <div class="rl-budget-fields">
@@ -441,7 +441,7 @@ function buildDialog() {
                 <select class="text_pole rl-filter-caller"><option value="">모두</option></select>
                 <select class="text_pole rl-filter-purpose" aria-label="사용 용도">${purposeOptions([])}</select>
                 <select class="text_pole rl-filter-status">
-                    <option value="">성공·오류</option>
+                    <option value="">성공 · 오류</option>
                     <option value="ok">성공만</option>
                     <option value="error">오류만</option>
                 </select>
@@ -867,7 +867,7 @@ function renderMessage(message, index, total) {
 /** 전송 흐름: 버튼을 누른 순간이 0초. 단계 사이 간격과 그 사이에 난 저장 · 임베딩 요청 길이 */
 function renderSendTrace(trace) {
     if (!trace || !Array.isArray(trace.marks)) return '';
-    const steps = [['보내기 (' + esc(trace.source || '버튼') + ')', 0], ...trace.marks, ['요청 보냄', trace.requestAt]];
+    const steps = [['보내기 (' + esc(trace.source || '단추') + ')', 0], ...trace.marks, ['요청 보냄', trace.requestAt]];
     const rows = steps.map(([label, at], index) => {
         const prev = index ? steps[index - 1][1] : 0;
         const gap = at - prev;
@@ -876,7 +876,7 @@ function renderSendTrace(trace) {
     }).join('');
     const fetches = (trace.fetches || []).map(row => `<div class="rl-trace-row is-fetch"><span class="rl-trace-at">${seconds(row.at)}</span><span class="rl-trace-label">${esc(row.label)}</span><span class="rl-trace-gap">${seconds(row.ms)}</span></div>`).join('');
     return `
-        <div class="rl-section-head"><b>전송 흐름</b><small>버튼을 누른 순간이 0초 · 굵은 줄은 0.7초 넘게 걸린 단계</small></div>
+        <div class="rl-section-head"><b>전송 흐름</b><small>단추를 누른 순간이 0초 · 굵은 줄은 0.7초 넘게 걸린 단계예요</small></div>
         <div class="rl-trace">${rows}${fetches ? `<div class="rl-trace-sub">그 사이에 난 요청</div>${fetches}` : ''}</div>`;
 }
 
@@ -1046,7 +1046,7 @@ async function renderStats(state) {
     const mixedCurrency = Object.keys(total.costs || {}).length > 1;
     const costSort = mixedCurrency ? 'requests' : 'cost';
     holder.innerHTML = tiles
-        + '<p class="rl-dim">용도별 비용은 모델 단가 기준 예상액이에요. 예전 기록은 용도 분류 불가로 남고, 사용량·가격이 없는 요청은 0원으로 계산하지 않아요. 새 기록은 요청 당시 연결처·공식 캐시 단가를 반영해요. 단가 확인이 안 된 요청은 합계에서 빠져요. 서로 다른 통화는 나눠 보여요.</p>'
+        + '<p class="rl-dim">용도별 비용은 모델 단가 기준 예상액이에요. 예전 기록은 용도 분류 불가로 남고, 사용량 · 가격이 없는 요청은 0원으로 계산하지 않아요. 새 기록은 요청 당시 연결처 · 공식 캐시 단가를 반영해요. 단가 확인이 안 된 요청은 합계에서 빠져요. 서로 다른 통화는 나눠 보여요.</p>'
         + renderTable(mixedCurrency ? '용도별 · 요청 많은 순 (통화가 서로 달라요)' : '용도별 · 비용 많은 순',byPurpose,{sortBy:costSort})
         + renderTable('용도 · 모델별',byPurposeModel,{sortBy:costSort})
         + renderTable('모델별', byModel)

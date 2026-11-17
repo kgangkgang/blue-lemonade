@@ -84,7 +84,7 @@ await test('사용자 메시지의 회색 대사색도 그 사람 색이에요(�
     assert.equal(who.colors.get('B'), '#7d8796');
 });
 
-await test('이름 바꾼 화자: 인물표는 원래 이름으로 물어 그 색을 써요(드림주 → 깡캐 꼴)', () => {
+await test('이름 바꾼 화자: 인물표는 원래 이름으로 물어 그 색을 써요(유저 이름 → 깡캐 꼴)', () => {
     const source = [msg('미라', [para(say(GOLD, GOLD, '「어서 와요.」'))]), msg('하루', [para(say(SLATE_LIT, SLATE, '「고마워.」'))], true)];
     const shown = [source[0], { ...source[1], name: '별명' }];
     const people = new Map([['하루', { color: '#424c59' }], ['미라', { color: '#f5c84c' }]]);

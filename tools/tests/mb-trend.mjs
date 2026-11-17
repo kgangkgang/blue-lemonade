@@ -48,7 +48,7 @@ function page({ raw = false, aff = AFF } = {}) {
     return dom.window.document;
 }
 const lineOf = (box, k) => box.querySelector(`.bl-tr-s[data-bl-k="${k}"] .bl-tr-line`)?.getAttribute('stroke');
-const keys = box => [...box.querySelectorAll('.bl-tr-key')].map(b => ({ name: [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim(), dot: b.querySelector('.bl-tr-dot').style.getPropertyValue('--c'), line: b.getAttribute('data-bl-line'), dash: b.getAttribute('data-bl-dash') || '' }));
+const keys = box => [...box.querySelectorAll('.bl-tr-key')].map(b => ({ name: (b.querySelector('.bl-tr-name')?.textContent ?? [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')).trim(), dot: b.querySelector('.bl-tr-dot').style.getPropertyValue('--c'), line: b.getAttribute('data-bl-line'), dash: b.getAttribute('data-bl-dash') || '' }));
 
 await test('모듈이 있어요(src/mb-trend.js)', () => { assert.ok(m, 'src/mb-trend.js 가 없어요'); assert.equal(typeof m.dressTrend, 'function'); assert.equal(typeof compat?.faceColorOf, 'function', 'ext-compat 의 faceColorOf'); });
 
@@ -157,14 +157,61 @@ await test('그림: 둥근 모서리 · 위 셋 굵게 · 맨 위 채움 · 끝�
     const r = m.roundPath([[0, 10], [0, 5], [10, 5], [20, 0]]); assert.equal(r.pts[0][1], 5);
 });
 
+let trendCb = null;   // startMbTrend 는 한 번만 붙어요 — 아래 시험이 같은 콜백을 써요
 await test('「원작 그대로 보기」 · 맞춤 밖이면 그대로', () => {
     const doc = page({ raw: true }); let cb = null;
-    m.startMbTrend(doc, { watch: (_r, _s, fn) => { cb = fn; return () => {}; } });
+    m.startMbTrend(doc, { watch: (_r, _s, fn) => { cb = trendCb = fn; return () => {}; } });
     const tr = doc.querySelector('.ss-trend');
     cb([{ addedNodes: [tr.closest('dialog')] }]);
     assert.equal(tr.querySelectorAll('polyline').length, 8, '그 확장 그림 그대로');
     doc.body.removeAttribute('data-bl-ext-raw'); cb([{ addedNodes: [tr.closest('dialog')] }]);
     assert.equal(tr.querySelectorAll('polyline').length, 0, '맞춤이면 다시 그려요');
+});
+
+await test('버그 사냥 10b: 아주 긴 이름 알약은 판 폭 안에서 줄임표(이름은 따로 감싸요 · 알약 최대 폭)', () => {
+    // 헤드리스 크롬 측정(고치기 전): 판 오른쪽 351px 인데 긴 이름 알약의 글이 482px 까지 — 판 밖으로 131px 넘쳤어요
+    const long = 'Maximilian Bartholomew Featherstonehaugh-Worthington the Third';
+    const doc = page({ aff: [{ name: long, data: [1, 2, 3, 4, 5] }, ...AFF] }); const tr = doc.querySelector('.ss-trend'); m.dressTrend(tr, { pick, bg: NIGHT, width: 340 });
+    const b = tr.querySelector('.bl-tr-key');
+    assert.equal(b.querySelector('.bl-tr-name')?.textContent, long, '이름은 줄임표를 걸 칸(.bl-tr-name)에');
+    assert.equal(b.getAttribute('title'), `${long}만 진하게 보기`, '전체 이름은 title 로');
+    const css = read('src/ext-status.css'), rule = sel => (css.match(new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}')) || [])[1] || '';
+    assert.match(rule('.ss-scope .bl-tr-legend > .bl-tr-key'), /max-width:\s*100%/, '알약 최대 폭');
+    const nm = rule('.ss-scope .bl-tr-key > .bl-tr-name');
+    for (const d of [/overflow:\s*hidden/, /text-overflow:\s*ellipsis/, /min-width:\s*0/]) assert.match(nm, d);
+    assert.match(rule('.ss-scope .bl-tr-key > small'), /flex:\s*none/, '끝 값은 줄지 않아요');
+});
+
+await test('버그 사냥 10b: 창이 열린 채 밤낮이 바뀌면 선 색을 새 바탕에 맞춰 다시 정해요(강조는 그대로)', () => {
+    const doc = page(); const tr = doc.querySelector('.ss-trend'); const subs = [];
+    const boxes = [...tr.querySelectorAll('.ss-trend-box')]; boxes.forEach(b => { b.style.backgroundColor = NIGHT; });
+    m.dressTrend(tr, { pick, width: 340, watch: (_r, spec, fn) => { subs.push({ spec, fn }); return () => {}; } });
+    const sub = subs.find(s => Array.isArray(s.spec?.attributes) && s.spec.attributes.includes('class'));
+    const box = tr.querySelector('.ss-trend-box'); box.querySelectorAll('.bl-tr-key')[1].dispatchEvent(new doc.defaultView.MouseEvent('click', { bubbles: true }));
+    const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const low = bg => keys(box).filter(k => compat.contrastOf(rgb(k.line), rgb(bg)) < 3).map(k => `${k.name} ${k.line}`);
+    assert.deepEqual(low(NIGHT), [], '밤 바탕에 맞음');
+    boxes.forEach(b => { b.style.backgroundColor = DAY; }); doc.body.classList.add('salty-light');
+    sub?.fn([{ type: 'attributes', target: doc.body, attributeName: 'class' }]);
+    assert.deepEqual(low(DAY), [], '낮으로 바꾼 뒤 선이 낮 바탕과 3 : 1');
+    assert.ok(sub, 'body class(밤낮) 구독');
+    keys(box).forEach((k, i) => assert.equal(lineOf(box, i), k.line, `그림 선 = 범례 ${k.name}`));
+    assert.equal(box.querySelectorAll('.bl-tr-key')[1].getAttribute('aria-pressed'), 'true', '강조는 그대로');
+    box.querySelectorAll('.bl-tr-key')[1].dispatchEvent(new doc.defaultView.MouseEvent('click', { bubbles: true }));
+    assert.equal(box.hasAttribute('data-bl-focus'), false, '새 범례도 누르기가 돼요');
+});
+
+await test('버그 사냥 10b: 창이 닫히면 크기 감시자 · 밤낮 구독을 끊어요', () => {
+    const doc = page(); const win = doc.defaultView; const ros = []; let offs = 0;
+    win.ResizeObserver = class { constructor(fn) { this.fn = fn; this.on = 0; ros.push(this); } observe() { this.on++; } disconnect() { this.on = 0; } };
+    const tr = doc.querySelector('.ss-trend');
+    m.dressTrend(tr, { pick, bg: NIGHT, width: 340, watch: () => () => { offs++; } });
+    assert.equal(ros.length, 2); assert.ok(ros.every(r => r.on === 1));
+    tr.closest('dialog').remove();
+    assert.ok(trendCb, '붙이기 콜백');
+    trendCb([{ addedNodes: [], removedNodes: [tr.closest('dialog') || tr] }]);
+    assert.ok(ros.every(r => r.on === 0), '크기 감시자를 끊어요');
+    assert.equal(offs, 1, '밤낮 구독을 끊어요');
 });
 
 await test('연결 자리: index 의 미트볼 문 · 맞춤 시트 · 얼굴과 같은 색 고르기 · CI', () => {

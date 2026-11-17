@@ -30,14 +30,14 @@ function cardName(avatar) {
 }
 const cardsLabel = cards => (cards.length ? cards.map(cardName).join(' · ') : '카드 고르기');
 function hint(row) {
-    if (!clean(row.word)) return '프롬프트·정규식 이름에 든 말을 적어 주세요.';
+    if (!clean(row.word)) return '프롬프트 · 정규식 이름에 든 말을 적어 주세요.';
     return row.cards.length ? `고른 카드 ${row.cards.length}장의 채팅에서 켜져요. 그룹이면 구성원 중 하나라도 있으면 돼요.` : `카드를 안 고르면 이름이 「${clean(row.word)}」인 카드에서 켜져요.`;
 }
 function rowMarkup(row, i, saved = true) {
     const n = i + 1;
     return `<div class="bl-link-row" data-link-row="${i}" role="group" aria-label="연동 ${n}">`
         + `<div class="bl-link-head"><b>연동 ${n}</b>${saved ? `<button type="button" class="salty-btn bl-link-mini" data-link-remove aria-label="연동 ${n} 지우기">지우기</button>` : ''}</div>`
-        + `<label class="salty-stack bl-link-field"><span>프롬프트·정규식 이름에 든 말</span><input type="text" class="text_pole" data-link-word value="${esc(row.word)}" maxlength="80" placeholder="예: 캐릭터나 작품 이름" autocomplete="off"></label>`
+        + `<label class="salty-stack bl-link-field"><span>프롬프트 · 정규식 이름에 든 말</span><input type="text" class="text_pole" data-link-word value="${esc(row.word)}" maxlength="80" placeholder="예: 캐릭터나 작품 이름" autocomplete="off"></label>`
         + `<div class="salty-stack bl-link-field"><span>카드</span><button type="button" class="bl-prompt-card-trigger" data-link-pick aria-label="연동 ${n} 카드 선택" aria-haspopup="dialog"><span data-link-cards>${esc(cardsLabel(row.cards))}</span><i class="fa-solid fa-address-card" aria-hidden="true"></i></button></div>`
         + `<small class="bl-link-hint" data-link-hint>${esc(hint(row))}</small><small class="bl-link-hint" data-link-found hidden></small></div>`;
 }
@@ -48,7 +48,7 @@ export function promptLinkMarkup() {
     const s = link();
     const html = `<div class="bl-prompt-tools bl-prompt-link" data-prompt-link><div class="salty-group">`
         + `<div class="salty-row bl-prompt-tool-row" data-search-anchor="캐릭터 이름 연동"><span>캐릭터 이름 연동</span><label class="salty-switch"><input type="checkbox" data-prompt-link-on aria-label="캐릭터 이름 연동" ${s.on ? 'checked' : ''}><span></span></label>`
-        + `<small>줄마다 적은 말이 이름에 든 프롬프트·정규식은 고른 카드의 채팅에서만 켜져요. 이름 자리가 「기본」이거나 말만 빠진 짝 프롬프트는 어느 줄에도 안 맞을 때 켜져요. 지금 고른 채팅 완성 프리셋에 적용돼요.</small></div>`
+        + `<small>줄마다 적은 말이 이름에 든 프롬프트 · 정규식은 고른 카드의 채팅에서만 켜져요. 이름 자리가 「기본」이거나 말만 빠진 짝 프롬프트는 어느 줄에도 안 맞을 때 켜져요. 지금 고른 채팅 완성 프리셋에 적용돼요.</small></div>`
         + `<div class="bl-link-rows" data-link-rows>${rowsMarkup()}</div>`
         + `<div class="bl-link-actions"><button type="button" class="salty-btn bl-link-mini" data-link-add>+ 연동 줄 추가</button></div>`
         // 1.0.1 정규식 창에서 직접 켜고 끈(말이 든) 정규식은 이름 연동이 다시 덮지 않는다 — 「자동으로」가 그 표시를 지운다 (promptbind.js linkedManualRegex · forgetLinkedManual)
@@ -109,9 +109,9 @@ async function apply(box) {
         if (!el?.isConnected) return;
         const any = count.prompts || count.regex;
         el.hidden = !clean(s.rows[i]?.word);
-        el.textContent = any ? `지금 프리셋에서 프롬프트 ${count.prompts}개 · 짝 ${count.twins}개 · 정규식 ${count.regex}개를 찾았어요.` : '지금 프리셋에 이 말이 든 프롬프트·정규식이 없어요.';
+        el.textContent = any ? `지금 프리셋에서 프롬프트 ${count.prompts}개 · 짝 ${count.twins}개 · 정규식 ${count.regex}개를 찾았어요.` : '지금 프리셋에 이 말이 든 프롬프트 · 정규식이 없어요.';
     });
-    if (!found.prompts && !found.regex) { say('지금 프리셋에 그 말이 든 프롬프트·정규식이 없어요. 채팅을 열 때마다 다시 확인해요.'); return; }
+    if (!found.prompts && !found.regex) { say('지금 프리셋에 그 말이 든 프롬프트 · 정규식이 없어요. 채팅을 열 때마다 다시 확인해요.'); return; }
     say(changed ? `${changed}개를 지금 채팅에 맞췄어요.` : '이미 지금 채팅에 맞아요.');
 }
 /** 설정 창은 다시 그려지므로 문서에 한 번 걸어 둔다 — 스위치 · 말 칸의 change 만 듣는다 (말은 칸을 떠날 때 저장) */

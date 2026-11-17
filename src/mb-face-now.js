@@ -11,6 +11,7 @@
 //   예전 신호(ss-pulse)는 안전망으로 그대로예요 — 같은 표식을 같은 값으로 다시 쓰는 것뿐이라 두 번 와도 화면이 안 바뀌어요.
 import { watchDom } from './dom-watch.js';
 import { paintFaces, FACES, markBadge, decoTheme, markLong } from './ext-compat.js';
+import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
 
 /** 이 기록에 얼굴 요소가 새로 붙었나(얼굴 자신이거나 얼굴을 품은 가지) */
 export function faceRecord(record) {
@@ -44,9 +45,10 @@ export function startFaceNow(doc = globalThis.document, { watch = watchDom, soon
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 얼굴' }, records => {
             if (fitted(doc)) {
                 const t = markTargets(records);
-                for (const tb of t.bands) try { marks.badge(tb); } catch { /* 예전 신호 때 */ }
-                for (const dl of t.lists) try { marks.long(dl); } catch { /* 예전 신호 때 */ }
-                for (const tw of t.tws) try { if (tw) marks.deco(tw); } catch { /* 예전 신호 때 */ }
+                // 1.7.3 미트볼 맞춤 스위치: 끈 묶음은 표식을 안 달아요(종 배지 · 이름표 두 열 · 꾸미기 묶음)
+                if (!mbOff('badge', doc)) for (const tb of t.bands) try { marks.badge(tb); } catch { /* 예전 신호 때 */ }
+                if (!mbOff('grid', doc)) for (const dl of t.lists) try { marks.long(dl); } catch { /* 예전 신호 때 */ }
+                if (!mbOff('deco', doc)) for (const tw of t.tws) try { if (tw) marks.deco(tw); } catch { /* 예전 신호 때 */ }
             }
             if (queued || !wants(doc) || !records.some(faceRecord)) return;
             queued = true; soon(() => { queued = false; try { if (wants(doc)) paint(doc); } catch { /* 다음 신호 때 */ } });

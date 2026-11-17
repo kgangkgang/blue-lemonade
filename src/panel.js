@@ -1,4 +1,5 @@
 import { deviceKind } from './device-layout-options.js';
+import { MB_SWITCHES, MB_GROUPS, switchOn, setSwitch, setAll as mbSetAll } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
 import { ruleTokens as mbRuleTokens, ruleBlock as mbRuleBlock, estimate as mbPromptEstimate, block as mbPromptBlock, LEVELS as MB_PROMPT_LEVELS, allText as mbPromptAllText, onceActive as mbPromptOnceActive, armOnce as mbPromptArmOnce, endOnce as mbPromptEndOnce } from './mb-prompt.js';   // 1.6.0 미트볼 문구: 블루레몬 추천 — 토큰 어림 · 덧붙는 글(순수 함수만)
 import { armGuard, disarmGuard } from './cheap-guards.js';
 import { trackerWeatherOn } from './weather-readability.js';
@@ -84,7 +85,7 @@ const TABS = [['theme', '테마'], ['text', '글자'], ['chat', '채팅'], ['ima
 const SUBS = {
     theme: [['palette', '색'], ['colors', '색 고치기'], ['icons', '단추 아이콘'], ['styles', '스타일'], ['changes', '변경한 설정'], ['backup', '백업'], ['update', '업데이트'], ['etc', '기타 설정']],
     text: [['text', '본문'], ['dialogue', '대사'], ['ui', '메뉴'], ['em', '속마음'], ['strike', '취소선'], ['strong', '강조'], ['code', '코드'], ['para', '문단'], ['markdown', '마크다운'], ['shadow', '그림자 · 외곽선']],
-    chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름·시간'], ['user-name', '내 이름·시간'], ['screen', '화면'], ['etc', '기타']],
+    chat: [['message', '메시지'], ['profile', '캐릭터 프로필'], ['user-profile', '내 프로필'], ['name', '캐릭터 이름 · 시간'], ['user-name', '내 이름 · 시간'], ['screen', '화면'], ['etc', '기타']],
     // 1.0.0: 「흐림」 화면은 걷음 — 흰 배경 지우기는 「모양」(옛 id image/fade 로 오면 모양)
     image: [['layout', '배치'], ['shape', '모양'], ['frame', '테두리'], ['size', '크기'], ['cutedge', '투명 그림']],
     prompt: [['deus', '데우스 엑스 마키나'], ['fruit', '과일 계열'], ['sola', '솔라']],
@@ -215,7 +216,7 @@ function historyValue(value, path) {
         if (path.startsWith('fonts.')) return Object.entries(value).map(([lang,id]) => `${lang}: ${findFont(id)?.label || id}`).join(' · ');
         return '사용자 설정';
     }
-    if (typeof value === 'string' && (/^(data:|https?:)/.test(value) || value.length > 100)) return '이미지·사용자 자료';
+    if (typeof value === 'string' && (/^(data:|https?:)/.test(value) || value.length > 100)) return '이미지 · 사용자 자료';
     return typeof value === 'number' ? `${numText(path, value)}${NUM[path]?.unit || ''}` : String(value);
 }
 async function syncChangedAddons(paths) {
@@ -260,7 +261,7 @@ async function stepHistory(redo) {
 function settingsChanges(s) {
     const changes = changedSettings(s);
     const card = ({path,before,value}) => `<article class="bl-setting-change"><b>${esc(historyLabel(path))}</b><small>기본 ${esc(historyValue(before,path))} → 현재 ${esc(historyValue(value,path))}</small><div><button type="button" class="salty-btn" data-act="setting-jump" data-setting="${esc(path)}">설정으로</button>${path === 'usageMode' ? '' : `<button type="button" class="salty-btn" data-act="setting-reset" data-setting="${esc(path)}">기본값</button>`}</div></article>`;
-    const note = `<p class="salty-note">기본값에서 바뀐 설정 ${changes.length}개예요. 저장한 액자·글꼴·스타일 보관함은 유지해요. 복원도 상단 화살표로 되돌릴 수 있어요.</p>`;
+    const note = `<p class="salty-note">기본값에서 바뀐 설정 ${changes.length}개예요. 저장한 액자 · 글꼴 · 스타일 보관함은 유지해요. 복원도 상단 화살표로 되돌릴 수 있어요.</p>`;
     if (!changes.length) return `${note}<div class="bl-changes-list"><p class="salty-note">모두 기본값을 사용하고 있어요.</p></div>`;
     // 1.5.0: 바꾼 설정이 많으면 화면별로 접어 둬요(한 줄로 늘어놓으면 100개에 16,000px) — 접힘은 다른 접는 묶음과 같은 부품 · 여닫은 것은 창이 열려 있는 동안 기억
     if (changes.length <= 8) return `${note}<div class="bl-changes-list">${changes.map(card).join('')}</div>`;
@@ -305,7 +306,7 @@ function jumpToSetting(root, path) {
     const controls = [...root.querySelectorAll('[data-range],[data-num],[data-path],[data-toggle],[data-color-path],[data-time-path],toolcool-color-picker[data-token]')];
     const found = controls.find(el => [el.dataset.range,el.dataset.num,el.dataset.path,el.dataset.toggle,el.dataset.colorPath,el.dataset.timePath].includes(path) || path.startsWith('colorOverrides.') && el.dataset.token === path.split('.')[2]);
     // 5.8.3 이름·시간 탭은 프로필 모양에 따라 다른 칸만 그린다 — 못 찾으면 왜인지 한 줄
-    if (!found && /^(?:(?:profile|userProfile)\.(?:name|header|meta|button)|fonts\.(?:name|userName)(?:\.|$))/.test(path)) toastr.info(/nameRowAlign$/.test(path) ? '작은 프로필 · 프로필 없음일 때 보여요' : '상단 큰 프로필일 때 보여요', '이름·시간');
+    if (!found && /^(?:(?:profile|userProfile)\.(?:name|header|meta|button)|fonts\.(?:name|userName)(?:\.|$))/.test(path)) toastr.info(/nameRowAlign$/.test(path) ? '작은 프로필 · 프로필 없음일 때 보여요' : '상단 큰 프로필일 때 보여요', '이름 · 시간');
     const anchor = path.includes('.decor') ? '장식 액자' : path.includes('.edgeShadow') ? '그림자' : path.includes('.edge') ? '테두리' : path.startsWith('shadow.') ? '글자 그림자' : path.startsWith('outline.') ? '글자 외곽선' : path.startsWith('chat.weather') ? '날씨' : null;
     const group = anchor ? [...root.querySelectorAll('[data-search-anchor]')].find(el => el.dataset.searchAnchor === anchor) : null;
     let target = found?.closest('.salty-slider,.salty-row,.salty-stack') || group || root.querySelector('.salty-sec');
@@ -343,7 +344,8 @@ export function mountPanel(container, { popup = false, onFullscreen = null, init
         ui.tab='extensions';ui.subs.extensions=initialExtension;ui.picker=null;ui.mbOnly=false;
         store('salty_tab',ui.tab);store('salty_subs',JSON.stringify(ui.subs));
     }
-    if (popup && initialExtension === 'mb-deco') { ui.tab = 'chat'; ui.subs.chat = 'screen'; ui.picker = null; ui.mbOnly = true; }   // 미트볼 꾸미기에서 「글꼴 고르기」로 연 창
+    if (popup && initialExtension === 'mb-deco') { ui.tab = 'chat'; ui.subs.chat = 'screen'; ui.picker = null; ui.mbOnly = true; }
+    else if (popup && initialExtension === 'mb-fit') { ui.tab = 'chat'; ui.subs.chat = 'screen'; ui.picker = null; ui.mbOnly = 'fit'; }   // 1.7.3 미트볼 설정 칸의 바로가기로 연 창 — 「미트볼 맞춤」 묶음만   // 미트볼 꾸미기에서 「글꼴 고르기」로 연 창
     else if (popup) ui.mbOnly = false;   // 1.5.2 통합: 평소대로 연 창은 좁은 보기를 풀어요(꾸미기에서 한 번 연 뒤 검색 · 변경한 설정이 그 세 칸에 갇혀 있었어요)
     const root = document.createElement('div');
     root.className = popup ? 'salty-panel in-popup bl-editor' : 'salty-panel bl-editor';
@@ -569,10 +571,10 @@ function mesPinPicker(s) {
     const items = listMenuButtons();
     const pins = s.chat.mesPins || [];
     const gone = pins.filter(key => !items.some(item => item.key === key)).map(pinLabel);   // 1.0.0 후보: 지금 안 잡힌 고정 단추도 사람이 읽는 이름 · 아이콘(열쇠 이름 · ? 아이콘 없음)
-    if (!items.length && !gone.length) return '<p class="salty-note">채팅을 열면 고를 수 있는 버튼이 나와요.</p>';
+    if (!items.length && !gone.length) return '<p class="salty-note">채팅을 열면 고를 수 있는 단추가 나와요.</p>';
     return `<div class="salty-seg bl-mespins">${[...items, ...gone].map(item =>
         `<button data-act="mes-pin" data-key="${esc(item.key)}" class="${pins.includes(item.key) ? 'on' : ''}" aria-pressed="${pins.includes(item.key)}"><i class="${esc(item.icon)}" aria-hidden="true"></i><span>${esc(item.title)}</span></button>`).join('')}</div>
-        <p class="salty-note">누른 버튼은 메뉴를 열지 않아도 이름 줄에 보여요. 최대 ${PIN_LIMIT}개.</p>`;
+        <p class="salty-note">누른 단추는 메뉴를 열지 않아도 이름 줄에 보여요. ${PIN_LIMIT}개까지 골라요.</p>`;
 }
 
 // 연결 선택 코드는 이 칸이 보일 때만 받아요. 회사별 모델 목록은 번역기와 같은 공용 목록이에요.
@@ -693,13 +695,51 @@ function mbPromptRows(s) {
     const all = mbPromptAll(s);
     const allLine = all ? `채팅 전체: 지금 채팅 보이는 메시지 ${mbNum(all.total)}개 · ${mbBig(all.tokens)} 토큰 · 상태창 만들기 1번(5회쯤) = ${mbBig(all.tokens * 5)} 토큰${all.summarized || all.cut || all.dropped ? ` · 상한 때문에 ${[all.summarized ? `오래된 ${mbNum(all.summarized)}개는 기억 요약으로` : '', all.cut ? `${mbNum(all.cut)}개는 앞 1,000자만` : '', all.dropped ? `${mbNum(all.dropped)}개는 뺐어요` : ''].filter(Boolean).join(' · ')}(상한 없이는 ${mbBig(all.full)})` : cap ? '' : ' · 상한 없음 — 다 실어요'}` : '채팅 전체: 지금 채팅을 못 읽었어요';
     const cost = `요청 1회에 더 드는 토큰(지금 채팅 기준 어림) — 가볍게 약 ${tok('light')} · 마지막 답 전체 약 ${tok('last')} · 최근 답 여러 개 약 ${tok('recent')} · 칸 다시 생성 · AI로 수정은 1회, 상태창 만들기는 5회쯤 보내요 · 어느 단계든 본편 답마다 약 ${mbNum(mbRuleTokens())}(줄 꼴 규칙: 시간 · 장소는 새 값만 · 인물은 한 줄에 한 사람)`;
-    return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 본편 「출력 규칙」 · 「별도 분석」 문구 끝에는 줄 꼴 규칙 한 덩이를 붙여요 · 「적용 안 함」 으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
+    return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 본편 「출력 규칙」 · 「별도 분석」 문구 끝에는 줄 꼴 규칙 한 덩이를 붙여요 · 「적용 안 함」으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
             <p class="salty-note">${cost}</p>
             <p class="salty-note bl-mb-prompt-all" data-keep-note>${allLine}</p>
             ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 미트볼의 상태창 만들기 화면에서도 고를 수 있어요(「채팅 읽기」) · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요')}
             ${slider('chat.mbPromptCap', '채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음 · 기본 0 = 다 실어요)', 0, 500000, 10000, 0)}
             ${lv === 'recent' ? `${slider('chat.mbPromptCount', '마지막 답 앞의 메시지 수', 0, 30, 1, 9)}${slider('chat.mbPromptChars', '앞 메시지마다 읽을 글자 수', 500, 8000, 100, 2000)}` : ''}
             ${lv !== 'off' ? `<details class="salty-note bl-mb-prompt-peek"><summary>덧붙는 글 보기</summary><pre>${esc(mbPromptBlock(lv))}</pre><pre>${esc(mbRuleBlock())}</pre></details>` : ''}`;
+}
+// 1.7.3 미트볼 맞춤 스위치(src/mb-switch.js): 블루레몬이 미트볼 상태창에 손대는 것 하나하나 — 머리에 전부 끄기 · 켜기, 화면만 바꾸는 것 / 데이터를 고치는 것 두 갈래
+function mbFitSwitch(sw, s) {
+    return `<label class="salty-switch"><input type="checkbox" data-act="mb-fit" data-key="${sw.key}" aria-label="${esc(sw.name)}" ${switchOn(s, sw.key) ? 'checked' : ''}><span></span></label>`;
+}
+function mbFitButtons(kind, all = false) {
+    return `<span class="salty-btns bl-mb-fit-btns"><button class="salty-btn" data-act="mb-fit-all" data-kind="${kind}" data-on="0">${all ? '전부 끄기' : '끄기'}</button><button class="salty-btn" data-act="mb-fit-all" data-kind="${kind}" data-on="1">${all ? '전부 켜기' : '켜기'}</button></span>`;
+}
+// 이미 있던 켬끔 스위치는 그 키 그대로(변경 기록 · 되돌리기 · 「처음으로」 가 예전처럼) — 「추억 앨범 단추」 만 거꾸로(켬 = 숨기기)라 묶음 스위치로 그려요
+const MB_OLD_TOGGLES = {
+    back: s => toggle('chat.mbBack', s.chat.mbBack !== false),
+    floors: s => toggle('chat.mbMapFloors', s.chat.mbMapFloors !== false),
+    hidden: s => toggle('chat.mbHiddenSync', s.chat.mbHiddenSync !== false),
+    autoen: s => toggle('chat.mbAutoEn', s.chat.mbAutoEn !== false),
+    helpers: s => toggle('chat.mbHelpers', s.chat.mbHelpers !== false),
+};
+function mbFitRow(sw, s) {
+    if (MB_OLD_TOGGLES[sw.key]) return row(sw.name, MB_OLD_TOGGLES[sw.key](s), sw.desc);
+    if (sw.key === 'prompt') return mbPromptRows(s);
+    if (sw.key === 'face') return `${stack(sw.name, seg('chat.mbFace', [['icon', '아이콘 (원작)'], ['initial', '이름 첫 글자']], 'icon'), sw.desc)}${row('미트볼 글꼴 · 얼굴 표시', '<button class="salty-btn" data-act="mb-deco">열기</button>', '미트볼 상태창 › 꾸미기 화면에도 있어요(「블루레몬 꾸미기」 묶음) · 여기서도 열 수 있어요')}`;
+    return row(sw.name, mbFitSwitch(sw, s), sw.desc);
+}
+function mbFitRaw() {
+    let raw = false; try { raw = localStorage.getItem('bl-ext-view:ss-settings') === 'raw'; } catch { raw = false; }
+    return row('원작 그대로 보기 (이 기기)', `<label class="salty-switch"><input type="checkbox" data-act="mb-fit-raw" aria-label="원작 그대로 보기" ${raw ? 'checked' : ''}><span></span></label>`, '미트볼 설정 칸 머리의 레몬 단추와 같아요 · 켜면 이 기기에서만 맞춤 화면을 통째로 쉬어요(아래 스위치 값은 그대로) · 데이터를 고치는 것 가운데 화면에 붙는 것만 같이 쉬어요');
+}
+function mbFitGroups(s) {
+    const count = kind => { const list = MB_SWITCHES.filter(sw => !sw.choice && (kind === 'all' || sw.kind === kind)); return `${list.filter(sw => switchOn(s, sw.key)).length} / ${list.length}개 켜짐`; };
+    const groupRows = (kind) => MB_GROUPS.map(([id, label]) => { const list = MB_SWITCHES.filter(sw => sw.kind === kind && sw.group === id); return list.length ? `${kind === 'screen' ? `<p class="salty-note bl-mb-fit-sub">${label}</p>` : ''}${list.map(sw => mbFitRow(sw, s)).join('')}` : ''; }).join('');
+    // 묶음 제목(cap)은 하나 — 설정 창이 제목마다 칩을 만들어서, 갈래는 묶음 안 머리 줄(끄기 · 켜기)로 나눠요
+    return `${cap('미트볼 맞춤', '블루레몬이 미트볼 상태창에 더하거나 고친 것을 하나씩 켜고 꺼요 · 끄면 그 부분만 원작 그대로예요')}<div class="salty-group bl-mb-fit">
+            ${row('전부', mbFitButtons('all', true), `${count('all')} · 고르는 칸(얼굴 표시 · 미트볼 문구)은 「전부 켜기」로 저절로 고르지 않고, 「전부 끄기」 전에 고른 값으로 돌아가요`)}
+            ${mbFitRaw()}
+            ${row('<b>화면만 바꾸는 것</b>', mbFitButtons('screen'), `${count('screen')} · 미트볼의 자료 · 설정은 그대로 두고 보이는 모양 · 동작만 바꿔요 · 끄면 다시 읽지 않아도 바로 원작 모양이에요`)}
+            ${groupRows('screen')}
+            ${row('<b>데이터를 고치는 것</b>', mbFitButtons('data'), `${count('data')} · 미트볼의 저장 자료 · 설정 값 · AI 요청을 바꿔요 · 끄면 더는 안 고쳐요(이미 고친 기록은 그대로 · 되돌리기는 미트볼 되돌리기)`)}
+            ${groupRows('data')}
+        </div>`;
 }
 /** 「채팅 전체」 를 고르거나 한 번만 싣기 전에 한 번 묻는 글 */
 function mbPromptConfirmText(s) {
@@ -1206,9 +1246,9 @@ function fontBlock(s, slot) {
     if (slot === 'text') {
         return `${rows}
             <div class="salty-group">
-                ${stack('한자(漢字)는', seg('fonts.hanja', [['auto', '자동'], ['ko', '한국어'], ['ja', '일본어'], ['zh', '중국어']]), '자동: 중국어 → 일본어 → 한국어 글꼴 순으로 있는 것')}
+                ${stack('한자(漢字)는', seg('fonts.hanja', [['auto', '자동'], ['ko', '한국어'], ['ja', '일본어'], ['zh', '중국어']]), '자동: 중국어 → 일본어 → 한국어 글꼴 순으로 있는 것을 써요')}
             </div>
-            <p class="salty-note">영어·일본어·중국어 글꼴을 따로 고르면 그 글자만 그 글꼴로 바뀌고, 나머지는 한국어 글꼴이 맡아요.</p>`;
+            <p class="salty-note">영어 · 일본어 · 중국어 글꼴을 따로 고르면 그 글자만 그 글꼴로 바뀌고, 나머지는 한국어 글꼴이 맡아요.</p>`;
     }
     return `<div class="salty-group">${row(slot === 'mb' ? '미트볼 글꼴: 테마 글꼴 따라가기' : '본문 글꼴과 같게', toggle(`fonts.${slot}.same`, !own), slot === 'mb' ? '끄면 아래에서 미트볼 상태창(띠 · 상태창 · 옆 미니창 · 알림 · 답 아래 칩)에만 쓸 글꼴을 골라요 · 아이콘과 편지 · 코드 글꼴은 그대로예요' : '')}</div>
         ${rows}`;
@@ -1217,7 +1257,7 @@ function fontBlock(s, slot) {
 // ───────── 테마 ─────────
 function tabTheme(s, sub) {
     if(sub==='etc')return `<div class="salty-group">${row('새 버전 자동 확인', toggle('updateCheck', s.updateCheck !== false), 'GitHub 에 6시간에 한 번 새 판이 있는지 물어요. 끄면 판 알약이 노랗게 빛나지 않아요')}</div><div class="bl-etc-grid"><details class="bl-usage-mode"><summary>사용 모드: <strong>${({both:'테마 + 확장',theme:'테마만',extensions:'확장만',zero:'블루레몬에이드 제로'})[usageMode(s)]}</strong></summary><div class="bl-usage-mode-body"><label>사용 모드<select data-usage-mode aria-label="사용 모드">${[['both','테마 + 확장'],['theme','테마만'],['extensions','확장만'],['zero','블루레몬에이드 제로 (모양만 · 빠르게)']].map(([v,label])=>`<option value="${v}" ${usageMode(s)===v?'selected':''}>${label}</option>`).join('')}</select></label><p>선택한 모드만 실행해요. 기존 설정은 보관해요.</p><p>제로는 색 · 글꼴 · 말풍선 같은 모양만 켜요. 내장 도구 · 확장 기능 · 성능 보조는 불러오지 않아 가장 가벼워요.</p><button type="button" class="salty-btn" data-usage-apply>저장하고 새로고침</button><span role="status" data-usage-status></span></div></details>
-        <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div>
+        <div class="salty-group bl-ext-colors">${row('다른 확장 색 유지', toggle('compat.preserveExtensionColors', !!s.compat?.preserveExtensionColors), '확장 설정 창과 지원되는 팝업이 원래 색을 써요')}${s.compat?.preserveExtensionColors ? extColorList(s) : ''}</div>
         <div class="salty-group bl-first-run-row" data-search-anchor="처음 설정 다시 보기">${row('처음 설정 다시 보기', '<button type="button" class="salty-btn salty-btn-icon" data-act="first-run" aria-label="처음 설정 다시 보기"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>', '팔레트 · 글꼴 · 읽기 방식 · 기기 알림 · 쓰는 방식')}</div></div>`;
     // 8.2.5 설치 · 충돌 점검 — 1.0.0 되살림: 무결성표(build-info.js)가 커서 그 화면을 열 때만 받아요(bindHealthSlot)
     // 1.0.1 테마 업데이트 상자(판 목록 · 업데이트 · 새로고침)를 설치 점검 위에 되살려요(bindUpdateSlot)
@@ -1229,7 +1269,7 @@ function tabTheme(s, sub) {
     if (sub === 'styles') return tabStyles(s);
     if (sub === 'colors') {
         const report=readabilityReport(s);
-        const readability=`<div class="salty-group">${cap('가독성 확인')}${report.map(x=>row(x.label,`<span>${x.ratio.toFixed(1)} : 1 · ${x.ratio>=4.5?'양호':'대비 낮음'}</span>${x.fix?`<button class="salty-btn" data-act="readability-fix" data-key="${x.key}">색 보정</button>`:''}`,x.ratio<4.5&&!x.fix?'밝고 어두운 배경이 섞여 있어요. 배경색 차이를 먼저 줄여 주세요.':'')).join('')}<p class="salty-note">테마 배경·형광펜 색 기준이에요. 그라데이션은 여러 지점을 비교하며 사진·날씨·개별 메시지 색은 포함하지 않아요.</p></div>`;
+        const readability=`<div class="salty-group">${cap('가독성 확인')}${report.map(x=>row(x.label,`<span>${x.ratio.toFixed(1)} : 1 · ${x.ratio>=4.5?'양호':'대비 낮음'}</span>${x.fix?`<button class="salty-btn" data-act="readability-fix" data-key="${x.key}">색 보정</button>`:''}`,x.ratio<4.5&&!x.fix?'밝고 어두운 배경이 섞여 있어요. 배경색 차이를 먼저 줄여 주세요.':'')).join('')}<p class="salty-note">테마 배경 · 형광펜 색 기준이에요. 그라데이션은 여러 지점을 비교하며 사진 · 날씨 · 개별 메시지 색은 포함하지 않아요.</p></div>`;
         // 1.0.0 중복 정리(10-31 사용자 「중복인 건 다 지워」): 글자 › 글자 모양에 같은 색 칸이 있는 토큰은 여기서 빼요(저장 키 colorOverrides.<테마>.<토큰> 은 그대로 — 그 화면이 같은 키를 써요)
         const colors = TOKEN_GROUPS.map(([label, list]) => [label, list.filter(([key]) => !TEXT_SCREEN_TOKENS.has(key))]).filter(([, list]) => list.length).map(([label, list]) =>
             `${cap(label)}<div class="salty-group">${list.map(([key, name]) => color(key, name)).join('')}</div>`).join('');
@@ -1373,7 +1413,7 @@ function splashRow() {
     if (state === null) checkSplash(refreshPanels);
     const note = state === 'on' ? '처음부터 레몬으로 떠요'
         : state === 'late' ? 'user.css 맨 위로 줄을 옮겨 주세요'
-            : '실리태번 뇌 로고 없이 처음부터 레몬 — 명령을 한 번 실행';
+            : '실리태번 뇌 로고 없이 처음부터 레몬으로 떠요 — 명령을 한 번 실행해요';
     return row('새로고침 화면', state === 'on'
         ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
         : '<button class="salty-btn" data-act="splash-copy">명령 복사</button>', note);
@@ -1386,7 +1426,7 @@ function faviconRow() {
     if (state === null) checkFaviconFile(refreshPanels);
     return row('탭 아이콘', state === 'on'
         ? '<span class="salty-splash-on"><i class="fa-solid fa-check" aria-hidden="true"></i></span>'
-        : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '탭 · 홈 화면 모두 레몬' : '탭 · 홈 화면 아이콘을 처음부터 레몬으로 — 명령을 한 번 실행')
+        : '<button class="salty-btn" data-act="favicon-copy">명령 복사</button>', state === 'on' ? '탭 · 홈 화면 모두 레몬이에요' : '탭 · 홈 화면 아이콘을 처음부터 레몬으로 바꿔요 — 명령을 한 번 실행해요')
         // 1.1.2 홈 화면 아이콘 모양(사용자 「레몬만 남게 못 함?」) — 바꾸면 위 버튼이 다시 떠요(표식 BLLEMON3L · 3S)
         // 1.1.4 흰 타일(표식 BLLEMON3T · 자동의 새 값) — 흰 판 + 레몬, manifest 에 maskable 을 더해 런처가 다른 앱처럼 둥글게 잘라요
         + row('홈 화면 아이콘', seg('chat.homeIcon', [['auto', '자동'], ['tile', '흰 타일'], ['lemon', '레몬만'], ['square', '어두운 네모']], 'auto'), `흰 타일 = 흰 판에 레몬 · 다른 앱처럼 둥글게 잘려요(자동) · 레몬만 = 투명 바탕 · 어두운 네모 = 옛 모양. 홈 화면 아이콘은 지우고 다시 추가해야 바뀌어요`);
@@ -1424,8 +1464,8 @@ function tabBackup() {
     const themeOn = themeEnabled(getSettings()), pending = !!restoreState();
     const locks=getSettings().settingLocks;
     const archive=appearanceArchive(getSettings());
-    const archiveMarkup=`<div class="salty-group">${cap('최근 꾸미기 복구함')}<p class="salty-note">스타일·프리셋 적용 전 모습을 최대 8개 기억해요. 복구는 잠금과 관계없이 그때 모습으로 돌아가요.</p>${archive.length?archive.map(x=>row(esc(x.label),`<button class="salty-btn" data-act="appearance-restore" data-id="${esc(x.id)}">복구</button>`,new Date(x.at).toLocaleString())).join(''):'<p class="salty-note">아직 보관한 모습이 없어요.</p>'}</div>`;
-    return `${archiveMarkup}<div class="bl-backup-layout"><div class="salty-group bl-setting-locks">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일·공유 프리셋·캐릭터 연결에 적용돼요. 직접 조절과 테마 설정 파일 복원·초기화에는 적용하지 않아요.</p></div><div class="salty-group bl-backup-actions">
+    const archiveMarkup=`<div class="salty-group">${cap('최근 꾸미기 복구함')}<p class="salty-note">스타일 · 프리셋 적용 전 모습을 최대 8개 기억해요. 복구는 잠금과 관계없이 그때 모습으로 돌아가요.</p>${archive.length?archive.map(x=>row(esc(x.label),`<button class="salty-btn" data-act="appearance-restore" data-id="${esc(x.id)}">복구</button>`,new Date(x.at).toLocaleString())).join(''):'<p class="salty-note">아직 보관한 모습이 없어요.</p>'}</div>`;
+    return `${archiveMarkup}<div class="bl-backup-layout"><div class="salty-group bl-setting-locks">${cap('스타일을 바꿔도 유지할 설정')}${LOCK_GROUPS.map(([id,label])=>row(label,toggle('settingLocks.'+id,locks[id]))).join('')}<p class="salty-note">스타일 · 공유 프리셋 · 캐릭터 연결에 적용돼요. 직접 조절과 테마 설정 파일 복원 · 초기화에는 적용하지 않아요.</p></div><div class="salty-group bl-backup-actions">
             ${themeOn || pending ? row('실리태번 설정', `<span class="salty-btns">${themeOn ? `<button class="salty-btn" data-act="st-theme">${matched ? '다시 맞추기' : '맞추기'}</button>` : ''}${pending ? '<button class="salty-btn" data-act="st-restore">되돌리기</button>' : ''}</span>`,
         !themeOn ? '맞추기 값이 실리태번에 남아 있어요' : matched ? '지금 이 테마에 맞게 돼 있어요 · 테마를 꺼도 남아요' : '흐림 · 그림자 · 말풍선 모양을 이 테마에 맞춰요 · 테마를 꺼도 남아요') : ''}
             ${row('프리셋 공유', '<span class="salty-btns"><button class="salty-btn" data-act="preset-export">공유하기</button><button class="salty-btn" data-act="preset-import">불러오기</button></span>', '형광펜 · 날씨처럼 묶음만 골라요')}
@@ -1457,7 +1497,7 @@ function tabText(s, sub) {
     let body = '';
     if (sub === 'para') {
         body = `<div class="salty-group">${row('폰 · PC 배치 따로 기억', toggle('deviceLayouts.on', s.deviceLayouts.on), '글자 크기·간격·여백·프로필 배치를 기기별로 기억해요. 색과 글꼴은 함께 써요.')}<p class="salty-note">지금은 ${deviceKind() === 'mobile' ? '모바일' : 'PC'} 배치를 편집하고 있어요.</p></div><div class="salty-group">
-                ${stack('정렬', seg('type.align', [['left', '왼쪽'], ['justify-word', '양쪽'], ['justify-break', '양쪽(끊어서)']], s.type.justify ? 'justify-word' : 'left'), '양쪽(끊어서): 낱말이 잘려도 빈틈 없이')}
+                ${stack('정렬', seg('type.align', [['left', '왼쪽'], ['justify-word', '양쪽'], ['justify-break', '양쪽 (끊어서)']], s.type.justify ? 'justify-word' : 'left'), '양쪽 (끊어서): 낱말이 잘려도 빈틈 없이 채워요')}
                 ${row('첫 줄 들여쓰기', toggle('type.indent', s.type.indent))}
             </div>
             <div class="salty-group">
@@ -1505,7 +1545,7 @@ function tabText(s, sub) {
             ${roleType('대사', [sizeOpt('type.dialogueSize', '크기', '본문과 같게', ...TEXT_LIMIT.dialogueSize), slider('dialogue.weight', '굵기', 300, 800, 1), sizeOpt('dialogue.letterSpacing', '자간', '본문과 같게', ...TEXT_LIMIT.letterSpacing)])}
             ${cap('대사 글꼴')}${fontBlock(s, 'dialogue')}`;
     } else if (sub === 'ui') {
-        body = `${gradientControls(s,'ui','메뉴 글자',{slider,esc})}${roleType('메뉴', [sizeOpt('type.uiSize', '크기', '기본', ...TEXT_LIMIT.uiSize), sizeOpt('ui.weight', '굵기', '기본', 300, 800), sizeOpt('ui.letterSpacing', '자간', '기본', ...TEXT_LIMIT.letterSpacing)], '메뉴 · 단추 · 설정창 글자')}
+        body = `${gradientControls(s,'ui','메뉴 글자',{slider,esc})}${roleType('메뉴', [sizeOpt('type.uiSize', '크기', '기본', ...TEXT_LIMIT.uiSize), sizeOpt('ui.weight', '굵기', '기본', 300, 800), sizeOpt('ui.letterSpacing', '자간', '기본', ...TEXT_LIMIT.letterSpacing)], '메뉴 · 단추 · 설정 창 글자')}
             ${cap('메뉴 글꼴')}${fontBlock(s, 'ui')}`;
     } else if (sub === 'em') {
         body = `
@@ -1596,21 +1636,21 @@ function nameControls(s, prefix = 'profile') {
     const range = (key, label, step = 1) => slider(`${prefix}.${key}`, label, ...PROFILE_RANGE[key], step);
     // 5.8.3 작은 프로필 · 프로필 없음: 이름 글자 · 배치 규칙은 큰 프로필 전용이라 안 먹었다 → 먹는 정보 정렬만 (따로 기억 nameRowAlign, css/62-name-row-align.css)
     if (p.mode !== 'banner') return `${chatPreview()}<div class="salty-group">
-        ${stack('정보 정렬', seg(`${prefix}.nameRowAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']], 'left'), '이름·시간과 메시지 번호·생성 정보를 함께 맞춰요')}
-    </div>${prefix === 'userProfile' && p.mode === 'small' ? '<p class="salty-note">번호·시간 줄은 내 프로필의 「번호 · 시간 줄 위치」가 사진 따라일 때 함께 움직여요.</p>' : ''}<p class="salty-note">이름 글자 · 배치는 상단 큰 프로필에서 바꿔요.</p>`;
-    return `${chatPreview()}<p class="salty-note">${prefix === 'userProfile' ? '내 메시지' : '캐릭터 메시지'}의 상단 큰 프로필 이름과 시간·버튼 배치예요.</p>
+        ${stack('정보 정렬', seg(`${prefix}.nameRowAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']], 'left'), '이름 · 시간과 메시지 번호 · 생성 정보를 함께 맞춰요')}
+    </div>${prefix === 'userProfile' && p.mode === 'small' ? '<p class="salty-note">번호 · 시간 줄은 내 프로필의 「번호 · 시간 줄 위치」가 사진 따라일 때 함께 움직여요.</p>' : ''}<p class="salty-note">이름 글자 · 배치는 상단 큰 프로필에서 바꿔요.</p>`;
+    return `${chatPreview()}<p class="salty-note">${prefix === 'userProfile' ? '내 메시지' : '캐릭터 메시지'}의 상단 큰 프로필 이름과 시간 · 단추 배치예요.</p>
     ${fontBlock(s, prefix === 'userProfile' ? 'userName' : 'name')}${cap('이름 글자')}<div class="salty-group">
         ${range('nameSize', '크기 (px)')}${range('nameWeight', '굵기', 50)}${range('nameSpacing', '자간 (1/100em)')}${range('nameHeight', '줄 높이', 0.1)}
-        ${stack('정보 정렬', seg(`${prefix}.nameAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']]), '이름·시간·버튼과 메시지 번호·생성 정보를 함께 맞춰요')}
+        ${stack('정보 정렬', seg(`${prefix}.nameAlign`, [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']]), '이름 · 시간 · 단추와 메시지 번호 · 생성 정보를 함께 맞춰요')}
         ${row('테마 글자색', toggle(`${prefix}.nameAuto`, p.nameAuto))}
         ${!p.nameAuto ? frameColor(`${prefix}.nameColor`, '이름 색', p.nameColor) : ''}${gradientControls(s,prefix==='profile'?'name':'userName','이름 글자',{slider,esc})}
         ${row('기울임', toggle(`${prefix}.nameItalic`, p.nameItalic))}${row('밑줄', toggle(`${prefix}.nameUnderline`, p.nameUnderline))}
         ${range('nameOutline', '외곽선 두께 (px)', 0.1)}${frameColor(`${prefix}.nameOutlineColor`, '외곽선 색', p.nameOutlineColor)}
         ${row('이름 그림자', toggle(`${prefix}.nameShadow`, p.nameShadow))}
         ${p.nameShadow ? range('nameShadowY', '그림자 거리 (px)') + range('nameShadowBlur', '그림자 번짐 (px)') + range('nameShadowAlpha', '그림자 진하기 (%)') : ''}
-    </div>${cap('시간 · 메뉴 · 편집 버튼')}<div class="salty-group">
+    </div>${cap('시간 · 메뉴 · 편집 단추')}<div class="salty-group">
         ${stack('배치', seg(`${prefix}.headerLayout`, [['side', '이름 옆 두 줄'], ['below-one', '이름 아래 한 줄'], ['below-two', '이름 아래 두 줄']]))}
-        ${range('headerGap', '줄 간격 (px)')}${range('metaSize', '시간 글자 크기 (px)')}${range('metaOpacity', '시간 진하기 (%)')}${range('buttonGap', '버튼 간격 (px)')}
+        ${range('headerGap', '줄 간격 (px)')}${range('metaSize', '시간 글자 크기 (px)')}${range('metaOpacity', '시간 진하기 (%)')}${range('buttonGap', '단추 간격 (px)')}
     </div>`;
 }
 function frameControls(prefix, o) {
@@ -1688,43 +1728,43 @@ function tabChat(s, sub) {
     if (sub === 'etc') {
         // 4.7.1: 커스텀 CSS 가 메시지 칸(.mes · #chat …)을 건드리면 여기서 바로 보인다 — 제보의 첫 의심 대상
         const css = customCssReport();
-        const touch = css.chat.length ? `<p class="salty-note bl-css-touch"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> 커스텀 CSS ${css.chat.length}개 규칙이 메시지 칸을 건드려요 — 버튼 · 이름 줄이 이상하면 먼저 꺼 보세요<br><small>${css.chat.slice(0, 5).map(esc).join(' · ')}${css.chat.length > 5 ? ' …' : ''}</small></p>` : '';
+        const touch = css.chat.length ? `<p class="salty-note bl-css-touch"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> 커스텀 CSS ${css.chat.length}개 규칙이 메시지 칸을 건드려요 — 단추 · 이름 줄이 이상하면 먼저 꺼 보세요<br><small>${css.chat.slice(0, 5).map(esc).join(' · ')}${css.chat.length > 5 ? ' …' : ''}</small></p>` : '';
         const customCss = `${cap('다른 CSS', css.lines ? `커스텀 CSS ${css.lines}줄 · ${css.rules}규칙` : '커스텀 CSS 없음')}<div class="salty-group">${touch}
-            ${row('펼친 카드 아래에 접기 버튼',toggle('chat.triangleFold',s.chat.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold??false),'채팅 카드 맨 아래에서 바로 접어요.')}
+            ${row('펼친 카드 아래에 접기 단추',toggle('chat.triangleFold',s.chat.triangleFold??SillyTavern.getContext().extensionSettings?.blue_lemonade_scripts?.enabled?.fold??false),'채팅 카드 맨 아래에서 바로 접어요.')}
             ${row('커스텀 CSS 끄기', toggle('compat.muteCustomCss', !!s.compat?.muteCustomCss), '사용자 설정의 커스텀 CSS 를 테마가 켜진 동안 꺼요 · 지우지는 않아요')}
         </div>
         ${cap('확장 탭')}<div class="salty-group">
-            ${row('「확장 탭에 보이기」 줄', toggle('headSwitchRows', s.headSwitchRows !== false), '확장 창 맨 위에 생기는 줄이에요 · 끄면 줄만 사라지고, 이미 제목 줄에 꺼내 둔 스위치는 그대로예요')}
+            ${row('「확장 탭에 보이기」 줄', toggle('headSwitchRows', s.headSwitchRows !== false), '확장 탭 맨 위에 생기는 줄이에요 · 끄면 줄만 사라지고, 이미 제목 줄에 꺼내 둔 스위치는 그대로예요')}
         </div>
         ${cap('프롬프트 관리자')}<div class="salty-group">
             ${row('프롬프트 폴더', toggle('promptFolders.on', s.promptFolders?.on !== false), `프롬프트 목록 아래 도구 줄의 폴더 단추로 항목을 폴더로 묶어 접고 펼쳐요 · 머리 줄에서 켜진 수 · 토큰 합 · 모두 켜기 · 하나만 켜기(택1) · 구분선으로 자동 만들기 · 줄과 보내는 순서는 그대로이고 끌어 옮기면 놓인 자리의 폴더로 들어가요 · 폴더는 프리셋마다 따로 기억해요${restNote('promptFolders')}`)}
-            ${row('프롬프트 켜짐 묶음', toggle('promptSaves.on', s.promptSaves?.on === true), `프롬프트 목록 위에 칩 줄 · 「＋」로 지금 켜고 끈 상태를 이름 붙여 저장하고, 칩을 누르면 한 번에 그 상태로 돌아가요(알림의 ↶ 로 되돌리기) · ✎ 로 덮어쓰기 · 이름 바꾸기 · 순서 · 지우기 · 묶음은 프리셋마다 따로 기억하고 프리셋 파일은 안 건드려요${restNote('promptSaves')}`)}
-            ${row('프리셋 목록 폴더', toggle('presetFolders.on', s.presetFolders?.on === true), `프리셋 고르기 칸(채팅 완성)을 누르면 폴더로 묶인 목록이 떠요 · 폴더 머리를 눌러 접고 펴고, ⋯ 로 이름 · 넣을 프리셋 · 순서 · 폴더 지우기 · 맨 아래 「새 폴더」 · 프리셋 파일은 그대로이고 폴더만 테마 설정에 기억해요${restNote('presetFolders')}`)}
+            ${row('프롬프트 켜짐 묶음', toggle('promptSaves.on', s.promptSaves?.on === true), `프롬프트 목록 위에 칩 줄이 생겨요 · 「＋」로 지금 켜고 끈 상태를 이름 붙여 저장하고, 칩을 누르면 한 번에 그 상태로 돌아가요(알림의 ↶ 로 되돌려요) · ✎ 로 덮어쓰기 · 이름 바꾸기 · 순서 바꾸기 · 지우기를 해요 · 묶음은 프리셋마다 따로 기억하고 프리셋 파일은 안 건드려요${restNote('promptSaves')}`)}
+            ${row('프리셋 목록 폴더', toggle('presetFolders.on', s.presetFolders?.on === true), `프리셋 고르기 칸(채팅 완성)을 누르면 폴더로 묶인 목록이 떠요 · 폴더 머리를 눌러 접고 펴요 · ⋯ 로 이름 · 넣을 프리셋 · 순서를 바꾸거나 폴더를 지우고, 맨 아래 「새 폴더」로 더해요 · 프리셋 파일은 그대로이고 폴더만 테마 설정에 기억해요${restNote('presetFolders')}`)}
         </div>
         ${cap('캐릭터 관리')}<div class="salty-group">
             ${row('최근 채팅 · 채팅 폴더', toggle('chatOrganizer.on', s.chatOrganizer?.on === true), `캐릭터 관리 서랍 위에 「캐릭터 · 최근 채팅 · 폴더」 탭을 더해요 · 캐릭터를 넘나드는 최근 대화를 찾고 고정하고, 채팅을 폴더로 묶고(하위 폴더 3단), 여러 채팅을 골라 폴더로 옮기거나 지워요 · 지울 때는 두 번 물어요 · 켤 때만 불러와요${restNote('chatOrganizer')}`)}
         </div>
         ${cap('API 연결')}<div class="salty-group">
-            ${row('API 서버 상태', toggle('apiStatus.on', s.apiStatus?.on === true), `API 연결 서랍의 연결 상태 줄 끝에 지금 연결(Chat Completion 소스 · 모델)의 공식 서버 상태를 작은 점으로 보여 줘요 · 누르면 구성 요소 · 진행 중 사고 · 공식 상태 페이지 · 다른 공급자를 한눈에 · 생성이 실패했을 때 공식 상태도 나쁘면 알림에 한 줄을 붙여요 · 켜 두면 각 회사 공식 상태 페이지(status.claude.com 등 바깥 주소)를 창을 열 때 · 생성이 실패했을 때 · 10분마다(탭이 숨으면 쉼) 읽어요 — 대화 · 키 · 사용자 정보는 보내지 않아요`)}
+            ${row('API 서버 상태', toggle('apiStatus.on', s.apiStatus?.on === true), `API 연결 서랍의 연결 상태 줄 끝에 지금 연결(Chat Completion 소스 · 모델)의 공식 서버 상태를 작은 점으로 보여 줘요 · 누르면 구성 요소 · 진행 중 사고 · 공식 상태 페이지 · 다른 공급자를 한눈에 봐요 · 생성이 실패했을 때 공식 상태도 나쁘면 알림에 한 줄을 붙여요 · 켜 두면 각 회사 공식 상태 페이지(status.claude.com 등 바깥 주소)를 창을 열 때 · 생성이 실패했을 때 · 10분마다(탭이 숨으면 쉼) 읽어요 — 대화 · 키 · 사용자 정보는 보내지 않아요`)}
         </div>
         ${cap('로그 복사')}<div class="salty-group">
-            ${row('로그 복사', toggle('logCopy.on', s.logCopy?.on !== false), '채팅에서 글을 끌어 고르면 뜨는 줄에 「로그 복사」 · 받는 쪽에 같은 글꼴이 없으면 비슷한 기본 글꼴로 보여요')}
+            ${row('로그 복사', toggle('logCopy.on', s.logCopy?.on !== false), '채팅에서 글을 끌어 고르면 뜨는 줄에 「로그 복사」가 생겨요 · 받는 쪽에 같은 글꼴이 없으면 비슷한 기본 글꼴로 보여요')}
         </div>
         ${cap('메시지 편의')}<div class="salty-group">
-            ${row('고른 글 고치기', toggle('quick.selEdit', s.quick?.selEdit === true), `채팅에서 글을 끌어 고르면 뜨는 줄에 「고치기」 · 고른 부분의 원래 글만 작은 창에서 고쳐요(메시지 전체 편집을 안 열어도 돼요) · 자리가 확실하지 않으면 고치지 않고 알려 줘요 · 번역문이 있는 메시지는 번역기의 「번역문 수정」으로 · 고친 뒤 알림의 ↶ 로 되돌려요${restNote('quickSelEdit')}`)}
-            ${row('번역문도 고치기', toggle('quick.selEditTr', s.quick?.selEditTr === true), `(시제품) 번역문이 있는 메시지에서도 「고치기」가 떠요 · 원문은 그대로 두고 화면의 번역문만 고쳐요(실리태번 내장 번역처럼 번역문을 메시지에 담는 꼴) · 번역기 확장(ST-Interpres · llm-translator)이 따로 보여 주는 번역 칸은 그대로 번역기의 「번역문 수정」으로 · 고친 뒤 편집 알림(사건)은 보내지 않아요 — 번역 확장이 다시 번역해 고친 글을 덮지 않게${restNote('quickSelEdit')}`)}
-            ${row('여기부터 · 여기까지', toggle('quick.selSpan', s.quick?.selSpan !== false), '여러 화면에 걸친 글을 한 번에 고르기 · 글을 고르면 뜨는 줄의 「여기부터」로 시작을 찍고, 굴린 뒤 끝낼 곳의 글을 골라 「여기까지」를 누르면 그 사이가 한 선택이 돼요 · 시작 표시는 취소 · 채팅 바꾸기 · 5분 뒤에 사라져요')}
+            ${row('고른 글 고치기', toggle('quick.selEdit', s.quick?.selEdit === true), `채팅에서 글을 끌어 고르면 뜨는 줄에 「고치기」가 생겨요 · 고른 부분의 원래 글만 작은 창에서 고쳐요(메시지 전체 편집을 안 열어도 돼요) · 자리가 확실하지 않으면 고치지 않고 알려 줘요 · 번역문이 있는 메시지는 번역기의 「번역문 수정」을 써요 · 고친 뒤 알림의 ↶ 로 되돌려요${restNote('quickSelEdit')}`)}
+            ${row('번역문도 고치기', toggle('quick.selEditTr', s.quick?.selEditTr === true), `(시제품) 번역문이 있는 메시지에서도 「고치기」가 떠요 · 원문은 그대로 두고 화면의 번역문만 고쳐요(실리태번 내장 번역처럼 번역문을 메시지에 담는 경우) · 번역기 확장(ST-Interpres · llm-translator)이 따로 보여 주는 번역 칸은 그 번역기의 「번역문 수정」을 써요 · 고친 뒤 편집 알림(사건)을 보내지 않아서 번역 확장이 다시 번역해 고친 글을 덮지 않아요${restNote('quickSelEdit')}`)}
+            ${row('여기부터 · 여기까지', toggle('quick.selSpan', s.quick?.selSpan !== false), '여러 화면에 걸친 글을 한 번에 골라요 · 글을 고르면 뜨는 줄의 「여기부터」로 시작을 찍고, 굴린 뒤 끝낼 곳의 글을 골라 「여기까지」를 누르면 그 사이가 한 선택이 돼요 · 시작 표시는 취소 · 채팅 바꾸기 · 5분 뒤에 사라져요')}
             ${row('로어북 스캔에서 상태창 글 빼기', toggle('quick.wiSkip', s.quick?.wiSkip === true), '로어북이 키워드를 찾을 때 코드 칸(\`\`\`)과 접는 칸(details) 안의 글은 보지 않아요 · 상태창 · 트래커에 적힌 낱말 때문에 엉뚱한 항목이 켜지는 것을 막아요 · AI 에게 보내는 글은 그대로예요 · 이 테마 뒤에 도는 다른 확장은 그 사이 뺀 글을 볼 수 있어요')}
             ${row('퀵 리플라이 줄 접기', toggle('quick.qrFold', s.quick?.qrFold === true), '입력창 요술봉 뒤 ⌃ 단추로 퀵 리플라이 줄을 통째로 접고 펼쳐요 · 접은 상태를 기억해요 · 켜 둔 동안 줄 앞의 「QR 접기 단추」(채팅 › 화면)는 쉬고, 끄면 그 단추와 접어 둔 상태가 그대로 돌아와요 · Simple QR Bar Toggle 확장을 따로 쓰고 있으면 그쪽을 써요')}
             ${s.quick?.qrFold === true && s.usageMode !== 'zero' ? addonCreditHtml('qrtoggle') : ''}
             ${row('연필 옆 지우기 단추', toggle('quick.mesDelete', s.quick?.mesDelete === true), `메시지 이름 줄의 연필(편집) 앞에 휴지통을 둬요 · 확인 창을 거쳐 지워요 · 한 번 누르면 실리태번 확인 창이 뜨고, 다른 답이 여럿인 마지막 답이면 스와이프만 지울지도 골라요 · 답을 만드는 중에는 안 지워요${restNote('quickMesDelete')}`)}
-            ${row('메시지 범위 지우기', toggle('quick.rangeDelete', s.quick?.rangeDelete !== false), `옵션 메뉴(☰)의 「메시지 삭제」 아래에 「범위 지우기」 · 처음 메시지와 끝 메시지를 누르면 그 사이만 지워요(실리태번 기본은 누른 메시지부터 끝까지) · 지우기 전에 몇 개인지 한 번 더 물어요${restNote('quickRangeDelete')}`)}
+            ${row('메시지 범위 지우기', toggle('quick.rangeDelete', s.quick?.rangeDelete !== false), `옵션 메뉴(☰)의 「메시지 삭제」 아래에 「범위 지우기」가 생겨요 · 처음 메시지와 끝 메시지를 누르면 그 사이만 지워요(실리태번 기본은 누른 메시지부터 끝까지) · 지우기 전에 몇 개인지 한 번 더 물어요${restNote('quickRangeDelete')}`)}
         </div>
         ${cap('단추 설명')}<div class="salty-group">
             ${row('단추 길게 누르면 설명 보기', toggle('longpressHelp', s.longpressHelp !== false), '실리태번 · 테마 단추를 꾹 누르면 무슨 기능인지 작은 창으로 알려 줘요 · PC 는 마우스를 올려 두면 풍선 글로 보여요 · 짧게 누르면 원래 동작 그대로예요')}
         </div>
         ${cap('실리태번 한국어')}<div class="salty-group">
-            ${row('한국어 화면 다듬기', toggle('koUi', s.koUi !== false), '실리태번 화면에 영어로 남은 글과 어색한 번역을 자연스러운 한국어로 바꿔요 · 실리태번 언어가 한국어일 때만 · 바꾸면 새로고침 뒤에 적용돼요')}
+            ${row('한국어 화면 다듬기', toggle('koUi', s.koUi !== false), '실리태번 화면에 영어로 남은 글과 어색한 번역을 자연스러운 한국어로 바꿔요 · 실리태번 언어가 한국어일 때만 바꾸고, 켜고 끈 것은 새로고침 뒤에 적용돼요')}
         </div>
         ${cap('채팅 저장')}<div class="salty-group">
             ${row('빈 채팅 덮어쓰기 막기', toggle('chat.emptyGuard', s.chat.emptyGuard !== false && SillyTavern.getContext().extensionSettings?.save_dedupe?.emptyGuard !== false), '채팅을 다시 불러오는 사이나 불러오기가 실패했을 때, 메시지가 있던 채팅 파일을 빈 채팅으로 덮어 날아가지 않게 그 저장을 막고 알려 줘요 · 직접 지워 비운 채팅은 그대로 저장해요 · 성능 보조를 켜지 않아도 돼요(성능 보조 › 저장 정리의 체크와 같은 설정이에요)')}
@@ -1737,9 +1777,9 @@ function tabChat(s, sub) {
         ${cap('다른 기기')}<div class="salty-group">
             ${row('다른 기기 변경 알림', toggle('syncWatch', s.syncWatch !== false), '이 채팅이 다른 기기에서 바뀌면 위에 띠를 띄우고, 덮어쓰기 전에 물어요')}
         </div>
-        ${cap('입력칸')}<div class="salty-group">
-            ${row('입력칸 높이 고정', toggle('inputBox.hold', s.inputBox?.hold === true), '입력 중 자동 수정 밑줄이 잠깐 다른 줄에 보이면 켜 보세요 · 입력칸을 다섯 줄 높이로 두고 넘치면 안에서 스크롤해요')}
-            ${row('자동 수정 밑줄 끄기', toggle('inputBox.noCorrect', s.inputBox?.noCorrect === true), '입력칸에서 키보드의 자동 수정 · 맞춤법 표시를 꺼요')}
+        ${cap('입력창')}<div class="salty-group">
+            ${row('입력창 높이 고정', toggle('inputBox.hold', s.inputBox?.hold === true), '입력 중 자동 수정 밑줄이 잠깐 다른 줄에 보이면 켜 보세요 · 입력창을 다섯 줄 높이로 두고 넘치면 안에서 스크롤해요')}
+            ${row('자동 수정 밑줄 끄기', toggle('inputBox.noCorrect', s.inputBox?.noCorrect === true), '입력창에서 키보드의 자동 수정 · 맞춤법 표시를 꺼요')}
         </div>
         ${cap('진단', '지금 상태를 한 덩어리로')}<div class="salty-group">
             ${row('진단 복사', '<button class="salty-btn salty-btn-icon" data-act="diag-copy" aria-label="진단 복사"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>', '버전 · 화면 · 표시 옵션 · 커스텀 CSS · 확장 · 최근 오류(번역 중단 이유)를 글로 복사해요. 댓글에 붙여 넣으면 돼요')}
@@ -1751,6 +1791,7 @@ function tabChat(s, sub) {
     if (sub === 'screen') {
         // 1.5.2 미트볼 꾸미기 칸(글꼴 · 얼굴 표시 · 색 톤): 사용자 「블루레몬에 넣지 말고 미트볼 꾸미기 쪽에」 — 보통 때는 이 화면에 안 보이고,
         //   미트볼 꾸미기의 「글꼴 고르기」 · 위 안내 줄 · 검색 · 변경한 설정에서 왔을 때(ui.mbOnly)만 이 세 칸만 그려요(글꼴 고르개는 테마 것 그대로)
+        if (ui.mbOnly === 'fit') return mbFitGroups(s);   // 1.7.3 미트볼 설정 칸 「블루레몬 맞춤 켜고 끄기」 로 연 창
         if (ui.mbOnly) return `${cap('미트볼 꾸미기', '미트볼 상태창에만 걸리는 칸이에요 · 미트볼 상태창 › 꾸미기에서도 바꿀 수 있어요')}<div class="salty-group">
             ${stack('미트볼 얼굴 표시', seg('chat.mbFace', [['icon', '아이콘'], ['initial', '이름 첫 글자']], 'icon'), '미트볼 상태창에서 사람 얼굴이 나오는 자리(프로필 · 관계 · 띠의 속마음 …)를 동물 아이콘 대신 이름 첫 글자로 보여요 · 첫 글자가 같은 사람끼리는 두 글자 · 사람마다 고른 아이콘은 그대로 남아 있어 되돌리면 돌아와요')}
             ${fontBlock(s, 'mb')}
@@ -1760,62 +1801,55 @@ function tabChat(s, sub) {
         const stFade = !!SillyTavern.getContext().powerUserSettings?.stream_fade_in; // 실리태번 쪽 페이드 인 (무거움) — 켜져 있으면 끄는 줄을 같이 보여 줌
         return `${chatPreview()}<div class="salty-group">
             ${stack('아이콘', seg('chat.icons', [['line', '선 아이콘'], ['default', '기본']]))}
-            ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕')}
+            ${row('배경 이미지 비치기', toggle('chat.bgImage', s.chat.bgImage), '끄면 깨끗한 종이색 바탕이에요')}
             ${s.chat.bgImage ? slider('chat.bgAlpha', '채팅 바탕 농도', 0, 100, 1, 82) : ''}
             ${s.chat.bgImage ? '<p class="salty-note">100이면 채팅 영역과 입력창 둘레를 테마 바탕색으로 완전히 덮어요. 내 메시지 면도 같은 농도를 따라가요.</p>' : ''}
             ${row('글자색 대비 맞추기', toggle('chat.inkContrast', s.chat.inkContrast !== false), '메시지에 적힌 글자색이 바탕에 묻히면 색은 두고 밝기만 바꿔 잘 보이게 해요 · 저장된 글은 그대로예요')}
             ${row('이름표를 인물 색으로', toggle('chat.namePeople', s.chat.namePeople === true), '채팅 이름표를 그 사람에게 정해 둔 색(TTS 대사 색 · 프리셋 색)으로 칠해요 · 색이 없는 사람은 지금 이름 색 그대로 · 바탕에 묻히면 밝기만 맞춰요')}
-            ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 목록을 테마가 그린 팝업으로 (끄면 폰 기본 목록)')}
-            ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸도 테마 색 고르기로')}
+            ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 고르기 목록을 테마가 그린 팝업으로 띄워요 · 끄면 폰 기본 목록이에요')}
+            ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸을 누르면 테마 색 고르기 창이 떠요')}
             ${row('큰 숫자는 쉼표로', toggle('chat.numComma', s.chat.numComma !== false), '숫자 칸의 30000 을 30,000 으로 보여 줘요 · 누르면 원래대로, 값은 그대로')}
             ${row('이전 메시지 저절로 불러오기', toggle('chat.showMoreAuto', s.chat.showMoreAuto !== false), '위로 올리다 채팅 맨 위 「이전 메시지 더 보기」에 가까워지면 누르지 않아도 미리 불러와요. 불러온 뒤에도 보던 자리는 그대로예요')}
             ${row('긴 채팅의 화면 밖 메시지 가볍게', toggle('chat.chatLight', s.chat.chatLight !== false), '메시지가 60개 이상 그려져 있으면 화면 밖 메시지의 스타일 · 배치 계산을 건너뛰어요(화면 가까이 오면 다시 그려요). 긴 채팅에서 페르소나 설명 · 전개 지시 같은 칸에 글자를 칠 때 덜 끊겨요 · 마지막 메시지 · 편집 중 · 메뉴 열린 메시지는 그대로예요')}
             ${row('입력 중 목록 갱신 미루기', toggle('chat.personaDefer', s.chat.personaDefer !== false), '페르소나 설명을 치는 동안은 목록 카드의 설명 글 · 토큰 수 갱신을 잠깐 미루고, 손을 멈추거나 칸을 떠날 때(다른 곳 누르기 · 서랍 닫기 · 페르소나 바꾸기) 한 번에 적어요. 저장되는 글은 같아요')}
             ${row('새 답 첫 줄로 가는 단추', toggle('chat.replyTop', !!s.chat.replyTop), '긴 답이 끝나 첫 줄이 위로 지나가 있으면 ↑ 아이콘이 떠요 · 첫 줄이 보이면 사라져요')}
             ${row('토큰 수 누르면 내역', toggle('chat.sentTokens', s.chat.sentTokens !== false), '메시지 머리 토큰 수를 누르면 생각 · 본문 · 다음 프롬에 들어가는 양을 한 줄씩 보여 줘요')}
-            ${row('웹 검색 · 출처 표시', toggle('chat.webSearchMarks', s.chat.webSearchMarks !== false), '웹 검색을 쓴 답에 지구 표시 · 답의 낱말을 꾹 누르면 진동과 함께 어디서 왔는지 한 줄')}
-            ${row('페르소나 입력창 높이 2배', toggle('chat.personaTall', !!s.chat.personaTall), '페르소나 본문 칸을 세로로 늘려요 · 끄면 기존 높이')}
-            ${row('채팅 입력칸 숨기기', toggle('chat.hideSendTextarea', !!s.chat.hideSendTextarea), '입력칸만 숨기고 보내기 · 빠른 답장 단추는 그대로예요. 단추만 쓰는 배치에 맞아요')}
+            ${row('웹 검색 · 출처 표시', toggle('chat.webSearchMarks', s.chat.webSearchMarks !== false), '웹 검색을 쓴 답에 지구 표시를 붙여요 · 답의 낱말을 꾹 누르면 진동과 함께 어디서 왔는지 한 줄로 보여요')}
+            ${row('페르소나 입력창 높이 2배', toggle('chat.personaTall', !!s.chat.personaTall), '페르소나 본문 칸을 세로로 늘려요 · 끄면 원래 높이로 돌아와요')}
+            ${row('채팅 입력창 숨기기', toggle('chat.hideSendTextarea', !!s.chat.hideSendTextarea), '입력창만 숨기고 보내기 · 퀵 리플라이 단추는 그대로예요. 단추만 쓰는 배치에 맞아요')}
             ${splashRow()}
             ${faviconRow()}
-            ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들게')}
+            ${row('가벼운 페이드 인', toggle('chat.streamFade', !!s.chat.streamFade), '스트리밍 중 새 글자만 스며들듯 나타나요')}
             ${s.chat.streamFade && stFade ? row('실리태번 페이드 인', toggle('st.streamFadeIn', true), '끄면 빨라지고 위 옵션이 대신해요') : ''}
-            ${row('숨긴 메시지 흐리게', toggle('chat.hiddenFade', !!s.chat.hiddenFade), '컨텍스트에서 뺀 메시지(눈 감은 아이콘)를 옅게')}
+            ${row('숨긴 메시지 흐리게', toggle('chat.hiddenFade', !!s.chat.hiddenFade), '컨텍스트에서 뺀 메시지(눈 감은 아이콘)를 옅게 보여요')}
             ${s.chat.hiddenFade ? slider('chat.hiddenOpacity', '진하기', 10, 90, 5, 40) : ''}
             ${s.chat.hiddenFade ? slider('chat.hiddenGray', '흑백', 0, 100, 5, 30) : ''}
-            ${s.chat.hiddenFade ? row('마우스 올리면 진하게', toggle('chat.hiddenHover', s.chat.hiddenHover !== false), '폰에서는 누르는 동안') : ''}
+            ${s.chat.hiddenFade ? row('마우스 올리면 진하게', toggle('chat.hiddenHover', s.chat.hiddenHover !== false), '폰에서는 누르는 동안 진하게 보여요') : ''}
             ${row('추론 요청을 끄면 지난 추론도 숨기기', toggle('chat.reasoningFollow', s.chat.reasoningFollow !== false), '실리태번 「모델 추론 요청」을 따라가요 · 켜면 다시 보여요')}
         </div>
         ${cap('가볍게', '폰이 느릴 때')}<div class="salty-group">
             ${row('아바타는 가까워질 때 받기', toggle('chat.lazyAvatars', s.chat.lazyAvatars !== false), '캐릭터 · 페르소나 목록의 화면 밖 아바타는 스크롤해 가까워질 때 받아요 · 캐릭터가 많을 때 목록이 빨리 떠요' + restNote('lazyAvatars'))}
             ${row('검색은 글자 조합이 끝난 뒤', toggle('chat.searchIme', s.chat.searchIme !== false), '캐릭터 · 월드인포 · 페르소나 · 채팅 파일 · 그룹 멤버 검색 칸에 한글을 조합하는 동안은 찾지 않고, 글자가 완성되고 0.3초 뒤에 한 번만 찾아요' + restNote('searchIme', '캐릭터 검색 칸은 '))}
-            ${row('코드 색 입히기 끄기', toggle('chat.codePlain', !!s.chat.codePlain), '코드블록이 많은 채팅에서 폰이 느릴 때 · 메시지 코드블록의 구문 강조를 건너뛰어요 · 이미 그려진 메시지는 다시 그릴 때부터' + restNote('codePlain'))}
+            ${row('코드 색 입히기 끄기', toggle('chat.codePlain', !!s.chat.codePlain), '코드 블록이 많은 채팅에서 폰이 느릴 때 켜요 · 메시지 코드 블록의 구문 강조를 건너뛰어요 · 이미 그려진 메시지는 다시 그릴 때부터 적용돼요' + restNote('codePlain'))}
             ${row('월드인포 긴 목록 가볍게', toggle('chat.worldInfoLight', s.chat.worldInfoLight !== false), '한 쪽에 항목이 80개 이상 보이면 화면 밖 접힌 항목은 그리지 않고 두어 스크롤이 덜 끊겨요 · 펼친 항목 · 끌고 있는 항목은 그대로예요' + restNote('worldInfoLight'))}
         </div>
-        ${cap('메시지 버튼', '··· 메뉴 밖에 늘 보일 버튼')}<div class="salty-group">
+        ${cap('메시지 단추', '··· 메뉴 밖에 늘 보일 단추')}<div class="salty-group">
             ${mesPinPicker(s)}
-            ${row('미트볼 추억 앨범 단추', toggle('chat.mbAlbumBtn', s.chat.mbAlbumBtn === true), '미트볼 상태창이 답마다 이름 줄에 붙이는 「추억 앨범에 담기」 단추를 보여요 · 끄면(기본) 숨겨서 폰 이름 줄이 한 줄에 들어가요 · 앨범 기능 · 상태창의 앨범 탭은 그대로예요')}
-            ${row('미트볼 상태창 편의 기능', toggle('chat.mbHelpers', s.chat.mbHelpers !== false), '미트볼 상태창 설정 칸의 「설정 찾기」와 긴 상태창의 「맨 위로」 단추를 보여요 · 끄면 둘 다 사라지고 나머지 맞춤 화면은 그대로예요')}
             ${row('뒤로 가기로 창 닫기', toggle('chat.backClose', s.chat.backClose !== false), '폰의 뒤로 가기를 누르면 테마가 연 창(설정 · 로그 복사 · 애드온 창 · 확인 창 · 목록 팝업 · 메뉴)이 맨 위부터 한 겹씩 닫혀요 · 창이 없을 때는 원래대로예요 · 끄면 뒤로 가기가 창을 안 닫고 원래대로(페이지 뒤로) 가요 · 미트볼 창은 아래 스위치를 따라가요')}
-            ${row('뒤로 가기로 미트볼 창 닫기', toggle('chat.mbBack', s.chat.mbBack !== false), '폰의 뒤로 가기를 누르면 열려 있는 미트볼 창(상태창 · 프로필 · 프롬프트 · 토큰 · 알림함 · 전체화면 미니홈피)이 한 겹씩 닫혀요 · 위에 물음 창이 떠 있으면 그것부터 닫아요 · 끄면 원래대로(뒤로 가기가 창을 안 닫아요)')}
-            ${row('미트볼 지도 층별 보기', toggle('chat.mbMapFloors', s.chat.mbMapFloors !== false), '미트볼 지도의 장소 설명에 층(7F · B1 · 3층 · 지하 1층 등)이 적혀 있으면 건물을 층별 띠로 쌓고 선을 꺾어 이어요 · 천국 · 하늘 쪽 세계는 건물 위, 지옥 · 땅 밑 세계는 아래, 나머지는 건물 옆 바깥에 둬요 · 층 정보가 없는 지도와 끈 때는 원래 그림 그대로예요')}
-            ${row('눈 감긴 답은 미트볼 상태에서 빼기', toggle('chat.mbHiddenSync', s.chat.mbHiddenSync !== false), '눈 단추로 감긴 AI 답에서 나온 인물 · 호감 · 장소 · 시간을 미트볼 상태창 계산에서 빼요 · 눈을 뜨면 그대로 돌아와요 · 눈 길게 눌러 「접기」 한 답도 같아요(이미 접어 둔 답은 채팅을 열 때 빼고 알려요) · 요약 확장 · 자동 숨김 · /hide 명령으로 감긴 답은 그대로 더해요 · 끄면 전부 원래대로 더해요')}
-            ${row('미트볼 영어 저장 전환 바로 하기', toggle('chat.mbAutoEn', s.chat.mbAutoEn !== false), '미트볼 상태창의 「한국어로 저장된 칸을 영어 저장으로 바꾸기」를 「바꿀까요?」 창 없이 바로 해요 · 바꾸는 중이라는 알림 한 줄이 떠요 · 다시 누르면 멈추고, 칸마다 /ss-undo 로 되돌리는 건 그대로예요 · 끄면 예전처럼 물어요')}
-            ${mbPromptRows(s)}
-            ${row('미트볼 글꼴 · 얼굴 표시', `<button class="salty-btn" data-act="mb-deco">열기</button>`, '미트볼 상태창 › 꾸미기 화면에 있어요(「블루레몬 꾸미기」 묶음) · 여기서도 열 수 있어요')}
         </div>
+        ${mbFitGroups(s)}
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true, s)}</div>
             ${row('하위 목록 단추에 세트 이름', toggle('chat.qrCtxNames', s.chat.qrCtxNames === true), '하위 세트를 묶은 QR 은 오른쪽 ⋮ 를 누르면 목록이 열려요. 켜면 ⋮ 대신 그 세트 이름을 보여요')}
-            ${row('QR 검색 버튼', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일·데우스 빠른 설정은 이 조건에 포함하지 않아요')}
-            ${row('QR 접기 단추', toggle('chat.qrFold', s.chat.qrFold !== false), `${s.quick?.qrFold === true && s.usageMode !== 'zero' ? '<b class="bl-rest-note">요술봉 뒤 접기를 쓰는 동안 쉬어요</b> ' : ''}줄 앞에 접기 · 펴기 단추를 둬요. 접으면 단추만 남고 퀵 리플라이 버튼은 숨어요 · 접힌 상태는 기억해요`)}
+            ${row('QR 검색 단추', toggle('chat.qrFind', s.chat.qrFind !== false), '실리태번의 QR 사용하기를 켰을 때만 보여요. 과일 · 데우스 빠른 설정은 이 조건과 상관없어요')}
+            ${row('QR 접기 단추', toggle('chat.qrFold', s.chat.qrFold !== false), `${s.quick?.qrFold === true && s.usageMode !== 'zero' ? '<b class="bl-rest-note">요술봉 뒤 접기를 쓰는 동안 쉬어요</b> ' : ''}줄 앞에 접기 · 펴기 단추를 둬요. 접으면 단추만 남고 퀵 리플라이 단추는 숨어요 · 접힌 상태는 기억해요`)}
             ${row('QR 책장', toggle('qrShelf.on', s.qrShelf?.on === true), `줄 앞에 책 단추를 둬요 · 누르면 모든 QR 을 즐겨찾기 · 최근 · 이 봇 · 세계관 · 카테고리 칸으로 모아 찾고 눌러요(줄을 접어도 책 단추는 남아요) · QR 마다 이름 · 설명 · 카테고리를 붙이고 숨길 수 있어요(테마 설정에만 적고 QR 원본은 그대로) · 「AI 정리」는 누를 때만, 보낼 개수 · 토큰을 묻고 지금 연결로 한 번 보내요 · 다른 확장이 결과 보관함을 열어 두면 답을 채팅 대신 보관함으로 보낼 수도 있어요${restNote('qrShelf')}`)}
             ${stack('자리', seg('chat.qrPlace', [['bottom', '입력창 아래'], ['top', '입력창 위']], 'bottom'), '입력창 옆에 아이콘이 많으면 위가 넓어요')}
             ${stack('넘기기', seg('chat.qrScroll', [['x', '가로 스크롤'], ['y', '세로 스크롤']]))}
             ${s.chat.qrScroll === 'y' ? slider('chat.qrRows', '보이는 줄', 1, 4, 1, 2) : ''}
         </div>
         ${cap('날씨')}<div class="salty-group">
-            ${row('생성·편집 중 날씨 쉬기', toggle('chat.weatherAutoRest', s.chat.weatherAutoRest), '답을 받거나 글을 쓰는 동안 멈추고, 끝나면 이어져요.')}
+            ${row('생성 · 편집 중 날씨 쉬기', toggle('chat.weatherAutoRest', s.chat.weatherAutoRest), '답을 받거나 글을 쓰는 동안 멈추고, 끝나면 이어져요.')}
             ${row('글 읽기 우선', toggle('chat.weatherReadability', s.chat.weatherReadability), '날씨를 조금 옅게 하고, 그림자를 따로 쓰지 않을 때 글자 그림자를 자동으로 보완해요.')}
             ${sceneSoundMarkup(s, { row, stack, slider, toggle })}
 
@@ -1857,8 +1891,8 @@ function tabChat(s, sub) {
         ${cap('폰')}<div class="salty-group">
             <div class="bl-inline-preview" data-pv="phone">${phoneMock(s)}</div>
             ${row('스크롤하면 바 숨기기', toggle('reader.autoHide', !!s.reader?.autoHide), '아래로 읽으면 숨고, 위로 올리거나 누르면 나와요')}
-            ${row('한 손 버튼 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 맨 위 · 맨 아래 · 번호로 가기 · 마지막 메시지 지우기 · 사칭 · 이어 쓰기 · 다시 생성')}
-            ${s.onehand?.on ? stack('버튼', chips([['onehand.swipe', '스와이프'], ['onehand.top', '맨 위로'], ['onehand.bottom', '맨 아래로'], ['onehand.jump', '번호로 가기'], ['onehand.delLast', '마지막 지우기'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']], 'bl-seg-2col')) : ''}
+            ${row('한 손 단추 줄', toggle('onehand.on', !!s.onehand?.on), '입력창 위에 스와이프 · 맨 위 · 맨 아래 · 번호로 가기 · 마지막 메시지 지우기 · 사칭 · 이어 쓰기 · 다시 생성 단추를 한 줄로 둬요')}
+            ${s.onehand?.on ? stack('단추', chips([['onehand.swipe', '스와이프'], ['onehand.top', '맨 위로'], ['onehand.bottom', '맨 아래로'], ['onehand.jump', '번호로 가기'], ['onehand.delLast', '마지막 지우기'], ['onehand.imp', '사칭'], ['onehand.cont', '이어 쓰기'], ['onehand.regen', '다시 생성']], 'bl-seg-2col')) : ''}
             ${stack('백그라운드에서도 계속 (실험)', segMulti('bgWindow.on', [['off', '끔', { 'bgWindow.on': false }], ['audio', '소리 없이', { 'bgWindow.on': true, 'bgWindow.mode': 'audio' }], ['pip', '작은 창', { 'bgWindow.on': true, 'bgWindow.mode': 'pip' }]], !s.bgWindow?.on ? 'off' : s.bgWindow.mode === 'pip' ? 'pip' : 'audio'), '답을 기다리는 동안 다른 앱을 봐도 생성 · 번역이 멈추지 않게 해요. 보내기 · 스와이프를 누를 때 켜지고 끝나면 꺼져요. 소리 없이: 귀에 안 들리는 아주 작은 소리로 브라우저가 탭을 재우지 못하게 해요(폰에 따라 안 통할 수 있어요). 작은 창: 진행 상황이 보이는 작은 창(PIP)이 떠요 — 가장 확실하지만 창이 화면에 남아요')}
             ${row('답이 오면 알려 주기', toggle('replyNotify.on', !!s.replyNotify?.on && globalThis.Notification?.permission === 'granted'), '다른 앱을 보고 있을 때 답이 끝나면 알림 · 진동으로 알려요. 처음 켤 때 브라우저가 알림 허용을 물어요. 화면을 보고 있을 땐 알리지 않아요')}
         </div>`;
@@ -1964,17 +1998,17 @@ function tabPrompt(s,sub) {
     if (!on) return `${head}<p class="salty-note">데우스 엑스 마키나 프리셋을 쓸 때만 켜 주세요. 끄면 아래 설정이 모두 쉬어요 (고른 값은 남아요).</p>${fruitTypographyGroup('deus')}`;
     return `${regexPreview()}${head}
         ${cap('카드')}<div class="salty-group">
-            ${row('카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로')}
+            ${row('카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로 바꿔요')}
             ${s.chat.demSkin ? row('폰에서 접어 두기', toggle('chat.demFold', s.chat.demFold !== false), '트래커는 한 줄, 펼쳐져 오는 카드는 제목만 · 누르면 펼쳐요') : ''}
-            ${row('카드 색 통일', toggle('chat.unifyRegex', s.chat.unifyRegex), '카드의 모듈별 색을 포인트색 하나로')}
-            ${row('카드 이모티콘', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만')}
+            ${row('카드 색 통일', toggle('chat.unifyRegex', s.chat.unifyRegex), '카드의 모듈별 색을 포인트 색 하나로 맞춰요')}
+            ${row('카드 이모지', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만 보여요')}
         </div>
         ${cap('대사 색상')}<div class="salty-group">
-            ${stack('프롬프트 색 그대로', segMulti('chat.demInk', [['off', '안 씀', { 'chat.demInk': false }], ['text', '글자 색', { 'chat.demInk': true, 'chat.demInkMode': 'text' }], ['marker', '형광펜 색', { 'chat.demInk': true, 'chat.demInkMode': 'marker' }]], !s.chat.demInk ? 'off' : s.chat.demInkMode === 'marker' ? 'marker' : 'text'), '프롬프트가 칠한 대사 색을 테마 대사색 · 형광펜보다 먼저 써요. 형광펜 색: 글자는 테마 색 그대로 두고 띠만 프롬프트 색으로')}
+            ${stack('프롬프트 색 그대로', segMulti('chat.demInk', [['off', '안 씀', { 'chat.demInk': false }], ['text', '글자 색', { 'chat.demInk': true, 'chat.demInkMode': 'text' }], ['marker', '형광펜 색', { 'chat.demInk': true, 'chat.demInkMode': 'marker' }]], !s.chat.demInk ? 'off' : s.chat.demInkMode === 'marker' ? 'marker' : 'text'), '프롬프트가 칠한 대사 색을 테마 대사색 · 형광펜보다 먼저 써요. 형광펜 색: 글자는 테마 색 그대로 두고 띠만 프롬프트 색으로 칠해요')}
         </div>
         ${s.chat.demInk && s.chat.demInkMode === 'marker' && !['marker', 'full'].includes(s.dialogue.style) ? '<p class="salty-note">지금 대사 표시가 “' + ({ bold: '굵게', tint: '색', plain: '없음' }[s.dialogue.style] || s.dialogue.style) + '” 라 칠할 띠가 없어요. 글자 › 대사 › 표시를 형광펜이나 전체 칠로 바꾸면 띠에 색이 들어가요.</p>' : ''}
         ${cap('색 통일', '메시지에 적힌 글자색')}<div class="salty-group">
-            ${stack('적힌 글자색', segMulti('chat.unifyInline', [['keep', '그대로', { 'chat.unifyInline': false, 'chat.toneInline': false }], ['tone', '톤 맞추기', { 'chat.unifyInline': false, 'chat.toneInline': true }], ['theme', '테마 색으로', { 'chat.unifyInline': true }]], s.chat.unifyInline ? 'theme' : s.chat.toneInline ? 'tone' : 'keep'), '톤 맞추기: 색은 그대로 두고 채도 · 밝기만 테마에 맞춰요(글자 색이든 형광펜 색이든). 테마 색으로: 메시지에 적힌 글자색을 무시하고 테마 글자색으로')}
+            ${stack('적힌 글자색', segMulti('chat.unifyInline', [['keep', '그대로', { 'chat.unifyInline': false, 'chat.toneInline': false }], ['tone', '톤 맞추기', { 'chat.unifyInline': false, 'chat.toneInline': true }], ['theme', '테마 색으로', { 'chat.unifyInline': true }]], s.chat.unifyInline ? 'theme' : s.chat.toneInline ? 'tone' : 'keep'), '톤 맞추기: 색은 그대로 두고 채도 · 밝기만 테마에 맞춰요(글자 색이든 형광펜 색이든). 테마 색으로: 메시지에 적힌 글자색을 무시하고 테마 글자색으로 칠해요')}
         </div>
         ${!s.chat.unifyInline && s.chat.toneInline ? `${cap('톤 값', PALETTES[s.palette]?.mode === 'dark' ? '지금은 나이트 값이 보여요' : '지금은 화이트 값이 보여요')}<div class="salty-group">
             ${s.chat.demInk && s.chat.demInkMode === 'marker' ? `
@@ -1988,7 +2022,7 @@ function tabPrompt(s,sub) {
             ${slider('chat.tone.dark.l', '나이트 밝기', 10, 90, 1)}`}
         </div>` : ''}
         ${cap('대사 색상 가독성 향상', '프롬프트가 칠한 글자에만')}<div class="salty-group">
-            ${row('외곽선', toggle('deus.ink.outline.on', dio.on), '글자 둘레에 테두리 — 밝은 색이 밝은 배경에 묻힐 때')}
+            ${row('외곽선', toggle('deus.ink.outline.on', dio.on), '글자 둘레에 테두리를 둘러요 — 밝은 색이 밝은 배경에 묻힐 때 좋아요')}
             ${dio.on ? `<div class="salty-row"><span>외곽선 색</span><input type="color" data-color-path="deus.ink.outline.color" value="${esc(dio.color)}" aria-label="외곽선 색"></div>` : ''}
             ${dio.on ? slider('deus.ink.outline.width', '외곽선 두께', 0.2, 3, 0.1) : ''}
             ${dio.on ? slider('deus.ink.outline.alpha', '외곽선 진하기', 0, 100, 1) : ''}
@@ -2003,7 +2037,7 @@ function tabPrompt(s,sub) {
         ${cap('감정 대사 효과', 'Expressive Dialogue')}<div class="salty-group">
             ${stack('효과', segMulti('deus.fx.on', [['off', '끔', { 'deus.fx.on': false }], ...[['soft', '약하게'], ['normal', '보통'], ['big', '크게']].map(([v, l]) => [v, l, { 'deus.fx.on': true, 'deus.fx.motion': v }])], !fx.on ? 'off' : ['soft', 'big'].includes(fx.motion) ? fx.motion : 'normal'), '외침 · 떨림 같은 감정 대사가 눈에 보이게 움직여요 · 약하게 = 프리셋 원래 크기')}
             ${fx.on ? row('빛', toggle('deus.fx.glow', fx.glow), '외침 · 화남 · 울음 대사가 제 색으로 은은하게 빛나요') : ''}
-            ${fx.on ? row('색 흐름', toggle('deus.fx.flow', fx.flow), '그 대사만 대사색 · 형광펜 대신 흐르는 색 글자로') : ''}
+            ${fx.on ? row('색 흐름', toggle('deus.fx.flow', fx.flow), '그 대사만 대사색 · 형광펜 대신 흐르는 색 글자로 보여요') : ''}
             ${fx.on && fx.flow ? stack('색 흐름을 어디에', seg('deus.fx.flowMode', [['text', '글자'], ['marker', '형광펜']], 'text'), '형광펜: 글자는 대사색 그대로 두고 띠에 색이 흘러요 (대사 표시가 형광펜 · 전체 칠일 때)') : ''}
             ${fx.on ? row('기기 설정 무시', toggle('deus.fx.force', fx.force), '기기가 애니메이션 줄이기 · 절전이어도 움직여요') : ''}
         </div>
@@ -2609,12 +2643,12 @@ function bind(root) {
                 case 'favicon-copy': {
                     try {
                         const { handle, command } = await prepareFaviconCommand(homeIconShape(getSettings().chat?.homeIcon));
-                        if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. 홈 화면 아이콘은 지우고 다시 추가. PC 는 data/${handle}/user/files 의 blue-lemonade-* 를 public/favicon.ico · public/img · public/manifest.json 로 복사`, 'Blue Lemonade', { timeOut: 10000 });
+                        if (await copyText(command)) toastr.success(`Termux 에 붙여 넣고 새로고침해 주세요. 홈 화면 아이콘은 지우고 다시 추가해 주세요. PC 는 data/${handle}/user/files 의 blue-lemonade-* 를 public/favicon.ico · public/img · public/manifest.json 로 복사해 주세요`, 'Blue Lemonade', { timeOut: 10000 });
                     } catch (error) { toastr.error(String(error.message || error), 'Blue Lemonade'); }
                     break;
                 }
                 case 'splash-copy': {
-                    if (await copyText(SPLASH_COMMAND)) toastr.success(`Termux 에 붙여 넣고 실리태번을 다시 켜 주세요. PC 는 data/_css/user.css 맨 위에 ${SPLASH_IMPORT}`, 'Blue Lemonade', { timeOut: 9000 });
+                    if (await copyText(SPLASH_COMMAND)) toastr.success(`Termux 에 붙여 넣고 실리태번을 다시 켜 주세요. PC 는 data/_css/user.css 맨 위에 ${SPLASH_IMPORT} 줄을 넣어 주세요`, 'Blue Lemonade', { timeOut: 9000 });
                     break;
                 }
                 case 'editor-search': openEditorCatalog(root, true, true); break;
@@ -2812,7 +2846,7 @@ function bind(root) {
                     update((st) => {
                         const pins = st.chat.mesPins || [];
                         if (pins.includes(key)) st.chat.mesPins = pins.filter(k => k !== key);
-                        else if (pins.length >= PIN_LIMIT) toastr.warning(`버튼은 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade');
+                        else if (pins.length >= PIN_LIMIT) toastr.warning(`단추는 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade');
                         else st.chat.mesPins = [...pins, key];
                     });
                     break;
@@ -3063,6 +3097,24 @@ function bind(root) {
                     const name = await ask('새 이름', style.name);
                     if (name === null || !String(name).trim()) break;
                     update((st) => { const target = st.styles.find(x => x.id === style.id); if (target) target.name = uniqueName(name, st.styles, style.id); });
+                    break;
+                }
+                case 'mb-fit': {   // 1.7.3 미트볼 맞춤 스위치 하나
+                    const key = el.dataset.key, on = !switchOn(getSettings(), key);
+                    update(st => { setSwitch(st.chat, key, on); });
+                    break;
+                }
+                case 'mb-fit-all': {   // 1.7.3 전부 · 화면만 · 데이터만 끄기 · 켜기
+                    const on = el.dataset.on === '1', kind = el.dataset.kind || 'all';
+                    update(st => { mbSetAll(st.chat, on, kind); });
+                    break;
+                }
+                case 'mb-fit-raw': {   // 1.7.3 원작 그대로 보기(이 기기 · 미트볼 설정 칸 머리의 레몬 단추와 같은 기억)
+                    let raw = false; try { raw = localStorage.getItem('bl-ext-view:ss-settings') === 'raw'; } catch { raw = false; }
+                    const next = !raw, root = document.getElementById('ss-settings');
+                    if (root?.dataset?.blOrg) { const org = await import('./ext-organize.js'); org.setView(root, next); }
+                    else { try { localStorage.setItem('bl-ext-view:ss-settings', next ? 'raw' : 'org'); } catch { /* 이 세션만 */ } document.body.toggleAttribute('data-bl-ext-raw', next); }
+                    refreshPanels();
                     break;
                 }
                 case 'ext-color': {

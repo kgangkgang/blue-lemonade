@@ -146,7 +146,7 @@ await test('실제 사례: 빨강 △ 를 누르면 계산 문장 · 숫자 표 
     assert.ok(!rows.includes('chatHistory') && !rows.includes('empty') && !rows.includes('none'));
     assert.ok(all.includes('최대 응답 길이를 30,000 → 8,000으로 줄이면 채팅 기록 자리가 23,590으로 늘어요.'), all);
     assert.ok(all.includes('올릴 수 있으면 올려요(모델이 받아 주는 만큼만). 지금은 70,000이에요.'));
-    assert.ok(all.includes('안 쓰는 프롬프트를 꺼요.') && all.includes('캐릭터·페르소나·월드인포의 토큰을 줄여도 돼요'));
+    assert.ok(all.includes('안 쓰는 프롬프트를 꺼요.') && all.includes('캐릭터 · 페르소나 · 월드인포의 토큰을 줄여도 돼요'));
     const goButtons = body.all(node => node.tag === 'button');
     assert.deepEqual(goButtons.map(b => [b.textContent, b.dataset.blHwGo]), [['설정으로 가기', '#openai_max_context'], ['설정으로 가기', '#openai_max_tokens']]);
     popup.close(); await wait(() => false, 2);

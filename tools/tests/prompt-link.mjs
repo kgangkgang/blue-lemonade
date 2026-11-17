@@ -86,7 +86,7 @@ await check('turning the switch on saves, resyncs through promptbind and reports
 await check('already matching chats, empty presets and rows without words are reported',async()=>{
   const e=environment();e.settings.promptLink.rows=[{word:'Mina',cards:[]}];e.paint();e.setChanged(0);await e.toggle(true);assert.match(e.status.textContent,/이미 지금 채팅에 맞아요/);
   e.setReport(rows=>({prompts:0,twins:0,regex:0,rows:rows.map(()=>({prompts:0,twins:0,regex:0}))}));await e.toggle(true);
-  assert.match(e.status.textContent,/그 말이 든 프롬프트·정규식이 없어요/);assert.match(e.rows[0].parts['[data-link-found]'].textContent,/이 말이 든 프롬프트·정규식이 없어요/);
+  assert.match(e.status.textContent,/그 말이 든 프롬프트 · 정규식이 없어요/);assert.match(e.rows[0].parts['[data-link-found]'].textContent,/이 말이 든 프롬프트 · 정규식이 없어요/);
   e.settings.promptLink.rows=[{word:'',cards:['rex.png']}];await e.toggle(true);assert.match(e.status.textContent,/연동할 말을 적어 주세요/);
   assert.deepEqual(e.calls,['save','sync:ui','report:1','save','sync:ui','report:1','save']);
 });

@@ -81,7 +81,7 @@ check('⑤ 그 확장이 없는 사람에게는 싣지 않아요', () => {
     assert.ok(!/MutationObserver|setInterval|watchDom|watchWith/.test(line), '감시자 · 되풀이 타이머 없음');
     assert.equal((index.match(/import\('\.\/src\/ext-compat\.js'\)/g) || []).length, 1);
     const mod = read('src/ext-compat.js');
-    assert.match(mod, /root: '#ss-settings', css: '\.\/ext-status\.css'/, 'SETS 의 켬 조건 · 시트가 index.js 와 같은 값');
+    assert.match(mod, /root: '#ss-settings', css: '\.\/ext-status\.gen\.css'/, 'SETS 의 켬 조건 · 시트가 index.js 와 같은 값(1.7.3 브라우저는 묶음 스위치 문을 단 사본을 받아요 — 원본은 이 시험이 보는 src/ext-status.css)');
     assert.ok(mod.includes("set.root.replace(/[^\\w-]/g, '')"), '시트 id 는 선택자마다 달라야 해요(둘째 확장이 와도 안 겹치게)');
 });
 check('⑥ 로그 복사는 변동 칩 칸을 건너뛰고, 탭 줄은 테마가 켜졌을 때만 보여요', () => {

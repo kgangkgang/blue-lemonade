@@ -15,6 +15,7 @@ import { getSettings } from './settings.js';
 import { addonsEnabled } from './usage-mode.js';
 import * as Core from './ext-bridge-core.js';
 import { isObj } from './ext-bridge-core.js';
+import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 「번역 용어집 싣기」 · 「고른 모델로 보내기」 — 끄면 골라 둔 값은 그대로 두고 쓰지만 않아요
 
 const MARK = Symbol.for('blue-lemonade.ext-bridge.v1');
 const LOG = Symbol.for('st.request-log.v1');   // 요청 로그 이름표(성능 보조 애드온 · 없으면 버려져요)
@@ -78,7 +79,7 @@ async function sendDirect({ ctx, pick, system, prompt, maxTokens }) {
  * 다리 하나를 만들어요. 시험은 host(가짜 SillyTavern) · stack(가짜 스택) · direct(가짜 보내기) · theme(가짜 테마 설정)을 넣어요.
  * 돌려주는 것: sync(설정에 맞춰 걸기) · config · update · status · clearMain — 화면(src/ext-bridge-ui.js)이 써요.
  */
-export function createBridge({ host = () => globalThis.SillyTavern, stack = captureStack, own = OWN, theme = getSettings, direct = sendDirect, toast = null, now = Date.now, textarea = () => globalThis.document?.getElementById?.('send_textarea')?.value, asyncFrames = probeAsyncFrames, birth = captureBirth } = {}) {
+export function createBridge({ host = () => globalThis.SillyTavern, stack = captureStack, own = OWN, theme = getSettings, direct = sendDirect, toast = null, now = Date.now, textarea = () => globalThis.document?.getElementById?.('send_textarea')?.value, asyncFrames = probeAsyncFrames, birth = captureBirth, gate = key => mbOff(key) } = {}) {
     const state = { on: false, inner: null, outer: null, mainBound: false, mainSet: false, needBirth: false, toastAt: -Infinity, folders: new Map(), seen: new Map(), raws: new WeakMap(), services: new WeakMap(), last: { ext: null, main: null, model: null } };
     // 비동기 프레임이 안 남는 엔진이면 문맥 객체마다 받은 때의 스택을 달아 둬요(남는 엔진은 아무것도 더 하지 않아요) — 한 번만 재요
     try { Promise.resolve(typeof asyncFrames === 'function' ? asyncFrames() : asyncFrames).then(ok => { state.needBirth = ok === false; }, () => {}); } catch { state.needBirth = false; }
@@ -87,6 +88,8 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
     const featuresOn = () => addonsEnabled(themeSettings());
     const translatorOn = () => themeSettings().addons?.translator === true;
     const config = () => { try { return Core.readBridge(ctx()?.extensionSettings?.[Core.BRIDGE_KEY]); } catch { return Core.readBridge(null); } };
+    /** 1.7.3 실제로 쓸 설정: 미트볼 맞춤 스위치로 끈 것은 뺀 사본(저장 · 화면은 config() 그대로 — 끈 동안에도 골라 둔 값이 남아요) */
+    const live0 = () => { const cfg = config(); if (gate('glossary')) { cfg.glossary = false; cfg.glossaryMain = false; } if (gate('model')) cfg.models = {}; return cfg; };
     const target = c => (isObj(c?.extensionSettings?.[Core.TARGET.module]) ? c.extensionSettings[Core.TARGET.module] : {});
     const entriesOf = c => Core.activeEntries(c?.extensionSettings?.[Core.GLOSSARY_SETTINGS_KEY], c);
     const warn = message => {
@@ -149,7 +152,7 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
     async function run(original, self, args, call) {
         const input = args[0];
         const c = ctx();
-        const cfg = config();
+        const cfg = live0();
         let system = typeof input.systemPrompt === 'string' ? input.systemPrompt : '';
         let next = args;
         try {
@@ -203,7 +206,7 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
         Object.defineProperty(facade, 'sendRequest', { configurable: true, writable: true, value: function blBridgeSendRequest(...args) {
             let next = args;
             try {
-                const cfg = live() ? config() : null;
+                const cfg = live() ? live0() : null;
                 const call = cfg?.glossary ? inspect(undefined, this?.[BIRTH] || null, Array.isArray(args[1]) ? Core.promptText(args[1].slice(-1)) : Core.promptText(args[1])) : null;   // 이 길은 「배열 → 한 줄 글」로 한 번 더 보낼 수 있어 지우지 않고 본문 끝으로 묶어요
                 if (call) {
                     const block = extGlossary(ctx(), cfg, call, Core.promptText(args[1]));
@@ -266,7 +269,7 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
             let value = '', lines = [];
             const settings = target(c);
             // 그 확장이 이번 턴에 「답 끝 상태 줄」을 시켰을 때만(일시정지 · OOC · 사칭이면 그 글이 없어요) · 한국어로 바로 적는 설정일 때만
-            if (featuresOn() && config().glossaryMain && translatorOn() && settings.ssGenLang !== 'en' && settings.ssGenLang !== 'enview' && typeof base?.value === 'string' && base.value.includes(Core.TARGET.tag)) {
+            if (featuresOn() && live0().glossaryMain && translatorOn() && settings.ssGenLang !== 'en' && settings.ssGenLang !== 'enview' && typeof base?.value === 'string' && base.value.includes(Core.TARGET.tag)) {
                 const chat = Array.isArray(c.chat) ? c.chat.slice(-Core.MAIN_RECENT) : [];
                 const recent = [...chat.map(message => (typeof message?.mes === 'string' ? message.mes : '')), String(textarea() ?? '')].join('\n');
                 const shown = [Core.TARGET.stateKey, ...Core.TARGET.sideKeys].map(key => String(c.extensionPrompts?.[key]?.value ?? '')).join('\n');
@@ -289,7 +292,7 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
 
     /** 설정에 맞춰 걸어요 — 쓰는 것이 없으면 아무것도 걸지 않고, 걸려 있던 것은 걷어요 */
     function sync() {
-        const cfg = config();
+        const cfg = live0();
         const features = featuresOn();
         state.on = features && (cfg.glossary || Core.anyModel(cfg));
         if (state.on) installHook(); else removeHook();
@@ -347,6 +350,7 @@ export function startExtBridge(doc = globalThis.document) {
             if (target.closest(BLOCK)) return;
             if (target.closest(Core.TARGET.root) || target.closest('.drawer-toggle')?.parentElement?.id === 'extensions-settings-button') ensureUi(doc);
         }, true);
+        onMbOff(doc, ['glossary', 'model'], () => { try { bridge.sync(); } catch { /* 다음 설정 바뀜에 */ } });   // 1.7.3 미트볼 맞춤 스위치를 바꾸면 걸기 · 걷기를 다시 맞춰요
         // 본편 용어집은 그 확장이 사건을 다 건 뒤에 걸어야 차례가 맞아요 — 앱이 준비된 다음 한 박자 뒤에
         //   같은 때 「화면만 번역」 빈틈 메우기(src/ext-bridge-tr.js)도 — 칩 · 알림 글이 영어로 남던 것(그 확장이 내보낸 번역 함수를 그대로 불러요)
         const late = () => setTimeout(() => {

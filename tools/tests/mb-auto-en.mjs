@@ -97,6 +97,40 @@ await ok('미트볼 2.8.0 원작의 창 글과 같은 꼴(사본이 있으면 �
     assert.ok(src.includes('<code>/ss-undo</code>'));
 });
 
+// 1.7.4 관계 칸의 한국어가 원작 날짜 꼴(「101년 April 4일」 — 영어 저장에서도 dateStr 이 「년 · 월 · 일」 로 찍어요)뿐이면 자동으로 「네」 하지 않아요.
+//   바꾸면 관계 칸이 통째로 저장돼 그 뒤 감긴 답 · 지운 답이 숫자에서 안 빠져요 — 그리고 다음 생활 기록이 또 날짜를 찍어 고리가 돼요.
+await ok('날짜 꼴 알아보기: 「년 · 월 · 일」 · 한 글자 요일만 섞인 글', () => {
+    assert.equal(M.dateOnly('Kingdom Year 12년 March 3일 (Tue)'), true);
+    assert.equal(M.dateOnly('12년 3월 3일 (화)'), true);
+    assert.equal(M.dateOnly('Year 5년 Frostmonth(2월) 9일 (Mon)'), true);
+    assert.equal(M.dateOnly('노엘과 저녁을 먹었다'), false);
+    assert.equal(M.dateOnly('12년 3월 3일 시장에서'), false, '날짜 말고 다른 한국어가 있으면 진짜 한국어');
+});
+const P = (id, texts) => ({ id, texts });
+await ok('정하기: 관계 칸 날짜뿐이면 건너뛰기 · 진짜 한국어는 「네」 · 같은 채팅 같은 내용은 한 번만 · 모르면 예전처럼 「네」', () => {
+    const seen = new Set();
+    assert.equal(M.decide([P('rel', ['Year 3년 May 1일 (Fri)'])], seen, 'chat-a').act, 'skip');
+    assert.equal(M.decide([P('rel', ['Year 3년 May 1일 (Fri)', '드레스를 골랐다'])], seen, 'chat-a').act, 'yes', '관계 칸에 진짜 한국어');
+    assert.equal(M.decide([P('rel', ['Year 3년 May 1일 (Fri)', '드레스를 골랐다'])], seen, 'chat-a').act, 'ask', '같은 내용은 두 번째부터 원작 창');
+    assert.equal(M.decide([P('rel', ['Year 3년 May 1일 (Fri)', '드레스를 골랐다'])], seen, 'chat-b').act, 'yes', '다른 채팅은 따로');
+    assert.equal(M.decide([P('calendar', ['봄 축제'])], seen, 'chat-a').act, 'yes', '다른 칸 · 새 내용');
+    assert.equal(M.decide([P('rel', ['Year 3년 May 2일 (Sat)']), P('memo', ['열쇠는 서랍에'])], seen, 'chat-a').act, 'yes', '진짜 한국어 칸이 있으면 「네」');
+    assert.equal(M.decide(null, seen, 'chat-a').act, 'yes', '칸을 못 읽으면 예전처럼');
+    assert.equal(M.decide([], seen, 'chat-a').act, 'yes');
+});
+await ok('켬 + 관계 칸 날짜뿐: 창 없이 「아니오」 + 건너뛴 알림 · 두 번째 같은 진짜 한국어는 원작 창', async () => {
+    const h = makeHost(); const doc = makeDoc('on'); const notes = [], skips = [];
+    let now = [P('rel', ['Year 3년 May 1일 (Fri)'])];
+    M.startMbAutoEn({ host: () => h.host, doc, notify: hit => notes.push(hit), skipNote: s => skips.push(s), panels: async () => now, chatKey: () => 'chat-z', force: true });
+    const c = h.host.getContext();
+    assert.equal(await c.Popup.show.confirm('미트볼 상태창', ask(1, '번역 모델 1회')), 0, '아니오(원작이 그만둬요)');
+    assert.equal(h.asked.length, 0); assert.equal(notes.length, 0); assert.equal(skips.length, 1);
+    now = [P('profile', ['머리끈'])];
+    assert.equal(await c.Popup.show.confirm('미트볼 상태창', ask(1, '번역 모델 1회')), 1); assert.equal(notes.length, 1);
+    assert.equal(await c.Popup.show.confirm('미트볼 상태창', ask(1, '번역 모델 1회')), 0, '같은 채팅 같은 내용이면 원작 창(여기선 가짜가 0)');
+    assert.equal(h.asked.length, 1); assert.equal(notes.length, 1);
+});
+
 const src = fs.readFileSync(path.join(root, 'src/mb-auto-en.js'), 'utf8');
 await ok('그 확장 파일 · 공용 객체에 쓰지 않아요(정적)', () => {
     assert.doesNotMatch(src, /Popup\.show\s*=|\.show\.confirm\s*=/);

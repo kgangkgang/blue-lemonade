@@ -11,6 +11,7 @@
 //   켜고 끄기: 맞춤 시트가 걸리는 때(body.salty · 「원작 그대로 보기」 아님)만. 시험: tools/tests/mb-trend.mjs
 import { watchDom } from './dom-watch.js';
 import { faceColorPicker, contrastOf } from './ext-compat.js';
+import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
 
 export const TREND = '.ss-trend';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -213,7 +214,7 @@ function drawLegend(doc, model) {
         const b = el(doc, 'button', { type: 'button', class: 'bl-tr-key', 'data-bl-k': i, 'aria-pressed': 'false', 'data-bl-line': s.line, 'data-bl-dash': s.dash || null, title: `${s.name}만 진하게 보기` });
         const dot = el(doc, 'i', { class: 'bl-tr-dot', 'aria-hidden': 'true' }); dot.style.setProperty('--c', s.dot); b.append(dot);
         if (s.dash) { const sv = el(doc, 'svg:svg', { class: 'bl-tr-dash', viewBox: '0 0 16 6', width: 16, height: 6, 'aria-hidden': 'true' }); sv.append(el(doc, 'svg:line', { x1: 1, x2: 15, y1: 3, y2: 3, stroke: s.line, 'stroke-dasharray': s.dash.split(' ').map(v => Math.max(1, Math.round(Number(v) * 0.6))).join(' ') })); b.append(sv); }
-        b.append(doc.createTextNode(s.name));
+        b.append(el(doc, 'span', { class: 'bl-tr-name' }, s.name));   // 버그 사냥 10b: 이름은 칸에 감싸 아주 긴 이름도 알약 안에서 줄임표(전체 이름은 title)
         if (s.value) b.append(el(doc, 'small', {}, s.value));
         row.append(b);
     });
@@ -222,7 +223,11 @@ function drawLegend(doc, model) {
 
 const bgOf = (win, node) => { for (let e = node; e && e.nodeType === 1; e = e.parentElement) { let c = null; try { c = rgbHex(win.getComputedStyle(e).backgroundColor); } catch { c = null; } if (c) return c; } return '#ffffff'; };
 
-/** 창 하나(.ss-trend) 다시 그리기 — 한 번만. opts.pick = 얼굴 색 고르개(시험) · opts.width = 판 폭(시험) */
+// 버그 사냥 10b: 다시 그린 창마다 끊을 것(크기 감시자 · 밤낮 구독) — 창이 문서에서 떨어지면 sweepGone 이 끊어요
+const live = new Set();
+export function sweepGone() { for (const x of live) if (!x.root.isConnected) { live.delete(x); x.off(); } }
+
+/** 창 하나(.ss-trend) 다시 그리기 — 한 번만. opts.pick = 얼굴 색 고르개(시험) · opts.width = 판 폭(시험) · opts.bg = 판 바탕(시험) · opts.watch = 밤낮 구독(시험) */
 export function dressTrend(root, opts = {}) {
     if (!root || root.hasAttribute('data-bl-tr')) return false;
     const doc = root.ownerDocument, win = doc.defaultView;
@@ -233,16 +238,23 @@ export function dressTrend(root, opts = {}) {
     const models = boxes.map(box => ({ box, ...readBox(box) }));
     const pick = opts.pick || faceColorPicker(doc);
     const colors = assignColors(models.flatMap(m => m.series.map(s => s.name).filter(Boolean)), pick);
+    const stops = [];
+    // 선 색 · 점선은 판 바탕에 맞춰요 — 버그 사냥 10b: 창이 열린 채 밤낮이 바뀌면(자동 밤낮 · 기기 다크 모드) 옛 바탕 대비로 남아서 바탕이 바뀔 때마다 다시 정해요
+    const tint = m => {
+        const bg = opts.bg || bgOf(win, m.box); if (bg === m.bg) return false;
+        m.bg = bg;
+        for (const s of m.series) s.line = lineColor(s.dot, bg);
+        dashFor(m.series.map(s => s.line)).forEach((d, i) => { m.series[i].dash = d; });
+        return true;
+    };
     for (const m of models) {
         m.box.classList.add('bl-tr-box');
         m.head?.classList.add('bl-tr-head');
-        const bg = opts.bg || bgOf(win, m.box);
         for (const s of m.series) {
             const c = s.name ? colors.get(s.name) : null;
             s.dot = c ? c.dot : (s.color || PALETTE[3]); s.own = !!c?.own;
-            s.line = lineColor(s.dot, bg);
         }
-        dashFor(m.series.map(s => s.line)).forEach((d, i) => { m.series[i].dash = d; });
+        tint(m);
         m.focus = -1;
         if (m.svg) {
             const wrap = el(doc, 'div', { class: 'bl-tr-plot' });
@@ -250,7 +262,7 @@ export function dressTrend(root, opts = {}) {
             const paint = w => { const svg = drawSvg(doc, m, w); wrap.replaceChildren(svg); m.w = w; };
             paint(opts.width || wrap.getBoundingClientRect?.().width || 640);
             m.redraw = () => paint(m.w);
-            if (typeof win.ResizeObserver === 'function') { const ro = new win.ResizeObserver(es => { const w = Math.round(es[0]?.contentRect?.width || 0); if (w > 0 && Math.abs(w - (m.w || 0)) >= 1) paint(w); }); ro.observe(wrap); }
+            if (typeof win.ResizeObserver === 'function') { const ro = new win.ResizeObserver(es => { if (!wrap.isConnected) { sweepGone(); return; } const w = Math.round(es[0]?.contentRect?.width || 0); if (w > 0 && Math.abs(w - (m.w || 0)) >= 1) paint(w); }); ro.observe(wrap); stops.push(() => ro.disconnect()); }
         }
         const old = m.box.querySelector(':scope > .ss-trend-legend');
         // 버그 사냥 10: readBox 의 legend(범례 글 배열)를 그대로 두면 범례 없는 판(돈 · 기록 적음)에서 아래 addEventListener 가 예외 — 강조 · 나머지 판 연결이 다 멈췄어요
@@ -268,16 +280,26 @@ export function dressTrend(root, opts = {}) {
             m.redraw?.();
         }
     };
-    for (const m of models) m.legend?.addEventListener('click', e => {
-        const b = e.target?.closest?.('.bl-tr-key'); if (!b) return;
+    // 누르기는 판(box)에서 받아요 — 밤낮이 바뀌어 범례를 다시 그려도 그대로
+    for (const m of models) if (m.legend) m.box.addEventListener('click', e => {
+        const b = e.target?.closest?.('.bl-tr-key'); if (!b || !m.legend?.contains(b)) return;
         const name = m.series[Number(b.getAttribute('data-bl-k'))]?.name ?? null; if (!name) return;
         focusName = focusName === name ? null : name;
         apply();
     });
+    try {
+        stops.push((opts.watch || watchDom)(doc.body, { attributes: ['class'], name: '미트볼 그래프 (밤낮)' }, () => {
+            if (!root.isConnected) { sweepGone(); return; }
+            let changed = false;
+            for (const m of models) if (tint(m)) { changed = true; if (m.legend) { const fresh = drawLegend(doc, m); m.legend.replaceWith(fresh); m.legend = fresh; } }
+            if (changed) apply();
+        }));
+    } catch { /* 다시 열면 맞아요 */ }
+    live.add({ root, off: () => { for (const f of stops) try { f?.(); } catch { /* 이미 끊김 */ } } });
     return true;
 }
 
-const fitted = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw');
+const fitted = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw') && !mbOff('trend', doc);   // 1.7.3 스위치 「변화 그래프 다시 그리기」
 /** 이 기록들에 새로 붙은 그래프 창 */
 export function trendRoots(records) {
     const out = new Set();
@@ -293,6 +315,7 @@ export function startMbTrend(doc = globalThis.document, { watch = watchDom } = {
     on = true;
     try {
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 그래프' }, records => {
+            if (live.size) sweepGone();   // 버그 사냥 10b: 닫힌 창의 감시자 · 구독 끊기
             if (!fitted(doc)) return;
             for (const r of trendRoots(records)) try { dressTrend(r); } catch (e) { console.warn('[Blue Lemonade] 미트볼 그래프', e); }
         });

@@ -27,7 +27,7 @@ const OWN = 'blue-lemonade', MB = 'meatballstats';
 const stackOf = (...fns) => ['Error', `    at wrapper (${BASE}/${OWN}/dist/c-1.js:1:1)`, ...fns.map(fn => `    at ${fn} (${BASE}/${fn.startsWith('other') ? 'other-ext' : MB}/src/x.js:1:1)`)].join('\n');
 const FROM_MB = fn => stackOf('aiGenerateOnce', 'aiGenerate', ...(fn ? [fn] : []));
 const FROM_OTHER = stackOf('otherCall');
-const GLOSSARY = { glossary_entries: [{ id: 'g1', scope: 'global', src: 'Leon', dst: '리온' }, { id: 'g2', scope: 'global', src: 'Ardel', dst: '아르델' }] };
+const GLOSSARY = { glossary_entries: [{ id: 'g1', scope: 'global', src: 'Leon', dst: '리온' }, { id: 'g2', scope: 'global', src: 'Aveno', dst: '아베노' }] };
 const THEME_ON = { enabled: true, usageMode: 'both', addons: { translator: true } };
 
 function setup({ mb = {}, saved, translator = GLOSSARY, theme = THEME_ON, direct, realDirect = false, service, manifests = { [MB]: { display_name: '미트볼 상태창 (Meatball Stats)' }, 'other-ext': { display_name: 'Other' }, 'fake-status': { display_name: '미트볼 상태창 흉내(시험용 가짜)' } }, chat = [], realStack = false, noAsync = false } = {}) {
@@ -66,7 +66,7 @@ function setup({ mb = {}, saved, translator = GLOSSARY, theme = THEME_ON, direct
     });
     return { bridge, holder, original, calls, env, extensionSettings, extensionPrompts, Service, generateRaw, getChatCompletionModel };
 }
-const REQ = () => ({ systemPrompt: 'SYSTEM', prompt: 'Leon walked into Ardel.', responseLength: 700 });
+const REQ = () => ({ systemPrompt: 'SYSTEM', prompt: 'Leon walked into Aveno.', responseLength: 700 });
 
 await test('① 쓰는 것이 있으면 getContext 를 한 번만 감싸고, 안쪽 함수 이름을 그대로 둬요', async () => {
     const t = setup();
@@ -134,9 +134,9 @@ await test('③ 그 확장의 요청: 요청 글에 나온 이름 줄이 시스�
     assert.notEqual(sent, req);
     assert.deepEqual(req, REQ());
     assert.ok(sent.systemPrompt.startsWith('SYSTEM\n\n[Glossary]\n'));
-    assert.ok(sent.systemPrompt.endsWith('Leon → 리온\nArdel → 아르델'));
+    assert.ok(sent.systemPrompt.endsWith('Leon → 리온\nAveno → 아베노'));
     assert.equal(sent.prompt, req.prompt); assert.equal(sent.responseLength, 700);
-    assert.deepEqual(t.bridge.status().last.ext.lines, ['Leon → 리온', 'Ardel → 아르델']);
+    assert.deepEqual(t.bridge.status().last.ext.lines, ['Leon → 리온', 'Aveno → 아베노']);
     assert.equal(t.bridge.status().last.ext.slot, 'gen');
 });
 await test('③ 나온 이름이 없으면 · 번역 애드온이 꺼져 있으면 · 용어집 「사용」이 꺼져 있으면 · 칸을 껐으면 받은 그대로', async () => {
@@ -161,7 +161,7 @@ await test('④ 「확장 AI 전체」를 골랐으면 그쪽으로 보내고 �
     const sent = t.calls.direct[0];
     assert.equal(sent.pick.provider, 'vertexai'); assert.equal(sent.pick.model, 'gemini-x'); assert.equal(sent.pick.slot, 'base');
     assert.ok(sent.system.includes('Leon → 리온'));
-    assert.equal(sent.prompt, 'Leon walked into Ardel.');
+    assert.equal(sent.prompt, 'Leon walked into Aveno.');
     assert.equal(sent.maxTokens, 700);
     assert.deepEqual({ ok: t.bridge.status().last.model.ok, slot: t.bridge.status().last.model.slot, label: t.bridge.status().last.model.label }, { ok: true, slot: 'gen', label: 'vertexai · gemini-x' });
 });
@@ -253,7 +253,7 @@ await test('⑤-2 실제 보내기: 실리태번 서버의 채팅 완성 창구�
     const { payload, options, extract, signal } = t.calls.process[0];
     assert.equal(payload.chat_completion_source, 'makersuite');
     assert.equal(payload.model, 'gemini-test');
-    assert.deepEqual(payload.messages, [{ role: 'system', content: 'SYSTEM' }, { role: 'user', content: 'Leon walked into Ardel.' }]);
+    assert.deepEqual(payload.messages, [{ role: 'system', content: 'SYSTEM' }, { role: 'user', content: 'Leon walked into Aveno.' }]);
     assert.equal(payload.stream, false);
     assert.ok((payload.max_tokens ?? payload.max_completion_tokens) >= 700);
     assert.deepEqual(options, {}); assert.equal(extract, true); assert.ok(signal instanceof AbortSignal);
@@ -331,7 +331,7 @@ await test('⑦ 그 확장이 사용 기록에 적는 모델 이름 함수는 �
 });
 
 await test('⑧ 영어로 만드는 설정: 생성 요청에는 안 싣고, 번역 요청에만 · 그 확장 지침과 겹치는 원문은 빼요', async () => {
-    const t = setup({ mb: { ssGenLang: 'enview', trLang: '한국어', trRules: 'Ardel = 아델' } });
+    const t = setup({ mb: { ssGenLang: 'enview', trLang: '한국어', trRules: 'Aveno = 아벤' } });
     t.bridge.sync();
     const req = REQ();
     await t.holder.getContext().generateRaw(req);
@@ -353,12 +353,12 @@ await test('⑨ 본편 요청: 그 확장이 답 끝 상태 줄을 시킨 턴에
     const handler = t.calls.on[0][1];
     handler('normal', {}, false);
     assert.equal(t.calls.set.length, 0, '그 확장 주입이 없으면 아무것도 안 넣어요');
-    t.extensionPrompts.statussim_state = { value: 'STATE 아르델\nEND every reply with a <meatball> block', position: 1, depth: 3, role: 0 };
-    t.env.text = 'I greet Leon in Ardel';
+    t.extensionPrompts.statussim_state = { value: 'STATE 아베노\nEND every reply with a <meatball> block', position: 1, depth: 3, role: 0 };
+    t.env.text = 'I greet Leon in Aveno';
     handler('normal', {}, false);
     assert.equal(t.calls.set.length, 1);
     assert.deepEqual({ ...t.calls.set[0], value: undefined }, { key: C.MAIN_PROMPT_KEY, value: undefined, position: 1, depth: 3, scan: false, role: 0 });
-    assert.ok(t.calls.set[0].value.endsWith('Leon → 리온'), '상태 글에 이미 있는 「아르델」은 줄을 만들지 않아요');
+    assert.ok(t.calls.set[0].value.endsWith('Leon → 리온'), '상태 글에 이미 있는 「아베노」은 줄을 만들지 않아요');
     assert.deepEqual(t.bridge.status().last.main.lines, ['Leon → 리온']);
     handler('normal', {}, true);
     assert.equal(t.calls.set.length, 1, '미리 세어 보기(dryRun)에서는 손대지 않아요');
@@ -466,7 +466,7 @@ await test('⑪ 진짜 호출 스택(가짜 확장 고정물): 동기 프레임 
         t.bridge.sync();
         const ext = await import(fixture);
         const models = () => t.calls.direct.map(call => call.pick.model);
-        assert.equal(await ext.genModule('SYS', 'Leon in Ardel'), 'DIRECT');
+        assert.equal(await ext.genModule('SYS', 'Leon in Aveno'), 'DIRECT');
         assert.deepEqual(models(), ['gen-model']);
         assert.ok(t.calls.direct[0].system.includes('Leon → 리온'));
         await ext.analyzeMessage('SYS', 'analyze this');
@@ -561,12 +561,12 @@ await test('⑫ 검토 M2: 받은 때의 스택은 그 요청 한 번만 — 같
     const [gm] = Object.getOwnPropertySymbols(svc);
     svc[gm].err = { stack: FROM_MB('trJSON') };
     p.env.stack = FROM_MB('');
-    await svc.sendRequest('p', [{ role: 'system', content: 'SYS' }, { role: 'user', content: 'Leon walked into Ardel.' }], 10);
-    await svc.sendRequest('p', 'SYS\n\nLeon walked into Ardel.', 10);
-    await svc.sendRequest('p', [{ role: 'system', content: 'SYS' }, { role: 'user', content: 'Leon met Ardel again.' }], 10);
+    await svc.sendRequest('p', [{ role: 'system', content: 'SYS' }, { role: 'user', content: 'Leon walked into Aveno.' }], 10);
+    await svc.sendRequest('p', 'SYS\n\nLeon walked into Aveno.', 10);
+    await svc.sendRequest('p', [{ role: 'system', content: 'SYS' }, { role: 'user', content: 'Leon met Aveno again.' }], 10);
     const sent = p.calls.send.map(call => (typeof call.prompt === 'string' ? call.prompt : call.prompt[0].content));
     assert.notEqual(sent[0], 'SYS', '번역 칸으로 알아봐 용어집을 실어요');
-    assert.notEqual(sent[1], 'SYS\n\nLeon walked into Ardel.', '같은 요청의 한 줄 글 다시 보내기도 같은 칸');
+    assert.notEqual(sent[1], 'SYS\n\nLeon walked into Aveno.', '같은 요청의 한 줄 글 다시 보내기도 같은 칸');
     assert.equal(sent[2], 'SYS', '다른 본문은 받은 때의 스택을 안 써요(영어 설정이라 번역 칸이 아니면 안 실어요)');
 });
 

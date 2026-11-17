@@ -237,7 +237,7 @@ export function usageLines(summary, { top = 8 } = {}) {
 
 // 요청 기록 용도 이름 (블루 레몬에이드 요청 로그의 purpose 열쇠 → 사람이 읽는 말). 모르는 열쇠는 그대로
 export const PURPOSE_LABELS = Object.freeze({
-    'chat.generate': '채팅 응답', 'chat.swipe': '스와이프', 'chat.regenerate': '재생성', 'chat.continue': '이어 쓰기', 'chat.impersonate': '대신 쓰기', 'chat.quiet': '보조 생성',
+    'chat.generate': '채팅 응답', 'chat.swipe': '스와이프', 'chat.regenerate': '다시 생성', 'chat.continue': '이어 쓰기', 'chat.impersonate': '사칭', 'chat.quiet': '보조 생성',
     'translation.chat': '채팅 번역', 'translation.glossary': '번역 용어집', 'translation.bookmark': '북마크 번역', 'translation.tts': 'TTS 번역', 'translation.retranslate': '번역 다시(교정)', 'translation.input': '보낼 글 번역', 'translation.persona': '페르소나 번역',
     'tts.analysis': 'TTS 대사 분석', 'tts.translate': 'TTS 듣는 말 번역',
     'memory.record': '기억 기록', 'memory.summary': '기억 요약', 'memory.arc': '기억 연대기', 'memory.translate': '기억 번역', 'memory.translate-packet': '기억 미리보기 번역', 'memory.regroup': '기억 재분류',

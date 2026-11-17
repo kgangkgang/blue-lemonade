@@ -488,6 +488,9 @@ function tidyFlags(s) {
         s.chat.mbAutoEn = flag(s.chat.mbAutoEn, true); // 1.6.6 미트볼 「한국어로 저장된 칸을 영어 저장으로 바꾸기」 를 묻지 않고 바로(src/mb-auto-en.js) — 기본 켬(11-17 사용자 「자동으로 항상 네 상태로」 · 예전 설정에는 없으니 켬)
         s.chat.mbHiddenSync = flag(s.chat.mbHiddenSync, true); // 1.6.0 눈 감긴 답을 미트볼 상태에서 빼기(src/mb-hidden.js) — 기본 켬(11-16 사용자 결정 · 예전 설정에는 없으니 켬 · 그 확장은 감긴 답도 더하는 게 원래 동작이에요)
         s.chat.mbHelpers = flag(s.chat.mbHelpers, true); // 미트볼 상태창 편의 기능(설정 찾기 · 맨 위로) — 기본 켬 · 끄면 둘 다 숨겨요
+        // 1.7.3 미트볼 맞춤 스위치(src/mb-switch.js): 끈 열쇠만 적어요(없으면 전부 켬 = 지금 동작 그대로 · 모르는 열쇠도 다음 판을 위해 남겨요) · 고르는 칸(얼굴 표시 · 미트볼 문구)을 「전부 끄기」 로 끄기 전 값
+        s.chat.mbOff = Array.isArray(s.chat.mbOff) ? [...new Set(s.chat.mbOff.filter(k => typeof k === 'string' && /^[a-z]{1,24}$/.test(k)))].slice(0, 100) : [];
+        { const w = s.chat.mbAllWas && typeof s.chat.mbAllWas === 'object' && !Array.isArray(s.chat.mbAllWas) ? s.chat.mbAllWas : {}, keep = {}; if (['initial'].includes(w.mbFace)) keep.mbFace = w.mbFace; if (['light', 'last', 'recent', 'all'].includes(w.mbPrompt)) keep.mbPrompt = w.mbPrompt; s.chat.mbAllWas = keep; }
         s.chat.codePlain = flag(s.chat.codePlain, false); // 코드 색 입히기 끄기 (code-plain.js) — 켤 때만
         s.chat.worldInfoLight = flag(s.chat.worldInfoLight, true); // 월드인포 긴 목록 가볍게 (worldinfo-light.js) — 예전 설정에는 없으니 켬
         s.chat.replyTop = flag(s.chat.replyTop, false); // 6.9.8 새 답 첫 줄로 가는 ↑ (reply-top.js) — 켤 때만
@@ -889,7 +892,7 @@ export function resetSettings(groups = { look: true }) {
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'mbAlbumBtn', 'mbPrompt', 'mbPromptCount', 'mbPromptChars', 'mbPromptCap', 'mbHelpers', 'mbHiddenSync', 'mbBack', 'backClose', 'mbAutoEn', 'mbMapFloors', 'mbFace', 'mbFaceTone', 'mbFaceLook', 'namePeople', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard', 'noteCarry']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'mbAlbumBtn', 'mbPrompt', 'mbPromptCount', 'mbPromptChars', 'mbPromptCap', 'mbHelpers', 'mbHiddenSync', 'mbBack', 'backClose', 'mbAutoEn', 'mbMapFloors', 'mbOff', 'mbAllWas', 'mbFace', 'mbFaceTone', 'mbFaceLook', 'namePeople', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard', 'noteCarry']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }

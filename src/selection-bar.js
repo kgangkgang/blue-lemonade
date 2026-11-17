@@ -196,7 +196,7 @@ function safeCapture(tool, target) {
         if (!target?.root?.isConnected || !target.range.startContainer.isConnected || !target.range.endContainer.isConnected) return null;
         return tool.capture(target);
     } catch (error) {
-        console.warn(`[${tool.label}] 고른 글을 읽지 못했습니다:`, error);
+        console.warn(`[${tool.label}] 고른 글을 읽지 못했어요:`, error);
         return null;
     }
 }

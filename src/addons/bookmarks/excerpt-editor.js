@@ -155,7 +155,7 @@ function insertPlainText(doc, text) {
 export async function openExcerptEditor(record, fav, excerptId) {
     const item = excerptList(fav).find(entry => String(entry.id) === String(excerptId));
     if (!item) {
-        toastr.error('발췌를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.', '북마크');
+        toastr.error('발췌를 찾을 수 없어요. 그사이 지워졌을 수 있어요.', '북마크');
         return true; // 카드가 옛 자료를 보이는 중 — 다시 그린다
     }
     const message = bookmarkMessage(record, fav);

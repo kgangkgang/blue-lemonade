@@ -4,6 +4,7 @@
 //   하는 일: 문서의 누름(잡는 단계) 하나만 들어요 → 표의 단추면 그 누름을 멈추고 실리태번 확인 창을 띄운 뒤, 「지우기」 를 고르면 같은 단추를 한 번 다시 눌러 줘요.
 //   그 확장의 파일 · 자료 · 함수는 안 건드려요(누름을 한 번 미룰 뿐). 감시자 · 타이머 없음. 확인 창을 못 띄우는 환경이면 아무것도 안 막아요(원래대로 바로 동작).
 //   「원작 그대로 보기」(data-bl-ext-raw) · 테마 꺼짐(body.salty 없음)이면 아무것도 안 해요. 시험: tools/tests/mb-ask.mjs
+import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 「바로 지워지는 단추에 한 번 묻기」
 
 /** 물어볼 단추 표: [선택자, 창 제목, 설명, 확인 단추 글(없으면 「지우기」)]. 그 확장이 스스로 묻는 단추 · 편집 기록으로 되돌릴 수 있는 한 줄 지우기는 넣지 않아요. */
 export const ASK = [
@@ -17,7 +18,7 @@ const ALL = ASK.map(row => row[0]).join(', ');
 const SCOPE = '.ss-scope, .ss-root, .ss-panel, dialog.ss-dlg';   // 그 확장이 그리는 화면 안의 단추만(같은 속성 이름을 쓰는 다른 확장은 안 건드려요)
 const KEYS = ['data-act', 'data-st', 'data-arg', 'data-clear'];
 
-const active = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw');
+const active = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw') && !mbOff('ask', doc);
 /** 누른 자리에서 표의 단추를 찾아요 → { el, row } 또는 null */
 export function askTarget(target, doc = target?.ownerDocument) {
     if (!active(doc)) return null;

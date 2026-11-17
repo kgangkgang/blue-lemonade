@@ -89,7 +89,7 @@ await test('현재 채팅: 북마크 더하기 → favorites 에 한 줄(메시�
     assert.equal(D.bookmarkAt(record, 1), fav);
     const user = await D.addBookmark(record, 0);
     assert.equal(user.role, 'user');
-    await assert.rejects(D.addBookmark(record, 9), /찾을 수 없습니다/);
+    await assert.rejects(D.addBookmark(record, 9), /찾을 수 없어요/);
 });
 
 await test('현재 채팅: 메모 · 지우기 (모르는 id 는 거짓 · 저장 없음) · 지우면 맡긴 저장을 flushBookmarkSave 가 바로 쓴다', async () => {
@@ -98,7 +98,7 @@ await test('현재 채팅: 메모 · 지우기 (모르는 id 는 거짓 · 저�
     const fav = await D.addBookmark(record, 0);
     await D.setNote(record, fav.id, '여기부터');
     assert.equal(ctx.chatMetadata.favorites[0].note, '여기부터');
-    await assert.rejects(D.setNote(record, 'nope', 'x'), /찾을 수 없습니다/);
+    await assert.rejects(D.setNote(record, 'nope', 'x'), /찾을 수 없어요/);
     const before = T.meta;
     assert.equal(await D.removeBookmark(record, 'nope'), false);
     assert.equal(T.meta, before, '없는 북마크는 저장하지 않는다');
@@ -154,7 +154,7 @@ await test('다른 채팅: 그사이 그 메시지가 바뀌었으면 저장하�
     assert.equal(T.posts.filter(([url]) => url === '/api/chats/save').length, 0);
     assert.equal(record.messages[0].mes, '다른 기기가 고친 글', '최신본을 받았다');
     T.saveStatus = 500; T.savePayload = { error: 'integrity' };
-    await assert.rejects(D.setNote(record, 'none', 'x'), /찾을 수 없습니다/, '없는 북마크는 저장 전에 멈춘다');
+    await assert.rejects(D.setNote(record, 'none', 'x'), /찾을 수 없어요/, '없는 북마크는 저장 전에 멈춘다');
     const fav = { id: 'f1', messageId: '0', note: '' };
     T.server.get('old-chat')[0].chat_metadata.favorites.push(fav);
     await assert.rejects(D.setNote(record, 'f1', '메모'), /그사이 채팅 파일이 바뀌어/);

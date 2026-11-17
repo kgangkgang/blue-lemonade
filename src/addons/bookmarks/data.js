@@ -139,7 +139,7 @@ export async function listOtherChats(owner, onProgress = null) {
         try {
             await loadRecord(record);
         } catch (error) {
-            console.warn(`[북마크] 그룹 채팅 ${key}을(를) 읽지 못했습니다:`, error);
+            console.warn(`[북마크] 그룹 채팅 ${key}을(를) 읽지 못했어요:`, error);
         }
         onProgress?.(++done, keys.length);
         return record;
@@ -208,7 +208,7 @@ export async function saveRecord(record, { messagesChanged = false } = {}) {
         else saveCurrentMetadataSoon();
         return;
     }
-    if (!record.loaded) throw new Error('채팅을 불러오기 전에는 저장할 수 없습니다.');
+    if (!record.loaded) throw new Error('채팅을 불러오기 전에는 저장할 수 없어요.');
     // 번역을 기다리는 사이에 그 채팅을 열었다면, 불러와 둔 예전 내용으로 파일을 덮어쓰면 안 된다 (무결성 검사는 같은 파일이라 통과한다).
     if (becameCurrent(record)) {
         record.loaded = false;
@@ -228,7 +228,7 @@ export async function saveRecord(record, { messagesChanged = false } = {}) {
         if (error.payload?.error === 'integrity') {
             // 그사이 다른 곳에서 파일이 바뀌었다. 덮어쓰지 않고 다시 불러오게 한다.
             record.loaded = false;
-            throw new Error('그사이 채팅 파일이 바뀌어 저장하지 않았습니다. 다시 불러온 뒤 한 번 더 해 주세요.');
+            throw new Error('그사이 채팅 파일이 바뀌어 저장하지 않았어요. 다시 불러온 뒤 한 번 더 해 주세요.');
         }
         throw error;
     }
@@ -265,7 +265,7 @@ function updateOtherChat(record, mutate) {
     return run;
 }
 async function updateOtherChatNow(record, mutate) {
-    if (record.isCurrent) throw new Error('현재 채팅은 이 방식으로 저장하지 않습니다.');
+    if (record.isCurrent) throw new Error('지금 채팅은 이 방식으로 저장하지 않아요.');
     if (becameCurrent(record)) {
         record.loaded = false;
         throw new Error('그사이 이 채팅을 열어서 저장하지 않았어요. 채팅 화면에서 다시 해 주세요.');
@@ -331,7 +331,7 @@ export async function addBookmark(record, index) {
     const existing = bookmarkAt(record, index);
     if (existing) return existing;
     const message = record.messages[index];
-    if (!message) throw new Error('북마크할 메시지를 찾을 수 없습니다.');
+    if (!message) throw new Error('북마크할 메시지를 찾을 수 없어요.');
     if (!record.isCurrent) {
         return updateOtherChat(record, (fresh) => {
             const target = fresh.messages[index];
@@ -375,7 +375,7 @@ export async function removeBookmark(record, favId) {
 export async function addExcerpt(record, index, excerpt) {
     await loadRecord(record);
     const message = record.messages[index];
-    if (!message) throw new Error('북마크할 메시지를 찾을 수 없습니다.');
+    if (!message) throw new Error('북마크할 메시지를 찾을 수 없어요.');
     const id = uuidv4();
     const attach = (target, holder) => {
         const existing = bookmarkAt(holder, index);
@@ -410,7 +410,7 @@ export async function addExcerpt(record, index, excerpt) {
 export async function addImageTo(record, index, image, { origin = '' } = {}) {
     await loadRecord(record);
     const message = record.messages[index];
-    if (!message) throw new Error('북마크할 메시지를 찾을 수 없습니다.');
+    if (!message) throw new Error('북마크할 메시지를 찾을 수 없어요.');
     const attach = (target, holder) => {
         const existing = bookmarkAt(holder, index);
         const fav = existing ?? { ...newBookmark(index, target), blImageBorn: true };   // 다리가 만든 북마크 표시 — 마지막 그림을 떼면 이것만 지운다
@@ -443,7 +443,7 @@ export async function addImageTo(record, index, image, { origin = '' } = {}) {
 export async function removeImageFrom(record, favId, src, { dropEmpty = false, origin = '' } = {}) {
     const detach = (holder) => {
         const fav = findBookmark(holder, favId);
-        if (!fav) throw new Error('북마크를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+        if (!fav) throw new Error('북마크를 찾을 수 없어요. 그사이 지워졌을 수 있어요.');
         const removed = dropImage(fav, src, origin);
         let bookmark = true;
         if (removed && dropEmpty && shouldDropBookmark(fav)) {
@@ -470,13 +470,13 @@ export async function removeExcerptFrom(record, favId, excerptId) {
     if (!record.isCurrent) {
         return updateOtherChat(record, (fresh) => {
             const fav = findBookmark(fresh, favId);
-            if (!fav) throw new Error('북마크를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+            if (!fav) throw new Error('북마크를 찾을 수 없어요. 그사이 지워졌을 수 있어요.');
             const removed = dropExcerpt(fav, excerptId);
             return { changed: removed, value: removed };
         });
     }
     const fav = findBookmark(record, favId);
-    if (!fav) throw new Error('북마크를 찾을 수 없습니다.');
+    if (!fav) throw new Error('북마크를 찾을 수 없어요.');
     const removed = dropExcerpt(fav, excerptId);
     if (removed) await saveRecord(record);
     return removed;
@@ -486,19 +486,19 @@ export async function removeExcerptFrom(record, favId, excerptId) {
 export async function editExcerptIn(record, favId, excerptId, patch) {
     // 그사이(다른 기기 · 다른 창) 발췌가 지워졌으면 고친 글을 조용히 버리지 않고 알린다
     const ensure = (fav) => {
-        if (!excerptList(fav).some(item => String(item.id) === String(excerptId))) throw new Error('발췌를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+        if (!excerptList(fav).some(item => String(item.id) === String(excerptId))) throw new Error('발췌를 찾을 수 없어요. 그사이 지워졌을 수 있어요.');
     };
     if (!record.isCurrent) {
         return updateOtherChat(record, (fresh) => {
             const fav = findBookmark(fresh, favId);
-            if (!fav) throw new Error('북마크를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+            if (!fav) throw new Error('북마크를 찾을 수 없어요. 그사이 지워졌을 수 있어요.');
             ensure(fav);
             const changed = updateExcerpt(fav, excerptId, patch);
             return { changed, value: changed };
         });
     }
     const fav = findBookmark(record, favId);
-    if (!fav) throw new Error('북마크를 찾을 수 없습니다.');
+    if (!fav) throw new Error('북마크를 찾을 수 없어요.');
     ensure(fav);
     const changed = updateExcerpt(fav, excerptId, patch);
     if (changed) await saveRecord(record);
@@ -509,13 +509,13 @@ export async function setNote(record, favId, note) {
     if (!record.isCurrent) {
         return updateOtherChat(record, (fresh) => {
             const fav = findBookmark(fresh, favId);
-            if (!fav) throw new Error('북마크를 찾을 수 없습니다. 그사이 지워졌을 수 있어요.');
+            if (!fav) throw new Error('북마크를 찾을 수 없어요. 그사이 지워졌을 수 있어요.');
             fav.note = note;
             return { changed: true, value: fav };
         });
     }
     const fav = findBookmark(record, favId);
-    if (!fav) throw new Error('북마크를 찾을 수 없습니다.');
+    if (!fav) throw new Error('북마크를 찾을 수 없어요.');
     fav.note = note;
     await saveRecord(record);
     return fav;
@@ -530,7 +530,7 @@ export async function setNote(record, favId, note) {
 export async function editMessageText(record, index, text, expected = null) {
     await loadRecord(record);
     const message = record.messages[index];
-    if (!message) throw new Error('메시지를 찾을 수 없습니다.');
+    if (!message) throw new Error('메시지를 찾을 수 없어요.');
     if ((record.isCurrent && currentChatKey() !== record.key) || (expected && !sameMessage(message, expected))) {
         throw new Error(CHAT_CHANGED_MEANWHILE);
     }

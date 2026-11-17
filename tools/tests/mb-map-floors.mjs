@@ -385,4 +385,47 @@ await ok('설정 · 연결 자리', () => {
     for (const sel of ['path.bl-route', '.bl-bldg.ghost', '.bl-band', '.bl-ftag', '.bl-ground', '.bl-shaft', '.bl-bldg']) assert.ok(css.includes(`body.salty:not([data-bl-ext-raw]) .ss-scope .ss-map `) && css.includes(sel), sel);
     assert.ok(/path\.bl-route \{ fill: none;/.test(css), '선은 칠하지 않아요');
 });
+// ── 버그 사냥 10b(10차가 남긴 의심) ─────────────────────
+const tryOk = async (name, fn) => { try { await ok(name, fn); } catch (e) { bad++; console.log('실패', name, '\n', e?.message || e); } };
+let bad = 0;
+const r = v => Math.round(v * 10) / 10;
+await tryOk('버그 사냥 10b: 「+N」 표 — 보이는 점에 circle.dot 이 없어도 좌표가 숫자', () => {
+    const list = [...office(), P('Garage Team (B1)', 'second record of the B1 parking', { area: '', kind: '', links: ['Reception'] })];
+    const doc = makeDoc(), svg = drawn(doc, list);
+    const vis = svg.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Garage');
+    vis.childNodes = vis.childNodes.filter(c => c.tagName !== 'circle');   // 점 없는 꼴(다른 애드온 · 그 확장 다음 판이 점을 다르게 그릴 때)
+    const L = m.applyFloors(svg, { places: list }, { ui: null });
+    assert.equal(L.alias.get('Garage Team (B1)'), 'Garage');
+    const badge = vis.querySelectorAll('text.bl-twin')[0]; assert.ok(badge, '「+1」 표');
+    for (const k of ['x', 'y']) assert.ok(Number.isFinite(Number(badge.getAttribute(k))), `${k} = ${badge.getAttribute(k)}`);
+});
+await tryOk('버그 사냥 10b: 이름이 완전히 같은 장소 둘 — 첫째(그 확장이 찾고 그리는 쪽)를 따르고 · 바깥 줄에 빈 칸이 안 생겨요', () => {
+    // 그 확장 findBy · layoutPlaces 는 같은 이름이면 첫째를 써요(누르면 첫째 카드). 층별 배치도 첫째의 층에 둬야 점 자리와 카드가 맞아요
+    const list = [...office(), P('Restroom', 'on 2F', { links: ['Studio'] }), P('Restroom', 'on 3F', { links: ['Board Room'] })];
+    const L = m.floorLayout(list);
+    assert.equal(L.pos.get('Restroom').row, 2, '첫째 장소의 층(2F)');
+    const once = m.floorLayout([...office(), P('Shed', 'garden shed', { area: 'Street', kind: 'shop', links: ['Park'] })]);
+    const twice = m.floorLayout([...office(), P('Shed', 'garden shed', { area: 'Street', kind: 'shop', links: ['Park'] }), P('Shed', 'garden shed', { area: 'Street', kind: 'shop', links: ['Park'] })]);
+    assert.equal(r(twice.outR - twice.outL), r(once.outR - once.outL), '같은 이름 바깥 장소가 두 칸을 차지하지 않아요');
+});
+await tryOk('버그 사냥 10b: 구역 이름이 층 표기뿐(「2F」)이어도 층 표기뿐인 방은 건물 머리가 아니에요', () => {
+    const list = [P('Lobby', '1F hall', { area: 'Tower', links: ['Office'] }), P('Office', '2F desks', { area: 'Tower', links: ['3F'] }), P('3F', 'top floor lounge', { area: 'Tower' }), P('Balcony', 'small balcony', { area: '2F', kind: 'nature', links: ['Office'] })];
+    const L = m.floorLayout(list);
+    assert.equal(L.pos.get('3F')?.zone, 'b', JSON.stringify(L.pos.get('3F')));
+    assert.equal(L.pos.get('3F').row, 3);
+});
+await tryOk('버그 사냥 10b: 그림 글자 이름표 폭(헤드리스 크롬 측정 · 글자 3.2 · 굵기 600)', () => {
+    // 측정(Windows 크롬 · Segoe UI Emoji): 「Bakery」 10.4 · 「Bakery🍰🍩🧁🍪」 28.0 → 그림 글자 하나 ≈ 4.4 · 「👨‍👩‍👧 Home」 14.3(가족 그림은 한 글자)
+    assert.ok(m.textW('Bakery🍰🍩🧁🍪') >= 27.9, String(m.textW('Bakery🍰🍩🧁🍪')));
+    assert.ok(m.textW('👨‍👩‍👧 Home') <= 16, '이어 붙인 그림 글자는 하나로 셈 ' + m.textW('👨‍👩‍👧 Home'));
+    assert.ok(Math.abs(m.textW('☕️ Tea') - 10.6) < 1.2, '☕️ Tea ' + m.textW('☕️ Tea'));
+    const L = m.floorLayout([...office(), P('Bakery🍰🍩🧁🍪', 'sweets', { area: 'Street', kind: 'shop', links: ['Park'] })]);
+    const o = L.pos.get('Bakery🍰🍩🧁🍪');
+    const lines = m.wrapLabel('Bakery🍰🍩🧁🍪', o.w - 1.5);
+    assert.ok(lines.length === 2 || o.w >= 27.9 + 1, `한 줄 이름표(실제 28.0)인데 바깥 칸이 ${o.w} — 이웃과 겹쳐요`);
+    assert.ok(Math.max(...lines.map(m.textW)) <= o.w, '접은 줄도 칸 안');
+    // 두 줄로 끊을 때도 그림 글자 가운데(이어 붙인 가족 그림)를 가르지 않아요
+    for (const ln of m.wrapLabel('👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧', 10)) assert.ok(!/^\u200d|\u200d$/.test(ln.replace(/…$/, '')), JSON.stringify(ln));
+});
+if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

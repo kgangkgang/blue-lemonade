@@ -14,12 +14,12 @@ const check = (name, fn) => { fn(); passed++; };
 const SRC = [
     'She was so happy that her five-centimeter heels gave an involuntary little tap-tap against the marble floor, her whole posture radiating the kind of uncontainable Friday-evening joy that could probably power a small generator in the IT Department.',
     "Watching the top of her head bob up and down across the counter, Bram couldn't help the low, rumbling laugh that escaped his chest. He took another slow, appreciative bite of his birthday doughnut, letting the rich vanilla custard coat his tongue before swallowing.",
-    '<span style="color:#7fe03c">「ははっ、大げさだなぁ。ただのプリンのオマケだぞ？そんな大事そうに両手で拝んでたら、通りかかった魂たちが『警備部の窓口で聖遺物の取引でもしてるのか』って勘違いしちまうっての。」</span>',
+    '<span style="color:#7fe03c">「ははっ、大げさだなぁ。ただのプリンのオマケだぞ？そんな大事そうに両手で拝んでたら、通りかかった魂たちが『図書部の窓口で聖遺物の取引でもしてるのか』って勘違いしちまうっての。」</span>',
     '<span class="bl-asset-slot" data-asset-slot="as4ad79538c44f"></span>',
 ];
 const P0 = '그녀는 너무 기쁜 나머지 5센티미터 굽의 힐이 저도 모르게 대리석 바닥을 톡톡 두드렸고, 온몸에서 주체할 수 없는 금요일 저녁의 기쁨이 뿜어져 나오고 있었다. 전산정보부의 소형 발전기 하나쯤은 거뜬히 돌릴 수 있을 것만 같은 그런 기쁨이었다.';
 const FINAL = '카운터 너머로 그녀의 정수리가 위아래로 콩콩 들썩이는 걸 보고 있자니, 인물 B의 가슴속에서 낮게 우르릉거리는 웃음이 절로 새어 나왔다. 그는 생일 도넛을 한 입 더 천천히, 음미하듯 베어 물고는 진한 바닐라 커스터드가 혀를 감싸는 걸 느낀 뒤에야 삼켰다.';
-const P2 = '<span style="color:#7fe03c">「하핫, 호들갑은. 그냥 푸딩에 딸려 온 덤이잖아? 그렇게 소중하다는 듯이 두 손으로 받들고 있으면, 지나가던 영혼들이 『경비부 창구에서 성유물 거래라도 하나?』 하고 오해하겠다고.」</span>';
+const P2 = '<span style="color:#7fe03c">「하핫, 호들갑은. 그냥 푸딩에 딸려 온 덤이잖아? 그렇게 소중하다는 듯이 두 손으로 받들고 있으면, 지나가던 영혼들이 『도서부 창구에서 성유물 거래라도 하나?』 하고 오해하겠다고.」</span>';
 const SLOT = '<span class="bl-asset-slot" data-asset-slot="as4ad79538c44f"></span>';
 const REAL_LEAK = `「쳐다보는 그녀의 정수리가 카운터 너머로 들썩이는 걸」 — let me write properly.\n\n<output>\n${FINAL}</output>\n\n${P2}`;
 const leakedMessage = `${P0}\n\n${REAL_LEAK}\n\n${SLOT}`;

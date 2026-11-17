@@ -194,7 +194,7 @@ await test('1.0.4 기호가 길게 이어진 줄도 바로 끝남 (11-06 제보 
     // 맞는 글은 예전과 같아요 — 기호 몇 개든 앞뒤 꾸밈이에요
     assert.equal(rp.noticeInner('***【 DRAW — DOUBLE KNOCKOUT 】*****'), 'DRAW — DOUBLE KNOCKOUT');
     assert.equal(rp.noticeInner('> __~~[ SYSTEM ALERT: CORE BREACH ]~~__ ⚠'), 'SYSTEM ALERT: CORE BREACH');
-    assert.equal(rp.noticeInner('⟦3⟧ <span class="x">*[ Text from Gabriel ]*</span>'), 'Text from Gabriel');
+    assert.equal(rp.noticeInner('⟦3⟧ <span class="x">*[ Text from Rowan ]*</span>'), 'Text from Rowan');
     assert.equal(rp.noticeInner('*'.repeat(100) + '[ SYSTEM ALERT ]' + '*'.repeat(100)), 'SYSTEM ALERT');
 });
 

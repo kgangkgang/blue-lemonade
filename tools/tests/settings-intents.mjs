@@ -191,7 +191,7 @@ await test('웹 검색 · 출처 표시: 진동 · 기록 없음 · 꾹 눌러 �
     assert.ok(S.searchSettings('진동').some(e => e.title === '답이 오면 알려 주기'), '진동 하나로는 답 알림도 같이 보여요');
     const row = S.entryByTitle('웹 검색 · 출처 표시');
     assert.ok(row, '검색 목록에 있어요');
-    assert.match(read('src/panel.js'), /'웹 검색을 쓴 답에 지구 표시 · 답의 낱말을 꾹 누르면 진동과 함께 어디서 왔는지 한 줄'/, '설명에 진동이 있다는 말');
+    assert.match(read('src/panel.js'), /'웹 검색을 쓴 답에 지구 표시를 붙여요 · 답의 낱말을 꾹 누르면 진동과 함께 어디서 왔는지 한 줄로 보여요'/, '설명에 진동이 있다는 말');
 });
 
 await test('연결: CI 목록에 이 시험', () => {

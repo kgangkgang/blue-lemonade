@@ -302,7 +302,7 @@ export async function openPanel(){
 let inlineHost=null;
 export function mountInline(host) {
     buildPanel();render();autoList();
-    inlineHost=host;if(opening)host.textContent='열린 설정창을 닫으면 여기에 표시돼요.';else{host.replaceChildren(root);renderSuggest();}root.classList.add('bl-embedded-settings');
+    inlineHost=host;if(opening)host.textContent='열린 설정 창을 닫으면 여기에 보여요.';else{host.replaceChildren(root);renderSuggest();}root.classList.add('bl-embedded-settings');
     const content=root.querySelector('.inline-drawer-content');if(content)content.style.display='block';
     return ()=>{if(inlineHost!==host)return;inlineHost=null;root.classList.remove('bl-embedded-settings');if(!opening)holder.append(root);};
 }

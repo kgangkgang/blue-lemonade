@@ -86,12 +86,16 @@ check('② 글꼴 파일 = 표의 해시 · 40KB 안 · cmap 이 그림 글자�
 });
 check('③ 글꼴은 그 확장 뿌리에만 · 채팅 본문 · 입력칸 · 말풍선 글은 빼요', () => {
     const rules = [...sheet.replace(/@font-face\s*\{[^}]*\}/g, '').replace(/@media[^{]*\{([\s\S]*?\})\s*\}/g, '$1').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim(), body: m[2] }));
-    const uses = rules.filter(r => /font-family:\s*'bl-mb-icons'/.test(r.body));
+    // 1.7.3 미트볼 맞춤 스위치: 글꼴 묶음 규칙은 이름 대신 변수(--bl-mb-ico · 「그림 글자를 선 아이콘으로」 를 끄면 없는 이름 bl-mb-none) — 같은 뿌리에 'bl-mb-icons' 로 정해 둬요
+    const ICO = /font-family:\s*('bl-mb-icons'|var\(--bl-mb-ico, bl-mb-none\))/;
+    const icoVar = rules.find(r => /--bl-mb-ico:\s*'bl-mb-icons'/.test(r.body));
+    assert.ok(icoVar && /#ss-settings/.test(icoVar.sel) && /dialog\.ss-dlg/.test(icoVar.sel) && /\.ss-msgcard/.test(icoVar.sel), '아이콘 글꼴 변수는 그 확장 뿌리에');
+    const uses = rules.filter(r => ICO.test(r.body));
     assert.ok(uses.length >= 4, `글꼴을 쓰는 규칙 ${uses.length}`);
     for (const r of uses) {
         assert.ok(!/#chat|\.mes_text|\.mes\b/.test(r.sel), `채팅 본문에 걸면 안 돼요: ${r.sel}`);
         for (const s of r.sel.split(/,\s*(?![^()]*\))/)) assert.match(s.trim(), /^body\.salty(:not\(\[data-bl-ext-raw\]\))? .*(\.ss-|#ss-|dialog\.bl-ext-avadlg )/, `그 확장 뿌리 밖: ${s}`);   // :not(…) 은 채팅방 고양이(「원작 그대로 보기」면 원래 아이콘) · dialog.bl-ext-avadlg 는 맞춤 모듈이 표식을 단 그 확장의 「얼굴 바꾸기」 창(실리태번 팝업이라 .ss- 이름이 없어요)
-        assert.match(r.body, /'bl-mb-icons',\s*var\(--salty-font-(ui|mb, var\(--salty-font-ui\))\)/, '테마 UI 글꼴(1.5.1: 미트볼 글꼴을 골랐으면 그 글꼴 · 아니면 UI 글꼴) 앞에만 끼워요(글꼴이 없으면 원래 글꼴)');
+        assert.match(r.body, /('bl-mb-icons'|var\(--bl-mb-ico, bl-mb-none\)),\s*var\(--salty-font-(ui|mb, var\(--salty-font-ui\))\)/, '테마 UI 글꼴(1.5.1: 미트볼 글꼴을 골랐으면 그 글꼴 · 아니면 UI 글꼴) 앞에만 끼워요(글꼴이 없으면 원래 글꼴)');
     }
     const all = uses.map(r => r.sel).join(',');
     for (const root of ['#ss-settings', '.ss-root', '.ss-hud', '.ss-side', '.ss-msgcard', '.ss-toasts', 'dialog.ss-dlg .popup-content', 'dialog.popup.ss-dlg .popup-controls']) assert.ok(all.includes(root), `뿌리 ${root}`);
@@ -120,7 +124,7 @@ check('⑤ 저장 · 프롬프트 · 본문 글은 안 건드려요 — 맞춤 �
     assert.ok(!/1F[0-9A-F]{3}|\\u\{1F(?!63C)/i.test(mod.replace(picks, '').replace(/icon: \['\\u\{1F63C\}', 'cat'\]/, '')), '그림 글자 바꾸기는 글꼴로만(모듈에 그림 글자를 바꾸는 표를 두지 않아요)');
     // 얼굴 바꾸기 창: 고른 그림은 그 확장의 입력칸에 적기만 하고(저장은 그 확장), 창에 글자로 찍힌 「[object …]」 한 덩이만 비워요
     assert.ok(mod.includes("input.value = pick.dataset.blAva || '';") && mod.includes("if (junk) { junk.before(hint, grid); junk.data = ''; } else box.append(hint, grid);"));
-    assert.ok(mod.includes("if (ava && !doc.body.hasAttribute('data-bl-ext-raw'))"), '「원작 그대로 보기」면 고르개를 놓지 않아요');
+    assert.ok(mod.includes("if (ava && !doc.body.hasAttribute('data-bl-ext-raw') && !mbOff('avapick', doc))"), '「원작 그대로 보기」 · 스위치 「얼굴 고르개」 끔이면 고르개를 놓지 않아요');
 });
 check('⑤-2 남은 그림 글자 0 — 미트볼 상태창 2.7.21 화면 문자열에서 모은 그림 글자(210종)가 전부 선 아이콘 글꼴 표 · 시트의 unicode-range 에 있어요', () => {
     // 2.7.21 원작 사본의 화면 문자열(index.js · style.css · src/*.js)을 \\p{Extended_Pictographic} 로 훑어 모은 코드 포인트(11-15 검수 · 숫자만 적어요 — 원작 글 · 코드는 싣지 않아요).

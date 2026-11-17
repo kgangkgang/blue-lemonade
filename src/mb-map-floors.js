@@ -126,15 +126,17 @@ const tagOf = r => (r >= 1 ? `${r}F` : `B${1 - r}`);
  * 돌려주는 것: null(층 건물이 없음 → 그 확장 그림 그대로) 또는 { pos: Map(이름 → {x, y, zone, row, b}), rows, buildings, ground, routes(pairs) }
  */
 export function floorLayout(places, { find = simpleFind, tr = null, tall = null } = {}) {
-    const list = (Array.isArray(places) ? places : []).filter(p => p && p.name);
+    // 버그 사냥 10b: 이름이 완전히 같은 장소는 첫째만(그 확장 findBy · layoutPlaces 도 첫째를 써요) — 둘째가 층 · 바깥 칸을 덮어 점 자리와 카드가 어긋났어요
+    const names = new Set(), list = (Array.isArray(places) ? places : []).filter(p => p && p.name && !names.has(p.name) && names.add(p.name));
     if (list.length < 2) return null;
     const info = new Map(list.map((p, i) => [p.name, { p, i, f: floorOf(p, tr), area: String(p.area ?? '') }]));
     // 1.7.0 구역(area) 이름과 같은 장소(「본부 | 7F 비서실」 같은 지금 장소 줄에서 그 확장이 앞 조각으로 만든 곳)는 방이 아니라 건물 머리 — 층을 안 읽어요
     const tx = s => [s, tr?.(s)].filter(Boolean);
     const areaKeys = new Map();
-    for (const it of info.values()) if (it.area) for (const t of tx(it.area)) areaKeys.set(placeKey(t).join(''), it.area);
+    // 버그 사냥 10b: 층 표기뿐인 구역 이름(「2F」)은 열쇠가 빈 글자라 층 표기뿐인 방 이름(「3F」)과 같다고 봤어요 — 빈 열쇠는 안 견줘요
+    for (const it of info.values()) if (it.area) for (const t of tx(it.area)) { const k = placeKey(t).join(''); if (k) areaKeys.set(k, it.area); }
     const headOf = new Map();
-    for (const it of info.values()) for (const t of tx(it.p.name)) { const a = areaKeys.get(placeKey(t).join('')); if (a && a !== undefined) { headOf.set(it.p.name, a); it.f = null; break; } }
+    for (const it of info.values()) for (const t of tx(it.p.name)) { const k = placeKey(t).join(''), a = k && areaKeys.get(k); if (a) { headOf.set(it.p.name, a); it.f = null; break; } }
     // 1.7.0 구역이 빈 층 장소(본편 AI 가 새로 더한 곳 등)는 이어진 층 장소들의 구역이 하나면 그 구역 건물로
     //   버그 사냥 10: 이어진 곳을 장소마다 목록 전체로 다시 찾으면(장소 200개 · 구역 빈 곳이 많을 때 0.6초 넘게) 느려서 링크를 한 번만 풀어 둬요
     const linked = new Map(list.map(p => [p.name, new Set()]));
@@ -330,8 +332,12 @@ const ghostOf = (L, shown) => !!shown && !L.buildings.some(b => bShown(L, b, sho
 const bShown = (L, b, shown) => { const bi = L.buildings.indexOf(b); return [...L.pos].some(([n, o]) => o.zone === 'b' && o.b === bi && (!shown || shown.has(n))); };
 
 // ── 이름표 두 줄 접기 ──────────────────────────────────────
-/** 이름표 글자 너비 어림(글자 크기 3.2 기준): 한글 · 한자 · 가나 3.2 · 공백 1 · 나머지 1.9 */
-export const textW = t => [...String(t ?? '')].reduce((s, c) => s + (/[ᄀ-ᇿ　-鿿가-힯＀-￯]/.test(c) ? 3.2 : c === ' ' ? 1 : 1.9), 0);
+/** 이름표 글자 너비 어림(글자 크기 3.2 기준): 한글 · 한자 · 가나 3.2 · 그림 글자 4.4 · 공백 1 · 나머지 1.9
+ *  버그 사냥 10b: 그림 글자를 1.9 로 셈해 바깥 칸이 좁았어요(크롬 측정 그림 글자 하나 ≈ 4.4) · 이어 붙인 그림 글자(👨‍👩‍👧 · ☕️)는 한 글자로 */
+const graphemer = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+const PICTO = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
+const chars = t => (graphemer ? [...graphemer.segment(String(t ?? ''))].map(x => x.segment) : [...String(t ?? '')]);
+export const textW = t => chars(t).reduce((s, c) => s + (PICTO.test(c) ? 4.4 : /[ᄀ-ᇿ　-鿿가-힯＀-￯]/.test(c) ? 3.2 : c === ' ' ? 1 : 1.9), 0);
 /** 칸 너비 w 에 맞게 이름을 한 줄 또는 두 줄로 — 띄어쓰기에서 가운데 가까운 곳을 먼저, 없으면 글자 가운데에서 끊어요(줄임표 없이 전체 이름) */
 /** 1.7.0 이름표에 쓸 이름: 「장소 — 설명」 · 「장소 | 설명」 꼴(지금 장소 줄이 그대로 장소 이름이 된 것)은 앞 조각만 */
 export function labelOf(name) {
@@ -344,9 +350,9 @@ export function wrapLabel(text, w) {
     if (!sp.length && textW(t) <= w * 1.35) return [t];   // 1.7.0 띄어쓰기 없는 한 낱말은 조금 넘쳐도 안 끊어요(「Secre / tariat」 처럼 낱말 가운데가 갈리지 않게)
     let lines;
     if (sp.length) { const cut = sp.reduce((b, i) => (Math.abs(textW(t.slice(0, i)) - textW(t.slice(i + 1))) < Math.abs(textW(t.slice(0, b)) - textW(t.slice(b + 1))) ? i : b)); lines = [t.slice(0, cut), t.slice(cut + 1)]; }
-    else { const cs = [...t]; let k = 1; while (k < cs.length - 1 && textW(cs.slice(0, k + 1).join('')) <= textW(t) / 2) k++; lines = [cs.slice(0, k).join(''), cs.slice(k).join('')]; }
+    else { const cs = chars(t); let k = 1; while (k < cs.length - 1 && textW(cs.slice(0, k + 1).join('')) <= textW(t) / 2) k++; lines = [cs.slice(0, k).join(''), cs.slice(k).join('')]; }
     // 두 줄로도 칸을 한참 넘는 아주 긴 이름만 줄 끝을 「…」 로(옆 이름표와 겹치지 않게)
-    const fit = s => { if (textW(s) <= w * 2) return s; const cs = [...s]; while (cs.length > 1 && textW(cs.join('') + '…') > w * 2) cs.pop(); return cs.join('').trimEnd() + '…'; };
+    const fit = s => { if (textW(s) <= w * 2) return s; const cs = chars(s); while (cs.length > 1 && textW(cs.join('') + '…') > w * 2) cs.pop(); return cs.join('').trimEnd() + '…'; };
     return lines.map(fit);
 }
 
@@ -395,7 +401,10 @@ export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null 
         const vis = gs.find(g => /\bhere\b/.test(g.getAttribute('class') || '')) || gs.find(g => /\bsel\b/.test(g.getAttribute('class') || '')) || gs.find(g => !L.alias?.has(nameOf(g))) || gs[0];
         const others = gs.filter(g => g !== vis);
         for (const g of others) { g.setAttribute('display', 'none'); g.setAttribute('data-bl-twin', nameOf(vis)); }
-        const dot = vis.querySelector('circle.dot'), cx = Number(dot?.getAttribute('cx')), cy = Number(dot?.getAttribute('cy'));
+        const dot = vis.querySelector('circle.dot'), at = L.pos.get(nameOf(vis)) || L.pos.get(L.alias?.get(nameOf(vis)));
+        // 버그 사냥 10b: 점이 없는 묶음(옮기지 않았어요)이면 좌표가 NaN 이었어요 → 배치 자리
+        let cx = Number(dot?.getAttribute('cx')), cy = Number(dot?.getAttribute('cy'));
+        if (!Number.isFinite(cx) || !Number.isFinite(cy)) { cx = at?.x ?? 0; cy = at?.y ?? 0; }
         const badge = el(doc, 'text', { class: 'bl-twin', x: r1(cx - 4.1), y: r1(cy + 1.2), 'data-act': 'selplace', 'data-arg': others[0].getAttribute('data-arg') }, `+${others.length}`);
         badge.appendChild(el(doc, 'title', {}, others.map(g => tr?.(nameOf(g)) || nameOf(g)).join(' · ')));
         vis.appendChild(badge);

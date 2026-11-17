@@ -325,7 +325,7 @@ function togglePin(el) {
     const pinned = el.classList.contains('bl-pinned') || current.includes(own) || current.includes(legacy);
     let next;
     if (pinned) next = current.filter(k => k !== own && k !== legacy);
-    else if (current.length >= PIN_LIMIT) { held = { el, at: Date.now() };   /* 못 꺼낼 때도 손을 뗄 때의 click 은 막아요 — 안 막으면 경고와 함께 그 단추(번역 · 지우기 …)가 눌렸어요 */ globalThis.toastr?.warning(`버튼은 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade'); return; }
+    else if (current.length >= PIN_LIMIT) { held = { el, at: Date.now() };   /* 못 꺼낼 때도 손을 뗄 때의 click 은 막아요 — 안 막으면 경고와 함께 그 단추(번역 · 지우기 …)가 눌렸어요 */ globalThis.toastr?.warning(`단추는 ${PIN_LIMIT}개까지 꺼내 둘 수 있어요.`, 'Blue Lemonade'); return; }
     else next = [...current, own];
     held = { el, at: Date.now() };
     try { navigator.vibrate?.(15); } catch { /* 진동이 없는 기기 */ }

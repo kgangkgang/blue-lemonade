@@ -68,12 +68,12 @@ await test('CSS: body.salty-send-textarea-off 아래에서만 입력칸을 접�
 });
 
 await test('설정 창 스위치 · 되돌리기 라벨 · 검색 목록 (제목 · 말하듯 쓴 글)', () => {
-    assert.match(read('src/panel.js'), /row\('채팅 입력칸 숨기기', toggle\('chat\.hideSendTextarea', !!s\.chat\.hideSendTextarea\)/);
-    assert.equal(SETTING_LABELS['chat.hideSendTextarea'], '채팅 입력칸 숨기기');
-    const row = S.searchSettings('채팅 입력칸 숨기기')[0];
+    assert.match(read('src/panel.js'), /row\('채팅 입력창 숨기기', toggle\('chat\.hideSendTextarea', !!s\.chat\.hideSendTextarea\)/);
+    assert.equal(SETTING_LABELS['chat.hideSendTextarea'], '채팅 입력창 숨기기');
+    const row = S.searchSettings('채팅 입력창 숨기기')[0];
     assert.equal(row?.path, 'chat.hideSendTextarea');
     assert.deepEqual([row.tab, row.sub], ['chat', 'screen']);
-    for (const q of ['입력칸 숨기', '입력창 없애기', '단추만', '버튼만 쓰기']) {
+    for (const q of ['채팅 입력칸 숨기기', '입력칸 숨기', '입력창 없애기', '단추만', '버튼만 쓰기']) {   // 옛 이름(입력칸)으로도 찾아져요
         assert.ok(S.searchSettings(q).slice(0, 5).some(e => e.path === 'chat.hideSendTextarea'), q);
     }
 });

@@ -33,11 +33,11 @@ const css = () => sheets.get(m.NAME_SHEET)?.textContent ?? '';
 const ROSE = '#d98aa5', SKY = '#7fb2e5', NAVY = '#1a2340';
 await ok('① 시트 글: 색 있는 사람만 · 별칭 · 같은 색 묶음 · 이상한 글자 · 시스템 메시지 제외', () => {
     assert.equal(m.nameCss([]), ''); assert.equal(m.nameCss(null), '');
-    const text = m.nameCss([{ name: '미나', names: ['미나', 'Mina "M" Park'], color: ROSE }, { name: '레온', names: ['레온'], color: SKY }, { name: '색없음', names: ['색없음'], color: null }, { name: '베스', names: ['베스'], color: '#D98AA5' }, { name: '이상', color: 'red' }]);
+    const text = m.nameCss([{ name: '미나', names: ['미나', 'Mina "M" Park'], color: ROSE }, { name: '레오', names: ['레오'], color: SKY }, { name: '색없음', names: ['색없음'], color: null }, { name: '베스', names: ['베스'], color: '#D98AA5' }, { name: '이상', color: 'red' }]);
     const rules = text.split('\n');
     assert.equal(rules.length, 2, '색 둘 = 규칙 둘');
     assert.equal(rules[0], 'body.salty[data-bl-name-people] #chat .mes.mes:is([ch_name="미나"],[ch_name="Mina \\"M\\" Park"],[ch_name="베스"]):not([is_system="true"]):not(.smallSysMes) .name_text { color: #d98aa5 !important; }');
-    assert.ok(rules[1].includes('[ch_name="레온"])') && rules[1].includes('color: #7fb2e5 !important'));
+    assert.ok(rules[1].includes('[ch_name="레오"])') && rules[1].includes('color: #7fb2e5 !important'));
     assert.ok(!text.includes('색없음') && !text.includes('이상'));
 });
 await ok('② 바탕에 묻히는 색은 밝기만 옮겨 대비 4.5 — 잘 보이는 색은 그대로(낮 · 밤)', () => {
@@ -63,10 +63,10 @@ await ok('④ 켬: 표식 · 시트 · 인물표가 바뀌면 다시 써요 · �
     m.syncNamePeople(true, { bg: '#1c1e21' }, doc);
     assert.equal(attrs.has(m.NAME_MARK), true);
     assert.ok(css().includes('[ch_name="미나"]')); assert.ok(!css().includes('여행자'));
-    book.set('여행자', SKY); book.set('레온', SKY); P.peopleChanged(); flush();
-    assert.ok(css().includes('[ch_name="레온"]'), '인물표 바뀜에 다시 썼어요'); assert.ok(css().includes('[ch_name="여행자"]'));
+    book.set('여행자', SKY); book.set('레오', SKY); P.peopleChanged(); flush();
+    assert.ok(css().includes('[ch_name="레오"]'), '인물표 바뀜에 다시 썼어요'); assert.ok(css().includes('[ch_name="여행자"]'));
     // 채팅 바꾸기: 명단에는 없지만 색이 잡히는 이름(카드 이름)
-    book.delete('여행자'); book.delete('레온'); P.invalidatePeople();
+    book.delete('여행자'); book.delete('레오'); P.invalidatePeople();
     const person = names => (names.includes('달빛서점') ? { color: ROSE } : null);
     const drop2 = P.registerPeopleSource('alias', { names: () => [], person }); flush();
     ctx.name2 = '달빛서점'; for (const fn of handlers.get('chat_id_changed') || []) fn();

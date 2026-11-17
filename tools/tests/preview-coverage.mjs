@@ -49,7 +49,7 @@ const COVERAGE = [
     // 날씨
     ['chat.weather*', '날씨 미리보기'], ['chat.weather2*', '날씨 미리보기'],
     ['chat.weatherAutoRest', NONE, '생성 · 편집 중 쉬기는 움직임 시점만 바꿔요'],
-    ['chat.mbAlbumBtn', NONE, '미트볼 상태창(확장)의 추억 앨범 단추라 미리보기 무대에 확장 이름 줄이 없어요'],
+    // 1.7.3 chat.mbAlbumBtn 은 「미트볼 맞춤」 묶음의 거꾸로 스위치(켬 = 단추 숨기기 · data-act=mb-fit)로 옮겨 설정 경로 칸이 아니에요 — 미리보기 무대에 확장 이름 줄도 없어요
     ['chat.mbFace', NONE, '미트볼 상태창(확장) 화면의 얼굴 동그라미라 미리보기 무대에 그 확장 화면이 없어요'],
     ['chat.mbFaceTone', NONE, '미트볼 상태창(확장) 화면의 얼굴 동그라미 색 톤이라 미리보기 무대에 그 확장 화면이 없어요'],
     ['chat.mbFaceLook', NONE, '미트볼 상태창(확장) 화면의 얼굴 동그라미(색만 / 글자)라 미리보기 무대에 그 확장 화면이 없어요'],

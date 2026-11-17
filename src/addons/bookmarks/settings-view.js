@@ -2,8 +2,8 @@
 import { VERSION, hooks, settings, saveSettings, baseColors, colorsFor, hasOwnColors, applyColors, parseColorCode, DEFAULT_COLORS, chatKey, iconName, themeColors } from './state.js';
 
 const COLOR_FIELDS = [
-    ['accent', '포인트 색', 'AI 메시지 리본·대사 색, 선택한 채팅, 버튼'],
-    ['user', '유저 색', '유저 메시지 리본·대사 색, 앞뒤 문맥 창의 유저 말풍선'],
+    ['accent', '포인트 색', 'AI 메시지 리본 · 대사 색, 고른 채팅, 단추'],
+    ['user', '내 메시지 색', '내 메시지 리본 · 대사 색, 앞뒤 문맥 창의 내 말풍선'],
     ['icon', '아이콘 색', '채팅 메시지에 붙는 북마크 아이콘'],
 ];
 
@@ -31,14 +31,14 @@ const GUIDE = [
     [null, '북마크 달기', '메시지의 북마크 아이콘을 누르면 북마크가 생기고, 다시 누르면 없어져요. <b>길게 누르면</b>(PC는 우클릭) 메모를 바로 쓸 수 있어요.'],
     ['fa-i-cursor', '글 골라 북마크', '채팅에서 글을 고르면 아래에 <b>북마크</b>가 떠요. 누르면 고른 글이 보이던 그대로(번역문 · 대사 색) 카드 위에 담겨요.'],
     ['fa-pen', '발췌 고치기', '카드 위 발췌의 <b>연필</b>을 누르면 보이던 그대로(대사 색 · 형광펜) 글만 고쳐요. 비우고 저장하면 그 발췌가 지워지고, <b>✕</b>로도 지울 수 있어요.'],
-    ['fa-wand-magic-sparkles', '목록 열기', '입력창 왼쪽 마법봉 메뉴 → <b>북마크</b>'],
-    ['fa-chevron-down', '메시지 펼치기', '카드의 메모·발췌나 <b>메시지 펼치기</b>를 누르면 북마크한 메시지가 아래에 보여요. 메모가 없어도 펼치기 버튼으로 볼 수 있고, 펼친 메시지를 다시 누르면 접혀요.'],
-    ['fa-comments', '채팅 고르기', '같은 캐릭터의 다른 채팅 북마크도 볼 수 있어요. 넓은 화면은 왼쪽 목록, 좁은 화면은 왼쪽 위 <i class="fa-solid fa-bars-staggered"></i> 버튼을 누르세요.'],
+    ['fa-wand-magic-sparkles', '목록 열기', '입력창 왼쪽 요술봉 메뉴 → <b>북마크</b>'],
+    ['fa-chevron-down', '메시지 펼치기', '카드의 메모 · 발췌나 <b>메시지 펼치기</b>를 누르면 북마크한 메시지가 아래에 보여요. 메모가 없어도 펼치기 단추로 볼 수 있고, 펼친 메시지를 다시 누르면 접혀요.'],
+    ['fa-comments', '채팅 고르기', '같은 캐릭터의 다른 채팅 북마크도 볼 수 있어요. 넓은 화면은 왼쪽 목록, 좁은 화면은 왼쪽 위 <i class="fa-solid fa-bars-staggered"></i> 단추를 눌러 주세요.'],
     ['fa-magnifying-glass', '검색', '메시지와 메모 · 발췌를 함께 찾아요. <b>메모만</b>을 켜면 메모와 발췌에서만 찾아요.'],
     ['fa-eye', '채팅에서 보기', '그 메시지 주변 대화를 채팅 화면에 잠깐 불러와요. 아래 막대에서 목록으로 돌아가거나 끝낼 수 있어요.'],
     ['fa-layer-group', '앞뒤 문맥', '작은 창에서 앞뒤 메시지를 보여 줘요. 창 위의 −/+로 범위를 바로 바꿀 수 있어요.'],
     ['fa-pen-to-square', '원문 수정', '메시지 원문을 직접 고쳐요. <b>채팅 기록이 바뀌니</b> 조심하세요.'],
-    ['fa-language', '번역', '카드의 <b>번역</b>을 누르면 번역하기·직접 고치기·지우기가 나와요. 번역은 <b>LLM 번역기</b> 확장의 모델·프롬프트 설정을 그대로 쓰고, 번역문은 채팅 화면과 같은 자리에 저장돼서 그 채팅을 열어도 똑같이 보여요. 다른 채팅의 북마크도 번역할 수 있어요.'],
+    ['fa-language', '번역', '카드의 <b>번역</b>을 누르면 번역하기 · 직접 고치기 · 지우기가 나와요. 번역은 <b>LLM 번역기</b> 확장의 모델 · 프롬프트 설정을 그대로 쓰고, 번역문은 채팅 화면과 같은 자리에 저장돼서 그 채팅을 열어도 똑같이 보여요. 다른 채팅의 북마크도 번역할 수 있어요.'],
     ['fa-arrows-rotate', '메시지 번호가 바뀌면', '메시지를 지우거나 끼워 넣거나 옮겨도 북마크가 그 메시지를 따라가요. 지운 메시지의 북마크는 함께 사라져요.'],
     ['fa-box-archive', '데이터', '이전 <b>채팅 북마크</b> 확장과 같은 곳(각 채팅 파일)에 저장해서 기존 북마크가 그대로 보여요. 두 확장을 같이 켜면 아이콘이 두 개 생기니 이전 확장은 꺼 주세요.'],
 ];
@@ -76,7 +76,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-palette"></i>모양</h3>
                 <div class="cg-setting cg-setting-desc">
-                    <div class="cg-setting-text"><b>테마</b><small>자동은 지금 실리태번 테마의 글자색·배경색을 그대로 써요. 밝게·어둡게는 대사 색이 아래 색상 설정을 따라요.</small></div>
+                    <div class="cg-setting-text"><b>테마</b><small>자동은 지금 실리태번 테마의 글자색 · 배경색을 그대로 써요. 밝게 · 어둡게는 대사 색이 아래 색상 설정을 따라요.</small></div>
                     ${segmented('theme', [['auto', '자동', 'fa-wand-magic-sparkles'], ['light', '밝게', 'fa-sun'], ['dark', '어둡게', 'fa-moon']], store.theme)}
                 </div>
                 <div class="cg-setting cg-setting-desc">
@@ -88,7 +88,7 @@ export function renderSettingsPage(page, viewingChat, onBack) {
                     <button type="button" class="cg-switch" role="switch" aria-label="글 골라 북마크" data-setting="selectionChip" aria-checked="${store.selectionChip !== false}"><span></span></button>
                 </div>
                 <div class="cg-setting cg-setting-desc">
-                    <div class="cg-setting-text"><b>원문 접어서 보기</b><small>메모·발췌를 누르면 아래에 메시지가 펼쳐져요. 끄면 처음부터 함께 보여요.</small></div>
+                    <div class="cg-setting-text"><b>원문 접어서 보기</b><small>메모 · 발췌를 누르면 아래에 메시지가 펼쳐져요. 끄면 처음부터 함께 보여요.</small></div>
                     <button type="button" class="cg-switch" role="switch" data-setting="collapseLong" aria-checked="${store.collapseLong}"><span></span></button>
                 </div>
             </section>
@@ -96,12 +96,12 @@ export function renderSettingsPage(page, viewingChat, onBack) {
             <section class="cg-section">
                 <h3 class="cg-section-title"><i class="fa-solid fa-id-badge"></i>표시</h3><!-- ui-density-620c -->
                 <div class="cg-setting cg-setting-desc">
-                    <div class="cg-setting-text"><b>프로필 사진·이름 표시</b><small>북마크에 작성자의 사진과 이름을 보여요.</small></div>
-                    <button type="button" class="cg-switch" role="switch" aria-label="프로필 사진·이름 표시" data-setting="showIdentity" aria-checked="${store.showIdentity !== false}"><span></span></button>
+                    <div class="cg-setting-text"><b>프로필 사진 · 이름 표시</b><small>북마크에 작성자의 사진과 이름을 보여요.</small></div>
+                    <button type="button" class="cg-switch" role="switch" aria-label="프로필 사진 · 이름 표시" data-setting="showIdentity" aria-checked="${store.showIdentity !== false}"><span></span></button>
                 </div>
                 <div class="cg-setting cg-setting-desc">
-                    <div class="cg-setting-text"><b>날짜·시간 표시</b><small>메시지 번호와 작성 날짜·시간을 보여요.</small></div>
-                    <button type="button" class="cg-switch" role="switch" aria-label="날짜·시간 표시" data-setting="showTimestamp" aria-checked="${store.showTimestamp !== false}"><span></span></button>
+                    <div class="cg-setting-text"><b>날짜 · 시간 표시</b><small>메시지 번호와 작성 날짜 · 시간을 보여요.</small></div>
+                    <button type="button" class="cg-switch" role="switch" aria-label="날짜 · 시간 표시" data-setting="showTimestamp" aria-checked="${store.showTimestamp !== false}"><span></span></button>
                 </div>
             </section>
 

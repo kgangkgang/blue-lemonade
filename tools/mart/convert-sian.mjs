@@ -508,8 +508,8 @@ const PERSON = { 세라프: 'seraph', 우리엘: 'uriel', 가브리엘: 'gabriel
 //   일러스트가 아닌 틀은 id 에 꼬리(심플 sp · 다꾸 dk · 무테 mt — s-animal-dk-1)가 붙고 geulkku-sian.json 에 style 칸이 남아요(일러스트는 칸 없음).
 //   labels: 다꾸 시안의 도장 · 라벨 글({ stamp, tag }) — 있으면 그대로 넘겨요(마트 자료에 실어 나중에 「도장 글 바꾸기」 칸으로)
 //   optional: 시안 파일이 아직 없으면 건너뛰어요(다꾸 확장 시안은 작업 중) — 생기면 그대로 옮겨져요.
-// 시안 머리의 흉내 알약 글 — 표본 칸 값(tools/mart/sample.mjs FIELDS: LOG · 깡통 세라피나 · 모델 Argon · 프롬프트 천사깡) + 1.0.1 원본 사본의 옛 글(Gemini 2.5 Pro · 레모나 5.15)
-const FAKE_PILLS = [...new Set([FIELDS.mark, FIELDS.char, FIELDS.model, FIELDS.prompt, 'Gemini 2.5 Pro', '레모나 5.15'])];
+// 시안 머리의 흉내 알약 글 — 표본 칸 값(tools/mart/sample.mjs FIELDS: LOG · 깡통 세라피나 · 모델 Argon · 프롬프트 천사깡) + 1.0.1 원본 사본의 옛 글(모델 이름)
+const FAKE_PILLS = [...new Set([FIELDS.mark, FIELDS.char, FIELDS.model, FIELDS.prompt, 'Gemini 2.5 Pro'])];
 const SERIES = { kind: 'series', T: '세라피나 · 숲 오두막', D: '2026.11.04', user: '나', tailPick: 'first', authored: true, fakePills: FAKE_PILLS, messages: { transport: 'station' },   // 교통은 시안처럼 정류장 노선(테마 station 배치)
     // S 정의는 T 와 마디 · 기본값이 달라요 — 다른 열 개는 S 정의 그대로인 bl-s-* 로(src/log-copy-motion.js), 같은 다섯(drift · pulse · spin · shimmer · hue)은 공용 이름 그대로
     rename: Object.fromEntries(['bl-fall', 'bl-float', 'bl-twinkle', 'bl-sway', 'bl-flicker', 'bl-wave', 'bl-rise', 'bl-ticker', 'bl-bounce', 'bl-breathe'].map(n => [n, n.replace('bl-', 'bl-s-')])), vars: {},

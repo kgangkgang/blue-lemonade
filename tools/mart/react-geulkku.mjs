@@ -5,7 +5,7 @@
 //     미리보기(테마 로그 복사 창 · 마트 카드 · 상세 · 시식)만 로그가 보이게 펼쳐 보여요: drawTemplate 이 닫힌 details 에 open + data-bl-peek 를 붙이고,
 //     복사할 때 data-bl-peek 가 붙은 것은 다시 닫아요(log-copy-sheet.js result · 마트 shutPeek). 원본은 이 파일 하나예요.
 //   열린 모습(열린 봉투 · 열린 문)은 details 안 첫 칸을 겉면 위에 겹쳐(margin-top 음수 · pointer-events:none) 그려요 — 눌림은 아래 겉면으로 가요.
-//   커뮤니티 글에 바로 붙이는 사진 틀(체크박스 · 사진 6장 · n/6)은 따로 있어요: 작업 허브 outputs/지시-1109/반응글꾸/반응글꾸-*.html
+//   커뮤니티 글에 바로 붙이는 사진 틀(체크박스 · 사진 6장 · n/6)은 따로 있어요(저장소 밖 작업 기록)
 const SANS = "font-family:Pretendard,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif";
 const SERIF = "font-family:'Noto Serif KR','AppleMyungjo','Nanum Myeongjo',Batang,Georgia,serif";
 const MONO = "font-family:ui-monospace,'SFMono-Regular','Cascadia Mono',Menlo,Consolas,monospace";

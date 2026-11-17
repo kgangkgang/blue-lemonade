@@ -576,10 +576,10 @@ await test('㉕ 1.6.8 플레이 기록 「지난 하루들」 줄(state.days 의
 });
 
 await test('㉖ 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는 글: 제목이 그 확장 이름일 때만 · 화면만 번역일 때만 사전으로 · 태그 · 엔티티 그대로', () => {
-    const dict = { Leon: '레온', Bread: '빵', "Ann's Ledger": '앤의 장부' };
+    const dict = { Leon: '레오', Bread: '빵', "Ann's Ledger": '앤의 장부' };
     const trs = t => { let out = t; for (const [en, ko] of Object.entries(dict)) out = out.split(en).join(ko); return out; };
-    assert.equal(T.trToastMessage('Leon와(과) 연인이 되었어요 💞', trs), '레온와(과) 연인이 되었어요 💞');
-    assert.equal(T.trToastMessage('💬 <b>Leon</b>: hi<br><small>Ann&#39;s Ledger</small>', trs), '💬 <b>레온</b>: hi<br><small>앤의 장부</small>');
+    assert.equal(T.trToastMessage('Leon와(과) 연인이 되었어요 💞', trs), '레오와(과) 연인이 되었어요 💞');
+    assert.equal(T.trToastMessage('💬 <b>Leon</b>: hi<br><small>Ann&#39;s Ledger</small>', trs), '💬 <b>레오</b>: hi<br><small>앤의 장부</small>');
     assert.equal(T.trToastMessage('<a href="Leon">x</a>', trs), '<a href="Leon">x</a>', '태그 속성은 안 건드려요');
     assert.equal(T.trToastMessage('상태창을 만들었어요!', trs), '상태창을 만들었어요!');
     const seen = [];

@@ -116,7 +116,7 @@ async function configureFallback(id) {
     if (typeof target.enable !== 'function') { if (linkable(target)) return openTarget(id); return; }
     busy = true;
     try {
-        if (!await callGenericPopup('검열되면 대체할 모델을 켜시겠습니까?', POPUP_TYPE.CONFIRM)) return;
+        if (!await callGenericPopup('검열되면 대신 쓸 모델을 켤까요?', POPUP_TYPE.CONFIRM)) return;
         let now = null; try { now = target.read(); } catch { /* 빈칸으로 시작 */ }
         configuring = { id, settings: { fallback: { enabled: true, provider: now?.source || '', model: now?.model || '' } } };
         note = '';
@@ -456,7 +456,7 @@ export async function openPanel() {
 
 export function mountInline(host) {
     mount(); note = ''; render(); autoList();
-    inlineHost = host; if (opening) host.textContent = '열린 설정창을 닫으면 여기에 표시돼요.'; else host.replaceChildren(root); root.classList.add('bl-embedded-settings');
+    inlineHost = host; if (opening) host.textContent = '열린 설정 창을 닫으면 여기에 보여요.'; else host.replaceChildren(root); root.classList.add('bl-embedded-settings');
     const content = root.querySelector('.inline-drawer-content'); if (content) content.style.display = 'flex';
     return () => { if (inlineHost !== host) return; inlineHost = null; armed.clear(); root.classList.remove('bl-embedded-settings'); if (!opening) holder.append(root); };
 }

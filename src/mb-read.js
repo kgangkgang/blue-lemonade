@@ -13,6 +13,7 @@
 //   그 확장의 파일 · 자료 · 함수는 안 건드려요(고르기 한 줄을 덧붙이고, 사용자가 고칠 수 있는 문구 설정은 mb-prompt.js 가 지금까지와 같은 방식으로 다뤄요).
 //   「원작 그대로 보기」 · 테마 꺼짐이면 신호가 안 나서 줄이 없고, 이미 놓인 줄은 시트(src/ext-status.css)가 숨겨요. 시험: tools/tests/mb-read.mjs
 import { watchDom } from './dom-watch.js';
+import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
 export const ANIM = 'bl-mb-note-seen';   // 작가 노트 넣기(src/mb-note.js · mb-note.css)가 지시칸에 거는 신호 이름 — 시험이 같은 이름인지 봐요
 // 문구 모듈(src/mb-prompt.js)은 만들기 창이 처음 뜰 때 받아요 — 미트볼만 깔고 이 기능을 안 쓰는 동안에는 안 받아요
 let promptMod = null;
@@ -110,6 +111,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         try { P = await load(); } catch { return null; }   // 문구 모듈을 못 받으면 줄을 놓지 않아요
         try { P.cleanupDupes?.().catch?.(() => { /* 그대로 */ }); } catch { /* 그대로 */ }   // 1.6.8 이미 생긴 중복 프로필(블루레몬이 더한 것만) 정리 — 채팅마다 한 번
         if (!heard && P.onFill) { heard = true; P.onFill(() => { if (lastRow) refresh(lastRow); }); }   // 요청이 실릴 때마다 어림 줄을 「보냈어요」 로
+        if (mbOff('read', doc)) return null;   // 1.7.3 미트볼 맞춤 스위치 「만들기 화면 「채팅 읽기」 고르기」 를 끔 — 줄을 안 놓아요(놓인 줄은 시트 묶음 문이 꺼져 숨어요 · 정리는 제 스위치를 따라요)
         row = slot.root.querySelector(`.${ROW}`);
         if (!row) {
             const once = P.onceLevel();
@@ -146,7 +148,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
             let a = null; try { a = P.allText(undefined, cap); } catch { a = null; }
             const lim = a ? (P.overModel?.(a.text) || 0) : 0;
             if (lim) warn(`채팅 전체가 지금 연결의 모델 한도(약 ${big(lim)} 토큰)를 넘을 수 있어요 — ${P.fillLine('all', a)}. 막지는 않아요. 넘치면 모델이 앞부분을 못 볼 수 있으니 「기억 요약」 이나 상한을 써 보세요.`, 15000);
-            if (a && (a.summarized || a.cut || a.dropped)) warn(`미리 알려요: 채팅 전체가 요청 1회 상한(약 ${big(cap)} 토큰)을 넘어요 — ${P.fillLine('all', a)}. 원문을 다 넣으려면 블루레몬 설정 › 채팅 › 미트볼 문구의 「채팅 전체: 요청 1회 상한」 을 올려요(0 = 없음).`, 15000);
+            if (a && (a.summarized || a.cut || a.dropped)) warn(`미리 알려요: 채팅 전체가 요청 1회 상한(약 ${big(cap)} 토큰)을 넘어요 — ${P.fillLine('all', a)}. 원문을 다 넣으려면 블루레몬 설정 › 채팅 › 미트볼 문구의 「채팅 전체: 요청 1회 상한」을 올려요(0 = 없음).`, 15000);
         }
         (async () => {
             if (pickOf(usual) === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요

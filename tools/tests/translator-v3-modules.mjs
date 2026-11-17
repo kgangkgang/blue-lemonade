@@ -79,11 +79,11 @@ await test('모듈 여럿(상태 · 관계 · 그사이 · 동료): 열쇠 · �
     assert.ok(!/Recovered|&lt;|\[\[__/.test(shown), shown);
 });
 
-await test('레모나 6.0 · 데우스 V3 맨 줄 시간 상태창: 사용자 <tracker> 보호 줄이 있어도 번역, 하늘 data-t 는 영어', async () => {
+await test('시트라 6.0 · 데우스 V3 맨 줄 시간 상태창: 사용자 <tracker> 보호 줄이 있어도 번역, 하늘 data-t 는 영어', async () => {
     await t.reset(); t.S.user_defined_regexes = USER_PROTECT;
-    const out = await t.translate(V3_FIXTURES.lemona60);
+    const out = await t.translate(V3_FIXTURES.citra60);
     assert.ok(out.startsWith(`<tracker> 🕖 오후 7:40 | 2026년 10월 27일 화요일 | ${ko('Harbor Ward 3')} → `), out);
-    assert.ok(render(V3_FIXTURES.lemona60, out).includes('data-t="7:40 PM"'));
+    assert.ok(render(V3_FIXTURES.citra60, out).includes('data-t="7:40 PM"'));
 });
 
 await test('사용자 <tracker> 보호 줄: 칸(|) 둘 이상인 상태창만 비키고, 칸 없는 <tracker> · 다른 규칙은 예전처럼 보호', async () => {
@@ -115,7 +115,7 @@ await test('v3-modules: 스위치 낱말 · 제목 · was · [표지] · 동료 
         assert.ok(mod.moduleKeepsLocal(v), v);
     assert.ok(mod.moduleKeepsLocal('Hold/Subtle', { before: '- [', after: '] Rex: x' }) && !mod.moduleKeepsLocal('Rex: waits', { before: '[Hold] ', after: '' }));
     assert.ok(mod.moduleKeepsLocal('Chi', { before: '**', after: '**: hi', card: 'companions' }) && !mod.moduleKeepsLocal('Chi', { before: '**', after: '**: hi', card: 'meanwhile' }));
-    for (const v of ['Gabriel', 'Strangers', 'Neither knows', 'was late again', 'None of them noticed']) assert.ok(!mod.moduleKeepsLocal(v), v);
+    for (const v of ['Rowan', 'Strangers', 'Neither knows', 'was late again', 'None of them noticed']) assert.ok(!mod.moduleKeepsLocal(v), v);
     assert.equal(mod.stageValue('Strangers'), '모르는 사이'); assert.equal(mod.stageValue('together'), '연인'); assert.equal(mod.stageValue('Slow burn'), null);
     assert.equal(mod.moduleLocalValue('Strangers', 'relationships', 'stage'), '모르는 사이');
     assert.equal(mod.moduleLocalValue('Strangers', 'relationships', 'unspoken'), null);

@@ -118,15 +118,15 @@ await test('원문 글 + 한국어 목록: 「세라피나」로 적어도 영�
     assert.deepEqual(hits('セラフィナが笑った。', conf('세라피나')), ['セラフィナ']);
     assert.deepEqual(hits('Old Rowan waits.', conf('올드 로완')), ['Old Rowan'], '두 낱말 이름');
 });
-await test('쉼표로 한 줄에 여럿: 「드림주, ドリムジュ」 — 「드림주 씨」 를 찾고 소리 음소거 서명이 걸린다 (11-03 제보)', () => {
+await test('쉼표로 한 줄에 여럿: 「하린, ハリン」 — 「하린 씨」 를 찾고 소리 음소거 서명이 걸린다', () => {
     bridge([]);
-    const line = '「아까 창고 안에서의 일은, 저와 당신만의 비밀로 해 둘까요. ……그럼, 조만간 또 들르겠습니다, 드림주 씨. 오늘도 저를 위해 기도해 주던 때처럼, 건강하게 지내 주세요.」';
-    assert.deepEqual(M.muteWords('드림주, ドリムジュ'), ['드림주', 'ドリムジュ'], '쉼표로 나눠 적어도 따로');
-    assert.deepEqual(M.muteWords('드림주，ドリムジュ、세라'), ['드림주', 'ドリムジュ', '세라'], '전각 쉼표 · 일본어 쉼표');
-    assert.deepEqual(hits(line, conf('드림주, ドリムジュ')), ['드림주']);
-    assert.deepEqual(hits('ドリムジュさん、おはよう', conf('드림주, ドリムジュ')), ['ドリムジュ']);
-    assert.ok(M.muteSig(line, conf('드림주, ドリムジュ')), '소리에서 지우기 서명');
-    assert.equal(M.muteText(line, termsOf(conf('드림주, ドリムジュ'))).includes('드림주'), false, 'text 모드로도 빠진다');
+    const line = '「오늘 정원 일은 둘만 아는 걸로 해요. ……그럼 내일 또 들를게요, 하린 씨. 비 오기 전에 창문 닫는 것도 잊지 말고요.」';
+    assert.deepEqual(M.muteWords('하린, ハリン'), ['하린', 'ハリン'], '쉼표로 나눠 적어도 따로');
+    assert.deepEqual(M.muteWords('하린，ハリン、세라'), ['하린', 'ハリン', '세라'], '전각 쉼표 · 일본어 쉼표');
+    assert.deepEqual(hits(line, conf('하린, ハリン')), ['하린']);
+    assert.deepEqual(hits('ハリンさん、おはよう', conf('하린, ハリン')), ['ハリン']);
+    assert.ok(M.muteSig(line, conf('하린, ハリン')), '소리에서 지우기 서명');
+    assert.equal(M.muteText(line, termsOf(conf('하린, ハリン'))).includes('하린'), false, 'text 모드로도 빠진다');
 });
 await test('번역 글 + 원문 목록: 「Seraphina」로 적어도 한국어 번역문의 이름을 찾는다', () => {
     bridge(GLOSSARY);

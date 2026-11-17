@@ -98,7 +98,7 @@ function scanOuterCards(text) {
     // A partial known card is kept opaque instead of sending its keys/code to the model.
     if (active) ranges.push({...active,innerEnd:text.length,end:text.length,partial:true});
     if (opaque) opaqueRanges.push({start:opaque.start,end:text.length});
-    // 8.0.6 데우스 V3 · 레모나 시간 상태창: 모델(특히 Gemini)이 템플릿의 `…` 를 따라 상태창을 코드칸(```)이나 `…` 로 감싸 쓴다.
+    // 8.0.6 데우스 V3 · 다른 프리셋의 시간 상태창: 모델(특히 Gemini)이 템플릿의 `…` 를 따라 상태창을 코드칸(```)이나 `…` 로 감싸 쓴다.
     //   원작 정규식(Unwrap @Tracker from code backticks)이 화면에서 감싸개를 풀어 상태창으로 그리니, 번역기도 감싸개째 한 카드로 본다 —
     //   전에는 코드칸을 통째로 「코드」로 보내(태그 · 이모지 · °C 까지) 모델이 그대로 두거나, 바꾸면 정규식이 못 알아봐 「Recovered」 카드가 됐다.
     //   감싸개 글자는 카드 원문에 그대로 남고 모델에는 값만 간다. 원작 정규식과 같은 범위: 백틱 1~3개 · 언어 이름 a-z 12자까지 · 상태창 하나만
@@ -286,7 +286,7 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
             const wholeText = patch(card.raw,card.fields,local.map((v,i)=>escapeDisplay(v,card.fields[i].context)));
             return {...card,local,whole:true,wholeText,tokens:[reserve(wholeText)]};
         }
-        // 1.0.0 own = 카드가 앞뒤 빈 줄로 문단 하나를 다 차지한다 (데우스 모듈 · 아드리안 <stat>) — 여닫는 자리표가 빠진 답에서 그 문단 끝까지를 카드 자리로 읽는다 (readOpenCard)
+        // 1.0.0 own = 카드가 앞뒤 빈 줄로 문단 하나를 다 차지한다 (데우스 모듈 · 카드 정규식이 그리는 한 줄 <stat>) — 여닫는 자리표가 빠진 답에서 그 문단 끝까지를 카드 자리로 읽는다 (readOpenCard)
         const own = /(?:^|\n[ \t]*\n)[ \t]*$/.test(primaryText.slice(0,card.start)) && /^[ \t]*(?:\r?\n[ \t]*\r?\n|\s*$)/.test(primaryText.slice(card.end));
         return {...card,local,own,tokens:Array.from({length:local.filter(v => v === null).length+2},()=>reserve(''))};
     });

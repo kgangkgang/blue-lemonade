@@ -123,7 +123,7 @@ const fromEnglish = (phrase, source) => {
 /**
  * 6.4.3 한 줄에 남은 원문 영어 낱말 · 여는 말 — 한글이 주된 줄(태그 밖 글자 · 찾은 말을 뺀 나머지로 셈) · 문장 첫머리 · 흔한 낱말(EN_WORDS로 시작) 또는 여는 말(EN_PHRASES) ·
  * 원문의 영어가 주된 줄에만 그 말이 있는 것. 한글 없는 괄호 · 따옴표 안(「Now, listen.」이라고) · 이름(names — 용어집 표기 · 내 캐릭터 · 지금 캐릭터) ·
- * 대문자 약어(OK · H.A.L.O — 꼴이 달라 안 걸린다)는 뺀다.
+ * 대문자 약어(OK · A.B.C.D — 꼴이 달라 안 걸린다)는 뺀다.
  */
 export function leftoverEnglish(line, source, names = []) {
     const s = bare(line), src = String(source ?? '');

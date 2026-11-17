@@ -39,7 +39,7 @@ const css = () => sheets.get(m.DOT_SHEET)?.textContent ?? '';
 await ok('① 시트 글: 본 칸만 · 원작 그대로 보기는 빼고 · 이상한 이름은 버려요', () => {
     assert.equal(m.dotCss([]), '');
     const text = m.dotCss(['date', 'loc', 'a"]{}', '']);
-    assert.match(text, /^body\.salty:not\(\[data-bl-ext-raw\]\) \.ss-tb \.ss-t:is\(\[data-k="date"\],\[data-k="loc"\]\) > \.ss-t-dot \{ display: none !important; \}$/);
+    assert.match(text, /^:where\(:root:not\(\[data-bl-mb-off~="dot"\]\)\) > body\.salty:not\(\[data-bl-ext-raw\]\) \.ss-tb \.ss-t:is\(\[data-k="date"\],\[data-k="loc"\]\) > \.ss-t-dot \{ display: none !important; \}$/);   // 1.7.3 미트볼 맞춤 스위치 「눌러 본 칸 빨간 점 숨기기」 문(특이도 0)
 });
 await ok('② 점 켜진 칸을 누르면 그 칸만 숨겨요 — 점 없는 칸 · 편집 중인 칸 · 칸 밖은 아님', () => {
     const date = tileOf('date'), loc = tileOf('loc');

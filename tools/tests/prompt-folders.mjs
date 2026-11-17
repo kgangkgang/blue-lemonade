@@ -192,7 +192,7 @@ await test('다른 프리셋에서 가져오기: 같은 id → 같은 이름(하
     assert.deepEqual(r.folders[1].ids, ['b1']); assert.equal(r.folders[1].parent, r.folders[0].id); assert.notEqual(r.folders[0].id, 'A', '새 id');
     assert.deepEqual(r.stats, { kept: 2, byName: 1, missing: 2, placed: 1 });
     assert.equal(source[0].ids.length, 3, '원본 폴더는 그대로');
-    assert.equal(core.presetStem('레모나 6.6'), core.presetStem('레모나 6.2')); assert.notEqual(core.presetStem('레모나 6.6'), core.presetStem('과일 6.6'));
+    assert.equal(core.presetStem('시트라 6.6'), core.presetStem('시트라 6.2')); assert.notEqual(core.presetStem('시트라 6.6'), core.presetStem('과일 6.6'));
 });
 await test('프리셋 칸 읽기: version 1 만 · 깨진 값은 빈 목록', () => {
     assert.deepEqual(core.readPresetFolders({ blPromptFolders: { version: 1, folders: [{ id: 'a', name: '문체', ids: ['x'] }] } }).map(f => f.ids), [['x']]);

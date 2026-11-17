@@ -3330,7 +3330,7 @@ function tidyNamesShown(source, shown) {
     } catch { return shown; }
 }
 let commentHookAdded = false;
-// 8.0.6 데우스 V3 · 레모나 시간 상태창: 정규식이 그린 HTML 의 data-t · data-w 에 영어 꼴을 넣어 번역한 시각 · 날씨에서도 하늘 장면이 나오게 (sky-attrs.js).
+// 8.0.6 데우스 V3 · 다른 프리셋의 시간 상태창: 정규식이 그린 HTML 의 data-t · data-w 에 영어 꼴을 넣어 번역한 시각 · 날씨에서도 하늘 장면이 나오게 (sky-attrs.js).
 //   보이는 글자는 그대로이고, 실리태번 서식 훅(정규식 뒤)이 없는 옛 판에서는 아무것도 안 해요
 let skyHookAdded = false;
 function installSkyAttrsHook() {
@@ -5513,9 +5513,9 @@ function glossaryNewId() {
 }
 
 /**
- * [2.1.1] 같은 범위에서 겹치는 항목을 하나로 합친다 — 번역이 똑같거나(대전쟁 · 행정전 · 천국군처럼 원문 표기만 다른 것),
+ * [2.1.1] 같은 범위에서 겹치는 항목을 하나로 합친다 — 번역이 똑같거나(원문 표기만 다르고 번역은 같은 것),
  * 원문 표기를 하나라도 나눠 쓰면(공유 캐릭터 두 줄이 S.T.A.R 을 같이 가진 것). 예전에는 원문 문자열이 글자까지 같아야만 같은 항목으로 봐서
- * "A, B" 와 "B, A" · "天国軍" 과 "天国軍, Heavenly Army" 가 따로 쌓였고, 뒤의 것은 activeGlossaryEntries 가 조용히 버렸다.
+ * "A, B" 와 "B, A" · "星軍" 과 "星軍, Star Army" 가 따로 쌓였고, 뒤의 것은 activeGlossaryEntries 가 조용히 버렸다.
  * 합칠 때 원문 · 번역 표기는 나온 순서대로 합집합(정규화해서 중복 제거), id 는 앞 항목 것. 순수 함수 — 목록을 고쳐 쓰고 합친 수를 돌려준다.
  */
 function mergeGlossaryDuplicates(entries) {

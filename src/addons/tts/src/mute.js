@@ -24,7 +24,7 @@ export function muteWords(src) {
     src = String(src || '').slice(0, MUTE_MAX_CHARS);
     if (wordsMemo.src === src) return wordsMemo.list;
     const seen = new Set(), list = [];
-    // 1.0.0: 「드림주, ドリムジュ」처럼 한 줄에 쉼표로 적어도 따로따로 — 전엔 쉼표째 한 말로 봐서 「드림주 씨」를 못 찾아 음소거가 안 됐어요(사용자 제보). 쉼표가 든 말 자체는 받지 않아요
+    // 1.0.0: 「하린, ハリン」처럼 한 줄에 쉼표로 적어도 따로따로 — 전엔 쉼표째 한 말로 봐서 「하린 씨」를 못 찾아 음소거가 안 됐어요(사용자 제보). 쉼표가 든 말 자체는 받지 않아요
     for (const raw of src.split(/\r?\n|[,，、]/)) {
         const w = raw.trim().slice(0, MAX_WORD);
         if (!w || seen.has(w.toLowerCase())) continue;

@@ -57,7 +57,7 @@ function dateZh(text) {
     const [, prefix, calendar, year, month, day, week] = m;
     return [prefix, calendar && CALENDAR_ZH[calendar], year && `${Number(year)}년`, `${Number(month)}월`, `${Number(day)}일`, week && WEEK_ZH[week] + '요일'].filter(Boolean).join(' ');
 }
-// 8.0.6 데우스 V3 · 레모나 「Exact Time」 시각: 11:42 PM · 7:40 a.m. → 오후 11:42 · 오전 7:40 (숫자는 그대로)
+// 8.0.6 데우스 V3 · 다른 프리셋의 「Exact Time」 시각: 11:42 PM · 7:40 a.m. → 오후 11:42 · 오전 7:40 (숫자는 그대로)
 const TIME_EN = /^(\d{1,2})\s*[:：]\s*(\d{2})\s*([AaPp])\.?\s*[Mm]\.?$/;
 function timeEn(text) {
     const m = text.match(TIME_EN); if (!m || Number(m[1]) > 12) return null;

@@ -19,7 +19,7 @@ const BUTTONS = [
 const NAV = new Set(['top', 'bottom', 'jump', 'delLast']);
 
 // 1.0.3 이동 · 지우기 — 누를 때만 받는다 (실패하면 알림 한 줄)
-const say = message => globalThis.toastr?.info?.(message, '한 손 버튼 줄', { timeOut: 2500 });
+const say = message => globalThis.toastr?.info?.(message, '한 손 단추 줄', { timeOut: 2500 });
 function goTo(action) {
     return import('./natural-slash.js').then(m => m.runNaturalSlash(action, SillyTavern.getContext())).then(result => { if (!result?.ok) say(result?.message || '옮기지 못했어요.'); })
         .catch(error => { console.warn('[Blue Lemonade] 한 손 버튼 줄 이동', error); say('옮기지 못했어요.'); });

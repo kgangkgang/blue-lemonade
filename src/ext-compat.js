@@ -20,6 +20,7 @@
 import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { armGuard } from './cheap-guards.js';
 import { cardColorTable, tableColor } from './card-colors.js';   // 1.5.9 카드별 색 기억(인물표 공급자와 같은 표)
+import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치(끈 묶음은 그 일을 안 해요 · 시트는 src/ext-status.gen.css 묶음 문)
 import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind, recall, remember } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
@@ -30,7 +31,7 @@ export const SETS = [
     //   2.7.22(11-15 리그 — 만들기 창 빠른 세트 · 번역 고치기 창 맞춤) · 2.7.23(11-15 대조 · 11-16 리그: 폰 384 낮 · 밤 · PC 1280 — 창 여섯 · 상태창 탭 전부 · 변화 그래프 · 최면 어플 · 새 설정 탭) — 맞춤이 기대는 이름 그대로.
     //   2.8.0(11-16 리그 — 폰 384 낮 · 밤 · 기본 모양과 「같은 모양」 켬 둘 다: 창 여섯 · 상태창 탭 전부 · 전체화면 미니홈피 · 띠): 관계 카드 이름 단추 줄 · 일곱 칸 묶음 줄 · 루트 비교 두 열 · 띠 펼친 칸 · 창 안 알림 자리를 맞춤.
     //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
-    { root: '#ss-settings', css: './ext-status.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0'],
+    { root: '#ss-settings', css: './ext-status.gen.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0'],
         strips: ['.ss-scope .ss-tabs'] },   // 맞춤 시트가 「한 줄 · 스크롤바 없음」으로 바꾼 그 확장의 탭 줄 — 등록부에 넣어야 휠로 넘친 탭에 닿고, 그 확장이 판을 다시 그린 뒤에도 고른 탭이 보여요
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   1.9.61(2026-11-14 점검 대본 대조): 바뀐 것은 백그라운드 답장의 반쪽 답을 건너뛰는 사건 처리뿐 — 화면 · CSS · 선택자 39개 · 구조 표식 8개 그대로라 맞춤도 그대로예요.
@@ -400,7 +401,7 @@ export function markBadge(tb) {
 export const DOT_SHEET = 'bl-mb-dot-seen';
 const dotSeen = new Set();
 const dotKey = key => (/^[\w-]{1,40}$/.test(String(key ?? '')) ? String(key) : '');
-export const dotCss = keys => { const list = [...keys].map(dotKey).filter(Boolean); return list.length ? `body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t:is(${list.map(k => `[data-k="${k}"]`).join(',')}) > .ss-t-dot { display: none !important; }` : ''; };
+export const dotCss = keys => { const list = [...keys].map(dotKey).filter(Boolean); return list.length ? `:where(:root:not([data-bl-mb-off~="dot"])) > body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t:is(${list.map(k => `[data-k="${k}"]`).join(',')}) > .ss-t-dot { display: none !important; }` : ''; };
 function writeDots(doc) {
     const css = dotCss(dotSeen); let sheet = doc.getElementById?.(DOT_SHEET);
     if (!sheet) { if (!css || !doc.createElement || !doc.head?.appendChild) return css; sheet = doc.createElement('style'); sheet.id = DOT_SHEET; doc.head.appendChild(sheet); }
@@ -409,6 +410,7 @@ function writeDots(doc) {
 }
 /** 누른 요소가 점이 켜진 칸이면 그 칸을 「봤음」 으로 적어요(편집 중인 칸 · 점 없는 칸은 아님). 적었으면 칸 이름. */
 export function seeDot(doc, target) {
+    if (mbOff('dot', doc)) return '';   // 1.7.3 「눌러 본 칸 빨간 점 숨기기」 를 끔
     const tile = target?.closest?.('.ss-tb .ss-t[data-k]'); if (!tile || tile.classList?.contains?.('edit')) return '';
     const key = dotKey(tile.getAttribute?.('data-k')); if (!key || dotSeen.has(key) || !tile.querySelector?.(':scope > .ss-t-dot')) return '';
     dotSeen.add(key); writeDots(doc); return key;
@@ -548,6 +550,7 @@ export function buildAll(doc) {
         const root = doc.querySelector(set.root);
         if (!root) continue;
         if (!set.mark) {
+            if (set.root === '#ss-settings' && mbOff('tabs', doc)) { attachSheet(doc, set); continue; }   // 1.7.3 「설정 칸 탭 나누기 · 정리한 보기」 를 끔 — 새로 나누지 않아요(이미 나눈 표식은 시트 묶음 문이 꺼서 원작처럼 길게 보여요)
             attachSheet(doc, set); buildTabs(root, set); adoptStray(root);
             // 정리한 보기: 탭이 있을 때만 · 한 번만. 구조를 모르면(다른 판 · 시험 DOM) 아무것도 안 하고 원래 모습 그대로
             try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }
@@ -603,7 +606,7 @@ export function startExtCompat(doc = globalThis.document) {
                 if (dlg.classList.contains('ss-dlg')) {
                     if (!plain(doc)) armTop(dlg);
                     const ava = target.closest('.ss-ava-btn');
-                    if (ava && !doc.body.hasAttribute('data-bl-ext-raw')) {   // 얼굴 바꾸기 창은 입력칸에 초점이 올 때 열린 것을 알아요(타이머 없이) — 그때 한 번 고르개를 놓고 받기를 떼요
+                    if (ava && !doc.body.hasAttribute('data-bl-ext-raw') && !mbOff('avapick', doc)) {   // 1.7.3 「얼굴 고르개」 를 끄면 원작 창 그대로   // 얼굴 바꾸기 창은 입력칸에 초점이 올 때 열린 것을 알아요(타이머 없이) — 그때 한 번 고르개를 놓고 받기를 떼요
                         const who = ava.dataset.arg || '', since = Date.now();
                         const onFocus = e => {
                             const input = e.target;
@@ -647,11 +650,14 @@ export function startExtCompat(doc = globalThis.document) {
             if (event.animationName !== 'ss-pulse') return;   // 맞춤 시트가 띠 · 이름표 목록에 0.001초로 거는 그 확장의 키프레임 — 지도의 깜빡이는 고리도 같은 이름이라 아래에서 요소로 가려요
             const el = event.target;
             try {
-                if (el?.classList?.contains('ss-tb')) { syncDots(doc, el); fitActs(el); markBadge(el); markWeekday(el); } else if (el?.tagName === 'DL') markLong(el);
-                else if (el?.classList?.contains('ss-wz-head') && el.parentElement?.classList?.contains('ss-tw')) decoTheme(el.parentElement);
+                // 1.7.3 미트볼 맞춤 스위치: 끈 묶음의 표식은 안 달아요(이미 단 표식은 시트 묶음 문이 꺼요)
+                if (el?.classList?.contains('ss-tb')) { if (!mbOff('dot', doc)) syncDots(doc, el); if (!mbOff('bandrow', doc)) fitActs(el); if (!mbOff('badge', doc)) markBadge(el); if (!mbOff('weekday', doc)) markWeekday(el); } else if (el?.tagName === 'DL') { if (!mbOff('grid', doc)) markLong(el); }
+                else if (el?.classList?.contains('ss-wz-head') && el.parentElement?.classList?.contains('ss-tw')) { if (!mbOff('deco', doc)) decoTheme(el.parentElement); }
                 else if (el?.matches?.(FACES) && !facesQueued) { facesQueued = true; queueMicrotask(() => { facesQueued = false; try { paintFaces(doc); } catch { /* 아이콘 그대로 */ } }); }   // 얼굴 여럿이 한꺼번에 그려져도 한 번만 훑어요
             } catch { /* 원래 배치 그대로 */ }
         }, true);
+        // 1.7.3 「꾸미기 창 「블루레몬 꾸미기」 묶음」 · 「얼굴 고르개」 를 끄면 열려 있는 창에서 끼운 것을 숨기고(시트 묶음 문이 꺼져 맨 글자로 남지 않게) 켜면 다시 보여요 — 테마가 끼운 것만 · 지우지 않아요
+        onMbOff(doc, ['deco', 'avapick'], (key, off) => { for (const el of doc.querySelectorAll?.(key === 'deco' ? '.bl-ext-deco' : '.bl-ext-avapick, .bl-ext-avahint') || []) el.hidden = off; });
         doc.addEventListener('input', event => { const box = event.target; if (!box?.classList?.contains('bl-ext-find')) return; const root = SETS.map(set => box.closest(set.root)).find(Boolean); if (root) renderFound(root, box.value); }, true);
         doc.addEventListener('change', event => { if (event.target?.tagName === 'INPUT' && event.target.classList?.contains('bl-ext-deco-act')) { decoAct(event.target).catch(() => { }); return; } const root = SETS.map(set => event.target?.closest?.(set.root)).find(Boolean); if (root?.dataset?.blOrg) refreshSummaries(root); }, true);
     }

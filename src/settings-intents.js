@@ -136,7 +136,7 @@ export const QUICK = {
  'type.para': { label: '문단 사이', num: [0, 2, 0.1], unit: 'em' },
  'type.letterSpacing': { label: '자간', num: [-5, 8, 1] },
  'type.gutter': { label: '좌우 여백', num: [8, 40, 2], unit: 'px' },
- 'type.align': { label: '정렬', options: [['left', '왼쪽'], ['justify-word', '양쪽'], ['justify-break', '양쪽(끊어서)']] },
+ 'type.align': { label: '정렬', options: [['left', '왼쪽'], ['justify-word', '양쪽'], ['justify-break', '양쪽 (끊어서)']] },
  'palette': { label: '밝기', options: [['salt', '화이트'], ['night', '나이트']], also: { 'auto.on': false } },   // also: 함께 바꾸는 값 — 달 단추처럼 자동 전환을 꺼요
  'nightTint': { label: '나이트 배경 농도', num: [1, 20, 0.5], unit: '%' },
  'lightTint': { label: '화이트 배경 농도', num: [0.5, 20, 0.5], unit: '%' },

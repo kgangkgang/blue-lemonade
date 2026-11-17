@@ -168,9 +168,9 @@ test('⑤ 고지가 지문 방식과 맞아요 · 배포 사본에도 원문 0',
     assert.match(notices, /src\/scripts\/plain\/korean\.js/);
     assert.match(notices, /지문/);
     const credits = read('src/credits.js');
-    assert.match(credits, /변경 내역의 원작 문구는 담지 않습니다/, '출처 창');
+    assert.match(credits, /변경 내역의 원작 문구는 담지 않아요/, '출처 창');
     assert.match(credits, /원문 대신 지문/, '출처 창');
-    assert.doesNotMatch(credits, /변경 내역 문구는 담지 않습니다/, '옛 출처 창 글(번역이 있는데 「안 담음」만 적던 것)');
+    assert.doesNotMatch(credits, /변경 내역 문구는 담지 않(습니다|아요)/, '옛 출처 창 글(번역이 있는데 「안 담음」만 적던 것)');
     const distFile = path.join(root, 'dist/plain/korean.js');
     if (fs.existsSync(distFile)) assert.ok(!HAN.test(fs.readFileSync(distFile, 'utf8')), 'dist/plain/korean.js 에 한자');
 });

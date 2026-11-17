@@ -1,15 +1,16 @@
 /* 1.5.4 미트볼 프로필에 작가 노트 넣기 (src/mb-note.js 가 미트볼이 있을 때만 한 번 붙여요)
    ① 알아채기: 지시칸 두 곳이 그려질 때 0.001초 애니메이션 한 번(눈에 안 보여요) — 그 animationstart 로 단추를 놓아요(감시자 · 타이머 없음).
       키프레임은 이 시트의 것(그 확장의 키프레임 이름을 빌리지 않아요 — 그 확장이 이름을 바꿔도 이 기능은 그대로).
-   ② 단추 모양: 그 확장의 작은 단추(.ss-btn.sm.ghost)와 맞춤 시트 규칙을 그대로 받고, 아이콘 · 글자 세로 가운데와 줄 안 자리만 맞춰요. */
+   ② 단추 모양: 그 확장의 작은 단추(.ss-btn.sm.ghost)와 맞춤 시트 규칙을 그대로 받고, 아이콘 · 글자 세로 가운데와 줄 안 자리만 맞춰요.
+   ③ 1.7.3 미트볼 맞춤 스위치: 규칙마다 :where(:root:not([data-bl-mb-off~="열쇠"])) 문(특이도 0) — 단추는 「작가 노트 넣기」(note), 신호는 만들기 화면 「채팅 읽기」(read)도 같이 써서 둘 다 끈 때만 꺼요. */
 @keyframes bl-mb-note-seen { from { outline-offset: 0; } to { outline-offset: 0; } }
-body.salty:not([data-bl-ext-raw]) :is(.ss-scope .ss-instruct, .ss-wizard textarea.ss-w-ins) { animation: bl-mb-note-seen .001s 1 !important; }   /* !important: 그 확장은 「움직임 줄이기」 기기에서 제 화면 애니메이션을 전부 꺼요(.ss-scope * { animation: none !important }) — 이 신호가 꺼지면 단추가 아예 안 생겨요(움직이는 것이 없는 신호 · ext-status.css 의 띠 신호와 같은 까닭) */
+:where(:root:not([data-bl-mb-off~="note"][data-bl-mb-off~="read"])) > body.salty:not([data-bl-ext-raw]) :is(.ss-scope .ss-instruct, .ss-wizard textarea.ss-w-ins) { animation: bl-mb-note-seen .001s 1 !important; }   /* !important: 그 확장은 「움직임 줄이기」 기기에서 제 화면 애니메이션을 전부 꺼요(.ss-scope * { animation: none !important }) — 이 신호가 꺼지면 단추가 아예 안 생겨요(움직이는 것이 없는 신호 · ext-status.css 의 띠 신호와 같은 까닭) */
 
-body.salty .bl-mb-note-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1; white-space: nowrap; }
-body.salty .bl-mb-note-btn[hidden] { display: none; }
-body.salty .bl-mb-note-btn > i { width: 1em; font-size: .95em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
-body.salty .bl-mb-note-btn > span { line-height: 1.2; }
+:where(:root:not([data-bl-mb-off~="note"])) > body.salty .bl-mb-note-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1; white-space: nowrap; }
+:where(:root:not([data-bl-mb-off~="note"])) > body.salty .bl-mb-note-btn[hidden] { display: none; }
+:where(:root:not([data-bl-mb-off~="note"])) > body.salty .bl-mb-note-btn > i { width: 1em; font-size: .95em; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+:where(:root:not([data-bl-mb-off~="note"])) > body.salty .bl-mb-note-btn > span { line-height: 1.2; }
 /* 지시 상자: 「보내기」 · 안내 글 줄 끝(오른쪽)에 (:has 없이 — 테마 :has 예산) */
-body.salty .ss-instruct .ss-row-btns > .bl-mb-note-btn { margin-left: auto; }
+:where(:root:not([data-bl-mb-off~="note"])) > body.salty .ss-instruct .ss-row-btns > .bl-mb-note-btn { margin-left: auto; }
 /* 처음 만들기 창: 「추가 지시」 머리줄 오른쪽 */
-body.salty .ss-sec-h > .bl-mb-note-r { margin-left: auto; display: flex; align-items: center; }
+:where(:root:not([data-bl-mb-off~="note"])) > body.salty .ss-sec-h > .bl-mb-note-r { margin-left: auto; display: flex; align-items: center; }

@@ -336,6 +336,21 @@ function appearanceText() {
     return `/* 생성 파일 — tools/build-css.cjs (원본 src/chat-appearance.css) */\n${require('./css-has-guard.cjs').guardHas(keyed).text}`;
 }
 
+// 1.7.3 미트볼 맞춤 스위치: 맞춤 시트 원본(src/ext-status.css · 손으로 고쳐요)의 규칙마다 묶음 문(tools/css-mb-gate.cjs)을 달고 주석을 뺀 사본을 브라우저에 줘요
+const MB_STATUS_IN = path.join(ROOT, 'src', 'ext-status.css');
+const MB_STATUS_OUT = path.join(ROOT, 'src', 'ext-status.gen.css');
+/** 스위치 표(src/mb-switch.js)의 열쇠 — ESM 이라 글에서 읽어요 */
+function mbKeys() {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'mb-switch.js'), 'utf8');
+    return new Set([...src.matchAll(/\{ key: '([a-z]+)'/g)].map(m => m[1]));
+}
+function mbStatusText() {
+    const raw = fs.readFileSync(MB_STATUS_IN, 'utf8').replace(/\r\n/g, '\n');
+    const r = require('./css-mb-gate.cjs').gateMb(raw, mbKeys());
+    const plain = stripCss(r.text).text.replace(/\n[ \t]+/g, '\n').replace(/\n{2,}/g, '\n');
+    return { ...r, text: `/* 생성 파일 — tools/build-css.cjs (원본 src/ext-status.css · 묶음 스위치 문 tools/css-mb-gate.cjs) */\n${plain}\n` };
+}
+
 /** 문서 뿌리(body.salty · body · :root · html …)에 사용자 정의 속성(--x)만 적은 규칙과 그 @media/@supports 겉만 남겨요 */
 function rootVarRules(text) {
     const ROOT = /^(?:html|:root|body)(?:[.#][\w-]+|:not\([^()]*\)|\[[^\]]*\])*$/;
@@ -383,6 +398,15 @@ function main(argv) {
         if (want !== had) {
             if (check) { console.error('[다름] src/chat-appearance.gen.css 가 원본과 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
             fs.writeFileSync(APPEARANCE_OUT, want, 'utf8'); console.log(`[씀] src/chat-appearance.gen.css (${(Buffer.byteLength(want) / 1024).toFixed(1)}KB)`);
+        }
+    }
+    {   // 1.7.3 미트볼 맞춤 시트: 원본(src/ext-status.css) → 묶음 스위치 문을 단 사본(src/ext-status.gen.css · src/ext-compat.js 가 붙여요)
+        const r = mbStatusText();
+        if (r.problems.length) { console.error(`[멈춤] src/ext-status.css 묶음 표식 문제 ${r.problems.length}개\n  ${r.problems.slice(0, 8).join('\n  ')}`); return 1; }
+        const had = fs.existsSync(MB_STATUS_OUT) ? fs.readFileSync(MB_STATUS_OUT, 'utf8') : null;
+        if (r.text !== had) {
+            if (check) { console.error('[다름] src/ext-status.gen.css 가 원본 src/ext-status.css 와 어긋났다 — node tools/build-css.cjs 로 다시 만들 것'); return 1; }
+            fs.writeFileSync(MB_STATUS_OUT, r.text, 'utf8'); console.log(`[씀] src/ext-status.gen.css (${(Buffer.byteLength(r.text) / 1024).toFixed(1)}KB · 규칙 ${r.rules} · 묶음 ${r.groups.size})`);
         }
     }
     const { text, preview, gateFiles, gates, lazyText, compatBrowser, compatWidth, compat, dem, names, parked, keyed } = build(CSS_DIR, { split });
@@ -523,4 +547,4 @@ function assertInlineSafe(text) {
     }
 }
 
-module.exports = { build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, PREVIEW_OUT, MD_OUT, markdownSplit, markdownGated, SPLIT_LAZY, SPLIT_OUT, COMPAT_BROWSER_OUT, COMPAT_WIDTH_OUT, extText, EXT_OUT, assertInlineSafe, GATE_TABLE };
+module.exports = { mbStatusText, MB_STATUS_OUT, build, modules, untouched, LAZY, LAZY_SENTINEL, CSS_DIR, lazyTail, LAZY_OUT, PREVIEW_OUT, MD_OUT, markdownSplit, markdownGated, SPLIT_LAZY, SPLIT_OUT, COMPAT_BROWSER_OUT, COMPAT_WIDTH_OUT, extText, EXT_OUT, assertInlineSafe, GATE_TABLE };

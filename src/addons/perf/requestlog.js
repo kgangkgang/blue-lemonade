@@ -43,7 +43,7 @@ eventSource.on(event_types.USER_MESSAGE_RENDERED, () => markSend('내 메시지 
 eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, () => markSend('프롬프트 완성'));
 // 보내기 버튼 · Enter — 실리태번보다 먼저(capture) 받아서 0초 기준으로 삼는다
 document.addEventListener('click', (event) => {
-    if (event.target.closest?.('#send_but')) beginSendTrace('버튼');
+    if (event.target.closest?.('#send_but')) beginSendTrace('단추');
 }, true);
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.shiftKey && event.target?.id === 'send_textarea') beginSendTrace('Enter');

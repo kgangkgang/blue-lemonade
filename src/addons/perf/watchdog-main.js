@@ -98,7 +98,7 @@ function buildDrawer() {
             </div>
             <div class="inline-drawer-content">
                 <div class="sw-body">
-                    <p class="sw-hint"><b>스트리밍 응답에만 적용됩니다.</b> 비스트리밍 응답의 대기 시간은 감시하지 않습니다.</p>
+                    <p class="sw-hint"><b>스트리밍 응답에만 적용돼요.</b> 비스트리밍 응답의 대기 시간은 감시하지 않아요.</p>
                     <label class="checkbox_label sw-check" for="sw_enabled"><input type="checkbox" id="sw_enabled"><span>답이 멈추면 끊고 풀기</span></label>
                     <label class="sw-row" for="sw_idle"><span>기다릴 시간</span><span class="sw-num"><input type="number" id="sw_idle" class="text_pole" min="10" step="1" inputmode="numeric"><i>초</i></span></label>
                     <small class="sw-hint">답이 시작된 뒤 이 시간 동안 글자가 하나도 안 오면 끊어요. 받은 글은 남아요.</small>

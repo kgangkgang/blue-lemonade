@@ -118,6 +118,49 @@ await ok('굳힌 기록 안의 답이면 한 번 알려요', async () => {
     assert.equal(await M.onEye(2, true, { c: C, on: true, wait: now, toast: globalThis.toastr }), 'out'); assert.equal(toasts.length, 1);
     C.chatMetadata.statussim.startAt = 0; C.chat[2].is_system = false; await M.onEye(2, false, { c: C, on: true, wait: now });
 });
+// 1.7.4 감긴 답 뒤에 그 확장의 「칸 통째 저장」(set.data) 기록이 있으면 그 칸 숫자는 그때 값으로 덮여 안 빠져요 — 원작 동작은 그대로 두고 알리기만
+const frozenChat = () => ({ ...C, getCurrentChatId: () => 'frozen-1', chat: [
+    { is_user: false, is_system: false, mes: 'a', extra: { statussim: OPS() } },
+    { is_user: true, is_system: false, mes: 'u' },
+    { is_user: false, is_system: true, mes: 'b', extra: { statussim: OPS(), type: M.MARK } },   // 감긴 답(표식 있음)
+    { is_user: false, is_system: false, mes: 'c', extra: { statussim: OPS() } },
+    { is_user: false, is_system: true, mes: 'd', extra: { statussim: OPS(), type: 'narrator' } },
+], chatMetadata: { statussim: { base: { data: {} }, startAt: 0, paused: false, adjust: [
+    { at: 1, t: 10, set: { mod: 'rel', data: { user: [] } }, label: '' },                       // 감긴 답보다 앞 — 상관없어요
+    { at: 3, t: 20, ops: [['_merge', 'Nell => Mira']], label: '🔗 Nell → Mira 합침' },           // 변화 기록 — 덮지 않아요
+    { at: 4, t: 30, set: { mod: 'rel', data: { user: [] } }, label: '' },                       // 감긴 답 #2 뒤 통째 저장 → 알려요
+    { at: 4, t: 40, set: { mod: 'contact', patch: { top: {} } }, label: '' },                   // 바뀐 부분만(patch) — 통째가 아니에요
+    { at: 5, t: 50, set: { mod: 'calendar', data: {} }, label: '', _off: true },                // 지금 안 보이는 기록
+    { at: 5, t: 60, set: { mod: 'wallet', data: {} }, label: '✏️ 재산 직접 편집' },
+] } } });
+await ok('통째 저장 찾기: 감긴 답보다 뒤 · 살아 있는 · set.data 기록만', async () => {
+    const c = frozenChat();
+    assert.deepEqual(M.frozenBy([2], c).map(x => [x.mod, x.at, x.t, x.name]), [['rel', 4, 30, '관계 칸 바뀜'], ['wallet', 5, 60, '✏️ 재산 직접 편집']]);
+    assert.deepEqual(M.frozenBy([], c), []); assert.deepEqual(M.frozenBy([5], c), [], '감긴 답보다 앞 기록만 있으면 없음');
+    assert.deepEqual(M.frozenBy([4], c).map(x => x.mod), ['wallet'], '「몇 번 뒤」 가 감긴 답 번호보다 커야(그 답까지 들어간 저장)');
+    c.chatMetadata.statussim.startAt = 3; assert.deepEqual(M.frozenBy([2], c), [], '굳힌 기록 안의 답은 따로 알려요(baked)');
+    assert.deepEqual(M.hiddenIds(frozenChat()), [2], '내 표식이 있는 감긴 답만');
+});
+await ok('통째 저장 알림 한 줄: 어느 기록 · 몇 번 뒤 · 관리 탭에서 그 기록을 지우면 빠진다', async () => {
+    const line = M.frozenLine(M.frozenBy([2], frozenChat()));
+    for (const w of ['관계 칸 바뀜', '4번 뒤', '✏️ 재산 직접 편집', '5번 뒤', '관리 탭', '편집 기록', '지우']) assert.ok(line.includes(w), `${w} 가 들어 있어요: ${line}`);
+    assert.ok(!line.includes('\n'), '한 줄');
+});
+await ok('채팅을 열 때(치우기) · 눈으로 감길 때 알려요 — 같은 채팅 · 같은 기록 묶음은 한 번만', async () => {
+    const c = frozenChat(); const before0 = JSON.stringify(c.chatMetadata.statussim); toasts.length = 0;
+    await M.tidy(c, true, true);
+    assert.equal(toasts.filter(t => t.includes('관계 칸 바뀜')).length, 1, '채팅을 열면 한 번');
+    await M.tidy(c, true, true); assert.equal(toasts.filter(t => t.includes('관계 칸 바뀜')).length, 1, '두 번째 치우기는 조용히');
+    c.chat[3].is_system = true;
+    assert.equal(await M.onEye(3, true, { c, on: true, wait: now, toast: globalThis.toastr }), 'out');
+    assert.equal(toasts.filter(t => t.includes('관계 칸 바뀜')).length, 1, '같은 기록 묶음이면 또 안 알려요');
+    c.chatMetadata.statussim.adjust.push({ at: 5, t: 70, set: { mod: 'rel', data: { user: [] } }, label: '' });
+    c.chat[0].is_system = true;
+    assert.equal(await M.onEye(0, true, { c, on: true, wait: now, toast: globalThis.toastr }), 'out');
+    assert.equal(toasts.filter(t => t.includes('관계 칸 바뀜')).length, 2, '새 통째 저장이 생기면 다시');
+    assert.equal(JSON.stringify(c.chatMetadata.statussim.adjust.slice(0, 6)), JSON.stringify(JSON.parse(before0).adjust), '그 확장 기록은 한 글자도 안 바꿔요');
+    toasts.length = 0; await M.tidy(frozenChat(), false, true); assert.equal(toasts.filter(t => t.includes('칸 바뀜')).length, 0, '꺼 두면 안 알려요');
+});
 await ok('걸기: 문서 누름 하나(잡는 단계) · 설정 바뀜 · 채팅 바뀜 · 생성 시작만 — 감시자 없음', async () => {
     assert.equal(M.startMbHidden(doc), true); assert.equal(M.startMbHidden(doc), false);
     assert.deepEqual([...listeners.keys()].sort(), ['bl-mb-hidden-sync', 'bl-mes-fold', 'click']); assert.equal(listeners.get('click')[0][1], true);

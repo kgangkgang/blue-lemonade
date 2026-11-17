@@ -49,7 +49,7 @@ function buildContent() {
     root.className = 'po-dialog';
     root.innerHTML = `
         <h3 class="po-title"><i class="fa-solid fa-arrow-down-short-wide"></i> ${TITLE} <span class="po-version ext-version">v${VERSION}</span></h3>
-        <p class="po-hint">표시 체크를 끄면 설정 탭의 블록만 숨깁니다. 확장 기능은 유지되고, 이 목록에서 다시 켤 수 있어요. 압정은 위쪽 고정입니다.</p>
+        <p class="po-hint">표시 체크를 끄면 설정 탭의 블록만 숨겨요. 확장 기능은 그대로이고, 이 목록에서 다시 켤 수 있어요. 압정을 누르면 위쪽에 고정해요.</p>
 
         <div class="bl-check-grid">
         <label class="checkbox_label po-opt" for="po_auto">
@@ -263,6 +263,6 @@ function renderRoot(root) {
 export function mountInline(host) {
     let root=null,alive=true;
     const mount=()=>{if(!alive)return;root=buildContent();inlineRoots.add(root);host.replaceChildren(root);renderRoot(root);};
-    if(dialogRoot){host.textContent='열린 설정창을 닫으면 여기에 표시돼요.';pendingInline.add(mount);}else mount();
+    if(dialogRoot){host.textContent='열린 설정 창을 닫으면 여기에 보여요.';pendingInline.add(mount);}else mount();
     return ()=>{alive=false;pendingInline.delete(mount);if(root){inlineRoots.delete(root);root.remove();}};
 }

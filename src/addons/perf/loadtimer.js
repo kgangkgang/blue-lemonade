@@ -300,7 +300,7 @@ function showOnce() {
     const data = collect();
     const chat = data.marks.chatMeasured ? ` · 채팅 ${seconds(data.marks.chatPainted - data.marks.chatChanged)}` : '';
     if (settings().toasts && typeof toastr !== 'undefined') {
-        toastr.info(`앱 준비 ${seconds(data.marks.appReady)} · 확장 ${data.list.length}개 ${seconds(data.extensionsTotal)}${chat} — 표는 마법봉 메뉴에서`, TITLE, { timeOut: 3000, extendedTimeOut: 500 });
+        toastr.info(`앱 준비 ${seconds(data.marks.appReady)} · 확장 ${data.list.length}개 ${seconds(data.extensionsTotal)}${chat} — 표는 요술봉 메뉴에서 봐요`, TITLE, { timeOut: 3000, extendedTimeOut: 500 });
     }
 }
 
@@ -334,7 +334,7 @@ function buildDrawer() {
                 <div class="lt-drawer">
                     <label class="checkbox_label" for="lt_toasts"><input type="checkbox" id="lt_toasts"><span>켤 때·채팅 열 때 시간 토스트</span></label>
                     <div class="menu_button menu_button_icon lt-open"><i class="fa-solid fa-table-list"></i><span>표 보기</span></div>
-                    <small class="lt-note">토스트를 꺼도 재는 건 계속해요. 표는 여기나 마법봉 메뉴에서 열어요.</small>
+                    <small class="lt-note">토스트를 꺼도 재는 건 계속해요. 표는 여기나 요술봉 메뉴에서 열어요.</small>
                 </div>
             </div>
         </div>`;

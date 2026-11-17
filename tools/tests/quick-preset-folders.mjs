@@ -26,22 +26,22 @@ await test('다듬기: 같은 프리셋은 앞 폴더만 · 깨진 값 · 같은
     assert.equal(core.tidyFolders(Array.from({ length: 80 }, (_, i) => ({ id: `f${i}`, items: [] }))).length, core.MAX_FOLDERS);
 });
 
-const names = ['Default', '레모나 5.15', '[Gemini] 레모나 5.15', '데우스 V3', '솔라 2', '짧은 답'];
-const folders = core.tidyFolders([{ id: 'g', name: '제미나이', items: ['[Gemini] 레모나 5.15', '지운 프리셋'] }, { id: 'd', name: '데우스 · 솔라', items: ['솔라 2', '데우스 V3'] }]);
+const names = ['Default', '시트라 5.15', '[Gemini] 시트라 5.15', '데우스 V3', '솔라 2', '짧은 답'];
+const folders = core.tidyFolders([{ id: 'g', name: '제미나이', items: ['[Gemini] 시트라 5.15', '지운 프리셋'] }, { id: 'd', name: '데우스 · 솔라', items: ['솔라 2', '데우스 V3'] }]);
 
 await test('묶기: 폴더 차례 · 폴더 안은 넣은 차례 · 없는 이름은 안 보임 · 나머지는 폴더 밖', () => {
     const { groups, loose } = core.groupPresets(names, folders);
-    assert.deepEqual(groups.map(g => [g.folder.id, g.items]), [['g', ['[Gemini] 레모나 5.15']], ['d', ['솔라 2', '데우스 V3']]]);
-    assert.deepEqual(loose, ['Default', '레모나 5.15', '짧은 답']);
+    assert.deepEqual(groups.map(g => [g.folder.id, g.items]), [['g', ['[Gemini] 시트라 5.15']], ['d', ['솔라 2', '데우스 V3']]]);
+    assert.deepEqual(loose, ['Default', '시트라 5.15', '짧은 답']);
     assert.equal(core.folderOf(folders, '데우스 V3'), 'd');
     assert.equal(core.folderOf(folders, 'Default'), '');
 });
 
 await test('찾기 · 넣기(다른 폴더에서 빼옴 · 없는 이름은 남김) · 순서 · 지우기', () => {
-    assert.deepEqual(core.searchPresets(names, folders, '레모나 gemini'), [{ name: '[Gemini] 레모나 5.15', folder: '제미나이' }]);
+    assert.deepEqual(core.searchPresets(names, folders, '시트라 gemini'), [{ name: '[Gemini] 시트라 5.15', folder: '제미나이' }]);
     assert.deepEqual(core.searchPresets(names, folders, '   '), []);
-    const next = core.assignPresets(folders, 'g', ['레모나 5.15', '솔라 2'], new Set(names));
-    assert.deepEqual(next[0].items, ['지운 프리셋', '레모나 5.15', '솔라 2']);
+    const next = core.assignPresets(folders, 'g', ['시트라 5.15', '솔라 2'], new Set(names));
+    assert.deepEqual(next[0].items, ['지운 프리셋', '시트라 5.15', '솔라 2']);
     assert.deepEqual(next[1].items, ['데우스 V3']);
     assert.deepEqual(core.moveFolder(folders, 'd', -1).map(f => f.id), ['d', 'g']);
     assert.equal(core.moveFolder(folders, 'g', -1), null);
@@ -101,18 +101,18 @@ const rows = () => [...layer().querySelectorAll('.salty-pick-rows > *')].map(el 
 await test('목록: 폴더 머리 · 들여 쓴 프리셋 · 지금 프리셋 ✓ · 폴더 밖 · 새 폴더', () => {
     P._forTest.open(sel);
     assert.ok(layer());
-    assert.deepEqual(rows(), ['[제미나이]', '  [Gemini] 레모나 5.15', '[데우스 · 솔라]', '  솔라 2', '  데우스 V3 ✓', '-폴더 밖-', 'Default', '레모나 5.15', '짧은 답', '+새 폴더']);
+    assert.deepEqual(rows(), ['[제미나이]', '  [Gemini] 시트라 5.15', '[데우스 · 솔라]', '  솔라 2', '  데우스 V3 ✓', '-폴더 밖-', 'Default', '시트라 5.15', '짧은 답', '+새 폴더']);
     assert.equal(layer().querySelector('.bl-pfo-head small').textContent, '1');
 });
 
 await test('고르면 실리태번 칸 값 + input · change(실리태번 프리셋 바꾸기가 그대로 돎) · 목록 닫힘', () => {
-    layer().querySelector('button[data-v="레모나 5.15"]').click();
+    layer().querySelector('button[data-v="시트라 5.15"]').click();
     assert.equal(selected, 1);
     assert.deepEqual(fired, ['input', 'change:1']);
     assert.equal(layer(), null);
     fired.length = 0;
     P._forTest.open(sel);
-    layer().querySelector('button[data-v="레모나 5.15"]').click();
+    layer().querySelector('button[data-v="시트라 5.15"]').click();
     assert.deepEqual(fired, [], '같은 것을 고르면 사건 없음');
 });
 
@@ -122,9 +122,9 @@ await test('접기는 기억하고, 지금 프리셋이 든 폴더는 늘 펼쳐
     assert.equal(settings.presetFolders.folders[0].open, false);
     assert.deepEqual(rows().slice(0, 2), ['[제미나이 접힘]', '[데우스 · 솔라]']);
     P._forTest.close();
-    selected = 2;   // [Gemini] 레모나 5.15 — 접힌 폴더 안
+    selected = 2;   // [Gemini] 시트라 5.15 — 접힌 폴더 안
     P._forTest.open(sel);
-    assert.deepEqual(rows().slice(0, 2), ['[제미나이]', '  [Gemini] 레모나 5.15 ✓']);
+    assert.deepEqual(rows().slice(0, 2), ['[제미나이]', '  [Gemini] 시트라 5.15 ✓']);
     P._forTest.close();
 });
 

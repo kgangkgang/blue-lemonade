@@ -161,7 +161,7 @@ export function installFruitOptionHelp(doc = document, host = window, config = {
                 show(target,'스트리밍','켜면 생성되는 글을 조금씩 받아 보여 주고, 끄면 완성된 답을 한꺼번에 보여 줘요. 답변 언어·내용을 바꾸는 옵션은 아니에요.',undefined,true);return;
             }
             if(target.matches('[data-pick-group]')) {
-                show(target,title,'한 묶음에서 사용할 옵션을 고르는 버튼이에요. 짧게 눌러 목록을 연 뒤, 개별 옵션을 길게 누르면 그 옵션의 효과를 확인할 수 있어요.',undefined,true);return;
+                show(target,title,'한 묶음에서 쓸 옵션을 고르는 단추예요. 짧게 눌러 목록을 연 뒤, 개별 옵션을 길게 누르면 그 옵션의 효과를 확인할 수 있어요.',undefined,true);return;
             }
             if(target.dataset.master==='theatre') {
                 show(target,title||'짧은 극장','짧은 극장 출력의 전체 스위치예요. 켜진 주제와 극장 형식에 따라 별도의 짧은 이야기가 붙어요.',undefined,true);return;

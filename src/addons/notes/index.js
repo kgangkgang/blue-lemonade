@@ -474,7 +474,7 @@ function pickNotes(q, selfId) {
 const pickRow = (n, on = false) => `<button type="button" class="bl-note-pickrow${on ? ' on' : ''}" data-pick-note="${n.id}"><b>${escA(n.title.trim())}</b><small>${escA(plainLine(n.body))}</small></button>`;
 function formatBar(area) {
     const bar = document.createElement('div'); bar.className = 'bl-note-fmt'; bar.hidden = true;
-    bar.innerHTML = `<button type="button" class="bl-note-btn bl-note-fmt-toggle" data-fmt="toggle" title="서식 버튼 펼치기 · 접기" aria-label="서식 버튼 펼치기 · 접기"><i class="fa-solid fa-pen-nib"></i></button><span class="bl-note-fmt-tools">${toolsHtml()}</span><span class="bl-note-fmt-hs bl-note-ac" hidden></span>`;
+    bar.innerHTML = `<button type="button" class="bl-note-btn bl-note-fmt-toggle" data-fmt="toggle" title="서식 단추 펼치기 · 접기" aria-label="서식 단추 펼치기 · 접기"><i class="fa-solid fa-pen-nib"></i></button><span class="bl-note-fmt-tools">${toolsHtml()}</span><span class="bl-note-fmt-hs bl-note-ac" hidden></span>`;
     bar.classList.toggle('is-open', !!look().fmtOpen);
     bar.addEventListener('pointerdown', event => { if (!event.target.closest('input')) event.preventDefault(); }); // 편집 칸의 초점(blur → 보기 전환)을 뺏지 않는다 (팝업 안 입력 칸은 제외)
     const pops = () => bar.querySelectorAll('.bl-note-fmt-hs');
@@ -1119,7 +1119,7 @@ export function openPanel() {
     const previous = document.activeElement;
     dialog = document.createElement('dialog');
     dialog.className = 'bl-notes-dialog'; dialog.setAttribute('aria-label', TITLE);
-    dialog.innerHTML = `<header><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE}<button type="button" class="bl-notes-guide bl-help-btn" data-act="guide" title="메모 사용방법" aria-label="메모 사용방법"><i class="fa-solid fa-question" aria-hidden="true"></i></button><small class="bl-notes-count"></small></b><div class="bl-notes-head-tools">${HEAD_TOOLS}<button type="button" class="bl-note-btn" data-act="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
+    dialog.innerHTML = `<header><b><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> ${TITLE}<button type="button" class="bl-notes-guide bl-help-btn" data-act="guide" title="메모 사용법" aria-label="메모 사용법"><i class="fa-solid fa-question" aria-hidden="true"></i></button><small class="bl-notes-count"></small></b><div class="bl-notes-head-tools">${HEAD_TOOLS}<button type="button" class="bl-note-btn" data-act="close" title="닫기" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div></header>
 ${FIND_ROW}${EMPTY_ROW}
 <div class="bl-notes-list"></div>`;
     document.body.append(dialog);

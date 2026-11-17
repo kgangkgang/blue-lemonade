@@ -64,7 +64,7 @@ function themed(html, message) {
     const holder = document.createElement('div');
     holder.className = 'mes_text';
     holder.innerHTML = html;
-    try { dressBody(holder, message); /* Typography runs once on the live hydrated card. */ } catch (error) { console.warn('[북마크] 테마 서식을 입히지 못했습니다:', error); }
+    try { dressBody(holder, message); /* Typography runs once on the live hydrated card. */ } catch (error) { console.warn('[북마크] 테마 서식을 입히지 못했어요:', error); }
     return holder.innerHTML;
 }
 
@@ -90,7 +90,7 @@ export function renderMessageHtml(message, index = null) {
         // the wrong regex depth. Detached/other-chat previews use the -1 sentinel.
         return themed(messageFormatting(loosenMarkdown(text), message.name, !!message.is_system, !!message.is_user, Number.isInteger(index) && index >= 0 ? index : -1, {}, false), message);
     } catch (error) {
-        console.warn('[북마크] 메시지를 그리지 못했습니다:', error);
+        console.warn('[북마크] 메시지를 그리지 못했어요:', error);
         return escapeHtml(text).replace(/\n/g, '<br>');
     }
 }
@@ -161,7 +161,7 @@ export function renderNoteHtml(note) {
     try {
         return messageFormatting(loosenMarkdown(text), '', false, false, -1, {}, false);
     } catch (error) {
-        console.warn('[북마크] 메모 정규식을 적용하지 못했습니다:', error);
+        console.warn('[북마크] 메모 정규식을 적용하지 못했어요:', error);
         return renderPlainNoteHtml(text);
     }
 }
@@ -279,7 +279,7 @@ export function highlightMatches(root, query) {
                 range.setEnd(node, Math.min(end, node.length));
                 registry.add(range);
             } catch (error) {
-                console.warn('[북마크] 검색어를 강조하지 못했습니다:', error);
+                console.warn('[북마크] 검색어를 강조하지 못했어요:', error);
             }
         }
     }
@@ -324,7 +324,7 @@ export function hydrateHtmlBlocks(container, onResize = null) {
                 doc.head?.appendChild(style);
                 fitHtmlFrame(iframe, onResize);
             } catch (error) {
-                console.warn('[북마크] iframe 높이를 맞추지 못했습니다:', error);
+                console.warn('[북마크] iframe 높이를 맞추지 못했어요:', error);
             }
         }, { once: true });
         pre.replaceWith(iframe);

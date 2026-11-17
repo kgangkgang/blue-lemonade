@@ -15,7 +15,8 @@
 //   시험: tools/tests/ext-bridge-tr.mjs(빈틈 고르기 · 칩 감시 · 누른 뒤 메우기)
 
 import { addMessageDecorator } from './message-decor.js';
-import { ruleValue } from './addons/translator/card-values.js';   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
+import { ruleValue } from './addons/translator/card-values.js';
+import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 — 칩 번역 다시 적기(trchip) · 알림 번역(trtoast) · 사전에 고정 낱말(trtidy) · 남은 영어 메우기(trfill)   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
 
 const FOLDER = /meatball|statussim|미트볼/i;
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';
@@ -537,6 +538,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
      *    칩 차례는 그 메시지 칩 글(snaps · 🎲 뺀 앞 14개)과 같아요 — 수가 다르면 그 확장 화면 번역만 불러요. 메시지 꾸미기가 다음 프레임 · 그리기 전에 불러요.
      */
     function paint(list) {
+        if (mbOff('trchip', doc)) return;   // 1.7.3 끄면 칩 글을 다시 적지 않아요(그 확장이 그린 그대로)
         const on = view();
         const snaps = core.app.current?.snaps;
         for (const mes of list) {
@@ -575,7 +577,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
 
     /** ⑤ AI 없이: 이어진 글의 조각 짝 + 고정 낱말 → 같은 사전(addPairs 한 번 = 채팅 메타 저장 한 번) */
     function tidy({ draw = true } = {}) {
-        if (!view()) return 0;
+        if (!view() || mbOff('trtidy', doc)) return 0;   // 1.7.3 끄면 사전(채팅 메타 tr)을 안 고쳐요
         const state = core.app.current?.state;
         if (!state) return 0;
         const meta = core.getMeta();
@@ -664,7 +666,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
 
     /** ② · ③ · ④ 칩 · 기록 · 알림 · 앨범 · 상태 칸에서 아직 영어인 글만 그 확장 번역 길로 → 같은 사전 (묶음 60개 · 8000자 · 짝은 끝에 한 번에) */
     async function fill(reason = 'click') {
-        if (filling || !view()) return 0;
+        if (filling || !view() || mbOff('trfill', doc)) return 0;   // 1.7.3 끄면 남은 영어를 번역 길로 안 보내요(AI 0)
         const current = core.app.current;
         if (!current?.state) return 0;
         const tidied = tidy({ draw: false });
@@ -791,7 +793,7 @@ export function startTrFill(doc = globalThis.document) {
         fill.guardTrFix();   // 1.5.3 「번역 고치기」 동안 숨긴 열쇠를 되돌려 고친 값이 저장되게(검토 1)
         doc.addEventListener('click', fill.onClick, true);
         // 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는 글도 화면만 번역일 때 사전으로(그 확장 화면 번역 범위 밖이에요)
-        try { wrapMbToasts(globalThis.toastr, { title: typeof mb.core.TITLE === 'string' ? mb.core.TITLE : '미트볼 상태창', trs: t => mb.tr.trString(t), on: () => fill.view() }); } catch { /* 알림은 원문 그대로 */ }
+        try { wrapMbToasts(globalThis.toastr, { title: typeof mb.core.TITLE === 'string' ? mb.core.TITLE : '미트볼 상태창', trs: t => mb.tr.trString(t), on: () => fill.view() && !mbOff('trtoast', doc) }); } catch { /* 알림은 원문 그대로 */ }
         // 감시자를 새로 걸지 않고 메시지 꾸미기(공용 #chat 구독 하나)에 얹어요 — 칩 자리 안이 바뀐 기록만 · 답이 오는 동안에도 · 다음 프레임(그리기 전)
         addMessageDecorator('미트볼 칩 번역', list => fill.paint(list), { settle: 0, live: true, order: 90, filter: fill.slotRecord });   // 1.6.8: 굳힌 옛 답 날 칩은 한국어 저장에서도 다시 적어요(화면만 번역 확인은 paint 안에서)
         try {

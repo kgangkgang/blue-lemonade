@@ -30,6 +30,7 @@ function lateSync(name, load, want, call) {
 /** 시험 · 진단: 2층 그리기 모듈이 다 붙을 때까지 */
 export const lateApplyReady = () => Promise.allSettled([...late.values()].map(slot => slot.job));
 import { syncDemGlow } from './dem-glow.js';   // 데우스 「테두리 빛」 — :root 가 아니라 상태창 요소에만 (문서 전체 재계산 없이)
+import { offAttrValue, syncOffAttr } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치(html 표식 하나 · 다 켜져 있으면 없음)
 
 const gradientFor = (...args) => appearance?.gradientFor(...args);
 const gradientSvg = (...args) => appearance?.gradientSvg(...args) || '';
@@ -824,6 +825,9 @@ export function applyAll() {
     if (document.body.hasAttribute('data-bl-mb-color-only') !== mbColorOnly) { restyleAhead(); document.body.toggleAttribute('data-bl-mb-color-only', mbColorOnly); }
     // 1.5.9 채팅 이름표를 인물 색으로(기본 끔): 켠 때만 모듈을 받아요 — 시트 한 장(name-people.js) · 이름 글자 그러데이션을 건 쪽은 빼요
     { const on = want.has('salty') && s.chat.namePeople === true; lateSync('namePeople', () => import('./name-people.js'), on, m => m.syncNamePeople(on, { bg: /^#[0-9a-f]{6}$/i.test(String(pal.bg)) ? pal.bg : '', skipChar: !!gradientFor(s, 'name'), skipUser: !!gradientFor(s, 'userName') })); }
+    // 1.7.3 미트볼 맞춤 스위치(src/mb-switch.js): 끈 열쇠를 html 표식 하나(data-bl-mb-off)에 띄어 적어요 — 맞춤 시트 묶음 문 · 모듈이 같은 표식을 봐요(바뀌면 문서 사건 한 번).
+    //   아래 미트볼 문구 동기(줄 꼴 규칙)보다 먼저 적어야 그 동기가 새 값을 봐요. 테마를 끈 때도 표식은 그대로(시트 규칙은 body.salty 가 없으면 어차피 안 걸려요)
+    syncOffAttr(offAttrValue(s), document, restyleAhead);
     // 1.6.0 눈 감긴 답을 미트볼 상태에서 빼기(src/mb-hidden.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 바뀌면 한 번 알려요(끄면 남은 표식을 바로 치워요)
     { const on = want.has('salty') && s.chat.mbHiddenSync !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-hidden-sync') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-hidden-sync', on); document.dispatchEvent(new Event('bl-mb-hidden-sync')); } }
     // 1.6.1 뒤로 가기로 미트볼 창 닫기(src/mb-back.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 끄면 새 창부터 겹을 올리지 않아요

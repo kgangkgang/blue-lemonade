@@ -14,23 +14,23 @@ let passed = 0;
 const test = async (name, fn) => { await fn(); passed++; console.log(`  PASS  ${name}`); };
 
 const core = await import(url('src/quick/preset-list-core.js'));
-const folders = core.tidyFolders([{ id: 'g', name: '제미나이', items: ['[Gemini] 레모나 5.15', '지운 프리셋'] }, { id: 'd', name: '데우스', items: ['데우스 V3'] }]);
-const seen = ['Default', '[Gemini] 레모나 5.15', '데우스 V3', '짧은 답'];
+const folders = core.tidyFolders([{ id: 'g', name: '제미나이', items: ['[Gemini] 시트라 5.15', '지운 프리셋'] }, { id: 'd', name: '데우스', items: ['데우스 V3'] }]);
+const seen = ['Default', '[Gemini] 시트라 5.15', '데우스 V3', '짧은 답'];
 
 await test('이름 하나가 사라지고 하나가 생기면 폴더 안 이름이 따라가요', () => {
-    const r = core.followRenames(folders, seen, ['Default', '[Gemini] 레모나 6.0', '데우스 V3', '짧은 답']);
-    assert.deepEqual(r.moved, [['[Gemini] 레모나 5.15', '[Gemini] 레모나 6.0']]);
-    assert.deepEqual(r.folders[0].items, ['[Gemini] 레모나 6.0', '지운 프리셋']);
+    const r = core.followRenames(folders, seen, ['Default', '[Gemini] 시트라 6.0', '데우스 V3', '짧은 답']);
+    assert.deepEqual(r.moved, [['[Gemini] 시트라 5.15', '[Gemini] 시트라 6.0']]);
+    assert.deepEqual(r.folders[0].items, ['[Gemini] 시트라 6.0', '지운 프리셋']);
     assert.deepEqual(r.folders[1].items, ['데우스 V3']);
-    assert.deepEqual(folders[0].items, ['[Gemini] 레모나 5.15', '지운 프리셋'], '원본은 그대로');
+    assert.deepEqual(folders[0].items, ['[Gemini] 시트라 5.15', '지운 프리셋'], '원본은 그대로');
 });
 
 await test('처음(본 적 없음) · 둘 이상 섞임 · 폴더 밖 이름 · 지우기만 · 새로 만들기만 → 건드리지 않음', () => {
     const same = r => { assert.deepEqual(r.moved, []); assert.equal(r.folders, folders); };
     same(core.followRenames(folders, [], ['A', 'B']));
     same(core.followRenames(folders, undefined, ['A']));
-    same(core.followRenames(folders, seen, ['Default', '레모나 6.0', '데우스 V4', '짧은 답']), '둘이 동시에');
-    same(core.followRenames(folders, seen, ['Default', '[Gemini] 레모나 5.15', '데우스 V3', '긴 답']), '폴더 밖 이름');
+    same(core.followRenames(folders, seen, ['Default', '시트라 6.0', '데우스 V4', '짧은 답']), '둘이 동시에');
+    same(core.followRenames(folders, seen, ['Default', '[Gemini] 시트라 5.15', '데우스 V3', '긴 답']), '폴더 밖 이름');
     same(core.followRenames(folders, seen, ['Default', '데우스 V3', '짧은 답']), '지우기만');
     same(core.followRenames(folders, seen, [...seen, '새 프리셋']), '새로 만들기만');
 });
@@ -82,7 +82,7 @@ await test('처음 열면 지금 이름을 기억해요(폴더는 그대로) · 
     P._forTest.open(sel);
     assert.deepEqual(S.getSettings().presetFolders.seen, seen);
     assert.equal(saves, 1);
-    assert.deepEqual(names().slice(0, 1), ['[Gemini] 레모나 5.15']);
+    assert.deepEqual(names().slice(0, 1), ['[Gemini] 시트라 5.15']);
     P._forTest.close();
     P._forTest.open(sel);
     assert.equal(saves, 1, '같은 목록이면 저장 안 함');
@@ -90,24 +90,24 @@ await test('처음 열면 지금 이름을 기억해요(폴더는 그대로) · 
 });
 
 await test('실리태번에서 이름을 바꾸고 다시 열면 폴더 안 이름이 따라가고 알림이 떠요', () => {
-    setNames(['Default', '[Gemini] 레모나 6.0', '데우스 V3', '짧은 답']);
+    setNames(['Default', '[Gemini] 시트라 6.0', '데우스 V3', '짧은 답']);
     toasts.length = 0;
     P._forTest.open(sel);
-    assert.deepEqual(names(), ['[Gemini] 레모나 6.0', '데우스 V3', 'Default', '짧은 답']);
-    assert.deepEqual(S.getSettings().presetFolders.folders[0].items, ['[Gemini] 레모나 6.0', '지운 프리셋']);
-    assert.deepEqual(S.getSettings().presetFolders.seen, ['Default', '[Gemini] 레모나 6.0', '데우스 V3', '짧은 답']);
-    assert.equal(toasts.length, 1); assert.match(toasts[0][1], /레모나 5\.15.*레모나 6\.0/);
+    assert.deepEqual(names(), ['[Gemini] 시트라 6.0', '데우스 V3', 'Default', '짧은 답']);
+    assert.deepEqual(S.getSettings().presetFolders.folders[0].items, ['[Gemini] 시트라 6.0', '지운 프리셋']);
+    assert.deepEqual(S.getSettings().presetFolders.seen, ['Default', '[Gemini] 시트라 6.0', '데우스 V3', '짧은 답']);
+    assert.equal(toasts.length, 1); assert.match(toasts[0][1], /시트라 5\.15.*시트라 6\.0/);
     P._forTest.close();
 });
 
 await test('둘을 한꺼번에 바꾸면(어느 것인지 모름) 폴더는 그대로 · 이름 기억만 갱신', () => {
-    setNames(['Default', '레모나 7', '데우스 V4', '짧은 답']);
+    setNames(['Default', '시트라 7', '데우스 V4', '짧은 답']);
     toasts.length = 0;
     P._forTest.open(sel);
-    assert.deepEqual(S.getSettings().presetFolders.folders.map(f => f.items), [['[Gemini] 레모나 6.0', '지운 프리셋'], ['데우스 V3']]);
-    assert.deepEqual(names(), ['Default', '레모나 7', '데우스 V4', '짧은 답'], '없는 이름은 안 보이고 모두 폴더 밖');
+    assert.deepEqual(S.getSettings().presetFolders.folders.map(f => f.items), [['[Gemini] 시트라 6.0', '지운 프리셋'], ['데우스 V3']]);
+    assert.deepEqual(names(), ['Default', '시트라 7', '데우스 V4', '짧은 답'], '없는 이름은 안 보이고 모두 폴더 밖');
     assert.equal(toasts.length, 0);
-    assert.deepEqual(S.getSettings().presetFolders.seen, ['Default', '레모나 7', '데우스 V4', '짧은 답']);
+    assert.deepEqual(S.getSettings().presetFolders.seen, ['Default', '시트라 7', '데우스 V4', '짧은 답']);
     P._forTest.close();
 });
 

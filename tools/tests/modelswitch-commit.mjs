@@ -170,7 +170,7 @@ await test('꺼진 「번역 (검열되면)」: 확인 → 고름 → 켜기 = �
     await M.configureFallback('translator-fallback');
     assert.equal(T.popups.length, 1);
     assert.equal(T.popups[0].type, 'confirm');
-    assert.match(T.popups[0].content, /검열되면 대체할 모델을 켜시겠습니까/);
+    assert.match(T.popups[0].content, /검열되면 대신 쓸 모델을 켤까요/);
     const edit = M.peek().configuring;
     assert.deepEqual(edit, { id: 'translator-fallback', settings: { fallback: { enabled: true, provider: '', model: '' } } }, '「안 씀」이던 줄은 빈칸으로 시작');
     assert.equal(tr().fallback, undefined, '확인만으로는 아무것도 안 씀');

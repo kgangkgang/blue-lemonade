@@ -111,7 +111,8 @@ await test('설정 창 · 되돌리기 라벨 · 검색 · 변경한 설정 화�
     const panel = read('src/panel.js');
     const { SETTING_LABELS } = await import(url('src/settings-labels.js'));
     const S = await import(url('src/settings-search.js'));
-    for (const [key, label] of [['hold', '입력칸 높이 고정'], ['noCorrect', '자동 수정 밑줄 끄기']]) {
+    assert.equal(S.searchSettings('입력칸 높이 고정')[0]?.path, 'inputBox.hold', '옛 이름(입력칸)으로도 찾아져요');
+    for (const [key, label] of [['hold', '입력창 높이 고정'], ['noCorrect', '자동 수정 밑줄 끄기']]) {
         assert.ok(panel.includes(`row('${label}', toggle('inputBox.${key}', s.inputBox?.${key} === true)`), label);
         assert.equal(SETTING_LABELS['inputBox.' + key], label);
         const row = S.searchSettings(label)[0];

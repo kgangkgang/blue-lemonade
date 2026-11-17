@@ -435,7 +435,7 @@ async function generate(messages, signal) {
         // 멈추면 응답을 기다리지 않는다 (현재 연결의 generateRaw는 GENERATION_STOPPED를 직접 듣고 요청을 끊는다).
         onStop = () => {
             controller.abort();
-            reject(new Error('멈춤 버튼을 눌렀어요'));
+            reject(new Error('멈춤 단추를 눌렀어요'));
         };
         signal?.addEventListener('abort', onStop, { once: true });
     });
@@ -858,7 +858,7 @@ async function cleanMessage(messageId, manual, signal) {
         report(result, spans.length, manual, undo);
     } catch (error) {
         console.error(`[${TITLE}]`, error);
-        toastr.error(`고쳐 쓰는 중 오류: ${friendlyError(error)}`, TITLE);
+        toastr.error(`고쳐 쓰다가 오류가 났어요: ${friendlyError(error)}`, TITLE);
     } finally {
         // 실리태번의 저장(이 리스너가 끝난 뒤)이 겹쳐 버려지지 않게 끝까지 기다린다
         await preSave;
@@ -1008,7 +1008,7 @@ async function ensureScenePlan(messageId, end, stopSignal) {
         }
     } catch (error) {
         console.error(`[${TITLE}]`, error);
-        toastr.error(`다시 생성 중 오류: ${friendlyError(error)}`, TITLE);
+        toastr.error(`다시 생성하다가 오류가 났어요: ${friendlyError(error)}`, TITLE);
     } finally {
         busy.delete(key);
         if (progress) toastr.clear(progress);
@@ -1570,7 +1570,7 @@ function renderExceptionEditor() {
             <label class="bwr_switch_row bwr_compact"><span>사용</span><input type="checkbox" class="bwr_enabled"><span class="bwr_switch" aria-hidden="true"></span></label>
             <div class="menu_button menu_button_icon bwr_delete" title="삭제"><i class="fa-solid fa-trash-can"></i></div>
         </div>
-        <label class="bwr_field"><span>이름 (쉼표로 구분, 본문에 나오는 호칭 모두)</span><textarea class="text_pole bwr_names" rows="2" placeholder="Leon, 레온, 레오"></textarea></label>
+        <label class="bwr_field"><span>이름 (쉼표로 구분, 본문에 나오는 호칭 모두)</span><textarea class="text_pole bwr_names" rows="2" placeholder="Rowan, 로완, 로니"></textarea></label>
         <div class="bwr_field"><span>허용할 묘사</span><div class="bwr_chips bwr_allow"></div></div>`);
 
     const refresh = () => {
@@ -2076,7 +2076,7 @@ export async function openPanel() {
 /** Blue Lemonade: the settings inside the theme's own window. Returns the cleanup. */
 export function mountInline(host) {
     inlineHost = host;
-    host.textContent = opening ? '열린 설정창을 닫으면 여기에 표시돼요.' : '설정을 불러오는 중…';
+    host.textContent = opening ? '열린 설정 창을 닫으면 여기에 보여요.' : '설정을 불러오는 중…';
     ready.then(ensureUi).then(() => {
         if (inlineHost !== host || !root || opening) return;
         host.replaceChildren(root);

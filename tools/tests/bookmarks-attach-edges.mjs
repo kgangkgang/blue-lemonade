@@ -94,20 +94,20 @@ await test('현재 채팅: 발췌 — 북마크가 없으면 만들고, 같은 �
     assert.deepEqual([more.created, more.added], [false, true], '같은 메시지면 있는 북마크에');
     assert.equal(ctx.chatMetadata.favorites.length, 1);
     assert.equal(T.meta, 2);
-    await assert.rejects(D.addExcerpt(record, 5, { text: 'x' }), /찾을 수 없습니다/);
+    await assert.rejects(D.addExcerpt(record, 5, { text: 'x' }), /찾을 수 없어요/);
     // 고치기 · 빼기
     const fav = ctx.chatMetadata.favorites[0], exId = fav.excerpts[0].id;
     assert.equal(await D.editExcerptIn(record, fav.id, exId, { text: '긴 대사 고침', html: '' }), true);
     assert.equal(T.meta, 3);
     assert.equal(await D.editExcerptIn(record, fav.id, exId, { text: '긴 대사 고침', html: '' }), false, '같은 글이면 안 바뀜');
     assert.equal(T.meta, 3);
-    await assert.rejects(D.editExcerptIn(record, fav.id, 'nope', { text: 'x' }), /발췌를 찾을 수 없습니다/);
-    await assert.rejects(D.editExcerptIn(record, 'nofav', exId, { text: 'x' }), /북마크를 찾을 수 없습니다/);
+    await assert.rejects(D.editExcerptIn(record, fav.id, 'nope', { text: 'x' }), /발췌를 찾을 수 없어요/);
+    await assert.rejects(D.editExcerptIn(record, 'nofav', exId, { text: 'x' }), /북마크를 찾을 수 없어요/);
     assert.equal(await D.removeExcerptFrom(record, fav.id, 'nope'), false);
     assert.equal(T.meta, 3);
     assert.equal(await D.removeExcerptFrom(record, fav.id, exId), true);
     assert.equal(T.meta, 4);
-    await assert.rejects(D.removeExcerptFrom(record, 'nofav', exId), /북마크를 찾을 수 없습니다/);
+    await assert.rejects(D.removeExcerptFrom(record, 'nofav', exId), /북마크를 찾을 수 없어요/);
 });
 
 await test('현재 채팅: 그림 — 다리가 만든 북마크는 마지막 그림을 떼면(dropEmpty) 북마크째, 손으로 단 별표는 남긴다', async () => {
@@ -140,8 +140,8 @@ await test('현재 채팅: 그림 — 다리가 만든 북마크는 마지막 �
     await D.addImageTo(record, 0, { src: IMG });
     await D.setNote(record, born.id, '');
     assert.equal((await D.removeImageFrom(record, born.id, IMG)).bookmark, true);
-    await assert.rejects(D.removeImageFrom(record, 'nofav', IMG), /북마크를 찾을 수 없습니다/);
-    await assert.rejects(D.addImageTo(record, 9, { src: IMG }), /찾을 수 없습니다/);
+    await assert.rejects(D.removeImageFrom(record, 'nofav', IMG), /북마크를 찾을 수 없어요/);
+    await assert.rejects(D.addImageTo(record, 9, { src: IMG }), /찾을 수 없어요/);
 });
 
 await test('다른 채팅: 발췌 · 그림 · 메모 · 지우기는 파일 최신본 위에, 바뀐 것이 없으면 저장하지 않는다', async () => {
@@ -170,7 +170,7 @@ await test('다른 채팅: 발췌 · 그림 · 메모 · 지우기는 파일 최
     const exId = exFav.excerpts[0].id;
     assert.equal(await D.editExcerptIn(record, exFav.id, exId, { text: '고친 발췌', html: '' }), true);
     assert.equal(T.server.get('old-chat')[0].chat_metadata.favorites[0].excerpts[0].text, '고친 발췌');
-    await assert.rejects(D.editExcerptIn(record, exFav.id, 'nope', { text: 'x' }), /발췌를 찾을 수 없습니다/);
+    await assert.rejects(D.editExcerptIn(record, exFav.id, 'nope', { text: 'x' }), /발췌를 찾을 수 없어요/);
     await assert.rejects(D.editExcerptIn(record, 'nofav', exId, { text: 'x' }), /그사이 지워졌을 수 있어요/);
     assert.equal(await D.removeExcerptFrom(record, exFav.id, 'nope'), false);
     const before = saves().length;
@@ -189,7 +189,7 @@ await test('다른 채팅: 발췌 · 그림 · 메모 · 지우기는 파일 최
 
 await test('saveRecord: 다른 채팅은 불러오기 전 · 그사이 열린 채팅이면 저장하지 않는다, 그룹 채팅은 그룹 저장 길', async () => {
     const record = otherChat([msg('미나', 'x')]);
-    await assert.rejects(D.saveRecord(record), /불러오기 전에는 저장할 수 없습니다/);
+    await assert.rejects(D.saveRecord(record), /불러오기 전에는 저장할 수 없어요/);
     await D.loadRecord(record);
     T.ctx.chatId = 'old-chat';
     await assert.rejects(D.saveRecord(record), /그사이 이 채팅을 열어서/);

@@ -132,7 +132,7 @@ await test('① 두 칸이 정한 자리 바로 뒤에 들어가고, 그 확장�
     const p = page(); use(p.doc);
     assert.equal(mountBridgeUi(p.doc, fakeBridge()), true);
     const kinds = p.content.children.map(node => node.getAttribute('data-bl-bridge') || node.querySelector('[data-s]')?.getAttribute('data-s') || node.className);
-    assert.deepEqual(kinds, ['enabled', 'ss-set-h', 'ssGenLang', 'trRules', 'trAuto', 'glossary', 'ss-set-h', 'aiProfile', 'profContact', 'models', 'aiFallbackMain', 'bl-ext-compat'], '용어집 칸은 지침 칸이 든 묶음의 맨 끝 · 모델 칸은 기능별 모델 묶음 바로 뒤');
+    assert.deepEqual(kinds, ['fit', 'enabled', 'ss-set-h', 'ssGenLang', 'trRules', 'trAuto', 'glossary', 'ss-set-h', 'aiProfile', 'profContact', 'models', 'aiFallbackMain', 'bl-ext-compat'], '용어집 칸은 지침 칸이 든 묶음의 맨 끝 · 모델 칸은 기능별 모델 묶음 바로 뒤');
     assert.deepEqual(p.content.children.filter(node => !node.hasAttribute('data-bl-bridge')), p.foreign);
     assert.ok(p.doc.getElementById('bl-ext-bridge-css'), '시트는 한 번 붙여요');
 });
@@ -141,8 +141,9 @@ await test('② 분류 탭 묶음 표식을 물려받고(보이는 탭 · 숨은
     const bridge = fakeBridge();
     mountBridgeUi(p.doc, bridge); mountBridgeUi(p.doc, bridge);
     const blocks = p.content.querySelectorAll(':scope > [data-bl-bridge]');
-    assert.equal(blocks.length, 2);
-    const [glossary, models] = blocks;
+    assert.equal(blocks.length, 3);   // 1.7.3 첫 탭 맨 위의 「미트볼 맞춤」 바로가기 + 두 칸
+    const [fit, glossary, models] = blocks;
+    assert.equal(fit.getAttribute('data-bl-bridge'), 'fit');
     assert.equal(glossary.dataset.blTabG, '1'); assert.equal('blTabOff' in glossary.dataset, false);
     assert.equal(models.dataset.blTabG, '2'); assert.equal('blTabOff' in models.dataset, true);
     assert.equal(p.doc.head.children.filter(node => node.id === 'bl-ext-bridge-css').length, 1);
@@ -179,9 +180,9 @@ await test('④ 지난 요청에 실은 줄: 없으면 그렇다고, 있으면 �
     mountBridgeUi(p.doc, bridge);
     const lines = p.content.querySelector('[data-bl-bridge-lines]');
     assert.match(lines.textContent, /아직 실은 요청이 없어요/);
-    bridge.state.last = { ext: { at: 0, slot: 'gen', kind: 'gen', lines: ['Leon → 리온', 'Ardel → 아르델'] }, main: { at: 0, lines: ['Klein → 클라인'] }, model: null };
+    bridge.state.last = { ext: { at: 0, slot: 'gen', kind: 'gen', lines: ['Leon → 리온', 'Aveno → 아베노'] }, main: { at: 0, lines: ['Klein → 클라인'] }, model: null };
     mountBridgeUi(p.doc, bridge);
-    assert.match(lines.textContent, /확장 AI 요청 · 만들기 · .* · 2줄\nLeon → 리온\nArdel → 아르델\n\n본편 요청 · .* · 1줄\nKlein → 클라인/);
+    assert.match(lines.textContent, /확장 AI 요청 · 만들기 · .* · 2줄\nLeon → 리온\nAveno → 아베노\n\n본편 요청 · .* · 1줄\nKlein → 클라인/);
 });
 
 await test('⑤ 모델 칸: 「확장 AI 전체」 + 여섯 갈래 · 회사 목록은 번역기와 같은 여덟 곳', async () => {
@@ -254,7 +255,7 @@ await test('⑤ 저장된 값으로 그려요 · 지난 요청 한 줄 · 고른
 await test('⑥ 끼울 자리를 못 찾으면 맨 아래, 맞춘 판 안내 줄 앞에 넣어요', async () => {
     const p = page({ anchors: false }); use(p.doc);
     mountBridgeUi(p.doc, fakeBridge());
-    assert.deepEqual(p.content.children.map(node => node.getAttribute('data-bl-bridge') || node.className || 'row'), ['row', 'row', 'glossary', 'models', 'bl-ext-compat']);
+    assert.deepEqual(p.content.children.map(node => node.getAttribute('data-bl-bridge') || node.className || 'row'), ['fit', 'row', 'row', 'glossary', 'models', 'bl-ext-compat']);   // 1.7.3 「미트볼 맞춤」 바로가기는 늘 맨 위
     assert.equal(p.content.querySelector('[data-bl-bridge="glossary"]').dataset.blTabG, '1');
     const bare = page({ anchors: false, note: false, tabs: false }); use(bare.doc);
     mountBridgeUi(bare.doc, fakeBridge());

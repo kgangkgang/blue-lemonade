@@ -44,7 +44,7 @@ export async function openMessageEditor(record, index) {
     await loadRecord(record);
     const message = record.messages[index];
     if (!message) {
-        toastr.error('메시지를 찾을 수 없습니다.', '북마크');
+        toastr.error('메시지를 찾을 수 없어요.', '북마크');
         return false;
     }
     const expected = { mes: message.mes, send_date: message.send_date, name: message.name, is_user: message.is_user };
@@ -58,7 +58,7 @@ export async function openMessageEditor(record, index) {
         value: message.mes ?? '',
         size: 'lg',
         rows: 16,
-        hint: `${translatedNote}<b>채팅 기록의 원문이 바뀝니다.</b>`,
+        hint: `${translatedNote}<b>채팅 기록의 원문이 바뀌어요.</b>`,
     });
     if (text === null || text === message.mes) return false;
     try {
@@ -95,7 +95,7 @@ export async function openTranslationEditor(record, index) {
     }
     const message = record.messages[index];
     if (!message) {
-        toastr.error('메시지를 찾을 수 없습니다.', '북마크');
+        toastr.error('메시지를 찾을 수 없어요.', '북마크');
         return false;
     }
     // 창을 열어 둔 사이에 메시지가 바뀌면(지워지거나 밀리면) 저장하지 않도록 지금 값을 잡아 둔다.
@@ -196,11 +196,11 @@ export async function openContextViewer(record, index) {
     try {
         await loadRecord(record);
     } catch (error) {
-        toastr.error(`앞뒤 문맥을 불러오지 못했습니다: ${error.message}`, '북마크');
+        toastr.error(`앞뒤 문맥을 불러오지 못했어요: ${error.message}`, '북마크');
         return;
     }
     if (!record.messages[index]) {
-        toastr.error('메시지를 찾을 수 없습니다.', '북마크');
+        toastr.error('메시지를 찾을 수 없어요.', '북마크');
         return;
     }
 
@@ -304,11 +304,11 @@ export async function enterPreview(record, index) {
     try {
         await loadRecord(record);
     } catch (error) {
-        toastr.error(`미리보기를 불러오지 못했습니다: ${error.message}`, '북마크');
+        toastr.error(`미리보기를 불러오지 못했어요: ${error.message}`, '북마크');
         return;
     }
     if (!record.messages[index]) {
-        toastr.error('메시지를 찾을 수 없습니다.', '북마크');
+        toastr.error('메시지를 찾을 수 없어요.', '북마크');
         return;
     }
     if (isGenerating()) {

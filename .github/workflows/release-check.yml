@@ -260,6 +260,7 @@ jobs:
           node tools/tests/mb-prompt.mjs .
           node tools/tests/mb-arrow.mjs .
           node tools/tests/mb-map-floors.mjs .
+          node tools/tests/mb-toggles.mjs .
           node tools/tests/mb-rowbtn-gap.mjs .
           node tools/tests/mb-face-now.mjs .
           node tools/tests/name-people.mjs .

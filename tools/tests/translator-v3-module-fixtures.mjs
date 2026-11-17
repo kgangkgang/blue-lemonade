@@ -87,8 +87,8 @@ export const V3_FIXTURES = {
     report: `${TRACKER_REPORT}\n\n${PROSE}\n\n${RELATIONSHIPS}`,
     // 모듈 여럿을 켠 V3 (상태 · 관계 · 그사이 · 동료)
     modules: `${TRACKER_REPORT}\n\n${PROSE}\n\n${STATUS}\n\n${RELATIONSHIPS}\n\n${MEANWHILE}\n\n${COMPANIONS}`,
-    // 레모나 6.0: 데우스식 시간 상태창(맨 줄) + 본문 (모듈 없음)
-    lemona60: `${TRACKER_REPORT.replace('🌤️ 09:46 AM', '🕖 7:40 PM')}\n\n${PROSE.replace('<prose>\n', '').replace('</body></prose>', '')}`,
+    // 시트라 6.0: 데우스식 시간 상태창(맨 줄) + 본문 (모듈 없음)
+    citra60: `${TRACKER_REPORT.replace('🌤️ 09:46 AM', '🕖 7:40 PM')}\n\n${PROSE.replace('<prose>\n', '').replace('</body></prose>', '')}`,
 };
 // 원작 순서 (데우스 V3 정규식 번호 순)
 export const V3_MODULE_REGEX = [V3_TRACKER, V3_CRUMBS, V3_STATUS, V3_STATUS_PTR, V3_STATUS_REL, V3_STATUS_USER, V3_STATUS_ROW, V3_STATUS_FIELDS, V3_MW_ENTRY, V3_REL, V3_REL_FRIEND, V3_REL_REAL,

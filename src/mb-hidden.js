@@ -85,6 +85,38 @@ export function baked(id, c = ctx()) {
     return Number.isFinite(start) && id < start;
 }
 
+/**
+ * 1.7.4 감긴 답보다 뒤에 그 확장의 「칸 통째 저장」 편집 기록(set.data — 영어 저장 바꾸기 · 직접 편집 · AI 로 수정 · 이모지 바꾸기 등이 남겨요)이 있으면
+ *   그 칸은 그때 값으로 통째로 덮여서, 감긴 답이 그 칸에 준 변화(애정 · 우정 등)가 거기 이미 들어가 있으면 빠지지 않아요(11-17 사용자 「눈 감겼는데 호감도 안 내려가는데??」).
+ *   원작 동작 · 기록은 그대로 두고(읽기만) 알리기만 해요 — 빼는 길은 그 확장 관리 탭 › 저장 · 되돌리기 › 「편집 기록 — 골라서 지우기」(undoAt)예요.
+ *   바뀐 부분만 적은 기록(set.patch) · 지금 안 보이는 기록(_off) · 굳힌 기록 안의 답(baked — 따로 알려요)은 빼요.
+ */
+const MOD_NAME = { rel: '관계', calendar: '달력', wallet: '재산', stats: '수치', profile: '프로필', map: '지도', memo: '메모', quest: '퀘스트', contact: '연락', home: '집', custom: '맞춤' };
+export const hiddenIds = (c = ctx()) => (Array.isArray(c?.chat) ? c.chat : []).flatMap((m, i) => (m?.is_system === true && m.extra?.type === MARK ? [i] : []));
+export function frozenBy(ids, c = ctx()) {
+    const meta = sheetOf(c); if (!meta || !Array.isArray(meta.adjust)) return [];
+    const start = Number(meta.startAt) || 0;
+    const live = (Array.isArray(ids) ? ids : []).filter(i => Number.isInteger(i) && i >= start);
+    if (!live.length) return [];
+    const first = Math.min(...live);
+    return meta.adjust.filter(a => a && !a._off && a.set && typeof a.set.mod === 'string' && a.set.data && typeof a.set.data === 'object' && Number(a.at) > first)
+        .map(a => ({ mod: a.set.mod, at: Number(a.at), t: a.t, name: String(a.label || '').trim() || `${MOD_NAME[a.set.mod] || a.set.mod} 칸 바뀜` }));
+}
+export function frozenLine(list) {
+    const rows = list.map(x => `「${x.name}」(${x.at}번 뒤)`).join(' · ');
+    return `눈 감긴 답보다 뒤에 미트볼이 칸을 통째로 저장한 기록이 있어요: ${rows}. 그 칸은 그때 값으로 덮여서 감긴 답의 변화(애정 · 우정 등)가 거기 들어가 있으면 안 빠져요 — 빼려면 미트볼 관리 탭 › 저장 · 되돌리기 › 「편집 기록 — 골라서 지우기」에서 그 기록을 지워요(그 기록이 한 영어 저장 바꾸기 · 직접 고친 글도 같이 없던 일이 돼요).`;
+}
+const told = new Set();   // 같은 채팅 · 같은 기록 묶음은 한 번만
+function warnFrozen(c, toast) {
+    const list = frozenBy(hiddenIds(c), c); if (!list.length) return false;
+    let chat = ''; try { chat = String(c?.getCurrentChatId?.() ?? c?.chatId ?? ''); } catch { /* 이름 없이 */ }
+    const key = `${chat}|${list.map(x => x.t).join(',')}`;
+    if (told.has(key)) return false;
+    told.add(key);
+    try { toast?.info?.(frozenLine(list), '', { timeOut: 15000, extendedTimeOut: 5000 }); } catch { /* 알림 없이 */ }
+    return true;
+}
+
 /** 표식을 바꾼 뒤: 저장하고 그 확장에게 다시 계산을 시켜요 */
 async function after(c) {
     try { await c?.saveChat?.(); } catch { /* 다음 저장 때 같이 가요 */ }
@@ -99,6 +131,7 @@ export async function onEye(id, wantHidden, { c = ctx(), on = enabled(), toast =
     if (how === 'none') return how;
     await after(c);
     if (how === 'out' && baked(id, c)) { try { toast?.info?.('오래된 답이라 미트볼이 이미 합쳐 둔 기록이에요 — 눈을 감겨도 숫자는 그대로예요.', '', { timeOut: 6000 }); } catch { /* 알림 없이 */ } }
+    else if (how === 'out') warnFrozen(c, toast);   // 1.7.4 뒤에 칸 통째 저장이 있으면 알려요
     return how;
 }
 
@@ -112,12 +145,12 @@ export async function adopt(c = ctx(), on = enabled(), toast = globalThis.toastr
     for (const m of c.chat) if (foldedByHand(m) && mark(m)) n++;
     if (!n) return 0;
     await after(c);
-    try { toast?.info?.(`접어 둔 답 ${n}개를 미트볼 상태에서 뺐어요. 펼치면 돌아오고, 전부 되돌리려면 테마 설정 「눈 감긴 답은 미트볼 상태에서 빼기」 를 꺼요.`, '', { timeOut: 12000, extendedTimeOut: 4000 }); } catch { /* 알림 없이 */ }
+    try { toast?.info?.(`접어 둔 답 ${n}개를 미트볼 상태에서 뺐어요. 펼치면 돌아오고, 전부 되돌리려면 테마 설정 「눈 감긴 답은 미트볼 상태에서 빼기」를 꺼요.`, '', { timeOut: 12000, extendedTimeOut: 4000 }); } catch { /* 알림 없이 */ }
     return n;
 }
 
 /** 채팅 바뀜 · 생성 시작 · 설정 바뀜: 남은 표식을 치우고, 켜져 있으면 처음 한 번 훑어요 */
-export async function tidy(c = ctx(), on = enabled(), sure = known()) {
+export async function tidy(c = ctx(), on = enabled(), sure = known(), toast = globalThis.toastr) {
     if (!sure) return { removed: 0, back: 0, adopted: 0 };
     const r = reconcile(c, on);
     if (r.removed) {
@@ -125,6 +158,7 @@ export async function tidy(c = ctx(), on = enabled(), sure = known()) {
         if (r.back) await nudge(c);
     }
     r.adopted = await adopt(c, on);
+    if (on && sheetOf(c)) warnFrozen(c, toast);   // 1.7.4 이미 감긴 답 뒤에 칸 통째 저장이 있으면 채팅을 열 때 한 번
     return r;
 }
 

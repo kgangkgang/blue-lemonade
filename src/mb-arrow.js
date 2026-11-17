@@ -3,6 +3,7 @@
 //   그 확장의 파일 · 자료 · 속성 · 입력칸은 안 건드려요. 그림은 맞춤 시트(src/ext-status.css)가 그려요. 시험: tools/tests/mb-arrow.mjs
 import { watchDom } from './dom-watch.js';
 import { addMessageDecorator } from './message-decor.js';
+import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 「「->」 를 화살표 그림으로」
 
 /** 1.6.0 사용자 「저녁 -> 밤 이 꺽쇠 … 귀여운 화살표로」: 그 확장의 값(때 · 장소)에는 AI 가 적은 「->」 가 그대로 와요(「저녁 -> 밤」 · 「집 -> 편의점」).
  *  양옆에 공백을 낀 「->」 · 「-->」 · 「=>」 를 테마의 선 화살표 그림(「이어 쓰기」 단추의 기본 그림 — 단추 아이콘을 바꿔도 이 그림 고정)으로 「보이게만」 해요.
@@ -25,7 +26,7 @@ export function arrowParts(text) {
     if (!out.length) return null;
     out.push(s.slice(at)); return out;
 }
-const rawView = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw');
+const rawView = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw') || mbOff('arrow', doc);   // 1.7.3 스위치를 끈 때도 「원작 그대로 보기」 와 같아요
 /** root(요소 · 글자 노드) 안의 화살표 글을 감싸요 → 감싼 글자 노드 수. 입력칸 · 고치는 칸 · 이미 감싼 것은 건너뛰어요. */
 export function wrapArrows(root) {
     const doc = root?.ownerDocument; if (!doc?.createElement || rawView(doc)) return 0;
@@ -82,6 +83,7 @@ export function startArrows(doc = globalThis.document, { watch = watchDom, decor
     // 그 확장의 화면 번역(같은 작업의 감시 콜백)이 글을 옮긴 뒤에 감싸게 한 박자(마이크로태스크) 미뤄요 — 여전히 그리기 전이에요
     try { watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 화살표' }, records => { if (rawView(doc)) return; const had = wait; wait = arrowTargets(records, wait || new Set()); if (!wait.size) wait = null; else if (!had) soon(flush); }); } catch { /* 시작할 때 훑은 것만 */ }
     try { watch(doc.body, { attributes: ['data-bl-ext-raw'], name: '미트볼 화살표 (원작 그대로 보기)' }, () => { try { if (rawView(doc)) unwrapArrows(doc); else sweepArrows(doc); } catch { /* 글자 그대로 */ } }); } catch { /* 다음에 그릴 때부터 */ }   // 「원작 그대로 보기」 를 켜면 되돌리고 끄면 다시 훑어요
+    onMbOff(doc, ['arrow'], () => { try { if (rawView(doc)) unwrapArrows(doc); else sweepArrows(doc); } catch { /* 글자 그대로 */ } });   // 1.7.3 스위치를 끄면 되돌리고 켜면 다시 훑어요
     try { decorate('미트볼 화살표', list => { if (rawView(doc)) return; for (const mes of list) for (const card of mes?.querySelectorAll?.('.ss-msgcard') || []) wrapArrows(card); }, { settle: 0, live: true, order: 95, filter: arrowRecord }); } catch { /* 채팅 밖만 */ }
     return true;
 }

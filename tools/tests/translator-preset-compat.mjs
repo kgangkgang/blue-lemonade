@@ -1,4 +1,4 @@
-// 8.0.6 번역기 프리셋 호환: 데우스 2.5 · 데우스 V3 · 레모나 · 과일 6.4 · 청과 2.0 · 야한 과일 2.0 답 꼴 그대로 만든 고정물을
+// 8.0.6 번역기 프리셋 호환: 데우스 2.5 · 데우스 V3 · 시트라(지어낸 이름 · 데우스식 시간 상태창) · 과일 6.4 · 청과 2.0 · 야한 과일 2.0 답 꼴 그대로 만든 고정물을
 //   실제 translate() 에 가짜 번역 API 로 돌려 ① 보낸 본문에 뺄 것(숨는 블록 · 생각 · 태그 속성 · 코드칸 · 카드 키 · 숫자 · 단위 · 이모지)이 없는지
 //   ② 결과에 뺀 것이 원문 그대로 제자리에 돌아오는지 ③ 상태창 값이 번역돼 제 칸에 들어가는지 ④ 그 프리셋의 표시 정규식이 상태창으로 그리는지 본다.
 //   유료 호출 없음. 실행: node tools/tests/translator-preset-compat.mjs .
@@ -32,7 +32,7 @@ const CASES = {
     deusV3: { send: ['Seoul', 'Hannam Apartment', 'Bedroom', 'Rain needled the window.'], keep: [],
         tracker: `<tracker> 🌙 오후 11:42 | 2026년 10월 27일 화요일 | ${ko('Seoul')} → ${ko('Hannam Apartment')} → ${ko('Bedroom')} | 🌧️ 약한 비, 12°C </tracker>`,
         shown: ['dem-track__clock">오후 11:42</span>', 'dem-track__date">2026년 10월 27일 화요일</div>', `<span class="dem-track__crumb">${ko('Seoul')}</span><span class="dem-track__sep" aria-hidden="true">›</span><span class="dem-track__crumb">${ko('Hannam Apartment')}</span><span class="dem-track__sep" aria-hidden="true">›</span><span class="dem-track__crumb">${ko('Bedroom')}</span>`, '<span class="dem-track__glyph">🌧️</span>약한 비</span><span class="dem-track__temp">12°C'] },
-    lemona: { send: ['Seoul', 'Rain needled the window.'], keep: [],
+    citra: { send: ['Seoul', 'Rain needled the window.'], keep: [],
         tracker: `<tracker> 🕖 오후 7:40 | 2026년 3월 14일 토요일 | ${ko('Seoul')} → ${ko('Hannam Apartment')} → ${ko('Bedroom')} | 🌧️ 약한 비, 12°C </tracker>`,
         shown: ['dem-track__clock">오후 7:40</span>', 'dem-track__date">2026년 3월 14일 토요일</div>'] },
     fruit64: { send: ['Hannam apartment', 'The rain remembers what we choose to forget.', 'Half a step', 'Rain needled the window.'],
@@ -67,7 +67,7 @@ for (const [key, c] of Object.entries(CASES)) {
         //   처음 번역에서 배운 카드 값을 이번엔 이 기기에서 채워 덩이 글이 달라져요). 다시 갈 때도 카드 값은 보내지 않아요
         const before = t.events.length; assert.equal(await t.translate(text), out);
         const again = t.events.slice(before).join('\n');
-        assert.ok(t.events.length - before <= (/^deus|^lemona/.test(key) ? 0 : 1), `${key}: 다시 번역 요청 ${t.events.length - before}개`);
+        assert.ok(t.events.length - before <= (/^deus|^citra/.test(key) ? 0 : 1), `${key}: 다시 번역 요청 ${t.events.length - before}개`);
         for (const value of ['Hannam apartment', '港城半山别墅', '公寓-卧室', 'The rain remembers']) assert.ok(!again.includes(value), `${key}: 다시 번역에 카드 값 「${value}」`);
     });
 }
@@ -116,10 +116,10 @@ await test('흘려받는 중간 글 · 미리 보기에도 짧은 태그(a1)가 
 
 await test('다시 번역(교정) · 보낼 글 번역 · 설정 끔은 태그를 줄이지 않아요 (예전 그대로)', async () => {
     await t.reset();
-    await t.translate(FIXTURES.lemona, { isInputTranslation: true, prompt: t.S.llm_prompt_chat });
+    await t.translate(FIXTURES.citra, { isInputTranslation: true, prompt: t.S.llm_prompt_chat });
     assert.ok(sentOf().includes('style="color:#e06c75"'));
     await t.reset(); t.S.compact_tags = false;
-    try { await t.translate(FIXTURES.lemona); assert.ok(sentOf().includes('style="color:#e06c75"')); } finally { delete t.S.compact_tags; }
+    try { await t.translate(FIXTURES.citra); assert.ok(sentOf().includes('style="color:#e06c75"')); } finally { delete t.S.compact_tags; }
 });
 
 await test('태그 속성 줄이기: 같은 속성은 같은 이름 · 번역에 쓰는 속성(character · title …)은 그대로 · 되돌리기', () => {

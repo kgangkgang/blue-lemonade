@@ -73,7 +73,7 @@ function buildShell() {
             <div class="cg-searchbar" hidden>
                 <label class="cg-search-field">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="search" placeholder="메시지·메모 검색" enterkeyhint="search" autocomplete="off">
+                    <input type="search" placeholder="메시지 · 메모 검색" enterkeyhint="search" autocomplete="off">
                     <button type="button" class="cg-search-clear" data-act="search-clear" title="지우기" aria-label="검색어 지우기" hidden><i class="fa-solid fa-circle-xmark"></i></button>
                 </label>
                 <button type="button" class="cg-chip" data-act="all-messages" aria-pressed="false" aria-label="전체 메시지에서 찾기"><i class="fa-solid fa-comments"></i><span>전체 메시지</span></button>
@@ -362,7 +362,7 @@ async function loadOthers() {
             if (first) await selectChat(first.key);
         }
     } catch (error) {
-        console.warn('[북마크] 다른 채팅 목록을 불러오지 못했습니다:', error);
+        console.warn('[북마크] 다른 채팅 목록을 불러오지 못했어요:', error);
         if (session === view.session) toastr.warning('다른 채팅 목록을 불러오지 못했어요.', '북마크');
     } finally {
         if (session === view.session) {
@@ -402,7 +402,7 @@ async function selectChat(key) {
         try {
             await loadRecord(record);
         } catch (error) {
-            console.warn('[북마크] 채팅을 불러오지 못했습니다:', error);
+            console.warn('[북마크] 채팅을 불러오지 못했어요:', error);
             if (view.selectedKey === key) renderListState('error', error.message);
             return;
         }
@@ -786,7 +786,7 @@ function reloadInPlace(live) {
         .then(() => {
             if (view.open && selectedRecord() === live) renderMain();
         })
-        .catch(error => console.warn('[북마크] 채팅을 다시 불러오지 못했습니다:', error));
+        .catch(error => console.warn('[북마크] 채팅을 다시 불러오지 못했어요:', error));
 }
 
 /**
@@ -857,7 +857,7 @@ async function runTranslate(record, fav, index) {
         if (view.subOpen === fav.id) view.subOpen = null;
         toastr.success(fromCache ? '저장해 둔 번역문을 가져왔어요.' : '번역했어요.', '북마크', { timeOut: 1800 });
     } catch (error) {
-        console.warn('[북마크] 번역하지 못했습니다:', error);
+        console.warn('[북마크] 번역하지 못했어요:', error);
         toastr.error(error.message, '북마크 번역', { timeOut: 8000 });
     } finally {
         translating.delete(key);
@@ -889,7 +889,7 @@ function renderCard(record, fav, index) {
             <div class="cg-card-body${collapsed ? ' is-collapsed' : ''}"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-mes mes_text">${body}</div></div></div></div></div>
             ${sourcePreview ? '<button type="button" class="cg-expand" hidden><span>전체 보기</span><i class="fa-solid fa-chevron-down"></i></button>' : ''}
         </div>`;
-    const noteContent = note ? `<div class="cg-note${sourcePreview ? '' : ' cg-note--summary'}" role="note" aria-label="메모·발췌"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : '';
+    const noteContent = note ? `<div class="cg-note${sourcePreview ? '' : ' cg-note--summary'}" role="note" aria-label="메모 · 발췌"><div class="salty-preview cg-chatlike" data-prev="bookmark"><div class="mes" is_user="${isUser}"><div class="mes_block"><div class="cg-note-text mes_text">${note}</div></div></div></div></div>` : '';
     // 채팅에서 골라 북마크한 글 — 메모 위에, 고를 때 보이던 모양 그대로 (없으면 빈 글이라 예전 카드와 같다)
     const excerpts = renderExcerptsHtml(fav, { summary: !sourcePreview, removable: !fav.virtual });
     // 붙인 그림(다른 확장의 즐겨찾기 — 1.4.9)은 발췌 위에. 카드가 왜 생겼는지 먼저 보이게 · 7.2.7 「글만」 보기에서는 그림을 빼고 글만

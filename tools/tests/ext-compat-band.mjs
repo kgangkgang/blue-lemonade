@@ -148,10 +148,10 @@ ok('⑥-1 (1.5.5) 얼굴 바탕 = 인물표의 그 사람 색 그대로(섞지 �
     assert.match(css, /\.ss-ava\.emo\[data-bl-pc\][^{]*\{ background: var\(--bl-face\); color: var\(--bl-face-ink, var\(--salty-text\)\); \}/);
 });
 ok('⑥-2 (1.5.4) 대사가 없어도 TTS 카드별 색 기억(lemon_voice.card_colors)에서 — 지금 카드 · 그룹 구성원 · 전체 이름 · 첫 낱말', () => {
-    const ctx = { characterId: 0, characters: [{ avatar: 'a.png' }], extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#E0567F': 'Mina Park', '#3a8ee6': '레온', 'bad': '누구' }, 'b.png': { '#ffe23c': '다른 카드' } } } } };
+    const ctx = { characterId: 0, characters: [{ avatar: 'a.png' }], extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#E0567F': 'Mina Park', '#3a8ee6': '레오', 'bad': '누구' }, 'b.png': { '#ffe23c': '다른 카드' } } } } };
     const t = m.cardColorTable(ctx);
     assert.equal(m.tableColor(t, 'mina park'), '#e0567f'); assert.equal(m.tableColor(t, 'Mina'), '#e0567f', '첫 낱말');
-    assert.equal(m.tableColor(t, '레온'), '#3a8ee6'); assert.equal(m.tableColor(t, '다른 카드'), null, '다른 카드의 기억은 안 봐요');
+    assert.equal(m.tableColor(t, '레오'), '#3a8ee6'); assert.equal(m.tableColor(t, '다른 카드'), null, '다른 카드의 기억은 안 봐요');
     const g = m.cardColorTable({ groupId: 'g', groups: [{ id: 'g', members: ['a.png', 'b.png'] }], extensionSettings: ctx.extensionSettings });
     assert.equal(m.tableColor(g, '다른 카드'), '#ffe23c', '그룹이면 구성원 카드 전부');
     assert.equal(m.cardColorTable({}).size, 0);
@@ -183,7 +183,7 @@ ok('⑧ 미트볼 글꼴: 테마 글꼴 자리(FONT_SLOTS)에 mb 하나 — 기�
     const css = read('src/ext-status.css').replace(/\/\*[\s\S]*?\*\//g, '');
     const uses = css.split('\n').filter(l => l.includes('--salty-font-mb'));
     assert.ok(uses.length >= 3);
-    for (const l of uses) assert.ok(/'bl-mb-icons', var\(--salty-font-mb, var\(--salty-font-ui\)\)/.test(l), l.slice(0, 80));
+    for (const l of uses) assert.ok(/('bl-mb-icons'|var\(--bl-mb-ico, bl-mb-none\)), var\(--salty-font-mb, var\(--salty-font-ui\)\)/.test(l), l.slice(0, 80));   // 1.7.3 선 아이콘 글꼴 이름은 스위치 변수로
     const raw = css.split('\n').find(l => l.startsWith('body.salty:is([data-bl-ext-raw])') && l.includes('font-family'));
     assert.ok(raw && !raw.includes('--salty-font-mb'), '원작 그대로 보기는 테마 글꼴 그대로');
     for (const f of ['css', 'src/addons']) for (const n of fs.readdirSync(path.join(root, f)).filter(n => n.endsWith('.css'))) assert.ok(!read(`${f}/${n}`).includes('--salty-font-mb'), `늘 붙는 시트에는 한 줄도: ${n}`);
@@ -243,7 +243,7 @@ ok('⑬ 얼굴 첫 글자는 보이는 이름으로(1.5.2): 화면만 번역이�
     const doc = els => ({ body: { hasAttribute: () => true }, querySelectorAll: () => els });
     const raw = ['Leon', 'Lily'].map(face); m.paintFaces(doc(raw));
     assert.deepEqual(raw.map(e => e.a['data-bl-ini']), ['L', 'L'], '1.5.4 늘 한 글자');
-    const dict = { Leon: '레온', Lily: '릴리' };
+    const dict = { Leon: '레오', Lily: '릴리' };
     m.setFaceName(name => dict[name] ?? name);
     const shown = ['Leon', 'Lily', 'Mara'].map(face); m.paintFaces(doc(shown));
     assert.deepEqual(shown.map(e => e.a['data-bl-ini']), ['레', '릴', 'M']);
@@ -277,7 +277,7 @@ ok('⑱ (1.5.5) 시간 칩 요일 · 칩 글자 맞춤: 칸 설명 맨 앞 「�
     assert.match(css, /#ss-hud\[data-bl-wd\] \.ss-tb\.hud \.ss-t\.t-date:not\(\.L\) > \.c > \.ci > small:first-of-type::after \{ content: var\(--bl-wd, ""\); \}/);
     assert.ok(!/--bl-o|--bl-w/.test(css), '칸마다 값을 적지 않아요(새로 그릴 때 흔들림)');
     const src = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8');
-    assert.match(src, /fitActs\(el\); markBadge\(el\); markWeekday\(el\);/);
+    assert.match(src, /if \(!mbOff\('bandrow', doc\)\) fitActs\(el\); if \(!mbOff\('badge', doc\)\) markBadge\(el\); if \(!mbOff\('weekday', doc\)\) markWeekday\(el\);/);   // 1.7.3 미트볼 맞춤 스위치를 끈 묶음은 표식을 안 달아요
 });
 ok('⑲ (1.5.6) 프로필 얼굴 「색만」(기본) / 「글자」: 설정 기본 color · body 표식 하나 · 지정색 있는 프로필 동그라미만 글자를 숨겨요 · 꾸미기 칸 누름 · 이름은 aria-label 로', async () => {
     const read = f => fs.readFileSync(path.join(root, f), 'utf8');
