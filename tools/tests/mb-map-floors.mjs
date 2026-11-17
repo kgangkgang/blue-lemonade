@@ -323,6 +323,47 @@ await ok('넓은 배치에서도 오른쪽 확대 단추 자리 비움', () => {
     assert.ok(vb[2] > vb[3] * 0.99, '가로가 넓은 배치');
     assert.ok(vb[0] + vb[2] - xr >= vb[2] * m.RESERVE - 0.2, JSON.stringify(vb));
 });
+await ok('버그 사냥 10: 번호 · 기호만 다른 방은 같은 곳이 아니에요', () => {
+    for (const [x, y] of [['IT 1', 'IT 2'], ['Room 101', 'Room 102'], ['회의실 1', '회의실 2'], ['Class 3-1', 'Class 3-2'], ['Ward 7', 'Ward 8'], ['카페 🍰', '카페 🍩']]) assert.equal(m.sameName(x, y), false, x + ' / ' + y);
+    // 머리글자는 대문자로 적힌 줄임말만(낱말 하나가 우연히 다른 이름의 머리글자와 같아도 안 합쳐요)
+    for (const [x, y] of [['Lab', 'Language Arts Building'], ['Gym', 'Grand Yoga Mat']]) assert.equal(m.sameName(x, y), false, x + ' / ' + y);
+    for (const [x, y] of [['IT', 'Information Technology'], ['QA Team', 'Quality Assurance Department'], ['Data Dept', 'Data Department (B2)'], ['IT 1', 'IT 1 (2F)']]) assert.equal(m.sameName(x, y), true, x + ' / ' + y);
+    // 같은 건물 · 같은 층의 「IT 1」 「IT 2」 「Art Room」 은 세 점 그대로
+    const list = [P('IT 1', '2F lab', { links: ['Lobby'] }), P('IT 2', '2F lab', { links: ['Lobby'] }), P('Art Room', '2F', { links: ['Lobby'] }), P('Lobby', '1F hall')];
+    const L = m.floorLayout(list);
+    assert.equal(L.alias.size, 0, JSON.stringify([...L.alias]));
+    assert.notEqual(L.pos.get('IT 1').x, L.pos.get('IT 2').x);
+});
+await ok('버그 사냥 10: 「이름, 자리 말」 꼬리가 다르면 다른 곳 · 긴 묘사 꼬리만 다르면 같은 곳', () => {
+    for (const [x, y] of [['Lab, North Wing', 'Lab, South Wing'], ['Hall — east side', 'Hall — west side'], ['Desk | A', 'Desk | B']]) assert.equal(m.sameName(x, y), false, x + ' / ' + y);
+    for (const [x, y] of [['Front Gate — wet canopy at dusk in the rain', 'Front Gate — bright morning with long queue outside'], ['Lab, North Wing', 'Lab'], ['Lab, North Wing', 'Lab, North Wing (2F)']]) assert.equal(m.sameName(x, y), true, x + ' / ' + y);
+    const L = m.floorLayout([P('Lab, North Wing', '2F', { links: ['Lobby'] }), P('Lab, South Wing', '2F', { links: ['Lobby'] }), P('Lobby', '1F hall')]);
+    assert.equal(L.alias.size, 0, JSON.stringify([...L.alias]));
+});
+await ok('1.7.2: 줄임말 부서 ↔ 풀어 쓴 부서(같은 지하 층) · 「1F 로비」 ↔ 「건물 이름 Main 로비 — 긴 묘사」 는 계속 한 점', () => {
+    const A = 'A.R.C Headquarters', H = (name, desc, extra = {}) => P(name, desc, { area: A, ...extra });
+    const list = [
+        H('Front Desk', '7F desk.', { links: ['1F Lobby', 'A.R.C Main Lobby — windy entrance porch at dawn'] }),
+        H('QA Dept', 'Cold B2 test hall.', { links: ['1F Lobby', 'Quality Assurance Department (B2)'] }),
+        H('QA 2', 'Spare B2 test hall.', { links: ['QA Dept'] }),
+        H('1F Lobby', 'Marble hall at the entrance.', { links: ['Front Desk', 'QA Dept'] }),
+        P('Quality Assurance Department (B2)', 'Cold B2 control room.', { area: '', kind: '', links: ['QA Dept'] }),
+        P('A.R.C Main Lobby — windy entrance porch at dawn', '', { area: '', kind: '', links: ['Front Desk'] })];
+    const L = m.floorLayout(list);
+    assert.equal(L.alias.get('Quality Assurance Department (B2)'), 'QA Dept', JSON.stringify([...L.alias]));
+    assert.equal(L.alias.get('A.R.C Main Lobby — windy entrance porch at dawn'), '1F Lobby', JSON.stringify([...L.alias]));
+    assert.ok(!L.alias.has('QA 2') && ![...L.alias.values()].includes('QA 2'), '번호만 다른 방은 따로');
+});
+await ok('버그 사냥 10: 장소 250개(구역 빈 층 장소가 많아도) 배치가 빨라요', () => {
+    const nm = i => 'Room ' + i + ' Long Name Of Place';
+    const list = [];
+    for (let i = 0; i < 200; i++) list.push(P(nm(i), ((i % 12) + 1) + 'F', { area: i % 3 ? '' : 'Office', links: [nm((i + 1) % 200)] }));
+    for (let i = 0; i < 50; i++) list.push(P('Shop ' + i, 'shop', { area: 'Street', kind: 'shop', links: [nm(1)] }));
+    m.floorLayout(list);
+    const t = performance.now(); const L = m.floorLayout(list.map(p => ({ ...p, name: p.name + ' ' }))); const ms = performance.now() - t;
+    assert.ok(L && L.buildings.length === 1);
+    assert.ok(ms < 300, `${Math.round(ms)}ms`);   // 1.7.0: 0.6초 넘게(이어진 곳을 장소마다 목록 전체로 다시 찾았어요)
+});
 await ok('층 정보가 없는 지도는 손대지 않아요', () => {
     const doc = makeDoc(), places = [P('A', 'a', { links: ['B'] }), P('B', 'b'), P('Heaven', 'c', { kind: 'realm' })], svg = drawn(doc, places);
     assert.equal(m.applyFloors(svg, { places }), null);

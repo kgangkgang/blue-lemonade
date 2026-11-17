@@ -130,6 +130,20 @@ await test('한 사람 강조는 두 판 같이 · 다시 누르면 둘 다 전�
     assert.deepEqual(pressed(a), ['Wren']); assert.equal(t.hasAttribute('data-bl-focus'), false); assert.equal(t.querySelectorAll('.bl-tr-s.dim').length, 0, '우정 판은 전체 그대로');
 });
 
+await test('버그 사냥 10: 범례 없는 판(돈 판 · 「아직 그릴 만큼 기록이 없어요」)이 같이 있어도 예외 없이 · 강조가 돼요', () => {
+    // 그 확장 2.8.0: 이름 없는 한 줄(돈)은 범례를 안 그려요 · 기록이 적으면 그림 없이 안내만
+    const money = `<div class="ss-trend-box"><b>💰 돈</b><svg viewBox="0 0 640 220" role="img" aria-label="돈 그래프"><line x1="46" x2="628" y1="12.0" y2="12.0" stroke="currentColor"/><text>9</text><line x1="46" x2="628" y1="196.0" y2="196.0" stroke="currentColor"/><text>1</text><polyline points="46.0,150.0 300.0,90.0 628.0,40.0" fill="none" stroke="#d98a1f"/><text>#3</text><text>#9 (지금)</text></svg></div>`;
+    const empty = '<div class="ss-trend-box"><b>📊 수치</b><p class="ss-hint">아직 그릴 만큼 기록이 없어요.</p></div>';
+    const doc = page(); const tr = doc.querySelector('.ss-trend');
+    tr.querySelector('.ss-trend-box').insertAdjacentHTML('beforebegin', empty); tr.querySelector('.ss-trend-box:last-of-type').insertAdjacentHTML('afterend', money);
+    assert.equal(m.dressTrend(tr, { pick, bg: NIGHT, width: 340 }), true);
+    const boxes = [...tr.querySelectorAll('.ss-trend-box')];
+    assert.equal(boxes.length, 4);
+    assert.equal(boxes[3].querySelectorAll('.bl-tr-svg .bl-tr-line').length, 1, '돈 판도 다시 그려요');
+    const b = boxes[1].querySelector('.bl-tr-key'); b.dispatchEvent(new doc.defaultView.MouseEvent('click', { bubbles: true }));
+    assert.equal(b.getAttribute('aria-pressed'), 'true', '범례 누르기가 돼요');
+});
+
 await test('그림: 둥근 모서리 · 위 셋 굵게 · 맨 위 채움 · 끝점 · 눈금 글자는 화면 픽셀', () => {
     const doc = page(); const tr = doc.querySelector('.ss-trend'); m.dressTrend(tr, { pick, bg: NIGHT, width: 340 });
     const svg = tr.querySelector('.ss-trend-box .bl-tr-svg');

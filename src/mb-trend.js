@@ -253,7 +253,9 @@ export function dressTrend(root, opts = {}) {
             if (typeof win.ResizeObserver === 'function') { const ro = new win.ResizeObserver(es => { const w = Math.round(es[0]?.contentRect?.width || 0); if (w > 0 && Math.abs(w - (m.w || 0)) >= 1) paint(w); }); ro.observe(wrap); }
         }
         const old = m.box.querySelector(':scope > .ss-trend-legend');
-        if (old) { m.legend = drawLegend(doc, m); old.replaceWith(m.legend); }
+        // 버그 사냥 10: readBox 의 legend(범례 글 배열)를 그대로 두면 범례 없는 판(돈 · 기록 적음)에서 아래 addEventListener 가 예외 — 강조 · 나머지 판 연결이 다 멈췄어요
+        m.legend = old ? drawLegend(doc, m) : null;
+        if (old) old.replaceWith(m.legend);
     }
     // 한 사람 강조는 창 전체에서 이름으로(조정자 11-17): 애정 판에서 누르면 우정 판도 같은 사람을 강조 · 다시 누르면 둘 다 전체 · 그 사람이 없는 판은 전체 그대로
     let focusName = null;

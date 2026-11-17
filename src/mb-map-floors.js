@@ -86,23 +86,33 @@ export function zoneOf(p, tr = null) {
 // 조직 꼬리말: 「부 · 팀 · 과 · 국 · 실 · 처」 · dept/department/team/division/section/bureau/office · 部/課/室/局 — 이것만 떼고 비교해요(방 · 홀 같은 말은 안 떼요 · 다른 방을 합치지 않게)
 const ORG_EN = /^(?:dept|department|team|division|section|bureau|office)$/;
 const ORG_KO = /[부팀과국실처部課室局]$/u;
-const words = s => String(s ?? '').toLowerCase().replace(/\([^)]*\)|（[^）]*）/g, ' ').split(/[^\p{L}\p{N}]+/u).filter(Boolean).filter(w => floorIn(w.toUpperCase()) === null && !/^\d+$/.test(w));
+// 버그 사냥 10: 번호(「IT 1」 · 「Room 101」 · 「회의실 2」) · 그림 글자(「카페 🍰」)도 낱말로 남겨요 — 떼면 번호만 다른 방이 한 점으로 합쳐졌어요(층 표기만 떼요)
+const wordMemo = new Map();   // 같은 이름을 여러 번 견줘요(층 규칙 정규식이 낱말마다 돌아서) — 배치 한 번 안에서 되풀이를 줄여요
+const words = (s, keepCase = false) => { const k = (keepCase ? '1' : '0') + String(s ?? ''); let r = wordMemo.get(k); if (!r) { if (wordMemo.size > 4000) wordMemo.clear(); wordMemo.set(k, r = wordsOf(s, keepCase)); } return r.slice(); };
+const wordsOf = (s, keepCase) => { const t = String(s ?? '').replace(/\([^)]*\)|（[^）]*）/g, ' '); return (keepCase ? t : t.toLowerCase()).split(/[^\p{L}\p{N}\p{Extended_Pictographic}]+/u).filter(Boolean).filter(w => floorIn(w.toUpperCase()) === null); };
 /** 이름의 비교 열쇠: 괄호 · 층 표기 · 조직 꼬리말을 뗀 낱말들 */
 const MODIFIER = /^(?:main|central|front|grand|메인|중앙|정문)$/u;   // 같은 곳을 꾸미는 말(「메인 로비」 ↔ 「1층 로비」)
-export function placeKey(name, drop = null) {
-    let ws = words(labelOf(name));
-    if (drop) { ws = ws.filter(w => !drop.has(w)); while (ws.length > 1 && MODIFIER.test(ws[0])) ws = ws.slice(1); }
-    while (ws.length > 1 && ORG_EN.test(ws[ws.length - 1])) ws = ws.slice(0, -1);
+export function placeKey(name, drop = null, keepCase = false) {
+    let ws = words(labelOf(name), keepCase);
+    if (drop) { ws = ws.filter(w => !drop.has(w.toLowerCase())); while (ws.length > 1 && MODIFIER.test(ws[0].toLowerCase())) ws = ws.slice(1); }
+    while (ws.length > 1 && ORG_EN.test(ws[ws.length - 1].toLowerCase())) ws = ws.slice(0, -1);
     if (ws.length) { const last = ws[ws.length - 1]; if ([...last].length >= 3 && ORG_KO.test(last)) ws[ws.length - 1] = [...last].slice(0, -1).join(''); }
     return ws;
 }
+const tailOf = n => { const t = String(n ?? '').trim(), h = labelOf(t); return h === t ? [] : words(t.slice(t.indexOf(h) + h.length)); };
 /** 두 이름이 같은 곳인가(좁게): 열쇠가 같거나 · 한쪽이 다른 쪽 낱말 머리글자(IT ↔ Information Technology) */
 export function sameName(a, b) {
     const ka = placeKey(a), kb = placeKey(b); if (!ka.length || !kb.length) return false;
+    // 버그 사냥 10: 둘 다 「이름, 꼬리」 · 「이름 — 꼬리」 꼴이고 꼬리가 다르면(그중 하나라도 세 낱말 이하 — 「North Wing」 · 「east side」 같은 자리 말) 다른 곳이에요.
+    //   긴 꼬리(「wet canopy at dusk …」 같은 묘사)끼리만 다를 때는 앞 조각으로 견줘요(지금 장소 줄에서 같은 곳이 두 번 생긴 것)
+    const ta = tailOf(a), tb = tailOf(b);
+    if (ta.length && tb.length && ta.join(' ') !== tb.join(' ') && Math.min(ta.length, tb.length) <= 3) return false;
     const ja = ka.join(''), jb = kb.join('');
     if (ja === jb) return [...ja].length >= 2;
+    // 머리글자: 줄임말 쪽이 대문자로 적힌 낱말 하나일 때만(「IT」 ↔ 「Information Technology」) — 「Lab」 ↔ 「Language Arts Building」 처럼 보통 낱말이 우연히 머리글자와 같은 건 안 합쳐요(버그 사냥 10)
     const ini = ws => ws.length >= 2 ? ws.map(w => [...w][0]).join('') : null;
-    return (ka.length === 1 && /^[a-z]{2,}$/.test(ja) && ini(kb) === ja) || (kb.length === 1 && /^[a-z]{2,}$/.test(jb) && ini(ka) === jb);
+    const acro = (n, k) => { const r = placeKey(n, null, true); return k.length === 1 && r.length === 1 && /^[A-Z]{2,6}$/.test(r[0]); };
+    return (acro(a, ka) && ini(kb) === ja) || (acro(b, kb) && ini(ka) === jb);
 }
 const normName = s => String(s ?? '').toLowerCase().replace(/[\s·・_\-.,'"()（）[\]]+/g, '');
 const simpleFind = (list, name) => { const k = normName(name); return list.find(p => normName(p.name) === k) || null; };
@@ -126,7 +136,10 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     const headOf = new Map();
     for (const it of info.values()) for (const t of tx(it.p.name)) { const a = areaKeys.get(placeKey(t).join('')); if (a && a !== undefined) { headOf.set(it.p.name, a); it.f = null; break; } }
     // 1.7.0 구역이 빈 층 장소(본편 AI 가 새로 더한 곳 등)는 이어진 층 장소들의 구역이 하나면 그 구역 건물로
-    const linkedOf = n => { const p = info.get(n).p, out = new Set(); for (const l of (Array.isArray(p.links) ? p.links : [])) { const q = find(list, l); if (q) out.add(q.name); } for (const q of list) if ((q.links || []).some(l => find(list, l)?.name === n)) out.add(q.name); return out; };
+    //   버그 사냥 10: 이어진 곳을 장소마다 목록 전체로 다시 찾으면(장소 200개 · 구역 빈 곳이 많을 때 0.6초 넘게) 느려서 링크를 한 번만 풀어 둬요
+    const linked = new Map(list.map(p => [p.name, new Set()]));
+    for (const p of list) for (const l of (Array.isArray(p.links) ? p.links : [])) { const q = find(list, l); if (q && linked.has(q.name)) { linked.get(p.name).add(q.name); linked.get(q.name).add(p.name); } }
+    const linkedOf = n => linked.get(n) || new Set();
     for (const it of info.values()) {
         if (it.f === null || it.area) continue;
         const as = new Set([...linkedOf(it.p.name)].map(n => info.get(n)).filter(x => x && x.f !== null && x.area).map(x => x.area));
@@ -156,7 +169,7 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     buildings.forEach(g => {
         const area = g[0]?.area; if (!area) return;
         const drop = new Set(tx(area).flatMap(a => words(a)));
-        const keyOf = n => tx(n).map(t => placeKey(t, drop).join('')).filter(k => [...k].length >= 2);
+        const keys = new Map(), keyOf = n => { if (!keys.has(n)) keys.set(n, tx(n).map(t => placeKey(t, drop).join('')).filter(k => [...k].length >= 2)); return keys.get(n); };
         for (const it of info.values()) {
             if (inB.has(it.p.name) || alias.has(it.p.name) || headOf.has(it.p.name) || it.f !== null || (it.area && it.area !== area)) continue;
             const mine = keyOf(it.p.name); if (!mine.length) continue;
