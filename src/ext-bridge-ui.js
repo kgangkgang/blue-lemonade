@@ -53,18 +53,7 @@ function place(content, block, anchor) {
     if (from && 'blTabG' in from.dataset) { block.dataset.blTabG = from.dataset.blTabG; if ('blTabOff' in from.dataset) block.dataset.blTabOff = ''; }
 }
 
-// ── 1.7.3 미트볼 맞춤 바로가기(첫 탭 맨 위) — 테마 설정의 「미트볼 맞춤」 묶음만 보이는 창을 열어요 ─────────────
-function buildFit(doc) {
-    const open = el(doc, 'div', { cls: 'menu_button', text: '맞춤 켜고 끄기', attrs: { role: 'button', tabindex: '0', 'data-bl-fit-open': '' } });
-    const go = event => { event?.preventDefault?.(); event?.stopPropagation?.(); try { doc.defaultView?.Salty?.openPopup?.(false, 'mb-fit'); } catch { /* 테마 설정 창을 못 열면 그대로 */ } };
-    open.addEventListener('click', go);
-    open.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') go(event); });
-    return el(doc, 'div', { cls: 'bl-ext-bridge', attrs: { 'data-bl-bridge': 'fit' }, kids: [
-        el(doc, 'b', { cls: 'bl-ext-bridge-h', text: '블루레몬에이드 · 미트볼 맞춤' }),
-        el(doc, 'small', { text: '블루레몬이 이 확장 화면에 더하거나 고친 것을 하나씩 켜고 꺼요 · 화면만 바꾸는 것과 데이터를 고치는 것을 나눠 보여요.' }),
-        el(doc, 'div', { cls: 'ss-set-btns', kids: [open] }),
-    ] });
-}
+// 1.7.3 의 「블루레몬에이드 · 미트볼 맞춤」 바로가기(첫 탭 맨 위)는 1.7.4 부터 분류 탭 줄의 「블루레몬」 탭(src/mb-lemon.js)이 맡아요 — 그 탭 안에 묶음 전체가 있어요
 
 // ── ① 번역 용어집 ─────────────────────────────────────
 function lastText(last) {
@@ -255,7 +244,6 @@ export function mountBridgeUi(doc, bridge) {
     const blocks = () => [...content.querySelectorAll('[data-bl-bridge]')];
     if (!bridge.status().features) { for (const block of blocks()) block.remove(); return false; }
     attachSheet(doc);
-    if (!content.querySelector(':scope > [data-bl-bridge="fit"]')) { const fit = buildFit(doc), nav = content.querySelector(':scope > .bl-ext-tabs'); const first = nav || content.firstElementChild || content.children?.[0]; if (nav) nav.after(fit); else if (first) first.before(fit); else content.append(fit); if (nav) fit.dataset.blTabG = '0'; }   // 1.7.3 첫 탭(앞머리 묶음) 맨 위
     if (!content.querySelector(':scope > [data-bl-bridge="glossary"]')) place(content, buildGlossary(doc, bridge), groupEnd(rowOf(content, 'trRules')));
     if (!content.querySelector(':scope > [data-bl-bridge="models"]')) place(content, buildModels(doc, bridge), rowOf(content, 'profContact') || rowOf(content, 'aiProfile'));
     // 번역 탭: 「번역 모델 (연결 프로필)」 줄 바로 아래(펼침 안이면 그 안) — 그 줄이 없는 판이면 넣지 않아요

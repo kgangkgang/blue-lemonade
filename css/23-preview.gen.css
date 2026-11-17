@@ -5,7 +5,7 @@
    ===== */
 /* ===== 미리보기 자동 생성 (surfaces:preview) =====
    tools/gen-preview-css.js 가 #chat 규칙을 여기 복사한다 — 손으로 고치지 말 것.
-   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 593개 (231.5KB).
+   선택자의 #chat 을 :is(#salty-nochat, .salty-preview) 로 바꾼 사본 595개 (232.2KB).
    style.css 의 채팅 · 에셋 규칙을 고치면 `node tools/gen-preview-css.js` 를 다시 돌린다.
    이 칸을 다른 자리로 옮기지 말 것: 사본이 손으로 쓴 채팅 규칙보다 뒤에 있어야 같은 무게에서 이기고,
    바로 뒤의 보정 칸이 사본을 눌러 줄 수 있다. 앞으로 옮기면 아바타 모서리처럼 순서로만 갈리는 것이 뒤집힌다 */
@@ -502,6 +502,22 @@ body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes :is(details.cust
 :is(body.salty.salty-dlg-marker :is(#salty-nochat, .salty-preview) .mes .mes_text, body.salty.salty-dlg-full :is(#salty-nochat, .salty-preview) .mes .mes_text) :is(em, i) q:not(q q)::after {
   content: '';
   padding-inline-end: 0.15em;
+}
+:is(body.salty.salty-dlg-marker :is(#salty-nochat, .salty-preview) .mes .mes_text, body.salty.salty-dlg-full :is(#salty-nochat, .salty-preview) .mes .mes_text) q.bl-q-inked:not(#salty-none) {
+  background: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  padding: 0;
+  border-radius: 0;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+:is(body.salty.salty-dlg-marker :is(#salty-nochat, .salty-preview) .mes .mes_text, body.salty.salty-dlg-full :is(#salty-nochat, .salty-preview) .mes .mes_text) q.bl-q-inked::after {
+  content: none;
 }
 :is(body.salty.salty-dlg-bold :is(#salty-nochat, .salty-preview) .mes .mes_text) q {
   font-weight: 650;

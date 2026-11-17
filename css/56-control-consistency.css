@@ -433,6 +433,16 @@ html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .world_entry_form_control > .
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .bl-wi-help { --bl-help-y: 0em; }
 /* 1.1.5 (11-12 폰 사진 「삽입 방스?」「이름 포힘?」): 전역 설정 체크 줄 이름 · 「삽입 방식」 이름은 flex 가 아니라 글 줄이라 위 column-gap 8 이 안 생겨요 — 거기서 8 을 빼면 ? 가 -2.6px 로 마지막 글자를 덮었어요(한국어는 뒤 공백도 없음). 글 줄 칸은 간격 그대로 */
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(#wiCheckboxes label.checkbox_label > small, #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) > small) > .bl-wi-help { margin-left:var(--bl-help-gap)!important; }
+/* 1.7.4 월드인포 칸 ? 를 칸 이름과 같은 글 줄에(1.7.3 게시 뒤 help-shape 새 실패 — 「모든 채팅에 켤 월드인포」 · 「주 키워드」 · 「재귀 안 됨」 ? 가 1.0 ~ 1.1px 처짐):
+   칸 이름이 flex 면 ? 는 줄 상자 가운데에 서는데 글자는 화면의 소수 px 자리마다 따로 맞춰 그려져(설정창 묶음 제목 1.1.1 과 같은 일) 같은 모양 칸도 자리만 바뀌면 0.1 ↔ 1.1px 로 갈렸어요
+   (위 1.5.2 올림 걷기는 그 가운데 한쪽 값으로 맞춘 것). 칸 이름을 글 줄로 두고 ? 를 글자와 같은 기준선에서 세우면(--bl-help-y-line · 설정창 묶음 제목과 같은 식)
+   자리와 상관없이 0 ~ 0.21px(사용자 글꼴 · 폰 384 · 전역 설정 + 항목 37곳 · 칸 배치 둘). 이름 글 상자는 inline-block — 실리태번 원본 줄바꿈 공백이 ? 앞 빈칸으로 남지 않게.
+   체크 줄 넷은 ? 를 이름 글 상자 안에 넣어요(src/wi-help-data.js 'append' — 체크 칸 자리 · 체크 줄 flex 는 그대로). 「지속 · 재사용 대기 · 지연」 뒤 💬 는 글 줄의 공백(≈ 0.18em) 뒤라 5px 만 더해 예전 칸 간격 8 에 맞춰요 */
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo small:has(> .bl-wi-help) { display:block!important; text-align:start!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo .range-block-title > small:has(> .bl-wi-help) { display:inline-block!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo :is(small, label.checkbox > span) > span:has(+ .bl-wi-help) { display:inline-block!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo :is(small, label.checkbox > span) > .bl-wi-help { --bl-help-y: 0em; top:var(--bl-help-y-line)!important; margin-left:var(--bl-help-gap)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo small > .bl-wi-help.bl-wi-help ~ :is(.fa-comments, .fa-solid) { margin-left:5px!important; }   /* 1.7.4 통합: 주어 아닌 :has 를 걷은 같은 뜻 · 같은 우선순위(클래스 두 번) — has-guard 기준 93 */
 /* 실리태번 서랍의 맨 아이콘 ? · ⓘ: 부모 flex gap 만큼 */
 html body.salty:not(#bl-h1):not(#bl-h2) #left-nav-panel .flex-container > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { margin-left:calc(var(--bl-help-gap) - 10px)!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #user-settings-block small > :is(.fa-circle-info, .fa-info-circle, .fa-circle-question, .fa-question-circle) { margin-left:calc(var(--bl-help-gap) - 4px)!important; }

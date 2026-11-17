@@ -27,6 +27,8 @@ export function placeHelpButtons(root, anchors) {
         if (!target) continue;   // 실리태번 판이 바뀌어 그 칸이 없으면 조용히 건너뜀
         const holder = how === 'append' ? target : target.parentElement;
         if (holder?.querySelector(`:scope > .bl-wi-help[data-bl-wi-help="${id}"]`)) continue;
+        // 1.7.4 append 로 옮긴 칸은 글자 키가 안쪽 span 으로 가요 — 같은 태그(span) 선택자가 다음 번에 그 안쪽 span 을 잡아도 ? 가 둘이 되지 않게(바깥에 이미 붙어 있음)
+        if (target.parentElement?.querySelector(`:scope > .bl-wi-help[data-bl-wi-help="${id}"]`)) continue;
         if (how === 'append') {
             // 실리태번 번역(한국어 UI 등)은 새로 붙은 [data-i18n] 칸의 textContent 를 다시 써서 안에 넣은 ? 를 지운다 → 글자 키를 안쪽 span 으로 옮긴다
             const key = target.getAttribute('data-i18n');

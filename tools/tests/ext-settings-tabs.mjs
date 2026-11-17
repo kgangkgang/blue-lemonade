@@ -172,7 +172,7 @@ test('⑦ 누름 길: 머리줄을 누르면 늦게 그려진 칸에 탭을 만�
     assert.equal(localStorage.getItem('bl-ext-tab:ss-settings'), '나', '기억은 원래 이름으로');
     startExtCompat(doc);
     assert.equal(listeners.click.length, 1, '두 번 불러도 감시자는 하나');
-    assert.equal(doc.head.children.length, 1);
+    assert.equal(doc.head.children.filter(k => /^bl-ext-css-/.test(k.id)).length, 1, '맞춤 시트는 한 번(1.7.4 레몬 탭 제 시트 bl-mb-lemon-css 는 따로)');
 });
 test('⑧ 공용 가로 탭 줄 등록부: 모듈이 먼저 떠도 등록부가 생긴 뒤 누를 때 한 번만 넣어요', () => {
     const KEY = Symbol.for('blue-lemonade.tab-scroll.v1');

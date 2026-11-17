@@ -21,7 +21,8 @@ import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { armGuard } from './cheap-guards.js';
 import { cardColorTable, tableColor } from './card-colors.js';   // 1.5.9 카드별 색 기억(인물표 공급자와 같은 표)
 import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치(끈 묶음은 그 일을 안 해요 · 시트는 src/ext-status.gen.css 묶음 문)
-import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind, recall, remember } from './ext-organize.js';
+import { buildLemon, setLemon, LEMON } from './mb-lemon.js';   // 1.7.4 레몬 탭(「블루레몬 · 미트볼 맞춤」 — 맞춤을 다 꺼도 남아요)
+import { organize, toggleFold, toggleMore, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind, recall, remember } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
  *  mark: 원작만 가진 요소(이것이 든 설정 칸에만 맞춰요 — 있으면 분류 탭 대신 표식 · 안내 줄만) · sheet: 판 번호를 화면에 안 적는 확장의 제 시트 첫 규칙(그 시트 옆 manifest.json 에서 판을 읽어요) */
@@ -94,6 +95,16 @@ export function showGroup(root, index) {
         if (child.dataset.blTabG === want) delete child.dataset.blTabOff; else child.dataset.blTabOff = '';
     }
     root.dataset.blTabs = want;
+    setLemon(root, want === LEMON);   // 1.7.4 레몬 탭이면 그 칸을 열고(처음이면 그려요) · 다른 탭이면 닫아요
+}
+/** 1.7.4 레몬 단추 · 레몬 탭으로 가거나 돌아와요 — 탭 줄이 보이는 때(탭 나누기 켬 · 정리한 보기)는 탭으로, 아니면 칸 맨 위 한 줄처럼 열고 닫아요 */
+export function goLemon(root, on) {
+    const doc = root.ownerDocument, nav = root.querySelector(`.${NAV}`);
+    const tabbed = !!nav && root.dataset.blView !== 'raw' && !mbOff('tabs', doc);
+    if (!tabbed) return setLemon(root, on);
+    if (on) return showGroup(root, LEMON);
+    const back = [...nav.children].findIndex(tab => tab.dataset.blTabTo !== LEMON && tab.dataset.blTabName === recall(root, 'tab'));
+    return showGroup(root, back > 0 ? back : 0);
 }
 
 /** 한 칸에 탭 줄을 만들어요 — 이미 있으면 그대로, 머리가 모자라면 아무것도 안 해요. 만들었으면 true */
@@ -106,6 +117,7 @@ export function buildTabs(root, set) {
     const labels = [FIRST_TAB];
     let group = 0;
     for (const child of content.children) {
+        if (/(^|\s)bl-ext-lemon/.test(String(child.className || ''))) continue;   // 1.7.4 레몬 칸 · 한 줄은 제 자리(레몬)
         if (heads.includes(child)) { group += 1; labels.push(headLabel(child)); }
         child.dataset.blTabG = String(group);
     }
@@ -336,22 +348,65 @@ export function rowCols(tiles, cols = 4) {
     const n = Math.max(...tiles.map(t => t.c + t.w - 1));
     return cols > 4 || tiles.length <= 3 ? n : 0;
 }
+/** 1.7.4 사용자 「밑에 줄 애들이 또 여백 장난 아니게 생겼잖아」: 단추 줄을 마지막 줄 오른쪽 빈 열로 올리면(「in」) 칸은 제 열 폭 그대로라
+ *  칸(장소)과 단추 사이가 크게 비었어요(폰 384 · 단추 넷 — 열 둘 177px 에 단추 132px). 마지막 줄에서 가장 오른쪽 칸 하나가 단추 앞까지 남는 폭을 받아요.
+ *  칸 자리만 봐요(배치를 재지 않아요): 그 칸의 열 수(w) · 오른쪽 빈 열 수(f) · 단추 수(a) → 시트가 칸의 오른쪽 여백을 음수로 늘려요(src/ext-status.css). 없으면 null */
+export function growTile(tiles, cols = 4) {
+    if (!tiles.length) return null;
+    const last = Math.max(...tiles.map(t => t.r + t.h - 1));
+    const row = tiles.filter(t => t.r <= last && t.r + t.h - 1 >= last);
+    if (!row.length) return null;
+    const t = row.reduce((a, b) => (b.c + b.w > a.c + a.w ? b : a));
+    const f = cols - (t.c + t.w - 1);
+    return f > 0 && t.k ? { k: t.k, w: t.w, f } : null;
+}
+const GROW_KEY = /^[a-z][a-z0-9-]{0,23}$/;
+function setGrow(host, g, a) {
+    const want = g && GROW_KEY.test(g.k) ? g : null;
+    if (!want) { if (host.hasAttribute?.('data-bl-grow')) { host.removeAttribute('data-bl-grow'); for (const v of ['--bl-gw', '--bl-gf', '--bl-ga']) host.style.removeProperty(v); } return; }
+    for (const [v, x] of [['--bl-gw', want.w], ['--bl-gf', want.f], ['--bl-ga', a]]) if (host.style.getPropertyValue(v) !== String(x)) host.style.setProperty(v, String(x));
+    if (host.getAttribute('data-bl-grow') !== want.k) host.setAttribute('data-bl-grow', want.k);
+}
 export function fitActs(tb) {
     // 1.5.5 「지글지글」: 판단은 띠 바깥 틀(#ss-hud — 그 확장이 띠를 새로 그려도 그대로 있는 요소)에 달아요. 새 띠는 처음 그려질 때부터 앞 판단으로 배치되고,
     //   여기서는 칸 자리(그 확장이 적은 인라인 값) · 열 수 · 단추 수만 봐요 — 펼친 「자세히」 · 띠 높이 · 칩 폭은 안 봐서 판단이 제 입력을 바꾸지 않아요(되먹임 없음)
     const host = tb.closest?.('#ss-hud') || tb;
     const tg = tb.querySelector?.('.ss-tg'), acts = tb.querySelector?.('.ss-tb-acts');
-    let fit = false;
+    let fit = false, grow = null;
     if (tg && acts && !tb.classList.contains('editing') && Number(tg.style.getPropertyValue('--cols')) >= 4) {
         const tiles = [];
-        for (const t of tg.querySelectorAll(':scope > .ss-t')) { const c = SPAN.exec(t.style.gridColumn || t.style.gridColumnStart + ' / ' + t.style.gridColumnEnd), r = SPAN.exec(t.style.gridRow || t.style.gridRowStart + ' / ' + t.style.gridRowEnd); if (!c || !r) { tiles.length = 0; break; } tiles.push({ c: +c[1], w: +c[2], r: +r[1], h: +r[2] }); }
+        for (const t of tg.querySelectorAll(':scope > .ss-t')) { const c = SPAN.exec(t.style.gridColumn || t.style.gridColumnStart + ' / ' + t.style.gridColumnEnd), r = SPAN.exec(t.style.gridRow || t.style.gridRowStart + ' / ' + t.style.gridRowEnd); if (!c || !r) { tiles.length = 0; break; } tiles.push({ c: +c[1], w: +c[2], r: +r[1], h: +r[2], k: t.getAttribute?.('data-k') || '' }); }
         const cols = Number(tg.style.getPropertyValue('--cols'));
         const n = rowCols(tiles, cols);
         if (n) { fit = 'row'; if (host.style.getPropertyValue('--bl-tcols') !== String(n)) host.style.setProperty('--bl-tcols', String(n)); }
-        else if (cols === 4 && actsFit(tiles, 4, acts.children.length > 5 ? 3 : acts.children.length <= 2 ? 1 : 2)) fit = 'in';   // 미트볼 다음 판(2.9) 심플 모드 띠는 단추가 둘(일시정지 · 톱니) — 빈 열 하나(폰 4열 판 한 열 72px 위 · 단추 둘 64px)에 들어가요
+        else if (cols === 4 && actsFit(tiles, 4, acts.children.length > 5 ? 3 : acts.children.length <= 2 ? 1 : 2)) { fit = 'in'; grow = growTile(tiles, 4); }   // 미트볼 다음 판(2.9) 심플 모드 띠는 단추가 둘(일시정지 · 톱니) — 빈 열 하나(폰 4열 판 한 열 72px 위 · 단추 둘 64px)에 들어가요
     }
     if (fit) { if (host.getAttribute('data-bl-acts') !== fit) host.setAttribute('data-bl-acts', fit); } else if (host.hasAttribute?.('data-bl-acts') ?? true) host.removeAttribute('data-bl-acts');
+    setGrow(host, grow, acts?.children.length || 0);
     return fit;
+}
+/** 1.7.4 수치 칸 고르게(사용자 「2줄이 돼도 저 상태창 알잘딱하게 크기 바뀌어야지」): 그 확장은 게이지 칸의 수치 묶음을 글 폭 그대로 가운데에 모으고(칸 양옆이 빔)
+ *  넘치면 통째로 줄여요(zoom) — 칸마다 폭이 달라 이름 ↔ 숫자 틈이 들쭉날쭉했어요. 시트가 수치를 칸 폭에 고르게 나누고, 한 줄에 안 들어가면 둘 · 하나씩 꺾어요.
+ *  여기서는 글자 수만 봐요(배치를 재지 않아요): 수치 수(--bl-bn)와 가장 긴 「이름 숫자」 의 대략 폭(--bl-bmin · em) — 한글 · 한자 1 · 그 밖 0.6 · 숫자 0.62(굵은 고른 폭). */
+const WIDE = /[ᄀ-ᇿ⺀-鿿가-힯豈-﫿＀-￯]/;
+export function barsMin(rows) {
+    let max = 0;
+    for (const { name, value } of rows) {
+        let u = 0; for (const ch of String(name || '')) u += ch === ' ' ? 0.3 : WIDE.test(ch) ? 1 : 0.6;
+        const v = [...String(value || '')].length;
+        max = Math.max(max, u * 0.85 + v * 0.62);
+    }
+    return Math.round((max + 0.6) * 100) / 100;   // + 이름 ↔ 숫자 틈(4px 남짓)
+}
+export function markBars(tb) {
+    const host = tb.closest?.('#ss-hud') || tb;
+    const gs = [...(tb.querySelectorAll?.('.ss-tg > .ss-t.t-bars:not(.tall) > .c > .ci > .g') || [])];
+    if (!gs.length) { if (host.hasAttribute?.('data-bl-bars')) { host.removeAttribute('data-bl-bars'); host.style.removeProperty('--bl-bn'); host.style.removeProperty('--bl-bmin'); } return 0; }
+    const min = `${barsMin(gs.map(g => ({ name: g.querySelector('em')?.textContent, value: g.querySelector('b')?.textContent })))}em`;
+    if (host.style.getPropertyValue('--bl-bn') !== String(gs.length)) host.style.setProperty('--bl-bn', String(gs.length));
+    if (host.style.getPropertyValue('--bl-bmin') !== min) host.style.setProperty('--bl-bmin', min);
+    if (host.getAttribute('data-bl-bars') !== String(gs.length)) host.setAttribute('data-bl-bars', String(gs.length));
+    return gs.length;
 }
 /** 1.5.5 사용자 「아침 4/1 뒤에 (화)(월) 이런 식으로 요일」: 그 확장의 날짜 칸은 칩에 「때 + 월/일」만 적고, 칸 설명(title)엔 「월/일(요일) 때 …」 를 적어요.
  *  설명 맨 앞의 「월/일(요일)」 을 읽어, 칩의 작은 글이 같은 「월/일」 로 끝나면 바깥 틀에 표식(data-bl-wd · 변수 --bl-wd)만 달아요 — 시트가 그 뒤에 「(요일)」 을 그려요(글 · 저장 자료는 안 바꿔요).
@@ -550,10 +605,11 @@ export function buildAll(doc) {
         const root = doc.querySelector(set.root);
         if (!root) continue;
         if (!set.mark) {
-            if (set.root === '#ss-settings' && mbOff('tabs', doc)) { attachSheet(doc, set); continue; }   // 1.7.3 「설정 칸 탭 나누기 · 정리한 보기」 를 끔 — 새로 나누지 않아요(이미 나눈 표식은 시트 묶음 문이 꺼서 원작처럼 길게 보여요)
+            if (set.root === '#ss-settings' && mbOff('tabs', doc)) { attachSheet(doc, set); try { buildLemon(root); } catch { /* 레몬 칸 없이 원래 모습 */ } continue; }   // 1.7.3 「설정 칸 탭 나누기 · 정리한 보기」 를 끔 — 새로 나누지 않아요(이미 나눈 표식은 시트 묶음 문이 꺼서 원작처럼 길게 보여요) · 1.7.4 레몬 칸 · 머리 단추는 그래도 끼워요(다시 켤 자리)
             attachSheet(doc, set); buildTabs(root, set); adoptStray(root);
             // 정리한 보기: 탭이 있을 때만 · 한 번만. 구조를 모르면(다른 판 · 시험 DOM) 아무것도 안 하고 원래 모습 그대로
-            try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }
+            if (set.root === '#ss-settings') try { buildLemon(root); } catch { /* 레몬 칸 없이 원래 모습 */ }   // 1.7.4 레몬 탭 · 칸 · 머리 단추(정리한 보기보다 먼저 — 머리 단추를 같이 써요)
+            try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, root.dataset.blTabs === LEMON ? LEMON : Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }
             continue;
         }
         if (!root.querySelector(set.mark)) continue;   // 이름만 같은 다른 확장의 칸
@@ -589,7 +645,8 @@ export function startExtCompat(doc = globalThis.document) {
             const tab = target.closest(`.${TAB}`);
             if (tab) {
                 const root = SETS.map(set => tab.closest(set.root)).find(Boolean);
-                if (root) { showGroup(root, Number(tab.dataset.blTabTo) || 0); remember(root, 'tab', tab.dataset.blTabName || tab.textContent); }
+                if (root && tab.dataset.blTabTo === LEMON) goLemon(root, true);   // 1.7.4 레몬 탭은 기억하지 않아요(다음 시작에 설정 창 모듈을 미리 받지 않게)
+                else if (root) { showGroup(root, Number(tab.dataset.blTabTo) || 0); remember(root, 'tab', tab.dataset.blTabName || tab.textContent); }
                 ensureStrip(doc);
                 return;
             }
@@ -620,6 +677,8 @@ export function startExtCompat(doc = globalThis.document) {
                 }
             }
             // 정리한 보기의 단추들: 갈래 펼침 · 자세히 · 보기 스위치 · 길잡이
+            const lemonOpen = target.closest('.bl-ext-lemon-open');   // 1.7.4 탭 줄이 안 보일 때의 「블루레몬 · 미트볼 맞춤」 한 줄
+            if (lemonOpen) { const root = SETS.map(set => lemonOpen.closest(set.root)).find(Boolean); if (root) goLemon(root, !('blLemon' in root.dataset)); return; }
             const own = target.closest('.bl-ext-fold') || target.closest('.bl-ext-more') || target.closest('.bl-ext-view') || target.closest('.bl-ext-jump') || target.closest('.bl-ext-start-x') || target.closest('.bl-ext-hit') || target.closest('.bl-ext-findbtn');
             if (own) {
                 const root = SETS.map(set => own.closest(set.root)).find(Boolean);
@@ -636,7 +695,11 @@ export function startExtCompat(doc = globalThis.document) {
                         const box = root.querySelector('.bl-ext-find'), open = toggleFind(root, own);
                         stay = !!root.querySelector('.inline-drawer-content')?.getClientRects?.().length;
                         if (box) { if (open) box.focus?.(); else { box.value = ''; renderFound(root, ''); } }
-                    } else setView(root, root.dataset.blView !== 'raw');
+                    } else {   // 1.7.4 레몬 단추: 레몬 탭으로 가요(한 번 더 누르면 돌아와요) — 원작 그대로 보기는 그 탭 안 스위치로 옮겼어요. 서랍이 접혀 있으면 펼치면서 열어요
+                        const shown = !!root.querySelector('.inline-drawer-content')?.getClientRects?.().length;
+                        goLemon(root, shown ? !('blLemon' in root.dataset) : true);
+                        stay = shown;
+                    }
                     if (stay) { event.stopPropagation?.(); event.preventDefault?.(); }
                 }
                 return;
@@ -651,7 +714,7 @@ export function startExtCompat(doc = globalThis.document) {
             const el = event.target;
             try {
                 // 1.7.3 미트볼 맞춤 스위치: 끈 묶음의 표식은 안 달아요(이미 단 표식은 시트 묶음 문이 꺼요)
-                if (el?.classList?.contains('ss-tb')) { if (!mbOff('dot', doc)) syncDots(doc, el); if (!mbOff('bandrow', doc)) fitActs(el); if (!mbOff('badge', doc)) markBadge(el); if (!mbOff('weekday', doc)) markWeekday(el); } else if (el?.tagName === 'DL') { if (!mbOff('grid', doc)) markLong(el); }
+                if (el?.classList?.contains('ss-tb')) { if (!mbOff('dot', doc)) syncDots(doc, el); if (!mbOff('bandrow', doc)) fitActs(el); if (!mbOff('band', doc)) markBars(el); if (!mbOff('badge', doc)) markBadge(el); if (!mbOff('weekday', doc)) markWeekday(el); } else if (el?.tagName === 'DL') { if (!mbOff('grid', doc)) markLong(el); }
                 else if (el?.classList?.contains('ss-wz-head') && el.parentElement?.classList?.contains('ss-tw')) { if (!mbOff('deco', doc)) decoTheme(el.parentElement); }
                 else if (el?.matches?.(FACES) && !facesQueued) { facesQueued = true; queueMicrotask(() => { facesQueued = false; try { paintFaces(doc); } catch { /* 아이콘 그대로 */ } }); }   // 얼굴 여럿이 한꺼번에 그려져도 한 번만 훑어요
             } catch { /* 원래 배치 그대로 */ }

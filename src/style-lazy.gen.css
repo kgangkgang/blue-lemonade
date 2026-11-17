@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build ad3fdaf5f6ec) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build e7e22141896e) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b28fbbf5e0cf7922"}
 /* css/00-base.css */
-:root{--bl-release:"1.7.3";}
+:root{--bl-release:"1.7.4";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -2964,6 +2964,28 @@ body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text :is(em, i) q:n
 .salty-sample.salty-dlg-full :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
   content: '';
   padding-inline-end: 0.15em;
+}
+body.salty.salty-dlg-marker :is(#chat,.bl-chat-like) .mes .mes_text q.bl-q-inked:not(#salty-none),
+.salty-sample.salty-dlg-marker q.bl-q-inked:not(#salty-none):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text q.bl-q-inked:not(#salty-none),
+.salty-sample.salty-dlg-full q.bl-q-inked:not(#salty-none):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
+  background: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  padding: 0;
+  border-radius: 0;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+body.salty.salty-dlg-marker :is(#chat,.bl-chat-like) .mes .mes_text q.bl-q-inked::after,
+.salty-sample.salty-dlg-marker q.bl-q-inked:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
+body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text q.bl-q-inked::after,
+.salty-sample.salty-dlg-full q.bl-q-inked:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
+  content: none;
 }
 body.salty.salty-dlg-bold :is(#chat,.bl-chat-like) .mes .mes_text q,
 .salty-sample.salty-dlg-bold q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
@@ -16574,6 +16596,7 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 .bl-setting-change > div { display:flex; gap:8px; flex-wrap:wrap; }
 .bl-editor .bl-editor-group-body .salty-note { margin:4px 0 6px; font-size:calc(12 * var(--sp)); line-height:1.5; color:var(--salty-muted); display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; cursor:pointer; }
 .bl-editor .bl-editor-group-body .salty-note.open { display:block; -webkit-line-clamp:none; line-clamp:none; overflow:visible; }
+.bl-editor .bl-editor-group-body .salty-note.bl-mb-fit-sub { cursor:auto; }
 .bl-editor :is(.salty-row,.salty-stack) > span > small,
 .salty-panel.bl-editor .bl-prompt-tools .bl-prompt-tool-row > small { font-size:calc(12 * var(--sp)); line-height:1.5; color:var(--salty-muted); }
 
@@ -18162,6 +18185,12 @@ html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :is(.world_entry_edit, .world
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .world_entry_form_control > .bl-wi-help { margin-left:calc(var(--bl-help-gap) - 2px)!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo .bl-wi-help { --bl-help-y: 0em; }
 html body.salty:not(#bl-h1):not(#bl-h2) #WorldInfo :where(small):is(#wiCheckboxes label.checkbox_label > small, #wiSliders > .flex-container:where([data-bl-row~="wics"]):is(#bl-s, *) > small) > .bl-wi-help { margin-left:var(--bl-help-gap)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo small:where(html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo small):has(> .bl-wi-help) { display:block!important; text-align:start!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo .range-block-title > small:where(html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo .range-block-title > small):has(> .bl-wi-help) { display:inline-block!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo :is(small, label.checkbox > span) > span:where(html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo :is(small, label.checkbox > span) > span):has(+ .bl-wi-help) { display:inline-block!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo :is(small, label.checkbox > span) > .bl-wi-help { --bl-help-y: 0em; top:var(--bl-help-y-line)!important; margin-left:var(--bl-help-gap)!important; }
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo small > .bl-wi-help.bl-wi-help ~ .fa-comments,
+html body.salty:not(#bl-h1):not(#bl-h2):not(#bl-h3) #WorldInfo small > .bl-wi-help.bl-wi-help ~ .fa-solid { margin-left:5px!important; }
 html body.salty:not(#bl-h1):not(#bl-h2) #left-nav-panel .flex-container > .fa-circle-info,
 html body.salty:not(#bl-h1):not(#bl-h2) #left-nav-panel .flex-container > .fa-info-circle,
 html body.salty:not(#bl-h1):not(#bl-h2) #left-nav-panel .flex-container > .fa-circle-question,
@@ -20795,6 +20824,7 @@ html body.salty dialog:not(.bl-settings-dialog) a[href]:not([class]) { color: va
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6):not(.fh-is-fullscreen) .fh-shell { border-radius: var(--bl-r-lg, 16px); }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand strong { font-size: 1em; font-weight: 700; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand-mark { width: 1.3em; height: 1.3em; }
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand strong > .bl-fruit-help-button { --bl-help-y: 0em; position: relative; top: var(--bl-help-y-line); }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item { font-size: var(--bl-ui-tab-fs, 13px); }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item > b { font-size: var(--bl-ui-ink-fa, 15px); }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sel { font-weight: 400; padding-left: 12px; }

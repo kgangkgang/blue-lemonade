@@ -125,11 +125,12 @@ const tagOf = r => (r >= 1 ? `${r}F` : `B${1 - r}`);
  * 층별 배치를 계산해요. places = 그 확장 지도 장소 목록(name · desc · kind · area · links · x · y).
  * 돌려주는 것: null(층 건물이 없음 → 그 확장 그림 그대로) 또는 { pos: Map(이름 → {x, y, zone, row, b}), rows, buildings, ground, routes(pairs) }
  */
-export function floorLayout(places, { find = simpleFind, tr = null, tall = null } = {}) {
+export function floorLayout(places, { find = simpleFind, tr = null, tall = null, dir = null } = {}) {
     // 버그 사냥 10b: 이름이 완전히 같은 장소는 첫째만(그 확장 findBy · layoutPlaces 도 첫째를 써요) — 둘째가 층 · 바깥 칸을 덮어 점 자리와 카드가 어긋났어요
     const names = new Set(), list = (Array.isArray(places) ? places : []).filter(p => p && p.name && !names.has(p.name) && names.add(p.name));
     if (list.length < 2) return null;
-    const info = new Map(list.map((p, i) => [p.name, { p, i, f: floorOf(p, tr), area: String(p.area ?? '') }]));
+    // 1.7.4 장소 이름 · 설명에 층이 없으면 로어북 층 안내(dir — floorDirectory)에서 그 이름의 층을 찾아요(그림만 · 그 확장 자료는 그대로)
+    const info = new Map(list.map((p, i) => [p.name, { p, i, f: floorOf(p, tr) ?? dirFloor(dir, p, tr), area: String(p.area ?? '') }]));
     // 1.7.0 구역(area) 이름과 같은 장소(「본부 | 7F 비서실」 같은 지금 장소 줄에서 그 확장이 앞 조각으로 만든 곳)는 방이 아니라 건물 머리 — 층을 안 읽어요
     const tx = s => [s, tr?.(s)].filter(Boolean);
     const areaKeys = new Map();
@@ -151,7 +152,16 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     const groups = new Map();
     for (const it of info.values()) if (it.f !== null) { const k = it.area; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(it); }
     const ax = it => (Number.isFinite(it.p.x) ? it.p.x : it.i * 10);
-    const buildings = [...groups.values()].filter(g => new Set(g.map(it => it.f)).size >= 2)
+    // 1.7.4 층이 몇 곳에만 적힌 구역은 건물로 안 봐요: 그 구역 장소(건물 머리 · 하늘 · 땅 밑 장소 빼고) 가운데 층이 적힌 곳이 절반이 안 되면
+    //   층 모르는 부서 여럿이 「바깥 장소」 로 땅 줄에 늘어서 건물 단면이 오히려 틀린 그림이 돼요(처음 만든 지도에 「3층 회의실」 · 「4층 서고」 만 층이 적힌 경우) → 그 확장 그림 그대로
+    //   구역이 빈 묶음(구역을 안 쓰는 지도)은 바깥 장소와 가를 수 없어 예전처럼 둬요
+    const thin = g => {
+        const a = g[0]?.area; if (!a) return false;
+        let members = 0;
+        for (const it of info.values()) if (it.area === a && (it.f !== null || (!headOf.has(it.p.name) && zoneOf(it.p, tr) === 'out'))) members++;
+        return g.length * 2 < members;
+    };
+    const buildings = [...groups.values()].filter(g => new Set(g.map(it => it.f)).size >= 2 && !thin(g))
         .sort((a, b) => a.reduce((s, it) => s + ax(it), 0) / a.length - b.reduce((s, it) => s + ax(it), 0) / b.length);
     if (!buildings.length) return null;
     const inB = new Map(); buildings.forEach((g, bi) => g.forEach(it => inB.set(it.p.name, bi)));
@@ -181,10 +191,12 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     });
     const real = n => alias.get(n) ?? n;
     // 줄: 건물마다 맨 위 ~ 맨 아래 층을 빈 층까지 다 넣어요(15층 넘게 벌어지면 장소가 있는 층만)
+    // 1.7.4 땅 위 건물은 1층(땅)까지 내려와요 — 맨 아래 방이 3층이면 땅 줄(바깥 장소 줄)이 3층 높이가 돼 바깥 장소가 「3층」 에 선 것처럼 보였어요
     const rowSet = new Set();
+    const lowOf = rs => { const hi = Math.max(...rs), lo = Math.min(...rs); return hi >= 1 ? Math.min(lo, 1) : lo; };
     for (const g of buildings) {
-        const rs = g.map(it => rowOf(it.f)), hi = Math.max(...rs), lo = Math.min(...rs);
-        if (hi - lo < 15) for (let r = lo; r <= hi; r++) rowSet.add(r); else rs.forEach(r => rowSet.add(r));
+        const rs = g.map(it => rowOf(it.f)), hi = Math.max(...rs), lo = lowOf(rs);
+        if (hi - lo < 15) for (let r = lo; r <= hi; r++) rowSet.add(r); else { rs.forEach(r => rowSet.add(r)); rowSet.add(lo); }
     }
     // 버그 사냥 9: 지하층만 있는 건물(지하 감옥 B1 ~ B3 등)이면 땅 줄(1F)이 없어 땅 선 · 바깥 장소가 맨 아래 지하층 높이에 놓였어요 — 빈 1F 줄을 하나 둬요(그 건물 띠에는 안 들어가요)
     if (![...rowSet].some(r => r >= 1)) rowSet.add(1);
@@ -208,15 +220,21 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
     const fOf = n => info.get(n)?.f ?? null;
     // 층 없는 장소: 위 · 아래 · 바깥
     const bAreas = new Set(buildings.map(g => g[0]?.area));
-    const zone = new Map(list.filter(p => !inB.has(p.name) && !alias.has(p.name)).map(p => [p.name, headOf.has(p.name) && bAreas.has(headOf.get(p.name)) ? 'above' : zoneOf(p, tr)]));   // 건물 머리는 지붕 위
-    // 승강기 줄: 건물 안 먼 층 사이 선 · 하늘 · 땅 밑 장소가 건물로 오는 선(지붕 위 · 바닥 아래로 곧게 나가요) — 선마다 줄 하나
-    const shaftN = buildings.map(() => 0), laneIdx = new Map();
+    // 1.7.4 이름 · 종류로 안 갈리는 장소는 구역 이름으로 한 번 더(하늘 구역의 「집」 · 땅 밑 구역의 영지가 땅 줄에 서던 것) — 건물 구역은 빼요(「Heaven Tower」 의 방)
+    const zoneIn = p => { const z = zoneOf(p, tr); if (z !== 'out' || !p.area || bAreas.has(String(p.area))) return z; return zoneOf({ name: String(p.area) }, tr); };
+    const zone = new Map(list.filter(p => !inB.has(p.name) && !alias.has(p.name)).map(p => [p.name, headOf.has(p.name) && bAreas.has(headOf.get(p.name)) ? 'above' : zoneIn(p)]));   // 건물 머리는 지붕 위
+    // 1.7.5 공용 통로: 높이가 다른 두 곳을 잇는 선은 모두 한 건물의 승강기 줄 하나(통로)로 모여요 — 예전엔 먼 층 선 · 하늘 · 땅 밑 선마다 제 줄,
+    //   바깥 장소 선마다 건물 곁 제 줄이 생겨 건물 오른쪽에 세로선이 열 개 넘게 빽빽했어요. 어느 건물 통로인가: 건물 안 장소 쪽(둘 다면 먼저 적힌 쪽) ·
+    //   건물 밖끼리면 바깥 장소가 끼면 바깥 줄에 가까운 맨 오른쪽 건물, 아니면 첫 건물
     const pkey = (a, b) => [a, b].sort().join('|');
+    const rowKey = n => (inB.has(n) ? `r${rowOf(fOf(n))}` : zone.get(n) === 'out' ? `r${groundRow}` : zone.get(n) ?? '');
+    const hub = new Map(), shaftOn = buildings.map(() => false);
     for (const [a, b] of pairs) {
-        const ba = inB.get(a), bb = inB.get(b);
-        if (ba !== undefined && ba === bb && Math.abs(rows.indexOf(rowOf(fOf(a))) - rows.indexOf(rowOf(fOf(b)))) > 1) laneIdx.set(pkey(a, b), [ba, shaftN[ba]++]);
-        else if ((ba !== undefined) !== (bb !== undefined)) { const bi = ba ?? bb, z = zone.get(ba === undefined ? a : b); if (z === 'above' || z === 'below') laneIdx.set(pkey(a, b), [bi, shaftN[bi]++]); }
+        if (rowKey(a) === rowKey(b)) continue;   // 같은 높이 줄: 가로선
+        const bi = inB.get(a) ?? inB.get(b) ?? (zone.get(a) === 'out' || zone.get(b) === 'out' ? buildings.length - 1 : 0);
+        hub.set(pkey(a, b), bi); shaftOn[bi] = true;
     }
+    const shaftN = shaftOn.map(on => (on ? 1 : 0));
     // 칸 너비 채우기: 세로(층 수 · 위 · 아래)로 정해지는 보기 칸 너비만큼 방 칸을 넓혀요(건물이 한쪽에 붙고 반이 비지 않게)
     const hasZ = z => [...zone.values()].includes(z);
     const contentH = bottom + (hasZ('above') ? 23 : 3) + (hasZ('below') ? 23 : 3);
@@ -238,21 +256,21 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
             const w = roomW / a.length;
             a.forEach((it, j) => pos.set(it.p.name, { x: r1(roomL + (j + 0.5) * w), y: r1(dotY(r)), zone: 'b', row: r, b: bi, w }));
         }
-        const rs = rows.filter(r => r <= Math.max(...byRow.keys()) && r >= Math.min(...byRow.keys()));
+        const rs = rows.filter(r => r <= Math.max(...byRow.keys()) && r >= lowOf([...byRow.keys()]));
         bInfo.push({ left, right, roomL, roomR: roomL + roomW, shaftL: roomL + roomW, shaftW, rows: rs, top: rowTop.get(rs[0]), bottom: rowTop.get(rs[rs.length - 1]) + rowH(rs[rs.length - 1]), lanes: 0 });
         x = right + 10;
     });
     const bLeft = bInfo[0].left, bRight = bInfo[bInfo.length - 1].right;
     const rest = list.filter(p => !pos.has(p.name) && !alias.has(p.name));
-    const lane = new Map([...laneIdx].map(([k, [bi, i]]) => [k, r1(bInfo[bi].shaftL + 1.5 + i * LANE)]));
+    for (const b of bInfo) b.shaftX = r1(b.shaftL + b.shaftW / 2);
     // 바깥 장소 차례: 건물에서 링크로 몇 걸음인지(가까운 것부터) → 그 확장 x
     const adj = new Map(list.map(p => [p.name, new Set()]));
     for (const [a, b] of pairs) { adj.get(a)?.add(b); adj.get(b)?.add(a); }
     const depth = new Map(); const q = [...pos.keys()]; q.forEach(n => depth.set(n, 0));
     while (q.length) { const n = q.shift(); for (const m of adj.get(n) || []) if (!depth.has(m) && zone.get(m) === 'out') { depth.set(m, depth.get(n) + 1); q.push(m); } }
     const outs = rest.filter(p => zone.get(p.name) === 'out').sort((p, q2) => (depth.get(p.name) ?? 99) - (depth.get(q2.name) ?? 99) || ax(info.get(p.name)) - ax(info.get(q2.name)));
-    const outLaneN = pairs.filter(([a, b]) => (zone.get(a) === 'out' && pos.get(b)?.zone === 'b' && pos.get(b).row !== groundRow) || (zone.get(b) === 'out' && pos.get(a)?.zone === 'b' && pos.get(a).row !== groundRow)).length;
-    const outL = bRight + 4 + outLaneN * LANE;
+    // 1.7.5 바깥 장소 선은 통로로 땅 줄까지 내려와 가장 가까운 벽(오른쪽)으로 나가요 — 건물과 바깥 사이에 선마다 줄을 안 둬요
+    const outL = bRight + 4;
     // 1.7.0 바깥 칸 너비는 이름표 폭 기준(두 줄로 접은 뒤 가장 긴 줄 + 2) — 이름표끼리 겹치지 않게 · 좁으면 그만큼 옆으로 밀어요
     let ox = outL;
     outs.forEach(p => {
@@ -260,28 +278,55 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null 
         pos.set(p.name, { x: r1(ox + w / 2), y: r1(dotY(groundRow)), zone: 'out', row: groundRow, b: null, w }); ox += w;
     });
     const outR = outs.length ? ox : bRight;
-    // 하늘 장소는 승강기 줄 꼭대기 위, 땅 밑 장소는 바닥 아래 — 그 장소의 첫 승강기 줄 x(건물로 가는 선이 없으면 건물 가운데)
-    const mid = (bLeft + bRight) / 2;
+    // 하늘 장소는 지붕 위 한 줄, 땅 밑 장소는 바닥 아래 한 줄 — 건물 방 칸 가운데에 그 확장 차례로 늘어서요
+    //   1.7.5 땅 밑 줄은 통로가 바닥 아래 복도까지 내려와 지나가므로 이름표 · 점이 통로 x 에 걸리지 않게 줄 전체를 왼쪽으로 반 칸씩 비켜요
+    const mid = (bInfo[0].roomL + bInfo[bInfo.length - 1].roomR) / 2;
+    const shaftXs = bInfo.filter(b => b.shaftW).map(b => b.shaftX);
     for (const [z, y] of [['above', top - 11], ['below', bottom + 13]]) {
-        const a = rest.filter(p => zone.get(p.name) === z), used = [];
-        a.forEach((p, k) => {
-            const own = pairs.find(([u, v]) => (u === p.name || v === p.name) && lane.has(pkey(u, v)));
-            let px = own ? lane.get(pkey(...own)) : mid + (k - (a.length - 1) / 2) * SLOT_W;
-            while (used.some(u => Math.abs(u - px) < SLOT_W * 0.9)) px -= SLOT_W;   // 겹치면 왼쪽으로 한 칸씩
-            used.push(px); pos.set(p.name, { x: r1(px), y, zone: z, row: null, b: null, w: SLOT_W });
-        });
+        const a = rest.filter(p => zone.get(p.name) === z);
+        const half = a.map(p => Math.max(...wrapLabel(tr?.(p.name) || p.name, SLOT_W - 1.5).map(textW), 5.6) / 2 + 1);
+        let x0 = mid - (a.length - 1) / 2 * SLOT_W;
+        const clash = () => z === 'below' && a.some((p, k) => shaftXs.some(sx => Math.abs(x0 + k * SLOT_W - sx) < half[k]));
+        for (let i = 0; i < 40 && clash(); i++) x0 -= SLOT_W / 2;
+        a.forEach((p, k) => pos.set(p.name, { x: r1(x0 + k * SLOT_W), y, zone: z, row: null, b: null, w: SLOT_W }));
     }
     for (const [a, b] of alias) if (pos.has(b)) pos.set(a, { ...pos.get(b), twin: b });   // 겹친 장소는 대표 점 자리
-    const out = { pos, alias, rows, rowTop, rowH, dotY, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, lane, tall: tall || new Set() };
+    const out = { pos, alias, rows, rowTop, rowH, dotY, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, hub, tall: tall || new Set() };
     if (tall) return out;
     // 이름표가 두 줄로 접힐 층(입히기와 같은 규칙: 보이는 이름 = 번역 보기 글 · 칸 너비 - 1.5)을 모아 한 번 더 놓아요
     const need = new Set();
     for (const [n, o] of pos) if (o.row !== null && o.row !== undefined && (o.zone === 'b' || o.zone === 'out') && info.get(n)?.p.known !== false && wrapLabel(tr?.(n) || n, (o.w || SLOT_W) - 1.5).length > 1) need.add(o.row);
-    return need.size ? floorLayout(places, { find, tr, tall: need }) : out;
+    return need.size ? floorLayout(places, { find, tr, tall: need, dir }) : out;
 }
 
-/** 두 장소 사이 꺾인 선(점 목록). L = floorLayout 결과 · shown = 지금 보이는 장소 이름 모음 · lanes = 길마다 쓴 줄 수(같은 길 선끼리 벌려요) */
-export function routeOf(L, a, b, shown = null, lanes = { left: 0, out: 0 }) {
+// ── 로어북 층 안내(1.7.4) ─────────────────────────────────────
+// 그 확장이 채팅마다 AI 로 만드는 지도는 같은 세계여도 장소 설명에 층을 적을 때도 · 안 적을 때도 있어요(한 채팅은 열 곳 · 다음 채팅은 세 곳 · 한 곳).
+//   로어북에 「- **7F:** 사무실 A, 사무실 B」 같은 층 안내가 있으면 그것으로 층을 채워 채팅마다 같은 건물 모양이 나오게 해요(그림만 · 자료는 그대로)
+const DIR_LINE = /^\s*(?:[-*•·]\s*)?(?:\*\*|__)?\s*((?:B\s?\d{1,2}\s?F?|\d{1,3}\s?F|(?:지하|地下)\s?\d{1,2}\s?(?:층|階)|\d{1,3}\s?(?:층|階)|\d{1,3}(?:st|nd|rd|th)\s+(?:floor|basement)|ground\s+floor|basement(?:\s+\d{1,2})?))\s*(?:\*\*|__)?\s*[:：]\s*(?:\*\*|__)?\s*(.+?)\s*$/iu;
+/** 글 여러 개(로어북 항목 본문)에서 「층: 이름, 이름」 줄을 읽어 [{ name, f }] — 한 글 안에서 서로 다른 층이 둘 넘게 나와야 층 안내로 봐요(우연한 한 줄은 안 써요) */
+export function floorDirectory(texts) {
+    const out = [];
+    for (const t of Array.isArray(texts) ? texts : []) {
+        const got = [];
+        for (const line of String(t ?? '').split(/\r?\n/)) {
+            const m = DIR_LINE.exec(line); if (!m) continue;
+            const f = floorIn(m[1].replace(/^B\s?(\d+)$/i, 'B$1')); if (f === null) continue;
+            for (const raw of m[2].replace(/[*_`]/g, '').split(/\s*(?:[,，、;；/]|\band\b|\s·\s)\s*/u)) { const name = raw.replace(/[.。]+$/, '').trim(); if (name && [...name].length >= 2 && [...name].length <= 60) got.push({ name, f }); }
+        }
+        if (new Set(got.map(g => g.f)).size >= 2) out.push(...got);
+    }
+    return out;
+}
+/** 장소 하나의 로어북 층(원문 · 번역 이름이 안내 이름과 같은 곳 — sameName). 안내 이름 둘이 다른 층으로 걸리면 모르는 것으로 */
+function dirFloor(dir, p, tr) {
+    if (!dir?.length || !p?.name) return null;
+    const names = [p.name, tr?.(p.name)].filter(Boolean);
+    const fs = new Set(dir.filter(d => names.some(n => normName(n) === normName(d.name) || sameName(n, d.name))).map(d => d.f));
+    return fs.size === 1 ? [...fs][0] : null;
+}
+
+/** 두 장소 사이 꺾인 선(점 목록). L = floorLayout 결과 · shown = 지금 보이는 장소 이름 모음(같은 줄 사이에 낀 점 판정) */
+export function routeOf(L, a, b, shown = null) {
     const A = L.pos.get(a), Bp = L.pos.get(b); if (!A || !Bp) return null;
     const pts = (...p) => p.map(([x, y]) => [r1(x), r1(y)]).filter((q, i, a) => !i || q[0] !== a[i - 1][0] || q[1] !== a[i - 1][1]);
     const between = (P, Q) => [...L.pos].some(([n, o]) => n !== a && n !== b && (!shown || shown.has(n)) && Math.abs(o.y - P.y) < 0.5 && o.x > Math.min(P.x, Q.x) + 0.5 && o.x < Math.max(P.x, Q.x) - 0.5);
@@ -290,26 +335,36 @@ export function routeOf(L, a, b, shown = null, lanes = { left: 0, out: 0 }) {
         if (!between(A, Bp)) return pts([A.x, A.y], [Bp.x, Bp.y]);
         const c = A.y + CORRIDOR; return pts([A.x, A.y], [A.x, c], [Bp.x, c], [Bp.x, Bp.y]);
     }
+    // 1.7.5 높이가 다른 두 곳: 두 끝 모두 점 바로 아래 복도로 내려와 → 그 줄 복도를 따라 공용 통로(승강기 줄 하나)로 → 통로를 타고 → 상대 줄 복도로 → 점 밑으로 올라가요.
+    //   층 사이 · 하늘 · 땅 밑 · 바깥 장소 선이 모두 같은 통로 · 같은 줄 복도에 겹쳐 하나로 보여요. 이름표는 점 위에 있어서 선이 점 밑으로만 드나들면 글자를 안 지나요
+    //   (예전: 이웃 층은 띠 경계 계단으로 아래층 이름표를 세로로 뚫고 · 하늘 ↔ 땅 밑은 층 가운데에서 꺾여 방 점을 지났어요)
     const [U, D] = A.y < Bp.y ? [A, Bp] : [Bp, A];
-    // 같은 건물
-    if (U.zone === 'b' && D.zone === 'b' && U.b === D.b) {
-        const bi = L.buildings[U.b];
-        const ui = L.rows.indexOf(U.row), di = L.rows.indexOf(D.row);
-        if (di - ui === 1) { const slab = L.rowTop.get(D.row); return pts([U.x, U.y], [U.x, slab], [D.x, slab], [D.x, D.y]); }   // 이웃 층: 계단
-        const sx = L.lane?.get([a, b].sort().join('|')) ?? bi.shaftL + 1.5;   // 먼 층: 승강기 줄(선마다 제 줄)
-        return pts([U.x, U.y], [U.x, U.y + CORRIDOR], [sx, U.y + CORRIDOR], [sx, D.y + CORRIDOR], [D.x, D.y + CORRIDOR], [D.x, D.y]);
+    const bi = L.hub?.get([a, b].sort().join('|')) ?? U.b ?? D.b ?? 0, bd = L.buildings[bi] || L.buildings[0];
+    const sx = bd.shaftX ?? r1(bd.shaftL + (bd.shaftW || 0) / 2);
+    return pts([U.x, U.y], [U.x, U.y + CORRIDOR], [sx, U.y + CORRIDOR], [sx, D.y + CORRIDOR], [D.x, D.y + CORRIDOR], [D.x, D.y]);
+}
+/** 1.7.5 선 여럿을 토막으로 쪼개 같은 줄에서 겹치는 토막을 합쳐요(한 path 로 그려 진하기가 쌓이지 않게) — skip = 이미 그린 토막 목록(그 위는 빼요) */
+export function mergeSegments(routes, skip = null) {
+    const lines = new Map();   // 'h|y' · 'v|x' → [[from, to]]
+    const add = (map, p, q) => {
+        if (p[0] === q[0] && p[1] === q[1]) return;
+        const h = p[1] === q[1], k = `${h ? 'h' : 'v'}|${h ? p[1] : p[0]}`, a = h ? p[0] : p[1], b = h ? q[0] : q[1];
+        if (!map.has(k)) map.set(k, []); map.get(k).push([Math.min(a, b), Math.max(a, b)]);
+    };
+    for (const pts of routes) for (let i = 1; i < pts.length; i++) add(lines, pts[i - 1], pts[i]);
+    const out = [];
+    for (const [k, list] of lines) {
+        list.sort((x, y) => x[0] - y[0]);
+        const merged = [];
+        for (const s of list) { const last = merged[merged.length - 1]; if (last && s[0] <= last[1] + 0.01) last[1] = Math.max(last[1], s[1]); else merged.push([...s]); }
+        // 이미 그린 토막을 빼요
+        let parts = merged;
+        for (const [a0, a1] of skip?.get(k) || []) parts = parts.flatMap(([b0, b1]) => (a1 <= b0 || a0 >= b1 ? [[b0, b1]] : [[b0, a0], [a1, b1]].filter(([u, v]) => v - u > 0.05)));
+        for (const [u, v] of parts) out.push({ k, u, v });
     }
-    // 하늘 장소 ↔ 건물: 지붕 위에서 승강기 줄을 타고 곧게 내려와 그 층 복도로 · 땅 밑 장소 ↔ 건물: 그 층 복도에서 승강기 줄로 바닥 아래까지 곧게(건물 벽을 안 가로질러요)
-    const sx = L.lane?.get([a, b].sort().join('|'));
-    if (sx !== undefined && U.zone === 'above' && D.zone === 'b') return pts([U.x, U.y], [U.x, U.y + CORRIDOR], [sx, U.y + CORRIDOR], [sx, D.y + CORRIDOR], [D.x, D.y + CORRIDOR], [D.x, D.y]);
-    if (sx !== undefined && U.zone === 'b' && D.zone === 'below') return pts([U.x, U.y], [U.x, U.y + CORRIDOR], [sx, U.y + CORRIDOR], [sx, D.y], [D.x, D.y]);
-    // 바깥 장소 ↔ 건물 다른 층: 건물과 바깥 사이 줄로
-    if ((U.zone === 'out') !== (D.zone === 'out')) {
-        const ox = L.bRight + 2 + (lanes.out++) * LANE;
-        return pts([U.x, U.y], [U.x, U.y + CORRIDOR], [ox, U.y + CORRIDOR], [ox, D.y + CORRIDOR], [D.x, D.y + CORRIDOR], [D.x, D.y]);
-    }
-    // 그 밖: 가운데서 한 번 꺾어요
-    const my = (U.y + D.y) / 2; return pts([U.x, U.y], [U.x, my], [D.x, my], [D.x, D.y]);
+    const map = new Map(); for (const { k, u, v } of out) { if (!map.has(k)) map.set(k, []); map.get(k).push([u, v]); }
+    const d = out.map(({ k, u, v }) => { const [o, c] = k.split('|'), n = Number(c); return o === 'h' ? `M${r1(u)} ${n} L${r1(v)} ${n}` : `M${n} ${r1(u)} L${n} ${r1(v)}`; }).join(' ');
+    return { d, lines: map };
 }
 export const pathD = pts => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ');
 
@@ -360,9 +415,9 @@ export function wrapLabel(text, w) {
 const el = (doc, tag, attrs = {}, text = null) => { const e = doc.createElementNS(SVG_NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v)); if (text !== null) e.textContent = text; return e; };
 const VB_MODE = 'blFloorsVB';   // ui 에 적는 「보던 칸을 어느 배치 눈금으로 그렸나」(floors · plain)
 /** 그 확장이 그린 지도 SVG 하나에 층별 배치를 입혀요 → 입혔으면 배치, 아니면 null(그대로) */
-export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null } = {}) {
+export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null, dir = null } = {}) {
     if (!svg || svg.getAttribute('data-bl-floors')) return null;
-    const L = floorLayout(map?.places, { find, tr });
+    const L = floorLayout(map?.places, { find, tr, dir });
     // 버그 사냥 9b: 그 확장이 기억한 보던 칸(ui.mapVB — 끌기 · 확대)은 그때 그린 배치의 눈금이에요. 장소가 바뀌어 층별 배치가 새로 생기거나 없어지면
     //   다른 눈금의 칸이 남아 엉뚱한 곳(빈 곳)을 보여 줬어요 → 어느 배치로 그렸는지 ui 에 적어 두고, 바뀌면 보던 칸을 버려요.
     //   (층별 배치 → 그 확장 배치: 그 확장이 이미 옛 칸으로 그렸으니 다시 그리게 _blRefit 로 알려요 — startMbFloors 가 그려요)
@@ -414,13 +469,17 @@ export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null 
     const edges = svg.querySelector('g.edges');
     if (edges) {
         const known = new Map(map.places.map(p => [p.name, p.known !== false]));
-        const lanes = { left: 0, out: 0 }; L.buildings.forEach(b => { b.lanes = 0; });
-        const frag = doc.createDocumentFragment();
+        // 1.7.5 같은 통로 · 복도를 지나는 선이 겹쳐 그려지면 반투명 선이 겹친 만큼 진해져요 → 아는 곳 선 하나 · 모르는 곳 선 하나(아는 선 위 토막은 빼요)로 합쳐 그려요
+        const known2 = [], unk = [];
         for (const [a, b] of L.pairs) {
             if (!shown.has(a) || !shown.has(b)) continue;
-            const pts = routeOf(L, a, b, shown, lanes); if (!pts) continue;
-            frag.appendChild(el(doc, 'path', { d: pathD(pts), class: `bl-route${known.get(a) && known.get(b) ? '' : ' unk'}` }));
+            const pts = routeOf(L, a, b, shown); if (!pts) continue;
+            (known.get(a) && known.get(b) ? known2 : unk).push(pts);
         }
+        const frag = doc.createDocumentFragment();
+        const k = mergeSegments(known2), u = mergeSegments(unk, k.lines);
+        if (k.d) frag.appendChild(el(doc, 'path', { d: k.d, class: 'bl-route' }));
+        if (u.d) frag.appendChild(el(doc, 'path', { d: u.d, class: 'bl-route unk' }));
         edges.replaceChildren(frag);
     }
     // 층 띠 · 이름표 · 승강기 줄 · 땅 선(누르기 · 끌기는 그 아래 SVG 가 받아요)
@@ -461,7 +520,7 @@ async function mbCore(doc, load = url => import(url)) {
     } catch { return null; }
 }
 let started = false;
-export function startMbFloors(doc = globalThis.document, { watch = watchDom, load = undefined } = {}) {
+export function startMbFloors(doc = globalThis.document, { watch = watchDom, load = undefined, stCtx = () => globalThis.SillyTavern?.getContext?.() } = {}) {
     if (started || !doc?.body) return false;
     started = true;
     let core = null;
@@ -472,7 +531,8 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
         if (!isOn(doc) || !core || svg.getAttribute('data-bl-floors')) return;
         const map = mapNow(); if (!map) return;
         const panel = svg.closest?.('.ss-panel');
-        try { applyFloors(svg, map, { ui: panel?._ss?.ui ?? null, find: findFn(), tr: trFn() }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
+        loadDir();
+        try { applyFloors(svg, map, { ui: panel?._ss?.ui ?? null, find: findFn(), tr: trFn(), dir: dirNow.list }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
         if (svg._blRefit && panel?._ss) { svg._blRefit = false; try { core.app?.renderPanel?.(panel); } catch { /* 다음에 그릴 때 */ } }   // 버그 사냥 9b: 층별 배치가 없어져 옛 눈금 칸으로 그려진 지도 — 보던 칸을 비웠으니 그 확장이 다시 맞춰 그려요
     };
     const sweep = () => { for (const svg of doc.querySelectorAll('svg.ss-map:not([data-bl-floors])')) dress(svg); };
@@ -484,6 +544,26 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
             try { core?.app?.renderPanel?.(panel); } catch { /* 다음에 그릴 때 */ }
         }
     };
+    // 1.7.4 로어북 층 안내: 이 채팅에 걸린 로어북(카드 · 카드 안 책 · 채팅 로어북)을 한 번 읽어 두고, 안내가 바뀌면 떠 있는 지도를 다시 그려요
+    const dirNow = { key: null, list: [], gen: 0 };
+    const loadDir = () => {
+        let c, key; try { c = stCtx(); if (!c) return; key = `${c.groupId ?? ''}|${c.characterId ?? ''}|${c.getCurrentChatId?.() ?? ''}|${c.chatMetadata?.world_info ?? ''}`; } catch { return; }
+        if (key === dirNow.key) return;
+        dirNow.key = key; const gen = ++dirNow.gen;
+        (async () => {
+            const texts = [], names = new Set();
+            const cards = c.groupId ? (c.groups?.find?.(g => g.id === c.groupId)?.members || []).map(a => c.characters?.find?.(x => x.avatar === a)) : [c.characters?.[c.characterId]];
+            for (const ch of cards) { const w = ch?.data?.extensions?.world; if (w) names.add(String(w)); for (const e of ch?.data?.character_book?.entries || []) if (e?.enabled !== false) texts.push(e?.content); }
+            if (c.chatMetadata?.world_info) names.add(String(c.chatMetadata.world_info));
+            for (const n of names) { try { const b = await c.loadWorldInfo?.(n); for (const e of Object.values(b?.entries || {})) if (!e?.disable) texts.push(e?.content); } catch { /* 그 책은 빼요 */ } }
+            return floorDirectory(texts);
+        })().then(list => {
+            if (gen !== dirNow.gen) return;
+            const was = JSON.stringify(dirNow.list); dirNow.list = list;
+            if (JSON.stringify(list) !== was && isOn(doc)) redraw();
+        }).catch(() => { /* 안내 없이 */ });
+    };
+    try { const c = stCtx(), ev = c?.eventTypes ?? c?.event_types; for (const k of ['WORLDINFO_UPDATED', 'CHARACTER_EDITED']) if (ev?.[k]) c.eventSource?.on?.(ev[k], () => { dirNow.key = null; loadDir(); }); } catch { /* 채팅이 바뀔 때만 새로 읽어요 */ }
     (load ? Promise.resolve(load()) : mbCore(doc)).then(m => { core = m; sweep(); }).catch(() => { /* 그 확장 그림 그대로 */ });
     try {
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 층별 지도' }, records => {

@@ -154,6 +154,28 @@ body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, de
   content: '';
   padding-inline-end: 0.15em;
 }
+/* 1.7.4 이미 글자색 · 강조가 입혀진 구간(속마음 · 인물색 · 굵게 — 그 구간에 대사 말고 다른 글이 있을 때) 안의 대사(조판이 q.bl-q-inked 를 붙인다,
+   src/quote-inked.js)는 형광펜 · 전체 칠을 또 칠하지 않고 둘레 글자색을 따른다 — 「이미 글자색 들어갔는데 또 형광펜이 들어가네」.
+   프롬프트 색 형광펜(css/37-prompt-ink.css · 띠 = 마스크 + currentColor)과 애플 웹킷 대체 규칙(!important · id 하나)보다 무거워야 해서 :not(#salty-none) */
+:is(body.salty.salty-dlg-marker #chat .mes .mes_text, .salty-sample.salty-dlg-marker,
+  body.salty.salty-dlg-full #chat .mes .mes_text, .salty-sample.salty-dlg-full) q.bl-q-inked:not(#salty-none) {
+  background: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  padding: 0;
+  border-radius: 0;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+  /* 글꼴 · 굵기 · 크기도 둘레 구간 그대로 (굵게 안에서 대사만 가늘어지지 않게) */
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+:is(body.salty.salty-dlg-marker #chat .mes .mes_text, .salty-sample.salty-dlg-marker,
+  body.salty.salty-dlg-full #chat .mes .mes_text, .salty-sample.salty-dlg-full) q.bl-q-inked::after {
+  content: none;
+}
 :is(body.salty.salty-dlg-bold #chat .mes .mes_text, .salty-sample.salty-dlg-bold) q {
   font-weight: 650;
 }

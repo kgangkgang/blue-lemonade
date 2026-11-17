@@ -277,7 +277,7 @@ ok('⑱ (1.5.5) 시간 칩 요일 · 칩 글자 맞춤: 칸 설명 맨 앞 「�
     assert.match(css, /#ss-hud\[data-bl-wd\] \.ss-tb\.hud \.ss-t\.t-date:not\(\.L\) > \.c > \.ci > small:first-of-type::after \{ content: var\(--bl-wd, ""\); \}/);
     assert.ok(!/--bl-o|--bl-w/.test(css), '칸마다 값을 적지 않아요(새로 그릴 때 흔들림)');
     const src = fs.readFileSync(path.join(root, 'src/ext-compat.js'), 'utf8');
-    assert.match(src, /if \(!mbOff\('bandrow', doc\)\) fitActs\(el\); if \(!mbOff\('badge', doc\)\) markBadge\(el\); if \(!mbOff\('weekday', doc\)\) markWeekday\(el\);/);   // 1.7.3 미트볼 맞춤 스위치를 끈 묶음은 표식을 안 달아요
+    assert.match(src, /if \(!mbOff\('bandrow', doc\)\) fitActs\(el\); if \(!mbOff\('band', doc\)\) markBars\(el\); if \(!mbOff\('badge', doc\)\) markBadge\(el\); if \(!mbOff\('weekday', doc\)\) markWeekday\(el\);/);   // 1.7.3 미트볼 맞춤 스위치를 끈 묶음은 표식을 안 달아요
 });
 ok('⑲ (1.5.6) 프로필 얼굴 「색만」(기본) / 「글자」: 설정 기본 color · body 표식 하나 · 지정색 있는 프로필 동그라미만 글자를 숨겨요 · 꾸미기 칸 누름 · 이름은 aria-label 로', async () => {
     const read = f => fs.readFileSync(path.join(root, f), 'utf8');
@@ -299,5 +299,44 @@ ok('⑳ (1.5.6) 펼친 칸 줄 아이콘: 상자는 제 폭 · 글자와 6px · 
     const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
     assert.ok(css.includes('body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det .ss-mini-line { gap: 6px; }'));
     assert.ok(css.includes('body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det .ss-mini-line > i { width: auto; text-align: start; position: relative; top: .04em; }'));
+});
+ok('㉑ (1.7.4) 단추를 올린 줄: 마지막 줄 가장 오른쪽 칸이 단추 앞까지 늘어나요 — 칸 이름 · 열 수 · 빈 열 수 · 단추 수만(배치를 재지 않아요)', () => {
+    const K = (c, r, w, k, h = 1) => ({ c, r, w, h, k });
+    assert.deepEqual(m.growTile([K(1, 1, 4, 'bars'), K(1, 2, 1, 'date'), K(2, 2, 1, 'loc')]), { k: 'loc', w: 1, f: 2 }, '사진 그대로(수치 위 · 날짜 · 장소 아래)');
+    assert.deepEqual(m.growTile([K(1, 1, 4, 'bars'), K(1, 2, 1, 'date')]), { k: 'date', w: 1, f: 3 }, '칸 하나면 그 칸이');
+    assert.deepEqual(m.growTile([K(1, 1, 1, 'date'), K(1, 2, 2, 'loc')]), { k: 'loc', w: 2, f: 2 });
+    assert.equal(m.growTile([K(1, 1, 4, 'bars')]), null, '빈 열이 없으면 없음');
+    assert.equal(m.growTile([]), null);
+    const host = { attrs: {}, vars: {}, style: { getPropertyValue: k => host.vars[k] || '', setProperty: (k, v) => { host.vars[k] = v; }, removeProperty: k => { delete host.vars[k]; } }, getAttribute: k => host.attrs[k] ?? null, setAttribute: (k, v) => { host.attrs[k] = v; }, hasAttribute: k => k in host.attrs, removeAttribute: k => { delete host.attrs[k]; } };
+    const tile = (c, r, w, k) => ({ style: { gridColumn: `${c} / span ${w}`, gridRow: `${r} / span 1` }, getAttribute: a => (a === 'data-k' ? k : null) });
+    const band = (tiles, nActs, editing = false) => ({ classList: { contains: k => k === 'editing' && editing }, closest: sel => (sel === '#ss-hud' ? host : null),
+        querySelector: sel => (sel === '.ss-tg' ? { style: { getPropertyValue: k => (k === '--cols' ? '4' : '') }, querySelectorAll: () => tiles } : sel === '.ss-tb-acts' ? { children: { length: nActs } } : null) });
+    assert.equal(m.fitActs(band([tile(1, 1, 4, 'bars'), tile(1, 2, 1, 'date'), tile(2, 2, 1, 'loc')], 4)), 'in');
+    assert.deepEqual([host.attrs['data-bl-grow'], host.vars['--bl-gw'], host.vars['--bl-gf'], host.vars['--bl-ga']], ['loc', '1', '2', '4']);
+    m.fitActs(band([tile(1, 1, 4, 'bars'), tile(1, 2, 1, 'date'), tile(2, 2, 1, 'loc')], 5)); assert.equal(host.vars['--bl-ga'], '5', '단추 수가 바뀌면 같이');
+    m.fitActs(band([tile(1, 1, 2, 'date'), tile(3, 1, 2, 'loc')], 4)); assert.equal(host.attrs['data-bl-acts'], 'row'); assert.equal('data-bl-grow' in host.attrs, false, '한 줄 판(row)이면 떼요');
+    assert.equal('--bl-gf' in host.vars, false);
+    m.fitActs(band([tile(1, 1, 4, 'bars'), tile(1, 2, 1, 'date')], 4, true)); assert.equal('data-bl-grow' in host.attrs, false, '칸 편집 중엔 떼요');
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    for (const k of ['date', 'loc', 'cash', 'contact', 'quest', 'diff', 'cond', 'fate', 'news', 'music', 'custom', 'rel', 'mind', 'bars']) assert.ok(css.includes(`#ss-hud[data-bl-grow="${k}"] .ss-tg > .ss-t[data-k="${k}"]`), `칸 ${k}`);
+    assert.ok(css.includes('margin-inline-end: calc(var(--bl-ga, 0) * var(--bl-band-btn, 30px) + var(--bl-ga, 0) * var(--bl-band-gap, 4px) - var(--bl-gf, 0) * ((100% - (var(--bl-gw, 1) - 1) * var(--bl-band-gap, 4px)) / var(--bl-gw, 1) + var(--bl-band-gap, 4px)));'));
+});
+ok('㉒ (1.7.4) 게이지 칸 수치 고르게: 수치 수 · 가장 긴 「이름 숫자」 어림 폭(em)만 바깥 틀에 — 글자 수로(배치를 재지 않아요) · 줄이지 않고 칸 폭에 나눠 꺾어요', () => {
+    assert.equal(m.barsMin([{ name: '체력', value: '70' }]), Math.round((2 * 0.85 + 2 * 0.62 + 0.6) * 100) / 100);
+    assert.ok(m.barsMin([{ name: '정신 집중도', value: '100' }]) > m.barsMin([{ name: '생명력', value: '100' }]), '긴 이름이 더 넓어요');
+    assert.ok(m.barsMin([{ name: 'HP', value: '1,250' }]) < m.barsMin([{ name: '생명력', value: '1,250' }]), '라틴 글자는 한글보다 좁게');
+    assert.equal(m.barsMin([{ name: '체력', value: '70' }, { name: '생명력', value: '999' }]), m.barsMin([{ name: '생명력', value: '999' }]), '가장 긴 것');
+    const host = { attrs: {}, vars: {}, style: { getPropertyValue: k => host.vars[k] || '', setProperty: (k, v) => { host.vars[k] = v; }, removeProperty: k => { delete host.vars[k]; } }, getAttribute: k => host.attrs[k] ?? null, setAttribute: (k, v) => { host.attrs[k] = v; }, hasAttribute: k => k in host.attrs, removeAttribute: k => { delete host.attrs[k]; } };
+    const g = (name, value) => ({ querySelector: s => ({ textContent: s === 'em' ? name : value }) });
+    const tb = list => ({ closest: () => host, querySelectorAll: sel => (sel === '.ss-tg > .ss-t.t-bars:not(.tall) > .c > .ci > .g' ? list : []) });
+    assert.equal(m.markBars(tb([g('생명력', '100'), g('신성력', '80'), g('평정심', '85'), g('체력', '70')])), 4);
+    assert.deepEqual([host.attrs['data-bl-bars'], host.vars['--bl-bn'], host.vars['--bl-bmin']], ['4', '4', `${m.barsMin([{ name: '생명력', value: '100' }])}em`]);
+    assert.equal(m.markBars(tb([])), 0); assert.equal('data-bl-bars' in host.attrs, false, '게이지 칸이 없으면 떼요'); assert.equal('--bl-bmin' in host.vars, false);
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.ok(css.includes('#ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-t.t-bars:not(.tall) > .c > .ci { --bl-bgap: 10px; zoom: 1 !important; width: 100% !important;'), '줄이지 않고 칸 폭 그대로');
+    assert.ok(css.includes('flex: 1 1 max(var(--bl-bq), min(var(--bl-bh), (var(--bl-bmin, 0em) - var(--bl-bq)) * 1000 + var(--bl-bq)), min(100%, (var(--bl-bmin, 0em) - var(--bl-bh)) * 1000 + var(--bl-bh)));'), '한 줄 → 둘씩 → 하나씩');
+    assert.ok(css.includes('#ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-tg { grid-auto-rows: minmax(var(--bl-band-row, 30px), auto); }'), '꺾이면 줄이 커져요');
+    assert.ok(css.includes('#ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-tg > .ss-t:not(.t-bars) { contain: size; }'), '다른 칸은 줄을 키우지 않아요');
+    assert.ok(/\/\* @mb band\|bandrow\|weekday\|badge\|dot\|grid\|deco \*\//.test(css), '띠 다시 그림 신호는 band 를 켜 둔 동안에도 돌아요');
 });
 console.log(`ext-compat-band: ${n}개 통과`);

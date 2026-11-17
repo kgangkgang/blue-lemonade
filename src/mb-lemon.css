@@ -1,0 +1,47 @@
+/* 1.7.4 미트볼 설정 칸의 「블루레몬」 레몬 탭(src/mb-lemon.js) — 그 칸을 볼 때 한 번 붙는 제 시트예요. style.css 에는 싣지 않아요.
+   · 맞춤 시트(src/ext-status.gen.css)와 달리 미트볼 맞춤 스위치 묶음 문이 없어요 — 맞춤을 전부 꺼도(탭 나누기 끔 · 원작 그대로 보기) 레몬 단추 · 탭 · 칸이 남아 다시 켤 수 있어요.
+   · 우리가 끼운 것(.bl-ext-view · .bl-ext-lemon-tab · .bl-ext-lemonbar · .bl-ext-lemonpane)에만 걸려요. 그 확장의 요소에는 닿지 않아요.
+   · 테마가 꺼져 있으면(body.salty 없음) 끼운 것을 모두 숨겨요(그 확장의 원래 모습). */
+.bl-ext-lemonpane, .bl-ext-lemonbar { display: none; }
+
+/* 서랍 머리 레몬 단추 — 누르면 레몬 탭으로 가요. 글 없이 레몬 아이콘 하나(테마 표식 · 단색) · 맞춤 화면이 걸려 있으면 테마 파랑, 원작 그대로 보기면 흐린 아이콘(11-13 사용자 「걍 블루레몬 아이콘으로 바꿔」) */
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view { display: inline-flex !important; align-items: center; justify-content: center; flex: none; position: relative; box-sizing: border-box; width: 28px; height: 28px; margin: 0 var(--bl-s1, 4px) 0 auto; padding: 0; border: 0; border-radius: var(--bl-ui-radius, 8px); background: transparent; box-shadow: none; color: var(--salty-faint, var(--salty-muted)); font-size: 0; line-height: 0; cursor: pointer; }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view::after { content: ''; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--salty-logo) center / contain no-repeat; mask: var(--salty-logo) center / contain no-repeat; }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view[data-bl-on] { color: var(--bl-ui-pick-ink); }
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent); }
+/* 누를 자리 44(폰) — 맞춤의 「누를 자리 44」 묶음을 꺼도 이 단추는 그대로 */
+body.salty #ss-settings .inline-drawer-header > .bl-ext-view::before { content: ''; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
+
+/* 레몬 아이콘(탭 · 한 줄 · 칸 머리) */
+body.salty #ss-settings .bl-ext-lemon-ico { display: inline-block; flex: none; width: 14px; height: 14px; background: currentColor; -webkit-mask: var(--salty-logo) center / contain no-repeat; mask: var(--salty-logo) center / contain no-repeat; }
+
+/* 탭 줄의 레몬 탭: 다른 분류 탭과 같은 꼴(맞춤 시트의 .bl-ext-tab) + 아이콘 */
+body.salty #ss-settings .bl-ext-tabs > .bl-ext-lemon-tab { gap: 6px; }
+
+/* 탭 줄이 안 보일 때(탭 나누기 끔 · 원작 그대로 보기 · 탭을 못 만든 판) 칸 맨 위 한 줄 — 분류 탭과 같은 높이 · 선 · 면 */
+body.salty #ss-settings:is([data-bl-view="raw"], :not([data-bl-tabs])) .inline-drawer-content > .bl-ext-lemonbar,
+:root[data-bl-mb-off~="tabs"] body.salty #ss-settings .inline-drawer-content > .bl-ext-lemonbar { display: flex !important; margin: var(--bl-s1, 4px) 0 0; padding: var(--bl-s1, 4px) 0; }
+body.salty #ss-settings .bl-ext-lemonbar > .bl-ext-lemon-open { display: inline-flex; align-items: center; gap: var(--bl-s2, 8px); box-sizing: border-box; width: 100%; height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0 var(--bl-s3, 12px); border: 1px solid var(--bl-ui-line, var(--salty-line)); border-radius: var(--bl-ui-radius, 8px); background: var(--bl-hover, var(--salty-shade)); box-shadow: none; color: var(--salty-muted); font: inherit; font-size: var(--bl-ui-tab-fs, 13px); font-weight: 400; line-height: 1.35; text-align: start; white-space: nowrap; cursor: pointer; }
+body.salty #ss-settings .bl-ext-lemonbar > .bl-ext-lemon-open[aria-expanded="true"] { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); font-weight: var(--bl-ui-strong, 650); }
+body.salty #ss-settings .bl-ext-lemonbar > .bl-ext-lemon-open:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent); }
+
+/* 레몬 칸: 열렸을 때만(레몬 탭 · 머리 단추 · 한 줄) — 탭 숨김 표식보다 세게(:not(#…) 하나) */
+body.salty #ss-settings[data-bl-lemon] .inline-drawer-content > .bl-ext-lemonpane:not(#bl-lemon-x) { display: block !important; grid-column: 1 / -1; min-width: 0; margin: var(--bl-s3, 12px) 0 0; }
+body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-h { display: flex; align-items: center; gap: var(--bl-s2, 8px); font-size: var(--bl-ts-ui, 14px); font-weight: var(--bl-ui-strong, 650); line-height: 1.35; }
+body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-h > .bl-ext-lemon-ico { color: var(--bl-ui-pick-ink); }
+body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-note { display: block; margin: var(--bl-s1, 4px) 0 0; font-size: var(--bl-ts-meta, 13px); line-height: 1.45; color: var(--salty-muted); opacity: 1; }
+body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-body { margin: var(--bl-s3, 12px) 0 0; }
+body.salty #ss-settings .bl-ext-lemonpane .bl-ext-lemon-err { display: block; color: var(--salty-muted); }
+
+/* 묶음(테마 설정 창의 「미트볼 맞춤」 그대로 · src/panel.js mountMbFit) — 서랍 폭에 한 열 · 칸 겉판 없이 묶음 면만 */
+body.salty #ss-settings .salty-panel.bl-mb-fit-embed { --pp: 0px; margin: 0; padding: 0; background: transparent; border-radius: 0; }
+body.salty #ss-settings .salty-panel.bl-mb-fit-embed .salty-group { padding: 2px var(--bl-s3, 12px); background: var(--salty-fill-shade, var(--salty-shade)); }
+body.salty #ss-settings .salty-panel.bl-mb-fit-embed .salty-row > span { flex: 1 1 auto; }
+body.salty #ss-settings .salty-panel.bl-mb-fit-embed .bl-mb-fit-sub { margin: var(--bl-s3, 12px) 0 0; }
+/* 전부 · 갈래 끄기 · 켜기 단추: 서랍 폭에서 설명 아래로 내려가면 오른쪽 끝에(가운데 떠 보이지 않게) */
+body.salty #ss-settings .salty-panel.bl-mb-fit-embed .salty-row > .bl-mb-fit-btns { margin-inline-start: auto; }
+/* 탭 줄이 안 보일 때는 위 한 줄이 같은 이름을 달고 있어서 칸 머리 이름은 숨겨요(설명은 그대로) */
+body.salty #ss-settings:is([data-bl-view="raw"], :not([data-bl-tabs])) .bl-ext-lemonpane > .bl-ext-lemon-h,
+:root[data-bl-mb-off~="tabs"] body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-h { display: none; }
+/* 테마 설정 찾기에서 데려온 줄 */
+body.salty #ss-settings .salty-panel.bl-mb-fit-embed [data-bl-lemon-hit] { border-radius: var(--bl-ui-radius, 8px); background: var(--bl-ui-pick-face); box-shadow: 0 0 0 4px var(--bl-ui-pick-face); }

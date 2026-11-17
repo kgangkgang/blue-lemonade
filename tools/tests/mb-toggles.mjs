@@ -203,7 +203,7 @@ await ok('탭 나누기: 끄면 설정 칸을 새로 나누지 않아요(정리�
         buildAll(doc);
         return touched;
     };
-    assert.equal(run('tabs'), 0);
+    assert.equal(run('tabs'), 1, '레몬 칸 자리(내용 칸)만 한 번 봐요 — 1.7.4 맞춤을 다 꺼도 레몬 탭은 남아요(tools/tests/mb-lemon-tab.mjs)');
     assert.ok(run('') > 0, '켜면 칸을 봐요');
 });
 await ok('얼굴 즉시 칠하기의 표식: 종 배지 · 이름표 두 열 · 꾸미기 묶음은 끈 것만 안 달아요', async () => {
@@ -308,12 +308,12 @@ await ok('설정 찾기: 새 스위치마다 한 줄 · 묶음 머리 · 원작 
     for (const sw of SW.MB_SWITCHES) if (!sw.setting) assert.ok(titles.has(`미트볼 맞춤: ${sw.name}`) && SEARCH_ENTRIES.some(e => e.anchor === sw.name), sw.name);   // 제목은 머리말 · 가는 자리(anchor)는 설정 창 줄 이름
     assert.ok(titles.has('미트볼 맞춤') && titles.has('원작 그대로 보기 (이 기기)'));
 });
-await ok('설정 창: 「미트볼 맞춤」 묶음(전부 · 화면만 · 데이터) · 미트볼 설정 칸 바로가기(mb-fit)', () => {
+await ok('「미트볼 맞춤」 묶음(전부 · 화면만 · 데이터) — 1.7.4 부터 미트볼 설정 칸의 「블루레몬」 탭이 그려요(tools/tests/mb-lemon-tab.mjs)', () => {
     const panel = read('src/panel.js');
     for (const act of ['mb-fit', 'mb-fit-all', 'mb-fit-raw']) assert.ok(panel.includes(`case '${act}':`), act);
-    assert.match(panel, /initialExtension === 'mb-fit'\) \{[^\n]*ui\.mbOnly = 'fit'/);
-    assert.match(panel, /if \(ui\.mbOnly === 'fit'\) return mbFitGroups\(s\);/);
-    assert.match(read('src/ext-bridge-ui.js'), /openPopup\?\.\(false, 'mb-fit'\)/);
+    assert.match(panel, /export function mountMbFit\(container\)/);
+    assert.match(panel, /root\.innerHTML = mbFitGroups\(getSettings\(\)\);/);
+    assert.match(read('src/mb-lemon.js'), /panel\.mountMbFit\(body\)/);
 });
 
 console.log(`mb-toggles: ${n}개 통과${bad ? ` · ${bad}개 실패` : ''}`);

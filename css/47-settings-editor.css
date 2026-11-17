@@ -75,6 +75,8 @@ html body .bl-editor .bl-setting-reset[hidden] { display:none !important; }
 /* 4.1.2 가독성: 묶음 제목 옆 지금 값 · 안내 글 한 모양 · 이름 옆 초기화 */
 .bl-editor .bl-editor-group-body .salty-note { margin:4px 0 6px; font-size:calc(12 * var(--sp)); line-height:1.5; color:var(--salty-muted); display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; cursor:pointer; }
 .bl-editor .bl-editor-group-body .salty-note.open { display:block; -webkit-line-clamp:none; line-clamp:none; overflow:visible; }
+/* 미트볼 맞춤 소제목(「모양」 등)은 한 줄이라 눌러도 펼 것이 없어요 — 손가락 모양을 띄우지 않아요 */
+.bl-editor .bl-editor-group-body .salty-note.bl-mb-fit-sub { cursor:auto; }
 .bl-editor :is(.salty-row,.salty-stack) > span > small,
 .salty-panel.bl-editor .bl-prompt-tools .bl-prompt-tool-row > small { font-size:calc(12 * var(--sp)); line-height:1.5; color:var(--salty-muted); }
 /* ST의 small opacity .7을 겹치지 않는다. 안내/현재값은 색 한 단계로만 구분. */

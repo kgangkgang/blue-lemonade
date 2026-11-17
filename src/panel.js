@@ -2,6 +2,8 @@ import { deviceKind } from './device-layout-options.js';
 import { MB_SWITCHES, MB_GROUPS, switchOn, setSwitch, setAll as mbSetAll } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
 import { ruleTokens as mbRuleTokens, ruleBlock as mbRuleBlock, estimate as mbPromptEstimate, block as mbPromptBlock, LEVELS as MB_PROMPT_LEVELS, allText as mbPromptAllText, onceActive as mbPromptOnceActive, armOnce as mbPromptArmOnce, endOnce as mbPromptEndOnce } from './mb-prompt.js';   // 1.6.0 미트볼 문구: 블루레몬 추천 — 토큰 어림 · 덧붙는 글(순수 함수만)
 import { armGuard, disarmGuard } from './cheap-guards.js';
+import { leaveSettingsDialog } from './settings-dialog.js';   // 1.7.4 레몬 탭으로 데려갈 때 설정 창(맨 위 층)을 먼저 닫아요
+import { isLemonPath, gotoMbLemon } from './mb-lemon.js';   // 1.7.4 「미트볼 맞춤」 묶음은 확장 탭 › 미트볼 상태창 칸의 「블루레몬」 탭으로 옮겼어요 — 설정 찾기 · 변경한 설정은 그 탭으로 데려가요
 import { trackerWeatherOn } from './weather-readability.js';
 import { gradientControls, mixControls, gradientAction, bindGradientColors } from './gradient-ui.js';
 import { syncProfileClip } from './profile-clip.js';
@@ -294,6 +296,7 @@ function syncSettingResets() {
     for (const panel of panels) for (const button of panel.querySelectorAll('.bl-setting-reset')) { const hide = !settingChanged(settings, button.dataset.setting) || button.dataset.setting === 'replyNotify.on' && globalThis.Notification?.permission !== 'granted'; if (button.hidden !== hide) button.hidden = hide; }
 }
 function jumpToSetting(root, path) {
+    if (isLemonPath(path)) { goMbLemon(root, path); return; }   // 1.7.4 레몬 탭으로 옮긴 설정
     if (!settingDefault(getSettings(),path).allowed) return;
     const route = settingRoute(path);
     root._catalogOpen = false; ui.tab = route.tab; ui.subs[route.tab] = route.sub; ui.picker = null; ui.mbOnly = /^(chat\.mbFace(Tone|Look)?|fonts\.mb(\..+)?)$/.test(path);   // 미트볼 꾸미기 칸은 그 세 칸만 보이는 보기로
@@ -345,7 +348,6 @@ export function mountPanel(container, { popup = false, onFullscreen = null, init
         store('salty_tab',ui.tab);store('salty_subs',JSON.stringify(ui.subs));
     }
     if (popup && initialExtension === 'mb-deco') { ui.tab = 'chat'; ui.subs.chat = 'screen'; ui.picker = null; ui.mbOnly = true; }
-    else if (popup && initialExtension === 'mb-fit') { ui.tab = 'chat'; ui.subs.chat = 'screen'; ui.picker = null; ui.mbOnly = 'fit'; }   // 1.7.3 미트볼 설정 칸의 바로가기로 연 창 — 「미트볼 맞춤」 묶음만   // 미트볼 꾸미기에서 「글꼴 고르기」로 연 창
     else if (popup) ui.mbOnly = false;   // 1.5.2 통합: 평소대로 연 창은 좁은 보기를 풀어요(꾸미기에서 한 번 연 뒤 검색 · 변경한 설정이 그 세 칸에 갇혀 있었어요)
     const root = document.createElement('div');
     root.className = popup ? 'salty-panel in-popup bl-editor' : 'salty-panel bl-editor';
@@ -359,6 +361,7 @@ export function mountPanel(container, { popup = false, onFullscreen = null, init
     bind(root);
     bindEditor(root);
     const navigate = entry => {
+        if (isLemonPath(entry.path)) { goMbLemon(root, entry.path); return; }   // 1.7.4 「미트볼 맞춤」 (옛 이름 · 별칭 그대로) → 확장 탭의 레몬 탭
         if (GONE_SUBS[entry.tab]?.[entry.sub]) entry = { ...entry, sub: GONE_SUBS[entry.tab][entry.sub] };   // 1.0.0 걷은 화면 id(옛 즐겨찾기 · 검색) → 남은 화면
         if (!SUBS[entry.tab]?.some(([sub])=>sub===entry.sub) && !(entry.tab==='theme'&&entry.sub==='custom')) return;
         root._catalogOpen = false;
@@ -430,6 +433,29 @@ export function unmountPanel(root) {
     const settings = panelAppearanceSettings(); syncDecor(settings); syncProfileClip(settings);
 }
 
+/** 1.7.4 미트볼 설정 칸 「블루레몬」 탭 안에 「미트볼 맞춤」 묶음 하나만 그리는 작은 판(src/mb-lemon.js 가 그 탭을 처음 열 때 불러요).
+ *  설정 창과 같은 그리기 · 누름 처리(bind)를 그대로 써서 키 · 저장 · 동작 · 변경 기록이 같아요. 설정이 바뀌면 refreshPanels 가 다시 그려요 · 떼는 것은 unmountPanel */
+export function mountMbFit(container) {
+    const root = document.createElement('div');
+    root.className = 'salty-panel bl-mb-fit-embed';
+    root._mbFit = true;
+    armGuard('panel');
+    container.appendChild(root);
+    panels.add(root);
+    bindTouchSliders(root);
+    bind(root);
+    renderMbFit(root);
+    return root;
+}
+function renderMbFit(root) {
+    const focusSnap = focusSnapshot(root);
+    root.innerHTML = mbFitGroups(getSettings());
+    restoreFocus(root, focusSnap);
+}
+function goMbLemon(root, path) {
+    Promise.resolve(leaveSettingsDialog(root)).catch(() => {}).then(() => gotoMbLemon(path)).catch(error => console.warn('[Blue Lemonade] 미트볼 레몬 탭 열기', error));
+}
+
 /** 5.1.2: 보이는 설정 창이 그 탭 · 소분류를 열어 두었는가 (index.js — 커스텀 CSS 를 치는 동안은 그 보고서가 보이는 화면에서만 다시 그린다) */
 export function panelShows(tab, sub) {
     return ui.tab === tab && subOf(tab) === sub && [...panels].some(root => root.isConnected && (root.checkVisibility?.() ?? true));
@@ -463,7 +489,7 @@ export function refreshPanels(changes) {
             unmountPanel(root);
             continue;
         }
-        if (popupOpen && !root.classList.contains('in-popup')) continue;
+        if (popupOpen && !root.classList.contains('in-popup') && !root._mbFit) continue;
         render(root);
     }
 }
@@ -726,13 +752,13 @@ function mbFitRow(sw, s) {
 }
 function mbFitRaw() {
     let raw = false; try { raw = localStorage.getItem('bl-ext-view:ss-settings') === 'raw'; } catch { raw = false; }
-    return row('원작 그대로 보기 (이 기기)', `<label class="salty-switch"><input type="checkbox" data-act="mb-fit-raw" aria-label="원작 그대로 보기" ${raw ? 'checked' : ''}><span></span></label>`, '미트볼 설정 칸 머리의 레몬 단추와 같아요 · 켜면 이 기기에서만 맞춤 화면을 통째로 쉬어요(아래 스위치 값은 그대로) · 데이터를 고치는 것 가운데 화면에 붙는 것만 같이 쉬어요');
+    return row('원작 그대로 보기 (이 기기)', `<label class="salty-switch"><input type="checkbox" data-act="mb-fit-raw" aria-label="원작 그대로 보기" ${raw ? 'checked' : ''}><span></span></label>`, '켜면 이 기기에서만 맞춤 화면을 통째로 쉬어요(아래 스위치 값은 그대로) · 데이터를 고치는 것 가운데 화면에 붙는 것만 같이 쉬어요 · 이 탭은 그대로 남아요');
 }
 function mbFitGroups(s) {
     const count = kind => { const list = MB_SWITCHES.filter(sw => !sw.choice && (kind === 'all' || sw.kind === kind)); return `${list.filter(sw => switchOn(s, sw.key)).length} / ${list.length}개 켜짐`; };
     const groupRows = (kind) => MB_GROUPS.map(([id, label]) => { const list = MB_SWITCHES.filter(sw => sw.kind === kind && sw.group === id); return list.length ? `${kind === 'screen' ? `<p class="salty-note bl-mb-fit-sub">${label}</p>` : ''}${list.map(sw => mbFitRow(sw, s)).join('')}` : ''; }).join('');
-    // 묶음 제목(cap)은 하나 — 설정 창이 제목마다 칩을 만들어서, 갈래는 묶음 안 머리 줄(끄기 · 켜기)로 나눠요
-    return `${cap('미트볼 맞춤', '블루레몬이 미트볼 상태창에 더하거나 고친 것을 하나씩 켜고 꺼요 · 끄면 그 부분만 원작 그대로예요')}<div class="salty-group bl-mb-fit">
+    // 1.7.4 미트볼 설정 칸의 「블루레몬」 탭 안(mountMbFit)에만 그려요 — 묶음 제목 · 설명은 그 탭 머리가 맡아요. 갈래는 묶음 안 머리 줄(끄기 · 켜기)로 나눠요
+    return `<div class="salty-group bl-mb-fit">
             ${row('전부', mbFitButtons('all', true), `${count('all')} · 고르는 칸(얼굴 표시 · 미트볼 문구)은 「전부 켜기」로 저절로 고르지 않고, 「전부 끄기」 전에 고른 값으로 돌아가요`)}
             ${mbFitRaw()}
             ${row('<b>화면만 바꾸는 것</b>', mbFitButtons('screen'), `${count('screen')} · 미트볼의 자료 · 설정은 그대로 두고 보이는 모양 · 동작만 바꿔요 · 끄면 다시 읽지 않아도 바로 원작 모양이에요`)}
@@ -1497,7 +1523,7 @@ function tabText(s, sub) {
     let body = '';
     if (sub === 'para') {
         body = `<div class="salty-group">${row('폰 · PC 배치 따로 기억', toggle('deviceLayouts.on', s.deviceLayouts.on), '글자 크기·간격·여백·프로필 배치를 기기별로 기억해요. 색과 글꼴은 함께 써요.')}<p class="salty-note">지금은 ${deviceKind() === 'mobile' ? '모바일' : 'PC'} 배치를 편집하고 있어요.</p></div><div class="salty-group">
-                ${stack('정렬', seg('type.align', [['left', '왼쪽'], ['justify-word', '양쪽'], ['justify-break', '양쪽 (끊어서)']], s.type.justify ? 'justify-word' : 'left'), '양쪽 (끊어서): 낱말이 잘려도 빈틈 없이 채워요')}
+                ${stack('정렬', seg('type.align', [['left', '왼쪽'], ['justify-word', '양쪽'], ['justify-break', '양쪽 (끊어서)']], s.type.justify ? 'justify-word' : 'left'), '(끊어서)는 낱말도 잘라 빈틈을 채워요')}
                 ${row('첫 줄 들여쓰기', toggle('type.indent', s.type.indent))}
             </div>
             <div class="salty-group">
@@ -1791,7 +1817,6 @@ function tabChat(s, sub) {
     if (sub === 'screen') {
         // 1.5.2 미트볼 꾸미기 칸(글꼴 · 얼굴 표시 · 색 톤): 사용자 「블루레몬에 넣지 말고 미트볼 꾸미기 쪽에」 — 보통 때는 이 화면에 안 보이고,
         //   미트볼 꾸미기의 「글꼴 고르기」 · 위 안내 줄 · 검색 · 변경한 설정에서 왔을 때(ui.mbOnly)만 이 세 칸만 그려요(글꼴 고르개는 테마 것 그대로)
-        if (ui.mbOnly === 'fit') return mbFitGroups(s);   // 1.7.3 미트볼 설정 칸 「블루레몬 맞춤 켜고 끄기」 로 연 창
         if (ui.mbOnly) return `${cap('미트볼 꾸미기', '미트볼 상태창에만 걸리는 칸이에요 · 미트볼 상태창 › 꾸미기에서도 바꿀 수 있어요')}<div class="salty-group">
             ${stack('미트볼 얼굴 표시', seg('chat.mbFace', [['icon', '아이콘'], ['initial', '이름 첫 글자']], 'icon'), '미트볼 상태창에서 사람 얼굴이 나오는 자리(프로필 · 관계 · 띠의 속마음 …)를 동물 아이콘 대신 이름 첫 글자로 보여요 · 첫 글자가 같은 사람끼리는 두 글자 · 사람마다 고른 아이콘은 그대로 남아 있어 되돌리면 돌아와요')}
             ${fontBlock(s, 'mb')}
@@ -1807,7 +1832,7 @@ function tabChat(s, sub) {
             ${row('글자색 대비 맞추기', toggle('chat.inkContrast', s.chat.inkContrast !== false), '메시지에 적힌 글자색이 바탕에 묻히면 색은 두고 밝기만 바꿔 잘 보이게 해요 · 저장된 글은 그대로예요')}
             ${row('이름표를 인물 색으로', toggle('chat.namePeople', s.chat.namePeople === true), '채팅 이름표를 그 사람에게 정해 둔 색(TTS 대사 색 · 프리셋 색)으로 칠해요 · 색이 없는 사람은 지금 이름 색 그대로 · 바탕에 묻히면 밝기만 맞춰요')}
             ${row('고르기 목록 팝업', toggle('chat.selectPop', s.chat.selectPop !== false), '모델 · 프리셋 같은 고르기 목록을 테마가 그린 팝업으로 띄워요 · 끄면 폰 기본 목록이에요')}
-            ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '실리태번 색 칸을 누르면 테마 색 고르기 창이 떠요')}
+            ${row('색 고르기 팝업', toggle('chat.colorPop', s.chat.colorPop !== false), '색 칸을 누르면 테마 색 고르기가 떠요')}
             ${row('큰 숫자는 쉼표로', toggle('chat.numComma', s.chat.numComma !== false), '숫자 칸의 30000 을 30,000 으로 보여 줘요 · 누르면 원래대로, 값은 그대로')}
             ${row('이전 메시지 저절로 불러오기', toggle('chat.showMoreAuto', s.chat.showMoreAuto !== false), '위로 올리다 채팅 맨 위 「이전 메시지 더 보기」에 가까워지면 누르지 않아도 미리 불러와요. 불러온 뒤에도 보던 자리는 그대로예요')}
             ${row('긴 채팅의 화면 밖 메시지 가볍게', toggle('chat.chatLight', s.chat.chatLight !== false), '메시지가 60개 이상 그려져 있으면 화면 밖 메시지의 스타일 · 배치 계산을 건너뛰어요(화면 가까이 오면 다시 그려요). 긴 채팅에서 페르소나 설명 · 전개 지시 같은 칸에 글자를 칠 때 덜 끊겨요 · 마지막 메시지 · 편집 중 · 메뉴 열린 메시지는 그대로예요')}
@@ -1837,7 +1862,6 @@ function tabChat(s, sub) {
             ${mesPinPicker(s)}
             ${row('뒤로 가기로 창 닫기', toggle('chat.backClose', s.chat.backClose !== false), '폰의 뒤로 가기를 누르면 테마가 연 창(설정 · 로그 복사 · 애드온 창 · 확인 창 · 목록 팝업 · 메뉴)이 맨 위부터 한 겹씩 닫혀요 · 창이 없을 때는 원래대로예요 · 끄면 뒤로 가기가 창을 안 닫고 원래대로(페이지 뒤로) 가요 · 미트볼 창은 아래 스위치를 따라가요')}
         </div>
-        ${mbFitGroups(s)}
         ${cap('퀵 리플라이')}<div class="salty-group bl-control-grid bl-qr-controls">
             <div class="bl-inline-preview" data-pv="qr">${qrSample(s.chat.qrFind !== false && globalThis.quickReplyApi?.settings?.isEnabled === true, s.chat.qrCtxNames === true, s)}</div>
             ${row('하위 목록 단추에 세트 이름', toggle('chat.qrCtxNames', s.chat.qrCtxNames === true), '하위 세트를 묶은 QR 은 오른쪽 ⋮ 를 누르면 목록이 열려요. 켜면 ⋮ 대신 그 세트 이름을 보여요')}
@@ -2000,8 +2024,8 @@ function tabPrompt(s,sub) {
         ${cap('카드')}<div class="salty-group">
             ${row('카드 스킨', toggle('chat.demSkin', !!s.chat.demSkin), '트래커 · 장면 계획 같은 카드를 테마 모양으로 바꿔요')}
             ${s.chat.demSkin ? row('폰에서 접어 두기', toggle('chat.demFold', s.chat.demFold !== false), '트래커는 한 줄, 펼쳐져 오는 카드는 제목만 · 누르면 펼쳐요') : ''}
-            ${row('카드 색 통일', toggle('chat.unifyRegex', s.chat.unifyRegex), '카드의 모듈별 색을 포인트 색 하나로 맞춰요')}
-            ${row('카드 이모지', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 카드 제목 앞 그림 없이 글자만 보여요')}
+            ${row('카드 색 통일', toggle('chat.unifyRegex', s.chat.unifyRegex), '카드 모듈별 색을 포인트 색으로 맞춰요')}
+            ${row('카드 이모지', toggle('chat.regexIcons', s.chat.regexIcons), '끄면 제목 앞 그림 없이 글자만 보여요')}
         </div>
         ${cap('대사 색상')}<div class="salty-group">
             ${stack('프롬프트 색 그대로', segMulti('chat.demInk', [['off', '안 씀', { 'chat.demInk': false }], ['text', '글자 색', { 'chat.demInk': true, 'chat.demInkMode': 'text' }], ['marker', '형광펜 색', { 'chat.demInk': true, 'chat.demInkMode': 'marker' }]], !s.chat.demInk ? 'off' : s.chat.demInkMode === 'marker' ? 'marker' : 'text'), '프롬프트가 칠한 대사 색을 테마 대사색 · 형광펜보다 먼저 써요. 형광펜 색: 글자는 테마 색 그대로 두고 띠만 프롬프트 색으로 칠해요')}
@@ -2302,6 +2326,7 @@ function bindHealthSlot(root) {
 }
 
 function render(root) {
+    if (root._mbFit) { renderMbFit(root); return; }   // 1.7.4 레몬 탭 안 「미트볼 맞춤」 묶음만
     // A direct capture opening needs no appearance samples. If the user later
     // navigates to appearance settings, enable the original preview CSS then.
     if (ui.tab!=='extensions' || !['words','capture'].includes(subOf(ui.tab))) restorePreviewRules();
@@ -2779,7 +2804,7 @@ function bind(root) {
                 case 'reset-colors':
                     update((st) => { delete st.colorOverrides[st.palette]; delete st.gradients.overrides[st.palette]; });
                     break;
-                case 'mb-deco': ui.mbOnly = true; ui.picker = null; refreshPanels(); break;
+                case 'mb-deco': if (root._mbFit) { window.Salty?.openPopup?.(false, 'mb-deco'); break; } ui.mbOnly = true; ui.picker = null; refreshPanels(); break;   // 1.7.4 레몬 탭 안에서는 꾸미기 칸만 보이는 설정 창을 열어요
                 case 'mb-prompt-once': {   // 1.6.0 미트볼 문구: 이번 한 번만 채팅 전체로(걸려 있으면 거두기)
                     if (mbPromptOnceActive()) await mbPromptEndOnce({ force: true });
                     else if (await askConfirm(mbPromptConfirmText(getSettings()), { ok: '한 번만 싣기', cancel: '취소', title: '다음 생성에 채팅 전체를 실을까요?' })) await mbPromptArmOnce();

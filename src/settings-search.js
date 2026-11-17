@@ -5,6 +5,7 @@ import { favoriteButton } from './settings-favorites.js';
 import { MARKDOWN_CONTROLS, MARKDOWN_TUNING } from './markdown.js';
 import { mergedOf } from './settings-screens.js';   // 1.0.0 후보: 합친 화면(글자 모양 · 이름 · 시간)의 길 표시
 import { MB_SWITCHES } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 이름 · 낱말
+import { isLemonPath } from './mb-lemon.js';   // 1.7.4 「미트볼 맞춤」은 확장 탭 › 미트볼 상태창 칸의 「블루레몬」 탭 — 고르면 그리로 데려가요(src/panel.js navigate)
 const rows = [
  ['image','frame','안쪽 사진 모서리 (px)','액자 안쪽 사진 모서리 둥글기'],
  ['image','frame','사진 확대 (%)','액자 안쪽 사진 확대 맞추기'],
@@ -142,10 +143,10 @@ const rows = [
  ['prompt','deus','데우스 대사 색·가독성','데우스 프롬프트 대사 색 형광펜 가독성 향상 그림자 외곽선 글자 배경 묻힘 두께 진하기 거리 번짐','대사 색상 가독성 향상'],
  ['prompt','deus','데우스 감정 대사 효과','데우스 expressive dialogue 감정 대사 효과 애니메이션 움직임 외침 떨림 빛 색 흐름 무지개 애니메이션 줄이기 절전 기기설정 무시 효과 살리기 색 흐름을 어디에','감정 대사 효과'],
  ['chat','screen','트래커 날씨 연결','데우스 트래커 날씨 비 눈 채팅 뒤 효과 자동 연결 트래커 날씨로 날씨 효과','날씨'],   // 1.0.0 중복 정리: 채팅 › 화면 › 날씨의 「트래커」 하나로
- // 1.7.3 미트볼 맞춤 스위치 — 표 끝에(같은 점수면 먼저 있던 줄이 위)
- ['chat','screen','미트볼 맞춤','미트볼 맞춤 스위치 켜고 끄기 전부 끄기 전부 켜기 원작 그대로 화면만 바꾸는 것 데이터를 고치는 것 화면 보호 데이터 보호 교정 meatball toggle','미트볼 맞춤'],
- ['chat','screen','원작 그대로 보기 (이 기기)','미트볼 원작 그대로 보기 레몬 단추 맞춤 화면 끄기 정리한 보기 meatball raw view','원작 그대로 보기 (이 기기)'],
- ...MB_SWITCHES.filter(sw => !sw.setting).map(sw => ['chat','screen',`미트볼 맞춤: ${sw.name}`,`미트볼 맞춤 켜고 끄기 원작 그대로 ${sw.words}`,sw.name]),   // 1.7.3 미트볼 맞춤 스위치(src/mb-switch.js 표 한 곳)
+ // 1.7.3 미트볼 맞춤 스위치 — 표 끝에(같은 점수면 먼저 있던 줄이 위) · 1.7.4 테마 설정 창에서 빼고 확장 탭의 레몬 탭으로 옮겼어요 — 옛 이름 · 별칭 그대로 두고 길만 「@mb」(그 탭) · 「@mb:열쇠」(그 줄)
+ ['chat','screen','미트볼 맞춤','미트볼 맞춤 스위치 켜고 끄기 전부 끄기 전부 켜기 원작 그대로 화면만 바꾸는 것 데이터를 고치는 것 화면 보호 데이터 보호 교정 meatball toggle 블루레몬 레몬 탭 확장 탭','미트볼 맞춤','@mb'],
+ ['chat','screen','원작 그대로 보기 (이 기기)','미트볼 원작 그대로 보기 레몬 단추 맞춤 화면 끄기 정리한 보기 meatball raw view','원작 그대로 보기 (이 기기)','@mb:raw'],
+ ...MB_SWITCHES.filter(sw => !sw.setting).map(sw => ['chat','screen',`미트볼 맞춤: ${sw.name}`,`미트볼 맞춤 켜고 끄기 원작 그대로 ${sw.words}`,sw.name,`@mb:${sw.key}`]),   // 1.7.3 미트볼 맞춤 스위치(src/mb-switch.js 표 한 곳)
 ];
 for (const [sub, name, alias] of [['profile','캐릭터','캐릭터 봇 상대'],['user-profile','내','내 나 유저 사용자 페르소나']]) {
  const owner = sub === 'profile' ? 'profile' : 'userProfile';
@@ -248,7 +249,7 @@ const crumb=(tab,sub)=>{const m=mergedOf(tab,sub);return tabs[tab]+' › '+(m?`$
 export const SEARCH_ENTRIES = rows.map(([tab,sub,title,aliases,anchor='',path=''],id)=>{
  const words=[...new Set(normalize(title+' '+aliases).split(' '))];
  const titleWords=normalize(title).split(' ');
- return {id,tab,sub,title,anchor,path,breadcrumb:crumb(tab,sub),words,compact:words.join(''),
+ return {id,tab,sub,title,anchor,path,breadcrumb:isLemonPath(path)?'확장 › 미트볼 상태창 › 블루레몬':crumb(tab,sub),words,compact:words.join(''),
   titleCho:chosung(titleWords.join('')),cho:words.map(chosung),jamoWords:words.map(jamo),titleJamo:titleWords.map(jamo),titleKeys:titleWords.map(keystrokes),wordKeys:words.map(keystrokes),titleTyped:keystrokes(titleWords.join('')),titleAll:jamo(titleWords.join(''))};
 });
 // NFKC 가 ㅂ(호환 자모)을 첫소리 자모(U+1100~)로 바꿔 놓으므로 되돌린다 — 6.9.5 치는 중에 홀로 남은 모음(U+1161~) · 받침(U+11A8~)도

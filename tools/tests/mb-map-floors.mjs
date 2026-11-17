@@ -76,9 +76,10 @@ await ok('배치: 층이 쌓이고 · 땅 · 위 · 아래 · 바깥', () => {
     assert.ok(at('Bakery').x > L.bRight && at('Park').x > at('Bakery').x, '바깥은 건물 옆 · 가까운 것부터');
     assert.ok(at('Bakery').y === at('Reception').y && at('Park').y === at('Reception').y, '바깥은 모두 1층 줄(땅 선 바로 위)');
     assert.ok(at('Park').y < L.groundY && at('Park').y > L.groundY - m.ROW_H, '층 띠 높이 안');
-    // 하늘 · 땅 밑 장소는 승강기 줄 위 · 아래(건물 가로 안)
+    // 하늘 · 땅 밑 장소는 건물 위 · 아래(건물 가로 안) — 1.7.5 땅 밑 장소는 통로 x 에서 비켜요(통로가 그 줄 밑 복도까지 내려와요)
     const b0 = L.buildings[0];
-    for (const k of ['Heaven', 'Underworld']) assert.ok(at(k).x > b0.shaftL && at(k).x < b0.right, k);
+    for (const k of ['Heaven', 'Underworld']) assert.ok(at(k).x >= b0.left && at(k).x <= b0.right, k);
+    assert.ok(Math.abs(at('Underworld').x - b0.shaftX) > 5, `${at('Underworld').x} / ${b0.shaftX}`);
     // 칸 너비 채우기: 낮은 건물은 기본 칸(한 층 방 둘 × 21) 그대로 · 높은 건물은 넓어져요(상한 2.4배)
     assert.equal(b0.roomR - b0.roomL, 42);
     const nine = m.floorLayout([...Array(9)].map((_, i) => P('R' + i, `${i + 1}F`, { x: i % 2 ? 70 : 30, links: i ? ['R' + (i - 1)] : [] })).concat([P('R9', '5F', { x: 80 }), P('Shop', 'shop', { area: 'S', links: ['R0'] })]));
@@ -101,21 +102,21 @@ await ok('층 정보가 없거나 한 층뿐이면 null(그 확장 그림 그대
 
 const straight = pts => pts.every((p, i) => !i || p[0] === pts[i - 1][0] || p[1] === pts[i - 1][1]);
 await ok('선은 모두 직각으로 꺾여요', () => {
-    const L = m.floorLayout(office()); const lanes = { left: 0, out: 0 };
-    for (const [a, b] of L.pairs) { const pts = m.routeOf(L, a, b, null, lanes); assert.ok(pts && pts.length >= 2, a + b); assert.ok(straight(pts), `${a}-${b} ${JSON.stringify(pts)}`); }
-    // 이웃 층(3F → 2F)은 띠 경계(계단), 먼 층(3F → 1F)은 승강기 줄
-    const stair = m.routeOf(L, 'Studio', 'Board Room');
-    assert.ok(stair.some(([, y]) => y === L.rowTop.get(2)));
-    const far = m.routeOf(L, 'Board Room', 'Reception');
-    assert.ok(far.some(([x]) => x >= L.buildings[0].shaftL && x <= L.buildings[0].right), JSON.stringify(far));
-    // 위 · 아래 장소는 승강기 줄로 곧게 — 건물 벽(왼쪽 · 오른쪽)을 가로지르지 않아요
+    const L = m.floorLayout(office());
+    for (const [a, b] of L.pairs) { const pts = m.routeOf(L, a, b, null); assert.ok(pts && pts.length >= 2, a + b); assert.ok(straight(pts), `${a}-${b} ${JSON.stringify(pts)}`); }
+    // 1.7.5 이웃 층(3F → 2F)도 먼 층(3F → 1F)도 같은 공용 통로(승강기 줄 하나)로
     const b0 = L.buildings[0];
+    for (const [a, b] of [['Studio', 'Board Room'], ['Board Room', 'Reception']]) {
+        const pts = m.routeOf(L, a, b);
+        assert.ok(pts.some(([x, y], i) => i && x === b0.shaftX && pts[i - 1][0] === b0.shaftX && y !== pts[i - 1][1]), JSON.stringify(pts));
+    }
+    // 위 · 아래 장소도 통로로 — 건물 벽(왼쪽 · 오른쪽)을 가로지르지 않고 점 밑으로 드나들어요(이름표는 점 위)
     const sky = m.routeOf(L, 'Heaven', 'Reception');
-    assert.equal(sky[0][0], sky[1][0]); assert.ok(sky.every(([x]) => x >= b0.roomL && x <= b0.right), JSON.stringify(sky));
-    assert.ok(sky.some(([x, y]) => x > b0.shaftL && y > b0.top && y < b0.bottom), '승강기 줄을 타요');
+    assert.equal(sky[0][0], sky[1][0]); assert.ok(sky[1][1] > sky[0][1], '점 밑으로 나가요'); assert.ok(sky.every(([x]) => x >= b0.roomL && x <= b0.right), JSON.stringify(sky));
+    assert.ok(sky.some(([x, y]) => x === b0.shaftX && y > b0.top && y < b0.bottom), '승강기 줄을 타요');
     const deep = m.routeOf(L, 'Underworld', 'Reception');
     assert.ok(deep.every(([x]) => x >= b0.roomL && x <= b0.right), JSON.stringify(deep));
-    const last = deep.at(-1), prev = deep.at(-2); assert.ok(last[0] === prev[0] && prev[1] < b0.bottom && last[1] > b0.bottom, '바닥 아래로 곧게');
+    const last = deep.at(-1), prev = deep.at(-2); assert.ok(last[0] === prev[0] && prev[1] > last[1] && prev[1] > b0.bottom, '땅 밑 장소에는 점 밑에서 올라가요');
     assert.equal(m.pathD([[0, 1], [0, 5], [3, 5]]), 'M0 1 L0 5 L3 5');
 });
 
@@ -166,8 +167,13 @@ await ok('SVG 에 입히기', () => {
     // 선: 곧은 선은 없고 꺾인 길만
     const edges = svg.querySelector('g.edges');
     assert.equal(edges.querySelectorAll('line').length, 0);
-    const paths = edges.querySelectorAll('path.bl-route'); assert.equal(paths.length, L.pairs.length);
-    for (const p of paths) { const pts = [...p.getAttribute('d').matchAll(/[ML]([-\d.]+) ([-\d.]+)/g)].map(x => [Number(x[1]), Number(x[2])]); assert.ok(straight(pts), p.getAttribute('d')); }
+    const paths = edges.querySelectorAll('path.bl-route'); assert.equal(paths.length, 1, '1.7.5 선은 한 path 로 합쳐요(모두 아는 곳)');
+    for (const p of paths) for (const sub of p.getAttribute('d').split(/(?=M)/)) { const pts = [...sub.matchAll(/[ML]([-\d.]+) ([-\d.]+)/g)].map(x => [Number(x[1]), Number(x[2])]); assert.ok(straight(pts), sub); }
+    // 모든 링크가 그려졌어요: 링크마다 꺾인 선의 토막이 합친 선 안에 들어 있어요
+    const drawnSegs = paths[0].getAttribute('d').split(/(?=M)/).map(s => [...s.matchAll(/([-\d.]+) ([-\d.]+)/g)].map(x => [Number(x[1]), Number(x[2])]));
+    const covered = (p, q) => drawnSegs.some(([u, v]) => (p[0] === q[0] && u[0] === p[0] && v[0] === p[0] && Math.min(u[1], v[1]) <= Math.min(p[1], q[1]) + 0.01 && Math.max(u[1], v[1]) >= Math.max(p[1], q[1]) - 0.01)
+        || (p[1] === q[1] && u[1] === p[1] && v[1] === p[1] && Math.min(u[0], v[0]) <= Math.min(p[0], q[0]) + 0.01 && Math.max(u[0], v[0]) >= Math.max(p[0], q[0]) - 0.01));
+    for (const [a, b] of L.pairs) { const pts = m.routeOf(L, a, b); for (let i = 1; i < pts.length; i++) assert.ok(covered(pts[i - 1], pts[i]), `${a}-${b} ${pts[i - 1]} → ${pts[i]}`); }
     // 띠 · 이름표 · 땅 선은 맨 앞(점 · 선 뒤) · 누르기를 안 받아요
     const deco = svg.firstChild; assert.equal(deco.getAttribute('class'), 'bl-floors'); assert.equal(deco.getAttribute('pointer-events'), 'none');
     assert.deepEqual(deco.querySelectorAll('text.bl-ftag').map(t => t.textContent), ['3F', '2F', '1F', 'B1']);
@@ -185,7 +191,11 @@ await ok('보던 viewBox(끌기 · 확대)는 그대로 · 구역 탭으로 걸�
     assert.equal(svg.getAttribute('viewBox'), '1 2 30 30');
     // 안 보이는 장소로 가는 선은 안 그려요
     for (const p of svg.querySelectorAll('path.bl-route')) assert.ok(p.getAttribute('d'));
-    assert.equal(svg.querySelectorAll('path.bl-route').length, 5);
+    assert.equal(svg.querySelectorAll('path.bl-route').length, 1);
+    // 1.7.5 한 path 로 합쳐도 안 보이는 곳(바깥 · 하늘 · 땅 밑)으로 가는 선 토막은 없어요: 모든 토막이 보이는 장소들 사이 선의 토막
+    const L = m.floorLayout(places), names = new Set(shown.map(p => p.name));
+    const want = m.mergeSegments(L.pairs.filter(([a, b]) => names.has(a) && names.has(b)).map(([a, b]) => m.routeOf(L, a, b, names))).d;
+    assert.equal(svg.querySelectorAll('path.bl-route')[0].getAttribute('d'), want);
 });
 await ok('버그 사냥 9b: 층별 배치가 새로 생기거나 없어지면 그 확장이 기억한 보던 칸(다른 눈금)을 버리고 다시 맞춰요', () => {
     const doc = makeDoc(), flat = office().map(p => ({ ...p, desc: 'plain room' })), ui = { mapVB: null };
@@ -426,6 +436,175 @@ await tryOk('버그 사냥 10b: 그림 글자 이름표 폭(헤드리스 크롬 
     assert.ok(Math.max(...lines.map(m.textW)) <= o.w, '접은 줄도 칸 안');
     // 두 줄로 끊을 때도 그림 글자 가운데(이어 붙인 가족 그림)를 가르지 않아요
     for (const ln of m.wrapLabel('👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧👨‍👩‍👧', 10)) assert.ok(!/^\u200d|\u200d$/.test(ln.replace(/…$/, '')), JSON.stringify(ln));
+});
+// 1.7.4: 처음 만든 지도에 층이 몇 곳에만 적힌 경우(본편 AI 가 「3층 회의실」 · 「4층 서고」 만 쓰고 나머지 부서는 층을 안 씀)
+//   전: 3F ~ 4F 두 층짜리 건물 + 층 모르는 부서 열 곳이 땅 줄 대신 3F 줄(건물 밖)에 늘어서고 · 하늘 구역의 집 · 땅 밑 구역의 영지도 그 줄에 섞였어요
+const sparse = () => [
+    P('Chief Office', 'Shared office of the two chiefs.', { area: 'Civic Tower', links: ['Desk Office'] }),
+    P('Desk Office', 'Scheduling and protocol.', { area: 'Civic Tower', links: ['Chief Office', 'Main Hall'] }),
+    P('Review Bureau', 'Checks the rules.', { area: 'Civic Tower', links: ['Desk Office'] }),
+    P('Merit Dept.', 'Judges past deeds.', { area: 'Civic Tower', links: ['Main Hall'] }),
+    P('Help Desk', 'Fields appeals.', { area: 'Civic Tower', links: ['Merit Dept.'] }),
+    P('Media Dept.', 'Runs the official account.', { area: 'Civic Tower', links: ['Main Hall'] }),
+    P('Data Dept.', 'Server floor.', { area: 'Civic Tower', links: ['Repair Shop'] }),
+    P('Repair Shop', 'Tinkerers fix things on 3F.', { area: 'Civic Tower', kind: 'workshop', links: ['Data Dept.', 'Garden Room'] }),
+    P('Garden Room', 'Small 3F room full of pots.', { area: 'Civic Tower', kind: 'workroom', links: ['Main Hall'] }),
+    P('Guard Post', 'Mostly naps.', { area: 'Civic Tower', links: ['Main Hall'] }),
+    P('Great Library', 'The 4F archive and library.', { area: 'Civic Tower', kind: 'library', links: ['Main Hall'] }),
+    P('Main Hall', 'Crowded hall.', { area: 'Civic Tower', kind: 'hall', links: ['Great Library', 'Heaven', 'Hell', 'Old Manor'] }),
+    P('Old Manor', 'Historic manor just outside the tower.', { area: 'Civic Tower', kind: 'mansion', links: ['Main Hall'] }),
+    P('Heaven', 'A calm realm.', { area: 'Heaven', kind: 'realm', links: ['Main Hall', 'Cottage'] }),
+    P('Cottage', 'A tidy house in the first district.', { area: 'Heaven', kind: 'house', links: ['Heaven'] }),
+    P('Hell', 'A loud realm.', { area: 'Hell', kind: 'realm', links: ['Main Hall', 'Dark Keep', 'Pit'] }),
+    P('Dark Keep', 'A desolate domain.', { area: 'Hell', kind: 'domain', links: ['Hell'] }),
+    P('Pit', 'Harsh punishment zone.', { area: 'Hell', kind: 'prison', links: ['Hell'] }),
+];
+await tryOk('1.7.4: 구역 장소 가운데 층이 적힌 곳이 절반이 안 되면 층별 보기를 안 해요(그 확장 그림 그대로)', () => {
+    assert.equal(m.floorLayout(sparse()), null, '열세 곳 중 세 곳만 층 — 건물 단면으로 그리면 층 모르는 부서가 엉뚱한 층 줄에 서요');
+    // 번역 이름 · 설명으로 층이 읽혀도 같아요
+    assert.equal(m.floorLayout(sparse(), { tr: s => (s === 'Judges past deeds.' ? '5층 심사실' : s) }), null);
+    // 층이 넉넉히 적힌 같은 건물(열세 곳 중 일곱)은 그대로 건물이에요
+    const dense = sparse().map((p, i) => (i < 4 ? { ...p, desc: `${p.desc} On ${7 - i}F.` } : p));
+    const L = m.floorLayout(dense); assert.ok(L, '절반 넘게 층이 있으면 건물'); assert.equal(L.buildings.length, 1);
+    // 구역이 빈 장소(구역을 안 쓰는 지도)는 이 규칙을 안 써요 — 예전처럼 층 장소만 건물로
+    const noArea = sparse().map(p => ({ ...p, area: '' }));
+    assert.ok(m.floorLayout(noArea), '구역 없는 지도는 그대로');
+});
+await tryOk('1.7.4: 건물 맨 아래가 1층보다 높아도 바깥 장소는 1층 줄(땅) — 건물은 땅까지 내려와요', () => {
+    const list = [P('Studio', '3F studio.', { links: ['Board'] }), P('Board', '4F board room.', { links: ['Lounge'] }), P('Lounge', '5F lounge.'), P('Bakery', 'Corner bakery.', { area: 'Street', kind: 'shop', links: ['Studio'] })];
+    const L = m.floorLayout(list);
+    assert.equal(L.groundRow, 1, '땅 줄은 1층'); assert.deepEqual(L.rows, [5, 4, 3, 2, 1]);
+    assert.equal(L.pos.get('Bakery').row, 1, '바깥 장소가 3층 줄에 서지 않아요');
+    assert.ok(L.pos.get('Bakery').y > L.pos.get('Studio').y);
+    const b0 = L.buildings[0]; assert.deepEqual(b0.rows, [5, 4, 3, 2, 1], '건물 띠가 땅(1층)까지'); assert.equal(r(b0.bottom), r(L.groundY));
+});
+await tryOk('1.7.4: 하늘 · 땅 밑 구역에 든 장소(그 구역의 집 · 영지)는 바깥 줄이 아니라 그 세계 쪽에', () => {
+    const list = [...office(), P('Cottage', 'A tidy house.', { area: 'Heaven', kind: 'house', links: ['Heaven'] }), P('Dark Keep', 'A desolate domain.', { area: 'Hell', kind: 'domain', links: ['Underworld'] })];
+    const L = m.floorLayout(list);
+    assert.equal(L.pos.get('Cottage').zone, 'above'); assert.equal(L.pos.get('Dark Keep').zone, 'below');
+    assert.equal(L.pos.get('Bakery').zone, 'out', '보통 구역 바깥 장소는 그대로');
+    // 건물 구역 이름에 하늘 낱말이 있어도(「Heaven Tower」) 그 구역의 층 모르는 장소는 하늘로 안 가요
+    const tower = office().map(p => (p.area === 'Office' ? { ...p, area: 'Heaven Tower' } : p)).concat([P('Mail Room', 'Letters.', { area: 'Heaven Tower', links: ['Reception'] })]);
+    assert.equal(m.floorLayout(tower).pos.get('Mail Room').zone, 'out');
+});
+await tryOk('1.7.4: 로어북 층 안내(「- **7F:** 이름, 이름」)를 읽어요 — 한 글에 서로 다른 층이 둘 넘을 때만', () => {
+    const book = ['Intro text.\n### Building\n- **4F:** Chief Office, Desk Office\n- **3F:** Review Bureau\n- 2F: Merit Dept. and Help Desk\n* **1F**: Main Hall, Guard Post.\n- **B1:** Data Department\n- 지하 2층: 보관실', 'Note — 3F: just one line here.', '- 5층: 회의실, 휴게실\n- 4층: 자료실'];
+    const d = m.floorDirectory(book);
+    const f = n => d.filter(x => x.name === n).map(x => x.f);
+    assert.deepEqual(f('Chief Office'), [4]); assert.deepEqual(f('Desk Office'), [4]); assert.deepEqual(f('Review Bureau'), [3]);
+    assert.deepEqual(f('Merit Dept'), [2]); assert.deepEqual(f('Help Desk'), [2]); assert.deepEqual(f('Guard Post'), [1]); assert.deepEqual(f('Data Department'), [-1]);
+    assert.deepEqual(f('보관실'), [-2]); assert.deepEqual(f('휴게실'), [5]); assert.deepEqual(f('자료실'), [4]);
+    assert.equal(f('just one line here').length, 0, '층이 한 줄뿐인 글은 안내가 아니에요');
+    assert.deepEqual(m.floorDirectory(null), []); assert.deepEqual(m.floorDirectory(['no floors at all']), []);
+});
+await tryOk('1.7.4: 같은 세계의 다른 채팅 지도(층이 설명에 몇 곳만 · 한 곳만)도 로어북 층 안내로 같은 건물 모양', () => {
+    const dir = m.floorDirectory(['- **4F:** Chief Office, Desk Office\n- **3F:** Review Bureau, Merit Dept.\n- **2F:** Help Desk, Media Dept.\n- **1F:** Main Hall, Guard Post\n- **B1:** Information Technology Dept.']);
+    // 앞 시험의 지도(층이 세 곳만 · 안내 없으면 null): 안내로 부서가 제 층에 · 「IT」 꼴 줄임말도
+    const list = sparse().concat([P('IT Dept.', 'Server room.', { area: 'Civic Tower', links: ['Main Hall'] })]);
+    assert.equal(m.floorLayout(list), null);
+    const L = m.floorLayout(list, { dir }); assert.ok(L); assert.equal(L.buildings.length, 1);
+    const row = n => L.pos.get(n)?.row;
+    assert.equal(row('Chief Office'), 4); assert.equal(row('Review Bureau'), 3); assert.equal(row('Help Desk'), 2); assert.equal(row('Main Hall'), 1); assert.equal(row('IT Dept.'), 0);
+    assert.equal(row('Repair Shop'), 3, '설명의 층이 먼저'); assert.equal(row('Great Library'), 4);
+    assert.equal(L.pos.get('Old Manor').zone, 'out'); assert.equal(L.pos.get('Old Manor').row, 1);
+    assert.equal(L.pos.get('Cottage').zone, 'above'); assert.equal(L.pos.get('Dark Keep').zone, 'below');
+    // 다른 채팅: 구역 이름이 장소(건물 머리)이고 층은 한 곳만 — 같은 안내로 같은 층 배치
+    const other = [P('Tower', 'The joint office.', { area: 'Tower', links: ['Chief Office', 'Main Hall'] }), P('Chief Office', 'Big office.', { area: 'Tower', links: ['Tower'] }), P('Desk Office', 'Desks.', { area: 'Tower', links: ['Chief Office'] }),
+        P('Review Bureau', 'Rules.', { area: 'Tower', links: ['Tower'] }), P('Help Desk', 'Appeals.', { area: 'Tower', links: ['Tower'] }), P('Main Hall', 'Hall.', { area: 'Tower', links: ['Tower'] }), P('Archive Room', 'Archive on 4F.', { area: 'Tower', links: ['Tower'] }),
+        P('Snack Shop', 'Lobby store.', { area: 'Tower', kind: 'shop', links: ['Tower'] }), P('Heaven', 'Realm.', { area: 'Heaven', kind: 'realm', links: ['Tower'] })];
+    assert.equal(m.floorLayout(other), null);
+    const O = m.floorLayout(other, { dir }); assert.ok(O);
+    for (const n of ['Chief Office', 'Review Bureau', 'Help Desk', 'Main Hall']) assert.equal(O.pos.get(n).row, L.pos.get(n).row, n);
+    assert.equal(O.pos.get('Tower').zone, 'above', '건물 머리는 지붕 위'); assert.equal(O.pos.get('Snack Shop').row, 1);
+    // 안내 이름 둘이 서로 다른 층으로 걸리면 모르는 것(바깥 그대로)
+    const two = m.floorDirectory(['- 3F: Lab\n- 5F: Lab\n- 1F: Hall']);
+    assert.equal(m.floorLayout([P('Lab', 'x', { links: ['Hall'] }), P('Hall', 'y'), P('Room', 'on 2F')], { dir: two }).pos.get('Lab').zone, 'out');
+});
+// 1.7.5 연결선: 7F ~ B2 건물에 링크가 많으면 건물 오른쪽에 먼 층 선마다 제 줄 · 바깥 선마다 제 줄이 생겨 세로선이 열 개 넘게 빽빽했고,
+//   이웃 층 계단 선은 아래층 이름표를 세로로 뚫고 · 하늘 ↔ 땅 밑 선은 층 가운데에서 꺾여 방 점을 지났어요(지어낸 이름만)
+const tower = () => {
+    const T = (name, desc, links, extra = {}) => P(name, desc, { area: 'Tower', links, ...extra });
+    return [
+        T('Tower', 'The joint office building.', ['Top Office', 'Review', 'Help Desk', 'Archive', 'Heaven', 'Hell'], { kind: 'building' }),
+        T('Top Office', 'Office on 7F.', ['Desk Room', 'Tower']), T('Desk Room', 'Desks on 7F.', ['Top Office', 'Audit', 'Archive']),
+        T('Audit', 'Audit floor 6F.', ['Desk Room', 'Media']), T('Media', 'Media room 5F.', ['Audit', 'Lobby']),
+        T('Review', 'Review hall 4F.', ['Lobby', 'Tower']), T('Archive', 'Archive on 4F.', ['Desk Room', 'Lobby']),
+        T('Repair', 'Repair shop 3F.', ['Garden Room', 'Lobby', 'Guard']), T('Garden Room', 'Pots on 3F.', ['Repair']),
+        T('Help Desk', 'Help desk 2F.', ['Lobby']), T('Lobby', 'Lobby on 1F.', ['Guard', 'Server', 'Old Manor', 'Heaven', 'Hell']), T('Guard', 'Guard post 1F.', ['Lobby', 'Repair']),
+        T('Server', 'Server room B2.', ['Lobby']),
+        T('Old Manor', 'Historic manor next door.', ['Lobby'], { kind: 'mansion' }),
+        P('Snack Shop', 'Corner store.', { kind: 'shop', area: 'Street', links: ['Audit', 'Lobby', 'Karaoke'] }), P('Karaoke', 'Songs.', { kind: 'shop', area: 'Street', links: ['Snack Shop'] }),
+        P('Heaven', 'A calm realm.', { kind: 'realm', area: 'Heaven', links: ['Cottage', 'Lobby', 'Hell'] }), P('Cottage', 'A tidy house.', { kind: 'house', area: 'Heaven', links: ['Heaven'] }),
+        P('Hell', 'A loud realm.', { kind: 'realm', area: 'Hell', links: ['Dark Keep', 'Pit', 'Lobby'] }), P('Dark Keep', 'A desolate domain.', { kind: 'domain', area: 'Hell', links: ['Hell'] }), P('Pit', 'Harsh zone.', { kind: 'prison', area: 'Hell', links: ['Hell'] }),
+    ];
+};
+/** 모든 연결선을 그려 세요: 겹친 세로선(서로 3 안쪽으로 붙어 나란히 2 넘게 가는 서로 다른 세로선) · 점(반지름 2.8)이나 이름표를 지나는 (선, 장소) · 통로 밖에서 층을 건너는 세로선 */
+const lineStats = L => {
+    const routes = L.pairs.map(([a, b]) => ({ a, b, pts: m.routeOf(L, a, b, null, { left: 0, out: 0 }) }));
+    const segs = r => r.pts.slice(1).map((p, i) => [r.pts[i], p]);
+    const vert = new Map();
+    for (const r of routes) for (const [p, q] of segs(r)) if (p[0] === q[0] && Math.abs(p[1] - q[1]) >= 1) { const k = p[0]; if (!vert.has(k)) vert.set(k, []); vert.get(k).push([Math.min(p[1], q[1]), Math.max(p[1], q[1])]); }
+    const xs = [...vert.keys()], crowded = new Set();
+    for (const x of xs) for (const y of xs) if (x < y && y - x < 3 && vert.get(x).some(([a0, a1]) => vert.get(y).some(([b0, b1]) => Math.min(a1, b1) - Math.max(a0, b0) > 2))) { crowded.add(x); crowded.add(y); }
+    const cross = [];
+    for (const [n, o] of L.pos) {
+        if (L.alias?.has(n)) continue;
+        const lines = m.wrapLabel(n, (o.w || 21) - 1.5), w = Math.max(...lines.map(m.textW));
+        const lab = [o.x - w / 2 + 0.2, o.y - 4.4 - (lines.length - 1) * 3.4 - 2.2, o.x + w / 2 - 0.2, o.y - 4.4 + 0.6];
+        for (const rt of routes) {
+            const own = n === rt.a || n === rt.b;
+            const hit = segs(rt).some(([p, q]) => {
+                if (Math.max(p[0], q[0]) > lab[0] && Math.min(p[0], q[0]) < lab[2] && Math.max(p[1], q[1]) > lab[1] && Math.min(p[1], q[1]) < lab[3]) return true;
+                if (own) return false;
+                const cx = Math.max(Math.min(p[0], q[0]), Math.min(o.x, Math.max(p[0], q[0]))), cy = Math.max(Math.min(p[1], q[1]), Math.min(o.y, Math.max(p[1], q[1])));
+                return Math.hypot(cx - o.x, cy - o.y) < 2.75;
+            });
+            if (hit) cross.push(`${rt.a}-${rt.b} × ${n}`);
+        }
+    }
+    const offShaft = routes.filter(rt => segs(rt).some(([p, q]) => p[0] === q[0] && L.buildings.some(b => p[0] > b.left && p[0] < b.shaftL && Math.min(Math.max(p[1], q[1]), b.bottom) - Math.max(Math.min(p[1], q[1]), b.top) > 5))).map(rt => `${rt.a}-${rt.b}`);
+    const leftOut = routes.filter(rt => L.pos.get(rt.a).x >= L.bLeft && L.pos.get(rt.b).x >= L.bLeft && rt.pts.some(([x]) => x < L.bLeft - 0.5)).map(rt => `${rt.a}-${rt.b}`);
+    return { routes, crowded: crowded.size, cross, offShaft, leftOut };
+};
+await tryOk('1.7.5 연결선: 층 사이 선은 공용 통로 하나로 모여 세로선이 겹치지 않아요', () => {
+    const L = m.floorLayout(tower()); assert.ok(L); assert.equal(L.buildings.length, 1);
+    const s = lineStats(L);
+    assert.equal(s.crowded, 0, `겹친 세로선 ${s.crowded}`);
+    assert.deepEqual(s.offShaft, [], '통로 밖에서 층을 건너는 세로선');
+    // 건물 안에서 층을 건너는 세로 구간은 모두 같은 x(통로 하나)
+    const b0 = L.buildings[0], xs = new Set();
+    for (const rt of s.routes) rt.pts.slice(1).forEach((q, i) => { const p = rt.pts[i]; if (p[0] === q[0] && Math.min(Math.max(p[1], q[1]), b0.bottom) - Math.max(Math.min(p[1], q[1]), b0.top) > 5) xs.add(p[0]); });
+    assert.equal(xs.size, 1, JSON.stringify([...xs]));
+    assert.ok([...xs][0] > b0.roomR && [...xs][0] < b0.right, '통로는 방 칸 오른쪽 승강기 줄 안');
+});
+await tryOk('1.7.5 연결선: 선이 다른 장소의 점 · 이름표(제 이름표 포함)를 가로지르지 않아요', () => {
+    const s = lineStats(m.floorLayout(tower()));
+    assert.deepEqual(s.cross, []);
+    assert.deepEqual(s.leftOut, [], '건물 왼쪽 벽 밖으로 돌아가지 않아요');
+    // 사무 건물(이웃 층 계단 선 · 하늘 · 땅 밑)도
+    const o = lineStats(m.floorLayout(office()));
+    assert.deepEqual(o.cross, []); assert.equal(o.crowded, 0);
+});
+await tryOk('1.7.5 연결선: 바깥 장소로 가는 선은 가장 가까운 벽(오른쪽)으로 나가 땅 줄 복도로 — 건물과 바깥 사이에 선마다 줄을 안 만들어요', () => {
+    const L = m.floorLayout(tower()), S = L.pos.get('Snack Shop');
+    const pts = m.routeOf(L, 'Audit', 'Snack Shop', null, { left: 0, out: 0 });
+    // 건물 오른쪽 벽 밖 세로 구간은 바깥 장소로 올라가는 끝 한 토막뿐
+    const outside = pts.slice(1).map((q, i) => [pts[i], q]).filter(([p, q]) => p[0] === q[0] && p[0] > L.bRight);
+    assert.equal(outside.length, 1, JSON.stringify(pts)); assert.equal(outside[0][0][0], S.x);
+    assert.ok(Math.abs(outside[0][0][1] - outside[0][1][1]) < 5, '바깥 장소 바로 밑 복도에서 올라가요');
+    assert.ok(L.outL - L.bRight <= 4.01, `바깥 장소가 건물 곁에 붙어요(${L.outL - L.bRight})`);
+});
+await tryOk('1.7.5 연결선: 겹쳐 지나는 선은 한 번만 그려요(진하기가 쌓이지 않게)', () => {
+    const doc = makeDoc(), places = tower(), svg = drawn(doc, places);
+    m.applyFloors(svg, { places }, { ui: null });
+    const paths = svg.querySelector('g.edges').querySelectorAll('path.bl-route');
+    assert.ok(paths.length >= 1 && paths.length <= 2, String(paths.length));
+    const seen = new Set();
+    for (const p of paths) for (const sub of p.getAttribute('d').split(/(?=M)/)) {
+        const pts = [...sub.matchAll(/[ML]([-\d.]+) ([-\d.]+)/g)].map(x => [Number(x[1]), Number(x[2])]);
+        assert.ok(straight(pts), sub);
+        for (let i = 1; i < pts.length; i++) { const k = [pts[i - 1], pts[i]].map(String).sort().join('|'); assert.ok(!seen.has(k), '같은 토막 두 번 ' + k); seen.add(k); }
+    }
 });
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

@@ -408,6 +408,8 @@ html body.salty dialog:not(.bl-settings-dialog) a[href]:not([class]) { color: va
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6):not(.fh-is-fullscreen) .fh-shell { border-radius: var(--bl-r-lg, 16px); }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand strong { font-size: 1em; font-weight: 700; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand-mark { width: 1.3em; height: 1.3em; }
+/* 1.7.4 이름 옆 ? 는 이름과 같은 글 줄 식(56 --bl-help-y-line · 설정창 묶음 제목과 같은 식): 이름을 1em 700 으로 맞춘 뒤 공용 올림값(−0.085em)으로는 ? 가 이름 글자보다 0.96px 아래였어요(1.7.3 게시 뒤 help-shape) — 사용자 · 기본 글꼴 모두 0.29px */
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-brand strong > .bl-fruit-help-button { --bl-help-y: 0em; position: relative; top: var(--bl-help-y-line); }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item { font-size: var(--bl-ui-tab-fs, 13px); }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item > b { font-size: var(--bl-ui-ink-fa, 15px); }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sel { font-weight: 400; padding-left: 12px; }

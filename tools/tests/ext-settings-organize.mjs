@@ -90,14 +90,14 @@ test('⑥ 시트: 접기 · 2열 · 설명은 「정리한 보기」일 때만 �
     for (const [kind, label] of [['ai', 'AI 요청 +'], ['tok', '토큰 +'], ['save', '토큰 절약'], ['free', '비용 없음']]) assert.ok(css.includes(`[data-bl-cost="${kind}"]::after { content: '${label}'; }`), `비용 표시 ${kind}`);
     assert.match(css, /#ss-settings\[data-bl-view="org"\] \.inline-drawer-content > small\[data-bl-clamp="hide"\] \{ display: none; \}/, '탭 맨 위 긴 문단은 정리한 보기에서만 접어요(원작 그대로면 보여요)');
     for (const cls of ['bl-ext-intro', 'bl-ext-fold', 'bl-ext-more', 'bl-ext-start']) assert.match(css, new RegExp(`#ss-settings\\[data-bl-view="org"\\] \\.${cls} \\{ display: [a-z-]+ !important;`), `${cls} 는 정리한 보기에서만 보여요`);
-    assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view \{ display: inline-flex !important;/, '보기 스위치는 두 보기 모두에서 보여요');
+    assert.match(read('src/mb-lemon.css'), /#ss-settings \.inline-drawer-header > \.bl-ext-view \{ display: inline-flex !important;/, '레몬 단추는 두 보기 모두에서 · 맞춤을 다 꺼도 보여요(1.7.4 묶음 문 없는 제 시트)');
     assert.ok(!/\.bl-ext-(intro|fold|more|start|view|jump)[^{]*\{[^}]*display: [a-z-]+ !important/.test(read('style.css')), '늘 붙는 시트에는 없어요');
 });
 test('⑦ 맞춤 모듈: 정리가 실패해도 탭 · 시트는 그대로 · 서랍 머리 스위치 누름만 멈춰요', () => {
     const mod = read('src/ext-compat.js');
-    assert.ok(mod.includes("try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }"), '탭을 만든 뒤 한 번 · 실패는 삼켜요');
+    assert.ok(mod.includes("try { if ('blTabs' in root.dataset && organize(root, set)) showGroup(root, root.dataset.blTabs === LEMON ? LEMON : Number(root.dataset.blTabs) || 0); } catch { /* 원래 모습 그대로 */ }"), '탭을 만든 뒤 한 번 · 실패는 삼켜요');
     assert.equal((mod.match(/stopPropagation/g) || []).length, 1); assert.equal((mod.match(/preventDefault/g) || []).length, 1);
-    assert.ok(mod.includes("} else setView(root, root.dataset.blView !== 'raw');\n                    if (stay) { event.stopPropagation?.(); event.preventDefault?.(); }"), '서랍 머리 안의 단추(보기 스위치 · 설정 찾기)는 그 누름만 멈춰요(서랍이 같이 접히지 않게) — 멈추는 곳은 한 곳');
+    assert.ok(/goLemon\(root, shown \? !\('blLemon' in root\.dataset\) : true\);\r?\n\s+stay = shown;\r?\n\s+\}\r?\n\s+if \(stay\) \{ event\.stopPropagation\?\.\(\); event\.preventDefault\?\.\(\); \}/.test(mod), '서랍 머리 안의 단추(1.7.4 레몬 단추 · 설정 찾기)는 그 누름만 멈춰요(서랍이 같이 접히지 않게) — 멈추는 곳은 한 곳');
     assert.ok(mod.includes("stay = !!root.querySelector('.inline-drawer-content')?.getClientRects?.().length;"), '설정 찾기 단추: 서랍이 접혀 있으면 누름을 흘려 서랍이 펼쳐지게');
     assert.equal((mod.match(/addEventListener\('click'/g) || []).length, 1, '누름 감시자는 하나 그대로');
     assert.equal((mod.match(/addEventListener\('change'/g) || []).length, 1, '값이 바뀔 때 접힌 줄의 지금 값만 다시 적어요');
@@ -110,15 +110,16 @@ test('⑧ 보기 스위치는 문서 몸통에 표식 하나(data-bl-ext-raw)를
     assert.doesNotThrow(() => setView(fake(undefined), true), '문서가 없어도(시험 · 떼어 낸 칸) 조용히');
     assert.doesNotThrow(() => setView(fake({}), false));
     assert.equal((code.match(/toggleAttribute/g) || []).length, 1, '몸통 표식은 이 한 곳에서만');
-    // 보기 스위치는 글 없는 레몬 아이콘 단추 — 이름은 title · aria-label, 누른 상태는 aria-pressed(켜짐 = 블루레몬 맞춤 화면)
-    const btn = { textContent: '옛 글', title: '', attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } };
+    // 1.7.4 서랍 머리 레몬 단추는 글 없는 아이콘 단추 — 누르면 「블루레몬」 탭으로 가요(src/mb-lemon.js). 이름은 title · aria-label, 맞춤 화면이 걸려 있으면 색 표식(data-bl-on) · 켜고 끄는 단추가 아니라 aria-pressed 는 없어요
+    const btn = { textContent: '옛 글', title: '', attrs: { 'aria-pressed': 'true' }, setAttribute(k, v) { this.attrs[k] = String(v); }, removeAttribute(k) { delete this.attrs[k]; }, toggleAttribute(k, on) { if (on) this.attrs[k] = ''; else delete this.attrs[k]; } };
     const withBtn = { id: 'ss-settings', dataset: {}, querySelector: () => btn, ownerDocument: doc };
     setView(withBtn, true);
-    assert.equal(btn.textContent, ''); assert.equal(btn.attrs['aria-pressed'], 'false'); assert.equal(btn.title, '블루레몬 맞춤 화면 끔 — 끄면 원작 화면 그대로'); assert.equal(btn.attrs['aria-label'], btn.title);
-    setView(withBtn, false); assert.equal(btn.attrs['aria-pressed'], 'true'); assert.equal(btn.title, '블루레몬 맞춤 화면 켬 — 끄면 원작 화면 그대로');
+    assert.equal(btn.textContent, ''); assert.ok(!('aria-pressed' in btn.attrs)); assert.ok(!('data-bl-on' in btn.attrs)); assert.equal(btn.title, '블루레몬 · 미트볼 맞춤 열기 (지금 원작 그대로 보기)'); assert.equal(btn.attrs['aria-label'], btn.title); assert.equal(btn.attrs['aria-expanded'], 'false');
+    setView(withBtn, false); assert.ok('data-bl-on' in btn.attrs); assert.equal(btn.title, '블루레몬 · 미트볼 맞춤 열기');
     assert.match(code, /if \(was && was !== now && recall\(root, 'viewtip'\) !== '1'\)/, '처음 바꿀 때 한 번만 알려요(처음 그릴 때는 안 알려요)');
-    assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view::after \{[^}]*mask: var\(--salty-logo\) center \/ contain no-repeat;/, '아이콘은 테마 레몬 표식(단색)');
-    assert.match(css, /#ss-settings \.inline-drawer-header > \.bl-ext-view\[aria-pressed="true"\] \{ color: var\(--bl-ui-pick-ink\); \}/, '켜짐은 면 없이 테마 파랑 아이콘만(옆 아이콘과 같은 크기)');
+    const lemonCss = read('src/mb-lemon.css');
+    assert.match(lemonCss, /#ss-settings \.inline-drawer-header > \.bl-ext-view::after \{[^}]*mask: var\(--salty-logo\) center \/ contain no-repeat;/, '아이콘은 테마 레몬 표식(단색)');
+    assert.match(lemonCss, /#ss-settings \.inline-drawer-header > \.bl-ext-view\[data-bl-on\] \{ color: var\(--bl-ui-pick-ink\); \}/, '맞춤 화면이면 면 없이 테마 파랑 아이콘만(옆 아이콘과 같은 크기)');
     assert.ok(!/document\.body|documentElement/.test(code), '칸의 문서를 거쳐서만(전역 문서를 직접 잡지 않아요)');
 });
 test('⑨ 설정 찾기(11-15 검수): 줄 이름으로만 찾고(고르기 선택지 · 글 상자 · 덧글은 빼요) · 탭 이름과 함께 돌려줘요 · 찾기 칸은 숨긴 채 끼우고 사건은 맞춤 모듈이 받아요', () => {

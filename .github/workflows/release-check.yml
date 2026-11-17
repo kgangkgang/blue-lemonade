@@ -178,6 +178,8 @@ jobs:
           # 1.0.1 성능 퇴행 재정비(L): 내장 스크립트가 숨은 iframe 으로 돌아가면 성능 관문의 긴 작업 비교가 다시 어긋나요
           node tools/tests/scripts-no-hidden-iframe.mjs .
           node tools/tests/wordmask-quote-lead.mjs .
+          # 1.7.4 이미 글자색 · 강조가 입혀진 구간 안의 따옴표 대사에는 형광펜을 또 칠하지 않아요(판정 · 규칙 · 생성물 · 조판 연결)
+          node tools/tests/quote-inked.mjs .
           node tools/tests/reply-top-generation-types.mjs .
           node tools/tests/weather-tracker-swipe.mjs .
           node tools/tests/promptbind.mjs .
@@ -251,6 +253,7 @@ jobs:
           node tools/tests/weather-meatball.mjs .
           node tools/tests/mb-dot-seen.mjs .
           node tools/tests/mb-hidden.mjs .
+          node tools/tests/mb-autosub.mjs .
           node tools/tests/mb-ask.mjs .
           node tools/tests/layer-back.mjs .
           node tools/tests/mb-back.mjs .
@@ -1020,6 +1023,8 @@ jobs:
           node tools/tests/prompt-engine-inside-once.mjs . tools
           # 1.5.3 작가 노트 안전망: 새 채팅에 직전 노트 묻기 · 지우기 경고 한 줄 · 마지막 노트 불러오기 (같은 jsdom · 가짜 새 채팅 · 지우기 길)
           node tools/tests/an-keep.mjs . tools
+          # 1.7.4 미트볼 설정 칸의 「블루레몬」 레몬 탭: 탭 줄 끝 · 머리 레몬 단추 · 맞춤을 다 꺼도 남음 · 설정 찾기 → 그 탭(jsdom)
+          node tools/tests/mb-lemon-tab.mjs . tools
           # 1.6.0 jsdom 을 쓰는 시험은 모두 위 npm ci 뒤에 — 앞 단계에는 tools/node_modules 가 없어 「jsdom 을 못 찾았어요」(종료 2)로 Release consistency 가 실패했어요(1.5.9)
           node tools/tests/translator-message-template.mjs . tools
           node tools/tests/icon-text-prescan-slices.mjs . tools

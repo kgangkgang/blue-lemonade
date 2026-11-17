@@ -12,6 +12,8 @@
 //   · 다시 계산은 그 확장의 공개 명령(/ss-resume · 멈춰 둔 채팅이면 /ss-pause — 지금 값 그대로 다시 적고 새로 계산)으로 불러요. 실리태번 사건을 지어내 쏘지 않아요(번역 · 요약 확장이 같이 움직여요).
 //   · 오래된 답(그 확장이 「굳힌 기록」 으로 합친 구간)은 빼도 숫자가 안 바뀌어요 — 한 번 알려요.
 // 감시자 · 타이머 없음: 눈 단추 누름(문서 한 곳) · 채팅 바뀜 · 생성 시작 때만 봐요. 설정은 body 표식(data-bl-mb-hidden-sync = on · off — src/apply.js)으로 읽어요.
+// 1.7.4 감긴 답보다 뒤에 칸 통째 저장이 있으면 그 저장 바로 뒤에 빼는 기록을 끼워 바로 반영해요(src/mb-autosub.js · 스위치 autosub · 기본 켬). 못 하면 1.7.3 알림이에요.
+import * as Sub from './mb-autosub.js';
 const META = 'statussim';   // 그 확장의 채팅 메타 칸 이름(읽기만)
 export const MARK = 'bl-hidden';
 export const ATTR = 'data-bl-mb-hidden-sync';
@@ -117,6 +119,12 @@ function warnFrozen(c, toast) {
     return true;
 }
 
+/** 1.7.4 바로 반영을 해 봐요 — 'changed'(기록을 바꿈) · 'same'(맞춰 봤는데 그대로) · ''(못 함: 스위치 끔 · 그 확장 모듈 못 받음 → 1.7.3 알림) */
+async function autoSub(c, opts) {
+    if (!Sub.active() || !sheetOf(c)) return '';
+    try { const r = await Sub.applyHidden(c, { save: false, ...opts }); return r === null ? '' : (r ? 'changed' : 'same'); } catch { return ''; }
+}
+
 /** 표식을 바꾼 뒤: 저장하고 그 확장에게 다시 계산을 시켜요 */
 async function after(c) {
     try { await c?.saveChat?.(); } catch { /* 다음 저장 때 같이 가요 */ }
@@ -129,9 +137,10 @@ export async function onEye(id, wantHidden, { c = ctx(), on = enabled(), toast =
     if (!!c?.chat?.[id]?.is_system !== wantHidden) return 'none';
     const how = settle(id, c, on);
     if (how === 'none') return how;
+    const subbed = baked(id, c) ? '' : await autoSub(c, { kind: how === 'out' ? 'hid' : 'open' });   // 1.7.4 조용히 반영(알림 없음)
     await after(c);
     if (how === 'out' && baked(id, c)) { try { toast?.info?.('오래된 답이라 미트볼이 이미 합쳐 둔 기록이에요 — 눈을 감겨도 숫자는 그대로예요.', '', { timeOut: 6000 }); } catch { /* 알림 없이 */ } }
-    else if (how === 'out') warnFrozen(c, toast);   // 1.7.4 뒤에 칸 통째 저장이 있으면 알려요
+    else if (how === 'out' && !subbed) warnFrozen(c, toast);   // 1.7.3 뒤에 칸 통째 저장이 있으면 알려요(바로 반영을 껐거나 못 할 때만)
     return how;
 }
 
@@ -158,16 +167,24 @@ export async function tidy(c = ctx(), on = enabled(), sure = known(), toast = gl
         if (r.back) await nudge(c);
     }
     r.adopted = await adopt(c, on);
-    if (on && sheetOf(c)) warnFrozen(c, toast);   // 1.7.4 이미 감긴 답 뒤에 칸 통째 저장이 있으면 채팅을 열 때 한 번
+    // 1.7.4 감긴 답 기록 맞추기(표식이 없어졌으면 끼운 기록도 빼요) — 못 하면 1.7.3 알림을 채팅을 열 때 한 번
+    const subbed = await autoSub(c, { kind: 'tidy' });
+    if (subbed === 'changed') { try { await c?.saveChat?.(); } catch { /* 다음 저장 때 */ } }
+    else if (!subbed && on && sheetOf(c)) warnFrozen(c, toast);
     return r;
 }
 
 let started = false;
+let undoAt = 0;   // 1.7.4 그 확장 되돌리기 단추를 누른 때
 /** 여러 번 불러도 한 번만 걸어요 */
 export function startMbHidden(doc = globalThis.document) {
     if (started || !doc?.addEventListener) return false;
     started = true;
     doc.addEventListener('click', event => {
+        // 1.7.4 그 확장 관리 탭 되돌리기(골라서 지우기 · 마지막 편집 · 싹 지우기 · 되살리기)를 누르면 끼운 기록을 다시 맞춰요(그 저장이 사라졌으면 같이 빼요)
+        //   원작은 「지울까요?」 확인 창을 띄우니, 그 단추를 누른 뒤 1분 안에 확인 창 「예」(.popup-button-ok)를 눌러도 다시 맞춰요
+        const undoBtn = event.target?.closest?.('[data-act="undoat"], [data-act="undo"], [data-act="undoall"], [data-act="undoallback"]');
+        if (undoBtn || (Date.now() - undoAt < 60000 && event.target?.closest?.('.popup-button-ok'))) { if (undoBtn) undoAt = Date.now(); setTimeout(() => { autoSub(ctx(), { kind: 'tidy' }).catch(() => { /* 다음 기회에 */ }); }, 700); return; }
         const eye = event.target?.closest?.('.mes_hide, .mes_unhide');
         if (!eye) return;
         const id = Number(eye.closest('.mes')?.getAttribute('mesid'));
@@ -190,6 +207,7 @@ export function startMbHidden(doc = globalThis.document) {
         if (on && types.CHAT_CHANGED) on(types.CHAT_CHANGED, () => setTimeout(run, 1200));   // 그 확장이 제 메타를 읽은 뒤에
         if (on && types.GENERATION_STARTED) on(types.GENERATION_STARTED, (_type, _opts, dry) => { if (!dry) run(); });
         setTimeout(run, 1200);
+        Sub.startAutoSub(doc);   // 1.7.4 지운 답 · 지운 스와이프(실리태번 지움 사건)
     } catch { /* 눈 단추만 */ }
     return true;
 }
