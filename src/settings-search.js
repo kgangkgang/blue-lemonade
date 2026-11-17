@@ -88,6 +88,7 @@ const rows = [
  ['chat','screen','미트볼 얼굴: 사람마다 색 톤','미트볼 얼굴 첫 글자 사람마다 색 톤 색깔 구분 meatball face tone','','chat.mbFaceTone'],
  ['chat','screen','미트볼 프로필 얼굴: 색만 / 글자','미트볼 프로필 얼굴 동그라미 색만 글자 디스코드 지정색 이름 첫 글자 meatball face color only letter','','chat.mbFaceLook'],
  ['chat','screen','뒤로 가기로 미트볼 창 닫기','미트볼 상태창 뒤로 가기 뒤로가기 창 닫기 닫힘 안드로이드 back button close window meatball','','chat.mbBack'],
+ ['chat','screen','미트볼 영어 저장 전환 바로 하기','미트볼 상태창 한국어로 저장된 칸 영어 저장 바꾸기 전환 확인 창 팝업 묻지 않고 바로 자동 네 meatball english save convert confirm','','chat.mbAutoEn'],
  ['chat','screen','눈 감긴 답은 미트볼 상태에서 빼기','미트볼 상태창 눈 감긴 숨긴 메시지 답 빼기 제외 인물 호감 장소 시간 반영 안 되게 숨김 meatball hidden message exclude','','chat.mbHiddenSync'],
  ['chat','screen','미트볼 문구: 블루레몬 추천','미트볼 상태창 문구 프롬프트 프리셋 추천 다시 생성 재생성 채팅 반영 700자 최근 답 본문 마지막 답 전체 토큰 meatball prompt preset recent','','chat.mbPrompt'],
  ['chat','screen','미트볼 문구: 마지막 답 앞의 메시지 수','미트볼 문구 블루레몬 추천 최근 답 여러 개 마지막 답 앞의 메시지 수 몇 개 meatball prompt recent count','','chat.mbPromptCount'],

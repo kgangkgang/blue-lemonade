@@ -399,6 +399,34 @@ await test('⑲ 망가진 자료 되살리기: 값 없는 잠금 풀기 · 이�
     assert.equal(T.trRepairLog.length, before + 1, '두 번째는 기록 없음');
 });
 
+await test('㉒ 1.6.6 번역 모델이 나눔표 「 / 」를 괄호로 싼 짝: 「가「 / 」나」 · 「가 「 」 나」 → 「가 / 나」 · 📌 한 짝 · 원문에 괄호가 있는 짝 · 진짜 대사 괄호는 그대로 · 두 번 돌아도 같음', async () => {
+    assert.equal(T.sepQuoteValue('Harvest Moon / Lantern Night', '수확의 달「 / 」등불의 밤'), '수확의 달 / 등불의 밤');
+    assert.equal(T.sepQuoteValue('Harbor drama / slice of life', '항구 드라마 「 」 일상물'), '항구 드라마 / 일상물');
+    assert.equal(T.sepQuoteValue('Harvest Moon / Lantern Night', '수확의 달 / 등불의 밤'), null, '고칠 것 없음');
+    assert.equal(T.sepQuoteValue('Harvest Moon / Lantern Night', '「수확의 달」 / 「등불의 밤」'), null, '낱말을 감싼 괄호는 이 꼴이 아님');
+    assert.equal(T.sepQuoteValue('She said 「 / 」 once', '그녀는 「 / 」 라고 했다'), null, '원문에 괄호가 있으면 그대로');
+    assert.equal(T.sepQuoteValue('Harvest Moon', '수확의 달「 」'), null, '원문에 나눔표가 없으면 그대로');
+    // 채팅을 열 때(tidy) 사전에서 바로잡고 · 그 확장 addPairs 로(사전 판 올림 · 저장) · 📌 한 짝은 안 건드림
+    const f = fakeTarget();
+    f.app.current.snaps = new Map();
+    f.app.current.state = { core: {}, data: { calendar: { events: [{ title: 'Harvest Moon / Lantern Night' }, { title: 'Founders Day / Tide Fair' }, { title: 'Bell Day / Rope Day' }] } }, recent: [] };
+    reset(f.meta, { tr: { 'Harvest Moon / Lantern Night': '수확의 달「 / 」등불의 밤', 'Founders Day / Tide Fair': '창립일 「 」 물때 장', 'Bell Day / Rope Day': '종의 날「 / 」밧줄의 날' }, trLock: { 'Bell Day / Rope Day': true }, notes: [] });
+    const added = [];
+    const inner = f.mb.tr.addPairs;
+    f.mb.tr.addPairs = pairs => { added.push(...pairs); return inner(pairs.filter(([en]) => !f.meta.trLock?.[en])); };
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+    fill.tidy({ draw: false });
+    assert.equal(f.meta.tr['Harvest Moon / Lantern Night'], '수확의 달 / 등불의 밤');
+    assert.equal(f.meta.tr['Founders Day / Tide Fair'], '창립일 / 물때 장');
+    assert.equal(f.meta.tr['Bell Day / Rope Day'], '종의 날「 / 」밧줄의 날', '📌 한 짝은 사용자 것');
+    assert.equal(added.some(([en]) => en === 'Bell Day / Rope Day'), false, '📌 한 짝은 보내지도 않음');
+    const snap = JSON.stringify(f.meta);
+    fill.tidy({ draw: false });
+    assert.equal(JSON.stringify(f.meta), snap, '두 번째도 같은 결과');
+    // 번역 메우기(fill)로 새로 온 짝도 같은 꼴이면 바로잡아 넣음
+    assert.deepEqual(T.pairsFor('Pier Two / Gull Rock', '둘째 부두「 / 」갈매기 바위', new Map()), [['Pier Two / Gull Rock', '둘째 부두 / 갈매기 바위']]);
+});
+
 await test('⑳ 1.5.8 테마 번역기가 답을 번역해 끝내면 그 답의 관계 칩 「이름 = 설명」 · 새 상태 글을 한 번에 메움 · 그 확장 자동 번역 「끔」이면 안 함', async () => {
     const LABEL = 'witnessed her harbor prank humiliation';
     for (const [auto, expect] of [['st', 1], ['always', 1], ['off', 0]]) {

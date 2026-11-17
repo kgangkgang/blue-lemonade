@@ -68,9 +68,34 @@ export function collectGaps(texts, { shown = t => t, has = () => false, tried = 
     }
     return { list: [...owners.keys()], owners };
 }
+/**
+ * 1.6.6 번역 모델이 원문의 나눔표 「 / 」를 대사 괄호로 싼 번역: 달력 「A / B」(같은 날 기념일 둘) → 「가「 / 」나」 · 「가 「 」 나」.
+ *   번역 사전(채팅 메타 tr)에 그대로 들어가 달력 「이달 일정」 · 「다가오는 일정」에 뒤집힌 괄호로 보였어요(11-17 사용자 화면 · 같은 채팅의 세 짝이 다 이 꼴).
+ *   테마의 대사 꾸밈 · 화면 번역 탓이 아니라 저장된 번역 값이에요. 원문에 꺾쇠가 없고 「 / 」 나눔표가 있을 때,
+ *   속이 비었거나 「/」 하나뿐인 괄호 짝만 「 / 」로 되돌려요 — 낱말을 감싼 「가」 · 원문에 있던 괄호는 그대로. 고칠 것이 없으면 null.
+ */
+const SEP_QUOTE = /\s*「\s*\/?\s*」\s*/g;
+export function sepQuoteValue(en, ko) {
+    const src = String(en ?? ''), value = String(ko ?? '');
+    if (/[「」『』]/.test(src) || !/\s\/\s/.test(src) || !value.includes('「')) return null;
+    const fixed = value.replace(SEP_QUOTE, ' / ');
+    if (fixed === value || /[「」]/.test(fixed)) return null;
+    const seps = text => (text.match(/\s\/\s/g) ?? []).length;
+    return seps(fixed) <= seps(src) ? fixed.trim() : null;
+}
+/** 사전에서 위 꼴로 들어간 짝 → 바로잡은 짝들(📌 고정한 짝은 빼요) */
+export function sepQuotePairs(dict, lock = {}) {
+    const out = [];
+    for (const [en, ko] of Object.entries(isObj(dict) ? dict : {})) {
+        if (typeof ko !== 'string' || lock?.[en]) continue;
+        const fixed = sepQuoteValue(en, ko);
+        if (fixed) out.push([en, fixed]);
+    }
+    return out;
+}
 /** 번역 결과 → 사전 짝. 덩이 짝 하나 + (덩이가 40자를 넘으면 그 확장이 글 속에서 안 바꾸므로) 원래 글 통째 짝 */
 export function pairsFor(part, ko, owners) {
-    const k = String(ko ?? '').trim();
+    const k = (sepQuoteValue(part, ko) ?? String(ko ?? '')).trim();
     if (!k || k === part || !/[^\x00-\x7F]/.test(k) || halfValue(part, k)) return [];   // 1.5.1: 반쯤 번역은 짝으로 넣지 않아요(다음에 다시)
     const out = [[part, k]];
     if (part.length > 40) for (const text of owners.get(part) ?? []) if (text !== part) out.push([text, text.replace(part, () => k)]);
@@ -446,6 +471,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const koOf = (word, key) => { if (names.has(word)) return null; const v = Object.hasOwn(dict, word) && !keep.has(word) ? dict[word] : (base.get(word) ?? fixedValue(word, key)); return !v || /[A-Za-z]{2,}/.test(v) ? null : key === 'week' ? shortWeek(v) : v; };
         for (const [k, v] of slotPairs(items, koOf)) base.set(k, v);
         const pairs = [...base].filter(([en]) => !keep.has(en) && !lock[en] && !Object.hasOwn(dict, en));
+        // 1.6.6 나눔표를 괄호로 싼 번역 짝(sepQuoteValue)은 그 확장 addPairs 로 덮어요 — 사전 판이 올라 화면 번역이 다시 읽고 · 채팅 메타에 저장돼요
+        pairs.push(...sepQuotePairs(dict, lock));
         const n = pairs.length ? (tr.addPairs(pairs) || 0) : 0;
         // 고정 낱말 열쇠를 낱말 바꾸기에서 빼고, 그 확장 화면 번역이 목록을 새로 만들게 해요(사전 판 올리기)
         const hidden = hideFixedKeys(dict, keep);

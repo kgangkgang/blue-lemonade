@@ -416,9 +416,14 @@ body.salty .ss-mchip { font-weight: 400; }
    그 확장의 큰 창(상태창 · 만들기 · 프롬프트 · 꾸미기 · 알림함 …)은 단추가 「닫기」 하나뿐이에요. 고르는 창(적용 · 취소 · 저장)은 아래 단추 그대로 */
 body.salty dialog.ss-dlg .popup-content > :is(.ss-root, .ss-panel > .ss-root) { padding: 0; border-radius: 0; }
 body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-body > .popup-controls { display: none !important; }
+/* 1.6.6 사용자 「미트볼 위에 여백 x 너무 큼. 아래랑 똑같이 여백 블럭 맞춰 줘」(폰 밤 · 상태창 › 나): 실리태번이 본문(.popup-content)에 위 여백 10 을 더 줘서
+   창 위 끝 → 내용이 23(폰) · 31(PC), 아래 끝 → 내용은 13 · 17 이었어요 → 위 여백을 빼서 위 = 아래(창 안 여백 + 1). 아래 단추 줄이 있는 작은 창(확인 · 도우미 …)은 그대로예요. */
+body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-body > .popup-content { margin-top: 0; }
+/* PC: 테마 팝업 여백이 위 20 · 아래 16 이라 위만 4 더 넓었어요 → 이 큰 창만 위도 16(폰은 아래 700 묶음에서 12 · 12 그대로) */
+body.salty dialog.popup.ss-dlg.large_dialogue_popup { padding-top: var(--bl-s4, 16px) !important; }
 body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close {
   display: block !important; position: absolute !important;
-  top: 22px !important; right: var(--bl-s3, 12px) !important;   /* 창 여백 20 + 머리 줄(44 안팎) 가운데 — 머리 줄의 아이콘 단추와 같은 높이에 와요 */
+  top: 12px !important; right: var(--bl-s3, 12px) !important;   /* 1.6.6: 오른쪽 위 모서리 — 다른 테마 창(css/85-addon-unify.css 의 top 12)과 같은 자리. 22 에서는 ✕ 가 빈 띠 가운데에 떠 있었어요 */
   width: var(--bl-ui-icon, 34px) !important; height: var(--bl-ui-icon, 34px) !important; z-index: 2 !important;
   margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: var(--bl-ui-radius, 8px) !important;
   background: var(--bl-fill-card, var(--bl-card)) !important; color: var(--salty-text) !important; opacity: 1 !important; filter: none !important;   /* 창 면과 같은 색 — 내용이 밀려 올라와도 ✕ 밑에서 겹쳐 보이지 않아요 */
@@ -700,7 +705,9 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
 @media (max-width: 700px) {
   /* 1.5.5 상태창을 내리면 맨 위 탭 줄(「관리」)이 ✕ 밑으로 지나가며 겹치고, 위 흐림 때문에 줄이 ✕ 높이에서 잘려 보였어요 → 내린 동안(스크롤 흐림 표식 top · both)만 ✕ 줄 높이의 창 면 띠를 맨 위에 붙여
      내용이 그 밑으로 지나가요. 맨 위에 있을 때(머리 줄이 ✕ 자리를 비워 둔 상태)는 띠가 없어요. 띠는 높이만큼 아래 여백을 접어 자리를 차지하지 않아요. PC 는 ✕ 가 내용 칸 밖이라 그대로예요. */
-  body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: 40px; margin-bottom: -40px; background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); pointer-events: none; }
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup { padding-top: var(--bl-s3, 12px) !important; }   /* 폰은 위 · 아래 12(위 PC 줄을 되돌려요) */
+  /* 1.6.6: 띠 높이 40 → ✕ 높이(34) — ✕ 를 모서리(위 12)로 올리고 본문 위 여백을 뺀 만큼, 내린 동안 창 위 끝에서 내용이 가려지는 높이가 63 → 47 */
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: var(--bl-ui-icon, 34px); margin-bottom: calc(-1 * var(--bl-ui-icon, 34px)); background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); pointer-events: none; }
   /* 번역 고치기(폰): 목록(제 스크롤 55vh) + 위 칸 + 맨 아래 안내 글이 창 높이를 넘어 안내 글 첫 줄이 창 바닥 흐림 아래로 목록과 겹쳐 보였어요 → 목록을 조금 줄여 안내 글까지 창 안에 */
   body.salty .ss-scope.ss-trfix .ss-trf-list { max-height: 46vh; }
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
@@ -1153,3 +1160,30 @@ body.salty #ss-settings .inline-drawer-content label.checkbox_label > input[type
 /* 그 확장 2.8.0 dev 「번역 전체 삭제」(설정 › 상태창 언어 · 번역 · 상태창 관리 › 도구 — 11-17): 테마의 「쓰레기통 아이콘 = 위험」 규칙(css/17-semantic)이 단추 글자 · 아이콘을 쨍한 위험색으로 칠해
    미트볼 단추 면 위에서 밤 4.11 · 낮 4.62 : 1 이었어요(리그). 미트볼 화면 안에서는 「나쁨」 색(--ss-neg · 위험색에 본문색을 섞어 한 단계 진하게)으로 — 1.5.2 「하드」 칸과 같은 길. 원작 그대로 보기에서는 안 걸려요 */
 body.salty:not([data-bl-ext-raw]) :is(.ss-scope, #ss-settings) [data-bl-trash-wrap], body.salty:not([data-bl-ext-raw]) :is(.ss-scope, #ss-settings) [data-bl-trash-wrap] > :is(.fa-trash, .fa-trash-can, .fa-trash-alt) { color: var(--ss-neg) !important; }
+
+/* ---------- 1.6.6 카드 · 단추 바로 다음 글 틈(11-17 사용자 「미트볼 화면 다 전수조사해서 버튼에 글자 딱 위아래로 붙어 있는 거 다 고쳐」 · 폰 밤 만들기 창 사진) ----------
+   리그 전수(미트볼 2.8.0 · 폰 384 밤 낮 · 360 · PC 1280)에서 0 ~ 4px 로 붙던 자리: 만들기 「상태창 언어」 카드 → 「화면 한국어 번역은」 · 번역 고르기 → 설명(0) · 「세계관」 카드 → 「장르」(10) ·
+   「플레이 방식」 카드 → 스위치(0) · 연락 방식 고르기 → 설명(4) · 꾸미기 「속마음」 고르기 → 설명(0) · 미리보기 칩 → 「미리보기」 제목(2.7) · 새 판 창 단추 → 설명(0) ·
+   상태창 사람 › 연락 단추 줄 → 설명(0) · 나 › 수치 ± 단추 → 설명(4) · 설정 서랍 고르기 칸 → 설명(2 ~ 3).
+   원인: 원작은 숨긴 칸(.ss-hide)을 사이에 두거나 설명을 칸 묶음(.ss-w-trbox · .ss-f)에 넣어서 테마의 「고르개 + 설명」(바로 옆) 규칙이 안 걸렸어요.
+   리듬(위 「간격 한 벌」과 같은 눈금): 조작 묶음 → 그 설명 8 · 조작 묶음 → 다음 작은 제목 · 칸 묶음 16 · → 스위치 줄 12 · 이름표 → 제 칸 4. 숨긴 칸 하나 · 둘을 건너뛰어도 같게.
+   절 · 판 · 연락 칸의 바로 아래 자식끼리만 걸어요(카드 안 줄은 그대로). 「원작 그대로 보기」면 안 걸려요. */
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root, .ss-ct) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + .ss-hint,
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root, .ss-ct) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + :is(.ss-hide, [hidden]) + .ss-hint,
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root, .ss-ct) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + :is(.ss-hide, [hidden]) + :is(.ss-hide, [hidden]) + .ss-hint { margin-top: var(--bl-s2, 8px); }
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root) > .ss-f + .ss-hint { margin-top: var(--bl-s2, 8px); }   /* 이름표 + 고르기 칸 묶음 → 설명(꾸미기 「속마음」) */
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-tw > .ss-sec + .ss-tw-preview { margin-top: var(--bl-s6, 24px); }   /* 꾸미기 끝 절 → 「미리보기」(절 ↔ 절 24) */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-f > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + .ss-hint { margin-top: var(--bl-s1, 4px); }   /* 칸 묶음은 제 틈(4)이 있어 더해 8 */
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + :is(.ss-f, .ss-w-trbox, .ss-w-lore, h4),
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + :is(.ss-hide, [hidden]) + :is(.ss-f, .ss-w-trbox, .ss-w-lore, h4) { margin-top: var(--bl-s4, 16px); }
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + .ss-tog,
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + :is(.ss-hide, [hidden]) + .ss-tog,
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-sec, .ss-root) > :is(.ss-seg, .ss-sets, .ss-pills, .ss-row-btns, .ss-grid-btns, .ss-w-trbox) + :is(.ss-hide, [hidden]) + :is(.ss-hide, [hidden]) + .ss-tog { margin-top: var(--bl-s3, 12px); }
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-w-trbox, .ss-w-lore) > .ss-hint:first-child { display: block; margin-bottom: var(--bl-s1, 4px); }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-gbtns > :is(small, .ss-dim) { margin-top: var(--bl-s1, 4px); }   /* ± 단추 줄의 틈(4)에 더해 8 */
+/* 프롬프트 · 토큰 창 비용 카드 줄(.ss-cost): 원작 아래 여백 6 이 카드 ↔ 카드 · 카드 → 설명 틈이 돼 눈금(4 · 8) 밖이었어요 → 8. 창 위 여백을 줄여 이 절이 첫 화면에 들어오며 관문이 잰 자리예요 */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-cost { margin-bottom: var(--bl-s2, 8px); }
+/* 누르는 칩(도우미 질문 칩 · 지도 장소 칩): 높이 22 에 위아래 안쪽 2 ~ 3 이라 글이 테두리에 붙어 보였어요 → 위아래 5(높이 27 안팎 · 누를 자리 44 는 위 손가락 화면 덮개 그대로). 띠 칩은 제 규칙(#ss-hud)이 이겨요 */
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(button.ss-chip, .ss-chip.btn) { padding-block: 5px; }
+/* 설정 서랍: 고르기 · 입력 칸 바로 아래 덧글(「초압축은 …」 · 「실리 기본 번역은 …」)이 칸 테두리에 2 ~ 3px 로 붙었어요 → 8 */
+body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label:not(.checkbox_label) > :is(select, textarea, .ss-set-inline, input.text_pole) + small { display: block; margin-top: var(--bl-s2, 8px); }

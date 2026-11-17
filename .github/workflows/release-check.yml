@@ -253,6 +253,7 @@ jobs:
           node tools/tests/mb-ask.mjs .
           node tools/tests/layer-back.mjs .
           node tools/tests/mb-back.mjs .
+          node tools/tests/mb-auto-en.mjs .
           node tools/tests/mb-read.mjs .
           node tools/tests/mb-prompt.mjs .
           node tools/tests/mb-arrow.mjs .

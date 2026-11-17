@@ -483,6 +483,7 @@ function tidyFlags(s) {
         s.chat.namePeople = flag(s.chat.namePeople, false); // 1.5.9 채팅 이름표를 인물 색으로(인물표에 색이 있는 사람만) — 기본 끔
         s.chat.mbFaceTone = flag(s.chat.mbFaceTone, false); // 이름 첫 글자일 때 사람마다 색 톤(팔레트 안 다섯 톤) — 기본 끔(같은 톤 하나)
         s.chat.mbBack = flag(s.chat.mbBack, true); // 1.6.1 뒤로 가기로 미트볼 창 닫기(src/mb-back.js · 공용 창 겹 쌓기 src/layer-back.js) — 기본 켬(11-16 사용자 「추천 ㄱㄱ」 · 예전 설정에는 없으니 켬)
+        s.chat.mbAutoEn = flag(s.chat.mbAutoEn, true); // 1.6.6 미트볼 「한국어로 저장된 칸을 영어 저장으로 바꾸기」 를 묻지 않고 바로(src/mb-auto-en.js) — 기본 켬(11-17 사용자 「자동으로 항상 네 상태로」 · 예전 설정에는 없으니 켬)
         s.chat.mbHiddenSync = flag(s.chat.mbHiddenSync, true); // 1.6.0 눈 감긴 답을 미트볼 상태에서 빼기(src/mb-hidden.js) — 기본 켬(11-16 사용자 결정 · 예전 설정에는 없으니 켬 · 그 확장은 감긴 답도 더하는 게 원래 동작이에요)
         s.chat.mbHelpers = flag(s.chat.mbHelpers, true); // 미트볼 상태창 편의 기능(설정 찾기 · 맨 위로) — 기본 켬 · 끄면 둘 다 숨겨요
         s.chat.codePlain = flag(s.chat.codePlain, false); // 코드 색 입히기 끄기 (code-plain.js) — 켤 때만
@@ -886,7 +887,7 @@ export function resetSettings(groups = { look: true }) {
         next.deviceLayouts = { on: old.deviceLayouts?.on === true, pc: {}, mobile: {} };
         // 5.2.3: chat 안의 동작 값과 고정 메시지(데이터)도 모습이 아니다 — 남긴다 (styles.js CHAT_BEHAVIOR 와 같은 목록 + QR 배치 · 고정)
         if (old.chat && typeof old.chat === 'object') {
-            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'mbAlbumBtn', 'mbPrompt', 'mbPromptCount', 'mbPromptChars', 'mbPromptCap', 'mbHelpers', 'mbHiddenSync', 'mbBack', 'mbFace', 'mbFaceTone', 'mbFaceLook', 'namePeople', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard', 'noteCarry']) {
+            for (const key of ['triangleFold', 'weatherAutoRest', 'weatherFollowMeatball', 'mbAlbumBtn', 'mbPrompt', 'mbPromptCount', 'mbPromptChars', 'mbPromptCap', 'mbHelpers', 'mbHiddenSync', 'mbBack', 'mbAutoEn', 'mbFace', 'mbFaceTone', 'mbFaceLook', 'namePeople', 'selectPop', 'colorPop', 'numComma', 'helpMarks', 'webSearchMarks', 'personaTall', 'showMoreAuto', 'replyTop', 'sentTokens', 'streamFade', 'reasoningFollow', 'demFold', 'hideSendTextarea', 'qrFind', 'qrFold', 'qrFolded', 'qrCtxNames', 'qrScroll', 'qrRows', 'qrPlace', 'mesPins', 'lazyAvatars', 'searchIme', 'codePlain', 'worldInfoLight', 'chatLight', 'personaDefer', 'emptyGuard', 'noteCarry']) {
                 if (key in old.chat) next.chat[key] = structuredClone(old.chat[key]);
             }
         }
