@@ -367,23 +367,38 @@ export function holdersOf(word, known, sets) {
 }
 /** 정확히 한 사람에게만 속할 때 그 이름 · 아니면 '' */
 export const onlyHolder = h => (h && !h.self && h.names.length === 1 && !h.unknown ? h.names[0] : '');
-const book = { key: '', books: [] };   // 로어북은 받아 오는 게 느려(비동기) 고를 때 미리 받아 둬요 — 매크로(동기)는 받아 둔 것만 써요
+const book = { key: '', sig: '', books: [], gen: 0 };   // 로어북은 받아 오는 게 느려(비동기) 고를 때 미리 받아 둬요 — 매크로(동기)는 받아 둔 것만 써요
 const bookKey = c => `${c?.groupId ?? ''}|${c?.characterId ?? ''}|${(typeof c?.getCurrentChatId === 'function' ? c.getCurrentChatId() : '') ?? ''}`;
+// 버그 사냥 9b: 같은 채팅에서 로어북을 고치거나(저장 → 실리태번 「로어북 바뀜」 사건) 채팅 · 카드에 건 로어북 이름이 바뀌면 받아 둔 열쇠 묶음은 옛것이에요.
+//   전엔 채팅 열쇠만 봐서 세션 내내 옛 로어북으로 합치기 · 이름 바꾸기 · 같은 사람 확인을 했어요. → 건 로어북 이름(sig)도 같이 보고 · 사건이 오면 비워요(다음에 쓸 때 새로 받아요)
+const bookSig = c => { try { return [...cardsOf(c).map(ch => String(ch?.data?.extensions?.world ?? '')), String(c?.chatMetadata?.world_info ?? '')].join('|'); } catch { return ''; } };
+const booksFresh = c => book.key === bookKey(c) && book.sig === bookSig(c);
+let bookHook = false;
+function hookBooks(c) {
+    if (bookHook) return;
+    try {
+        const ev = c?.eventTypes ?? c?.event_types, src = c?.eventSource; if (!ev || typeof src?.on !== 'function') return;
+        const drop = () => { book.key = ''; book.sig = ''; book.books = []; book.gen++; };   // 받는 중이던 것도 남기지 않아요(gen)
+        for (const k of ['WORLDINFO_UPDATED', 'CHARACTER_EDITED']) if (ev[k]) src.on(ev[k], drop);   // 로어북 저장 · 카드 고침(카드 안 책 · 건 로어북)
+        bookHook = true;
+    } catch { /* 채팅 · 이름이 바뀔 때만 새로 받아요 */ }
+}
 /** 이 채팅에 걸린 로어북(카드의 것 · 카드 안 책 · 채팅 로어북)을 읽어 둬요. 못 읽으면 빈 목록 */
 //   버그 사냥 9: 열쇠는 받기 전에 잡아요 — 받는 사이 채팅이 바뀌면(같은 캐릭터의 다른 채팅) 받은 뒤 열쇠가 새 채팅 것이 돼 앞 채팅의 채팅 로어북으로
 //   새 채팅 사람을 합쳤어요. 받는 사이 채팅이 바뀌었으면 받아 둔 것으로 남기지 않아요(돌려주기만).
 export async function primeBooks(c = ctx()) {
-    const books = [], key = bookKey(c);
+    hookBooks(c);
+    const books = [], key = bookKey(c), sig = bookSig(c), gen = book.gen;
     try {
         const names = new Set();
         for (const ch of cardsOf(c)) { const w = ch?.data?.extensions?.world; if (w) names.add(String(w)); const cb = ch?.data?.character_book; if (Array.isArray(cb?.entries)) books.push({ entries: Object.fromEntries(cb.entries.map((e, i) => [i, { key: e?.keys || e?.key || [] }])) }); }
         if (c?.chatMetadata?.world_info) names.add(String(c.chatMetadata.world_info));
         if (typeof c?.loadWorldInfo === 'function') for (const n of names) { try { const b = await c.loadWorldInfo(n); if (b?.entries) books.push(b); } catch { /* 그 책은 빼요 */ } }
     } catch { /* 빈 목록 */ }
-    if (bookKey(c) === key) { book.key = key; book.books = books; }
+    if (bookKey(c) === key && bookSig(c) === sig && book.gen === gen) { book.key = key; book.sig = sig; book.books = books; }
     return books;
 }
-const booksFor = c => (book.key === bookKey(c) ? book.books : []);
+const booksFor = c => (booksFresh(c) ? book.books : []);
 /** 변화 장의 이름 하나를 적는 꼴: 이름이면 그대로 · 한 사람의 직함이면 「이름 (written as "직함")」 · 여럿이면 후보를 적어 AI 가 고르게 */
 //   그 사람 이름도 변화 줄에 따로 있으면(본편 AI 가 둘을 다른 사람으로 셈 — 예: 함께 사는 동물 이름이 주인 항목 열쇠에 든 것) 짝을 짓지 않아요.
 function ledgerName(n, known, sets, seen = new Set()) {
@@ -430,7 +445,7 @@ export function opsLedger(c = ctx()) {
     return { text, people: rows.length, events: events.length, msgs, sums: sum, time: last.timeRaw || '' };
 }
 const withLedger = (c, body) => {
-    if (book.key !== bookKey(c)) primeBooks(c).catch(() => { /* 다음 요청에 */ });   // 평소 단계가 「채팅 전체」 라 고르기를 안 거친 때: 다음 요청부터 이름 짝이 붙어요
+    if (!booksFresh(c)) primeBooks(c).catch(() => { /* 다음 요청에 */ });   // 평소 단계가 「채팅 전체」 라 고르기를 안 거친 때: 다음 요청부터 이름 짝이 붙어요
     try { const l = opsLedger(c); return l.text ? `${l.text}\n\n--- STORY TEXT ---\n${body}` : body; } catch { return body; }
 };
 const kNum = n =>Math.round(Number(n) || 0).toLocaleString('ko-KR');
@@ -673,8 +688,8 @@ export function maybeSame(name, base, sets, self = null) {
     const others = new Map();
     for (const r of panelRows(base)) if (r !== self && r.name && nmKey(r.name) !== w) others.set(nmKey(r.name), String(r.name));
     if (sets?.length) return holdersOf(name, others, sets).names.length > 0;
-    const re = new RegExp(`(^|[^\\p{L}\\p{N}])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}\\p{N}])`, 'iu');
-    return (base?.data?.profile?.list || []).some(p => p && p !== self && nmKey(p.name) !== w && re.test(profText(p)));
+    // 버그 사냥 9b: 한글은 조사가 붙은 꼴(「왕이라」)도 낱말로 봐요 — 전엔 글자 경계만 봐서 못 알아보고 같은 사람 프로필을 하나 더 더했어요
+    return (base?.data?.profile?.list || []).some(p => p && p !== self && nmKey(p.name) !== w && hasWord(profText(p), name));
 }
 /** 테마가 관계 칸으로 더한 프로필인가: 표식이 있거나 · 1.6.6 꼴(표식 전) 그대로 — npc · 칸 없음 · 요약이 그 이름 관계 칸의 「이름표 — 메모」 와 글자 하나 안 다름 */
 export function isFilled(p, rel = []) {
@@ -723,8 +738,9 @@ function watchDupes(c = ctx()) {
  *   재현(11-17): 알림이 두 번 떴어요(채팅 열 때 + 만들기 창). 그래서 알린 이름 · 도는 중인 정리를 globalThis 에 두고(모듈이 두 벌 떠도 같이 봐요),
  *   같은 채팅에서 이미 알린 이름은 다시 지워져도(그 확장이 화면 자료로 되살렸다 다시 걸리는 때) 알림 없이 정리만 해요. */
 const DEDUP = (globalThis.__blMbDedupe ||= { seen: new Set(), told: new Set(), run: null });
-export async function cleanupDupes({ c = undefined, toast = globalThis.toastr, doc = globalThis.document, core = undefined, force = false } = {}) {
+export async function cleanupDupes({ c = undefined, toast = globalThis.toastr, doc = globalThis.document, core = undefined, engine = undefined, force = false } = {}) {
     const cx = c || ctx(); if (!metaMb(cx)?.base) return [];
+    if (themeOff(doc)) return [];   // 버그 사냥 9b: 테마를 꺼 뒀으면(「블루레몬에이드 사용」 끔) 그 확장 자료를 고치지 않아요 — 「한 번 함」 으로도 안 적어 다시 켜고 열면 해요
     const key = bookKey(cx); if (!force && DEDUP.seen.has(key)) return [];
     while (DEDUP.run) { try { await DEDUP.run; } catch { /* 앞 정리 실패해도 이어서 */ } }   // 한 번에 하나씩
     if (!force && DEDUP.seen.has(key)) return [];
@@ -732,11 +748,12 @@ export async function cleanupDupes({ c = undefined, toast = globalThis.toastr, d
     let done; DEDUP.run = new Promise(r => { done = r; });
     let gone = [], merged = [];
     try {
-        if (book.key !== key) await primeBooks(cx);
+        if (!booksFresh(cx)) await primeBooks(cx);
         // 버그 사냥 9: 기다리는 사이(앞 정리 · 로어북 받기) 채팅이 바뀌었으면 손대지 않아요 — 앞 채팅 자료를 고쳐 놓고 새 채팅을 저장 · 알리던 것. 그 채팅을 다시 열면 그때 해요
         if (bookKey(cx) !== key) { DEDUP.seen.delete(key); return []; }
         gone = dedupeFilled(cx);
         try { merged = mergeTitles(cx); } catch { merged = []; }   // 1.6.9 관계 칸의 직함 줄 · 이름 줄 합치기(그 확장의 「합치기」 와 같은 기록으로)
+        if (merged.length) await fitAdjust(metaMb(cx), doc, engine);
         if (gone.length || merged.length) {
             try { await cx.saveMetadata?.(); } catch { /* 다음 저장 때 */ }
             try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
@@ -779,19 +796,31 @@ export function titleMerges(c = ctx(), { books = booksFor(c) } = {}) {
         const X = String(r?.name ?? '').trim(), w = nmKey(X); if (!w || skip.has(w) || realProf.has(w) || done.has(w)) continue;
         const others = new Map(); for (const x of [...list, ...people]) if (x !== r && x?.name && nmKey(x.name) !== w && !skip.has(nmKey(x.name))) others.set(nmKey(x.name), String(x.name));   // 상태창의 다른 사람(관계 줄 · 진짜 프로필)
         const h = holdersOf(X, others, sets); if (h.self || !h.names.length || h.unknown) continue;
-        if (h.names.some(n => hasWord(rowText(r), n))) continue;                                  // ④
-        const cand = h.names.filter(n => { const t = rowOf(n); return t && hasWord(rowText(t), X); });   // ③
-        if (cand.length === 1) out.push({ from: X, to: String(rowOf(cand[0]).name) });
+        if (h.names.some(n => mentions(rowText(r), n))) continue;                                 // ④ 넓게(들어 있으면) — 다른 이일 수 있으면 안 합쳐요
+        // ③ 버그 사냥 9b: 낱말로 든 후보가 정확히 하나이고, 다른 후보 글에는 그 글자가 아예 없을 때만(「왕」 ↔ 「왕자」 · 「여왕」 — 좁혀서 생기는 새 합치기는 없어요)
+        const cand = h.names.filter(n => { const t = rowOf(n); return t && hasWord(rowText(t), X); });
+        const loose = h.names.filter(n => { const t = rowOf(n); return t && mentions(rowText(t), X); });
+        if (cand.length === 1 && loose.length === 1) out.push({ from: X, to: String(rowOf(cand[0]).name) });
     }
     return out.filter(m => out.filter(x => x.to === m.to).length === 1 && !out.some(x => nmKey(x.from) === nmKey(m.to)));   // ⑤
 }
 const rowText = r => [r?.label, r?.memo].map(x => String(x ?? '')).join(' \n ');
-/** 낱말로 들었나(대소문자 무시) — 라틴 글자 낱말은 낱말 경계로, 그 밖(한글 · 일본 글자 등)은 들어 있으면 */
-function hasWord(text, word) {
+/** 글에 들어 있나(넓게 · 대소문자 무시) — 라틴 글자 낱말은 낱말 경계로, 그 밖(한글 · 한자 · 가나 등)은 들어 있으면. 「다른 이일 수 있나」 처럼 넓게 볼수록 안전한 자리에 써요(1.6.9 의 hasWord) */
+function mentions(text, word) {
     const w = String(word ?? '').normalize('NFC').trim(); if (!w) return false;
     const t = String(text ?? '').normalize('NFC');
     if (!/^[\p{Script=Latin}\p{N}\s'’.-]+$/u.test(w)) return t.toLowerCase().includes(w.toLowerCase());
-    return new RegExp(`(^|[^\\p{L}\\p{N}])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}\\p{N}])`, 'iu').test(t);
+    return new RegExp(`(^|[^\\p{L}\\p{N}])${esc(w)}($|[^\\p{L}\\p{N}])`, 'iu').test(t);
+}
+// 버그 사냥 9b: 한글 낱말 뒤에 붙어도 같은 낱말로 보는 조사 · 어미(그 뒤는 글자가 아니어야 해요). 앞에 글자가 붙으면(「여왕」 · 「국왕」) 다른 낱말이에요
+const KO_TAIL = '(?:이|가|은|는|을|를|의|에|에게|에게서|에서|께|께서|와|과|도|만|로|으로|로서|으로서|랑|이랑|한테|처럼|보다|님|씨|이다|다|이며|며|이고|고|이자|자|인|이던|이었던|였던|이라|라|이라고|라고|이라는|라는|이란|란|이야|야|이여|여|이었다|였다|이에요|예요|이지만|지만)?';
+const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** 낱말로 들었나(대소문자 무시) — 라틴 글자 낱말은 낱말 경계로 · 한글 낱말은 앞이 글자가 아니고 뒤가 조사 · 어미뿐일 때 · 그 밖(한자 · 가나 등 띄어쓰기 없는 글)은 들어 있으면 */
+function hasWord(text, word) {
+    const w = String(word ?? '').normalize('NFC').trim(); if (!w) return false;
+    const t = String(text ?? '').normalize('NFC');
+    if (/^[\p{Script=Hangul}\p{N}\s]+$/u.test(w)) return new RegExp(`(^|[^\\p{L}\\p{N}])${esc(w)}${KO_TAIL}($|[^\\p{L}\\p{N}])`, 'iu').test(t);
+    return mentions(t, w);
 }
 /** 지금 관계 칸 줄: 그 확장의 마지막 「칸 통째 저장」 편집(직접 편집 · AI 로 수정) 기록이 있으면 그것 · 없으면 기준 자료 */
 function relNow(meta) {
@@ -870,13 +899,23 @@ export function renameTitles(c = ctx(), { before = null, books = booksFor(c) } =
     }
     return out;
 }
-async function mbCore(doc = globalThis.document, load = url => import(url)) {
+async function mbCore(doc = globalThis.document, load = url => import(url), file = './src/core.js') {
     try {
         const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
-        return await load(new URL('./src/core.js', src).href);
+        return await load(new URL(file, src).href);
     } catch { return null; }
+}
+/** 테마를 꺼 뒀나(body.salty 없음) — 문서를 모르면(시험 · 옛 판) 켜진 것으로 */
+const themeOff = doc => !!doc?.body?.classList?.contains && !doc.body.classList.contains('salty');
+/**
+ * 버그 사냥 9b: 그 확장은 편집 기록을 더할 때(addAdjust) 80개를 넘으면 그 자리에서 squash 로 오래된 기록을 굳혀요. 테마가 합치기 기록을 더할 때도 같은 규칙으로 —
+ *   그 확장이 이미 띄운 engine 모듈(같은 주소)의 squash 를 불러요(굳히는 계산은 그 확장 몫 · 테마는 문턱만 같이 봐요). 못 받으면 그대로(그 확장의 다음 addAdjust 가 정리해요).
+ */
+async function fitAdjust(meta, doc = globalThis.document, engine = undefined) {
+    if (!Array.isArray(meta?.adjust) || meta.adjust.length <= 80) return false;
+    try { const e = engine === undefined ? await mbCore(doc, undefined, './src/engine.js') : engine; if (typeof e?.squash !== 'function') return false; e.squash(meta); return true; } catch { return false; }
 }
 /**
  * 만들기 창이 닫힌 뒤(「채팅 전체」 · 「기억 요약」 으로 보냈을 때만): 상태창 기준 자료가 새것으로 바뀌면(적용) 관계 숫자를 바로잡고 저장 · 새로고침 · 알려요.
@@ -884,7 +923,7 @@ async function mbCore(doc = globalThis.document, load = url => import(url)) {
  */
 /** 지금 채팅을 가리는 열쇠(그룹 · 캐릭터 · 채팅 파일) — 만들기 고르기를 걸 때 적어 두고 afterWizard 에 넘겨요 */
 export const chatKey = (c = ctx()) => bookKey(c);
-export async function afterWizard({ before = null, level = '', chat = undefined, c = undefined, toast = globalThis.toastr, waitMs = 8000, step = 250, doc = globalThis.document, core = undefined } = {}) {
+export async function afterWizard({ before = null, level = '', chat = undefined, c = undefined, toast = globalThis.toastr, waitMs = 8000, step = 250, doc = globalThis.document, core = undefined, engine = undefined } = {}) {
     if (level !== 'all' && level !== 'memo') return null;
     const cx = () => c || ctx();
     // 버그 사냥 9: 창을 닫자마자(또는 창이 열린 채) 다른 채팅으로 가면 그 채팅의 상태창을 「새로 적용됨」 으로 보고 숫자 · 이름을 고쳐 저장했어요(만들기를 안 한 채팅).
@@ -893,11 +932,12 @@ export async function afterWizard({ before = null, level = '', chat = undefined,
     let base = baseRef(cx());
     for (let t = 0; (!base || base === before) && t < waitMs && same(); t += step) { await new Promise(r => setTimeout(r, step)); base = baseRef(cx()); }
     if (!base || base === before || !same()) return null;
-    try { if (book.key !== bookKey(cx())) await primeBooks(cx()); } catch { /* 로어북 없이 */ }   // 1.6.8 프로필을 더하기 전 같은 사람 확인 · 직함 이름 바꾸기에 써요
+    try { if (!booksFresh(cx())) await primeBooks(cx()); } catch { /* 로어북 없이 */ }   // 1.6.8 프로필을 더하기 전 같은 사람 확인 · 직함 이름 바꾸기에 써요
     if (!same()) return null;
     const res = reconcileRel(cx());
     try { res.renamed = renameTitles(cx(), { before }); } catch { res.renamed = []; }   // 숫자를 맞춘 뒤에(직함 이름으로 변화 합을 찾고 나서) 이름을 바꿔요
     try { res.merged = mergeTitles(cx()); } catch { res.merged = []; }   // 1.6.9 그래도 직함 줄 · 이름 줄이 둘 다 남았으면 합치기 기록으로(채팅을 열 때와 같은 규칙)
+    if (res.merged.length) await fitAdjust(metaMb(cx()), doc, engine);   // 버그 사냥 9b: 그 확장 addAdjust 처럼 80개를 넘으면 정리
     if (res.changed.length || res.time || res.added?.length || res.renamed.length || res.merged.length) {
         try { await cx().saveMetadata?.(); } catch { /* 다음 저장 때 */ }
         try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }

@@ -347,7 +347,7 @@ export function fitActs(tb) {
         const cols = Number(tg.style.getPropertyValue('--cols'));
         const n = rowCols(tiles, cols);
         if (n) { fit = 'row'; if (host.style.getPropertyValue('--bl-tcols') !== String(n)) host.style.setProperty('--bl-tcols', String(n)); }
-        else if (cols === 4 && actsFit(tiles, 4, acts.children.length > 5 ? 3 : 2)) fit = 'in';
+        else if (cols === 4 && actsFit(tiles, 4, acts.children.length > 5 ? 3 : acts.children.length <= 2 ? 1 : 2)) fit = 'in';   // 미트볼 다음 판(2.9) 심플 모드 띠는 단추가 둘(일시정지 · 톱니) — 빈 열 하나(폰 4열 판 한 열 72px 위 · 단추 둘 64px)에 들어가요
     }
     if (fit) { if (host.getAttribute('data-bl-acts') !== fit) host.setAttribute('data-bl-acts', fit); } else if (host.hasAttribute?.('data-bl-acts') ?? true) host.removeAttribute('data-bl-acts');
     return fit;

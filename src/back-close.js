@@ -41,7 +41,8 @@ const ensure = (doc = globalThis.document, stack = layers()) => (state ||= { doc
 function add(dlg) {
     const s = state;
     if (!s || !isDialog(dlg) || s.open.has(dlg) || !wants(s.doc) || dlg.matches?.(SKIP) || !isModal(dlg)) return null;
-    s.open.set(dlg, s.stack.open(() => closeDialog(dlg)));
+    // 버그 사냥 9b: body 직속이 아닌 창이 닫히지 않고 떼어지면(바깥 상자째) toggle · body 감시 모두 몰라 겹이 남았어요 — 뒤로 가기 때 그 겹은 세지 않게(alive)
+    s.open.set(dlg, s.stack.open(() => closeDialog(dlg), () => { const live = dlg.isConnected !== false; if (!live) s.open.delete(dlg); return live; }));
     return () => drop(dlg);
 }
 function drop(dlg) {

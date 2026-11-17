@@ -183,7 +183,7 @@ export const SELF_ROWS = [
 ["event","WORLDINFO_ENTRIES_LOADED","src/addons/translator/index.js",4641,"translator","",0],
 ["event","WORLDINFO_FORCE_ACTIVATE","src/addons/translator/index.js",4619,"translator","",0],
 ["global","__blLlmTranslatorLoaded","src/addons/translator/index.js",129,"translator","=",0],
-["global","__blMbDedupe","src/mb-prompt.js",725,"","||=",0],
+["global","__blMbDedupe","src/mb-prompt.js",740,"","||=",0],
 ["global","__blMbTrRepair","src/ext-bridge-tr.js",524,"","=",0],
 ["global","__blMermaidBase","src/addons/mermaid/index.js",61,"mermaid","=",0],
 ["global","__blMermaidEngine","src/addons/mermaid/source/src/index.js",7,"mermaid","=",0],

@@ -15,7 +15,9 @@ const SEL = 'font[color], [style*="color" i]';
 // 1.6.9 프리셋 속마음: <true_thoughts character="이름"> → <span class="tt tt-이름"><em>…</em></span> (실리태번이 클래스에 custom- 을 붙여요).
 // 색은 인라인이 아니라 메시지 안 <style> 의 `.tt-이름, .tt-이름 * {color:… !important}` 라 SEL 로는 안 잡혀요. 그 규칙이 안쪽 요소(em · 테마 글자 조각)를
 // 하나하나 직접 칠하니, 속마음 칸 안 요소는 모두 계산된 글자색으로 재요. 우리 표시 규칙(id 둘 무게 · !important)이 클래스 하나짜리 !important 를 이겨요
-const TT = '.tt, [class*="custom-tt"]';
+// 버그 사냥 9b: 「custom-tt 로 시작하는 아무 클래스」 가 아니라 속마음 칸 클래스(custom-tt)와 이름 클래스(custom-tt-이름)만 — custom-ttl · custom-tts-box 같은
+//   다른 프리셋 칸(클래스로 칠한 제목 · 가림 글)을 속마음으로 보고 계산된 색을 밝혔어요(인라인 색만 맞추는 기능인데 프리셋 색을 바꿈)
+const TT = '.tt, .custom-tt, [class*="custom-tt-"]';
 const BOX = '.mes_text, .salty-sample';
 const MARK = 'bl-ink';
 let active = false, timer = 0, key = null, mode = null, sheet = null, gen = 0;

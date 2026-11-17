@@ -42,6 +42,15 @@ await ok('층 읽기', () => {
     assert.equal(m.floorOf({ name: 'Hall', desc: 'x' }, s => (s === 'x' ? '지하 2층 복도' : s)), -2);
 });
 
+await ok('버그 사냥 9b: 화씨 온도(75F)는 층이 아니에요 — 온도 표시(° · degrees · 기온 · 75F/24C)가 붙거나, 높은 수(30 넘음) 곁에 날씨 · 때 낱말이 있으면', () => {
+    const cases = [['A warm 75F afternoon.', null], ['Sunny, 75 F outside.', null], ['It is 75F/24C today.', null], ['Hot day — 98F in the shade.', null], ['실내 온도 72F 유지', null], ['기온 80F 의 무더운 오후', null],
+        ['Temperature 68F on the 12F terrace', 12], ['Warm cafe on 3F.', 3], ['Cozy room on 2F, warm and quiet.', 2], ['Penthouse on 75F.', 75], ['Sky lounge 40F with a night view', 40], ['Diner on 45F, open all day every afternoon', 45], ['75F', 75]];
+    for (const [s, want] of cases) assert.equal(m.floorIn(s), want, s);
+    // 배치: 온도를 적은 정원이 75층 방이 되지 않아요(바깥 장소)
+    const L = m.floorLayout([P('Lobby', '1F lobby.'), P('Studio', '2F studio.', { links: ['Lobby'] }), P('Roof Garden', 'Open garden; a warm 75F afternoon breeze.', { links: ['Studio'] })]);
+    assert.deepEqual(L.rows, [2, 1]); assert.equal(L.pos.get('Roof Garden').zone, 'out');
+});
+
 await ok('위 · 아래 · 바깥', () => {
     assert.equal(m.zoneOf({ name: 'Heaven', kind: 'realm' }), 'above');
     assert.equal(m.zoneOf({ name: '천계', kind: '' }), 'above');
@@ -177,6 +186,25 @@ await ok('보던 viewBox(끌기 · 확대)는 그대로 · 구역 탭으로 걸�
     // 안 보이는 장소로 가는 선은 안 그려요
     for (const p of svg.querySelectorAll('path.bl-route')) assert.ok(p.getAttribute('d'));
     assert.equal(svg.querySelectorAll('path.bl-route').length, 5);
+});
+await ok('버그 사냥 9b: 층별 배치가 새로 생기거나 없어지면 그 확장이 기억한 보던 칸(다른 눈금)을 버리고 다시 맞춰요', () => {
+    const doc = makeDoc(), flat = office().map(p => ({ ...p, desc: 'plain room' })), ui = { mapVB: null };
+    // ① 층 없는 지도를 보다가 끌어서 보던 칸이 생김(그 확장 눈금) → 다음 그리기에 층이 생김
+    assert.equal(m.applyFloors(drawn(doc, flat), { places: flat }, { ui }), null);
+    ui.mapVB = [1, 2, 30, 30];
+    const places = office(), svg = drawn(doc, places); svg.setAttribute('viewBox', '1 2 30 30');   // 그 확장은 보던 칸으로 그려요
+    const L = m.applyFloors(svg, { places }, { ui });
+    assert.ok(L); assert.equal(ui.mapVB, null, '다른 눈금의 보던 칸은 버려요');
+    assert.equal(svg.getAttribute('viewBox'), m.fitFloors(L, new Set(places.map(p => p.name))).join(' '), '층별 배치 전체가 보이게');
+    // ② 층별 배치로 보다가 끌어서 보던 칸이 생김 → 층이 없어짐: 보던 칸을 버리고 그 확장이 다시 그리게 알려요
+    ui.mapVB = [5, 5, 40, 40];
+    const svg2 = drawn(doc, flat); svg2.setAttribute('viewBox', '5 5 40 40');
+    assert.equal(m.applyFloors(svg2, { places: flat }, { ui }), null);
+    assert.equal(ui.mapVB, null); assert.equal(svg2._blRefit, true);
+    // ③ 같은 눈금이면(층별 배치끼리) 보던 칸 그대로
+    m.applyFloors(drawn(doc, places), { places }, { ui }); ui.mapVB = [1, 2, 30, 30];
+    const svg3 = drawn(doc, places); svg3.setAttribute('viewBox', '1 2 30 30');
+    m.applyFloors(svg3, { places }, { ui }); assert.equal(svg3.getAttribute('viewBox'), '1 2 30 30'); assert.deepEqual(ui.mapVB, [1, 2, 30, 30]);
 });
 await ok('하늘 · 땅 밑 장소만 보일 때 흐린 건물 윤곽', () => {
     const doc = makeDoc(), places = office(), shown = places.filter(p => p.area === 'Beyond');

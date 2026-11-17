@@ -139,6 +139,17 @@ await ok('⑥ 새로 고침 뒤 깊이만 남은 칸에 서 있으면 시작할 
     const pre = dialog(doc2); doc2.dialogs.push(pre); pre.isConnected = true; pre.open = true;
     m.startBackClose(doc2, { watch: doc2.watch, stack: s2 }); assert.equal(s2.size, 1);
 });
+await ok('버그 사냥 9b: body 직속이 아닌 창이 닫히지 않고 떼어지면(body 변화 없음) 그 겹은 뒤로 가기 한 번을 먹지 않아요 — 그 아래 창이 바로 닫혀요', async () => {
+    const { m, w, stack, doc } = await setup();
+    const a = dialog(doc, { name: 'settings' }); show(doc, a);
+    const b = dialog(doc, { name: 'nested' }); b.isConnected = true; b.open = true; m.trackDialog(b);   // 다른 상자 안에서 열린 창(showThemeModal · toggle 길)
+    assert.equal(stack.size, 2); assert.equal(depth(w), 2);
+    b.isConnected = false;                                             // 바깥 상자째 떼어 짐 — open 은 그대로 · body 직속 변화가 아니라 감시가 모름
+    w.history.back(); await w.idle();
+    assert.equal(a.open, false, '뒤로 가기 한 번에 보이는 창이 닫혀요'); assert.equal(stack.size, 0); assert.equal(depth(w), 0); assert.equal(w.left, 0);
+    assert.equal(b.cancels, 0, '떼어진 창에는 취소 사건을 안 보내요');
+    w.history.back(); await w.idle(); assert.equal(w.at, 0, '그다음은 원래 동작');
+});
 await ok('⑦ 연결: showThemeModal · 시작 표 · 설정(기본 켬) · 표식 · 패널 · 검색 · 이름표 · 스타일 밖 · 미리보기 목록 · 겹 올리는 모듈 · 시험 등록', async () => {
     assert.ok(read('src/modal.js').includes("import('./back-close.js').then(m => { if (dialog.open) backDrop = m.trackDialog(dialog); })") && read('src/modal.js').includes('backDrop?.(); backDrop = null;'));
     assert.ok(read('index.js').includes("['startBackClose', () => import('./src/back-close.js'), m => { m.startBackClose(); }]"));

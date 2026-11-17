@@ -693,4 +693,77 @@ await ok('버그 사냥 9: 만들기 창을 닫고 곧 다른 채팅으로 가�
             assert.deepEqual(r.changed.map(x => x.to), [[3, 0]], '같은 채팅에서 적용되면 그대로 바로잡아요'); }
     } finally { globalThis.SillyTavern = keep; }
 });
+// ── 버그 사냥 9b ─────────────────────────────
+const relKo = (n, memo, label = '') => ({ name: n, label, memo, aff: 0, trust: 0, stage: -1 });
+const koCtx = (user, id = 'ko-' + Math.random(), extra = {}) => ({ characterId: 0, characters: [{ name: '해설', avatar: 'h.png', data: { extensions: { world: 'book-ko' } } }], getCurrentChatId: () => id, name1: '나', chat: [{}, {}],
+    loadWorldInfo: async n => (n === 'book-ko' ? { entries: { 0: { key: ['왕', '아린'] }, 1: { key: ['왕', '세온'] } } } : null), saveMetadata() { this.saved = (this.saved || 0) + 1; },
+    chatMetadata: { statussim: { base: { data: { rel: { user }, profile: { list: [] } } }, adjust: [] } }, ...extra });
+await ok('버그 사냥 9b: 한글 직함은 낱말로(뒤 조사 · 어미만 허용) — 「왕」 이 「왕자」 · 「여왕」 에 걸려 엉뚱한 사람으로 합치지 않아요', async () => {
+    { const c = koCtx([relKo('왕', '성의 주인.'), relKo('아린', '왕자의 스승.'), relKo('세온', '젊은 기사.')]); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '「왕자의 스승」 은 왕이 아니에요'); }
+    { const c = koCtx([relKo('왕', '성의 주인.'), relKo('아린', '여왕의 시녀.'), relKo('세온', '젊은 기사.')]); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '「여왕」 도 왕이 아니에요'); }
+    { const c = koCtx([relKo('왕', '성의 주인.'), relKo('아린', '왕자의 스승.'), relKo('세온', '백성들은 그를 왕이라 부른다.')]); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '다른 후보 글에 「왕」 이 섞여 있으면(왕자) 하나로 못 정해요 — 그대로'); }
+    for (const memo of ['모두가 왕으로 모신다.', '왕께서 직접 나섰다.', '이 나라의 왕.', '사람들은 왕이라 부른다.', '"왕"']) {
+        const c = koCtx([relKo('왕', '성의 주인.'), relKo('아린', '젊은 기사.'), relKo('세온', memo)]); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [{ from: '왕', to: '세온' }], `조사 · 어미가 붙은 「왕」: ${memo}`);
+    }
+    // ④ 그 줄 글에 후보 이름이 들어 있으면(넓게 봐요) 안 합쳐요 — 「세온이네 마부」 처럼 조사 목록에 없는 꼴이어도
+    { const c = koCtx([relKo('왕', '세온이네 늙은 마부.'), relKo('아린', '젊은 기사.'), relKo('세온', '왕으로 모신다.')]); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '그 줄 글에 후보 이름이 나오면 다른 이'); }
+    // 로어북을 못 읽을 때 같은 사람일 수 있나: 다른 프로필 글에 「왕이라」 처럼 조사가 붙어 나와도 같은 사람일 수 있어요(프로필을 둘로 더하지 않게)
+    const base = { data: { rel: { user: [relKo('왕', '')] }, profile: { list: [{ name: '세온', role: 'main', summary: '백성들은 그를 왕이라 부른다.' }] } } };
+    assert.equal(M.maybeSame('왕', base, null), true);
+    const base2 = { data: { rel: { user: [relKo('왕', '')] }, profile: { list: [{ name: '아린', role: 'main', summary: '왕자의 스승.' }] } } };
+    assert.equal(M.maybeSame('왕', base2, null), false, '「왕자」 는 왕이 아니에요');
+    // 라틴 글자는 예전 그대로
+    { const c = loreCtx({ getCurrentChatId: () => 'lat-1', chat: [{}], chatMetadata: { statussim: { base: { data: { rel: { user: [relKo('Captain', 'x'), relKo('Joon', 'Captains club.'), relKo('Mira', 'Called Captain by staff.')] }, profile: { list: [] } } }, adjust: [] } } });
+        await M.primeBooks(c); assert.deepEqual(M.titleMerges(c), [{ from: 'Captain', to: 'Mira' }]); }
+});
+await ok('버그 사냥 9b: 테마 「블루레몬에이드 사용」 이 꺼져 있으면(body.salty 없음) 채팅 열 때 정리 · 합치기를 안 해요 — 다시 켜고 열면 해요', async () => {
+    const body = { classList: { has: false, contains(c) { return c === 'salty' && this.has; } } };
+    const doc = { body, querySelectorAll: () => [] };
+    const c = koCtx([relKo('왕', '성의 주인.'), relKo('아린', '젊은 기사.'), relKo('세온', '왕으로 모신다.')], 'off-1');
+    const toasts = [];
+    assert.deepEqual([...await M.cleanupDupes({ c, doc, toast: { info: m => toasts.push(m) }, core: null })], []);
+    assert.equal(c.saved, undefined); assert.equal(c.chatMetadata.statussim.adjust.length, 0); assert.equal(toasts.length, 0);
+    body.classList.has = true;
+    const r = await M.cleanupDupes({ c, doc, toast: { info: m => toasts.push(m) }, core: null });
+    assert.deepEqual(r.merged, [{ from: '왕', to: '세온' }], '켜면 그 채팅도 해요(꺼져 있을 때는 「한 번 함」 으로 안 적어요)'); assert.equal(c.saved, 1);
+});
+await ok('버그 사냥 9b: 같은 세션에서 로어북을 고치거나(실리태번 로어북 바뀜 사건) 채팅 로어북을 바꾸면 받아 둔 옛 로어북을 버려요', async () => {
+    const handlers = {}; const eventSource = { on: (ev, fn) => { (handlers[ev] ||= []).push(fn); } };
+    let lore = { entries: { 0: { key: ['Captain', 'Mira'] }, 1: { key: ['Captain', 'Joon'] } } };
+    const rel = (n, memo) => ({ name: n, label: '', memo, aff: 0, trust: 0, stage: -1 });
+    const c = { characterId: 0, characters: [{ name: 'Narrator', avatar: 'n.png', data: { extensions: { world: 'book-e' } } }], getCurrentChatId: () => 'wi-1', name1: 'Me', chat: [{}],
+        eventSource, eventTypes: { WORLDINFO_UPDATED: 'worldinfo_updated', CHARACTER_EDITED: 'character_edited' },
+        loadWorldInfo: async n => (n === 'book-e' ? structuredClone(lore) : n === 'book-f' ? { entries: { 0: { key: ['Captain', 'Harbor'] } } } : null),
+        chatMetadata: { statussim: { base: { data: { rel: { user: [rel('Captain', 'x'), rel('Joon', 'y'), rel('Mira', 'Called Captain by staff.')] }, profile: { list: [] } } }, adjust: [] } } };
+    await M.primeBooks(c);
+    assert.deepEqual(M.titleMerges(c), [{ from: 'Captain', to: 'Mira' }]);
+    // 사용자가 로어북에 사람 없는 설정 항목(「Captain」 열쇠)을 더하고 저장 — 이제는 모르는 항목이 섞여 안 합쳐야 해요
+    lore = { entries: { ...lore.entries, 2: { key: ['Captain', 'Harbor'] } } };
+    for (const fn of handlers.worldinfo_updated || []) fn('book-e', lore);
+    assert.deepEqual(M.titleMerges(c), [], '옛 로어북으로 합치지 않아요');
+    await M.primeBooks(c); assert.deepEqual(M.titleMerges(c), [], '새로 받은 로어북으로도 그대로');
+    // 채팅 로어북을 새로 걸면(사건 없이 채팅 메타데이터만 바뀜) 받아 둔 것은 그 채팅 것이 아니에요
+    lore = { entries: { 0: { key: ['Captain', 'Mira'] }, 1: { key: ['Captain', 'Joon'] } } };
+    await M.primeBooks(c); assert.deepEqual(M.titleMerges(c), [{ from: 'Captain', to: 'Mira' }]);
+    c.chatMetadata.world_info = 'book-f';
+    assert.deepEqual(M.titleMerges(c), [], '채팅 로어북이 바뀌면 옛 것을 안 써요');
+    await M.primeBooks(c); assert.deepEqual(M.titleMerges(c), [], '새 채팅 로어북의 설정 항목 — 그대로');
+});
+await ok('버그 사냥 9b: 합치기 기록을 더해 편집 기록이 80개를 넘으면 그 확장 addAdjust 처럼 그 확장의 squash 로 정리해요', async () => {
+    const c = koCtx([relKo('왕', '성의 주인.'), relKo('아린', '젊은 기사.'), relKo('세온', '왕으로 모신다.')], 'sq-1');
+    c.chatMetadata.statussim.adjust = [...Array(80)].map((_, i) => ({ at: 0, t: i + 1, ops: [['_read', 'x']] }));
+    const calls = []; const engine = { squash: meta => { calls.push(meta.adjust.length); meta.adjust = meta.adjust.slice(-10); } };
+    const r = await M.cleanupDupes({ c, core: null, engine, toast: null });
+    assert.deepEqual(r.merged, [{ from: '왕', to: '세온' }]);
+    assert.deepEqual(calls, [81], '81개가 되면 한 번'); assert.equal(c.chatMetadata.statussim.adjust.length, 10);
+    // 80개 이하면 안 불러요
+    const c2 = koCtx([relKo('왕', '성의 주인.'), relKo('아린', '젊은 기사.'), relKo('세온', '왕으로 모신다.')], 'sq-2'); const calls2 = [];
+    await M.cleanupDupes({ c: c2, core: null, engine: { squash: () => calls2.push(1) }, toast: null });
+    assert.deepEqual(calls2, []);
+});
 console.log(`mb-prompt: ${n}개 통과`);

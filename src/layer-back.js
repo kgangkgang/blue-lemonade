@@ -25,11 +25,16 @@ export function createLayers(win = globalThis) {
         if (have > want) { travel = true; try { hist().go(want - have); } catch { travel = false; } }
         else for (let n = have + 1; n <= want; n++) if (!push(n)) break;
     }
+    const aliveOf = layer => { try { return layer.alive() !== false; } catch { return true; } };
     function onPop() {
         const mine = travel; travel = false;          // 테마가 스스로 물린 이동의 신호면 겹을 닫지 않아요(창을 닫자마자 다른 창을 연 때 — 새 창이 닫히면 안 돼요) · 아래 settle 이 모자란 칸을 채워요
         const have = depth();
-        while (!mine && stack.length > have) {                 // 뒤로 가기: 맨 위 겹부터
+        let want = mine ? 0 : stack.length - have;   // 닫아 달라는 겹 수
+        while (want > 0 && stack.length) {                 // 뒤로 가기: 맨 위 겹부터
             const layer = stack[stack.length - 1];
+            // 버그 사냥 9b: 벌써 사라진 겹(창이 닫히지 않고 떼어졌는데 알림이 안 온 것)은 세지 않고 치워요 — 전엔 그 겹이 뒤로 가기 한 번을 먹어 아무것도 안 닫혔어요
+            if (layer.alive && !aliveOf(layer)) { layer.gone = true; stack.pop(); continue; }
+            want--;
             let closed = true;
             try { closed = layer.close() !== false; } catch { closed = true; }
             if (!closed) break;                       // 안 닫힘(위의 다른 창을 먼저 닫았어요) — 겹은 그대로, 아래 settle 이 기록 한 칸을 다시 채워요
@@ -44,11 +49,12 @@ export function createLayers(win = globalThis) {
         settle();                                     // 새로 고친 뒤 깊이만 남은 칸에 서 있으면 물러나요
     }
     return {
-        /** 겹을 올려요. close(): 그 창을 닫아요 — 못 닫았으면 false 를 돌려줘요. 돌려주는 done(): 다른 길(✕ · 바깥 누름)로 닫혔을 때 불러요. */
-        open(close) {
+        /** 겹을 올려요. close(): 그 창을 닫아요 — 못 닫았으면 false 를 돌려줘요. 돌려주는 done(): 다른 길(✕ · 바깥 누름)로 닫혔을 때 불러요.
+         *  alive()(고를 수 있어요): 그 창이 아직 있나 — false 면 뒤로 가기 때 그 겹은 세지 않고 치워요(버그 사냥 9b) */
+        open(close, alive = null) {
             if (typeof close !== 'function' || !hist()?.pushState) return () => {};
             wire();
-            const layer = { close, gone: false };
+            const layer = { close, alive: typeof alive === 'function' ? alive : null, gone: false };
             stack.push(layer);
             settle();
             return () => { if (layer.gone) return; layer.gone = true; const i = stack.indexOf(layer); if (i >= 0) stack.splice(i, 1); settle(); };

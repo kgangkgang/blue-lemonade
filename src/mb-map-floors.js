@@ -30,22 +30,33 @@ const FLOOR_RULES = [
     [/basement\s*(?:level\s*)?(\d{1,2})/giu, n => -n],
     [/(\d{1,2})(?:st|nd|rd|th)\s+basement/giu, n => -n],
     [/(?:지하층|basement)/giu, () => -1],
-    [new RegExp(`${B}(\\d{1,3})\\s?F${E}`, 'gu'), n => n],
+    [new RegExp(`${B}(\\d{1,3})\\s?F${E}`, 'gu'), n => n, (s, m) => !tempAt(s, m)],
     [/(\d{1,3})(?:st|nd|rd|th)[\s-]+floor/giu, n => n],
     [/\bfloor\s+(\d{1,3})\b/giu, n => n],
     [/ground[\s-]floor/giu, () => 1],
     [/(\d{1,3})\s?(?:층|階)/gu, n => n],
 ];
+// 버그 사냥 9b: 「75F」 꼴은 화씨 온도이기도 해요(장소 설명의 「a warm 75F afternoon」 이 75층 방이 됐어요). 층으로 안 읽는 때:
+//   ① 바로 곁(앞뒤 12자)에 온도 표시(° · ℉ · degrees · temperature · 화씨 · 기온 · 온도)가 있거나 · 바로 뒤가 「/24C」 꼴
+//   ② 30 넘는 수인데 곁(앞뒤 24자)에 날씨 낱말(warm · sunny · humid · 날씨 · 더운 …)이 있어요 — 낮은 층(「Warm cafe on 3F」)은 그대로 층이에요
+const TEMP_MARK = /°|℉|℃|\bdeg(?:rees?)?\b|\btemp(?:erature)?s?\b|fahrenheit|celsius|화씨|섭씨|기온|온도/iu;
+const WEATHER = /\b(?:warm|hot|cold|chilly|humid|muggy|sunny|cloudy|rainy|snowy|breez[ey]|weather|heat(?:wave)?|shade)\b|날씨|더운|덥|추운|춥|따뜻|쌀쌀|무더|습한|그늘/iu;   // 「open all day」 같은 가게 설명에 걸리지 않게 때 낱말은 안 봐요
+function tempAt(s, m) {
+    const at = m.index, end = at + m[0].length, near = n => s.slice(Math.max(0, at - n), end + n);
+    if (TEMP_MARK.test(near(12)) || /^\s*\/\s*-?\d{1,3}\s*°?\s*C(?![\p{L}\p{N}])/u.test(s.slice(end))) return true;
+    return Number(m[1]) > 30 && WEATHER.test(near(24));
+}
 /** 글 한 줄에서 층 하나(1 이상 = 지상 · −1 이하 = 지하 · 없으면 null). 여럿이면 글에서 가장 먼저 나온 것 */
 export function floorIn(text) {
     const s = String(text ?? ''); if (!s) return null;
     let best = null;
-    for (const [re, to] of FLOOR_RULES) {
+    for (const [re, to, keep] of FLOOR_RULES) {
         re.lastIndex = 0; let m;
         while ((m = re.exec(s))) {
             const raw = m[1] === undefined ? 1 : Number(m[1]);
             const f = to(raw);
             if (!Number.isFinite(f) || f === 0 || Math.abs(f) > 200) continue;
+            if (keep && !keep(s, m)) continue;
             if (!best || m.index < best.at) best = { at: m.index, f };
             break;
         }
@@ -328,10 +339,16 @@ export function wrapLabel(text, w) {
 
 // ── SVG 에 입히기 ─────────────────────────────────────────
 const el = (doc, tag, attrs = {}, text = null) => { const e = doc.createElementNS(SVG_NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v)); if (text !== null) e.textContent = text; return e; };
+const VB_MODE = 'blFloorsVB';   // ui 에 적는 「보던 칸을 어느 배치 눈금으로 그렸나」(floors · plain)
 /** 그 확장이 그린 지도 SVG 하나에 층별 배치를 입혀요 → 입혔으면 배치, 아니면 null(그대로) */
 export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null } = {}) {
     if (!svg || svg.getAttribute('data-bl-floors')) return null;
     const L = floorLayout(map?.places, { find, tr });
+    // 버그 사냥 9b: 그 확장이 기억한 보던 칸(ui.mapVB — 끌기 · 확대)은 그때 그린 배치의 눈금이에요. 장소가 바뀌어 층별 배치가 새로 생기거나 없어지면
+    //   다른 눈금의 칸이 남아 엉뚱한 곳(빈 곳)을 보여 줬어요 → 어느 배치로 그렸는지 ui 에 적어 두고, 바뀌면 보던 칸을 버려요.
+    //   (층별 배치 → 그 확장 배치: 그 확장이 이미 옛 칸으로 그렸으니 다시 그리게 _blRefit 로 알려요 — startMbFloors 가 그려요)
+    const mode = L ? 'floors' : 'plain', was = ui?.[VB_MODE];
+    if (ui && typeof ui === 'object') { if (was && was !== mode && ui.mapVB) { ui.mapVB = null; if (!L) svg._blRefit = true; } ui[VB_MODE] = mode; }
     if (!L) { svg.setAttribute('data-bl-floors', 'none'); return null; }
     const doc = svg.ownerDocument;
     const nodes = [...svg.querySelectorAll('g.node[data-arg]')];
@@ -432,7 +449,9 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
     const dress = svg => {
         if (!isOn(doc) || !core || svg.getAttribute('data-bl-floors')) return;
         const map = mapNow(); if (!map) return;
-        try { applyFloors(svg, map, { ui: svg.closest?.('.ss-panel')?._ss?.ui ?? null, find: findFn(), tr: trFn() }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
+        const panel = svg.closest?.('.ss-panel');
+        try { applyFloors(svg, map, { ui: panel?._ss?.ui ?? null, find: findFn(), tr: trFn() }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
+        if (svg._blRefit && panel?._ss) { svg._blRefit = false; try { core.app?.renderPanel?.(panel); } catch { /* 다음에 그릴 때 */ } }   // 버그 사냥 9b: 층별 배치가 없어져 옛 눈금 칸으로 그려진 지도 — 보던 칸을 비웠으니 그 확장이 다시 맞춰 그려요
     };
     const sweep = () => { for (const svg of doc.querySelectorAll('svg.ss-map:not([data-bl-floors])')) dress(svg); };
     const redraw = () => {

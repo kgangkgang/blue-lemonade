@@ -447,6 +447,21 @@ await test('1.6.9 속마음 클래스 색: 묻히는 것만 같은 색 계열로
     usePalette('night');
 });
 
+// 버그 사냥 9b: 속마음 칸 선택자가 「custom-tt 로 시작하는 아무 클래스」(custom-ttl · custom-tts-box …)에도 걸려, 프리셋이 클래스로 칠한 다른 칸(제목 · 가림 글 등)을
+//   속마음으로 보고 계산된 색을 밝혔어요(인라인 색만 맞추는 기능인데 프리셋 색을 바꿈). 지어낸 클래스 · 지어낸 글
+await test('버그 사냥 9b: 속마음 칸은 custom-tt · custom-tt-이름 만 — custom-ttl · custom-tts 같은 다른 프리셋 클래스 칸은 손대지 않아요', async () => {
+    usePalette('night');
+    const title = new Node('div', { class: 'custom-ttl' }, { themeInk: '#2A2F38' }).append(new Node('b', {}, { themeInk: '#2A2F38' }).append('지어낸 제목'));
+    const box = new Node('span', { class: 'custom-tts-box' }, { themeInk: '#30343C' }).append('가림 글');
+    ttRules.set('custom-tt-하람', '#424C59');
+    const only = new Node('span', { class: 'custom-tt-하람' }).append(new Node('em').append('하람의 지어낸 속마음'));
+    const mt = message(title, ' ', box, ' ', only);
+    R.syncInkContrast(true); await wait(260); R.inkContrastRun([mt]);
+    for (const el of [title, title.children[0], box]) assert.ok(!el.classList.contains('bl-ink'), `${el.getAttribute('class') || el.nodeName} 는 속마음 칸이 아니에요`);
+    assert.ok(only.classList.contains('bl-ink') && shownOn(only) >= 4.5, '이름 클래스만 있는 속마음 칸은 예전처럼 맞춰요');
+    R.syncInkContrast(false); mt.remove(); ttRules.clear();
+});
+
 // ── 연결 ──
 await test('연결: features(기본 켬 · 확장만 모드 제외) · 채팅 › 화면 스위치 · 조판 훅 · 설정 검색 · CI', () => {
     const features = read('src/features.js');

@@ -18,6 +18,7 @@ ok('② 타일이 그 자리를 쓰면 지금처럼 아랫줄 — 꽉 채움 · 
     assert.equal(m.actsFit([T(1, 1), T(2, 1), T(3, 1)]), false);
     assert.equal(m.actsFit([T(3, 1, 2, 2), T(1, 2)]), false, '윗줄에서 내려온 키 큰 타일');
     assert.equal(m.actsFit([]), false);
+    assert.equal(m.actsFit([T(1, 1, 2), T(3, 1)], 4, 1), true, '단추가 둘(2.9 심플 띠)이면 빈 열 하나로 돼요'); assert.equal(m.actsFit([T(1, 1, 2), T(3, 1, 2)], 4, 1), false);
     assert.equal(m.actsFit([T(1, 1)], 4, 3), true); assert.equal(m.actsFit([T(1, 1), T(2, 1)], 4, 3), false, '단추가 여섯이면 세 칸이 필요해요');
 });
 ok('②-1 (1.5.4) 칸이 모두 첫 줄 한 칸 높이이고 칸 셋 이하면 한 줄(row) — 열 수 = 쓰인 끝 열 · 칸 넷이면 아님 · PC 넓은 판은 다 같은 줄이면 한 줄', () => {

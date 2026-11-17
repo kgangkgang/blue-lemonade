@@ -1,8 +1,8 @@
 {
  "_": "미트볼 상태창 화면의 그림 글자(이모지)를 테마 선 아이콘으로 보이게 하는 글꼴의 표 — src/ext-status.css 의 @font-face(unicode-range)와 같아야 해요. 글꼴은 허브 대본(build-icons.py)으로 만들어요. 테마 선 아이콘과 같은 꼴(24 칸 · 선 1.8 · 둥근 끝)로 직접 그렸고, 뜻이 겹치는 것은 테마 아이콘을 그대로 썼어요.",
  "font": "ext-status-icons.woff2",
- "bytes": 39748,
- "sha256": "a72411b1b71562c4efef54dc407da34ebe6dcfbfe8a355e9c2de449420ffcfdc",
+ "bytes": 39832,
+ "sha256": "35a83c67a6b767d0ebaced7e0ae099127270c0f1310c9bd86d746d7ce0d99b80",
  "family": "bl-mb-icons",
  "zeroWidth": [
   "FE0F",
@@ -142,9 +142,11 @@
   "1F353": "strawberry",
   "1F356": "meat",
   "1F357": "meat",
+  "1F359": "bowl",
   "1F35A": "bowl",
   "1F35C": "bowl",
   "1F35D": "bowl",
+  "1F35E": "wheat",
   "1F370": "cake",
   "1F371": "dish",
   "1F372": "bowl",
@@ -167,6 +169,7 @@
   "1F3A9": "tophat",
   "1F3AC": "clapper",
   "1F3AD": "masks",
+  "1F3AE": "dice",
   "1F3B2": "dice",
   "1F3C6": "trophy",
   "1F3CE": "gauge",
@@ -221,6 +224,7 @@
   "1F449": "pointer",
   "1F44D": "thumbsup",
   "1F451": "crown",
+  "1F455": "tophat",
   "1F464": "person",
   "1F465": "people",
   "1F480": "skull",
@@ -258,6 +262,7 @@
   "1F4CB": "clipboard",
   "1F4CC": "pin",
   "1F4CD": "mappin",
+  "1F4CE": "chain",
   "1F4D2": "book",
   "1F4D5": "book",
   "1F4D6": "book",
@@ -299,6 +304,7 @@
   "1F54C": "church",
   "1F54D": "church",
   "1F550": "clock",
+  "1F56F": "flame",
   "1F573": "hole",
   "1F58A": "pencil",
   "1F58B": "feather",
@@ -365,6 +371,7 @@
   "1F98A": "fox",
   "1F98B": "butterfly",
   "1F99D": "raccoon",
+  "1F9DF": "skull",
   "1F9E0": "thought",
   "1F9E9": "puzzle",
   "1F9ED": "compass",
@@ -372,6 +379,7 @@
   "1F9F1": "bricks",
   "1F9F8": "teddy",
   "1F9F9": "broom",
+  "1F9FE": "clipboard",
   "1FA91": "chair",
   "1FA9F": "window",
   "1FAB4": "sprout",
@@ -718,14 +726,14 @@
    ],
    [
     "1F358",
-    "1F359"
+    "1F358"
    ],
    [
     "1F35B",
     "1F35B"
    ],
    [
-    "1F35E",
+    "1F35F",
     "1F36F"
    ],
    [
@@ -777,7 +785,7 @@
     "1F3AB"
    ],
    [
-    "1F3AE",
+    "1F3AF",
     "1F3B1"
    ],
    [
@@ -858,6 +866,10 @@
    ],
    [
     "1F452",
+    "1F454"
+   ],
+   [
+    "1F456",
     "1F463"
    ],
    [
@@ -933,7 +945,7 @@
     "1F4C9"
    ],
    [
-    "1F4CE",
+    "1F4CF",
     "1F4D1"
    ],
    [
@@ -1033,7 +1045,7 @@
     "1F567"
    ],
    [
-    "1F56F",
+    "1F570",
     "1F570"
    ],
    [
@@ -1274,7 +1286,7 @@
    ],
    [
     "1F99E",
-    "1F9DF"
+    "1F9DE"
    ],
    [
     "1F9E1",
@@ -1294,6 +1306,10 @@
    ],
    [
     "1F9FA",
+    "1F9FD"
+   ],
+   [
+    "1F9FF",
     "1F9FF"
    ],
    [
@@ -1345,17 +1361,17 @@
     "1FAF8"
    ]
   ],
-  "count": 1063,
+  "count": 1055,
   "by": {
-   "box": 327,
+   "box": 323,
    "building": 2,
    "cloud": 25,
-   "dish": 99,
+   "dish": 97,
    "dot": 144,
    "leaf": 15,
    "mappin": 88,
    "paw": 104,
-   "person": 254,
+   "person": 252,
    "zw": 5
   }
  },
