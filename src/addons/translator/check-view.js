@@ -175,7 +175,8 @@ export function createCheckView({ stateOf, rerender, act, scope, autoFixOn = () 
         document.body.append(pop);
         place(flag);
         const onDown = event => { if (pop && !pop.contains(event.target) && !event.target.closest?.('.custom-llmt-flag, .llmt-flag')) close(); };
-        const onKey = event => { if (event.key === 'Escape') { close(); flag.focus?.(); } };
+        // 버그 사냥 7: 팝오버가 받은 Esc 는 여기서 멈춰요 — 실리태번으로 넘어가 서랍 · 작가 노트가 닫히거나 만들던 답이 멈췄어요
+        const onKey = event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); flag.focus?.(); } };
         const onMove = () => close();
         document.addEventListener('pointerdown', onDown, true);
         document.addEventListener('keydown', onKey, true);

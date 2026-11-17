@@ -71,11 +71,7 @@ await test('당겨 새로고침은 홈 화면에 깐 터치 앱에서만 받아�
     notAtBoot('src/pull-to-refresh.js', 'PC · 브라우저 탭에서는 쓰지 않아요');
     const runtime = read('index.js');
     assert.match(runtime, /\['startPullToRefresh', \(\) => installedTouchMode\(window\) \? import\('\.\/src\/pull-to-refresh\.js'\) : Promise\.resolve\(null\), m => m\?\.startPullToRefresh\(/);   // 9.0.2 3층 표(IDLE_LAYER)
-    const { installedTouchMode } = await import(pathToFileURL(path.join(root, 'src/device-layouts.js')).href);
-    const mode = (coarse, standalone, touch = 5, legacy = false) => ({ navigator: { maxTouchPoints: touch, standalone: legacy }, matchMedia: q => ({ matches: q === '(pointer: coarse)' ? coarse : standalone }) });
-    assert.equal(installedTouchMode(mode(true, true)), true);
-    assert.equal(installedTouchMode(mode(true, false, 5, true)), true, '옛 iOS navigator.standalone');
-    for (const w of [mode(false, true), mode(true, false), mode(true, true, 0)]) assert.equal(installedTouchMode(w), false);
+    // 판정 자체(터치 · 거친 포인터 · 홈 화면 앱 · 옛 iOS)는 unit-device-layout-and-panel-keys.mjs 가 재요
     assert.match(read('src/pull-to-refresh.js'), /export \{ installedTouchMode \}/, '예전 이름도 그대로');
 });
 

@@ -153,4 +153,9 @@ test('⑨ 설정 찾기(11-15 검수): 줄 이름으로만 찾고(고르기 선�
     assert.ok(mod.includes("if (!plain(doc)) armTop(dlg);") && mod.includes("const plain = doc => !!doc.body?.hasAttribute?.('data-bl-mb-plain');"), '「맨 위로」는 편의 기능을 끄면 달지 않아요');
     assert.ok(/pane\.addEventListener\('scroll', \(\) => \{[\s\S]*?\}, \{ passive: true \}\);/.test(mod), '스크롤 받기는 그 창의 내용 칸 하나 · 수동(passive)');
 });
+test('⑩ 미트볼 2.8.0 dev 「번역 전체 삭제」(data-s-act=trclear)도 번역 갈래에 접혀요(11-17 원작 따라가기 6)', () => {
+    const fold = PLANS['#ss-settings'].folds.find(([title]) => title === '번역 지침 · 자동 번역');
+    assert.ok(fold && fold[1].includes('trclear'), '번역 갈래에 trclear');
+    assert.ok(fold[1].indexOf('trclear') > fold[1].indexOf('trprune'), '번역 사전 정리 다음 자리');
+});
 console.log(`ext-settings-organize: ${passed}개 통과`);

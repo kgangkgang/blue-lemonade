@@ -1,6 +1,6 @@
 // 실리태번 한글화 스크립트: 원본(tools/scripts-src/korean.js — 사람이 고치는 판, 사전 TRANSLATIONS 그대로)에서 두 파일을 만든다.
 //   ① src/scripts/plain/korean.js — 사전 없이 코드만(약 40KB). 실행기(src/scripts/runtime.js)가 테마 창에서 돌리는 모듈이에요(9.0.7 부터 iframe 없음).
-//   ② src/ko-ui-text.gen.js — 사전. 시작 때 하던 정리(열쇠 NFKC 정리 · 블록 쪼개기 · <code> 태그 벗긴 사본 · 덧붙이는 열쇠 · 패턴 앞자리)를
+//   ② src/ko-ui-text.index.gen.json + 조각 src/ko-ui-text.<조각>.gen.json — 사전. 시작 때 하던 정리(열쇠 NFKC 정리 · 블록 쪼개기 · <code> 태그 벗긴 사본 · 덧붙이는 열쇠 · 패턴 앞자리)를
 //      여기서 원본 코드 그대로 돌린 결과예요(폰 4배 사전 준비 약 92 → 12ms). ko-ui 쪽 표라서 ko-ui.js 의 loadTextDictionary 로 받고,
 //      스크립트는 처음 필요할 때(쉬는 틈 · 처음 누를 때) 받아요. 예전 내장본(bundled/korean.js 1,031KB · 코드 글 안의 JSON 글이라 따옴표가 두 겹)보다 작아요.
 //   9.0.7 다듬기: tools/scripts-src/korean-prune.json(tools/ko-dict-prune.mjs 가 실리태번 1.19 파일과 맞대어 만든 지문 목록)의 열쇠 · 패턴은 뺀다 —

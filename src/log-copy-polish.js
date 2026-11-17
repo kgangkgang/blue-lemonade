@@ -34,8 +34,6 @@ export function fixKkGuard(css) {
         return hit ? `${next}{${body}}` : all;
     });
 }
-/** HTML 의 <style> 마다 fixKkGuard (마트 자료 생성기 · 붙여 넣을 꼴 다듬기가 같이 써요) */
-export const fixKkGuardHtml = html => String(html ?? '').replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, a, css, z) => a + fixKkGuard(css) + z);
 
 // 선언 묶음 하나(style 속성 값 또는 CSS 규칙 본문)를 고쳐요
 export function polishDecls(text) {

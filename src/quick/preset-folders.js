@@ -11,7 +11,7 @@ import { pickRect } from '../selects.js';
 import { showThemeModal } from '../modal.js';
 import { ask } from '../ask.js';
 import { splitCssReady } from '../lite.js';
-import { esc, ensureQuickCss, openMenu, closeMenu, swallowNextClick } from './shared.js';
+import { esc, ensureQuickCss, openMenu, closeMenu, menuOpen, swallowNextClick } from './shared.js';
 import { tidyFolders, newFolderId, groupPresets, searchPresets, assignPresets, moveFolder, removeFolder, folderOf, followRenames, sameNames, MAX_FOLDERS, MAX_NAME, MAX_SEEN } from './preset-list-core.js';
 
 const SELECT = 'settings_preset_openai';
@@ -128,7 +128,8 @@ function open(sel) {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); items[event.key === 'ArrowDown' ? Math.min(items.length - 1, at + 1) : Math.max(0, at - 1)]?.focus(); }
         else if (event.key === 'Enter' && event.target === input && !event.isComposing) { event.preventDefault(); rows.querySelector('button[data-v]')?.click(); }
     });
-    const key = event => { if (event.key === 'Escape' && layer) { event.preventDefault(); event.stopPropagation(); close(); sel.focus?.({ preventScroll: true }); } };
+    // 버그 사냥 7: 폴더 ⋯ 메뉴가 열려 있으면 Esc 는 메뉴 몫이에요(메뉴의 Esc 는 같은 자리에 나중에 걸려, 여기서 닫으면 메뉴와 목록이 같이 닫혔어요)
+    const key = event => { if (event.key === 'Escape' && layer && !menuOpen()) { event.preventDefault(); event.stopPropagation(); close(); sel.focus?.({ preventScroll: true }); } };
     const width = window.innerWidth;
     const resize = () => { if (!layer) return; if (window.innerWidth !== width || !sel.isConnected) close(); else place(box, sel); };
     const scroll = event => { if (layer && !layer.contains(event.target) && (event.target === document || event.target?.contains?.(sel)) && Date.now() - openedAt > GRACE) close(); };

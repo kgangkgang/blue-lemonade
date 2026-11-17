@@ -24,11 +24,13 @@ function bindDeletions(){
     if(deletionBound)return;
     try{const c=context(),T=c.eventTypes||c.event_types;if(T?.MESSAGE_DELETED&&c.eventSource?.on){c.eventSource.on(T.MESSAGE_DELETED,()=>{deletions++;});deletionBound=true;}}catch{/* 사건 없음 */}
 }
+// 버그 사냥 7: 비웠으면 true — 창이 열린 채 지움이 오면 체크 칸은 켜진 채인데 고른 것은 비어 있었어요(부르는 쪽이 다시 그려요)
 function syncChat() {
     bindDeletions();
     const key=context().chatId;
-    if(key!==chatKey){chatKey=key;selected.clear();proposal=null;previewGen++;undoChat=null;previewCache=new WeakMap();capturePage=null;seenDeletions=deletions;}
-    else if(deletions!==seenDeletions){seenDeletions=deletions;selected.clear();proposal=null;previewGen++;capturePage=null;}
+    if(key!==chatKey){chatKey=key;selected.clear();proposal=null;previewGen++;undoChat=null;previewCache=new WeakMap();capturePage=null;seenDeletions=deletions;return true;}
+    if(deletions!==seenDeletions){seenDeletions=deletions;selected.clear();proposal=null;previewGen++;capturePage=null;return true;}
+    return false;
 }
 function previewText(raw) {
     let text=String(raw??'');
@@ -189,8 +191,8 @@ export function bindWordTools(root, refresh) {
     }));
     section.querySelectorAll('[data-rule-delete]').forEach(button=>button.addEventListener('click',()=>{getSettings().wordTools.rules.splice(Number(button.dataset.ruleDelete),1);invalidate();saveSettings();refresh();}));
     section.querySelectorAll('[data-word-option]').forEach(input=>input.addEventListener('change',()=>{getSettings().wordTools[input.dataset.wordOption]=input.checked;invalidate();saveSettings();refresh();}));
-    section.addEventListener('change',event=>{const input=event.target;if(!input.matches('[data-word-message]'))return;const key=chatKey;syncChat();if(key!==chatKey){refresh();return;}input.checked?selected.add(Number(input.dataset.wordMessage)):selected.delete(Number(input.dataset.wordMessage));invalidate();selectionSummary(section);section.querySelector('[data-word-action="apply"]')?.setAttribute('disabled','');});
-    section.addEventListener('click',event=>{const button=event.target.closest('[data-capture-page]');if(!button||button.disabled)return;const key=chatKey;syncChat();if(key!==chatKey){refresh();return;}capturePage+=button.dataset.capturePage==='next'?1:-1;const picker=section.querySelector('[data-message-picker]');picker.outerHTML=choices('capture');const next=section.querySelector(`[data-capture-page="${button.dataset.capturePage}"]:not(:disabled)`)||section.querySelector('[data-capture-page]:not(:disabled)');next?.focus({preventScroll:true});});
+    section.addEventListener('change',event=>{const input=event.target;if(!input.matches('[data-word-message]'))return;if(syncChat()){refresh();return;}input.checked?selected.add(Number(input.dataset.wordMessage)):selected.delete(Number(input.dataset.wordMessage));invalidate();selectionSummary(section);section.querySelector('[data-word-action="apply"]')?.setAttribute('disabled','');});
+    section.addEventListener('click',event=>{const button=event.target.closest('[data-capture-page]');if(!button||button.disabled)return;if(syncChat()){refresh();return;}capturePage+=button.dataset.capturePage==='next'?1:-1;const picker=section.querySelector('[data-message-picker]');picker.outerHTML=choices('capture');const next=section.querySelector(`[data-capture-page="${button.dataset.capturePage}"]:not(:disabled)`)||section.querySelector('[data-capture-page]:not(:disabled)');next?.focus({preventScroll:true});});
     section.querySelector('[data-word-import]')?.addEventListener('change',event=>{if(event.target.value==='')return;getSettings().wordTools.rules.push(...structuredClone(importRuleSets(context().extensionSettings)[Number(event.target.value)].rules));invalidate();saveSettings();refresh();});
     section.querySelector('[data-word-draft]')?.addEventListener('input',event=>{draft=event.target.value;});
     // 6.0.4 잠시 가리기: 낱말 목록은 저장, 스위치는 세션 안에서만. 켜 둔 채 목록을 고치면 잠시 뒤 새 목록으로 다시 가린다
@@ -204,7 +206,8 @@ export function bindWordTools(root, refresh) {
         try {
             const action=button.dataset.wordAction,ctx=context(),cfg=getSettings().wordTools;
             if(document.body.classList.contains('cg-previewing')&&['load-older','all','pull-original','pull-translation','preview','apply','undo-chat','capture'].includes(action))throw userError('다른 채팅 미리보기를 닫은 뒤 메시지를 선택해 주세요.');
-            const oldKey=chatKey;syncChat();if(oldKey!==chatKey) {refresh();return;}
+            if(syncChat()) {refresh();return;}
+            const oldKey=chatKey;   // 「이전 메시지 불러오기」 가 기다리는 사이 채팅이 바뀌었는지 보는 열쇠(버그 사냥 7 에서 이 줄이 빠져 정의 없는 이름이 됐어요)
             const ids=[...selected].sort((a,b)=>a-b);
             if(action==='help'){showHelp();return;}
             if(action==='load-older') {

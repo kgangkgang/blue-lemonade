@@ -443,13 +443,17 @@ export function startCompactLayout() {
             if (!menu.contains(event.target)) menu.open = false;
         }
     });
+    // 버그 사냥 7: 메뉴를 닫은 Esc 는 거기서 멈춰요 — 거품 단계에서는 먼저 걸린 실리태번 Esc 가 월드 인포 서랍까지 닫고 만들던 답도 멈췄어요(캡처로 받고 메뉴가 열렸을 때만)
     if (world) document.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
-        for (const menu of world.querySelectorAll('.bl-wi-actions[open]')) {
+        const open = world.querySelectorAll('.bl-wi-actions[open]');
+        if (!open.length) return;
+        event.preventDefault(); event.stopPropagation();
+        for (const menu of open) {
             menu.open = false;
             menu.querySelector('summary').focus();
         }
-    });
+    }, true);
 }
 
 // ───────── 퀵 리플라이 줄 (3.5.2~3.5.4) — 입력판의 #qr--bar 와 설정 창 미리보기(.bl-qr-sample)가 같이 씀 ─────────

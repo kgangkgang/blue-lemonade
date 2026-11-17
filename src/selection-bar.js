@@ -423,9 +423,10 @@ function start() {
     window.addEventListener('resize', reposition);
     window.visualViewport?.addEventListener('resize', reposition);
     window.visualViewport?.addEventListener('scroll', reposition);
+    // 버그 사냥 7: 줄을 닫은 Esc 는 거기서 멈춰요 — 실리태번 문서 Esc 로 넘어가 만들던 답이 멈추거나 서랍이 닫혔어요(줄이 보일 때만 · 캡처)
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && bar && !bar.hidden) hideSelectionBar();
-    });
+        if (event.key === 'Escape' && bar && !bar.hidden) { event.preventDefault(); event.stopPropagation(); hideSelectionBar(); }
+    }, true);
 }
 
 // 줄 모양 — 북마크 애드온이 꺼져 있어도 같은 모양이어야 해서 이 모듈이 처음 쓸 때 넣는다 (시작 CSS 에 넣지 않는다)

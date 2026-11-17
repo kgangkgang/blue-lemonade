@@ -108,18 +108,20 @@ function marked(text, q) {
     return out + esc(text.slice(at));
 }
 
+// 버그 사냥 7: 글자 수로 자를 때 이모지(UTF-16 두 칸) 가운데를 자르면 반쪽(�)이 남아요 — 자르는 자리가 쌍 가운데면 그 글자를 통째로 빼요
+const cutText = (s, a = 0, b = s.length) => { if (a > 0 && /[\uDC00-\uDFFF]/.test(s[a] || '')) a++; if (b < s.length && /[\uD800-\uDBFF]/.test(s[b - 1] || '')) b--; return s.slice(a, b); };
 // 내용 줄: 찾기 중이면 검색어가 든 곳(제목 · 내용 · 세트 이름) 근처를 잘라 보여 줌 — 90자 앞쪽만 보이면 뒤에 걸린 검색어가 안 보임
 function snippet(text, q, max = 90) {
     const flat = text.replace(/\s+/g, ' ').trim();
     const hit = q ? flat.toLowerCase().indexOf(q) : -1;
-    if (hit < 0 || hit + q.length <= max) return flat.slice(0, max) + (flat.length > max ? '…' : '');
+    if (hit < 0 || hit + q.length <= max) return cutText(flat, 0, max) + (flat.length > max ? '…' : '');
     const start = Math.max(0, hit - 24);
-    return `…${flat.slice(start, start + max)}${start + max < flat.length ? '…' : ''}`;
+    return `…${cutText(flat, start, start + max)}${start + max < flat.length ? '…' : ''}`;
 }
 
 function row(item, index, q = '') {
     const icon = item.icon ? `<i class="fa-solid ${esc(item.icon)}" aria-hidden="true"></i>` : '';
-    const name = item.label || item.text.slice(0, 30) || '(이름 없음)';
+    const name = item.label || cutText(item.text, 0, 30) || '(이름 없음)';
     let line = item.text && item.text !== item.label ? item.text : '';
     if (q && !name.toLowerCase().includes(q) && !line.toLowerCase().includes(q)) {
         if (item.body.toLowerCase().includes(q)) line = item.body;              // 제목(툴팁) 말고 안의 내용에 걸림

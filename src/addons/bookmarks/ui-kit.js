@@ -17,8 +17,16 @@ export function closeTopSheet() {
 }
 
 // 메모 시트는 모아 보기 패널을 읽기 전에도 열리므로 여기서 먼저 받는다.
+// 1.6.5 시트를 연 뒤 새로 열린 <dialog>(앞뒤 문맥 시트에서 꾹 눌러 연 그림 크게 보기 창 등)가 있으면 Esc 는 그 창 몫이에요 —
+//   이 리스너가 늘 먼저 돌아 그 창의 Esc 를 막고 밑의 시트를 닫았어요(그림 창은 남음). 시트를 열 때 이미 떠 있던 창은 시트 밑이에요.
+function dialogAboveTop() {
+    const under = openSheets.at(-1)?.under;
+    if (!under) return false;
+    for (const d of document.querySelectorAll('dialog[open]')) if (!under.has(d)) return true;
+    return false;
+}
 window.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || !hasOpenSheet()) return;
+    if (event.key !== 'Escape' || !hasOpenSheet() || dialogAboveTop()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     closeTopSheet();
@@ -64,6 +72,7 @@ export function openSheet({ title, subtitle = '', icon = '', size = 'md', body =
     let resolveClosed;
     const sheet = {
         overlay,
+        under: new Set(document.querySelectorAll('dialog[open]')),   // 이 시트를 열 때 이미 떠 있던 창(시트 밑)
         element: overlay.querySelector('.cg-sheet'),
         body: bodyElement,
         extra: overlay.querySelector('.cg-sheet-extra'),

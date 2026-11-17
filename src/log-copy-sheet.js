@@ -1407,7 +1407,8 @@ export async function openLogSheet(model) {
         ruleTimer = setTimeout(() => { readRules(); $('[data-lc-words-count]').textContent = String(tools().replaceRules.filter(r => r.from.trim()).length || ''); draw(); }, 300);
     });
     dialog.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && event.target.matches?.('[data-lc-name-input]')) { event.preventDefault(); $('[data-lc="name-add"]').click(); }
+        // 1.6.5 한글 조합 중 Enter(isComposing · keyCode 229)는 조합만 끝내요 — 조합 중에 칸을 비워 끝 글자가 다시 남거나 두 번째 Enter 로 또 들어갔어요
+        if (event.key === 'Enter' && !event.isComposing && event.keyCode !== 229 && event.target.matches?.('[data-lc-name-input]')) { event.preventDefault(); $('[data-lc="name-add"]').click(); }
     });
     // 1.1.0: 닫을 때 남은 대기(규칙 · 그림 주소 · 글자색 · 되돌리기 묶음 · 길게 누르기)를 모두 걷어요 — 닫힌 직후 떨어진 창을 다시 그리지 않게
     dialog.addEventListener('close', () => { selBar.destroy(); boxWatch?.disconnect(); globalThis.visualViewport?.removeEventListener('resize', onVv); clearTimeout(ruleTimer); clearTimeout(imageTimer); clearTimeout(picTimer); clearTimeout(inkTimer); clearTimeout(fine.timer); clearTimeout(hist.timer); clearTimeout(hold); hist.timer = 0; if (open === dialog) open = null; dialog.remove(); }, { once: true });

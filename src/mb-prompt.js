@@ -338,6 +338,7 @@ export function opsLedger(c = ctx()) {
     const sign = n => (n > 0 ? `+${n}` : String(n));
     const rows = [...sum].filter(([, r]) => r.aff || r.trust).map(([n, r]) => `${n}: aff ${sign(r.aff)}, trust ${sign(r.trust)}`);
     const text = ['--- STATUS CHANGES RECORDED DURING THE STORY (written by the story AI after each reply; they are already part of the story — current values must include them) ---',
+        'Profiles: write a profile (role "main") for EVERY person in the relationship changes above, not only two or three — the "at most 3" limit in the task is only for extra background people.',
         'Names here are as the story AI wrote them and may be a title, rank or nickname; in every panel use each person’s real name exactly as in the card, lorebook or current panel data, never the title.',
         rows.length ? `Total relationship changes since the first message (aff = romance, trust = friendship): ${rows.join('; ')}` : '',
         last.place ? `Latest location: ${last.place}` : '', last.time ? `Latest time of day: ${last.time}` : '', last.date ? `Latest date change: ${last.date}` : '',
@@ -534,7 +535,7 @@ export function reconcileRel(c = ctx()) {
     const changed = []; let checked = 0, time = null;
     // 시간대: 본편 AI 가 마지막으로 적은 시간대(그 확장 달력의 시간대 이름으로 바꿀 수 있을 때만) — 기본 틀 달력이 「아침」 에 머무는 것
     if (cal && led.time) { const t = timeOfDay(led.time, cal.times); if (t && t !== cal.time) { time = { from: cal.time, to: t }; cal.time = t; } }
-    if (!Array.isArray(list) || !list.length || !sums?.size) return { changed, checked, time };
+    if (!Array.isArray(list) || !list.length || !sums?.size) return { changed, checked, time, added: [] };
     const fix = (r, k, d) => { const v = Number(r[k]) || 0; if (!d) return v; return d > 0 ? Math.max(v, clampRel(d)) : Math.min(v, clampRel(d)); };
     for (const r of list) {
         const s = sumFor(r, sums, list); if (!s) continue; checked++;
@@ -544,7 +545,20 @@ export function reconcileRel(c = ctx()) {
         r.aff = aff; r.trust = trust; r.stage = -1;
         const o = meta.origin?.data?.rel?.user?.find?.(x => x?.name === r.name); if (o) { o.aff = aff; o.trust = trust; o.stage = -1; }
     }
-    return { changed, checked, time };
+    // 1.6.6 (11-17 사용자 「나에 나오는 사람이 왜 이렇게 적음?」): 그 확장의 프로필 지시는 「주요 인물 + NPC 는 많아야 3」 이라, 관계 칸에는 15명이 있어도 프로필은 6명만 만들기도 해요.
+    //   이야기에 변화 줄이 남은 사람(관계 칸에 있고 변화 합이 맞는 사람)인데 프로필이 없으면, 그 사람 관계 칸의 이름표 · 메모로 짧은 프로필을 더해요(AI 호출 없음 · 지어내는 글 없음).
+    const added = [], prof = meta?.base?.data?.profile;
+    if (prof && Array.isArray(prof.list)) {
+        const has = new Set(prof.list.flatMap(p => namesOf(p)));
+        for (const r of list) {
+            if (!sumFor(r, sums, list) || namesOf(r).some(n => has.has(n))) continue;
+            const summary = [r.label, r.memo].map(x => String(x ?? '').trim()).filter(Boolean).join(' — ').slice(0, 200);
+            const p = { name: r.name, role: 'npc', summary, fields: [], home: '', sched: '' };
+            prof.list.push(p); added.push(r.name); for (const n of namesOf(r)) has.add(n);
+            const op = meta.origin?.data?.profile?.list; if (Array.isArray(op) && !op.some(x => x?.name === r.name)) op.push(structuredClone(p));
+        }
+    }
+    return { changed, checked, time, added };
 }
 async function mbCore(doc = globalThis.document, load = url => import(url)) {
     try {
@@ -565,12 +579,12 @@ export async function afterWizard({ before = null, level = '', c = undefined, to
     for (let t = 0; (!base || base === before) && t < waitMs; t += step) { await new Promise(r => setTimeout(r, step)); base = baseRef(cx()); }
     if (!base || base === before) return null;
     const res = reconcileRel(cx());
-    if (res.changed.length || res.time) {
+    if (res.changed.length || res.time || res.added?.length) {
         try { await cx().saveMetadata?.(); } catch { /* 다음 저장 때 */ }
         try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
     }
     try {
-        const tm = res.time ? ` 시간대도 채팅의 마지막 시간대 「${res.time.to}」 로 맞췄어요.` : '';
+        const tm = (res.time ? ` 시간대도 채팅의 마지막 시간대 「${res.time.to}」 로 맞췄어요.` : '') + (res.added?.length ? ` 프로필이 없던 ${res.added.length}명은 관계 칸의 이름표 · 메모로 프로필을 더했어요.` : '');
         if (res.changed.length) toast?.success?.(`관계 숫자를 채팅 기록(${res.changed.length}명)에 맞췄어요 — 본편 AI 가 답마다 남긴 애정 · 우정 변화 합보다 낮게 만들어진 사람만 그 합까지 올렸어요.${tm}`, '', { timeOut: 12000 });
         else if (res.checked) toast?.info?.(`관계 숫자가 채팅 기록을 따라요(${res.checked}명 확인).${tm}`, '', { timeOut: 6000 });
         else if (tm) toast?.info?.(tm.trim(), '', { timeOut: 6000 });

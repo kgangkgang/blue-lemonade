@@ -77,10 +77,12 @@ function draw() {
     ctx.fillStyle = pick('--salty-muted', '#9aa3ad'); ctx.font = '22px system-ui, sans-serif';
     ctx.fillText(`${seconds}초${state.phase === 'done' ? ' · 번역 등 뒷일을 기다리는 중' : ''}`, 22, 72);
     ctx.fillStyle = pick('--salty-text', '#fff'); ctx.font = '22px system-ui, sans-serif';
-    const text = state.preview.replace(/\s+/g, ' ').slice(-64);
-    ctx.fillText(text.slice(0, 32), 22, 118); ctx.fillText(text.slice(32), 22, 148);
+    const flat = state.preview.replace(/\s+/g, ' '), text = cutText(flat, Math.max(0, flat.length - 64)), k = /[\uD800-\uDBFF]/.test(text[31] || '') ? 31 : 32;
+    ctx.fillText(text.slice(0, k), 22, 118); ctx.fillText(text.slice(k), 22, 148);
 }
 
+// 버그 사냥 7: 글자 수로 자를 때 이모지(UTF-16 두 칸) 가운데를 자르면 반쪽(�)이 남아요 — 자르는 자리가 쌍 가운데면 그 글자를 통째로 빼요
+const cutText = (s, a = 0, b = s.length) => { if (a > 0 && /[\uDC00-\uDFFF]/.test(s[a] || '')) a++; if (b < s.length && /[\uD800-\uDBFF]/.test(s[b - 1] || '')) b--; return s.slice(a, b); };
 function ensureVideo() {
     if (video) return;
     canvas = document.createElement('canvas'); canvas.width = 480; canvas.height = 200; ctx = canvas.getContext('2d');

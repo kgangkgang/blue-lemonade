@@ -40,7 +40,7 @@ import { runtimeEnabled, assertRuntime } from './runtime.js';
 //   강조는 parts 의 seg/alt(화면 · 원문 조각)로 찾으니 그대로이고, 재생 막대 글은 job.text(옮긴 글). '자동'이면 1.4.3 과 같은 작업 · 캐시 키.
 //   듣는 언어가 원어 읽기(목소리 언어 · 분석의 번역문)를 대신하고, 스트리밍 읽기는 쉰다 (streamBlocked).
 
-import { chat, substituteParams, eventSource, event_types } from '../../../../../../../../script.js';
+import { chat, eventSource, event_types } from '../../../../../../../../script.js';
 import * as stScript from '../../../../../../../../script.js';   // 1.9.7 getThumbnailUrl (없는 판 · 시험 스텁이면 직접 만든 주소)
 import { getContext } from '../../../../../../../extensions.js';
 import { settings, providerConfig, addUsage, addPreUsed, USER_AUTO } from './settings.js';
@@ -52,8 +52,8 @@ function recordVoice(job, chars, model) {
         globalThis[Symbol.for('blue-lemonade.usage')]?.record?.({ ext: '블루레몬에이드', feature: `TTS 음성 · ${job.provider.name || id}`, model: model || '', api: `tts-${id}`, characters: chars, ok: true, at: Date.now(), chatId: getContext()?.chatId || '' });
     } catch { /* 장부 없음 — 소리는 그대로 */ }
 }
-import { segmentMessage, pairSegments, colorsClash, detectLang, parseRegexLines, speechDisplay, markJoins, joinSpeech, italicCandidates } from './text.js';
-import { resolveSpeaker, canon, knownNames as learnedNames, colorOfPerson, ownerOfColor } from './speakers.js';
+import { detectLang, joinSpeech, italicCandidates } from './text.js';
+import { canon, colorOfPerson, ownerOfColor } from './speakers.js';
 import { voiceFor, findVoice, allVoices, twinOf, engineUsable, isPinned, setPersonaAuto, personaKnown, ensureStock, extraEngine, hasOwnVoice, unknownVoice } from './voices.js';
 export { voiceOfName, voiceListPublic } from './voice-public.js';
 import { usesTags } from './providers/elevenlabs.js';   // 6.1.8 다른 확장용 synth — 글 속 오디오 태그를 받는 모델인가
@@ -79,7 +79,7 @@ import { mixScene } from './scene-mix.js';
 import { createKeepAlive } from './keep-alive.js';   // 1.9.9 (7.0.2) 숨었을 때 줄 사이 무음으로 이어 잡기 · 뒷일 다리
 import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance } from './highlight-colors.js';
 import { widenToQuotes } from './highlight-colors.js';   // 1.9.1 읽는 대사 강조를 따옴표부터 따옴표까지 (findRange)
-import { sub, msg, stripRegexes, skipTagSet, chatCtx, knownNames, segOpts, sourcesOf, safeSegment, nameKey, canonKey, mappedUid, ownerOf, sameOwnerInfo, sameOwner, lenOf, lenScore, dialogueScore, thoughtScore, alignSeq, alignLists, analysisCfg, analysisReady, cachedAnalysis, normText, looseText, analysisLookup, dialogueSpeakers, safeResolve, bindAnalysis } from './message-segments.js';   // 1.0.0 극한 최적화: 채팅 맥락 · 조각 짝 · 저장된 분석 조회 · 화자(paint.js 가 재생기 없이도 씀)
+import { msg, chatCtx, sourcesOf, nameKey, sameOwner, lenOf, alignSeq, alignLists, analysisCfg, analysisReady, cachedAnalysis, normText, looseText, analysisLookup, dialogueSpeakers, safeResolve, bindAnalysis } from './message-segments.js';   // 1.0.0 극한 최적화: 채팅 맥락 · 조각 짝 · 저장된 분석 조회 · 화자(paint.js 가 재생기 없이도 씀)
 export { alignSeq, sameOwner, dialogueSpeakers };
 bindAnalysis(analysis);   // 저장된 분석 · 바깥 메시지 · 기울임은 analysis.js 가 있을 때만(화자 색만 쓰는 가벼운 길은 없이)
 

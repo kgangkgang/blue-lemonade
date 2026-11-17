@@ -83,7 +83,10 @@ body.salty .popup {
 body.salty .popup:not(:has(.salty-panel)) {
   padding: var(--bl-s5) var(--bl-s4) var(--bl-s4) !important;
 }
-body.salty .popup::backdrop {
+/* 1.6.6 둘째 줄: 애드온 창 뒤 막의 흐림 끄기(디자인 2차) — 막 색은 28-late-fixes 에 따로 두고(이 파일 색 줄에는 빌드가 「확장 원래 색」 표식을 붙여요),
+   흐림 끄기는 첫 장 흐림 끄기 글자 수 상한(perf-budget-static) 안에 들게 이 규칙에 함께 실어요 */
+body.salty .popup::backdrop,
+body.salty :is(dialog.bl-translator-dialog, dialog.bls-panel, dialog.blzi-dialog, dialog.bl-notes-dialog, dialog.bl-notes-help, dialog.bl-assets-dialog, dialog.bl-ctsi-dialog, dialog.bl-direction-dialog, dialog.bl-mermaid-dialog, dialog.blpt-dialog, dialog.pt-help-dialog, dialog.lvs-dialog, dialog.bl-credits-dialog)::backdrop {
   background: var(--bl-scrim) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;

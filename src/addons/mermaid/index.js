@@ -19,7 +19,9 @@ const foreign = () => {
     return scriptHit;
 };
 export const duplicate = foreign();
-const blocks = () => Array.from(document.querySelectorAll(BLOCK));
+// 1.6.5 opt7: #chat 안만 훑어요(같은 결과) — 문서 전체 querySelectorAll 은 채팅 사건(스와이프 · 편집 · 캐릭터 바꾸기)마다 두세 번 돌아 폰 4배에서 한 번 약 1.4ms 였어요
+const BLOCK_IN_CHAT = 'pre code.language-mermaid, pre code.custom-language-mermaid, pre code.bl-mermaid-source';
+const blocks = () => { const chat = document.getElementById('chat'); return chat ? Array.from(chat.querySelectorAll(BLOCK_IN_CHAT)) : []; };
 
 // 10-30 묶어 둔 mermaid 11.12.3 은 아래 세 도표에서 끝없이 돌아 탭이 멈춰요(실리태번은 마지막 채팅을 다시 여니 켤 때마다).
 // mermaid 11.15.0 · 11.16.1 보안 고침과 같은 조건만 그리기 전에 막아요: 간트가 모든 요일을 빼기 · xychart x 축 두 값이 같음(→ 못 그림),
@@ -127,8 +129,11 @@ async function drain() {
     try {
         while (requested) {
             const retry = retryRequested; requested = retryRequested = false;
+            // 1.6.5 opt7: 도표가 없으면 다른 확장 찾기(document.scripts 길이 — DOM 이 바뀐 뒤엔 문서 전체를 셈 · 폰 4배 약 0.9ms)를 건너뛰어요.
+            //   상태 칸이 열려 있을 때만 예전처럼 물어 「다른 Mermaid 확장」 글을 맞춰요(칸을 열 때도 한 번 — statusView)
+            if (!blocks().length) { if (views.size && foreign()) phase = 'other'; break; }
             if (foreign()) { phase = 'other'; break; }
-            if (!blocks().length || !(await load())) break;
+            if (!(await load())) break;
             const chat = document.getElementById('chat');
             const atBottom = chat && chat.scrollHeight - chat.scrollTop - chat.clientHeight < 30;
             const scrollTop = chat?.scrollTop;
@@ -170,6 +175,7 @@ function paint() {
     }
 }
 function statusView() {
+    if (phase !== 'other' && foreign()) phase = 'other';   // 1.6.5 opt7: 도표 없는 채팅에선 사건 때 안 물으니 상태 칸을 열 때 한 번
     const box = document.createElement('div'); box.className = 'bl-mermaid-status';
     box.innerHTML = '<p class="salty-note" role="status"></p><button type="button" class="salty-btn bl-mermaid-again" aria-label="다시 그리기"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>';
     box.querySelector('button').onclick = () => queue(true);

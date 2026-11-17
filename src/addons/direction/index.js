@@ -1827,6 +1827,8 @@ function closePopup() {
     pageTarget = null;
     if (staleButton) refreshButton();
     closing.classList.remove('is-open');
+    // 버그 사냥 7: 창 안에 초점이 있었으면(Esc · 닫기 단추) 깃털 단추로 돌려줘요 — 창을 떼면 body 로 떨어져 키보드로 이어 쓰기 어려웠어요
+    if (closing.contains(document.activeElement) && button?.isConnected) button.focus({ preventScroll: true });
     setTimeout(() => { closing.remove(); if (!popup) document.querySelector('.jj-popup-host')?.classList.remove('jj-popup-host'); }, 180);
     button?.classList.remove('has-popup');
     document.removeEventListener('pointerdown', onOutsidePointer, true);

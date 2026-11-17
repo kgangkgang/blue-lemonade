@@ -39,6 +39,14 @@ function setFamily(s, family) {
     saveSettings();
     return true;
 }
+/** 「오늘의 에이드」: 날이 바뀌었으면 기본 에이드를 오늘 것으로 — 바꿨으면 true */
+function rollDay(st) {
+    if (!flags.daily) return false;
+    const today = dayKey();
+    if (st.day === today) return false;
+    st.day = today; st.base = dailyFamily(families(), today, st.base); persist();
+    return true;
+}
 function settle(s, st) {
     const here = currentKey(), key = flags.chat ? here : '';
     // 기억이 없는 방인데 캐릭터별 스타일이 이 채팅에 입혀져 있으면 그 스타일의 팔레트를 그대로 둬요(기본 에이드로 덮지 않음 — 「오늘의 에이드」만 켠 때도)
@@ -49,7 +57,13 @@ function settle(s, st) {
 /** 채팅 바뀜: 같은 사건의 다른 리스너(캐릭터별 스타일 paint)가 모두 끝난 다음 틱에 — 채팅방 에이드가 마지막에 칠해져 이겨요 */
 function onChatChanged() {
     clearTimeout(settleTimer);
-    settleTimer = setTimeout(() => { settleTimer = 0; if (!on) return; const s = getSettings(); lastKey = currentKey(); last = paletteFamily(s.palette); settle(s, state()); }, 0);
+    settleTimer = setTimeout(() => { settleTimer = 0; if (!on) return; const s = getSettings(); lastKey = currentKey(); last = paletteFamily(s.palette); const st = state(); rollDay(st); settle(s, st); }, 0);
+}
+// 버그 사냥 7: 날짜는 설정이 바뀔 때(syncAde)만 봐서, 띄우거나 숨겨 둔 채 자정을 넘기면 다음 날에도 어제 에이드였어요 — 채팅이 바뀔 때 · 탭이 다시 보일 때도 봐요
+function onVisible() {
+    if (!on || document.visibilityState !== 'visible') return;
+    const st = state();
+    if (rollDay(st)) settle(getSettings(), st);
 }
 function bind() {
     if (bound) return;
@@ -59,6 +73,7 @@ function bind() {
     // 알림 바로 뒤의 applyAll → syncAde(마이크로태스크)에서만 봐요 — 적용이 없었으면 다음 틱에 풀어 그 뒤의 고르기를 삼키지 않아요
     const note = () => { if (!on) return; foreign = true; setTimeout(() => { foreign = false; }, 0); };
     for (const name of ['bl:settings-merged', 'bl:settings-replaced']) globalThis.window?.addEventListener?.(name, note);
+    globalThis.document?.addEventListener?.('visibilitychange', onVisible);
 }
 
 /** features.js 가 설정이 바뀔 때마다(applyAll 끝) 부른다 — q: 설정 quick 묶음 */
@@ -81,10 +96,7 @@ export function syncAde(next, q, h) {
     if (!on) { on = true; if (!st.base) st.base = now; last = now; lastKey = here; bind(); persist(); }
     else if (outside || here !== lastKey) { lastKey = here; last = now; }   // 채팅이 바뀌며 변한 팔레트(캐릭터별 스타일 · 되돌림) · 밖에서 들어온 팔레트는 사용자 선택이 아니에요
     else if (!applying && now !== last) { noteUserPick(st, key, now, flags); last = now; persist(); }
-    if (flags.daily) {
-        const today = dayKey();
-        if (st.day !== today) { st.day = today; st.base = dailyFamily(families(), today, st.base); persist(); }
-    }
+    rollDay(st);
     settle(s, st);
 }
 

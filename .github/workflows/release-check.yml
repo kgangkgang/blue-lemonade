@@ -34,6 +34,21 @@ jobs:
           # 1.4.1 실행 때 받는 자원(이어 붙인 주소 · .json · 글꼴 · 그림)이 ZIP 목록 · 무결성 표에 다 있는지 · 빠지면 관문이 멈추는지(되돌림: 사전 JSON 이 ZIP 에서 빠짐)
           python -m unittest discover -s tools/tests -p 'test_runtime_assets.py'
           node tools/tests/version-series.mjs .
+          # 1.6.5 코드 정리: 통과하는데 CI 에 없던 시험 14개 (jsdom 을 쓰는 mb-note · settings-pairs 는 아래 npm ci 뒤 · 손 브라우저 · 전수 훑기 · 도우미 모듈은 넣지 않음)
+          node tools/tests/ext-compat-band.mjs .
+          node tools/tests/icon-size.mjs .
+          node tools/tests/korean-dict-parts.mjs .
+          node tools/tests/log-copy-bare.mjs .
+          node tools/tests/log-copy-bare-audit.mjs .
+          node tools/tests/no-screen-emoji.mjs .
+          node tools/tests/perf-count-budget.mjs .
+          node tools/tests/preset-colors.mjs .
+          node tools/tests/press-flat.mjs .
+          node tools/tests/prompt-paragraph-reuse.mjs .
+          node tools/tests/qingguo-snapshot.mjs .
+          node tools/tests/regex-toggle-touch.mjs .
+          node tools/tests/translator-shell.mjs .
+          node tools/tests/css-key.mjs .
           # 1.0.0 전수조사 고침 (필수 14 · 먼저 3 · 작은 권장)
           node tools/tests/bookmarks-per-page-words.mjs .
           node tools/tests/direction-addon-off.mjs .
@@ -220,6 +235,8 @@ jobs:
           node tools/tests/translator-comments.mjs .
           node tools/tests/translator-preview.mjs .
           node tools/tests/translator-check.mjs .
+          # 버그 사냥 7: 번역 점검 팝오버의 Esc 는 실리태번(서랍 닫기 · 생성 멈춤)으로 넘어가지 않아요
+          node tools/tests/translator-check-esc.mjs .
           node tools/tests/fruit-ecot-race.mjs .
           node tools/tests/translator-brackets.mjs .
           node tools/tests/translator-number-note.mjs .
@@ -357,6 +374,8 @@ jobs:
           node tools/tests/tts-shared-color.mjs .
           node tools/tests/tts-char-add.mjs .
           node tools/tests/bughunt2-addons.mjs .
+          # 버그 사냥 7: 애드온 스위치 — 끄면 대기 표시도 거둠 · 옛 폴더 확인을 기다리는 사이 끄면 켬이 저장값을 덮지 않음
+          node tools/tests/addon-toggle-off.mjs .
           node tools/tests/assets-rename-unreadable.mjs .
           node tools/tests/fa-free-icons.mjs .
           node tools/tests/prompt-history-label.mjs .
@@ -584,10 +603,16 @@ jobs:
           node tools/tests/quick-onehand-nav.mjs .
           node tools/tests/quick-prompt-saves.mjs .
           node tools/tests/quick-preset-folders.mjs .
+          # 버그 사냥 7: 프리셋 폴더 ⋯ 메뉴가 열린 채 Esc 는 메뉴만 닫아요
+          node tools/tests/preset-folder-menu-esc.mjs .
           # 1.1.1 시제품(기본 꺼짐): 에이드 갈아입기 · 프리셋 폴더 이름 따라가기 · 번역문도 고치기
           node tools/tests/ade.mjs .
+          # 버그 사냥 7: 오늘의 에이드 — 채팅이 바뀔 때 · 탭이 다시 보일 때도 날짜를 봐요
+          node tools/tests/ade-daily-roll.mjs .
           # 1.1.2 코드 감사 A2 · A3: 에이드가 칠한 팔레트를 캐릭터별 스타일에 적지 않아요 · 오늘의 에이드만 켠 때도 채팅 바뀜을 진짜 열쇠로 걸러요
           node tools/tests/ade-charstyle.mjs .
+          # 버그 사냥 7: 화이트 · 나이트 자동이 바꾼 밝기도 캐릭터별 스타일에 적지 않고 저장하지 않아요
+          node tools/tests/automode-charstyle.mjs .
           # 1.1.2 코드 감사 A1(급한 대안): 다른 기기 · 탭에서 합쳐져 들어온 팔레트를 이 채팅방의 사용자 선택으로 적지 않아요
           node tools/tests/ade-merge.mjs .
           node tools/tests/preset-folders-rename.mjs .
@@ -618,6 +643,10 @@ jobs:
           node tools/tests/translation-segments-edges.mjs .
           node tools/tests/lazy-import-retry.mjs .
           node tools/tests/reply-notify-group.mjs .
+          node tools/tests/log-copy-name-ime.mjs .
+          node tools/tests/addon-icon-race.mjs .
+          # 버그 사냥 7: 알림 본문 · 퀵 리플라이 찾기 · 생성 중 미리보기를 자를 때 이모지 반쪽이 안 남아요
+          node tools/tests/emoji-cut.mjs .
           node tools/tests/translation-segments-store.mjs .
           node tools/tests/translator-footnotes.mjs .
           node tools/tests/translation-display.mjs .
@@ -965,6 +994,11 @@ jobs:
           node tools/build-bundle.mjs
           # 1.4.6 머리 스위치: jsdom(tools 개발 의존성 · 위 npm ci 가 받음)으로 실제 DOM · 타이머를 돌려 봐요 — jsdom 이 없으면 종료 2 라 통과로 안 쳐요
           node tools/tests/headswitch-dom.mjs . tools
+          # 버그 사냥 7: 떠 있는 작은 메뉴(빠른 메뉴 · 채팅 정리) — 열면 초점이 안으로 · 화살표 · 닫으면 연 단추로
+          node tools/tests/quick-menu-focus.mjs . tools
+          node tools/tests/direction-close-focus.mjs . tools
+          node tools/tests/wi-menu-esc.mjs . tools
+          node tools/tests/selection-bar-esc.mjs . tools
           # 1.4.x 미트볼 「화면만 번역」 빈틈 메우기: 같은 jsdom 으로 칩 자리 감시 · 누른 뒤 메우기
           node tools/tests/ext-bridge-tr.mjs . tools
           # 1.5.0 버그 사냥: 장식 액자 — 감시가 걸린 뒤 새 메시지 사진에도 액자
@@ -988,6 +1022,14 @@ jobs:
           node tools/tests/sel-span.mjs . tools
           # 1.6.3 프로필 여러 개: 스트리밍 첫 토큰에 얼굴 칠하기 (같은 jsdom — npm ci 뒤에 있어야 해요)
           node tools/tests/multi-avatar-stream.mjs . tools
+          # 1.6.5 코드 정리: 미트볼 작가 노트 넣기(같은 jsdom — 그동안 CI 에 없던 시험)
+          node tools/tests/mb-note.mjs . tools
+          # 1.6.6 통합: 설정 창 짧은 줄 두 열도 jsdom 을 써서 npm ci 뒤로(코드 정리가 앞 단계에 넣어 깨끗한 clone 에서 「jsdom 을 못 찾았어요」)
+          node tools/tests/settings-pairs.mjs . tools
+          # 1.6.5 북마크 시트 위에 뜬 창(그림 크게 보기)의 Esc 는 그 창 몫 (같은 jsdom)
+          node tools/tests/bookmark-sheet-esc.mjs . tools
+          # 1.6.5 고르기 목록이 받은 Esc 는 밑의 창으로 안 가요 (같은 jsdom)
+          node tools/tests/select-pick-esc.mjs . tools
           git status --porcelain
           git diff --exit-code --stat
           test -z "$(git status --porcelain)"

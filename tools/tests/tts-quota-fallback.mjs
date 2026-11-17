@@ -325,6 +325,19 @@ await test('설정: 가져온 파일의 quota_fallback 도 정리해서 받아�
     assert.deepEqual(S.settings().quota_fallback, { enabled: false, map: { 'elevenlabs:mina': 'minimax:mina-mm' } });
 });
 
+await test('설정: 가져온 발음 사전 · 음소거 낱말은 지금 고친 것으로 찍어요 — 파일의 옛 시각(field_stamps)이 다른 기기 옛 값에 지지 않게(버그 사냥 6)', async () => {
+    await reset({ enabled: false, map: {} });
+    const s = S.settings();
+    s.pron_dict = 'old=옛'; s.field_stamps = { pron_dict: 5000, mute_words: 5000 };
+    const before = Date.now();
+    UI.importSettings({ pron_dict: 'new=새', mute_words: 'x', field_stamps: { pron_dict: 1000, mute_words: 1000 } });
+    assert.equal(s.pron_dict, 'new=새');
+    assert.ok(s.field_stamps.pron_dict >= before, JSON.stringify(s.field_stamps));
+    assert.ok(s.field_stamps.mute_words >= before, JSON.stringify(s.field_stamps));
+    UI.importSettings({ field_stamps: { pron_dict: 9e15 } });
+    assert.ok(s.field_stamps.pron_dict < 9e15, '파일의 시각은 받지 않아요');
+});
+
 P.stop(); for (const node of T.nodes) node.pause();
 console.log(JSON.stringify({ passed, failed, mockOnly: true, sourceRoot: root }, null, 2));
 process.exitCode = failed ? 1 : 0;

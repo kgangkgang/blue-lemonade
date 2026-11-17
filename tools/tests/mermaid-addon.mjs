@@ -137,7 +137,7 @@ function world({initial=[],camel=false}={}){
   querySelector(s){return this.children.find(e=>e.tag===s)}
   replaceChildren(...els){this.children=[];this.append(...els)}
  }
- const chat=new El('chat');chat.isConnected=true;chat.scrollTop=20;chat.scrollHeight=1000;chat.clientHeight=300;
+ const chat=new El('chat');chat.isConnected=true;chat.scrollTop=20;chat.scrollHeight=1000;chat.clientHeight=300;chat.querySelectorAll=()=>codes.filter(x=>x.isConnected);
  const body=new El('body');body.isConnected=true;
  const add=source=>{const pre=new El('pre'),code=new El('code');pre.isConnected=true;code.textContent=source;code.className='language-mermaid';pre.append(code);codes.push(code);return code};
  initial.forEach(add);
@@ -184,6 +184,11 @@ await test('1.1.6 script list is rescanned only when its count changes; a later 
  const before=w.renders.length;w.add('sequenceDiagram; A->>B: later');
  list.push({src:'http://localhost/scripts/extensions/third-party/Extension-Mermaid/dist/index.js'});await w.fire('mml');await settle();
  assert.equal(scans,1,'count changed: one rescan');assert.equal(w.renders.length,before,'official extension found by the rescan takes over new blocks');
+});
+await test('1.6.5 opt7 no diagram in #chat: events neither read the script list nor walk the whole document',async()=>{
+ const w=world();await loadAddon();let reads=0,docWalks=0;const list=[];globalThis.document.scripts={get length(){reads++;return list.length},[Symbol.iterator](){return list[Symbol.iterator]()}};globalThis.document.querySelectorAll=()=>{docWalks++;return []};
+ await w.fire('ms','mu','cmr','cc','mml');await settle();assert.equal(reads,0,'no script-count read without blocks');assert.equal(docWalks,0,'blocks are looked up inside #chat only');assert.equal(w.scripts.length,0);
+ w.add('flowchart TD; A-->B');await w.fire('ms');await settle();assert.ok(reads>0,'with a block the duplicate check runs as before');assert.equal(w.scripts.length,1);
 });
 for(const key of ['document','SillyTavern','webpackChunkextension_mermaid','webpackChunkblue_lemonade_mermaid','__blMermaidEngine','__blMermaidBase'])delete globalThis[key];
 console.log(`${failed?'FAIL':'PASS'} mermaid add-on: ${passed} passed, ${failed} failed`);if(failed)process.exit(1);

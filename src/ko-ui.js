@@ -13,7 +13,7 @@ export const LOCALE = 'ko-kr';
 /** 7.7.9 한국어 화면인가: 실리태번은 언어를 고르지 않으면 브라우저 언어(navigator.language → 'ko' 또는 'ko-kr')를 그대로 쓰고,
  *  addLocaleData 는 그 값과 똑같은 id 만 받는다 — 'ko-kr' 만 보면 'ko' 인 폰(삼성 · 크롬 일부)에서 이 파일이 통째로 꺼져 「Show more messages」가 영어였다 */
 export const isKoreanLocale = locale => /^ko(?:[-_]|$)/i.test(String(locale ?? ''));
-// 9.0.7 ko-ui 의 둘째 표 — 글자 사전(src/ko-ui-text.index.gen.js 색인 + 조각 · 옛 korean 내장 스크립트의 1MB 사전을 다듬은 것). 위 ADD · FIX 는 data-i18n 키를 고치고,
+// 9.0.7 ko-ui 의 둘째 표 — 글자 사전(src/ko-ui-text.index.gen.json 색인 + 조각 · 옛 korean 내장 스크립트의 1MB 사전을 다듬은 것). 위 ADD · FIX 는 data-i18n 키를 고치고,
 //   이 표는 키 없이 그려진 영어 글자 · 속성을 바꿔요(내장 스크립트 korean 이 씀). 실리태번 언어 표 · ADD · FIX 가 이미 그리는 글은 빌드 때 뺐어요(tools/ko-dict-prune.mjs).
 //   부팅 길에는 싣지 않고 처음 부를 때 한 번 받아요.
 // 1.0.0 극한 최적화: 글자 사전(808KB 한 장)은 색인(ko-ui-text.index.gen.js ≈ 75KB: 열쇠 지문 · 패턴 전부) + 조각 여섯(boot · drawers · templates · js · html · rest)으로 —

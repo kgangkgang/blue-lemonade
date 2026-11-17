@@ -23,7 +23,7 @@ body.salty .ss-scope :is(input, textarea):where(:not(.ss-letter *, .ss-paper *, 
 body.salty .ss-scope :is(input, textarea)::placeholder { font-family: 'bl-mb-icons', var(--salty-font-ui); }
 
 /* ---------- 색: 그 확장의 색 변수 → 팔레트 (낮 · 밤 · 에이드 모두 따라가요) ---------- */
-body.salty .ss-scope {
+body.salty .ss-scope, body.salty #ss-settings [data-bl-trash-wrap] {   /* 둘째: 설정 칸은 미트볼 범위 밖이라 쓰레기통 단추에만 같은 색을 풀어요(아래 「번역 전체 삭제」) */
   --ss-bg: var(--salty-surface);
   --ss-surface: var(--salty-surface-shade, var(--salty-shade));
   --ss-surface2: var(--salty-shade-2);
@@ -479,8 +479,6 @@ body.salty .ss-scope .ss-editbar { gap: var(--bl-s2, 8px); margin-top: var(--bl-
 /* ---------- 면 · 줄: 간격 사다리 ---------- */
 body.salty .ss-scope .ss-card { padding: var(--bl-s3, 12px); }
 body.salty .ss-scope .ss-stack { gap: var(--bl-s2, 8px); }
-body.salty .ss-scope .ss-sec { margin: var(--bl-s4, 16px) 0 var(--bl-s1, 4px); }
-body.salty .ss-scope .ss-sec:first-child { margin-top: 0; }
 body.salty .ss-scope .ss-sec-h { gap: var(--bl-s2, 8px); margin-bottom: var(--bl-s2, 8px); min-height: 24px; }
 body.salty .ss-scope .ss-row-btns { gap: var(--bl-s2, 8px); margin-top: var(--bl-s3, 12px); }
 body.salty .ss-scope .ss-inline { gap: var(--bl-s2, 8px); margin-top: var(--bl-s2, 8px); }
@@ -1151,3 +1149,7 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .bl-mb-read-cost:empty { display: no
    1.6.3: 체크 칸 규칙은 :has 없이 「줄의 첫 아이」 로만 골라요(뜻 같음 — 주어 아닌 :has 상한 93 을 넘지 않게). */
 body.salty #ss-settings .inline-drawer-content label.checkbox_label:has(> input[type="checkbox"]:first-child) { --bl-mb-cbox: 20px; line-height: 1.45; overflow-wrap: anywhere; }
 body.salty #ss-settings .inline-drawer-content label.checkbox_label > input[type="checkbox"]:first-child { font-size: inherit; width: var(--bl-mb-cbox); height: var(--bl-mb-cbox); top: calc((1.45em - var(--bl-mb-cbox)) / 2 - 0.045em);   /* 끝의 0.045em: 글꼴 위아래 여백이 비대칭이라 글자 상자가 줄 가운데보다 0.7px(15.5px 글자) 아래 — 글자 크기 비례로 맞춰요 */ margin: 0 !important; }
+
+/* 그 확장 2.8.0 dev 「번역 전체 삭제」(설정 › 상태창 언어 · 번역 · 상태창 관리 › 도구 — 11-17): 테마의 「쓰레기통 아이콘 = 위험」 규칙(css/17-semantic)이 단추 글자 · 아이콘을 쨍한 위험색으로 칠해
+   미트볼 단추 면 위에서 밤 4.11 · 낮 4.62 : 1 이었어요(리그). 미트볼 화면 안에서는 「나쁨」 색(--ss-neg · 위험색에 본문색을 섞어 한 단계 진하게)으로 — 1.5.2 「하드」 칸과 같은 길. 원작 그대로 보기에서는 안 걸려요 */
+body.salty:not([data-bl-ext-raw]) :is(.ss-scope, #ss-settings) [data-bl-trash-wrap], body.salty:not([data-bl-ext-raw]) :is(.ss-scope, #ss-settings) [data-bl-trash-wrap] > :is(.fa-trash, .fa-trash-can, .fa-trash-alt) { color: var(--ss-neg) !important; }

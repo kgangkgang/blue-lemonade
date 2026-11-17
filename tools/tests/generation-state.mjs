@@ -7,7 +7,6 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.');
 const file = path.join(root, 'src/generation-state.js');
-if (!fs.existsSync(file)) { console.log('skip: 이 트리에는 generation-state.js 가 없어요 (6.5.2 이전)'); process.exit(0); }
 const X = await import(pathToFileURL(file).href);
 
 let passed = 0;

@@ -37,7 +37,7 @@ export const PLANS = {
             ['장면에 맞춰 줄이기 · 변동 칩', ['sceneFilter:장면 필터', 'sceneTurns:최근 메시지', 'pinCap:고정 메모', 'msgCard:변동 칩', 'chipOutside:칩 밖에']],
             ['퀘스트 · 흥정 판정', ['questJudge:완료 판정', 'questExpire:기한', 'extraJudge:흥정 · 일하기', 'questJudgeAI:AI 완료']],   // 2.7.3 ~ 2.7.6
             ['번역 모델 · 언어', ['trProfile:모델', 'trLang:언어', 'trCode:코드']],
-            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trLlmFallback:못 바꾼 글은 모델로', 'trsheet', 'trprune', 'toenglish']],
+            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trLlmFallback:못 바꾼 글은 모델로', 'trsheet', 'trprune', 'trclear', 'toenglish']],   // trclear: 2.8.0 dev 9415367b 「번역 전체 삭제」(앞 판에는 없어 조용히 건너뛰어요)
             ['먼저 연락 오게', ['autoPing:자동 선톡', 'autoPingEvery:간격', 'rushChance:급행 %']],
             ['실패했을 때 · 묶어 만들기', ['aiFallbackMain:메인으로 다시', 'genBatch:묶어서 생성']],
             ['한 번에 보내는 양', ['genParallel:동시 요청', 'aiMaxTokens:출력 토큰', 'recentForGen:최근 채팅', 'loreChars:로어북 글자', 'injectDepth:주입 깊이']],

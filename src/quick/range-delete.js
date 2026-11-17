@@ -159,15 +159,18 @@ async function confirmDelete() {
     // 11-17 버그 사냥 4: 하나씩 기다리며 지우는 동안 입력줄이 이미 돌아와 있어 채팅을 바꾸거나 보내기를 누를 수 있었어요 —
     //   새로 연 채팅의 같은 번호를 지우던 것. 지울 메시지 객체를 먼저 잡아 두고, 매번 그 자리에 그 메시지가 그대로 있을 때만 지워요.
     const targets = c.chat.slice(lo, hi + 1);
-    let done = 0, stopped = false;
+    let done = 0, stopped = '';
     for (let id = hi; id >= lo; id--) {
         const now = ctx();
-        if ((now.getCurrentChatId?.() ?? now.chatId) !== chatId || now.chat?.[id] !== targets[id - lo] || generating()) { stopped = true; break; }
+        // 1.6.5 멈춘 까닭을 따로 알려요 — 전에는 답 만들기가 시작돼 멈춰도 늘 「채팅이 바뀌어」 라고 했어요
+        if ((now.getCurrentChatId?.() ?? now.chatId) !== chatId) { stopped = '채팅이 바뀌어'; break; }
+        if (generating()) { stopped = '답을 만드는 중이라'; break; }
+        if (now.chat?.[id] !== targets[id - lo]) { stopped = '메시지가 바뀌어'; break; }
         const before = now.chat.length;
         await c.deleteMessage(id, undefined, false, false);
         if (now.chat.length < before) done++;
     }
-    if (stopped) toastr.warning(`지우는 도중 채팅이 바뀌어 멈췄어요. ${done}개만 지웠어요.`, '범위 지우기');
+    if (stopped) toastr.warning(`지우는 도중 ${stopped} 멈췄어요. ${done}개만 지웠어요.`, '범위 지우기');
     else toastr.success(`메시지 ${done}개를 지웠어요.`, '범위 지우기');
 }
 

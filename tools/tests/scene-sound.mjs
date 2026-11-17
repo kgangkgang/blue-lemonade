@@ -258,6 +258,24 @@ await t('숨은 탭: 기본(계속)은 소리를 두고 천둥 타이머만 쉰�
     doc.hidden = false; doc.dispatchEvent(new Event('visibilitychange')); await settle();
     st = sceneSoundState(); assert.equal(st.kind, 'rain'); assert.equal(st.resting, false); assert.equal(ctx.state, 'running');
 });
+await t('버그 사냥 7: 내 소리 파일을 받는 사이 탭을 숨기면(화면 밖 끔) 받은 뒤에도 숨은 탭에서 시작하지 않고, 돌아오면 그때 틀어요', async () => {
+    _forTest.reset();
+    let release; const gate = new Promise(r => { release = r; });
+    _forTest.setHost({ ...fakeHost, fetch: async url => { await gate; return fakeHost.fetch(url); } });
+    const p = syncSceneSound(true, { on: true, volume: 100, background: false, files: { rain: '/user/files/slow-ok.mp3' } }, { weather: 'rain', weather2: 'off' }, true);
+    await settle();
+    doc.hidden = true; doc.dispatchEvent(new Event('visibilitychange'));
+    release(); await p; await settle();
+    let st = sceneSoundState();
+    assert.equal(st.kind, null, '숨은 탭에서 소리가 시작됐어요');
+    assert.equal(st.bridge.playing, null);
+    doc.hidden = false; doc.dispatchEvent(new Event('visibilitychange')); await settle();
+    st = sceneSoundState();
+    assert.equal(st.kind, 'rain', '돌아오면 틀어요');
+    assert.equal(st.file, '/user/files/slow-ok.mp3');
+    _forTest.reset(); _forTest.setHost(fakeHost);
+    await syncSceneSound(true, { on: true, volume: 100, background: false }, { weather: 'rain', weather2: 'off' }, true); await settle();
+});
 await t('끄기(스위치 · 테마): 페이드아웃 · 다리 비움 · 날씨 꺼짐도 같다', async () => {
     await syncSceneSound(false, { on: false }, { weather: 'rain' }, true); await settle();
     assert.equal(sceneSoundState().kind, null); assert.equal(globalThis[AMBIENT].playing(), null);

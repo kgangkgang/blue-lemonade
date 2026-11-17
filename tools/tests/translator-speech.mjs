@@ -11,7 +11,6 @@ import { pathToFileURL } from 'node:url';
 
 const dev = path.resolve(process.argv[2] || '.');
 const dir = path.join(dev, 'src/addons/translator');
-if (!fs.existsSync(path.join(dir, 'speech-translate.js'))) { console.log('skip: 이 트리에는 speech-translate.js 가 없어요 (번역 2.3.0 이전)'); process.exit(0); }
 const url = (name) => pathToFileURL(path.join(dir, name)).href;
 const SP = await import(url('speech-translate.js'));
 const GM = await import(url('glossary-match.js'));

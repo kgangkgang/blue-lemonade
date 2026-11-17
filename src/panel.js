@@ -540,6 +540,8 @@ function seg(path, options, fallback, cls = '') {
     const current = value === undefined || value === null ? fallback : value;
     // 8.0.4 같은 폭 2열 고르기(bl-seg-2col): 글자를 한 줄 칸(span)에 담아 좁으면 말줄임(…) · 전체 이름은 title 로
     const two = /(^|\s)bl-seg-2col(\s|$)/.test(cls);
+    // 1.6.6 셋짜리는 2 + 1 로 꺾지 않고 한 줄 셋(들어가지 않을 때만 감김) — css/20-panel.css .bl-seg-3
+    if (two && options.length === 3) cls += ' bl-seg-3';
     return `<div class="salty-seg${cls ? ` ${cls}` : ''}">${options.map(([v, label]) =>
         `<button data-act="seg" data-path="${path}" data-value="${esc(v)}" aria-pressed="${String(current) === String(v)}" class="${String(current) === String(v) ? 'on' : ''}"${two ? ` title="${esc(label.replace(/<[^>]*>/g, ''))}"` : ''}>${two ? `<span class="bl-seg-label">${label}</span>` : label}</button>`).join('')}</div>`;
 }
@@ -549,6 +551,7 @@ function seg(path, options, fallback, cls = '') {
 function chips(items, cls = '') {
     const s = getSettings();
     const two = /(^|\s)bl-seg-2col(\s|$)/.test(cls);
+    if (two && items.length === 3) cls += ' bl-seg-3';
     return `<div class="salty-seg${cls ? ` ${cls}` : ''}">${items.map(([path, label]) =>
         `<button data-act="chip" data-path="${path}" aria-pressed="${!!getPath(s,path)}" class="${getPath(s, path) ? 'on' : ''}"${two ? ` title="${esc(label.replace(/<[^>]*>/g, ''))}"` : ''}>${two ? `<span class="bl-seg-label">${label}</span>` : label}</button>`).join('')}</div>`;
 }

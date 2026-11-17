@@ -351,7 +351,8 @@ export function startSelectPop() {
         if (phantom && e.isTrusted) { e.preventDefault(); e.stopPropagation(); }   // 7.8.3: 코드가 부르는 click(.click())은 삼키지 않는다(부록 F)
     }, true);
     document.addEventListener('keydown', (e) => {
-        if (layer && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
+        // 1.6.5 stopImmediatePropagation — 같은 document 캡처에 나중에 걸린 창의 Esc(전개 지시 창 · TTS 이름 목소리 상자)까지 돌아 목록과 창이 같이 닫혔어요
+        if (layer && e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
         if (!eligible(e.target)) return;
         if (e.key === 'Enter' || e.key === ' ' || (e.altKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp'))) {
             e.preventDefault();

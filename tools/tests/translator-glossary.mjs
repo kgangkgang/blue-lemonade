@@ -8,10 +8,6 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const file = path.resolve(process.argv[2] || '.', 'src/addons/translator/glossary-match.js');
-if (!fs.existsSync(file)) {
-    console.log('skip: 이 트리에는 glossary-match.js 가 없어요 (번역기 2.2.8 이전)');
-    process.exit(0);
-}
 const { glossaryLines, glossaryHits, glossaryVariantTag, kanaVariantKey, kanaDuplicateKey, glossaryFold } = await import(pathToFileURL(file).href);
 
 const E = (src, dst, id = src) => ({ id, scope: 'x.png', src, dst });

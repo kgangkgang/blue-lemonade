@@ -32,5 +32,8 @@ test('word editing list keeps its original unpaged behavior',()=>{liveIds=messag
     vm.createContext(sx);
     vm.runInContext(`const selected=new Set();let chatKey,proposal=null,undoChat=null,previewGen=0,previewCache=new WeakMap(),capturePage=null;${sync}globalThis.api={syncChat,selected,set:v=>{proposal=v;undoChat=v;},get:()=>({proposal,undoChat})};`,sx);
     test('deleting a message clears picked ids (they would point at shifted messages) but keeps chat undo',()=>{sx.api.syncChat();sx.api.selected.add(50);sx.api.selected.add(51);sx.api.set('p');sx.api.syncChat();assert.deepEqual([...sx.api.selected],[50,51],'no deletion — kept');for(const [t,fn] of handlers)if(t==='del')fn(10);sx.api.syncChat();assert.equal(sx.api.selected.size,0);assert.equal(sx.api.get().proposal,null);assert.equal(sx.api.get().undoChat,'p');});
+    // 버그 사냥 7: 창이 열린 채 지움이 오면 다른 체크 칸은 켜진 채 보이는데 고른 것은 비어 있었어요 — syncChat 이 비웠으면 알려 주고, 체크 칸 · 쪽 넘김 처리는 그때 다시 그려요
+    test('syncChat tells when it reset the picks, and the checkbox/page handlers redraw then',()=>{sx.api.selected.add(7);assert.equal(sx.api.syncChat(),false,'nothing changed');for(const [t,fn] of handlers)if(t==='del')fn(3);assert.equal(sx.api.syncChat(),true,'deletion reset');assert.equal(sx.api.selected.size,0);
+        for(const head of ["section.addEventListener('change',event=>{","section.addEventListener('click',event=>{const button=event.target.closest('[data-capture-page]')"]){const at=source.indexOf(head);assert.ok(at>0,head);const body=source.slice(at,source.indexOf('\n',at));assert.match(body,/if\(syncChat\(\)\)\{refresh\(\);return;\}/,'handler redraws when syncChat reset the picks: '+head);}});
 }
 console.log(`${passed} checks passed`);

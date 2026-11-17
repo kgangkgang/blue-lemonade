@@ -7,10 +7,6 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.');
 const file = path.join(root, 'src/main-chat-rules.js');
-if (!fs.existsSync(file)) {
-    console.log('skip: 이 트리에는 main-chat-rules.js 가 없어요 (5.8.0 이전)');
-    process.exit(0);
-}
 const handlers = {};
 globalThis.SillyTavern = { getContext: () => ({ event_types: { CHAT_COMPLETION_SETTINGS_READY: 'chat_completion_settings_ready' }, eventSource: { on: (name, fn) => { (handlers[name] ||= []).push(fn); } } }) };
 const { stripClaude5Sampling, startMainChatRules } = await import(pathToFileURL(file).href);

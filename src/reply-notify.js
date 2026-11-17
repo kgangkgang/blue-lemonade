@@ -42,6 +42,8 @@ export async function afterPermission(state) {
     return true;
 }
 
+// 버그 사냥 7: 글자 수로 자를 때 이모지(UTF-16 두 칸) 가운데를 자르면 반쪽(�)이 남아요 — 자르는 자리가 쌍 가운데면 그 글자를 통째로 빼요
+const cutText = (s, a = 0, b = s.length) => { if (a > 0 && /[\uDC00-\uDFFF]/.test(s[a] || '')) a++; if (b < s.length && /[\uD800-\uDBFF]/.test(s[b - 1] || '')) b--; return s.slice(a, b); };
 function replyPreview() {
     try {
         const chat = SillyTavern.getContext().chat;
@@ -49,7 +51,7 @@ function replyPreview() {
         if (!last || last.is_user) return { title: '답이 도착했어요', body: '' };
         // 6.6.5 GENERATION_ENDED 는 MESSAGE_RECEIVED 보다 먼저 온다 — 과일 ECoT 스크립트가 머리의 생각 블록을 추론으로 옮기기 전이라 알림에 "[RE:] 让我…" 가 떴다
         const text = dropThinkingHead(String(last.mes || '')).replace(/\{\{[^{}]*\}\}/g, ' ').replace(/<[^>]+>/g, ' ').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
-        return { title: `${last.name || '답'} · 답이 도착했어요`, body: text.slice(0, 120) };
+        return { title: `${last.name || '답'} · 답이 도착했어요`, body: cutText(text, 0, 120) };
     } catch { return { title: '답이 도착했어요', body: '' }; }
 }
 

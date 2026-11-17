@@ -33,6 +33,8 @@ function commit() {
     // 1.1.2 지금 팔레트가 에이드 갈아입기(ade.js)가 칠한 가족이면 스타일 편집이 아니에요 — 스타일에 적힌 팔레트를 그대로 둬요
     const ade = globalThis[Symbol.for('blue-lemonade.ade-paint')];
     if (ade && ade === paletteFamily(s.palette) && 'palette' in style.data) now.palette = style.data.palette;
+    // 버그 사냥 7: 화이트 · 나이트 자동(automode.js)이 같은 묶음의 밝기만 바꾼 것도 스타일 편집이 아니에요(자동 전환은 저장하지 않음 · 7.0.2)
+    else if (s.auto?.on && 'palette' in style.data && paletteFamily(style.data.palette) === paletteFamily(s.palette)) now.palette = style.data.palette;
     preserveLocks(now,style.data,s.settingLocks)();
     if (sameStyle(now, style.data)) return false;
     style.data = now;

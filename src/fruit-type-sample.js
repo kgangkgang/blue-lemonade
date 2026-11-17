@@ -3,7 +3,7 @@
 //   모양은 사용자가 설치한 프리셋의 원작 정규식으로 그 표본 글을 바꿔서 만들어요(실리태번이 메시지에 하는 것과 같은 치환).
 //   과일 계열처럼 정규식 결과가 스크립트로 그려지는 문서면, 네트워크 · 부모 창 · 저장소가 막힌 격리 iframe 에서 한 번 그려 본 결과만 가져와요.
 //   원작 정규식을 못 찾거나 그리지 못하면 테마에 들어 있는 기본 표본(fruit-type-preview.js)을 써요.
-import {FRUIT_TYPES,typeMatch} from './fruit-type-schema.js';
+import {typeMatch} from './fruit-type-schema.js';
 import {fruitTypePreview,FRUIT_PREVIEW_BASE,DEUS_PREVIEW_CSS} from './fruit-type-preview.js';
 import {wrapCss} from './fruit-type-runtime.js';
 

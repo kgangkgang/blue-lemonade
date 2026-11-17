@@ -296,6 +296,8 @@ export async function syncAddonIcons(){
         const buttonId=id==='order'?'po-open':'pa-hub-open';
         if(!running.has(id)||!s.addonUI[id+'Icon']){const old=document.getElementById(buttonId);if(old?.dataset.blAddon)old.remove();continue;}
         const existed=document.getElementById(buttonId),api=await import(id==='order'?'./addons/order/panel.js':'./addons/perf/hub.js');
+        // 1.6.5 받는 사이 꺼졌으면 붙이지 않아요 — 끔의 맞추기가 먼저 끝나(지울 아이콘이 아직 없음) 뒤늦게 붙은 아이콘이 남았어요
+        if(!running.has(id)||!getSettings().addonUI?.[id+'Icon'])continue;
         if(id==='order')api.mountButton();else api.mountGear();
         if(!existed){const button=document.getElementById(buttonId);if(button)button.dataset.blAddon=id;}
     }

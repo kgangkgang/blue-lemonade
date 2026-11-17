@@ -2,7 +2,7 @@
 //   ① 공용 키프레임 14개(bl-*) — 글꾸 장식의 인라인 style 「animation:bl-…」 이 이 이름만 써요(살균: log-copy-template.js 가 bl- 로 시작하는 이름만 받아요).
 //   ② 누르면 반응 — 장식에 data-bl-egg="bounce|spin|…" · 누르는 동안(:active) · PC 올려 두기 · 폰 탭(:hover — 폰은 탭한 뒤 다른 곳을 누를 때까지 남아요) · 켜고 끄기형은 <details><summary data-bl-egg> 를 열어 두면 그대로.
 //   ③ 움직임 줄이기(prefers-reduced-motion)면 글꾸 안 애니는 끄고 반응의 전환(transition)만 남겨요.
-// 같은 CSS 가 세 곳에 들어가요: 테마 lazy 시트(css/86-log-copy-motion.css · 채팅에 붙여 넣은 글꾸) · 로그 복사 미리보기 칸(log-copy-sheet.js) · 마트 「HTML 복사」 맨 앞 <style>(tools/mart-build.mjs, 그 틀이 쓰는 것만).
+// 같은 CSS 가 세 곳에 들어가요: 테마 lazy 시트(css/74-log-copy-motion.css · 채팅에 붙여 넣은 글꾸) · 로그 복사 미리보기 칸(log-copy-sheet.js) · 마트 「HTML 복사」 맨 앞 <style>(tools/mart-build.mjs, 그 틀이 쓰는 것만).
 // 시험 tools/tests/mart-geulkku-64.mjs 가 css 파일과 이 모듈이 글자까지 같은지 봐요.
 export const MOTION_KEYFRAMES = {
     // 정의 = 작업자 T(시안5-컨셉) <style> 그대로 + 작업자 S(시안4-시리즈) 변수도 받게(이름이 다른 변수는 겹쳐 받기: var(--T, var(--S, 기본)))

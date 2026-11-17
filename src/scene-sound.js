@@ -193,6 +193,7 @@ async function play(kind, level = '') {
     if (url) {
         try { buffer = await loadBuffer(url); } catch (error) { console.info('[Blue Lemonade] 장면 소리 파일을 못 읽어 합성 소리로 대신해요', url, error?.message || error); missingFile(url, '내 소리 파일을 찾지 못해 합성 소리로 들려요'); }
         if (token !== loading) return;   // 그 사이 다른 소리로 바뀜
+        if (resting) return;   // 버그 사냥 7: 받는 사이 탭이 숨었으면(화면 밖 끔) 숨은 탭에서 시작하지 않아요 — 돌아올 때(onVisibility → decide) 다시 틀어요
     }
     let voice;
     try { voice = buildVoice(ctx, kind, { buffer, level: level || undefined }); } catch (error) { console.warn('[Blue Lemonade] 장면 소리', error); return; }

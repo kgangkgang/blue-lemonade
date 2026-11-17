@@ -3,7 +3,7 @@ import { syncMessageMenus } from './menu-position.js';
 import { frameVars } from './frames.js';
 // 설정 → :root CSS 변수(--salty-*) + 실리태번 색 변수 덮기 + body 클래스 + 글꼴 합치기
 import { getSettings, fontSet, FONT_SLOTS, DEFAULTS } from './settings.js';
-import { PALETTES, TOKEN_KEYS, paletteColors, paletteMode, ensurePalettes, rememberPalette, parseColor, sameColor, onColor, toRgba, mixColor } from './palettes.js';
+import { PALETTES, TOKEN_KEYS, paletteColors, paletteMode, ensurePalettes, rememberPalette, parseColor, onColor, mixColor } from './palettes.js';
 import { buildComposite, slotStack, findFont, preloadFonts } from './fonts.js';
 import { loadFullCatalog, catalogReady } from './catalog.js';
 import { iconsCss } from './icons.js';

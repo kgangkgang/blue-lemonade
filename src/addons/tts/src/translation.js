@@ -31,7 +31,6 @@
 //   shownDisplay(mes, { preview }) → { text, preview }   6.9.6 원문 짝을 찾을 화면 번역문 (누르기 길은 번역 중 미리 보기 글이 먼저)
 //   cancelWait(mesId | undefined)                기다림 취소 → 'none' 으로 끝남 (id 없으면 전부)
 //   translatorInfo() → { name, key, incoming, outgoing, label }   설정 화면용
-//   isWaiting(mesId) → boolean
 //   watchDisplay(mesId, mes, { signal, timeoutMs }) → Promise<'done'|'none'|'timeout'>   (1.2.2 미리 만들기)
 //                                                  waitForTranslation 과 같은 판단이지만 따로 산다: cancelWait(재생기의 stop) 로 끝나지 않고,
 //                                                  signal · 글이 바뀜 · 다른 메시지 객체 · 채팅 바뀜에만 'none'
@@ -286,9 +285,6 @@ export function cancelWait(mesId) {
     if (mesId === undefined || mesId === null) { for (const id of [...pending.keys()]) finish(id, 'none'); return; }
     finish(Number(mesId), 'none');
 }
-
-/** 이 메시지의 번역을 기다리는 중인지 */
-export function isWaiting(mesId) { return pending.has(Number(mesId)); }
 
 // ---------- 미리 만들기의 기다림 (1.2.2) — 재생기의 기다림(pending)과 따로: cancelWait 가 끊지 않는다
 

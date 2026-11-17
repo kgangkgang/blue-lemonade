@@ -31,15 +31,21 @@ function swallowNextClick(ms = 700) {
     for (const [type, fn] of [['click', eat], ['pointerdown', done], ['keydown', done]]) document.addEventListener(type, fn, true);
 }
 export { swallowNextClick };   // 프리셋 폴더 목록(preset-folders.js)도 같은 지킴을 써요
+/** 떠 있는 메뉴가 열려 있나 — 그 메뉴를 띄운 목록(프리셋 폴더)이 Esc 를 메뉴에 넘기려고 봐요(버그 사냥 7) */
+export const menuOpen = () => !!menu;
 export function closeMenu() {
     if (!menu) return;
-    const { layer, off } = menu; menu = null; off();
+    const { layer, off, back } = menu; menu = null; off();
+    // 버그 사냥 7: 초점이 메뉴 안에 있었으면(키보드 · 항목 고르기) 메뉴를 연 단추로 돌려줘요 — 지우면 body 로 떨어졌어요
+    const inside = layer.contains(document.activeElement);
     try { if (layer.matches(':popover-open')) layer.hidePopover(); } catch { /* popover 모름 */ }
     layer.remove();
+    if (inside && back?.isConnected) back.focus?.({ preventScroll: true });
 }
 /** items: [{ label, run, danger?, disabled?, check? }] — check 가 있으면 체크 표시 줄 */
 export function openMenu(anchor, items) {
     closeMenu();
+    const back = document.activeElement;
     const layer = document.createElement('div');
     layer.className = 'salty-pick-layer bl-quick-layer';
     layer.dataset.blPopup = 'pick';
@@ -57,12 +63,20 @@ export function openMenu(anchor, items) {
         closeMenu();
         Promise.resolve().then(() => item?.run?.()).catch(error => console.warn('[Blue Lemonade] 메뉴', error));
     });
-    const key = event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMenu(); } };
+    const key = event => {
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMenu(); return; }
+        // 버그 사냥 7: 위 · 아래 화살표 · Home · End 로 항목 옮기기(초점이 메뉴 안일 때만)
+        if (!/^(ArrowDown|ArrowUp|Home|End)$/.test(event.key) || !box.contains(document.activeElement)) return;
+        const list = [...box.querySelectorAll('button[data-i]:not([disabled])')], at = list.indexOf(document.activeElement);
+        if (!list.length) return;
+        event.preventDefault();
+        list[event.key === 'Home' ? 0 : event.key === 'End' ? list.length - 1 : (at + (event.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length].focus({ preventScroll: true });
+    };
     const width = window.innerWidth;
     const resize = () => { if (window.innerWidth !== width || !anchor.isConnected) closeMenu(); else locate(); };
     document.addEventListener('keydown', key, true);
     window.addEventListener('resize', resize);
-    menu = { layer, off: () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
+    menu = { layer, back, off: () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
     (anchor.closest?.('dialog[open]') || document.body).append(layer);
     if (typeof layer.showPopover === 'function') { try { layer.setAttribute('popover', 'manual'); layer.showPopover(); } catch { layer.removeAttribute('popover'); } }
     function locate() {
@@ -74,6 +88,9 @@ export function openMenu(anchor, items) {
         box.classList.toggle('up', r.up);
     }
     locate();
+    // 버그 사냥 7: 마우스 · 키보드 기기는 열면 초점을 첫 항목으로(키보드로 연 메뉴를 바로 고를 수 있게 · 터치 기기는 그대로)
+    let fine = false; try { fine = matchMedia('(hover: hover) and (pointer: fine)').matches && !(navigator.maxTouchPoints > 0); } catch { /* 모름 */ }
+    if (fine) box.querySelector('button[data-i]:not([disabled])')?.focus({ preventScroll: true });
     return layer;
 }
 

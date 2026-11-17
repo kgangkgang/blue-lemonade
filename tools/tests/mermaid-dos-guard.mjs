@@ -25,7 +25,7 @@ function world(sources) {
         querySelector(tag) { return this.children.find(el => el.tag === tag); }
         replaceChildren(...els) { this.children = []; this.append(...els); }
     }
-    const chat = new El('chat'); chat.isConnected = true; chat.scrollTop = 0; chat.scrollHeight = 100; chat.clientHeight = 100;
+    const chat = new El('chat'); chat.isConnected = true; chat.scrollTop = 0; chat.scrollHeight = 100; chat.clientHeight = 100; chat.querySelectorAll = () => codes.filter(code => code.isConnected);   // 1.6.5 opt7: 도표는 #chat 안에서만 찾아요
     const body = new El('body'); body.isConnected = true;
     for (const source of sources) { const pre = new El('pre'), code = new El('code'); pre.isConnected = true; code.textContent = source; code.className = 'language-mermaid'; pre.append(code); codes.push(code); }
     globalThis.document = { scripts, body, head: { append(el) { el.isConnected = true; scripts.push(el); } }, createElement: tag => new El(tag), querySelectorAll: () => codes.filter(code => code.isConnected), getElementById: id => id === 'chat' ? chat : scripts.find(el => el.id === id && el.isConnected) };

@@ -423,4 +423,19 @@ await ok('1.6.5 진짜 모델 다시 넣기에서 찾은 것: 직함이 다른 �
     const r = M.reconcileRel(c);
     assert.deepEqual(r.time, { from: '아침', to: '밤' }); assert.deepEqual(c.chatMetadata.statussim.base.data.rel.user.map(x => [x.name, x.aff, x.trust]), [['Captain', 14, 0], ['Ozz', 0, 8]]);
 });
+await ok('1.6.6 프로필 채우기: 변화 줄이 남은 사람인데 프로필이 없으면 관계 칸 이름표 · 메모로 짧은 프로필(npc) · 이미 있으면(이름 · 별칭) 안 더해요 · 변화 줄 없는 사람은 안 더해요 · 변화 장에 「모두 프로필」 안내', async () => {
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });   // 시험용으로 지어낸 줄
+    const chat = [{ name: 'A', mes: 'a', swipe_id: 0, extra: op(['aff', 'Mira +3, Joon +2, Bo +1']) }];
+    const c = { chat, chatMetadata: { statussim: {
+        base: { data: { profile: { mode: 'detailed', list: [{ name: 'Me', role: 'user', summary: 'x', fields: [] }, { name: 'Mira', role: 'main', summary: 'm', fields: [{ k: 'a', v: 'b' }] }, { name: 'Jo', aliases: ['Joon'], role: 'main', summary: 'j', fields: [] }] },
+            rel: { user: [{ name: 'Mira', aff: 3, trust: 0, stage: 0 }, { name: 'Joon', aff: 2, trust: 0, stage: 0 }, { name: 'Bo', label: 'Baker', memo: 'Gave her bread.', aff: 1, trust: 0, stage: 0 }, { name: 'Kai', label: 'Stranger', memo: 'Passed by.', aff: 0, trust: 0, stage: 0 }] } } },
+        origin: { data: { profile: { list: [] } } } } } };
+    c.chatMetadata.statussim.base.data.rel.user[1].aliases = ['Jo'];
+    const r = M.reconcileRel(c);
+    assert.deepEqual(r.added, ['Bo']);
+    assert.deepEqual(c.chatMetadata.statussim.base.data.profile.list.at(-1), { name: 'Bo', role: 'npc', summary: 'Baker — Gave her bread.', fields: [], home: '', sched: '' });
+    assert.equal(c.chatMetadata.statussim.origin.data.profile.list.length, 1);
+    assert.deepEqual(M.reconcileRel(c).added, [], '두 번 해도 한 번만');
+    assert.ok(M.opsLedger({ chat }).text.includes('Profiles: write a profile (role "main") for EVERY person in the relationship changes above'));
+});
 console.log(`mb-prompt: ${n}개 통과`);

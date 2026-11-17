@@ -81,13 +81,16 @@ export function bindAddons(root,refresh){
 
     root.querySelectorAll('[data-addon-toggle]').forEach(input=>input.addEventListener('change',async()=>{
         const id=input.dataset.addonToggle,on=input.checked;
-        if(on&&folders[id]&&await conflict(id)){
+        // 버그 사냥 7: 옛 폴더 확인을 기다리는 사이 스위치를 다시 바꿨으면 그 처리에 맡겨요(늦은 켬이 끔의 저장을 덮었어요)
+        const legacy=on&&folders[id]?await conflict(id):false;
+        if(input.checked!==on)return;
+        if(legacy){
             // 8.3.0 개인 확장은 켜 두고 「대기」로 — 카드에 「옛 단독 확장 끄기」가 뜬다 (옛 폴더를 끄고 새로고침하면 이어서 돈다)
             if(PRIVATE_ADDONS[id]){waiting.add(id);failed.set(id,'기존 단독 확장이 켜져 있어 테마 쪽은 대기 중이에요. 「옛 단독 확장 끄기」를 누르고 새로고침해 주세요.');}
             else{input.checked=false;globalThis.toastr?.warning(`${names[id]} 단독 확장이 켜져 있어요. 확장 관리에서 둘 중 하나를 꺼 주세요.`,'Blue Lemonade');return;}
         }
         getSettings().addons[id]=on;
-        if(!on)failed.delete(id);
+        if(!on){failed.delete(id);waiting.delete(id);}   // 버그 사냥 7: 끈 카드에 「옛 단독 확장 끄기」 가 남지 않게 대기 표시도 거둬요
         if(id==='regexlink'&&!on&&running.has(id))await stopRegexlink();
         if(id==='tts'&&running.has(id))(await import('./addons/tts/shell.js')).syncEnabled();
         try{await persist();}catch(error){globalThis.toastr?.warning(error.message,'Blue Lemonade');}await syncAddonIcons();refresh();

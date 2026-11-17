@@ -137,8 +137,7 @@ await test('그림이 잘리지 않음: 카드 · 격자 모두 원래 비율(ob
     assert.match(block, /\.cg-root \.cg-image-open img \{[^}]*width: 100%; height: auto;[^}]*aspect-ratio: auto 2 \/ 3; object-fit: contain;/);
     assert.match(block, /\.cg-root \.cg-image\.is-loaded \.cg-image-open img \{ width: auto; max-width: 100%; aspect-ratio: auto; \}/);
     assert.match(block, /\.cg-root \.cg-tile-open img \{[^}]*width: 100%; height: auto; aspect-ratio: auto 2 \/ 3;/);
-    assert.match(block, /\.cg-root \.cg-tiles \{ display: grid;/);   // 7.3.1 (1.7.1) CSS columns → 읽는 차례대로 쌓기 (bookmark-masonry-731.mjs)
-    assert.match(block, /\.cg-root \.cg-tiles\.is-masonry > \.cg-tile \{ position: absolute; \}/);
+    assert.match(block, /\.cg-root \.cg-tiles \{ display: grid;/);   // 7.3.1 (1.7.1) CSS columns → 읽는 차례대로 쌓기 (칸 놓기는 bookmark-masonry-731.mjs 가 재요)
 });
 
 await test('lazy: 카드 · 격자의 그림은 loading=lazy · decoding=async, 다 받은 그림만 is-loaded (캐시는 바로)', () => {

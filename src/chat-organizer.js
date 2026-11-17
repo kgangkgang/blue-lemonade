@@ -343,11 +343,15 @@ function swallowNextClick(ms = 700) {
 }
 function closeMenu() {
     if (!menu) return;
-    const { layer, off: done } = menu; menu = null; done();
+    const { layer, off: done, back } = menu; menu = null; done();
+    // 버그 사냥 7: 초점이 메뉴 안에 있었으면(키보드 · 항목 고르기) 메뉴를 연 단추로 돌려줘요 — 지우면 body 로 떨어졌어요
+    const inside = layer.contains(document.activeElement);
     try { if (layer.matches(':popover-open')) layer.hidePopover(); } catch { /* popover 모름 */ }
     layer.remove();
+    if (inside && back?.isConnected) back.focus?.({ preventScroll: true });
 }
 function openMenu(anchor, items) {
+    const back = menu?.back || document.activeElement;   // 메뉴 안에서 다음 메뉴를 열면(다른 폴더 안으로) 처음 연 단추를 그대로
     closeMenu();
     const layer = document.createElement('div');
     layer.className = 'salty-pick-layer bl-co-layer';
@@ -364,12 +368,20 @@ function openMenu(anchor, items) {
         closeMenu();
         try { item?.run?.(); } catch (error) { warn(error); }
     });
-    const key = event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMenu(); } };
+    const key = event => {
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMenu(); return; }
+        // 버그 사냥 7: 위 · 아래 화살표 · Home · End 로 항목 옮기기(초점이 메뉴 안일 때만)
+        if (!/^(ArrowDown|ArrowUp|Home|End)$/.test(event.key) || !box.contains(document.activeElement)) return;
+        const list = [...box.querySelectorAll('button[data-i]:not([disabled])')], at = list.indexOf(document.activeElement);
+        if (!list.length) return;
+        event.preventDefault();
+        list[event.key === 'Home' ? 0 : event.key === 'End' ? list.length - 1 : (at + (event.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length].focus({ preventScroll: true });
+    };
     const width = window.innerWidth;
     const resize = () => { if (window.innerWidth !== width || !anchor.isConnected) closeMenu(); else place(); };
     document.addEventListener('keydown', key, true);
     window.addEventListener('resize', resize);
-    menu = { layer, off: () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
+    menu = { layer, back, off: () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
     document.body.append(layer);
     if (typeof layer.showPopover === 'function') { try { layer.setAttribute('popover', 'manual'); layer.showPopover(); } catch { layer.removeAttribute('popover'); } }
     function place() {

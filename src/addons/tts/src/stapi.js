@@ -17,7 +17,7 @@
 //   keyState(id) → 'yes' | 'no' | 'optional' | 'unknown' · hasInheritedProxy(id) · autoListOk(id)
 //   customEndpoint(cfg) → { url, inherit }
 //   listKey(cfg) · cachedModels(key) · pageModels(id, cfg) · modelList(cfg) · modelOf(cfg, id?)
-//   modelIds(data) · fetchProviderModels(cfg) · fetchCompatModels(cfg)
+//   fetchProviderModels(cfg) · fetchCompatModels(cfg)
 //   needsAutoList(cfg) → 지금 조용히 목록을 다시 받아도 되나 (카드를 열 때) · onListChange(cb) → 그만 듣기 함수
 //   providerProblem(cfg) → '' | 한국어 한 줄 (준비 안 된 까닭) · buildRequest(cfg, system, user, { maxTokens }) → /generate 본문
 //   applyModelRequestRules(provider, model, body)
@@ -73,7 +73,6 @@ const OR_WEBSITE = 'OR_Website';                                   // 본체 Ope
 
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const str = (v) => (typeof v === 'string' ? v : v == null ? '' : String(v));
-const uniq = (arr) => [...new Set(arr)];
 export const normUrl = (u) => str(u).trim().replace(/\/+$/, '');
 export function validUrl(u) {
     try { const p = new URL(u); return p.protocol === 'http:' || p.protocol === 'https:'; } catch { return false; }
@@ -217,19 +216,6 @@ export function modelOf(cfg, id) {
 }
 /** 목록을 저절로 받아도 되나 (Azure 는 /status 가 진짜 채팅 요청이라 ↻ 로만) */
 export const autoListOk = (id) => !!(source(id)?.status) && !NO_AUTO_LIST.has(str(id));
-
-/** /models 응답 → 모델 id 들 (정렬 · 중복 제거). { data: [...] } · 배열 · { models: [...] } (Cohere 는 name) */
-export function modelIds(data) {
-    const raw = Array.isArray(data) ? data
-        : Array.isArray(data?.data) ? data.data
-            : Array.isArray(data?.models) ? data.models
-                : Array.isArray(data?.data?.data) ? data.data.data : [];
-    const ids = raw
-        .map(x => (x && typeof x === 'object' ? (x.id ?? x.name ?? '') : x))
-        .map(v => str(v).trim().replace(/^models\//, ''))
-        .filter(Boolean);
-    return uniq(ids).sort((a, b) => a.localeCompare(b));
-}
 
 /**
  * 실리태번 서버의 /status 로 공급자의 모델 목록을 받아 캐시에 넣는다 (키는 서버가 붙임) → ids (새것 먼저 · 채팅 모델만)

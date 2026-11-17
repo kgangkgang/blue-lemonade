@@ -168,6 +168,22 @@ await test('지우는 도중 다른 채팅을 열면 거기서 멈춤 — 새 �
     ctx.getCurrentChatId = keep; ctx.deleteMessage = keepDel;
 });
 
+await test('지우는 도중 답 만들기가 시작되면 멈추고 「채팅이 바뀌어」 가 아니라 그 까닭을 알려요(버그 사냥 6)', async () => {
+    fill(6); deletes.length = 0; toasts.length = 0;
+    globalThis.confirm = () => true;
+    const keepDel = ctx.deleteMessage;
+    R._forTest.enter();
+    click(chat.querySelector('[mesid="1"]'));
+    click(chat.querySelector('[mesid="4"]'));
+    ctx.deleteMessage = async (...a) => { await keepDel(...a); if (deletes.length === 1) document.body.dataset.generating = 'true'; };   // 입력줄이 돌아온 사이 보내기를 누름
+    await R._forTest.confirmDelete();
+    delete document.body.dataset.generating;
+    ctx.deleteMessage = keepDel;
+    assert.deepEqual(deletes.map(d => d[0]), [4], '첫 번째만 지우고 멈춤');
+    const warn = toasts.find(([k]) => k === 'warning')?.[1] || '';
+    assert.ok(/1개만/.test(warn) && /답을 만드는/.test(warn) && !/채팅이 바뀌어/.test(warn), warn);
+});
+
 await test('확인 창이 떠 있으면 Esc 는 그 창 몫 — 고르기 줄은 그대로(버그 사냥 4)', () => {
     fill(3);
     R._forTest.enter();

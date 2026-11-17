@@ -379,8 +379,6 @@ const isOff = (f) => (typeof f.disabled === 'function' ? !!f.disabled(settings()
 // ---------- 1.3.8 '?' 도움말: 항목에 help 가 있으면 이름 바로 뒤 작은 ? — 누르면 아래에 한두 줄 (말풍선 없음 · '!' 와 같은 펼침).
 //   도움말이 있는 칸은 겉을 label 이 아닌 div 로 (펼친 글을 눌러도 선택칸이 열리지 않게) · 고르는 칸엔 aria-label 로 이름
 const helpOf = (f) => (f && f.help ? String(typeof f.help === 'function' ? f.help(settings()) : f.help) : '');
-const helpBtn = (f) => (helpOf(f) ? '<button type="button" class="lv-help-btn" data-lv-act="help" aria-label="도움말" aria-expanded="false"><i class="fa-solid fa-question" aria-hidden="true"></i></button>' : '');
-const helpNote = (f) => { const h = helpOf(f); return h ? `<span class="lv-help-note" hidden>${esc(h)}</span>` : ''; };
 // 7.7.9 항목마다 붙던 ? 는 떼고 절(카드 · 편집 팝업) 제목 옆 하나로 (도움말 ? 는 절 제목 옆에 하나만).
 //   항목을 그리는 동안 「이름: 설명」을 모아 두면 card() · editorHtml() 이 제목 ? 밑 한 묶음으로 보여 준다. 항목 아래 설명 줄(desc)은 그대로.
 export const HELP_LINES = [];
@@ -2641,6 +2639,8 @@ function importSettings(obj) {
     const fileVer = Number(obj.version) || 0;   // 1.2.5: 옛 파일(8 미만)의 목소리 음량 보정은 옮겨서 받는다 (목록 값이 gainDb 에 든 채로 두 번 맞추지 않게)
     for (const [k, v] of Object.entries(obj)) {
         if (BAD_KEYS.has(k) || k === 'usage' || k === 'analysis_usage' || k === 'version') continue;
+        // 1.6.5 기기 간 합치기 시각은 파일 것을 받지 않아요 — 가져온 발음 사전 · 음소거 낱말은 아래에서 지금 시각으로 찍어요(옛 시각이면 다른 기기의 옛 값이 이겼어요)
+        if (k === 'field_stamps') continue;
         if (k === 'providers') {
             if (!isObj(v)) continue;
             for (const [pid, cfg] of Object.entries(v)) {
@@ -2706,6 +2706,7 @@ function importSettings(obj) {
         const d = DEFAULTS[k];
         if (isObj(d) ? !isObj(v) : Array.isArray(d) ? !Array.isArray(v) : typeof v !== typeof d) continue;   // 모양이 다르면 버린다
         s[k] = v;
+        if (SYNC_TEXT_FIELDS.includes(k)) { if (!isObj(s.field_stamps)) s.field_stamps = {}; s.field_stamps[k] = Date.now(); }
     }
     if (fileVer < 8 && Array.isArray(obj.voices)) migrateVoicesV8(s.voices, { normalize: s.normalize !== false });   // 음량 고르기는 가져온 뒤의 값 (파일 값이 먼저 들어옴)
     s.voices = s.voices.filter(v => v && (v.uid || v.voiceId)).map(v => toVoice(v, v.provider));

@@ -8,7 +8,6 @@ import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
-if (!fs.existsSync(path.join(root, 'src/generation-state.js'))) { console.log('skip: 이 트리에는 generation-state.js 가 없어요 (6.5.2 이전)'); process.exit(0); }
 
 // 실리태번 흉내: eventSource.on 으로 받은 처리기를 모아 두고 직접 부른다. streamingProcessor 는 바꿀 수 있게
 const handlers = {};

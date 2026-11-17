@@ -265,4 +265,11 @@ check('⑯ 설정 칸 체크 줄(11-16 「체크박스 옆에 글자들 약간 �
     const box = find(/label\.checkbox_label > input\[type="checkbox"\]:first-child$/);   // 1.6.3: :has 없이(주어 아닌 :has 상한)
     assert.ok(box.length && /top:\s*calc\(\(1\.45em - var\(--bl-mb-cbox\)\) \/ 2 - 0\.045em\)/.test(box[0].body) && /font-size:\s*inherit/.test(box[0].body), '체크 칸 위치는 줄 높이에서 계산(em 이 줄 글자 크기로 풀리게)');
 });
+check('⑰ 미트볼 「번역 전체 삭제」 같은 쓰레기통 단추(11-17): 미트볼 화면 · 설정 칸 안에서는 「나쁨」 색 — 설정 칸 단추에도 그 변수가 풀려요 · 원작 그대로 보기 밖', () => {
+    const palette = rules.find(r => r.selectors.includes('body.salty .ss-scope'));
+    assert.ok(palette.selectors.includes('body.salty #ss-settings [data-bl-trash-wrap]'), '설정 칸 쓰레기통 단추에도 팔레트 변수(--ss-neg)');
+    const trash = rules.filter(r => r.selectors.some(s => /:is\(\.ss-scope, #ss-settings\) \[data-bl-trash-wrap\]$/.test(s)));
+    assert.ok(trash.length && /color:\s*var\(--ss-neg\) !important/.test(trash[0].body), '글자 · 아이콘은 「나쁨」 색');
+    assert.ok(trash[0].selectors.every(s => s.includes(':not([data-bl-ext-raw])')), '원작 그대로 보기에서는 안 걸려요');
+});
 console.log(`status-ext-css: ${passed}개 통과`);

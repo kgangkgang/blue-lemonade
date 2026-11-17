@@ -12,7 +12,6 @@ const root = path.resolve(process.argv[2] || '.');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const load = rel => import(pathToFileURL(path.join(root, rel)).href);
 const panelFile = 'src/addons/prompt/glossary.js';
-if (!fs.existsSync(path.join(root, panelFile))) { console.log('skip: 이 트리에는 한글화 패널 용어집(prompt/glossary.js)이 없어요 (1.0.4 이전)'); process.exit(0); }
 
 const shared = await load('src/addons/translator/glossary-prompt.js');
 const panel = await load(panelFile);
@@ -144,7 +143,7 @@ await t('범위: 봇카드 탭은 그 카드 · 월드인포는 기본 월드 ·
     assert.deepEqual(panel.panelGlossaryScopes(`pt-wi::${WORLD}`, { ctx, characters: CHARACTERS }), { scopes: [CARD], chat: false });
     assert.deepEqual(panel.panelGlossaryScopes('pt-wi::Extra Book', { ctx, characters: CHARACTERS, charLore: [{ name: '다른카드', extraBooks: ['Extra Book'] }] }), { scopes: [OTHER], chat: false });
     assert.deepEqual(panel.panelGlossaryScopes('pt-wi::Lonely', { ctx, characters: CHARACTERS }), { scopes: [OTHER], chat: true }, '이어진 카드 없음 → 지금 채팅');
-    assert.deepEqual(panel.panelGlossaryScopes('pt-preset::레모나', { ctx, characters: CHARACTERS }), { scopes: [OTHER], chat: true });
+    assert.deepEqual(panel.panelGlossaryScopes('pt-preset::내프리셋', { ctx, characters: CHARACTERS }), { scopes: [OTHER], chat: true });
     assert.deepEqual(panel.panelGlossaryScopes('pt-char::_idx3', { ctx: {}, characters: CHARACTERS }), { scopes: [], chat: true });
     const settings = { glossary_entries: ENTRIES };
     assert.match(panel.panelGlossaryBlock(settings, 'Merstein met Dreamy.', { ns: 'pt-preset::x', ctx, characters: CHARACTERS }), /Merstein → 메르\(채팅\)\nDreamy → 드리미$/, '프리셋: 이 채팅 항목 > 지금 카드 · 전체 항목');
@@ -169,11 +168,11 @@ await t('주석 모드 · 제목 묶음(프리셋 제목) · 다른 확장이 �
     await note.api.translateText('', 'メルスタイン', null, { mode: 'note', includeTitle: false, ns: `pt-wi::${WORLD}` });
     assert.deepEqual(glossaryOf(note.calls[0]), ['メルスタイン → 메르스타인']);
     const titles = panelEnv({ ctx: { characterId: 0, characters: CHARACTERS, chatMetadata: {} } });
-    await titles.api.translateTitleBatch(['メルスタインの部屋', '共通ルール'], 'pt-preset::레모나');
+    await titles.api.translateTitleBatch(['メルスタインの部屋', '共通ルール'], 'pt-preset::내프리셋');
     assert.deepEqual(glossaryOf(titles.calls[0]), ['メルスタイン → 메르스타인']);
     assert.ok(titles.calls[0].indexOf('[Glossary]') < titles.calls[0].indexOf('--- LABELS ---'));
     const none = panelEnv({ entries: [] });
-    await none.api.translateTitleBatch(['共通ルール'], 'pt-preset::레모나');
+    await none.api.translateTitleBatch(['共通ルール'], 'pt-preset::내프리셋');
     assert.ok(none.calls[0].includes('rendering.\n\n--- LABELS ---'), '용어집 없으면 예전 모양');
 });
 
