@@ -38,7 +38,6 @@ function pills(fields, c, ui, keys = ['mark', 'model', 'prompt'], top = 0) {
 // 1.0.1(11-04 「심플하게」): 틀 글(제목 · 날짜 · 꼬리)은 한국어 낱말 중간에서 안 꺾여요(keep-all) — 메시지 글에는 덧대지 않아요
 const title = (fields, c, ui, size = 20, key = 'title', more = {}) => (fields[key] ? tag('div', { color: c.text, ...font(ui, size, '650'), 'line-height': '1.4', 'word-break': 'keep-all', 'overflow-wrap': 'anywhere', ...more }, F(key, fields[key])) : '');
 const muted = (key, text, c, ui, more = {}) => (text ? tag('div', { color: c.muted, ...font(ui, 13), 'line-height': '1.5', 'word-break': 'keep-all', 'overflow-wrap': 'anywhere', ...more }, F(key, text)) : '');
-const rule = c => tag('div', { height: '0', 'border-top': `1px solid ${c.line}` }, '');
 // 1.1.2 이름표 · 이름 라벨은 본문 글꼴(사용자 실리태번 글꼴 설정에서 떠 온 그 메시지의 글꼴)을 따라요 — 크기 · 굵기는 틀 그대로(사용자 「이름표 글꼴 안 바뀜」)
 const nameFont = (message, ui, size, weight = '400', more = {}) => ({ ...font(ui, size, weight, more), 'font-family': message?.font?.['font-family'] || ui.family });
 /** 글자로 쓸 색: 그 바탕에서 대비 4.5 이상이면 그 색, 아니면 팔레트 본문색 (붙인 곳 어디서나 읽히게) */

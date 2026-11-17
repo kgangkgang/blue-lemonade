@@ -82,7 +82,7 @@ const tagOf = r => (r >= 1 ? `${r}F` : `B${1 - r}`);
  * 층별 배치를 계산해요. places = 그 확장 지도 장소 목록(name · desc · kind · area · links · x · y).
  * 돌려주는 것: null(층 건물이 없음 → 그 확장 그림 그대로) 또는 { pos: Map(이름 → {x, y, zone, row, b}), rows, buildings, ground, routes(pairs) }
  */
-export function floorLayout(places, { find = simpleFind, tr = null } = {}) {
+export function floorLayout(places, { find = simpleFind, tr = null, tall = null } = {}) {
     const list = (Array.isArray(places) ? places : []).filter(p => p && p.name);
     if (list.length < 2) return null;
     const info = new Map(list.map((p, i) => [p.name, { p, i, f: floorOf(p, tr) }]));
@@ -101,13 +101,17 @@ export function floorLayout(places, { find = simpleFind, tr = null } = {}) {
         const rs = g.map(it => rowOf(it.f)), hi = Math.max(...rs), lo = Math.min(...rs);
         if (hi - lo < 15) for (let r = lo; r <= hi; r++) rowSet.add(r); else rs.forEach(r => rowSet.add(r));
     }
+    // 버그 사냥 9: 지하층만 있는 건물(지하 감옥 B1 ~ B3 등)이면 땅 줄(1F)이 없어 땅 선 · 바깥 장소가 맨 아래 지하층 높이에 놓였어요 — 빈 1F 줄을 하나 둬요(그 건물 띠에는 안 들어가요)
+    if (![...rowSet].some(r => r >= 1)) rowSet.add(1);
     const rows = [...rowSet].sort((a, b) => b - a);
     // 줄 y: 위에서부터 띠를 쌓아요. 1F 와 B1 사이가 땅(ground)
-    const rowTop = new Map(); rows.forEach((r, k) => rowTop.set(r, k * ROW_H));
-    const top = 0, bottom = rows.length * ROW_H;
+    // 두 줄 이름표가 있는 층은 띠를 한 줄(LINE_H)만큼 높이고 점 · 이름표를 그만큼 내려요 — 윗줄이 위층 띠 경계에 닿지 않게(tall = 그런 층 모음 · 처음엔 비우고 배치 뒤 한 번 더)
+    const extra = r => (tall?.has(r) ? LINE_H : 0), rowH = r => ROW_H + extra(r);
+    const rowTop = new Map(); { let acc = 0; for (const r of rows) { rowTop.set(r, acc); acc += rowH(r); } }
+    const top = 0, bottom = rows.reduce((a, r) => a + rowH(r), 0);
     const groundRow = rows.includes(1) ? 1 : (rows.filter(r => r >= 1).sort((a, b) => a - b)[0] ?? rows[rows.length - 1]);
-    const groundY = rowTop.get(groundRow) + ROW_H;
-    const dotY = r => rowTop.get(r) + DOT_Y;
+    const groundY = rowTop.get(groundRow) + rowH(groundRow);
+    const dotY = r => rowTop.get(r) + DOT_Y + extra(r);
     // 링크 짝(그 확장과 같은 규칙: 이어진 곳 이름으로 찾고 · 한 번씩)
     const pairs = []; const seen = new Set();
     for (const p of list) for (const l of (Array.isArray(p.links) ? p.links : [])) {
@@ -128,7 +132,7 @@ export function floorLayout(places, { find = simpleFind, tr = null } = {}) {
     }
     // 칸 너비 채우기: 세로(층 수 · 위 · 아래)로 정해지는 보기 칸 너비만큼 방 칸을 넓혀요(건물이 한쪽에 붙고 반이 비지 않게)
     const hasZ = z => [...zone.values()].includes(z);
-    const contentH = rows.length * ROW_H + (hasZ('above') ? 23 : 3) + (hasZ('below') ? 23 : 3);
+    const contentH = bottom + (hasZ('above') ? 23 : 3) + (hasZ('below') ? 23 : 3);
     const outN = [...zone.values()].filter(z => z === 'out').length;
     // 바깥 장소: 땅 위 1층 가게 · 집이라 모두 1층 줄(땅 선 바로 위) 한 줄에 둬요 — 다른 층 높이에 두면 「3층 가게」 처럼 읽혀요
     const fixedW = 4 + buildings.length * TAG_W + shaftN.reduce((s2, n2) => s2 + (n2 ? 3 + n2 * LANE : 0), 0) + (buildings.length - 1) * 10 + (outN ? 4 + outN * OUT_W + 10 - OUT_W / 2 : 2);
@@ -148,7 +152,7 @@ export function floorLayout(places, { find = simpleFind, tr = null } = {}) {
             a.forEach((it, j) => pos.set(it.p.name, { x: r1(roomL + (j + 0.5) * w), y: dotY(r), zone: 'b', row: r, b: bi, w }));
         }
         const rs = rows.filter(r => r <= Math.max(...byRow.keys()) && r >= Math.min(...byRow.keys()));
-        bInfo.push({ left, right, roomL, roomR: roomL + roomW, shaftL: roomL + roomW, shaftW, rows: rs, top: rowTop.get(rs[0]), bottom: rowTop.get(rs[rs.length - 1]) + ROW_H, lanes: 0 });
+        bInfo.push({ left, right, roomL, roomR: roomL + roomW, shaftL: roomL + roomW, shaftW, rows: rs, top: rowTop.get(rs[0]), bottom: rowTop.get(rs[rs.length - 1]) + rowH(rs[rs.length - 1]), lanes: 0 });
         x = right + 10;
     });
     const bLeft = bInfo[0].left, bRight = bInfo[bInfo.length - 1].right;
@@ -175,7 +179,12 @@ export function floorLayout(places, { find = simpleFind, tr = null } = {}) {
             used.push(px); pos.set(p.name, { x: r1(px), y, zone: z, row: null, b: null, w: SLOT_W });
         });
     }
-    return { pos, rows, rowTop, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, lane };
+    const out = { pos, rows, rowTop, rowH, dotY, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, lane, tall: tall || new Set() };
+    if (tall) return out;
+    // 이름표가 두 줄로 접힐 층(입히기와 같은 규칙: 보이는 이름 = 번역 보기 글 · 칸 너비 - 1.5)을 모아 한 번 더 놓아요
+    const need = new Set();
+    for (const [n, o] of pos) if (o.row !== null && o.row !== undefined && (o.zone === 'b' || o.zone === 'out') && info.get(n)?.p.known !== false && wrapLabel(tr?.(n) || n, (o.w || SLOT_W) - 1.5).length > 1) need.add(o.row);
+    return need.size ? floorLayout(places, { find, tr, tall: need }) : out;
 }
 
 /** 두 장소 사이 꺾인 선(점 목록). L = floorLayout 결과 · shown = 지금 보이는 장소 이름 모음 · lanes = 길마다 쓴 줄 수(같은 길 선끼리 벌려요) */
@@ -291,8 +300,8 @@ export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null 
         deco.appendChild(el(doc, 'rect', { class: 'bl-bldg', x: r1(b.left), y: r1(b.top), width: r1(b.right - b.left), height: r1(b.bottom - b.top), rx: 1.2 }));
         b.rows.forEach((r, k) => {
             const y = L.rowTop.get(r);
-            deco.appendChild(el(doc, 'rect', { class: `bl-band${k % 2 ? ' alt' : ''}${r < 1 ? ' under' : ''}`, x: r1(b.left), y: r1(y), width: r1(b.right - b.left), height: ROW_H }));
-            deco.appendChild(el(doc, 'text', { class: 'bl-ftag', x: r1(b.left + TAG_W / 2), y: r1(y + DOT_Y + 1.1) }, tagOf(r)));
+            deco.appendChild(el(doc, 'rect', { class: `bl-band${k % 2 ? ' alt' : ''}${r < 1 ? ' under' : ''}`, x: r1(b.left), y: r1(y), width: r1(b.right - b.left), height: r1(L.rowH(r)) }));
+            deco.appendChild(el(doc, 'text', { class: 'bl-ftag', x: r1(b.left + TAG_W / 2), y: r1(L.dotY(r) + 1.1) }, tagOf(r)));
         });
         if (b.shaftW) deco.appendChild(el(doc, 'rect', { class: 'bl-shaft', x: r1(b.shaftL + 0.6), y: r1(b.top + 0.6), width: r1(b.shaftW - 1.2), height: r1(b.bottom - b.top - 1.2), rx: 0.6 }));
         gx0 = Math.min(gx0, b.left); gx1 = Math.max(gx1, b.right);

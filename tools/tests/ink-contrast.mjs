@@ -133,7 +133,7 @@ class Node {
     closest(sel) { for (let n = this; n; n = n.parentElement) if (n.matches(sel)) return n; return null; }
     querySelectorAll(sel) { return [...this.walk()].filter(n => n.matches(sel)); }
     querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
-    getElementsByTagName(tag) { return [...this.walk()].filter(n => n.nodeName === tag.toUpperCase()); }
+    getElementsByTagName(tag) { return [...this.walk()].filter(n => tag === '*' || n.nodeName === tag.toUpperCase()); }
     getElementsByClassName(c) { return [...this.walk()].filter(n => n.classList.contains(c)); }
 }
 function one(el, sel) {
@@ -178,10 +178,16 @@ const sheetColor = el => {
     return null;
 };
 const css = c => { const [r, g, b, a = 1] = C.parseColor(c); return a < 1 ? `rgba(${r}, ${g}, ${b}, ${a})` : `rgb(${r}, ${g}, ${b})`; };
+// 프리셋 속마음 색(메시지 안 <style> — 실리태번이 클래스에 custom- 을 붙임): .custom-tt-이름, .custom-tt-이름 * { color: … !important }
+// 클래스 하나짜리 !important 라 인라인 style 색 · 테마 덮기보다 세고, 우리 표시(id 둘 무게)보다는 약하다. 안쪽 요소마다 직접 칠한다(상속 아님)
+const ttRules = new Map();
+const ttColor = el => { for (let n = el; n; n = n.parentElement) for (const c of n.classList) if (ttRules.has(c)) return ttRules.get(c); return null; };
 function colorOfNode(el) {
     if (el === doc.documentElement || el === doc.body) return pal.text;
     const mine = sheetColor(el);
     if (mine) return mine;
+    const tt = ttColor(el);
+    if (tt) return tt;
     if (el.themeInk) return el.themeInk;
     if (el.nodeName === 'Q' && !el.inheritQ) return pal.dialogue;
     const inline = /(?:^|;)\s*color\s*:\s*([^;]+)/i.exec(el.getAttribute('style') || '');
@@ -397,6 +403,48 @@ await test('미리보기 표본 bl-ink-sample 은 우리 표시가 아님: 맞�
     R.syncInkContrast(false);
     assert.ok(sample.classList.contains('bl-ink-sample') && !sample.classList.contains('bl-ink'), '끄면 우리 표시만 사라짐');
     sample.parentElement.parentElement.parentElement.remove();
+});
+
+// 1.6.9 프리셋 속마음(<true_thoughts character="이름"> → <span class="tt tt-이름"><em>…</em></span>, 색은 메시지 안 <style> 의 클래스 규칙 · !important).
+// 인라인 색이 아니라 예전엔 안 봤다 → 낮의 연보라 · 연노랑, 밤의 남회색 속마음이 묻혔다. 지어낸 이름 · 지어낸 글
+await test('1.6.9 속마음 클래스 색: 묻히는 것만 같은 색 계열로 맞추고(밤 밝힘 · 낮 짙게), 안쪽 글자 조각까지 · 잘 읽히는 색 · 원래 HTML 은 그대로 · 끄면 원래 색', async () => {
+    usePalette('night');
+    const P = { 가온: '#b799e8', 나리: '#f0d878', 다솜: '#424C59', 라온: '#e63946' };
+    for (const [name, color] of Object.entries(P)) ttRules.set(`custom-tt-${name}`, color);
+    const thought = name => {
+        const piece = new Node('span', { class: 'bl-cjk' }).append('조각');
+        const em = new Node('em').append(`${name}의 지어낸 속마음 `, piece);
+        return { root: new Node('span', { class: `custom-tt custom-tt-${name}` }).append(em), em, piece };
+    };
+    const T = Object.fromEntries(Object.keys(P).map(n => [n, thought(n)]));
+    const plain = new Node('span', { style: 'color:#424C59' }).append('인라인 남회색');
+    const mt = message(...Object.values(T).map(t => t.root), ' ', plain);
+    const html = () => [...mt.walk()].map(n => `${n.nodeName}|${n.getAttribute('style') ?? ''}|${(n.getAttribute('class') || '').split(' ').filter(c => !c.startsWith('bl-ink')).join(' ')}`).join('\n');
+    const was = html();
+    const all = t => [t.root, t.em, t.piece];
+    const hueKept = (el, name) => hueGap(hueOf(C.parseColor(getComputedStyle(el).color)), hueOf(rgb(P[name]))) < 4;
+    const darker = (el, name) => C.luminance(C.parseColor(getComputedStyle(el).color)) < C.luminance(rgb(P[name]));
+    assert.ok(shownOn(T.다솜.piece) < 2, `처음엔 밤에 남회색 속마음이 묻힘 ${shownOn(T.다솜.piece)}`);
+    R.syncInkContrast(true); await wait(260); R.inkContrastRun([mt]);
+    for (const el of all(T.다솜)) {
+        assert.ok(shownOn(el) >= 4.5, `밤 남회색 속마음 ${el.nodeName} ${shownOn(el)}`);
+        assert.ok(hueKept(el, '다솜') && !darker(el, '다솜'), '같은 색 계열로 밝힘');
+    }
+    for (const el of all(T.가온)) assert.equal(getComputedStyle(el).color, css(P.가온), '밤에 잘 읽히는 연보라는 그대로');
+    for (const el of all(T.나리)) assert.equal(getComputedStyle(el).color, css(P.나리), '밤에 잘 읽히는 연노랑은 그대로');
+    assert.ok(plain.classList.contains('bl-ink') && shownOn(plain) >= 4.5, '인라인 색 맞추기는 예전처럼');
+    usePalette('light'); R.syncInkContrast(true); await wait(260);
+    for (const name of ['가온', '나리', '라온']) for (const el of all(T[name])) {
+        assert.ok(shownOn(el) >= 4.5, `낮 ${name} ${el.nodeName} ${shownOn(el)}`);
+        assert.ok(hueKept(el, name) && darker(el, name), `낮 ${name} 같은 색 계열로 짙게`);
+    }
+    for (const el of all(T.다솜)) assert.equal(getComputedStyle(el).color, css(P.다솜), '낮에 잘 읽히는 남회색은 원래 색으로 돌아옴');
+    assert.equal(html(), was, '원래 HTML(style · class) 그대로');
+    R.syncInkContrast(false);
+    for (const [name, t] of Object.entries(T)) for (const el of all(t)) assert.equal(getComputedStyle(el).color, css(P[name]), '끄면 원래 색');
+    mt.remove();
+    ttRules.clear();
+    usePalette('night');
 });
 
 // ── 연결 ──

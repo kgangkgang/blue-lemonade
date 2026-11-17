@@ -231,10 +231,19 @@ await ok('⑧ 1.6.5 만들기 창이 닫히면(보낸 뒤) 관계 숫자 바로�
     w.macros[P.MACRO_ALL]();
     doc.watchers[0]([{ removedNodes: [z.dlg] }]); await tick();
     assert.equal(calls.length, 1); assert.equal(calls[0].level, 'all'); assert.equal(calls[0].before, base0);
+    assert.equal(typeof calls[0].chat, 'string', '버그 사냥 9: 고르기를 건 채팅 열쇠도 넘겨요(채팅을 바꿔 창이 치워져도 새 채팅을 안 고치게)'); assert.equal(calls[0].chat, P.chatKey(w.c));
     const z2 = wizard(doc, undefined, true); doc.fire('animationstart', { animationName: m.ANIM, target: z2.ta }); await tick();
     const s2 = z2.chatRow.querySelector('.bl-mb-read-sel'); s2.value = 'all'; doc.fire('change', { target: s2 }); await tick();
     doc.watchers[0]([{ removedNodes: [z2.dlg] }]); await tick();
     assert.equal(calls.length, 1, '안 보냈으면(요청 0) 안 불러요');
     delete w.c.chatMetadata;
+});
+await ok('1.6.9 채팅을 열 때 정리: 「미트볼 문구」 를 안 써도 상태창 있는 채팅을 처음 열면 문구 모듈을 받아 채팅 감시를 한 번 걸어요 · 상태창 없는 채팅이면 안 받아요', async () => {
+    const m = await fresh(); const doc = makeDoc(); let loads = 0, watched = 0; const on = {};
+    const c = { eventTypes: { CHAT_CHANGED: 'cc' }, eventSource: { on: (e, f) => { on[e] = f; } }, chatMetadata: {} };
+    m.startMbRead(doc, { watch: doc.watch, settings: async () => ({ chat: { mbPrompt: 'off' } }), load: async () => { loads++; return { watchChats: () => { watched++; } }; }, ctx: () => c });
+    await tick(); assert.deepEqual([loads, watched], [0, 0], '상태창 없는 채팅 — 문구 모듈을 안 받아요');
+    c.chatMetadata = { statussim: { base: { data: {} } } }; on.cc(); await tick(); assert.deepEqual([loads, watched], [1, 1]);
+    on.cc(); await tick(); assert.deepEqual([loads, watched], [1, 1], '한 번만 — 다음 채팅부터는 문구 모듈의 감시가 맡아요');
 });
 console.log(`mb-read: ${n}개 통과`);

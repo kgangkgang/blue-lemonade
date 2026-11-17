@@ -106,9 +106,10 @@ export function valueOf(control) {
     return String(control.value ?? '').trim().slice(0, 12) || null;
 }
 
+/** 설정 칸마다의 기억(localStorage · bl-ext-<종류>:<칸 id>) — 탭(src/ext-compat.js) · 접힘 · 보기 · 시작 안내가 같이 써요. 저장소가 막혀 있으면 기억 없이(탭은 첫 탭) */
 const keyOf = (root, kind) => `bl-ext-${kind}:${root.id || 'x'}`;
-function recall(root, kind) { try { return localStorage.getItem(keyOf(root, kind)) || ''; } catch { return ''; } }
-function remember(root, kind, value) { try { localStorage.setItem(keyOf(root, kind), value); } catch { /* 저장소가 막혀 있으면 기억 없이 */ } }
+export function recall(root, kind) { try { return localStorage.getItem(keyOf(root, kind)) || ''; } catch { return ''; } }
+export function remember(root, kind, value) { try { localStorage.setItem(keyOf(root, kind), value); } catch { /* 기억 없이 */ } }
 const keysOf = row => { const out = []; const add = e => { const d = e.dataset || {}; for (const k of ['s', 'sAct', 'sEvery', 'sPreset']) if (d[k]) out.push(d[k]); }; add(row); for (const e of row.querySelectorAll(KEYED)) add(e); return out; };
 function make(doc, tag, cls, text, group) {
     const node = doc.createElement(tag);

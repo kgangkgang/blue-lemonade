@@ -1198,3 +1198,18 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-cost { margin-bottom: var(--bl-s
 body.salty:not([data-bl-ext-raw]) .ss-scope :is(button.ss-chip, .ss-chip.btn) { padding-block: 5px; }
 /* 설정 서랍: 고르기 · 입력 칸 바로 아래 덧글(「초압축은 …」 · 「실리 기본 번역은 …」)이 칸 테두리에 2 ~ 3px 로 붙었어요 → 8 */
 body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label:not(.checkbox_label) > :is(select, textarea, .ss-set-inline, input.text_pole) + small { display: block; margin-top: var(--bl-s2, 8px); }
+
+/* 관문 빚 갚기(11-17 · 1.6.6 위): 상태창 머리 「찾기」 돋보기는 그림이 제 글자 칸을 꽉 채워(512 칸 전부) 옆 그림(일시정지 · 넓게 보기 — 칸의 87%)보다 잉크가 15% 커 보였어요(폰 384 · 15.6 ↔ 13.6px).
+   그림만 0.88배 — 단추 상자 · 누를 자리 · 간격은 그대로 */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-head-a > .ss-ib[data-act="search"] > i[class*="fa-"] { font-size: .88em; transform: translateY(calc(.05em + .44px)); }   /* 줄이면 잉크가 0.44px 위로 떠서(리그) 그만큼 내려요 — 1033 줄 .05em 밀기는 그대로 */
+/* 일시정지 그림(두 막대)은 칸의 75% 높이라 옆 그림보다 15% 작았어요(11.6 ↔ 13.6px) — 막대 그림일 때만 1.17배(재생 ▶ 으로 바뀌면 원래 크기) */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-head-a > .ss-ib[data-act="pause"] > i.fa-pause { font-size: 1.17em; }
+/* 관계 카드 얼굴 단추(얼굴 바꾸기)는 36px 라 누를 자리 40 에 모자랐어요 — 보이는 원은 그대로 두고 안 보이는 자리만 사방 2px 넓혀요(오른쪽 6px 여백 · 카드 안쪽 여백 안) */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h > .ss-ava-btn { position: relative; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h > .ss-ava-btn::after { content: ''; position: absolute; inset: -2px; }
+
+/* 1.6.9 (css/73-scroll-fade 에서 옮김 — 늘 붙는 시트에 그 확장 규칙을 싣지 않으려고) 미트볼 상태창 창(과 그 안 스크롤 칸)은 흐림을 걸지 않아요 — 11-17 사용자 폰 「또」(1.5.1 · 1.6.8 두 번): 관계 카드 하나에서
+   위치 지정 요소(단추 넷 · 막대 길과 막대 — 손가락 화면에서 단추는 누를 자리 상자 때문에 position: relative)만 통째로 안 칠해지고 글자 · 얼굴 · 단계 딱지는 보였어요.
+   그 카드 안 요소를 하나씩 대 보면 빠진 것 = 위치 지정 요소 전부 · 보인 것 = 아닌 것 전부예요. 원작 창에는 mask 가 없고, 테마만 그 스크롤 칸에 mask(넘친 쪽 흐림)를 걸고
+   스크롤할 때마다 top · bottom · both 로 바꿔 다시 칠하게 해요 — 폰 크롬의 mask 스크롤 칸 안 위치 지정 층 덜 칠하기로 봐요(PC 리그 · 같은 자료로는 안 생겨 폰 확인은 사용자 몫). */
+html:not(#bl-tab-scroll-off) body.salty :is(dialog.ss-dlg .popup-content, .ss-scope)[data-bl-fade-y], html:not(#bl-tab-scroll-off) body.salty .ss-scope [data-bl-fade-y] { -webkit-mask-image: none; mask-image: none; }

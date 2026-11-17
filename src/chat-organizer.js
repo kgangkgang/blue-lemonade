@@ -9,6 +9,7 @@
 import { getSettings, saveSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';
 import { pickRect } from './selects.js';
+import { backLayer } from './back-close.js';   // 1.6.9 뒤로 가기 = 이 겹만 닫기
 import { ask, attachUndo } from './ask.js';
 import { mouseDevice } from './prompt-card-picker.js';
 import * as core from './chat-organizer-core.js';
@@ -381,7 +382,8 @@ function openMenu(anchor, items) {
     const resize = () => { if (window.innerWidth !== width || !anchor.isConnected) closeMenu(); else place(); };
     document.addEventListener('keydown', key, true);
     window.addEventListener('resize', resize);
-    menu = { layer, back, off: () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
+    const backDone = backLayer(() => { if (menu?.layer === layer) closeMenu(); });
+    menu = { layer, back, off: () => { backDone(); document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
     document.body.append(layer);
     if (typeof layer.showPopover === 'function') { try { layer.setAttribute('popover', 'manual'); layer.showPopover(); } catch { layer.removeAttribute('popover'); } }
     function place() {

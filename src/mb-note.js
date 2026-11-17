@@ -20,6 +20,7 @@ const SHORT_PERSONA = 200;   // 이보다 짧은 페르소나 설명은 이름 �
 const TOLD_MAX = 60;
 
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
+const flat = s => s.replace(/\s+/g, ' ').trim();
 
 /** 이 채팅의 작가 노트 글(앞뒤 빈칸 뗌) — 없으면 '' */
 export function noteText(c = ctx()) {
@@ -31,7 +32,6 @@ export function noteText(c = ctx()) {
 export function joined(value, note) {
     const cur = String(value ?? ''), add = String(note ?? '').trim();
     if (!add) return null;
-    const flat = s => s.replace(/\s+/g, ' ').trim();
     if (flat(cur).includes(flat(add))) return null;
     const head = cur.replace(/\s+$/, '');
     return head ? `${head}\n\n${add}` : add;
@@ -84,7 +84,6 @@ export function place(el, note = noteText()) {
     let button = slot.row.querySelector(`.${BTN}`);
     if (!button) {
         button = makeButton(doc);
-        button.__blMbNoteInput = slot.input;
         if (slot.kind === 'wizard') { const wrap = doc.createElement('div'); wrap.className = 'ss-sec-r bl-mb-note-r'; wrap.append(button); slot.row.append(wrap); }
         else slot.row.append(button);
     }
@@ -119,7 +118,6 @@ export function shouldTell(c = ctx()) {
     if (!Array.isArray(meta.adjust) || meta.adjust.some(a => a?.set?.mod === 'profile' || a?.mod === 'profile')) return false;
     const persona = String(c?.powerUserSettings?.persona_description ?? '');
     if (persona.trim().length >= SHORT_PERSONA) return false;   // 페르소나 설명에 글이 있으면 그 확장이 그걸 읽었어요 — 어긋남을 확신 못 해요
-    const flat = s => s.replace(/\s+/g, ' ').trim();
     const sheet = [mine.summary, ...(Array.isArray(mine.fields) ? mine.fields.map(f => f?.v) : [])].map(v => String(v ?? '')).join(' ');
     if (flat(sheet).includes(flat(note).slice(0, 40))) return false;   // 노트를 이미 넣어 만든 시트
     return true;

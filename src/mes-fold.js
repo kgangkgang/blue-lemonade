@@ -9,6 +9,7 @@
 
 // 감싸는 틀: 빈 줄을 두어야 첫 문단부터 <p> 로 그려진다 (한 줄 틀은 첫 문단이 <br> 붙은 맨 글자로 남았다)
 import { watchDom } from './dom-watch.js';
+import { backLayer } from './back-close.js';   // 1.6.9 뒤로 가기 = 이 겹만 닫기
 import { notifyRerender } from './rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) — 이벤트는 여전히 쏘지 않고 알림기가 판단한다
 
 const HEAD = '<details><summary></summary>\n\n', TAIL = '\n\n</details>';
@@ -235,7 +236,8 @@ export function openEyeChoice(button, pin) {
     const onResize = () => { if (window.innerWidth !== width || !button.isConnected) closeEyeChoice(); else place(box, button); };
     document.addEventListener('keydown', onKey, true);
     window.addEventListener('resize', onResize);
-    current = { layer, off: () => { document.removeEventListener('keydown', onKey, true); window.removeEventListener('resize', onResize); } };
+    const backDone = backLayer(() => { if (current?.layer === layer) closeEyeChoice(); });
+    current = { layer, off: () => { backDone(); document.removeEventListener('keydown', onKey, true); window.removeEventListener('resize', onResize); } };
     // 아직 누르고 있는 손가락(마우스)을 뗄 때의 click — 창 위에 떨어져 뒤의 ··· 메뉴를 닫지 않게
     swallowNextClick(1500);
     document.body.append(layer);

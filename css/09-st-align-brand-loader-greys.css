@@ -98,7 +98,7 @@ body.salty #right-nav-panel:not(#salty-none) .scrollableInner:where(:not(.scroll
      (북마크 .cg-version 과 .eh-version-foot 은 알약이 아니라 창 아래 한 줄 글이라 그대로) */
 body.salty #rm_extensions_block #salty-drawer > .inline-drawer-header > b > .fa-lemon {
   color: var(--salty-lemon, var(--bl-fb-e9be00)); /* 상표 레몬은 팔레트의 brand (없으면 레몬색) — 상태색 --bl-lemon 과 따로 (4.1.2) */
-  --bl-glyph-y: .02em; /* 1.6.0 .045em → .02em(아래 출처 단추 줄 설명) · 1.5.2 레몬 그림은 제 글자 칸 가운데보다 0.045em 위에 그려져 있어요 — 옆 출처 단추 그림과 잉크 가운데 차 −0.81 → −0.13px(폰 384 · PC 1280) */
+  --bl-glyph-y: .06em; /* 11-17 관문 빚 .02em → .06em: 레몬이 글자 · 출처 단추(ⓒ)보다 0.41px 위(둘 다 0.41 아래)라 0.6px 더 내려요(.046em 에서 아직 0.22 위 — 리그) · 1.6.0 .045em → .02em(아래 출처 단추 줄 설명) · 1.5.2 레몬 그림은 제 글자 칸 가운데보다 0.045em 위에 그려져 있어요 — 옆 출처 단추 그림과 잉크 가운데 차 −0.81 → −0.13px(폰 384 · PC 1280) */
 }
 /* 1.5.7 그 밀기는 그림(::before)에만 — 상자(i 24px)를 밀면 머리줄(b) 형제 상자 묶음이 0.7px 아래로 늘어 알약 · 출처 단추가 「한 줄 가운데」에서 −1.15 · −0.7px 로 재졌어요.
    레몬 그림은 가로로 넓어 잉크 높이가 옆 그림(출처 원 · 다른 확장 아이콘)의 83% 라 그림만 1.15배(관문 「아이콘 잉크 높이」 0.9 ~ 1.1) — 상자 · 간격은 그대로 */

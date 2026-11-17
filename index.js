@@ -251,6 +251,8 @@ const BOOT_IDLE = [
     ['startTabScroll', () => import('./src/tab-scroll-init.js'), () => {}, 'drawer'],   // 애드온 창 · 도구 창의 가로 탭 줄 스크롤 (불러오면 걸어요)
     ['registerStorageReport', () => import('./src/storage-report.js'), m => { m.registerStorageReport(); }, 'drawer'],   // 7.4.0 저장 공간 보고 다리에 등록
     // 6.9.9 프롬프트 템플릿(ST-Prompt-Template) 설정 블록: 한국어 표 · 머리글 아이콘 — 블록이 없으면 몇 번 찾고 끝 (src/prompt-template-host.js)
+    // 1.6.9 뒤로 가기로 창 닫기 — 테마 창(모달) · 테마가 띄운 실리태번 팝업이 뜨면 기록 한 칸, 폰의 뒤로 가기 = 맨 위 창 하나 닫기 · 새로 고친 뒤 남은 칸 치우기 (src/back-close.js)
+    ['startBackClose', () => import('./src/back-close.js'), m => { m.startBackClose(); }],
     ['startPromptTemplateHost', () => import('./src/prompt-template-host.js'), m => { m.startPromptTemplateHost({ koUi: settings.koUi }); }, 'drawer'],
 ];
 

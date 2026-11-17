@@ -85,8 +85,8 @@ export function baked(id, c = ctx()) {
     return Number.isFinite(start) && id < start;
 }
 
-async function after(changed, c) {
-    if (!changed) return;
+/** 표식을 바꾼 뒤: 저장하고 그 확장에게 다시 계산을 시켜요 */
+async function after(c) {
     try { await c?.saveChat?.(); } catch { /* 다음 저장 때 같이 가요 */ }
     await nudge(c);
 }
@@ -97,7 +97,7 @@ export async function onEye(id, wantHidden, { c = ctx(), on = enabled(), toast =
     if (!!c?.chat?.[id]?.is_system !== wantHidden) return 'none';
     const how = settle(id, c, on);
     if (how === 'none') return how;
-    await after(true, c);
+    await after(c);
     if (how === 'out' && baked(id, c)) { try { toast?.info?.('오래된 답이라 미트볼이 이미 합쳐 둔 기록이에요 — 눈을 감겨도 숫자는 그대로예요.', '', { timeOut: 6000 }); } catch { /* 알림 없이 */ } }
     return how;
 }
@@ -111,7 +111,7 @@ export async function adopt(c = ctx(), on = enabled(), toast = globalThis.toastr
     let n = 0;
     for (const m of c.chat) if (foldedByHand(m) && mark(m)) n++;
     if (!n) return 0;
-    await after(true, c);
+    await after(c);
     try { toast?.info?.(`접어 둔 답 ${n}개를 미트볼 상태에서 뺐어요. 펼치면 돌아오고, 전부 되돌리려면 테마 설정 「눈 감긴 답은 미트볼 상태에서 빼기」 를 꺼요.`, '', { timeOut: 12000, extendedTimeOut: 4000 }); } catch { /* 알림 없이 */ }
     return n;
 }

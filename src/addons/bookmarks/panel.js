@@ -15,6 +15,7 @@ import { tileLayouter } from './tile-masonry.js';   // 1.7.1 그림만 격자를
 import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBookmark, enterPreview, isPreviewing, openTranslationEditor, confirmClearTranslation } from './viewers.js';
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
 import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
+import { backLayer } from '../../back-close.js';   // 1.6.9 기록 뒤로 가기(CloseWatcher 가 없는 브라우저 · 브라우저 뒤로)도 한 단계씩
 import { nameAliases } from '../../name-aliases.js';   // 6.3.x 찾는 말이 이름이면 다른 표기(영 · 한 · 일)로도
 
 const view = {
@@ -215,6 +216,12 @@ export async function openPanel({ keepState = false } = {}) {
     if (!reuse) view.root.classList.add('cg-chat-intro');
     view.open = true;
     watchBack();   // 7.0.2 안드로이드 뒤로 가기
+    // 1.6.9 공용 뒤로 가기 겹(src/back-close.js): 기록 한 칸 — 뒤로 가기면 Esc 와 같은 차례로 한 단계, 창이 남으면 겹도 남아요
+    view.backDone ||= backLayer(() => {
+        if (!view.open) return true;
+        if (isSettingsOpen()) closeSettings(); else if (isDrawerOpen()) closeDrawer(); else closePanel();
+        return !view.open;
+    });
     applyColors(colorsFor(view.selectedKey ?? currentChatKey()));
     renderAll();
     if (!view.root.contains(document.activeElement)) $('[data-act="close"]').focus({ preventScroll: true });
@@ -255,6 +262,7 @@ export function closePanel({ keepColors = false } = {}) {
     if (!view.open) return;
     view.open = false;
     unwatchBack();
+    { const lb = view.backDone; view.backDone = null; lb?.(); }
     othersCache.clear();   // 7.2.6 다시 열면 목록을 새로 받는다
     if (!keepColors) {
         // 닫은 뒤 늦게 도착한 다른 채팅 목록도 버린다. 미리보기에서 돌아올 때만 재사용한다.

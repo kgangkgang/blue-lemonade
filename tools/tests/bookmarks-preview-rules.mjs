@@ -31,7 +31,7 @@ const context = {
     currentChatKey: () => "1부", getOwner: () => owner, clearHighlights() {},
     currentRecord: () => ({ key: '1부', label: '1부', isCurrent: true, owner, favorites: [], messageCount: 1, lastMes: '' }),
     otherRecord: () => ({}), listOtherChats: async () => [],
-    setTimeout: (f) => { timers.push(f); return timers.length; }, clearTimeout() {}, nameAliases: () => [],
+    setTimeout: (f) => { timers.push(f); return timers.length; }, clearTimeout() {}, nameAliases: () => [], backLayer: () => () => {},
 };
 const plain = panelSource.split('\n').filter(line => !line.startsWith('import ')).join('\n').replace(/^export /gm, '');
 vm.runInNewContext(plain + `

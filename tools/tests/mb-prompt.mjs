@@ -597,4 +597,100 @@ await ok('1.6.8 재현에서 찾은 것: 중복 정리 알림은 채팅마다 �
     const tt = []; await M.afterWizard({ before, level: 'all', c: cx, toast: { info: m => tt.push(m), success: m => tt.push(m) }, waitMs: 500, step: 5, core: null });
     assert.match(tt.at(-1), /시간대도 채팅의 마지막 시간대 「아침」으로 맞췄어요\./); assert.equal(cx.chatMetadata.statussim.base.data.calendar.time, 'Morning', '달력 값은 그 확장 이름 그대로');
 });
+await ok('1.6.9 이미 만든 상태창의 직함 줄 · 이름 줄 합치기: 직함이 두 사람 항목에 나와도 관계 칸 자기 글에 그 직함이 든 사람이 정확히 하나면 그 사람 · 그 확장 「합치기」 기록 그대로 · 채팅마다 한 번 · 다른 사람은 안 합쳐요', async () => {
+    const rel = (n, label, memo, aff = 0, trust = 0) => ({ name: n, label, memo, aff, trust, stage: -1, met: '', bond: false });
+    const filled = (r) => ({ name: r.name, role: 'npc', summary: `${r.label} — ${r.memo}`, fields: [], home: '', sched: '' });
+    const pro = (n, summary) => ({ name: n, role: 'main', summary, fields: [{ k: 'Age', v: '30' }] });
+    // 지어낸 자료: Captain(직함 줄) · Mira(진짜 이름 줄 — 메모에 「Captain」) · Joon(예전 Captain — 프로필 요약에만) · Pip(Mira 항목에 든 고양이)
+    const mk = (over = {}, id = 'm' + Math.random()) => {
+        const cap = rel('Captain', 'Boss', 'Her kind, distracted boss.', 15, 13);
+        const user = over.rel || [cap, rel('Joon', 'Old Guard', 'Gave her a honey drop.', 0, 8), rel('Pip', '', "Mira's two-tailed cat.", 0, 0), rel('Mira', '', 'Gentle director, called only "Captain" by the staff.', 0, 0)];
+        const prof = over.prof || [{ name: 'Me', role: 'user', summary: 'Mira the Captain\'s secretary.' }, pro('Mira', 'Gentle director known as the Captain.'), pro('Joon', 'Former Captain, now an adviser.'), filled(cap)];
+        return loreCtx({ getCurrentChatId: () => id, saveMetadata() { this.saved = (this.saved || 0) + 1; }, chat: [{}, {}, {}], chatMetadata: { statussim: { base: { data: { rel: { user, pairs: [{ a: 'Bo', b: 'Captain' }] }, profile: { list: prof } } }, adjust: over.adjust || [], tr: { Captain: '캡틴', Mira: '미라' } } }, ...(over.ctx || {}) });
+    };
+    { const c = mk(); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [{ from: 'Captain', to: 'Mira' }], 'Joon 요약의 「Former Captain」 은 안 봐요(관계 칸 자기 글만)');
+        assert.deepEqual(M.mergeTitles(c, { now: () => 1000 }), [{ from: 'Captain', to: 'Mira' }]);
+        assert.deepEqual(c.chatMetadata.statussim.adjust, [{ at: 3, t: 1000, ops: [['_merge', 'Captain => Mira']], label: '🔗 Captain → Mira 합침' }], '그 확장 「합치기」 단추와 같은 기록(메시지에 안 묶음)');
+        assert.deepEqual(M.titleMerges(c), [], '이미 합친 이름은 다시 안 합쳐요'); }
+    { const c = mk({ rel: [rel('Captain', 'Boss', 'Her boss.'), rel('Joon', 'Old Guard', 'The old Captain, still proud.'), rel('Mira', '', 'Called "Captain" by staff.')] }); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '두 후보 다 자기 글에 그 직함 — 못 정해요'); }
+    { const c = mk({ rel: [rel('Captain', 'Boss', 'Her boss.'), rel('Joon', 'Old Guard', 'x'), rel('Mira', '', 'Director.')] }); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '자기 글에 그 직함이 든 후보가 없으면 그대로'); }
+    { const c = mk({ rel: [rel('Pip', '', "Mira's cat."), rel('Mira', '', 'Owns Pip, a cat.')] }); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '그 줄 글에 후보 이름이 나오면(후보의 고양이) — 다른 이라 안 합쳐요'); }
+    { const c = mk({ rel: [rel('Keeper', '', 'x'), rel('Ria', '', 'The Keeper of the docks.')] }); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '사람 없는 설정 항목에도 나오는 낱말 — 그대로'); }
+    { const c = mk({ prof: [pro('Captain', 'Real person named Captain.'), pro('Mira', 'm')] }); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '그 이름의 진짜 프로필(사람 · AI 가 쓴 것)이 있으면 그 사람이에요'); }
+    { const c = mk({ ctx: { name1: 'Captain' } }); await M.primeBooks(c); assert.deepEqual(M.titleMerges(c), [], '사용자 이름이면 그대로'); }
+    { const c = mk(); c.loadWorldInfo = async () => null; await M.primeBooks(c); assert.deepEqual(M.titleMerges(c), [], '로어북이 없으면 그대로'); }
+    { const c = mk({ adjust: [{ at: 2, t: 5, set: { mod: 'rel', data: { user: [rel('Captain', 'Boss', 'Her boss.'), rel('Mira', '', 'Known as "Captain".')] } } }] }); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [{ from: 'Captain', to: 'Mira' }], '칸 통째 편집 기록이 있으면 그 줄로 봐요'); }
+    { const c = mk({ adjust: [{ at: 2, t: 5, set: { mod: 'rel', data: { user: [rel('Mira', '', 'x')], alias: { captain: 'Mira' } } } }] }); await M.primeBooks(c);
+        assert.deepEqual(M.titleMerges(c), [], '그 확장 이름 표에 이미 있으면(합친 뒤) 그대로'); }
+    // 채팅을 열 때: 중복 프로필 정리 + 합치기 · 저장 · 새로고침 · 알림 한 번(화면 번역 이름으로)
+    const c = mk({}, 'open-1'); const toasts = []; let refreshed = 0;
+    const gone = await M.cleanupDupes({ c, toast: { info: m => toasts.push(m) }, core: { app: { refreshNow: () => refreshed++ } } });
+    assert.deepEqual([...gone], ['Captain'], '블루레몬이 더한 Captain 프로필도 정리'); assert.deepEqual(gone.merged, [{ from: 'Captain', to: 'Mira' }]);
+    assert.equal(c.saved, 1); assert.equal(refreshed, 1); assert.equal(toasts.length, 2);
+    assert.match(toasts[1], /^관계 칸에 같은 사람이 직함 줄과 이름 줄로 나뉘어 있어 합쳤어요\(캡틴 → 미라\)\. 미트볼 「합치기」 와 같아요 — 애정 · 우정은 두 줄을 더하고, 앞으로 「캡틴」으로 적힌 변화도 그 사람에게 가요\. 관리 탭 되돌리기로 되돌릴 수 있어요\.$/);
+    assert.deepEqual(await M.cleanupDupes({ c, toast: { info: m => toasts.push(m) }, core: null }), [], '채팅마다 한 번'); assert.equal(toasts.length, 2);
+    assert.equal(c.chatMetadata.statussim.base.data.rel.user.length, 4, '기준 자료의 줄은 그대로(합치기는 그 확장이 계산할 때 — 되돌릴 수 있게)');
+});
+await ok('버그 사냥 9: 합치기를 사용자가 되돌리면(그 확장이 기록을 뺌) 다음에 채팅을 열어도 · 만들기 뒤에도 다시 안 합쳐요 · 장부는 채팅 메타데이터에', async () => {
+    const rel = (n, label, memo) => ({ name: n, label, memo, aff: 0, trust: 0, stage: -1 });
+    const c = loreCtx({ getCurrentChatId: () => 'undo-1', chat: [{}, {}], saveMetadata() { }, chatMetadata: { statussim: { base: { data: { rel: { user: [rel('Captain', 'Boss', 'x'), rel('Joon', 'Guard', 'y'), rel('Mira', '', 'Called "Captain" by staff.')] }, profile: { list: [] } } }, adjust: [] } } });
+    await M.primeBooks(c);
+    assert.deepEqual(M.mergeTitles(c, { now: () => 1 }), [{ from: 'Captain', to: 'Mira' }]);
+    assert.deepEqual(c.chatMetadata.bl_mb_merged, ['Captain']);
+    c.chatMetadata.statussim.adjust.splice(0, 1);   // 그 확장 되돌리기(undoAt · undoLast)는 기록을 통째로 빼요
+    assert.deepEqual(M.titleMerges(c), [], '되돌린 합치기는 다시 안 해요');
+    assert.deepEqual(M.mergeTitles(c), []); assert.equal(c.chatMetadata.statussim.adjust.length, 0);
+});
+await ok('버그 사냥 9: 로어북을 받는 사이 채팅이 바뀌면(같은 캐릭터 · 다른 채팅 로어북) 받은 것을 새 채팅 것으로 남기지 않아요 — 앞 채팅 로어북으로 새 채팅 사람을 합치던 것', async () => {
+    const rel = (n, label, memo) => ({ name: n, label, memo, aff: 0, trust: 0, stage: -1 });
+    let cur = 'race-a', release; const gate = new Promise(r => { release = r; });
+    const books = { 'card-z': { entries: {} }, 'chat-a': { entries: { 0: { key: ['Captain', 'Mira'] }, 1: { key: ['Captain', 'Joon'] } } }, 'chat-b': { entries: {} } };
+    const mk = wi => ({ characterId: 0, characters: [{ name: 'Narrator', avatar: 'n.png', data: { extensions: { world: 'card-z' } } }], getCurrentChatId: () => cur, name1: 'Me', chat: [{}, {}],
+        loadWorldInfo: async n => { if (n === 'chat-a') await gate; return structuredClone(books[n]); },
+        chatMetadata: { world_info: wi, statussim: { base: { data: { rel: { user: [rel('Captain', 'Boss', 'x'), rel('Joon', 'Guard', 'y'), rel('Mira', '', 'Called "Captain" by staff.')] }, profile: { list: [] } } }, adjust: [] } } });
+    const a = mk('chat-a'), p = M.primeBooks(a);
+    cur = 'race-b'; const b = mk('chat-b');
+    release(); await p;
+    assert.deepEqual(M.titleMerges(b), [], 'B 채팅에는 그 로어북이 없어요 — 안 합쳐요');
+    await M.primeBooks(b); assert.deepEqual(M.titleMerges(b), [], 'B 로어북으로 받으면 그대로');
+});
+await ok('버그 사냥 9: 채팅 열 때 정리가 기다리는 사이 채팅이 바뀌면 그만두고(앞 채팅 자료를 고쳐 놓고 새 채팅을 저장 · 알리던 것) 그 채팅을 다시 열면 해요', async () => {
+    const old166 = n => ({ name: n, role: 'npc', summary: 'Boss — Kind to her.', fields: [], home: '', sched: '' });
+    let cur = 'tidy-a', release; const gate = new Promise(r => { release = r; });
+    const c = loreCtx({ getCurrentChatId: () => cur, saveMetadata() { this.saved = (this.saved || 0) + 1; }, loadWorldInfo: async n => { await gate; return n === 'book-a' ? structuredClone(LORE) : null; },
+        chatMetadata: { statussim: { base: { data: { profile: { list: [{ name: 'Bo', role: 'main', summary: 'b', fields: [] }, old166('Warden')] }, rel: { user: [{ name: 'Warden', label: 'Boss', memo: 'Kind to her.' }] } } } } } });
+    const toasts = []; const p = M.cleanupDupes({ c, toast: { info: m => toasts.push(m) }, core: null });
+    await new Promise(r => setTimeout(r, 5)); cur = 'tidy-b'; release();
+    assert.deepEqual([...await p], [], '바뀐 뒤엔 손대지 않아요'); assert.equal(c.saved, undefined); assert.equal(toasts.length, 0);
+    assert.deepEqual(c.chatMetadata.statussim.base.data.profile.list.map(x => x.name), ['Bo', 'Warden']);
+    cur = 'tidy-a'; assert.deepEqual([...await M.cleanupDupes({ c, toast: { info: m => toasts.push(m) }, core: null })], ['Warden'], '다시 열면 정리해요');
+});
+await ok('버그 사냥 9: 만들기 창을 닫고 곧 다른 채팅으로 가거나 · 채팅을 바꿔 창이 치워지면 그 채팅 상태창을 「새로 적용됨」 으로 보고 고치지 않아요', async () => {
+    const op = (...ops) => ({ statussim: { bySwipe: { 0: ops } } });
+    const baseA = { data: { rel: { user: [{ name: 'Mira', aff: 0, trust: 0, stage: 0 }] } } };
+    const mkc = (id, base, ops) => ({ getCurrentChatId: () => id, chat: [{ name: 'x', mes: 'a', swipe_id: 0, extra: op(ops) }], chatMetadata: { statussim: { base } }, saveMetadata() { this.saved = 1; } });
+    const cA = mkc('aw-a', baseA, ['aff', 'Mira +3']);
+    const kai = () => ({ data: { rel: { user: [{ name: 'Kai', aff: 2, trust: 0, stage: 3 }] } } });
+    const keep = globalThis.SillyTavern; const toast = { success() { }, info() { } };
+    try {
+        { const cB = mkc('aw-b', kai(), ['aff', 'Kai +40']); let cur = cA; globalThis.SillyTavern = { getContext: () => cur };
+            setTimeout(() => { cur = cB; }, 20);
+            assert.equal(await M.afterWizard({ before: baseA, level: 'all', toast, waitMs: 300, step: 5, core: null }), null, '기다리는 사이 다른 채팅으로');
+            assert.deepEqual([cB.chatMetadata.statussim.base.data.rel.user[0].aff, cB.saved], [2, undefined]); }
+        { const cB = mkc('aw-b', kai(), ['aff', 'Kai +40']); globalThis.SillyTavern = { getContext: () => cB };
+            assert.equal(await M.afterWizard({ before: baseA, level: 'all', chat: M.chatKey(cA), toast, waitMs: 50, step: 5, core: null }), null, '부를 때 이미 다른 채팅(창이 채팅 바꾸기로 치워짐)');
+            assert.equal(cB.chatMetadata.statussim.base.data.rel.user[0].aff, 2); }
+        { let cur = cA; globalThis.SillyTavern = { getContext: () => cur };
+            setTimeout(() => { cA.chatMetadata.statussim.base = { data: { rel: { user: [{ name: 'Mira', aff: 0, trust: 0, stage: 0 }] } } }; }, 10);
+            const r = await M.afterWizard({ before: baseA, level: 'all', chat: M.chatKey(cA), toast, waitMs: 300, step: 5, core: null });
+            assert.deepEqual(r.changed.map(x => x.to), [[3, 0]], '같은 채팅에서 적용되면 그대로 바로잡아요'); }
+    } finally { globalThis.SillyTavern = keep; }
+});
 console.log(`mb-prompt: ${n}개 통과`);

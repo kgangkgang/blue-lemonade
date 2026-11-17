@@ -1,4 +1,5 @@
 import { bindWeatherRest } from './weather-rest.js';
+import { backLayer } from './back-close.js';   // 1.6.9 뒤로 가기 = 자리 정하기 취소(Esc 와 같음)
 // 날씨 효과 (3.3.0) — 채팅 글 뒤에 비 · 눈이 내린다. 채팅 › 화면 › 날씨 (chat.weather: off | rain | snow | custom | tracker, chat.weatherLevel 1~3).
 // 3.3.1: 투명도 · 크기 · 속도 · 각도 (chat.weatherOpacity · Size · Speed · Angle) · 내 그림(chat.weatherImage — 투명 PNG data URL, 목록은 weatherImages).
 //
@@ -564,10 +565,12 @@ export function placeWeatherSpots(mode, defaults, onDone) {
     };
     const live = () => apply({ ...(s.chat.weatherSpots || {}), [mode]: list.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 })) });
     const previousFocus = document.activeElement;
-    const close = (reopen) => { document.removeEventListener('keydown', onKey, true); box.remove(); if (reopen) onDone?.(); else if (previousFocus?.isConnected) previousFocus.focus({preventScroll:true}); };
+    let backDone = () => {};
+    const close = (reopen) => { backDone(); document.removeEventListener('keydown', onKey, true); box.remove(); if (reopen) onDone?.(); else if (previousFocus?.isConnected) previousFocus.focus({preventScroll:true}); };
     const cancel = () => { apply(JSON.parse(before)); close(true); };
     const onKey = event => { if (event.key === 'Escape' && !event.isComposing) { event.preventDefault(); event.stopImmediatePropagation(); cancel(); } };
     document.addEventListener('keydown', onKey, true);
+    backDone = backLayer(() => { cancel(); });
     box.querySelector('[data-place="cancel"]')?.focus({preventScroll:true});
     paint();
     box.addEventListener('pointerdown', (event) => {

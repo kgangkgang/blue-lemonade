@@ -37,6 +37,7 @@ const ALLOW = [
     [/^src\/credits\.js$/, '✨♡', '출처 표시의 원작 이름 · 원작자 표기'],
     [/^src\/addons\/translator\/display-cards\.js$/, null, '본문 앞 장식 글자를 찾는 정규식'],
     [/^src\/api-status\.js$/, null, '주석 속 글자(문자열 아님)'],
+    [/^src\/mb-prompt\.js$/, '🔗', '미트볼 편집 기록 글 — 그 확장 「합치기」 단추가 남기는 기록(label)과 글자까지 같게 써요(그 확장 관리 탭이 원작대로 그려요)'],
 ];
 const skipDir = /(^|\/)(node_modules|dist|\.git)(\/|$)/;
 

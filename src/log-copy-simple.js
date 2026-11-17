@@ -168,7 +168,9 @@ export function colorLetters(who, painted, { main = 'A', second = main === 'A' ?
 export function castLetters(who, frame, cast, screen = null) {
     if (!cast || (!cast.main && !cast.other)) return who;
     const colors = new Map(who.colors), second = frame.second ?? (frame.main === 'A' ? 'B' : 'A');
-    const put = (letter, v) => { if (v === 'orig') { if (colors.has(letter)) colors.set(letter, screen?.get(letter) ?? null); } else if (/^#[0-9a-f]{6}$/i.test(v || '')) colors.set(letter, v.toLowerCase()); };
+    // 1.6.8 「원래 색」: 메시지 주인이 아니라 한 메시지 안 대사 색으로만 글자를 받은 사람(colorLetters)은 그 대사 색 그대로 — 전엔 색 모름(틀 색 #ff5fa2)이 돼 남의 색으로 나왔어요
+    const named = new Set(who.letterOf?.values?.() ?? []);
+    const put = (letter, v) => { if (v === 'orig') { if (colors.has(letter)) colors.set(letter, screen?.get(letter) ?? (named.has(letter) ? null : colors.get(letter) ?? null)); } else if (/^#[0-9a-f]{6}$/i.test(v || '')) colors.set(letter, v.toLowerCase()); };
     put(frame.main, cast.main); put(second, cast.other);
     return { ...who, colors, main: colors.get(frame.main) ?? null };
 }

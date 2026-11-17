@@ -499,9 +499,9 @@ body.salty.salty-indent :is(#salty-nochat, .salty-preview) .mes :is(details.cust
   border-radius: 5px;
   padding: 0.04em 0;
 }
-:is(body.salty.salty-dlg-marker :is(#salty-nochat, .salty-preview) .mes .mes_text, body.salty.salty-dlg-full :is(#salty-nochat, .salty-preview) .mes .mes_text) :is(em, i) q:not(q q) {
+:is(body.salty.salty-dlg-marker :is(#salty-nochat, .salty-preview) .mes .mes_text, body.salty.salty-dlg-full :is(#salty-nochat, .salty-preview) .mes .mes_text) :is(em, i) q:not(q q)::after {
+  content: '';
   padding-inline-end: 0.15em;
-  margin-inline-end: -0.15em;
 }
 :is(body.salty.salty-dlg-bold :is(#salty-nochat, .salty-preview) .mes .mes_text) q {
   font-weight: 650;

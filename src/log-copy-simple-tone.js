@@ -266,7 +266,11 @@ export function toneSimple(html, K, { mode = 'dark', main, others = {}, cvTail =
         for (const step of Object.keys(a)) put(a[step], b[step]);
     }
     const rgbOf = K0 => h2rgb(K0 || NEUTRAL_LADDER.c500).join(',');
-    const swapRgb = body => changed.reduce((b, X) => (colors0[X] ? b.split(`(${rgbOf(colors0[X])},`).join(`(${rgbOf(colors[X])},`).split(`rgb%28${rgbOf(colors0[X])}%29`).join(`rgb%28${rgbOf(colors[X])}%29`) : b), body);
+    // 1.6.8 한 번에 바꿔요(한 자리는 한 번만) — 글자마다 차례로 바꾸면 새 색이 다음 글자의 틀 색과 같을 때(사람 색 #ff5fa2 = 형광펜 틀 둘째 색) 한 번 더 바뀌어
+    //   주인공 띠가 상대 색이 됐어요(11-17 「왜 글자색이 바뀌는거임」). 같은 틀 색을 둘이 가지면 앞 글자가 이겨요(예전과 같게)
+    const rgbSwap = new Map();
+    for (const X of changed) if (colors0[X] && !rgbSwap.has(rgbOf(colors0[X]))) rgbSwap.set(rgbOf(colors0[X]), rgbOf(colors[X]));
+    const swapRgb = body => (rgbSwap.size ? body.replace(/\((\d{1,3},\d{1,3},\d{1,3}),|rgb%28(\d{1,3},\d{1,3},\d{1,3})%29/g, (all, a, b) => { const v = rgbSwap.get(a ?? b); return !v ? all : a != null ? `(${v},` : `rgb%28${v}%29`; }) : body);
     const swapHex = body => body.replace(HEX6, (h) => { const pre = h[0] === '#' ? '#' : '%23', v = swap.get(`#${h.slice(pre.length).toLowerCase()}`); return v ? pre + v.slice(1) : h; });
     const imageBand = r => /^\{background-image:/.test(bodyOf(r)) && /\.gk-d[A-Z](?![\w-])/.test(selOf(r));
     const chunk = css => rulesOf(css).map((r) => {

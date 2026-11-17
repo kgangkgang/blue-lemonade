@@ -438,6 +438,23 @@ await test('폴더 택1이 택1 클릭 연결에 더해져요(prompt-choice setF
     assert.equal(order.find(e => e.identifier === 'p10').enabled, false);
     off();
 });
+await test('버그 사냥 9: 폴더 메뉴는 뒤로 가기 겹을 올려요 — 뒤로 가기 = 메뉴만 닫기 · ✕ 로 닫으면 기록도 물러나요', async () => {
+    const stack = [null]; let at = 0; const pops = [];
+    const fire = () => { for (const fn of pops) fn({ type: 'popstate', state: stack[at] }); };
+    const keepH = globalThis.history, keepAdd = globalThis.addEventListener;
+    globalThis.history = { get state() { return stack[at]; }, pushState(s) { stack.length = at + 1; stack.push(s); at++; }, go(n) { at = Math.max(0, at + n); setTimeout(fire, 0); } };
+    globalThis.addEventListener = (type, fn, opt) => { if (type === 'popstate') pops.push(fn); else keepAdd?.call(globalThis, type, fn, opt); };
+    try {
+        const depth = () => Number(stack[at]?.blLayer) || 0;
+        const more = () => heads().find(h => h.dataset.pfId === 'fc').querySelector('.bl-pf-more').dispatchEvent(new Event('click', { bubbles: true }));
+        more(); assert.ok(document.querySelector('.bl-pf-layer'), '메뉴 층'); assert.equal(depth(), 1, '메뉴를 열면 기록 한 칸');
+        at--; fire(); await settle();
+        assert.ok(!document.querySelector('.bl-pf-layer'), '뒤로 가기에 메뉴만 닫혀요'); assert.equal(depth(), 0);
+        more(); assert.equal(depth(), 1);
+        document.dispatchEvent(new Event('keydown', { key: 'Escape', bubbles: true, cancelable: true })); await settle();
+        assert.ok(!document.querySelector('.bl-pf-layer')); assert.equal(depth(), 0, 'Esc 로 닫으면 남는 칸 없이 물러나요');
+    } finally { globalThis.history = keepH; globalThis.addEventListener = keepAdd; }
+});
 await test('폴더 메뉴(공용 고르기 목록 팝업) → 「폴더 풀기」 → 알림의 되돌리기로 그대로 돌아와요', async () => {
     const toastBox = document.createElement('div'); const msg = document.createElement('div'); msg.className = 'toast-message'; toastBox.append(msg);
     let toastText = ''; globalThis.toastr.info = text => { toastText = text; return [toastBox]; };

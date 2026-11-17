@@ -215,7 +215,7 @@ export function toneLookup(shown, source, get, list = null) {
 // ── 1.5.8 대사 조각 → 인물표 색 ─────────────────────────────
 //   사용자(11-16): 「다른 컨셉으로 가면 색깔 다 빠짐 · 인물표 색도 TTS 나 프리셋 불러오게끔 해 줘 자동으로」
 //   인물표(src/people.js — 이 채팅 TTS 대사 색 → 카드별 색 기억 → 프리셋 색 공급자)에 정해 둔 색을 손으로 넣지 않아도 대사마다 입혀요.
-//   찾는 차례: ① TTS 대사 분석이 메시지에 적어 둔 화자(captureLog 의 message.said) ② 화면에서 읽은 대사 색과 같은 색을 가진 인물 ③ 바로 앞 「이름:」 머리 — 못 찾으면 null(화면 색 그대로).
+//   찾는 차례(1.6.8): ① 화면에서 읽은 대사 색과 같은 색을 가진 인물 ② TTS 대사 분석이 메시지에 적어 둔 화자(captureLog 의 message.said) ③ 바로 앞 「이름:」 머리 — 못 찾으면 null(화면 색 그대로).
 /** TTS 대사 분석의 줄 열쇠와 같은 셈(addons/tts/src/analysis.js hash · normText) — 순수 모듈이라 따로 둬요 */
 export const saidKey = (text) => {
     const s = String(text ?? '').replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -233,9 +233,11 @@ export function whoFinder({ get = null, list = null } = {}) {
     let folk = null;
     const people = () => { if (!folk) { try { folk = (list?.() ?? []).map(p => speakerColor(p?.color)).filter(Boolean); } catch { folk = []; } } return folk; };
     return (text, seen, message, before = '') => {
+        // 1.6.8 화면 대사 색이 인물표의 한 사람 색이면 그 사람이 먼저예요(채팅 화면 색 = 로그 복사 색) — TTS 분석이 다른 이름을 적어 뒀어도(부르는 말 「~짱」 · 「~씨」 로 짐작한 화자)
+        //   TTS 화자는 화면 색이 없거나(회색 띠) 인물표에 없는 색일 때만
+        if (seen) { const same = people().find(c => sameSpeaker(c, seen)); if (same) return same; }
         const said = message?.said;
         if (Array.isArray(said) && said.length) { const hit = said.find(([h]) => h === saidKey(text)); const c = hit && colorOf(hit[1]); if (c) return c; }
-        if (seen) { const same = people().find(c => sameSpeaker(c, seen)); if (same) return same; }
         const head = NAME_HEAD.exec(String(before ?? '')); const named = head && colorOf(head[1]);
         return named || null;
     };

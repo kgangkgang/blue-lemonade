@@ -58,7 +58,7 @@ await test('#12 북마크 패널: 열린 채 같은 캐릭터의 채팅을 옮�
     assert.match(src, /const OTHERS_TTL = 5 \* 60 \* 1000;\s*const othersCache = new Map\(\);/);
     assert.match(src, /const cached = cachedOthers\(\);\s*const others = cached \|\| await listOtherChats\(view\.owner,/);
     assert.match(src, /if \(!cached\) othersCache\.set\(view\.owner\.key, \{ at: Date\.now\(\), others: \[\.\.\.others\] \}\);/);
-    assert.match(src, /view\.open = false;\s*unwatchBack\(\);\s*othersCache\.clear\(\);/);
+    assert.match(src, /view\.open = false;\s*unwatchBack\(\);\s*(?:\{ const lb = view\.backDone; view\.backDone = null; lb\?\.\(\); \}\s*)?othersCache\.clear\(\);/);   // 1.6.9 뒤로 가기 겹 내리기 한 줄이 사이에 와도 닫으면 캐시를 버려요
     assert.match(src, /function renderSidebar\(\) \{\s*snapCurrent\(\);/);
     assert.match(read('src/addons/bookmarks/data.js'), /export function otherRecord\(owner, key/);
 });

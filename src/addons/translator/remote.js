@@ -11,6 +11,7 @@
 //   · 원작이 이 기기에 남긴 위치 · 크기 · 대표 기능을 처음 한 번 옮겨 와요.
 // 유료 번역 요청: 번역 · 다시 번역은 누른 그 메시지 하나만, 채팅 전체 번역은 확인 창(남은 메시지 수)을 거쳐요. 몰래 늘어나는 요청은 없어요.
 
+import { backLayer } from '../../back-close.js';   // 1.6.9 뒤로 가기 = 리모컨 메뉴만 닫기
 export const ACTIONS = Object.freeze({
     auto: { icon: 'fa-language', label: '자동 번역' },
     translate: { icon: 'fa-brain', label: '번역' },
@@ -144,6 +145,7 @@ export function createRemote(host) {
     const saveLayout = () => { try { host.storage?.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch { /* 막힘 */ } };
     const bootUntil = now() + (host.bootGraceMs ?? BOOT_GRACE_MS);
 
+    let menuBack = null;   // 1.6.9 뒤로 가기 겹 내리기(src/back-close.js)
     let btn = null, icon = null, menu = null, showSet = false, running = 0, resting = '', stopped = true;
     let down = null, lpTimer = 0, graceTimer = 0, headWatch = null, frame = 0, lastCursor = null;
 
@@ -600,6 +602,7 @@ export function createRemote(host) {
         if (menu && !menu.hidden) return;   // 터치 길게 누르기는 타이머와 contextmenu 가 둘 다 와요
         if (!menu) buildMenu();
         menu.hidden = false;
+        menuBack ||= backLayer(() => { closeMenu(); }, doc);
         btn.setAttribute('aria-expanded', 'true');
         render();
         fillMenu();
@@ -609,6 +612,7 @@ export function createRemote(host) {
         if (focus) menu.querySelector('button')?.focus();
     }
     function closeMenu({ focus = false } = {}) {
+        const lb = menuBack; menuBack = null; lb?.();
         if (menu && !menu.hidden) { menu.hidden = true; btn?.setAttribute('aria-expanded', 'false'); if (focus) btn?.focus(); }
         showSet = false;
         doc.removeEventListener('pointerdown', onOutside, true);

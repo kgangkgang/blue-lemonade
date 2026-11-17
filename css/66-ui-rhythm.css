@@ -13,6 +13,9 @@ body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i {
   width:24px; height:24px; line-height:1; margin:0;
 }
 body.salty #rm_extensions_block :is(#extensions_settings, #extensions_settings2) .inline-drawer-header > :is(b,strong) > i:is(.fa-language, .fa-users, .fa-comments, .fa-gamepad, .fa-people-group, .fa-user-group, .fa-photo-film) { font-size:.88em; }
+/* 관문 빚 갚기(11-17 · 1.6.6 위): 칸 가운데에 놓인 그림의 잉크가 이름 글자 잉크보다 0.81px 위였어요(폰 384 밤 · 낮 · 전개 지시 · 캐릭터 에셋 · TTS · 번역 줄 같은 값 — 한글 글자 잉크는 줄 상자 가운데보다 아래에 앉아요).
+   상자(24px 칸) · 간격 · 누를 자리는 그대로 두고 그림(::before)만 0.026em(15.5px 글자에서 0.4px) 내려 둘 사이를 반으로 모아요. 레몬은 제 밀기(09 --bl-glyph-y)가 따로 있어 빼요 */
+body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > i:not(.fa-lemon)::before { display:inline-block; translate:0 .026em; }
 body.salty #rm_extensions_block .inline-drawer-header > :is(b,strong) > .ext-version { margin-inline:0; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row { padding:4px 0 8px; gap:8px; line-height:1.45; }
 body.salty :is(#rm_extensions_block, .bl-assets-dialog, dialog) .bl-hs-row > span { min-width:0; overflow-wrap:anywhere; }

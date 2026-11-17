@@ -68,7 +68,7 @@ export const FN_SLOT = Object.freeze({
 /** 한국어 → 영어로 되돌리는 요청 — 용어집(원문 → 한국어)과 방향이 반대라 싣지 않아요 */
 const REVERSE_FN = 'trJSONToEnglish';
 
-const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
+export const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
 const str = (value, max) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
 
 // ── 호출 스택 ─────────────────────────────────────────

@@ -13,6 +13,7 @@
 // 밖의 요소는 inert 라 body 에 두면 눌리지 않는다.
 import { getSettings, readSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';
+import { backLayer } from './back-close.js';   // 1.6.9 뒤로 가기 = 목록만 닫기(CloseWatcher 없는 브라우저 · 브라우저 뒤로 · body 에 뜬 목록)
 
 const SEARCH_FROM = 12; // 항목이 이보다 많으면 찾기칸
 let layer = null;       // 열린 팝업 (한 번에 하나)
@@ -149,6 +150,7 @@ function place(box, sel) {
 
 let closedAt = 0;       // 닫은 시각 — 바깥을 눌러 닫은 직후의 click 을 삼킴
 
+let backDone = null;    // 1.6.9 뒤로 가기 겹(src/back-close.js) 내리기
 let closeWatch = null;  // 7.0.6 목록이 열린 동안의 CloseWatcher (뒤로 가기 = 목록만 닫기)
 
 // 9.0.4: 목록이 열린 동안만 공용 감시 허브 구독(body 구역) — 주인 select 가 문서에서 빠지면 닫아요
@@ -159,6 +161,7 @@ function close() {
     unwatchHost?.();
     unwatchHost = null;
     const watch = closeWatch; closeWatch = null; watch?.destroy();   // 7.0.6 목록이 닫히면 뒤로 가기는 다시 창 몫
+    const lb = backDone; backDone = null; lb?.();                     // 1.6.9 기록 한 칸도 같이 물려요
     if (!layer) return;
     const back = refocus && owner?.isConnected && layer.contains(document.activeElement) ? owner : null;
     layer.remove();
@@ -269,6 +272,7 @@ function open(sel, anchor = null) {
     if (typeof CloseWatcher === 'function') {
         try { closeWatch = new CloseWatcher(); closeWatch.onclose = () => { closeWatch = null; close(); }; } catch { closeWatch = null; }
     }
+    backDone = backLayer(() => { close(); });   // 1.6.9 기록 뒤로 가기도 목록만 닫아요(창 겹 위에 한 겹)
     if (host instanceof HTMLDialogElement) {
         // 문서 캡처라 창 자신의 cancel 처리기(실리태번 팝업 · 테마 창)보다 먼저 받는다 (cancel 은 거품이 없어도 캡처는 지난다)
         const onCancel = (e) => { if (!layer || e.target !== host) return; e.preventDefault(); e.stopImmediatePropagation(); close(); };

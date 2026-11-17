@@ -323,18 +323,32 @@ ${B}:focus-visible::before {
 
   // ── 안전망: 화면이 크게 바뀐 뒤 한 번 더 훑기 ─────────────
 
-  function scheduleSweep() {
+  // 최적화 9차: 메시지 사건(그림 · 스와이프 · 고침 · 생성 끝)은 채팅(#chat) 안만 훑어요. 실리태번 문서 전체 훑기(요소 1만 개 · 폰 4배 한 번 약 1.5ms)는
+  //   채팅 바꾸기 · 더 보기 · 화면 돌아옴 때만 해요. 채팅 밖(북마크 패널 · 앞뒤 문맥 창)의 메시지 본문은 붙을 때 감시(bringsChat)와 열고 닫기(toggle)가 그대로 맡아요.
+  let sweepFull = false;
+  function scheduleSweep(full = true) {
     if (!alive) return;
+    if (full) sweepFull = true;
     clearTimeout(sweepTimer);
     sweepTimer = setTimeout(sweep, 80);
   }
+  const sweepAll = () => scheduleSweep(true);
+  const sweepChat = () => scheduleSweep(false);
+  const FULL_EVENTS = new Set(['CHAT_CHANGED', 'MORE_MESSAGES_LOADED']);
 
   function sweep() {
     if (!alive) return;
+    const full = sweepFull;
+    sweepFull = false;
     for (const [doc, off] of docs) {
       if (doc !== stDoc && doc.defaultView?.document !== doc) {
         docs.delete(doc);
         try { off(); } catch { /* 이미 사라진 iframe 문서 */ }
+        continue;
+      }
+      if (doc === stDoc && !full) {
+        const chat = stDoc.getElementById('chat');
+        scan(chat ?? doc);
         continue;
       }
       scan(doc);
@@ -351,7 +365,7 @@ ${B}:focus-visible::before {
     if (!alive) return;
     alive = false;
     clearTimeout(sweepTimer);
-    stDoc.removeEventListener('visibilitychange', scheduleSweep);
+    stDoc.removeEventListener('visibilitychange', sweepAll);
     offs.splice(0).forEach(off => { try { off(); } catch { /* 이미 사라진 창 */ } });
     for (const frame of frames) frame.removeEventListener('load', onFrameLoad);
     frames.clear();
@@ -366,10 +380,10 @@ ${B}:focus-visible::before {
   const instance = { version: VERSION, destroy };
   ST[INSTANCE] = instance;
   // The main document survives bfcache pagehide; observers resume with it.
-  stDoc.addEventListener('visibilitychange', scheduleSweep);
+  stDoc.addEventListener('visibilitychange', sweepAll);
   if (typeof eventOn === 'function' && typeof tavern_events === 'object') {
     for (const name of SWEEP_EVENTS) {
-      if (tavern_events[name]) eventOn(tavern_events[name], scheduleSweep);
+      if (tavern_events[name]) eventOn(tavern_events[name], FULL_EVENTS.has(name) ? sweepAll : sweepChat);
     }
   } else {
     // 테마 실행기 틀에는 헬퍼 전역(eventOn)이 없다 — 실리태번 이벤트에 직접 달고 destroy 에서 뗀다.
@@ -380,8 +394,9 @@ ${B}:focus-visible::before {
       for (const name of SWEEP_EVENTS) {
         const type = types[name];
         if (!type) continue;
-        bus.on(type, scheduleSweep);
-        offs.push(() => bus.removeListener(type, scheduleSweep));
+        const fn = FULL_EVENTS.has(name) ? sweepAll : sweepChat;
+        bus.on(type, fn);
+        offs.push(() => bus.removeListener(type, fn));
       }
     }
   }

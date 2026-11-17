@@ -1,6 +1,7 @@
 // 1.0.3 편의 기능(src/quick/) 공용 — 모양 시트 한 장(quick.css, 켠 기능이 처음 쓸 때 한 번 받음) · 실리태번 길잡이 몇 개.
 // 이 파일은 편의 기능 모듈만 불러요(시작 그래프 밖).
 import { pickRect } from '../selects.js';
+import { backLayer } from '../back-close.js';   // 1.6.9 뒤로 가기 = 이 겹만 닫기
 export const ctx = () => SillyTavern.getContext();
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 /** 답을 만드는 중인가 (실리태번이 body 에 다는 표시) */
@@ -76,7 +77,8 @@ export function openMenu(anchor, items) {
     const resize = () => { if (window.innerWidth !== width || !anchor.isConnected) closeMenu(); else locate(); };
     document.addEventListener('keydown', key, true);
     window.addEventListener('resize', resize);
-    menu = { layer, back, off: () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
+    const backDone = backLayer(() => { if (menu?.layer === layer) closeMenu(); });
+    menu = { layer, back, off: () => { backDone(); document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
     (anchor.closest?.('dialog[open]') || document.body).append(layer);
     if (typeof layer.showPopover === 'function') { try { layer.setAttribute('popover', 'manual'); layer.showPopover(); } catch { layer.removeAttribute('popover'); } }
     function locate() {

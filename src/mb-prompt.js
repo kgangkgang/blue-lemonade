@@ -370,15 +370,17 @@ export const onlyHolder = h => (h && !h.self && h.names.length === 1 && !h.unkno
 const book = { key: '', books: [] };   // 로어북은 받아 오는 게 느려(비동기) 고를 때 미리 받아 둬요 — 매크로(동기)는 받아 둔 것만 써요
 const bookKey = c => `${c?.groupId ?? ''}|${c?.characterId ?? ''}|${(typeof c?.getCurrentChatId === 'function' ? c.getCurrentChatId() : '') ?? ''}`;
 /** 이 채팅에 걸린 로어북(카드의 것 · 카드 안 책 · 채팅 로어북)을 읽어 둬요. 못 읽으면 빈 목록 */
+//   버그 사냥 9: 열쇠는 받기 전에 잡아요 — 받는 사이 채팅이 바뀌면(같은 캐릭터의 다른 채팅) 받은 뒤 열쇠가 새 채팅 것이 돼 앞 채팅의 채팅 로어북으로
+//   새 채팅 사람을 합쳤어요. 받는 사이 채팅이 바뀌었으면 받아 둔 것으로 남기지 않아요(돌려주기만).
 export async function primeBooks(c = ctx()) {
-    const books = [];
+    const books = [], key = bookKey(c);
     try {
         const names = new Set();
         for (const ch of cardsOf(c)) { const w = ch?.data?.extensions?.world; if (w) names.add(String(w)); const cb = ch?.data?.character_book; if (Array.isArray(cb?.entries)) books.push({ entries: Object.fromEntries(cb.entries.map((e, i) => [i, { key: e?.keys || e?.key || [] }])) }); }
         if (c?.chatMetadata?.world_info) names.add(String(c.chatMetadata.world_info));
         if (typeof c?.loadWorldInfo === 'function') for (const n of names) { try { const b = await c.loadWorldInfo(n); if (b?.entries) books.push(b); } catch { /* 그 책은 빼요 */ } }
     } catch { /* 빈 목록 */ }
-    book.key = bookKey(c); book.books = books;
+    if (bookKey(c) === key) { book.key = key; book.books = books; }
     return books;
 }
 const booksFor = c => (book.key === bookKey(c) ? book.books : []);
@@ -709,6 +711,8 @@ export function dedupeFilled(c = ctx(), { books = booksFor(c) } = {}) {
 }
 /** 1.6.8 채팅이 바뀔 때마다 중복 프로필 정리(한 번만 걸어요 · 지금 채팅도 바로) */
 let dupeWatch = false;
+/** 1.6.9 미트볼 문(src/mb-read.js)이 상태창 있는 채팅을 처음 열 때 불러요 — 「미트볼 문구」 를 안 써도 채팅을 열 때 정리가 돌게 */
+export const watchChats = (c = ctx()) => watchDupes(c);
 function watchDupes(c = ctx()) {
     if (dupeWatch) return; dupeWatch = true;
     const run = () => { cleanupDupes().catch(() => { /* 다음 채팅에 */ }); };
@@ -726,19 +730,111 @@ export async function cleanupDupes({ c = undefined, toast = globalThis.toastr, d
     if (!force && DEDUP.seen.has(key)) return [];
     DEDUP.seen.add(key);
     let done; DEDUP.run = new Promise(r => { done = r; });
-    let gone = [];
+    let gone = [], merged = [];
     try {
         if (book.key !== key) await primeBooks(cx);
+        // 버그 사냥 9: 기다리는 사이(앞 정리 · 로어북 받기) 채팅이 바뀌었으면 손대지 않아요 — 앞 채팅 자료를 고쳐 놓고 새 채팅을 저장 · 알리던 것. 그 채팅을 다시 열면 그때 해요
+        if (bookKey(cx) !== key) { DEDUP.seen.delete(key); return []; }
         gone = dedupeFilled(cx);
-        if (gone.length) {
+        try { merged = mergeTitles(cx); } catch { merged = []; }   // 1.6.9 관계 칸의 직함 줄 · 이름 줄 합치기(그 확장의 「합치기」 와 같은 기록으로)
+        if (gone.length || merged.length) {
             try { await cx.saveMetadata?.(); } catch { /* 다음 저장 때 */ }
             try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
             const fresh = gone.filter(n => !DEDUP.told.has(`${key}|${nmKey(n)}`));
             for (const n of gone) DEDUP.told.add(`${key}|${nmKey(n)}`);
             if (fresh.length) { try { toast?.info?.(`같은 사람이 프로필에 둘로 나뉘어 있어 블루레몬이 더했던 프로필 ${fresh.length}개를 정리했어요(${fresh.join(' · ')}). 직접 만든 프로필은 그대로예요.`, '', { timeOut: 10000 }); } catch { /* 알림 없이 */ } }
+            if (merged.length) { try { toast?.info?.(mergeLine(merged, cx), '', { timeOut: 14000 }); } catch { /* 알림 없이 */ } }
         }
     } finally { DEDUP.run = null; done(); }
+    Object.defineProperty(gone, 'merged', { value: merged });   // 목록 비교에 안 섞이게(숨은 칸)
     return gone;
+}
+/**
+ * 1.6.9 관계 칸에 같은 사람이 직함 줄과 이름 줄로 따로 있을 때 — 이미 만든 상태창도 채팅을 열 때 합쳐요(11-17 사용자: 직함 줄 · 이름 줄이 따로 나와요).
+ *   같은 사람으로 보는 때(아주 좁게 · 하나라도 어긋나면 그대로):
+ *   ① 그 줄 이름(직함 X)이 사용자 · 카드 이름이 아니고, 테마가 더한 것이 아닌 프로필(사람이 쓴 · AI 가 만든)도 없어요(진짜 이름의 사람이 아니에요)
+ *   ② 로어북 열쇠 묶음에서 X 가 나오는 항목 **모두**에 상태창의 다른 사람 이름이 들어 있어요(사람 없는 설정 항목에 나오는 낱말이면 그대로) — 로어북을 못 읽으면 그대로
+ *   ③ 그 후보들 가운데 **관계 칸 자기 글(이름표 · 메모)에 X 가 낱말로 든 사람이 정확히 하나**예요(예: 메모 「… known by staff as X」).
+ *      프로필 요약은 안 봐요 — 같은 직함을 예전에 가졌던 다른 사람 요약에도 그 낱말이 나와요(「former X」)
+ *   ④ X 줄 자기 글에 그 후보 이름이 나오면 안 합쳐요(그 사람과 관계가 있는 다른 이 — 예: 「후보의 고양이」)
+ *   ⑤ 둘 이상의 직함이 한 사람으로 모이거나, 합칠 사람이 또 다른 줄로 합쳐지는 꼴이면 그대로
+ *   합치는 방법: 그 확장의 「합치기」 단추(관계 카드 🔗)가 남기는 것과 똑같은 편집 기록(`_merge` 「X => 이름」)을 더해요 —
+ *     그 확장이 계산할 때 X 의 애정 · 우정을 그 사람에게 더하고(두 줄은 본편 AI 가 따로 센 변화라 더한 값이 채팅 변화 합과 같아요) 비어 있는 이름표 · 메모 · 만난 곳은
+ *     X 쪽 것으로 채우고 · 관계 짝(a · b) · 지난 일도 그 사람으로 · 앞으로 본편 AI 가 X 라고 적는 변화도 그 사람에게 가요. 관리 탭 되돌리기로 되돌릴 수 있어요.
+ *   돌려주는 것: [{ from, to }]
+ */
+export function titleMerges(c = ctx(), { books = booksFor(c) } = {}) {
+    const meta = metaMb(c), base = meta?.base; if (!base?.data) return [];
+    const sets = keySets(books, base); if (!sets.length) return [];
+    const list = relNow(meta); if (list.length < 2) return [];
+    const done = mergedFrom(meta);
+    for (const n of mergedOnce(c)) done.add(n);   // 버그 사냥 9: 테마가 한 번 합친 이름은 그 기록을 사용자가 되돌렸어도(기록이 빠짐) 다시 안 합쳐요
+    const baseRel = base.data.rel?.user || [];
+    const people = (base.data.profile?.list || []).filter(p => p?.name && p.role !== 'user' && !isFilled(p, baseRel));
+    const realProf = new Set(people.map(p => nmKey(p.name)));
+    const skip = new Set([nmKey(c?.name1), ...cardsOf(c).map(ch => nmKey(ch?.name)), ...(base.data.profile?.list || []).filter(p => p?.role === 'user').map(p => nmKey(p.name))].filter(Boolean));
+    const rowOf = n => list.find(x => nmKey(x?.name) === nmKey(n));
+    const out = [];
+    for (const r of list) {
+        const X = String(r?.name ?? '').trim(), w = nmKey(X); if (!w || skip.has(w) || realProf.has(w) || done.has(w)) continue;
+        const others = new Map(); for (const x of [...list, ...people]) if (x !== r && x?.name && nmKey(x.name) !== w && !skip.has(nmKey(x.name))) others.set(nmKey(x.name), String(x.name));   // 상태창의 다른 사람(관계 줄 · 진짜 프로필)
+        const h = holdersOf(X, others, sets); if (h.self || !h.names.length || h.unknown) continue;
+        if (h.names.some(n => hasWord(rowText(r), n))) continue;                                  // ④
+        const cand = h.names.filter(n => { const t = rowOf(n); return t && hasWord(rowText(t), X); });   // ③
+        if (cand.length === 1) out.push({ from: X, to: String(rowOf(cand[0]).name) });
+    }
+    return out.filter(m => out.filter(x => x.to === m.to).length === 1 && !out.some(x => nmKey(x.from) === nmKey(m.to)));   // ⑤
+}
+const rowText = r => [r?.label, r?.memo].map(x => String(x ?? '')).join(' \n ');
+/** 낱말로 들었나(대소문자 무시) — 라틴 글자 낱말은 낱말 경계로, 그 밖(한글 · 일본 글자 등)은 들어 있으면 */
+function hasWord(text, word) {
+    const w = String(word ?? '').normalize('NFC').trim(); if (!w) return false;
+    const t = String(text ?? '').normalize('NFC');
+    if (!/^[\p{Script=Latin}\p{N}\s'’.-]+$/u.test(w)) return t.toLowerCase().includes(w.toLowerCase());
+    return new RegExp(`(^|[^\\p{L}\\p{N}])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}\\p{N}])`, 'iu').test(t);
+}
+/** 지금 관계 칸 줄: 그 확장의 마지막 「칸 통째 저장」 편집(직접 편집 · AI 로 수정) 기록이 있으면 그것 · 없으면 기준 자료 */
+function relNow(meta) {
+    const adj = (Array.isArray(meta?.adjust) ? meta.adjust : []).filter(a => !a?._off && a?.set?.mod === 'rel' && Array.isArray(a.set.data?.user));
+    const last = adj.sort((a, b) => (a.at - b.at) || (a.t - b.t)).at(-1);
+    return (last ? last.set.data.user : meta?.base?.data?.rel?.user || []).filter(r => r && typeof r === 'object');
+}
+/** 이미 합친 이름(그 확장의 합치기 기록 · 이름 표) — 다시 합치지 않아요 */
+function mergedFrom(meta) {
+    const out = new Set();
+    for (const a of Array.isArray(meta?.adjust) ? meta.adjust : []) if (!a?._off) for (const op of a?.ops || []) if (op?.[0] === '_merge') { const f = String(op[1] ?? '').split('=>')[0]; if (f.trim()) out.add(nmKey(f)); }
+    for (const al of [meta?.base?.data?.rel?.alias, ...(meta?.adjust || []).map(a => a?.set?.mod === 'rel' ? a.set.data?.alias : null)]) if (al && typeof al === 'object') for (const k of Object.keys(al)) out.add(nmKey(k));
+    return out;
+}
+/**
+ * 버그 사냥 9: 테마가 합친 이름 장부(채팅 메타데이터 bl_mb_merged — 그 확장 자료 밖 · 채팅 파일에 같이 저장돼요).
+ *   그 확장의 되돌리기(관리 탭 · /ss-undo)는 합치기 기록을 통째로 빼서, 장부 없이는 다음에 채팅을 열 때 · 만들기 창을 닫을 때 같은 합치기를 또 더했어요
+ *   (알림이 「되돌릴 수 있어요」 라고 해 놓고 되돌릴 수 없던 것).
+ */
+const MERGED_KEY = 'bl_mb_merged';
+function mergedOnce(c) { const v = c?.chatMetadata?.[MERGED_KEY]; return Array.isArray(v) ? v.map(nmKey).filter(Boolean) : []; }
+/** 합치기 기록을 더해요(그 확장의 addAdjust 와 같은 꼴 · 메시지에 묶지 않는 편집) — 돌려주는 것: 더한 [{ from, to }] */
+export function mergeTitles(c = ctx(), { books = booksFor(c), now = Date.now } = {}) {
+    const meta = metaMb(c); if (!meta?.base) return [];
+    const list = titleMerges(c, { books }); if (!list.length) return [];
+    meta.adjust = Array.isArray(meta.adjust) ? meta.adjust : [];
+    const at = Array.isArray(c?.chat) ? c.chat.length : 0;
+    for (const { from, to } of list) {
+        let t = now(); for (const e of meta.adjust) if (e?.t >= t) t = e.t + 0.001;
+        for (const e of meta.adjust) if (e && !e.an && e.at > at) e.at = at;
+        meta.adjust.push({ at, t, ops: [['_merge', `${from} => ${to}`]], label: `🔗 ${from} → ${to} 합침` });
+    }
+    if (c?.chatMetadata && typeof c.chatMetadata === 'object') {
+        const was = Array.isArray(c.chatMetadata[MERGED_KEY]) ? c.chatMetadata[MERGED_KEY] : [];
+        c.chatMetadata[MERGED_KEY] = [...new Set([...was, ...list.map(m => m.from)])].slice(-200);
+    }
+    return list;
+}
+/** 합친 알림 한 줄 — 이름은 그 확장의 화면 번역(채팅마다 쌓인 사전)이 있으면 그 글로 */
+export function mergeLine(list, c = ctx()) {
+    const tr = metaMb(c)?.tr; const shown = n => (tr && typeof tr === 'object' && typeof tr[n] === 'string' && tr[n].trim()) || n;
+    const pairs = list.map(m => `${shown(m.from)} → ${shown(m.to)}`).join(' · '), first = shown(list[0].from);
+    return `관계 칸에 같은 사람이 직함 줄과 이름 줄로 나뉘어 있어 합쳤어요(${pairs}). 미트볼 「합치기」 와 같아요 — 애정 · 우정은 두 줄을 더하고, 앞으로 「${first}」${josa(first, '으로', '로')} 적힌 변화도 그 사람에게 가요. 관리 탭 되돌리기로 되돌릴 수 있어요.`;
 }
 /**
  * 1.6.8 만든 뒤 이름 칸이 직함이면 이름으로 — 아주 좁게(사람이 섞이지 않게):
@@ -786,16 +882,23 @@ async function mbCore(doc = globalThis.document, load = url => import(url)) {
  * 만들기 창이 닫힌 뒤(「채팅 전체」 · 「기억 요약」 으로 보냈을 때만): 상태창 기준 자료가 새것으로 바뀌면(적용) 관계 숫자를 바로잡고 저장 · 새로고침 · 알려요.
  *   before = 고르기를 걸 때의 기준 자료 · 적용이 창 닫힘보다 늦을 수 있어 잠깐(waitMs) 기다려요. 돌려주는 것: 바로잡은 결과 또는 null(적용 안 함)
  */
-export async function afterWizard({ before = null, level = '', c = undefined, toast = globalThis.toastr, waitMs = 8000, step = 250, doc = globalThis.document, core = undefined } = {}) {
+/** 지금 채팅을 가리는 열쇠(그룹 · 캐릭터 · 채팅 파일) — 만들기 고르기를 걸 때 적어 두고 afterWizard 에 넘겨요 */
+export const chatKey = (c = ctx()) => bookKey(c);
+export async function afterWizard({ before = null, level = '', chat = undefined, c = undefined, toast = globalThis.toastr, waitMs = 8000, step = 250, doc = globalThis.document, core = undefined } = {}) {
     if (level !== 'all' && level !== 'memo') return null;
     const cx = () => c || ctx();
+    // 버그 사냥 9: 창을 닫자마자(또는 창이 열린 채) 다른 채팅으로 가면 그 채팅의 상태창을 「새로 적용됨」 으로 보고 숫자 · 이름을 고쳐 저장했어요(만들기를 안 한 채팅).
+    //   고르기를 건 채팅(chat = chatKey() — 채팅을 바꿔 창이 치워진 때는 부를 때 이미 다른 채팅이에요)에서만 해요 — 기다리는 동안 · 로어북을 받은 뒤 채팅이 바뀌었으면 그만둬요
+    const chat0 = chat ?? bookKey(cx()), same = () => bookKey(cx()) === chat0;
     let base = baseRef(cx());
-    for (let t = 0; (!base || base === before) && t < waitMs; t += step) { await new Promise(r => setTimeout(r, step)); base = baseRef(cx()); }
-    if (!base || base === before) return null;
+    for (let t = 0; (!base || base === before) && t < waitMs && same(); t += step) { await new Promise(r => setTimeout(r, step)); base = baseRef(cx()); }
+    if (!base || base === before || !same()) return null;
     try { if (book.key !== bookKey(cx())) await primeBooks(cx()); } catch { /* 로어북 없이 */ }   // 1.6.8 프로필을 더하기 전 같은 사람 확인 · 직함 이름 바꾸기에 써요
+    if (!same()) return null;
     const res = reconcileRel(cx());
     try { res.renamed = renameTitles(cx(), { before }); } catch { res.renamed = []; }   // 숫자를 맞춘 뒤에(직함 이름으로 변화 합을 찾고 나서) 이름을 바꿔요
-    if (res.changed.length || res.time || res.added?.length || res.renamed.length) {
+    try { res.merged = mergeTitles(cx()); } catch { res.merged = []; }   // 1.6.9 그래도 직함 줄 · 이름 줄이 둘 다 남았으면 합치기 기록으로(채팅을 열 때와 같은 규칙)
+    if (res.changed.length || res.time || res.added?.length || res.renamed.length || res.merged.length) {
         try { await cx().saveMetadata?.(); } catch { /* 다음 저장 때 */ }
         try { const m = core === undefined ? await mbCore(doc) : core; m?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
     }
@@ -807,6 +910,7 @@ export async function afterWizard({ before = null, level = '', c = undefined, to
         if (res.changed.length) toast?.success?.(`관계 숫자를 채팅 기록(${res.changed.length}명)에 맞췄어요 — 본편 AI 가 답마다 남긴 애정 · 우정 변화 합보다 낮게 만들어진 사람만 그 합까지 올렸어요.${tm}`, '', { timeOut: 12000 });
         else if (res.checked) toast?.info?.(`관계 숫자가 채팅 기록을 따라요(${res.checked}명 확인).${tm}`, '', { timeOut: 6000 });
         else if (tm) toast?.info?.(tm.trim(), '', { timeOut: 6000 });
+        if (res.merged.length) toast?.info?.(mergeLine(res.merged, cx()), '', { timeOut: 14000 });
     } catch { /* 알림 없이 */ }
     return res;
 }

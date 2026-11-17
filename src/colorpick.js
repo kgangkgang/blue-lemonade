@@ -7,6 +7,7 @@ import { getSettings } from './settings.js';
 import { paletteColors, parseColor } from './palettes.js';
 import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 import { decodeAnyImage, imageWidth, imageHeight, IMAGE_ACCEPT } from './imagedecode.js';
+import { backLayer } from './back-close.js';   // 1.6.9 뒤로 가기 = 색 고르기만 닫기
 
 const RECENT_KEY = 'bl-color-recent';
 const RECENT_MAX = 8;
@@ -14,6 +15,7 @@ const SWATCH_TOKENS = ['accent', 'dialogue', 'em', 'strong', 'marker', 'gold', '
 const GRACE = 700;
 
 let layer = null;
+let backDone = null;   // 1.6.9 뒤로 가기 겹 내리기
 let session = null;
 let closedAt = 0;
 
@@ -343,6 +345,7 @@ export function colorPickPhantom(target) {
 }
 
 export function closeColorPick() {
+    const lb = backDone; backDone = null; lb?.();
     if (!layer) return;
     const s = session;
     clearTimeout(s?.timer);
@@ -415,6 +418,7 @@ export function openColorPick({ anchor, value, alpha = false, onInput, onClose }
     const { theme, recent } = swatchList();
     const host = anchor.closest('dialog[open]') || document.body;
     layer = document.createElement('div');
+    backDone = backLayer(() => { closeColorPick(); });
     layer.className = 'bl-cp-layer';
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh';
     layer.innerHTML = `<div class="bl-cp" role="dialog" aria-label="색 고르기">

@@ -6,7 +6,9 @@ const RECENT_KEY = 'bl-qr-recent';
 const RECENT_MAX = 6;
 const GRACE = 600;
 
+import { backLayer } from './back-close.js';   // 1.6.9 뒤로 가기 = 찾기 창만 닫기
 let layer = null;
+let backDone = null;
 let anchor = null;
 let items = [];
 let openedAt = 0;
@@ -180,6 +182,7 @@ function place(box) {
 }
 
 export function closeQrFind() {
+    const lb = backDone; backDone = null; lb?.();
     if (!layer) return;
     layer.remove();
     layer = null;
@@ -230,6 +233,7 @@ export function openQrFind(button) {
     items = collect();
     openedAt = Date.now();
     layer = document.createElement('div');
+    backDone = backLayer(() => { closeQrFind(); });
     layer.className = 'salty-pick-layer bl-qrf-layer';
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh';
     layer.innerHTML = `<div class="salty-pick salty-pick-float bl-qrf" role="listbox" aria-label="퀵 리플라이 찾기">

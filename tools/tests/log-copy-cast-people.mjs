@@ -1,6 +1,6 @@
 // 1.5.8 로그 복사 「인물표 색」 — 다른 틀(컨셉)에서도 대사마다 말한 인물의 색(인물표: 이 채팅 TTS 대사 색 → 카드별 색 기억 → 프리셋 색)이 자동으로 입혀져요.
 //   사용자 제보(11-16 · 실제 폰 1.5.7 · 묘비 틀): 「다른 컨셉으로 가면 색깔 다 빠짐 · 인물표 색도 TTS 나 프리셋 불러오게끔 해 줘 자동으로」
-//   잠그는 것: ① 대사 조각의 인물 찾기 차례(TTS 가 적어 둔 화자 → 화면 색이 같은 인물 → 「이름:」 머리 → 못 찾으면 화면 색)
+//   잠그는 것: ① 대사 조각의 인물 찾기 차례(1.6.8 화면 색이 같은 인물 → TTS 가 적어 둔 화자 → 「이름:」 머리 → 못 찾으면 화면 색)
 //   ② 한 메시지(카드 하나가 여러 인물을 말하는 글) 안 대사마다 다른 글자 · 그 인물 색 ③ 낮 · 밤 둘 다 ④ 인물표가 비면 예전과 같은 그림. 이름 · 글은 가짜예요.
 //   node tools/tests/log-copy-cast-people.mjs .
 import { assert, load, suite } from './_t.mjs';
@@ -37,10 +37,11 @@ const scene = msg('이야기꾼', [
 
 const whoList = (m) => { const out = []; const walk = nodes => { for (const n of nodes ?? []) if (n.t === 'el') { if (n.who) out.push(n.who); else walk(n.children); } }; walk(m.nodes); return out; };
 
-await test('whoFinder: TTS 가 적어 둔 화자 → 화면 색이 같은 인물 → 「이름:」 머리 → 모르면 null', () => {
+await test('whoFinder: 화면 색이 같은 인물 → TTS 가 적어 둔 화자 → 「이름:」 머리 → 모르면 null', () => {
     const who = whoFinder({ get, list });
     assert.equal(who('「저도 그렇게 생각해요.」', null, scene), MINT, 'TTS 분석의 화자(따옴표 · 빈칸은 같은 열쇠)');
-    assert.equal(who('저도   그렇게 생각해요.', ROSE, scene), MINT, '적어 둔 화자가 화면 색보다 먼저');
+    assert.equal(who('저도   그렇게 생각해요.', ROSE, scene), ROSE, '1.6.8 화면 색이 인물표의 한 사람이면 그 사람(TTS 가 다른 화자를 적어 뒀어도)');
+    assert.equal(who('저도   그렇게 생각해요.', PLUM, scene), MINT, '화면 색이 인물표에 없으면 TTS 가 적어 둔 화자');
     assert.equal(who('「다른 대사」', '#d88ba6', scene), ROSE, '화면 색과 거의 같은 색의 인물');
     assert.equal(who('「다른 대사」', PLUM, scene), null, '인물표에 없는 색은 모름(화면 색 그대로 쓰게)');
     assert.equal(who('「다른 대사」', null, scene, '미카: '), MINT, '「이름:」 머리');
@@ -147,6 +148,60 @@ await test('「원래 색」 칩: 인물표를 안 묻고 채팅에서 보이던
     // 칩 설명
     const fs = await import('node:fs'); const path = await import('node:path');
     assert.match(fs.readFileSync(path.join(path.resolve(process.argv[2] || '.'), 'src/log-copy-tune-ui.js'), 'utf8'), /'원래 색', orig, \{ tip: '채팅에서 보이던 색' \}/);
+});
+
+// 1.6.8 사용자(11-17 · 형광펜 틀 · 인물표 색): 「아니 도대체 왜 글자색이 바뀌는거임」 — 채팅에서 분홍 띠던 사람 대사가 로그 복사에서 상대(청록) 색으로.
+//   원인: 그 사람 색이 틀을 만든 둘째 화자 색과 똑같았어요(#ff5fa2). 띠 그림 색 바꾸기(toneSimple swapRgb)가 글자마다 차례로 바꿔서
+//   주인공 띠가 「틀 색 → 분홍」 으로 바뀐 뒤 둘째 글자 차례에 「분홍 → 청록」 으로 한 번 더 바뀌었어요. 이제 한 번에(한 자리는 한 번만) 바꿔요.
+const FRAME_PINK = '#ff5fa2', TEAL = '#3ccfbf', LIME = '#7fe03c';
+const duo = (a, b) => msg('모임', [
+    para(say(a, '「룰루♪ 수달짱~, 아까 그 영상 나한테도 보내 줘~♡」')),
+    para(say(b, '「아니, 보낼 리가 없잖아요 나비 씨!!」')),
+    para(words('나비가 수달 뒤를 졸졸 따라온다.')),
+]);
+const bookOf = pairs => { const m = new Map(pairs); return [n => (m.has(n) ? { name: n, color: m.get(n) } : null), () => [...m].map(([name, color]) => ({ name, color }))]; };
+const rgbIn = (html, letter) => (html.match(new RegExp(`\\.gk-d${letter}\\{background-image:url\\('data:image/svg\\+xml,[^']*?rgb%28(\\d+,\\d+,\\d+)%29`)) || [])[1];
+const triple = hex => { const c = parseColor(hex); return `${c.r},${c.g},${c.b}`; };
+
+await test('형광펜 틀: 그 사람 색이 틀의 둘째 화자 색과 같아도 대사마다 채팅 화면 색 그대로(낮 · 밤 · 인물표 색 · 원래 색)', () => {
+    const p = picks.find(x => x.id === 'simple-k13');
+    assert.ok(p, 'simple-k13');
+    const scene2 = duo(FRAME_PINK, TEAL);
+    const [get2, list2] = bookOf([['나비', FRAME_PINK], ['수달', TEAL]]);
+    for (const mode of ['light', 'dark']) {
+        for (const [label, simple] of [['인물표 색', p], ['원래 색', { ...p, set: { ...(p.set || {}), themeCast: { main: 'orig', other: 'orig' } } }]]) {
+            const html = renderLog(model([scene2]), { simple, mode, lookup: toneLookup([scene2], [scene2], get2, list2) });
+            const letters = dlg(html);
+            assert.equal(letters.length, 2, `${mode} ${label} 대사 둘`);
+            assert.notEqual(letters[0], letters[1], `${mode} ${label} 두 사람 = 글자 둘`);
+            assert.equal(rgbIn(html, letters[0].slice(-1)), triple(FRAME_PINK), `${mode} ${label} 첫 대사(분홍 사람) 띠`);
+            assert.equal(rgbIn(html, letters[1].slice(-1)), triple(TEAL), `${mode} ${label} 둘째 대사(청록 사람) 띠`);
+        }
+    }
+});
+
+await test('받은 심플 글꾸 전부: 새 화자 색이 다른 글자의 틀 색과 같아도 한 번만 바뀌어요(이어 바뀜 없음)', async () => {
+    const { simpleFrameInfo, speakerColorsOf } = await load('src/log-copy-simple-tone.js');
+    const count = (html, hex) => html.split(triple(hex)).length - 1;
+    let checked = 0;
+    const bad = [];
+    for (const p of picks.filter(x => x.frame)) {
+        const f = p.frame, second = f.second ?? (f.main === 'A' ? 'B' : 'A');
+        const c0 = f.colors0 ?? speakerColorsOf(simpleFrameInfo(f.html)?.color_css ?? '');
+        if (!c0[f.main] || !c0[second]) continue;
+        for (const mode of ['light', 'dark']) {
+            // ① 주인공 새 색 = 상대의 틀 색 · ② 상대 새 색 = 주인공의 틀 색 — 견줌: 같은 자리에 겹치지 않는 색(라임)
+            for (const [mainNew, otherNew, victim] of [[c0[second], TEAL, TEAL], [LIME, c0[f.main], LIME]]) {
+                const ref = mainNew === LIME ? [TEAL, otherNew] : [LIME, otherNew];
+                const draw = (a, b) => { const s = duo(a, b); const [g, l] = bookOf([['나비', a], ['수달', b]]); return renderLog(model([s]), { simple: p, mode, lookup: toneLookup([s], [s], g, l) }); };
+                const got = count(draw(mainNew, otherNew), victim), want = count(draw(...(victim === TEAL ? [ref[0], otherNew] : [mainNew, ref[0]])), victim);
+                if (got !== want) bad.push(`${p.id} ${mode} ${victim === TEAL ? '주인공 = 상대 틀 색' : '상대 = 주인공 틀 색'} (${victim} ${got} ≠ ${want})`);
+                checked++;
+            }
+        }
+    }
+    assert.ok(checked >= 20, `본 틀 ${checked}`);
+    assert.deepEqual(bad, [], `이어 바뀐 틀 ${bad.length}`);
 });
 
 await test('떠 오기: TTS 대사 분석이 적어 둔 화자를 메시지에 실어요(읽기만) · CI 등록', async () => {

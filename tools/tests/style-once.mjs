@@ -231,6 +231,21 @@ await test('칸이 통째로 빠지면(다른 코드가 지움) 다음 그리기
     assert.equal(doc.getElementById('sheld').nextSibling, holder());
 });
 
+await test('최적화 9차: 한 번도 바꾼 적 없으면 사건 정리(sync)가 문서 style 을 훑지 않는다 · 처음 바꾼 뒤부터는 예전처럼', () => {
+    const { doc, once, flush, render, keys } = setup();
+    let walks = 0;
+    const real = doc.body.getElementsByTagName.bind(doc.body);
+    doc.body.getElementsByTagName = tag => { walks++; return real(tag); };
+    render(0, '<p>style 없는 글</p>');
+    for (let i = 0; i < 5; i++) once.schedule(), flush();
+    assert.equal(walks, 0, 'no style scan before any style was replaced');
+    assert.equal(doc.getElementById(S.HOLDER_ID), null, 'no holder either');
+    render(1, `<p>꾸밈</p>${st(CSS_A)}`);
+    flush();
+    assert.ok(walks >= 1, 'scans again once something was replaced');
+    assert.equal(keys().length, 1);
+});
+
 await test('캡처: 내보내는 사본 안 표시를 원래 CSS 로 되돌린다 · 모르는 표시 · 다른 style 은 그대로', () => {
     const { doc, once, render } = setup();
     const m = render(0, `${st(CSS_A)}<p>x</p>`);

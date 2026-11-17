@@ -162,6 +162,9 @@ export function createStyleOnce({ decode, mediaAllowed = () => true, enabled = (
     function sync() {
         pending = false;
         stats.syncs++;
+        // 최적화 9차: 아직 하나도 바꾼 적이 없으면(style 이 든 메시지가 없던 채팅 — 대부분) 문서의 style 을 훑지 않아요.
+        //   그때 문서의 표시는 모두 모르는 열쇠라 아래에서 건너뛰고(byKey 없음), 칸도 비어 있어 할 일이 없어요(사건마다 body 훑기 · 폰 4배 약 0.8ms)
+        if (!byKey.size && !nodes.size) return;
         const order = scan();
         if (!order.size && !nodes.size) return;
         const box = mount();

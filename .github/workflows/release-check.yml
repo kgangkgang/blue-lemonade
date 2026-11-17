@@ -231,6 +231,7 @@ jobs:
           node tools/tests/perf-prompt-render-batch.mjs .
           node tools/tests/style-dedupe.mjs .
           node tools/tests/style-once.mjs .
+          node tools/tests/fold-sweep-scope.mjs .
           node tools/tests/translator-leak.mjs .
           node tools/tests/translator-comments.mjs .
           node tools/tests/translator-preview.mjs .
@@ -253,6 +254,7 @@ jobs:
           node tools/tests/mb-ask.mjs .
           node tools/tests/layer-back.mjs .
           node tools/tests/mb-back.mjs .
+          node tools/tests/back-close.mjs .
           node tools/tests/mb-auto-en.mjs .
           node tools/tests/mb-read.mjs .
           node tools/tests/mb-prompt.mjs .
@@ -607,6 +609,8 @@ jobs:
           node tools/tests/quick-preset-folders.mjs .
           # 버그 사냥 7: 프리셋 폴더 ⋯ 메뉴가 열린 채 Esc 는 메뉴만 닫아요
           node tools/tests/preset-folder-menu-esc.mjs .
+          # 버그 사냥 9: 프리셋 고르기 목록도 뒤로 가기 겹을 올려요(뒤로 가기 = 목록만 닫기)
+          node tools/tests/folder-popup-back.mjs .
           # 1.1.1 시제품(기본 꺼짐): 에이드 갈아입기 · 프리셋 폴더 이름 따라가기 · 번역문도 고치기
           node tools/tests/ade.mjs .
           # 버그 사냥 7: 오늘의 에이드 — 채팅이 바뀔 때 · 탭이 다시 보일 때도 날짜를 봐요

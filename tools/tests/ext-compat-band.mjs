@@ -135,7 +135,7 @@ ok('⑥-1 (1.5.5) 얼굴 바탕 = 인물표의 그 사람 색 그대로(섞지 �
         assert.ok(m.contrastOf(rgb(f.bg), rgb(f.ink)) >= 4.5, `${c} → ${f.bg} / ${f.ink}`);
         assert.ok(dist(f.bg, c) < 40, `${c} → ${f.bg} 색이 거의 그대로 남아요`);
     }
-    assert.equal(m.faceColors('#ff5a3c').bg, '#ff5a3c', '또렷한 색은 손대지 않아요'); assert.equal(m.faceFill('#b799e8'), '#b799e8');
+    assert.equal(m.faceColors('#ff5a3c').bg, '#ff5a3c', '또렷한 색은 손대지 않아요'); assert.equal(m.faceColors('#b799e8').bg, '#b799e8');
     assert.ok(dist(m.faceColors('#e63946').bg, m.faceColors('#ff5a3c').bg) > 20, '빨강 · 주황이 구분돼요');
     const face = name => { const a = { title: name }; const vars = {}; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty: (k, v) => { vars[k] = v; }, removeProperty: k => { delete vars[k]; } }, a, vars }; };
     const els = ['Leon', 'Nobody'].map(face);

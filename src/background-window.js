@@ -118,11 +118,24 @@ function editOpen() {
     return false;
 }
 function arm() { Object.assign(state, { phase: 'working', chars: 0, since: Date.now(), preview: '' }); lastSign = Date.now(); openWindow(); }
+// 최적화 9차: 이미 있는 스와이프로 넘기기만 하는 누름(왼쪽 화살표 · 마지막 스와이프가 아닌 곳의 오른쪽 화살표)은 생성을 안 해요 — 켜지 않아요.
+//   예전에는 그때도 소리판(AudioContext)을 처음 만들어(폰 4배 첫 번 60 ~ 90ms) 넘기기가 늦었고, 90초 뒤 걸러내기가 내려놓을 때까지 소리를 냈어요.
+//   마지막 스와이프에서 오른쪽(새로 생성)은 예전처럼 누르는 그 순간 켜요(사용자 동작 안이라야 소리판을 깨울 수 있어요). 모르면 예전처럼 켜요
+function swipeOnly(btn) {
+    if (btn.classList?.contains('swipe_left')) return true;
+    if (!btn.classList?.contains('swipe_right')) return false;
+    try {
+        const id = Number(btn.closest('.mes')?.getAttribute('mesid'));
+        const m = SillyTavern.getContext().chat?.[id];
+        return Number.isInteger(id) && Array.isArray(m?.swipes) && Number.isInteger(m.swipe_id) && m.swipe_id < m.swipes.length - 1;
+    } catch { return false; }
+}
 function onTap(event) {
     if (event.target?.closest?.('.qr--button-expander,.ctx-expander') || document.body.classList.contains('salty') && event.target?.closest?.('.qr--hasCtx')) return;
     if (!on) return;
     if (event.target?.closest?.(TRANSLATE_BUTTONS)) { translateTapAt = Date.now(); return; }   // 번역이 실제로 시작되면(다리 begin) 그때 켠다
-    if (event.target?.closest?.(TRIGGERS)) arm();
+    const hit = event.target?.closest?.(TRIGGERS);
+    if (hit && !swipeOnly(hit)) arm();
 }
 // Enter 는 실리태번이 실제로 생성할 때만 (RossAscends-mods.js processHotkeys 와 같은 조건 — 폰은 기본값이 줄바꿈).
 // Alt+Enter(이어쓰기) · Ctrl+Enter(다시 생성)는 <a> 를 jQuery 로 눌러 클릭 이벤트가 안 오므로 여기서 켠다. 생성이 안 되면 위 걸러내기가 내려놓는다

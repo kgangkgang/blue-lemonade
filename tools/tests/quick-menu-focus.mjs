@@ -26,6 +26,7 @@ for (const [file, extra] of [['src/quick/shared.js', ''], ['src/chat-organizer.j
     window.__mouse = true;
     window.matchMedia = q => ({ matches: /hover: hover|pointer: fine/.test(q), addEventListener() {}, removeEventListener() {} });
     window.pickRect = () => ({ width: 160, left: 0, top: 30, maxHeight: 300, up: false });
+    window.backLayer = () => () => {};   // 1.6.9 뒤로 가기 겹(src/back-close.js) 대역
     window.warn = () => {};
     const esc = 'const esc = s => String(s);';
     const consts = (src.match(/\nconst mouseDevice = [^\n]+\n/) || [''])[0];

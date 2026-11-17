@@ -17,6 +17,7 @@ import { getSettings, saveSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';
 import { groupedNumber } from './numbers.js';
 import { pickRect } from './selects.js';
+import { backLayer } from './back-close.js';   // 버그 사냥 9: 뒤로 가기 = 폴더 메뉴만 닫기
 import { ask, attachUndo } from './ask.js';
 import { showThemeModal } from './modal.js';
 import { mouseDevice } from './prompt-card-picker.js';
@@ -370,7 +371,8 @@ function openMenu(anchor, items) {
     const resize = () => { if (window.innerWidth !== width || !anchor.isConnected) closeMenu(); else place(); };
     document.addEventListener('keydown', key, true);
     window.addEventListener('resize', resize);
-    menu = { layer, off: () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
+    const backDone = backLayer(() => { if (menu?.layer === layer) closeMenu(); });   // 버그 사냥 9: 뒤로 가기 = 이 메뉴만 닫기(같은 꼴의 빠른 메뉴 · 채팅 정리 메뉴와 같게)
+    menu = { layer, off: () => { backDone(); document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); } };
     document.body.append(layer);
     if (typeof layer.showPopover === 'function') { try { layer.setAttribute('popover', 'manual'); layer.showPopover(); } catch { layer.removeAttribute('popover'); } }
     function place() {

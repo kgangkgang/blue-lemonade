@@ -210,6 +210,34 @@ await ok('이름표: 줄임표 대신 두 줄 접기', () => {
     assert.equal(t.getAttribute('data-bl-wrap'), '2');
     assert.ok(!t.textContent.includes('…'));
 });
+await ok('두 줄 이름표 층은 띠가 높아져 윗줄이 위층 경계에 닿지 않아요', () => {
+    const places = office().map(p => p.name === 'Studio' ? { ...p, name: 'Studio With A Much Longer Name Here' } : p);
+    places.find(p => p.name === 'Board Room').links = ['Reception'];
+    places.find(p => p.name === 'Reception').links = ['Studio With A Much Longer Name Here', 'Garage', 'Bakery'];
+    const L = m.floorLayout(places);
+    assert.ok(L.tall.has(2), '2F 는 두 줄');
+    assert.ok(L.rowH(2) > m.ROW_H && L.rowH(3) === m.ROW_H, '두 줄 층만 높아요');
+    // 모든 장소의 이름표 윗줄(글자 위끝 ≈ 점 - 4.4 - 줄 수만큼 - 2.6)이 제 띠 위끝보다 2 넘게 아래
+    for (const [n, o] of L.pos) {
+        if (o.row === null || o.row === undefined) continue;
+        const lines = m.wrapLabel(n, (o.w || 21) - 1.5).length;
+        const top = o.y - 4.4 - (lines - 1) * 3.4 - 2.6;
+        assert.ok(top - L.rowTop.get(o.row) >= 2, `${n} ${top} ${L.rowTop.get(o.row)}`);
+    }
+    // 띠는 겹치지 않고 이어져요
+    L.rows.slice(1).forEach((r, i) => assert.equal(L.rowTop.get(r), L.rowTop.get(L.rows[i]) + L.rowH(L.rows[i])));
+});
+await ok('버그 사냥 9: 지하층만 있는 건물이면 땅 선은 건물 꼭대기 · 바깥 장소는 땅 위(맨 아래 지하층 높이가 아니에요) · 빈 1F 띠는 안 그려요', () => {
+    const places = [P('Gate', 'B1 entrance hall', { area: 'Keep', links: ['Cells'] }), P('Cells', 'B2 holding cells', { area: 'Keep', links: ['Pit'] }), P('Pit', 'B3 deepest pit', { area: 'Keep' }),
+        P('Market', 'busy square', { kind: 'shop', area: 'Town', links: ['Gate'] })];
+    const L = m.floorLayout(places);
+    const b = L.buildings[0];
+    assert.equal(L.groundY, b.top, '땅 = 건물 꼭대기(B1 띠 위)');
+    assert.ok(L.pos.get('Market').y < b.top, `바깥 장소는 땅 위 ${L.pos.get('Market').y} < ${b.top}`);
+    assert.deepEqual(b.rows, [0, -1, -2], '건물 띠는 B1 ~ B3 만');
+    const doc = makeDoc(), svg = drawn(doc, places); m.applyFloors(svg, { places });
+    assert.ok(!svg.querySelectorAll('text.bl-ftag').some(t => t.textContent === '1F'), '빈 1F 이름표 없음');
+});
 await ok('층 정보가 없는 지도는 손대지 않아요', () => {
     const doc = makeDoc(), places = [P('A', 'a', { links: ['B'] }), P('B', 'b'), P('Heaven', 'c', { kind: 'realm' })], svg = drawn(doc, places);
     assert.equal(m.applyFloors(svg, { places }), null);

@@ -20,7 +20,7 @@
 import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { armGuard } from './cheap-guards.js';
 import { cardColorTable, tableColor } from './card-colors.js';   // 1.5.9 카드별 색 기억(인물표 공급자와 같은 표)
-import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind } from './ext-organize.js';
+import { organize, toggleFold, toggleMore, setView, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind, recall, remember } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
  *  mark: 원작만 가진 요소(이것이 든 설정 칸에만 맞춰요 — 있으면 분류 탭 대신 표식 · 안내 줄만) · sheet: 판 번호를 화면에 안 적는 확장의 제 시트 첫 규칙(그 시트 옆 manifest.json 에서 판을 읽어요) */
@@ -62,10 +62,6 @@ export function compatText(set, installed) {
     if (set.verified.includes(installed)) return `블루레몬에이드가 ${set.name} ${installed} 화면에 맞춰 뒀어요.`;
     return `${set.name} ${known} 화면에 맞춘 모습이에요 · 지금 판은 ${installed} — 일부가 어긋나 보일 수 있어요.`;
 }
-
-const keyOf = root => `bl-ext-tab:${root.id || 'x'}`;
-function remember(root, label) { try { localStorage.setItem(keyOf(root), label); } catch { /* 저장소가 막혀 있으면 첫 탭 */ } }
-function recall(root) { try { return localStorage.getItem(keyOf(root)) || ''; } catch { return ''; } }
 
 /** 고른 탭을 탭 줄 안으로 — 시작 덮개 동안이면 걷힌 뒤 한 번(그때도 고른 탭이면) */
 const revealWaiting = new Set();
@@ -129,7 +125,7 @@ export function buildTabs(root, set) {
     note.style.display = 'none';
     note.textContent = compatText(set, versionOf(root.querySelector(set.version)?.textContent));
     content.append(note);
-    const saved = labels.indexOf(recall(root));
+    const saved = labels.indexOf(recall(root, 'tab'));
     showGroup(root, saved > 0 ? saved : 0);
     return true;
 }
@@ -238,8 +234,6 @@ export function faceColors(color) {
     for (let i = 0; i < 12 && contrastOf(c, ink) < 4.5; i++) c = c.map(v => v + (to - v) * 0.05);
     return { bg: toHex(c), ink: toHex(ink) };
 }
-/** 옛 이름(1.5.4 시험 · 다른 곳이 부를 수 있어요): 바탕만 */
-export const faceFill = color => faceColors(color).bg;
 let peopleHooked = false;
 /** 화면의 얼굴 요소 전부에 첫 글자 · 톤 · 인물 색 표식 — 설정이 「아이콘」이면 아무것도 안 해요(표식이 남아 있어도 시트가 안 봐요) */
 export function paintFaces(doc) {
@@ -582,7 +576,7 @@ export function startExtCompat(doc = globalThis.document) {
             const tab = target.closest(`.${TAB}`);
             if (tab) {
                 const root = SETS.map(set => tab.closest(set.root)).find(Boolean);
-                if (root) { showGroup(root, Number(tab.dataset.blTabTo) || 0); remember(root, tab.dataset.blTabName || tab.textContent); }
+                if (root) { showGroup(root, Number(tab.dataset.blTabTo) || 0); remember(root, 'tab', tab.dataset.blTabName || tab.textContent); }
                 ensureStrip(doc);
                 return;
             }

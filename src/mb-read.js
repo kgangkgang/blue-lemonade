@@ -89,10 +89,10 @@ export function slotOf(el) {
 }
 const defaultSettings = async () => (await import('./settings.js')).getSettings();
 let started = false;
-export function startMbRead(doc = globalThis.document, { watch = watchDom, settings = defaultSettings, load = loadPrompt, toast = () => globalThis.toastr } = {}) {
+export function startMbRead(doc = globalThis.document, { watch = watchDom, settings = defaultSettings, load = loadPrompt, toast = () => globalThis.toastr, ctx = () => globalThis.SillyTavern?.getContext?.() } = {}) {
     if (started || !doc?.addEventListener) return false;
     started = true;
-    let chat = {}, host = null, hostQuiet = false, P = null, lastRow = null, heard = false, armedBase = null;      // host = 이번 한 번을 건 만들기 창 · P = 문구 모듈(창이 처음 뜰 때) · lastRow = 마지막으로 놓은 고르기
+    let chat = {}, host = null, hostQuiet = false, P = null, lastRow = null, heard = false, armedBase = null, armedChat = undefined;   // armedChat: 고르기를 건 채팅(버그 사냥 9 — 채팅을 바꿔 창이 치워지면 새 채팅을 고치지 않게)      // host = 이번 한 번을 건 만들기 창 · P = 문구 모듈(창이 처음 뜰 때) · lastRow = 마지막으로 놓은 고르기
     const prev = new WeakMap();   // 고르기 → 바로 앞 값(기억 요약이 없을 때 되돌려요)
     const refresh = row => {
         try {
@@ -150,9 +150,17 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         }
         (async () => {
             if (pickOf(usual) === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요
-            if (await P.armOnce({ level: want, quiet: true })) { host = row.closest('dialog') || row.closest('.ss-wizard'); hostQuiet = want === 'off' || want === 'light'; armedBase = P.baseRef?.() ?? null; }   // 기본 쪽은 요청을 셀 수 없어 닫을 때 조용히 돌려놔요
+            if (await P.armOnce({ level: want, quiet: true })) { host = row.closest('dialog') || row.closest('.ss-wizard'); hostQuiet = want === 'off' || want === 'light'; armedBase = P.baseRef?.() ?? null; armedChat = P.chatKey?.(); }   // 기본 쪽은 요청을 셀 수 없어 닫을 때 조용히 돌려놔요
         })().catch(() => { /* 평소 단계 그대로 */ });
     }, true);
+    // 1.6.9 채팅을 열 때 정리(중복 프로필 · 직함 줄 합치기) — 11-17 사용자 폰(1.6.8): 「미트볼 문구」 가 「적용 안 함」 이면 문구 모듈(mb-prompt.js)을 아예 안 받아서
+    //   1.6.8 의 채팅 열 때 정리(watchDupes)가 한 번도 안 돌았어요(만들기 창을 열 때만 돌았어요). 이 모듈은 미트볼이 깔려 있으면 늘 받으니 여기서 채팅마다 걸어요.
+    //   미트볼 상태창이 있는 채팅을 처음 열 때 문구 모듈을 받아 그 모듈의 채팅 감시(watchChats — 지금 채팅 바로 · 다음부터 채팅이 바뀔 때마다)를 한 번 걸어요.
+    //   상태창이 있는 채팅이 없으면 받지 않아요(미트볼 없음 · 상태창 없는 채팅은 그대로 0). 타이머 · 감시자는 이 모듈에 두지 않아요(문구 모듈이 1.6.8 부터 가진 것 하나).
+    let tidyOn = false;
+    const tidy = () => { if (tidyOn) return; try { const c = ctx(); if (!c?.chatMetadata?.statussim?.base) return; tidyOn = true; load().then(m => m.watchChats?.()).catch(() => { tidyOn = false; }); } catch { /* 다음 채팅에 */ } };
+    try { const c = ctx(); const ev = c?.eventTypes?.CHAT_CHANGED ?? c?.event_types?.CHAT_CHANGED; if (ev && c?.eventSource?.on) c.eventSource.on(ev, tidy); } catch { /* 만들기 창을 열 때만 */ }
+    tidy();
     // 기능을 켜고 끄면 그 확장이 「AI k회」 를 다시 적어요 — 그 창 안을 누른 뒤 한 박자 뒤에 어림을 다시 적어요
     doc.addEventListener('click', event => {
         const row = event.target?.closest?.('.ss-wizard, dialog')?.querySelector?.(`.${ROW}`);
@@ -163,7 +171,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         watch(doc.body, { childList: true, name: '미트볼 만들기 채팅 읽기' }, records => {
             if (!host) return;
             for (const r of records) for (const n of r.removedNodes || []) {
-                if (n === host || (n.nodeType === 1 && n.contains?.(host))) { host = null; const info = P?.onceInfo?.(); if (info?.seen && P.afterWizard) P.afterWizard({ before: armedBase, level: info.level }).catch(() => { /* 그대로 */ }); if (P?.onceLevel()) P.endOnce({ force: true, quiet: hostQuiet }).catch(() => { /* 다음 맞추기에 */ }); return; }   // 1.6.5 적용했으면 관계 숫자를 채팅 기록에 맞춰요(src/mb-prompt.js afterWizard)
+                if (n === host || (n.nodeType === 1 && n.contains?.(host))) { host = null; const info = P?.onceInfo?.(); if (info?.seen && P.afterWizard) P.afterWizard({ before: armedBase, level: info.level, chat: armedChat }).catch(() => { /* 그대로 */ }); if (P?.onceLevel()) P.endOnce({ force: true, quiet: hostQuiet }).catch(() => { /* 다음 맞추기에 */ }); return; }   // 1.6.5 적용했으면 관계 숫자를 채팅 기록에 맞춰요(src/mb-prompt.js afterWizard)
             }
         });
     } catch { /* 창을 닫아도 시간이 지나면 돌아가요 */ }

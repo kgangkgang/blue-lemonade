@@ -12,7 +12,9 @@ function fixToastrForDialogs() {
 /** Keep notifications in the modal top layer, and recover them before removal. */
 export function showThemeModal(dialog) {
     // Capture runs before the existing close handlers that remove the dialog.
+    let backDrop = null;   // 1.6.9 뒤로 가기 겹 내리기(src/back-close.js)
     const closed = () => {
+        backDrop?.(); backDrop = null;
         const container = dialog.querySelector('#toast-container');
         if (container) document.body.append(container);
         fixToastrForDialogs();
@@ -29,4 +31,6 @@ export function showThemeModal(dialog) {
     try { dialog.showModal(); }
     catch (error) { dialog.removeEventListener('close',closed,true); throw error; }
     fixToastrForDialogs();
+    // 1.6.9 뒤로 가기로 창 닫기(src/back-close.js): 다시 쓰는 창 · body 밖 창도 겹을 올리게 바로 알려요(설정 끔이면 거기서 안 올려요)
+    import('./back-close.js').then(m => { if (dialog.open) backDrop = m.trackDialog(dialog); }).catch(() => {});
 }

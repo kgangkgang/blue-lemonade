@@ -12,6 +12,7 @@ import { showThemeModal } from '../modal.js';
 import { ask } from '../ask.js';
 import { splitCssReady } from '../lite.js';
 import { esc, ensureQuickCss, openMenu, closeMenu, menuOpen, swallowNextClick } from './shared.js';
+import { backLayer } from '../back-close.js';   // 버그 사냥 9: 뒤로 가기 = 이 목록만 닫기(1.6.9 에 이 목록만 빠져 폰 뒤로 가기가 페이지를 떠났어요)
 import { tidyFolders, newFolderId, groupPresets, searchPresets, assignPresets, moveFolder, removeFolder, folderOf, followRenames, sameNames, MAX_FOLDERS, MAX_NAME, MAX_SEEN } from './preset-list-core.js';
 
 const SELECT = 'settings_preset_openai';
@@ -136,7 +137,8 @@ function open(sel) {
     document.addEventListener('keydown', key, true);
     window.addEventListener('resize', resize);
     document.addEventListener('scroll', scroll, true);
-    off = () => { document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); document.removeEventListener('scroll', scroll, true); };
+    const mine = layer, backDone = backLayer(() => { if (layer === mine) close(); });
+    off = () => { backDone(); document.removeEventListener('keydown', key, true); window.removeEventListener('resize', resize); document.removeEventListener('scroll', scroll, true); };
     host.append(layer);
     if (typeof layer.showPopover === 'function') { try { layer.setAttribute('popover', 'manual'); layer.showPopover(); } catch { layer.removeAttribute('popover'); } }
     place(box, sel);

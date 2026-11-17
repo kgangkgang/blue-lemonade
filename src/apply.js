@@ -828,6 +828,8 @@ export function applyAll() {
     { const on = want.has('salty') && s.chat.mbHiddenSync !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-hidden-sync') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-hidden-sync', on); document.dispatchEvent(new Event('bl-mb-hidden-sync')); } }
     // 1.6.1 뒤로 가기로 미트볼 창 닫기(src/mb-back.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 끄면 새 창부터 겹을 올리지 않아요
     { const on = want.has('salty') && s.chat.mbBack !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-back') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-back', on); } }
+    // 1.6.9 뒤로 가기로 창 닫기(src/back-close.js · 기본 켬): 표식 하나 — 테마 화면을 꺼도 애드온 창은 뜨니 미트볼과 달리 salty 와 상관없어요 · 끄면 새 창부터 겹을 올리지 않아요
+    { const on = s.chat.backClose !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-back-close') !== on) { restyleAhead(); document.body.setAttribute('data-bl-back-close', on); } }
     // 1.6.6 미트볼 영어 저장 전환 바로 하기(src/mb-auto-en.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 그 확장이 물을 때마다 이 표식을 봐요(시트는 이 표식을 안 써요)
     { const on = want.has('salty') && s.chat.mbAutoEn !== false ? 'on' : 'off'; if (document.body.getAttribute('data-bl-mb-auto-en') !== on) { restyleAhead(); document.body.setAttribute('data-bl-mb-auto-en', on); } }
     // 1.6.8 미트볼 지도 층별 보기(src/mb-map-floors.js · 기본 켬): 표식 하나 — 모듈은 미트볼 문(index.js)에서 받고, 바뀌면 떠 있는 지도를 다시 그려요

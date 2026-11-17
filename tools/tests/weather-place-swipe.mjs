@@ -65,7 +65,7 @@ globalThis.cancelAnimationFrame = () => {};
 
 // weather.js 의 import 줄을 떼고 같은 이름을 흉내로 넣어요(설정 · 저장 · 엔진은 이 시험에서 안 써요)
 const stubs = { bindWeatherRest() {}, weatherAmount() { return 1; }, weatherPixelRatio() { return 1; }, activeWeather() { return { on: false }; }, parseColor() { return null; },
-    getSettings: () => ({ chat: { weatherSpots: {} } }), saveSettings() {}, loadWeatherModule: async () => ({}) };
+    getSettings: () => ({ chat: { weatherSpots: {} } }), saveSettings() {}, loadWeatherModule: async () => ({}), backLayer: () => () => {} };
 globalThis.__weatherPlace = stubs;
 const source = (await fs.readFile(path.join(root, 'src/weather.js'), 'utf8')).replace(/^import [^\n]*\n/gm, '');
 const prelude = `const {${Object.keys(stubs).join(',')}} = globalThis.__weatherPlace;\n`;

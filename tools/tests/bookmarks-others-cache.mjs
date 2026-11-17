@@ -45,7 +45,7 @@ const context = {
     currentRecord: () => { const key = T.chatKey; return key ? { key, label: key, isCurrent: true, owner: ownerOf(), get favorites() { return favs.get(T.chatKey) || []; }, messageCount: 3, lastMes: '' } : null; },
     otherRecord,
     listOtherChats: async owner => { T.listCalls.push(owner.name); return (T.lists[owner.name] || []).filter(key => key !== T.chatKey).map(key => otherRecord(owner, key, { favorites: favs.get(key) || [] })); },
-    setTimeout: () => 0, clearTimeout() {}, nameAliases: () => [],
+    setTimeout: () => 0, clearTimeout() {}, nameAliases: () => [], backLayer: () => () => {},
 };
 const plain = panelSource.split('\n').filter(line => !line.startsWith('import ')).join('\n').replace(/^export /gm, '');
 vm.runInNewContext(plain + `

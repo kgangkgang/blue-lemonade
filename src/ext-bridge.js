@@ -14,12 +14,12 @@
 import { getSettings } from './settings.js';
 import { addonsEnabled } from './usage-mode.js';
 import * as Core from './ext-bridge-core.js';
+import { isObj } from './ext-bridge-core.js';
 
 const MARK = Symbol.for('blue-lemonade.ext-bridge.v1');
 const LOG = Symbol.for('st.request-log.v1');   // 요청 로그 이름표(성능 보조 애드온 · 없으면 버려져요)
 const OWN = (() => { try { return decodeURIComponent(/\/scripts\/extensions\/third-party\/([^/?#]+)\//.exec(import.meta.url)?.[1] || ''); } catch { return ''; } })();
 const SEEN_MS = 10 * 60 * 1000;
-const isObj = value => !!value && typeof value === 'object' && !Array.isArray(value);
 const reasonOf = error => String(error?.cause?.message || error?.message || error || '').replace(/\s+/g, ' ').trim().slice(0, 160);
 
 /** 지금 호출 스택 글(비동기 프레임까지 넉넉히) */

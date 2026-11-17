@@ -12,6 +12,10 @@ import { hiddenQueue, mayHide } from './hidden-details.js';
 import { booting, afterBoot } from './boot-gate.js';   // 1.2.2 덮개 동안은 재지 않아요 — 그때 꺼 둔 시트(채팅 모양 · 마크다운 모양)의 바탕 · 글자색이 빠진 채 재면 틀린 표시가 남아요
 
 const SEL = 'font[color], [style*="color" i]';
+// 1.6.9 프리셋 속마음: <true_thoughts character="이름"> → <span class="tt tt-이름"><em>…</em></span> (실리태번이 클래스에 custom- 을 붙여요).
+// 색은 인라인이 아니라 메시지 안 <style> 의 `.tt-이름, .tt-이름 * {color:… !important}` 라 SEL 로는 안 잡혀요. 그 규칙이 안쪽 요소(em · 테마 글자 조각)를
+// 하나하나 직접 칠하니, 속마음 칸 안 요소는 모두 계산된 글자색으로 재요. 우리 표시 규칙(id 둘 무게 · !important)이 클래스 하나짜리 !important 를 이겨요
+const TT = '.tt, [class*="custom-tt"]';
 const BOX = '.mes_text, .salty-sample';
 const MARK = 'bl-ink';
 let active = false, timer = 0, key = null, mode = null, sheet = null, gen = 0;
@@ -133,7 +137,9 @@ function run(roots, { force = false } = {}) {
     let count = 0;
     for (const box of boxes) {
         const check = !force && mayHide(box);
+        const thoughts = thoughtEls(box);
         for (const el of box.querySelectorAll(SEL)) {
+            if (thoughts.has(el)) continue;   // 속마음 칸 안은 아래에서 계산된 색으로 — 프리셋 규칙이 인라인 색을 덮었을 수 있어요
             const src = sourceColor(el.getAttribute('color'), el.getAttribute('style'));
             // 대사 수도 넣는다 — 조판이 뒤에 대사(q)를 새로 감싸면(여러 줄 대사) 그 대사도 봐야 한다
             const sig = src + '|' + gen + '|' + el.getElementsByTagName('q').length;
@@ -166,6 +172,27 @@ function run(roots, { force = false } = {}) {
                 if (paintColor || markOf(q)) writes.push([q, paintColor]);
             }
         }
+        // 1.6.9 속마음 칸: 원래 색 = 우리 표시가 없을 때의 계산값(표시가 보이면 적어 둔 값). 잘 읽히면 표시 없음 → 원래 색 그대로
+        const ttSig = 'tt|' + gen;
+        for (const el of thoughts) {
+            if (seen.get(el) === ttSig) continue;
+            if (check && hidden.defer(el)) continue;
+            seen.set(el, ttSig);
+            count++;
+            const cs = styleOf(el), color = parseColor(cs.color);
+            if (!color || !color[3] || !el.textContent.trim()) { writes.push([el, '']); continue; }
+            const mark = markOf(el);
+            const want = mark && sameRgb(color, colorOf(mark.hex)) ? ttWant.get(el) || color : color;
+            ttWant.set(el, want);
+            if (drawnBy(cs, color)) {
+                writes.push([el, cache.get(want, bgAt(el, box, memo, styleOf))?.hex || '']);
+            } else {
+                // 글자는 따로 그리고 색은 띠 칠에만(데우스 '형광펜 색' 대사): 1.5.9 와 같이 — 밝힌 띠가 글자를 묻지 않을 때만 밝힌 색, 아니면 원래 색
+                const base = el.parentElement ? bgAt(el.parentElement, box, memo, styleOf) : under(box, memo, styleOf);
+                const fix = cache.get(want, base);
+                writes.push([el, !fix ? '' : liftsBand(fix, cs, base) ? fix.hex : paint(want)]);
+            }
+        }
     }
     // 색마다 시트를 고치면 다음 글자의 계산 스타일을 읽을 때 강제 재계산돼요.
     for (const entry of writes) if (entry[1]) entry[1] = classFor(entry[1], rules);
@@ -173,6 +200,17 @@ function run(roots, { force = false } = {}) {
     for (const [el, cls] of writes) setMark(el, cls);
     const ms = performance.now() - t0;
     stats.runs++; stats.elements += count; stats.fixed += writes.filter(w => w[1]).length; stats.ms += ms; stats.last = ms;
+}
+// 1.6.9 상자 안 속마음 칸과 그 안 요소 전부 (속마음 안 속마음은 바깥 칸이 이미 담아요)
+const ttWant = new WeakMap();   // 속마음 요소 → 우리 표시 없이 보이던 색 (팔레트를 바꿔 다시 잴 때)
+function thoughtEls(box) {
+    const out = new Set();
+    for (const t of box.querySelectorAll(TT)) {
+        if (out.has(t)) continue;
+        out.add(t);
+        for (const n of t.getElementsByTagName('*')) out.add(n);
+    }
+    return out;
 }
 // 1.5.9 대사(q)에 색을 물려주는 칸: 색을 실제로 적은 가장 가까운 조상. 색 칸 안에 색 없는 칸이 한 겹 더 있으면(프리셋 말투 태그가 바뀐
 // style="…;color:;font-weight:500" — color 낱말만 있고 값이 빈 칸 · 배경색만 있는 칸) 그 칸을 주인으로 치면 바깥 색 칸과도 안쪽 칸과도 짝이 안 맞아

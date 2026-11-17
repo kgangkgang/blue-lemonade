@@ -87,6 +87,7 @@ const rows = [
  ['chat','screen','미트볼 얼굴 표시','미트볼 상태창 얼굴 표시 아이콘 이름 첫 글자 머리글자 이니셜 동물 누가 누구 속마음 프로필 관계 동그라미 meatball face initial','','chat.mbFace'],
  ['chat','screen','미트볼 얼굴: 사람마다 색 톤','미트볼 얼굴 첫 글자 사람마다 색 톤 색깔 구분 meatball face tone','','chat.mbFaceTone'],
  ['chat','screen','미트볼 프로필 얼굴: 색만 / 글자','미트볼 프로필 얼굴 동그라미 색만 글자 디스코드 지정색 이름 첫 글자 meatball face color only letter','','chat.mbFaceLook'],
+ ['chat','screen','뒤로 가기로 창 닫기','뒤로 가기 뒤로가기 창 닫기 닫힘 안드로이드 폰 설정 창 팝업 로그 복사 애드온 서랍 목록 메뉴 페이지 떠남 나가짐 back button close window popup','','chat.backClose'],
  ['chat','screen','뒤로 가기로 미트볼 창 닫기','미트볼 상태창 뒤로 가기 뒤로가기 창 닫기 닫힘 안드로이드 back button close window meatball','','chat.mbBack'],
  ['chat','screen','미트볼 영어 저장 전환 바로 하기','미트볼 상태창 한국어로 저장된 칸 영어 저장 바꾸기 전환 확인 창 팝업 묻지 않고 바로 자동 네 meatball english save convert confirm','','chat.mbAutoEn'],
  ['chat','screen','미트볼 지도 층별 보기','미트볼 상태창 지도 층 층별 건물 지하 천국 지옥 위 아래 꺾인 선 floor building basement map meatball','','chat.mbMapFloors'],

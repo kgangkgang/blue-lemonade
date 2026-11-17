@@ -96,6 +96,19 @@ try{
     onTap({target:btn});clock+=6_000;const end2=work.begin('translate');assert.equal(state.phase,'idle','too late for the tap → stays off');end2();
     const send={closest:sel=>/#send_but/.test(sel)?send:null};onTap({target:send});assert.equal(state.phase,'working','other triggers still arm at once');
   });
+  t('opt9: swiping through existing swipes does not arm (no AudioContext); a right swipe on the last swipe still arms',()=>{
+    const ctx=globalThis.SillyTavern.getContext;
+    const chat=[{mes:'a'},{mes:'b',swipes:['x','y','z'],swipe_id:0}];
+    globalThis.SillyTavern={getContext:()=>({...ctx(),chat})};
+    const mes={getAttribute:k=>k==='mesid'?'1':null};
+    const btn=cls=>{const b={classList:{contains:c=>c===cls},closest:sel=>sel==='.mes'?mes:(sel.includes('.'+cls)?b:null)};return b;};
+    try{
+      state.phase='idle';onTap({target:btn('swipe_right')});assert.equal(state.phase,'idle','swipe 0 → 1 is navigation');
+      onTap({target:btn('swipe_left')});assert.equal(state.phase,'idle','left never generates');
+      chat[1].swipe_id=2;onTap({target:btn('swipe_right')});assert.equal(state.phase,'working','right on the last swipe generates → armed');
+      state.phase='idle';delete chat[1].swipes;onTap({target:btn('swipe_right')});assert.equal(state.phase,'working','no swipes yet → generates → armed');
+    }finally{globalThis.SillyTavern={getContext:ctx};state.phase='idle';}
+  });
   t('after work ends the close waits at least 20 s after done (TTS after translation), else 2.5 s',()=>{
     state.phase='done';state.doneAt=clock;assert.equal(closeDelayAfterWork(clock),20_000);
     assert.equal(closeDelayAfterWork(clock+10_000),10_000);assert.equal(closeDelayAfterWork(clock+60_000),2_500);
