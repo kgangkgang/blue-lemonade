@@ -797,6 +797,43 @@ await tryOk('1.7.6 다른 캐릭터로 넘어간 뒤 지도를 처음 열 때 �
     ctx.getCurrentChatId = () => 'chat-b2';
     assert.deepEqual(names(draw()), ['별빛 서점']);
 });
+await tryOk('버그 사냥 4: 지도를 열지 않고 다른 캐릭터 · 채팅으로 넘어간 뒤 번역 다리가 가져가는 글은 앞 채팅 로어북 것이 아니에요(읽는 중이면 빈 목록 · 다 읽으면 그 채팅 것)', async () => {
+    const fresh = await import(pathToFileURL(path.join(root, 'src/mb-map-floors.js')).href + '?hunt4-registry');
+    const places = office(), map = { places };
+    let cb = null; const live = [];
+    const doc = {
+        body: { getAttribute: k => (k === fresh.FLOOR_ATTR ? 'on' : null), hasAttribute: () => false, classList: { contains: c => c === 'salty' } },
+        documentElement: { getAttribute: () => null },
+        querySelectorAll: sel => (sel.includes('svg.ss-map') ? live.filter(s => (sel.includes(':not([data-bl-floors])') ? !s.getAttribute('data-bl-floors') : true)) : []), addEventListener: () => {},
+    };
+    const book = name => ({ entries: [{ comment: '[장소]' + name, content: '작은 가게예요.' }] });
+    const ctx = { characterId: 0, getCurrentChatId: () => 'chat-a', chatMetadata: {},
+        characters: [{ data: { character_book: book('달빛 찻집') } }, { data: { extensions: { world: 'book-b' }, character_book: book('별빛 서점') } }],
+        loadWorldInfo: async () => { await new Promise(res => setTimeout(res, 30)); return { entries: {} }; } };
+    const core = { app: { current: { state: { data: { map } } }, renderPanel() {} } };
+    const REG = Symbol.for('blue-lemonade.mb-unvisited.v1'), old = globalThis[REG];
+    try {
+        fresh.startMbFloors(doc, { watch: (_t, o, fn) => { if (o.childList) cb = fn; }, load: () => core, stCtx: () => ctx });
+        const tick = (ms = 5) => new Promise(res => setTimeout(res, ms));
+        await tick();
+        const svg = drawn(makeDoc(), places); live.push(svg); cb([{ addedNodes: [svg] }]); await tick(60);
+        const get = globalThis[REG];
+        assert.deepEqual(get().map(x => x.name), ['달빛 찻집'], 'A 채팅');
+        ctx.characterId = 1; ctx.getCurrentChatId = () => 'chat-b';   // 지도를 열지 않고 B 로
+        assert.deepEqual(get(), [], 'B 로어북을 읽는 중: 앞 캐릭터 글을 안 내줘요');
+        await tick(80);
+        assert.deepEqual(get().map(x => x.name), ['별빛 서점'], '다 읽은 뒤: B 의 글');
+    } finally { globalThis[REG] = old; }
+});
+await tryOk('버그 사냥 4: 번역 사전이 늘면(같은 장소 목록이어도) 안 가 본 곳을 다시 골라요 — 이미 지도에 있는 곳을 흐린 점으로 또 그리지 않아요', async () => {
+    const places = [{ name: 'Moonlit Cafe', desc: '', kind: 'shop', area: 'Town', links: [] }, { name: 'Plaza', desc: '', kind: 'x', area: 'Town', links: [] }];
+    const lore = [{ key: 'bl-unv:a', label: '달빛 찻집', names: ['달빛 찻집'], owners: [], zone: 'out', summary: '' }];
+    const dict = {}; const tr = s => dict[s] ?? s;
+    assert.deepEqual(m.unvisitedOf({ places }, lore, { tr }).map(g => g.label), ['달빛 찻집'], '번역 전');
+    dict['Moonlit Cafe'] = '달빛 찻집';
+    assert.deepEqual(m.unvisitedOf({ places }, lore, { tr }).map(g => g.label), [], '번역 뒤 같은 목록');
+    assert.deepEqual(m.unvisitedTexts({ places }, lore, { tr }), [], '번역 다리에도 안 내줘요');
+});
 await tryOk('1.7.6 안 가 본 곳 번역: 사전에 있으면 이름 · 카드 설명을 번역으로 · 원문 보기면 영어 그대로 · 번역 이름이 지도 장소와 같으면 두 번 안 그려요 · 번역할 글을 번역 다리에 내줘요', async () => {
     const places = office(), map = { places };
     const lore = [{ key: 'bl-unv:lobby', label: 'Lobby', names: ['Lobby'], f: null, zone: 'out', summary: 'A wide hall with two information desks.', owners: [], from: 'Tower', src: 'section' },
@@ -883,6 +920,115 @@ await tryOk('1.7.9 로어북 · 캐릭터 편집을 저장해도 지도가 화�
     shop = '은빛 온실'; emit('wi'); await tick(20);
     assert.equal(wiReads, 3, '지도가 떠 있으면 바로 읽어요');
     assert.equal(renders >= 0, true);
+});
+// ── 1.7.9 부속 자리 묶기(「X 대문」 · 「X Gate」 · 「Xの玄関」 → X 점 하나) ─────────────
+await ok('1.7.9 부속 이름 읽기: 한국어 · 영어 · 일본어 꼴만 · 본 이름이 두 글자 넘을 때만', () => {
+    const cases = [['토끼의 집 대문', ['토끼의 집']], ['토끼의 집 앞마당', ['토끼의 집']], ['빵집 정문', ['빵집']], ['빵집앞', ['빵집']], ['Mira\'s House Gate', ['Mira\'s House']], ['Bakery Front Entrance', ['Bakery']],
+        ['Bakery Entrance', ['Bakery']], ['Front of the Bakery', ['the Bakery']], ['Old Mill Back Door', ['Old Mill']], ['パン屋の玄関', ['パン屋']], ['学校正門', ['学校']],
+        ['집 앞', []], ['駅前', []], ['Gate', []], ['Bakery', []], ['정문', []]];
+    for (const [s, want] of cases) assert.deepEqual(m.annexBase(s), want, s);
+});
+const town = () => [
+    P('Sky', 'A calm realm.', { kind: 'realm', area: 'Sky', links: ['Mira\'s Home'] }),
+    P('Sky Gate', 'Gate of the sky realm.', { kind: 'gate', area: 'Sky', links: ['Sky'] }),   // 넓은 곳(세계 · 구역 이름)의 문은 따로 가는 곳 — 안 묶어요
+    P('Mira\'s Home', 'A tidy house.', { kind: 'house', area: 'Sky', links: ['Sky'] }),
+    P('Mira\'s House Gate', '', { kind: '', area: '', links: [] }),   // 그 확장 place 줄로 생긴 곳(구역 · 이어진 곳 없음)
+    P('Bakery', 'Corner bakery.', { kind: 'shop', area: 'Street', links: ['Bakery Entrance'] }),
+    P('Bakery Entrance', '', { kind: '', area: 'Street', links: ['Park'] }),
+    P('Park', 'Small park.', { kind: 'nature', area: 'Street', links: [] }),
+    P('Park Gate', '', { kind: '', area: 'Harbor', links: [] }),   // 다른 구역 → 안 묶어요
+];
+await ok('1.7.9 부속 자리 찾기: 원문 · 번역 이름 · 집 꼴 낱말(House ↔ Home) · 넓은 곳 · 다른 구역 · 사슬', () => {
+    const A = m.annexMap(town());
+    assert.equal(A.get('Mira\'s House Gate'), 'Mira\'s Home');
+    assert.equal(A.get('Bakery Entrance'), 'Bakery');
+    assert.ok(!A.has('Sky Gate'), '세계 · 구역 이름의 문은 따로');
+    assert.ok(!A.has('Park Gate'), '다른 구역은 따로');
+    // 번역 이름으로만 같은 곳(원문은 다른 낱말)
+    const tr = s => ({ 'Mira\'s Place': '미라의 집', 'Mira Gatehouse Spot': '미라의 집 대문' })[s] || s;
+    const B = m.annexMap([P('Mira\'s Place', ''), P('Mira Gatehouse Spot', '')], tr);
+    assert.equal(B.get('Mira Gatehouse Spot'), 'Mira\'s Place');
+    assert.equal(m.annexMap([P('Mira\'s Place', ''), P('Mira Gatehouse Spot', '')]).size, 0, '번역이 없으면 원문만');
+    // 사슬(「X 대문」 의 본 장소가 또 부속)은 안 묶어요
+    const C = m.annexMap([P('Tower', ''), P('Tower Gate', ''), P('Tower Gate Front', '')]);
+    assert.equal(C.get('Tower Gate'), 'Tower'); assert.ok(!C.has('Tower Gate Front'));
+    // 자료는 그대로
+    const list = town(), before = JSON.stringify(list); m.annexMap(list); assert.equal(JSON.stringify(list), before);
+});
+await ok('1.7.9 층별 배치: 부속 자리는 본 장소 점 자리 · 링크는 본 장소로 · 땅 줄에 외딴 점이 안 생겨요', () => {
+    const list = [...office(), P('Bakery Entrance', '', { kind: '', area: '', links: ['Park'] }), P('Garage Gate', '', { kind: '', area: '', links: [] })];
+    const plain = m.floorLayout(list);
+    assert.equal(plain.pos.get('Bakery Entrance').zone, 'out'); assert.ok(!plain.pos.get('Bakery Entrance').twin, '묶기 전에는 따로 점');
+    const A = m.annexMap(list), L = m.floorLayout(list, { annex: A });
+    assert.equal(A.get('Bakery Entrance'), 'Bakery'); assert.equal(A.get('Garage Gate'), 'Garage');
+    for (const [a, b] of A) { assert.deepEqual([L.pos.get(a).x, L.pos.get(a).y], [L.pos.get(b).x, L.pos.get(b).y], a); assert.ok(L.pos.get(a).annex && L.pos.get(a).twin === b); }
+    assert.equal(L.pos.get('Garage Gate').zone, 'b', '건물 방(지하) 자리');
+    const outs = o => [...o.pos].filter(([, p]) => p.zone === 'out' && !p.twin).length;
+    assert.equal(outs(L), outs(plain) - 2, '땅 줄 외딴 점 둘이 없어져요');
+    assert.ok(L.pairs.some(([a, b]) => [a, b].includes('Bakery') && [a, b].includes('Park')), '부속 링크는 본 장소로');
+    assert.ok(!L.pairs.some(([a, b]) => A.has(a) || A.has(b)));
+    assert.equal(L.annex.size, 2);
+});
+await ok('1.7.9 SVG: 부속 점은 숨기고 본 장소 점 옆 「+1」 · 지금 위치가 부속이면 본 장소 점에 지금 고리 · 끄면 따로 · 층 없는 지도도', () => {
+    const list = [...office(), P('Bakery Entrance', '', { kind: '', area: '', links: [] })];
+    const doc = makeDoc(), svg = drawn(doc, list);
+    const ge = svg.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Bakery Entrance');
+    ge.setAttribute('class', 'node here'); ge.insertBefore(new El(doc, 'circle', { cx: 0, cy: 0, r: 4.6, class: 'ring' }), ge.firstChild);
+    const L = m.applyFloors(svg, { places: list, here: 'Bakery Entrance' }, { ui: null });
+    const gb = svg.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Bakery');
+    assert.equal(ge.getAttribute('display'), 'none', '부속 점 숨김'); assert.equal(gb.getAttribute('display'), null, '본 장소 점이 보여요(지금 위치가 부속이어도)');
+    assert.match(gb.getAttribute('class'), /\bhere\b/); assert.equal(gb.getAttribute('data-bl-annex-here'), 'Bakery Entrance');
+    assert.equal(gb.querySelectorAll('circle.ring').length, 1, '지금 고리'); assert.equal(gb.querySelector('circle.dot').getAttribute('r'), '3.2');
+    const badge = gb.querySelector('text.bl-twin'); assert.ok(badge); assert.match(badge.getAttribute('class'), /bl-annex/); assert.equal(badge.getAttribute('data-arg'), 'Bakery Entrance'); assert.equal(badge.textContent, '+1');
+    assert.ok(L.pos.get('Bakery Entrance').annex);
+    // 스위치 끔(annex: false): 지금과 같은 그림
+    const svgA = drawn(makeDoc(), list), svgB = drawn(makeDoc(), list.filter(p => p.name !== 'Bakery Entrance').concat([P('Bakery Entrance', '', { kind: '', area: '', links: [] })]));
+    m.applyFloors(svgA, { places: list }, { ui: null, annex: false });
+    assert.equal(svgA.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Bakery Entrance').getAttribute('display'), null, '끄면 따로 점');
+    assert.equal(svgA.querySelectorAll('text.bl-twin').length, 0); void svgB;
+    // 층 없는 지도(그 확장 배치): 부속 점을 숨기고 닿던 선 끝을 본 장소 점으로 · 부속 ↔ 본 장소 선은 지워요
+    const flat = [P('Bakery', 'shop', { area: '', links: ['Park', 'Bakery Entrance'] }), P('Park', 'park', { area: '', links: [] }), P('Bakery Entrance', '', { area: '', links: ['Park'] })];
+    const d2 = makeDoc(), s2 = drawn(d2, flat), e2 = s2.querySelector('g.edges');
+    e2.childNodes = [];
+    const at = n => { const d = s2.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === n).querySelector('circle.dot'); return [d.getAttribute('cx'), d.getAttribute('cy')]; };
+    const line = (a, b) => { const [x1, y1] = at(a), [x2, y2] = at(b); const l = new El(d2, 'line', { x1, y1, x2, y2, class: '' }); l.remove = () => { e2.childNodes = e2.childNodes.filter(c => c !== l); }; e2.appendChild(l); return l; };
+    line('Bakery', 'Park'); const lp = line('Bakery Entrance', 'Park'); line('Bakery', 'Bakery Entrance');
+    assert.equal(m.applyFloors(s2, { places: flat }, { ui: null }), null);
+    assert.equal(s2.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Bakery Entrance').getAttribute('display'), 'none');
+    assert.deepEqual([lp.getAttribute('x1'), lp.getAttribute('y1')], at('Bakery').map(String), '선 끝을 본 장소 점으로');
+    assert.equal(e2.querySelectorAll('line').length, 1, '점 하나가 된 선 · 겹친 선은 지워요(빵집 ↔ 공원 하나만)');
+    // 노선도 보기(그 확장 「새 지도」)는 그대로
+    const s3 = drawn(makeDoc(), flat); s3.setAttribute('class', 'ss-map line'); m.applyFloors(s3, { places: flat }, { ui: null });
+    assert.equal(s3.querySelectorAll('g.node').filter(x => x.getAttribute('display') === 'none').length, 0);
+});
+await ok('1.7.9 「＋」 확대: 그림 몫 가운데를 축으로 · 건물 왼쪽이 칸 밖으로 안 밀려요 · 「－」 로 처음 칸', () => {
+    const list = [...office(), ...['North Kiosk', 'South Kiosk', 'East Kiosk', 'West Kiosk'].map(nm => P(nm, 'kiosk', { kind: 'shop', area: 'Street', links: ['Bakery'] }))];
+    const doc = makeDoc(), svg = drawn(doc, list); const L = m.applyFloors(svg, { places: list }, { ui: null });
+    const fit = svg._blFit, c = svg._blContent; assert.ok(fit && c); assert.deepEqual(svg.getAttribute('viewBox'), fit.join(' '));
+    assert.deepEqual(fit, m.fitFloors(L, null));
+    const bl = L.buildings[0].left;
+    // 그 확장처럼 보기 칸 가운데를 축으로 늘리면(오른쪽 비움 몫 때문에) 건물 왼쪽이 칸 밖으로 나가요
+    const theirs = (() => { const w = fit[2] / 1.4, cx = fit[0] + fit[2] / 2; return cx - w / 2; })();
+    assert.ok(theirs > bl, '고치기 전 모양: 건물 왼쪽 벽이 칸 밖');
+    const z = m.zoomFloors(fit, c, fit, 1 / 1.4);
+    assert.ok(z[2] < fit[2] && Math.abs(z[2] / z[3] - fit[2] / fit[3]) < 0.01, '비율 그대로 좁혀요');
+    assert.ok(z[0] < theirs - 5, `건물 쪽으로 당겨요 ${z[0]} < ${theirs}`);
+    assert.ok(z[0] >= c[0] - 0.05 && z[0] + z[2] <= Math.max(c[2], c[0] + z[2]) + 0.05, '그림 밖 빈 곳을 안 보여요');
+    const firstRoom = Math.min(...[...L.pos.values()].filter(o => o.zone === 'b').map(o => o.x));
+    assert.ok(firstRoom - 6 >= z[0], '맨 왼쪽 방 점 · 이름이 칸 안');
+    // 여러 번 확대해도 칸이 그림 안 · 「－」 를 거듭하면 처음 칸(null)
+    let v = z; for (let i = 0; i < 4; i++) { v = m.zoomFloors(v, c, fit, 1 / 1.4); assert.ok(v[0] >= c[0] - 0.05 && v[0] + v[2] <= c[2] + 0.05); }
+    for (let i = 0; i < 8 && v; i++) v = m.zoomFloors(v, c, fit, 1.4);
+    assert.equal(v, null);
+    assert.equal(m.zoomFloors([NaN, 0, 1, 1], c, fit, 1.4), null);
+    const src = read('src/mb-map-floors.js');
+    assert.match(src, /\[data-act="mapzoom"\]\[data-arg="in"\]/); assert.match(src, /zoomFloors\(vb, svg\._blContent, svg\._blFit/);
+});
+await ok('1.7.9 스위치 annex: 표 · 화면만 · 기본 켬 · 붙이기가 mbFit 로 봐요', () => {
+    const sw = read('src/mb-switch.js');
+    assert.match(sw, /key: 'annex', kind: 'screen', group: 'add'/);
+    const src = read('src/mb-map-floors.js');
+    assert.match(src, /mbFit\('annex', doc\)/); assert.match(src, /onMbOff\(doc, \[[^\]]*'annex'/);
 });
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

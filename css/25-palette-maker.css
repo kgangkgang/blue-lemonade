@@ -15,6 +15,8 @@
 .salty-panel .salty-pal b:not(.salty-pal-page b) { font-size: 12px; line-height: 1.5; font-weight: 650; }
 .salty-panel .salty-pal-page { padding: 8px; min-height: 69px; }
 .salty-panel .salty-pal-create { align-content: center; justify-items: center; min-height: 136px; text-align: center; background: var(--salty-fill-accent-8, var(--salty-accent-8)); color: var(--salty-text); box-shadow: inset 0 0 0 1px var(--salty-accent-22); }
+/* 1.7.9 디자인 전수(「같은 묶음 단추 크기」): 홀수라 혼자 남은 「커스텀 에이드 만들기」 카드만 136 · 나머지 에이드 카드 133 — 격자 줄 높이를 하나로 */
+.salty-panel .salty-palettes { grid-auto-rows: 1fr; }
 .salty-panel .salty-pal-create small { color: var(--salty-muted) !important; }
 .salty-panel .salty-create-icon { display: grid; place-items: center; width: var(--bl-deco-create-icon); height: var(--bl-deco-create-icon); margin-bottom: 4px; border-radius: 12px; background: var(--salty-fill-accent-13, var(--salty-accent-13)); color: var(--salty-accent); font-size: 26px; font-weight: 400; }
 .salty-panel .salty-custom-card { position: relative; display: grid; min-width: 0; }

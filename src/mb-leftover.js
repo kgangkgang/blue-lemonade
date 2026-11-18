@@ -12,7 +12,8 @@ import { mbOff, onMbOff } from './mb-switch.js';
 
 export const ATTR = 'data-bl-mb-left';
 const KEY = 'chips';   // 미트볼 맞춤 「답 아래 변동 칩 모양」 — 끄거나 「원작 그대로 보기」면 숨기지 않아요
-export const offView = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw') || mbOff(KEY, doc);
+// 버그 사냥 4: 테마를 끈 때(body.salty 없음)도 숨기던 것 — 다른 미트볼 맞춤 모듈처럼 테마가 켜진 때만
+export const offView = doc => !doc?.body?.classList?.contains?.('salty') || !!doc?.body?.hasAttribute?.('data-bl-ext-raw') || mbOff(KEY, doc);
 const hide = el => { el.setAttribute(ATTR, '1'); el.style.setProperty('display', 'none', 'important'); };
 const show = el => { el.removeAttribute(ATTR); el.style.removeProperty('display'); if (!el.getAttribute('style')) el.removeAttribute('style'); };
 // 그 확장 변화 줄의 키 가운데 본문 끝 덩이에 자주 오는 것(영어 · 한국어) — 테마가 고른 목록
@@ -20,20 +21,22 @@ const KEYS = ['loc', 'location', 'place', 'room', 'aff', 'affection', 'trust', '
     'ach', 'memo', 'note', 'msg', 'npc', 'roll', 'quest', 'news', 'rumor', 'post', 'curse', 'weather', 'cash', 'money', 'item', 'stat', 'attr', 'cond', 'stock', 'decor',
     '위치', '장소', '호감', '호감도', '신뢰', '신뢰도', '애정', '우정', '관계', '날짜', '시간', '시간대', '일정', '메모', '인물', '날씨', '돈', '소지금', '아이템', '상태', '퀘스트'];
 const MARK = new RegExp(`(^|\\s)(${KEYS.join('|')})\\s*[:：]`, 'gi');
-/** 글 전체가 「키: 값」 이 둘 이상 이어진 덩이인가(처음부터 그 확장 키로 시작) */
+// 버그 사냥 4: 날짜 · 시간 · 장소 · 날씨 키뿐인 칸은 카드가 답 머리에 늘 적는 줄(「Date: … Time: … Location: …」)일 수 있어요 — 변화 키(인물 · 사건 · 돈 …)가 하나는 있어야 덩이로 봐요
+const SCENE = new Set(['loc', 'location', 'place', 'room', 'date', 'days', 'time', 'period', 'slot', 'weather', '위치', '장소', '날짜', '시간', '시간대', '날씨', '일정']);
+/** 글 전체가 「키: 값」 이 둘 이상 이어진 덩이인가(처음부터 그 확장 키로 시작 · 변화 키 하나 이상) */
 export function statusRun(text) {
     const s = String(text ?? '').replace(/\s+/g, ' ').trim(); if (!s) return false;
     MARK.lastIndex = 0; const hits = [...s.matchAll(MARK)];
-    return hits.length >= 2 && hits[0].index === 0;
+    return hits.length >= 2 && hits[0].index === 0 && hits.some(h => !SCENE.has(h[2].toLowerCase()));
 }
 /** 칸 글(줄바꿈 <br> · 칸 경계는 빈칸으로 — textContent 는 <br> 을 빼서 「(1F)npc:」 처럼 붙었어요 · 리그 11-18) · 그 확장 칩 자리는 빼요 */
 const SLOT = '.ss-slot, .custom-ss-slot, .ss-msgcard';
-export function textOf(el) {
+export function textOf(el, skip = null) {
     let s = '';
     const walk = n => {
         for (let c = n.firstChild; c; c = c.nextSibling) {
             if (c.nodeType === 3) s += c.nodeValue;
-            else if (c.nodeType === 1 && !c.matches?.(SLOT)) { if (c.tagName === 'BR') { s += ' '; continue; } s += ' '; walk(c); s += ' '; }
+            else if (c.nodeType === 1 && !c.matches?.(SLOT) && !(skip && c.matches?.(skip))) { if (c.tagName === 'BR') { s += ' '; continue; } s += ' '; walk(c); s += ' '; }
         }
     };
     walk(el); return s.replace(/\s+/g, ' ').trim();
@@ -53,6 +56,8 @@ export function markLeftovers(mes, m) {
         if (!statusRun(t) || t === whole) continue;
         hide(el); n++;
     }
+    // 버그 사냥 4: 덩이가 문단 둘 이상으로 나뉘면 칸마다 본문 전체와 달라 다 숨겨져 답이 통째로 비었어요 — 숨긴 뒤 남는 글이 없으면 되돌려요(본문 전체가 덩이인 답은 그대로)
+    if (n && !textOf(box, `[${ATTR}]`)) { for (const el of box.querySelectorAll(`[${ATTR}]`)) show(el); return 0; }
     return n;
 }
 let on = false;
@@ -63,6 +68,7 @@ export function startMbLeftover(doc = globalThis.document, { decorate = addMessa
     const all = () => run([...doc.querySelectorAll('#chat .mes')]);
     onMbOff(doc, [KEY], all);
     try { onMbRawChange(all); } catch { /* 다음 그림 때 */ }
+    try { doc.addEventListener('bl-mb-hidden-sync', all); } catch { /* 다음 그림 때 */ }   // 버그 사냥 4: 테마 켬 · 끔(src/apply.js 가 salty 를 바꿀 때 내는 사건 — 「눈 감긴 답 빼기」 를 끈 사람은 다음 그림 때)
     try { decorate('미트볼 본문에 남은 변화 줄', run, { settle: 0, live: false, order: 97, filter: r => !!r?.target?.closest?.('.mes_text') && !r.target.closest('.ss-msgcard, .ss-slot, .custom-ss-slot') }); } catch { /* 글 그대로 */ }
     return true;
 }

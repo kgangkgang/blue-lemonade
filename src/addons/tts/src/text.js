@@ -658,7 +658,10 @@ function markParagraphs(segs, names) {
         }
         const own = narration.length ? firstNameIn(narration.map(g => g.raw || g.text).join('\n'), names) : null;
         if (own) for (const g of list) if (g.text && (g.kind === 'dialogue' || g.speech)) g.paraName = own;
-        if (own && narration.some(g => senderHead(g.raw || g.text))) for (const g of list) if (g.paraName) g.paraHead = true;
+        // 버그 사냥 4: 머리 줄이 있으면 그 줄 안의 이름만 믿어요 — 전엔 문단 서술에 처음 나온 이름(「렉스의 폰이 울렸다」 · 【수신자: 렉스】)을 보낸 사람으로 칠했어요 · 머리 줄에 아는 이름이 없으면(미확인 번호) 칠하지 않아요
+        const heads = own ? narration.flatMap(g => String(g.raw || g.text || '').split('\n')).filter(senderHead) : [];
+        const sender = heads.length ? firstNameIn(heads.map(l => l.replace(SENDER_HEAD, '')).join('\n'), names) : null;
+        if (sender) for (const g of list) if (g.paraName) { g.paraName = sender; g.paraHead = true; }
         if (!narration.length && lastName) for (const g of list) if (g.inner) g.paraName = lastName;   // 문단 전체 기울임 속마음 — 앞 서술 문단의 이름
         const pov = own || lastName;
         if (pov) for (const g of list) if (g.kind === 'action' && g.text) g.povName = pov;

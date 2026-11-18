@@ -192,7 +192,7 @@ function render(panel) {
         return `<section class="bls-card" aria-label="${esc(o.label)}">
           <div class="bls-row bls-between"><h3>${esc(o.label)}</h3><span class="bls-num">${formatBytes(sum(rows))}${rows.some(r => r.bytes === null) ? ' +' : ''}</span></div>
           <ul class="bls-list">${rows.map(r => `<li><div class="bls-item-main"><span>${esc(r.label)}</span><small>${r.where === 'server' ? '서버' : '이 기기'}${r.count != null ? ` · ${r.count.toLocaleString()}개` : ''}${r.note ? ` · ${esc(r.note)}` : ''}</small></div><span class="bls-num">${r.approx ? '약 ' : ''}${formatBytes(r.bytes)}</span></li>`).join('')}</ul>
-          <div class="bls-row bls-wrap">${cleans.map(c => `<button type="button" class="bls-btn" data-act="clean" data-pid="${esc(c.pid)}" data-cid="${esc(c.id)}">${esc(c.label)}</button>`).join('')}${entry ? `<button type="button" class="bls-btn" data-act="open" data-entry="${esc(entry.id)}">${esc(entry.label)} 열기</button>` : ''}</div>
+          <div class="bls-row bls-wrap bls-grid">${cleans.map(c => `<button type="button" class="bls-btn" data-act="clean" data-pid="${esc(c.pid)}" data-cid="${esc(c.id)}">${esc(c.label)}</button>`).join('')}${entry ? `<button type="button" class="bls-btn" data-act="open" data-entry="${esc(entry.id)}">${esc(entry.label)} 열기</button>` : ''}</div>
           ${cleans.length ? '' : `<p class="bls-note">${esc(WHERE_TO_CLEAN[o.id] || OTHER_CLEAN)}</p>`}
         </section>`;
       }).join('')}

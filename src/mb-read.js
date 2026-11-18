@@ -155,7 +155,9 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         refresh(row);
         if (!P) return;
         const lean = 'blLean' in (row?.dataset || {});                         // 1.7.7 「기억 요약: 안 씀 / 쓰기」 꼴 — 「안 씀」 은 평소 그대로
-        const usual = chat.mbPrompt || 'off', want = lean && sel.value === 'base' ? usual : levelFor(sel.value, usual);
+        // 버그 사냥 4: 평소 단계가 「기억 요약」 이면 이 꼴의 고르기는 「쓰기」 로 떠요 — 그때 「안 씀」 은 평소(기억 요약) 그대로가 아니라 이번만 끄기예요(전엔 그대로 실렸어요)
+        const usual = chat.mbPrompt || 'off', usualPick = lean ? (SLIM_PICKS.includes(pickOf(usual)) ? pickOf(usual) : 'base') : pickOf(usual);
+        const want = lean && sel.value === 'base' ? (usualPick === 'base' ? usual : 'off') : levelFor(sel.value, usual);
         if (want === 'all') {                                                  // 상한을 넘으면 고르는 순간 미리 알려요
             let a = null; try { a = P.allText(undefined, cap); } catch { a = null; }
             const lim = a ? (P.overModel?.(a.text) || 0) : 0;
@@ -163,7 +165,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
             if (a && (a.summarized || a.cut || a.dropped)) warn(`미리 알려요: 채팅 전체가 요청 1회 상한(약 ${big(cap)} 토큰)을 넘어요 — ${P.fillLine('all', a)}. 원문을 다 넣으려면 블루레몬 설정 › 채팅 › 미트볼 문구의 「채팅 전체: 요청 1회 상한」을 올려요(0 = 없음).`, 15000);
         }
         (async () => {
-            if ((lean ? 'base' : pickOf(usual)) === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요
+            if (usualPick === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요
             if (await P.armOnce({ level: want, quiet: true })) { host = row.closest('dialog') || row.closest('.ss-wizard'); hostQuiet = want === 'off' || want === 'light'; armedBase = P.baseRef?.() ?? null; armedChat = P.chatKey?.(); }   // 기본 쪽은 요청을 셀 수 없어 닫을 때 조용히 돌려놔요
         })().catch(() => { /* 평소 단계 그대로 */ });
     }, true);

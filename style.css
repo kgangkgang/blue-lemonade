@@ -1,7 +1,7 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 17312676d6c4) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 4d21f9a7968e) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b28fbbf5e0cf7922"}
 /* css/00-base.css */
-:root{--bl-release:"1.8.0";}
+:root{--bl-release:"1.8.1";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -8945,18 +8945,22 @@ html body #char_assets_settings .eh-search {
 }
 @media (max-width: 760px), (pointer: coarse) {
   html body.salty .salty-btn.salty-btn-icon:not([data-health-check]) { width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; }
-  html body.salty .bl-name-row > button { flex: 0 0 34px; width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; }
+  html body.salty .bl-name-row > button { flex: 0 0 36px; width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0; }
   html body.salty #jj_reset { height: 36px; min-height: 36px; }
   html body.salty :where(.bl-assets-dialog) .eh-btn--small:is(#bl-s, *),
 html body.salty #char_assets_settings .eh-btn--small { height: 36px; min-height: 36px; }
   html body.salty .eh-pchip { height: 36px; }
-  html body.salty .bl-word-rule > button { height: 34px; min-height: 34px; }
+  html body.salty .bl-word-rule > button:not(.bl-rule-swap) { height: 36px; min-height: 36px; }
   html body.salty #char_assets_settings .eh-icon-btn--labeled { height: var(--bl-h-ctl, 36px); font-size: var(--bl-ts-ctl); }
 }
 html body.salty #char_assets_settings .eh-icon-btn--labeled,
 html body.salty #char_assets_settings .eh-btn--small { height: var(--bl-h-ctl, 36px); }
 html body.salty #char_assets_settings .eh-icon-btn--labeled,
 html body.salty #char_assets_settings .eh-btn--small { font-size: var(--bl-ts-ctl) !important; }
+html body.salty .llmt-term-memory input:not([type="checkbox"], [type="radio"]),
+html body.salty .llmt-term-memory select:is(.bl-s, *) { min-height: var(--bl-h-ctl, 36px); height: var(--bl-h-ctl, 36px); padding-block: 0; border-radius: 8px; }
+html body.salty .llmt-term-memory > button { position: relative; min-height: var(--bl-h-ctl, 36px); height: var(--bl-h-ctl, 36px); border-radius: 8px; }
+html body.salty .llmt-term-memory > button::before { content: ''; position: absolute; inset: -4px 0; }
 /* css/90-press.css */
 @media (prefers-reduced-motion: no-preference) {
   html[data-bl-puffy]:not(#bl-puffy-off) body .salty-btn:not(.on, .active, [aria-pressed="true"], :disabled, [aria-disabled="true"]):active,

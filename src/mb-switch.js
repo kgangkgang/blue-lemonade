@@ -46,6 +46,7 @@ export const MB_SWITCHES = [
     { key: 'deco', kind: 'screen', group: 'add', css: true, file: 'src/ext-compat.js', name: '꾸미기 창 「블루레몬 꾸미기」 묶음', desc: '글꼴 · 얼굴 · 색 톤을 골라요', more: '미트볼 「꾸미기」 창에 글꼴 · 얼굴 표시 · 색 톤을 고르는 「블루레몬 꾸미기」 묶음을 끼워요 · 끄면 원작 꾸미기 창이에요(이 칸들은 테마 설정에서 바꿔요)', words: '꾸미기 창 블루레몬 꾸미기 묶음 deco' },
     { key: 'arrow', kind: 'screen', group: 'add', css: true, file: 'src/mb-arrow.js', name: '「->」를 화살표 그림으로', desc: '글 · 복사 글은 그대로예요', more: '그 확장 글의 「저녁 -> 밤」 같은 「->」를 테마 선 화살표 그림으로 보여요(글 · 복사 글 · 자료는 그대로) · 끄면 원작처럼 「->」 글자예요', words: '화살표 꺾쇠 -> arrow' },
     { key: 'floors', kind: 'screen', group: 'add', css: true, setting: 'chat.mbMapFloors', file: 'src/mb-map-floors.js', name: '지도 층별 보기', desc: '층이 적힌 지도를 단면으로 놓아요', more: '장소 설명에 층이 적힌 지도를 층 띠 · 꺾인 선의 건물 단면으로 다시 놓아요(장소 자료는 그대로) · 끄면 원작 지도 그림이에요', words: '지도 층 층별 건물 지하 map floor' },
+    { key: 'annex', kind: 'screen', group: 'add', file: 'src/mb-map-floors.js', name: '지도 대문 · 입구는 그 장소 점으로', desc: '「집 대문」을 「집」 점 하나로 묶어요', more: '이야기에 「<장소> 대문 · 입구 · 앞 · 현관 · 정문 · 마당 · 뒷문」(Gate · Entrance · Front · 玄関 …)이 새 장소로 들어오면 따로 점을 만들지 않고 그 장소 점 하나로 묶어요 · 묶인 곳은 점 옆 「+1」로 열고, 지금 위치가 그곳이면 그 장소 점에 지금 표시가 떠요(지도 자료는 그대로) · 끄면 원작처럼 따로 점이에요', words: '지도 대문 입구 현관 정문 마당 같은 곳 합치기 부속 gate entrance annex map' },
     { key: 'unvisited', kind: 'screen', group: 'add', css: true, file: 'src/mb-map-floors.js', name: '지도에 아직 안 가 본 곳', desc: '지도 「전체」 보기에서만 나와요', more: '이 채팅에 걸린 로어북의 장소(인물의 집 · 층 안내의 부서 · 장소 묶음) 가운데 지도에 없는 곳을 점선 흐린 점과 「아직 안 가 본 곳」으로 더해 그리고, 누르면 로어북 설명을 짧게 보여요(지도 자료는 그대로 · 이야기에 나오면 원래 점으로) · 지도의 「전체」 보기에서만 나오고 구역 탭을 고르면 안 그려요 · 끄면 원작처럼 이야기에 나온 곳만이에요', words: '지도 아직 안 가 본 곳 로어북 장소 집 흐린 점 unvisited map lorebook' },
     { key: 'trend', kind: 'screen', group: 'add', css: true, file: 'src/mb-trend.js', name: '변화 그래프 다시 그리기', desc: '자료는 그대로 · 모양만 바꿔요', more: '변화 그래프 창을 프로필 얼굴 색 · 둥근 선 · 누르면 한 사람 강조로 다시 그려요(자료는 그대로) · 끄면 다음에 여는 그래프부터 원작 그래프예요', words: '변화 그래프 추이 선 색 trend graph' },
     { key: 'addon', kind: 'screen', group: 'add', css: true, file: 'src/ext-status.css', name: '부가 기능 탭 정렬', desc: '끄면 원작 배열이에요', more: '상태창 「부가 기능」 탭의 단추 높이 · 줄 머리 · 단추 아래 틈을 맞춰요 · 끄면 원작 배열이에요', words: '부가 기능 탭 정렬 방명록 addon' },
@@ -94,9 +95,13 @@ export function switchOn(settings, key) {
     return v !== false;
 }
 /** html 표식에 적을 끈 열쇠(띄어 적은 글 · 다 켜져 있으면 '') — 고르는 칸(얼굴 표시 · 미트볼 문구)은 제 표식 · 설정을 따로 써서 빼요 */
-export function offAttrValue(settings) {
+let handedKeys = () => [];
+/** 미트볼 2.9.1 이 스스로 하게 된 시트 묶음을 알려 주는 함수를 받아요 — src/mb-upstream.js 가 받힐 때 한 번 넣어요(시작 그래프에 그 모듈을 끌어들이지 않게 이 표는 그 모듈을 부르지 않아요) */
+export function setHanded(fn) { handedKeys = typeof fn === 'function' ? fn : () => []; }
+export function offAttrValue(settings, handed = handedKeys) {
     const out = [];
     for (const sw of MB_SWITCHES) if (!sw.choice && !switchOn(settings, sw.key)) out.push(sw.key);
+    try { for (const key of handed()) if (!out.includes(key)) out.push(key); } catch { /* 그 확장 설정을 못 읽으면 테마 스위치만 */ }   // 미트볼 2.9.1 이 스스로 하게 된 묶음(src/mb-upstream.js UP 의 css)
     return out.join(' ');
 }
 /**

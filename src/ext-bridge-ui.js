@@ -147,8 +147,15 @@ const listOptions = () => ({ endpoint: endpoint(), includeHeaders: hostSettings(
 function refreshAll(content) {
     for (const block of content?.querySelectorAll?.('[data-bl-bridge]') || []) refreshers.get(block)?.();
 }
+/** 미트볼 2.9.1 「연결 프로필 없이 모델 이름만」(aiModelOnly)에 이름이 있으면 그 확장이 그 이름으로 바로 보내요 — 여기 고른 모델을 지나쳐요(원작 prompts.js) */
+export function upModelNote(up = globalThis.SillyTavern?.getContext?.()?.extensionSettings?.statussim) {
+    const name = String(up?.aiModelOnly || '').trim();
+    return name ? `미트볼 「연결 프로필 없이 모델 이름만」 칸에 「${name.slice(0, 40)}」이(가) 적혀 있어 미트볼이 그 이름으로 바로 보내요 — 여기 고른 모델은 그 칸을 비워야 써요.` : '';
+}
 function modelNote(status, message) {
     if (message) return message;
+    let up = ''; try { up = upModelNote(); } catch { up = ''; }
+    if (up) return up;
     const last = status.last?.model;
     if (!last) return '';
     const where = Core.slotLabel(last.slot) || '기능 모름';

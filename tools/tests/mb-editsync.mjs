@@ -318,6 +318,117 @@ await ok('1.7.8 상태창 시작점 앞(그 확장이 굳힌 답 · 다시 만�
     assert.equal(await go(3, edit(3, LONG.slice(0, 10).join('\n\n'))), null);
     assert.equal(C.chat[3].extra[E.STATE], undefined);
 });
+// 그 확장 rebindToUser 와 같은 뜻(묶인 기록을 그 답 다음 내 메시지로 옮김 · keep 를 안 봐요)
+const rebind = () => { const idx = new Map(C.chat.map((m, i) => [anchorOf(m), i])); for (const a of C.chatMetadata.statussim.adjust) { if (typeof a.an !== 'string') continue; const i = idx.get(a.an); if (i === undefined || C.chat[i].is_user) continue; const u = C.chat[i + 1]; if (u?.is_user) a.an = anchorOf(u); } };
+await ok('버그 사냥 4: 내 메시지를 보낸 뒤(그 확장이 기록을 내 메시지로 옮김) 다시 붙여 넣어도 되살아나요 · 옛 기록(만든 때 열쇠 없음)도', async () => {
+    world(); await go(3, edit(3, LONG.slice(0, 10).join('\n\n')));
+    assert.deepEqual(now().Sua, [0, 0]);
+    rebind(); assert.ok(ours().every(a => a.an.startsWith('u:')), '옮겨졌어요');
+    await go(3, edit(3, LONG.join('\n\n')));
+    assert.deepEqual(now(), { Mira: [22, 3], Oskar: [2, 0], Sua: [4, 3], Jisua: [1, 0] }); assert.equal(ours().length, 0);
+    assert.deepEqual(C.chat[3].extra[E.STATE] ?? null, null, '되돌린 것(keep)으로 안 적어요');
+    // 1.7.6 ~ 1.7.8 이 만든 기록(bl_sub.an 없음)
+    world(); await go(3, edit(3, LONG.slice(0, 10).join('\n\n')));
+    for (const a of ours()) delete a.bl_sub.an;
+    rebind(); await go(3, edit(3, LONG.join('\n\n')));
+    assert.deepEqual(now().Sua, [4, 3]); assert.equal(ours().length, 0);
+});
+await ok('버그 사냥 4: 그 답 바로 뒤 자리에 칸 통째 저장이 있어도(끝 답 · 영어 저장 바꾸기 뒤) 빼요 · 상태를 지우지 않아요', async () => {
+    world(); const meta = C.chatMetadata.statussim;
+    C.chat.length = 4;
+    meta.adjust.push({ at: 4, t: 100, set: { mod: 'rel', data: clone(fake.compute(4, { bake: true }).state.data.rel) }, label: '' });
+    const r = await go(3, edit(3, LONG.slice(0, 10).join('\n\n')));
+    assert.deepEqual(r.cut.sort(), ['Jisua', 'Sua']);
+    assert.deepEqual(now(), { Mira: [15, 3], Oskar: [2, 0], Sua: [0, 0], Jisua: [0, 0] }, '전엔 그대로(Sua [4,3])');
+    assert.deepEqual(Object.keys(C.chat[3].extra[E.STATE]['0'].off).sort(), ['jisua', 'sua']);
+    await go(3, edit(3, LONG.join('\n\n')));
+    assert.deepEqual(now().Sua, [4, 3], '되살리기'); assert.equal(ours().length, 0);
+});
+await ok('버그 사냥 4: 앞 스와이프를 지우면 상태 칸 번호도 당겨요 — 다른 데를 고쳐도 뺀 몫이 되살아나지 않아요', async () => {
+    world(); C.chat.length = 4;
+    const m = C.chat[3]; const ops = m.extra.statussim.bySwipe[0];
+    m.swipes = ['A0', 'A1', m.mes]; m.swipe_info = [{ extra: {} }, { extra: {} }, { extra: {} }];
+    m.extra.statussim.bySwipe = { 0: [['aff', 'Mira +1']], 1: [['aff', 'Mira +1']], 2: ops }; m.swipe_id = 2;
+    await go(3, edit(3, LONG.slice(0, 10).join('\n\n')));
+    assert.deepEqual(now().Sua, [0, 0]);
+    // 실리태번 deleteSwipe(0) + 그 확장 shiftSwipeAnchors 흉내
+    const oldKey = anchorOf(m).replace(/\|\d+$/, '');
+    m.swipes.shift(); m.swipe_info.shift(); m.extra.statussim.bySwipe = { 0: [['aff', 'Mira +1']], 1: ops }; m.swipe_id = 1;
+    for (const a of C.chatMetadata.statussim.adjust) if (a.an?.startsWith(oldKey + '|')) a.an = `${oldKey}|${Number(a.an.split('|').pop()) - 1}`;
+    assert.equal(E.shiftState(m, 0), true);
+    assert.deepEqual(Object.keys(m.extra[E.STATE]), ['1']); assert.deepEqual(Object.keys(m.swipe_info[1].extra[E.STATE]), ['1'], '스와이프 칸 사본도');
+    await go(3, edit(3, LONG.slice(0, 9).join('\n\n')));
+    assert.deepEqual(now().Sua, [0, 0], '전엔 [4,3] 으로 되살아났어요'); assert.equal(ours().filter(a => a.bl_sub.k === 'edit').length, 2);
+    assert.equal(E.shiftState(m, 5), true); assert.deepEqual(Object.keys(m.extra[E.STATE]), ['1'], '뒤 번호를 지우면 그대로');
+    assert.equal(E.shiftState({ extra: {} }, 0), false);
+});
+await ok('버그 사냥 4: 연필 단추 뒤 확인 창을 Esc 로 닫으면 기다리던 듣는 곳을 떼요 · 여러 번 눌러도 하나뿐 · 스와이프 지움 사건을 들어요', async () => {
+    const fresh = await import(pathToFileURL(path.join(root, 'src/mb-editsync.js')).href + '?hunt4-once');
+    world();
+    const bus = {}, listeners = {}; C.eventSource = { on: (t, fn) => { (bus[t] ||= []).push(fn); } }; C.event_types = { MESSAGE_EDITED: 'edited', CHAT_CHANGED: 'chat', MESSAGE_SWIPE_DELETED: 'swdel' };
+    const doc = { addEventListener: (t, fn) => { (listeners[t] ||= []).push(fn); }, removeEventListener: (t, fn) => { listeners[t] = (listeners[t] || []).filter(x => x !== fn); }, querySelector: () => null, documentElement: globalThis.document.documentElement, body: globalThis.document.body };
+    assert.equal(fresh.startEditSync(doc), true);
+    const chipTarget = { closest: sel => (sel === '.ss-mchip.edit[data-ss-edit]' ? { getAttribute: () => '3' } : null) };
+    const base = listeners.click.length;
+    for (let k = 0; k < 3; k++) for (const fn of [...listeners.click]) fn({ target: chipTarget });
+    assert.equal(listeners.click.length, base + 1, '세 번 눌러도 기다리는 것은 하나');
+    for (const fn of [...(listeners.keydown || [])]) fn({ key: 'Escape' });
+    assert.equal(listeners.click.length, base, 'Esc 로 닫으면 떼요'); assert.equal((listeners.keydown || []).length, 0);
+    assert.equal(bus.swdel?.length, 1, '스와이프 지움 사건');
+});
+await ok('1.8.1 고친 답을 맞추는 사이(로어북을 처음 읽는 동안) 채팅을 바꾸면: 새 채팅의 답 · 저장을 건드리지 않아요', async () => {
+    // 실리태번은 채팅을 바꿀 때 메시지 배열은 그 자리에서 갈아 끼우고(chat.splice) 메타 칸은 새 객체로 바꿔요 — 읽는 동안 들고 있던 맥락(c)의 chat 은 새 채팅, 메타 칸은 옛 채팅이 돼요
+    world();
+    let release = null, saves = 0;
+    C.chatMetadata.world_info = 'Book';
+    C.loadWorldInfo = () => new Promise(r => { release = () => r({ entries: {} }); });
+    C.saveChat = async () => { saves++; }; C.saveMetadata = async () => { saves++; };
+    E.useLore(undefined);
+    const before = edit(3, LONG.slice(0, 10).join('\n\n'));
+    const job = go(3, before);
+    for (let k = 0; k < 20 && !release; k++) await new Promise(r => setTimeout(r, 0));
+    assert.ok(release, '로어북을 읽기 시작했어요');
+    // 채팅을 바꿈: 같은 배열에 새 채팅의 답들 · 새 메타 칸 · 새 채팅 이름
+    const other = [me(), ai('Sua 가 문을 닫았다.', ['aff', 'Sua +4']), me(), ai('Sua 는 창밖을 봤다.', ['aff', 'Sua +2']), me()];
+    const otherCopy = clone(other);
+    C.chat.splice(0, C.chat.length, ...other);
+    const oldMeta = C.chatMetadata.statussim;
+    C.chatMetadata = { statussim: { base: { data: { rel: people(), wallet: { cash: 100 } } }, startAt: 0, adjust: [] } };
+    C.getCurrentChatId = () => 'chat-2';
+    release();
+    const r = await job;
+    assert.equal(r, null, '채팅이 바뀌었으면 손대지 않아요');
+    assert.deepEqual(clone(C.chat), otherCopy, '새 채팅의 답은 그대로');
+    assert.equal(saves, 0, '새 채팅을 저장하지 않아요');
+    assert.equal(oldMeta.adjust.filter(a => a.bl_sub).length, 0, '옛 메타 칸(이미 버려진 객체)에도 안 적어요');
+    delete C.loadWorldInfo;
+    E.useLore(null);
+});
+await ok('1.8.1 연필을 눌렀다 취소한 뒤 스와이프가 바뀌고 다른 확장이 편집 사건만 내면: 옛 스와이프 글을 「고치기 전」 으로 보지 않아요', async () => {
+    // 고치기 전: 연필 누름 때 기억한 본문이 취소 뒤에도 남아, 다른 스와이프로 넘긴 뒤 번역 · 명령이 낸 편집 사건에 옛 스와이프 글과 견줘 새 스와이프의 인물 몫을 뺐어요
+    const E2 = await import(pathToFileURL(path.join(root, 'src/mb-editsync.js')).href + '?stale');
+    E2.useCore({ app: { refreshNow() {} } });
+    world(); S.useEngine(fake);
+    const bus = {}, listeners = {}; C.eventSource = { on: (t, fn) => { (bus[t] ||= []).push(fn); } }; C.event_types = { MESSAGE_EDITED: 'edited', CHAT_CHANGED: 'chat' };
+    const doc = { addEventListener: (t, fn) => { (listeners[t] ||= []).push(fn); }, removeEventListener() {}, querySelector: () => null, documentElement: globalThis.document.documentElement, body: globalThis.document.body };
+    assert.equal(E2.startEditSync(doc), true);
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const at = (sel0, id) => ({ closest: sel => (sel === sel0 ? { closest: () => ({ getAttribute: () => String(id) }) } : null) });
+    const m = C.chat[3];
+    for (const fn of listeners.click) fn({ target: at('.mes_edit', 3) });   // 연필 → 취소(편집 사건 없음)
+    for (const fn of listeners.click) fn({ target: at('.mes_edit_cancel', 3) });
+    // 새 스와이프: Sua 가 안 나오는 글 · 변화 줄에는 Sua
+    m.swipes = [m.mes, 'Mira 가 창가에 앉았다.']; m.swipe_id = 1; m.mes = m.swipes[1];
+    m.extra.statussim.bySwipe[1] = [['aff', 'Mira +2'], ['호감', 'Sua +4']];
+    for (const fn of bus.edited) fn(3); await wait(500);
+    assert.equal(ours().length, 0, '연필로 고친 것이 아니에요');
+    // 연필을 누른 채 스와이프만 바뀐 때도(취소 단추를 안 거침) 그 스와이프 글로 견주지 않아요
+    for (const fn of listeners.click) fn({ target: at('.mes_edit', 3) });
+    m.swipe_id = 0; m.mes = m.swipes[0];
+    for (const fn of bus.edited) fn(3); await wait(500);
+    assert.equal(ours().length, 0, '기억한 스와이프와 다르면 「고치기 전」 이 아니에요');
+    S.useEngine(null);
+});
 await ok('CI 등록(release-check.yml)', async () => {
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/mb-editsync.mjs .'));
 });

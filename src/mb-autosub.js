@@ -352,6 +352,9 @@ export function startAutoSub(doc = globalThis.document, { onFail = null } = {}) 
     const keepSoon = () => { if (keepQueued) return; keepQueued = true; setTimeout(() => { keepQueued = false; keep(); }, 0); };
     for (const ev of ['CHAT_CHANGED', 'MESSAGE_RECEIVED', 'MESSAGE_SENT', 'MESSAGE_SWIPED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'GENERATION_ENDED', 'MORE_MESSAGES_LOADED', 'CHARACTER_MESSAGE_RENDERED'])
         if (T[ev]) on(T[ev], keepSoon);
+    // 버그 사냥 4: 이름 앞 · 줄인 키 고치기(src/mb-namekey.js)는 답 끝 뒤 0.6초에 서랍을 새 배열로 바꿔요 — 그 뒤엔 실리태번 사건이 없어 기억이 옛 변화 줄(그 확장이 못 읽은 줄)을 들고 있었고,
+    //   그 스와이프를 지우면 고친 몫(「aff: 이름 +3」)을 못 뺐어요 → 고쳤다는 문서 사건에 다시 기억해요
+    try { doc?.addEventListener?.('bl-mb-namekey', keepSoon); } catch { /* 다음 사건 때 */ }
     // 1.7.6 지움 사건이 잇달아 오면(답 여러 개 지우기 · /cut 범위 · 지운 직후 또 지움) 한 묶음으로 — 예전엔 사건마다 같은 「지우기 전 기억」 으로 따로 돌아
     //   첫 사건이 다 뺀 것을 둘째 사건이 또 빼고 참 자리(pos)도 두 번 당겼어요. 첫 사건의 기억 하나를 들고 마지막 사건 뒤에 한 번만 돌아요.
     //   돌기 직전에 지금 채팅을 다시 기억해서(keep) 도는 사이에 온 다음 지움은 「지운 뒤」 기억에서 시작해요. 그 사이 채팅이 바뀌었으면 안 돌아요(옛 채팅 기억으로 새 채팅을 고치지 않게).

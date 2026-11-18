@@ -12,6 +12,7 @@
 //      자동: 그 확장의 「새로 쓴 영어 글 자동 번역」이 지금 번역 담당에 켜져 있을 때만(실리 기본 번역 · 「항상」) 답이 끝나고 잠시 뒤 같은 일을 해요 — 꺼 두면 누를 때만.
 //   그 확장의 파일 · 함수는 고치지 않아요 — 그 확장이 내보낸 함수를 같은 주소로 불러 같은 모듈을 써요(그 확장이 쓰는 길 그대로). 판이 달라 함수가 없으면 아무것도 안 해요.
 //   새 감시자 없음: 메시지 꾸미기 하나(칩 자리 기록만 · 화면만 번역일 때만) · 번역 단추를 누른 뒤에만 도는 짧은 확인(1.5초 · 최대 15분).
+//   1.7.9 누르면 그 확장 번역을 기다리지 않고 0.3초 뒤 그 확장이 안 보내는 글(지도 흐린 점 이름 · 칩)부터 작은 첫 묶음으로 보내고, 묶음이 올 때마다 바로 다시 그려요.
 //   시험: tools/tests/ext-bridge-tr.mjs(빈틈 고르기 · 칩 감시 · 누른 뒤 메우기)
 
 import { addMessageDecorator } from './message-decor.js';
@@ -24,6 +25,9 @@ const SLOT = 'custom-ss-slot';
 const UNVISITED = Symbol.for('blue-lemonade.mb-unvisited.v1');   // 지도 「아직 안 가 본 곳」 글 등록부(src/mb-map-floors.js 가 걸어요)
 const SLOTS = '.ss-slot, .custom-ss-slot';
 const BATCH = 60, BATCH_CHARS = 8000;
+// 1.7.9 첫 묶음은 작게(보이는 이름 몇 개 · 몇 백 자) — 번역기는 글이 길수록 늦게 돌려줘서, 이름 몇 개를 긴 설명과 한 요청에 묶으면 이름도 그만큼 늦었어요
+const FIRST_BATCH = 12, FIRST_CHARS = 600;
+const EARLY_MS = 300, EARLY_SHEET_MAX = 10000;
 const WATCH_MS = 1500, WATCH_MAX = 15 * 60 * 1000, AUTO_MS = 8000, TIDY_MS = 3000, TIDY_REPLY_MS = 1200, TRANSLATED_MS = 1500;
 const isObj = value => !!value && typeof value === 'object';
 
@@ -273,6 +277,31 @@ export function batches(list, size = BATCH, chars = BATCH_CHARS) {
     }
     if (cur.length) out.push(cur);
     return out;
+}
+/**
+ * 1.7.9 첫 묶음만 작게(FIRST_BATCH 개 · FIRST_CHARS 자) — 나머지는 예전 묶음대로 이어서.
+ *   맨 앞이 짧은 글(40자까지 · 이름)이면 첫 묶음엔 짧은 글만(긴 설명은 다음 묶음) · 글 하나가 첫 상한보다 길어도 첫 묶음에 하나는 들어가요
+ *   다 합쳐도 첫 상한 안이면 나누지 않아요
+ */
+export function quickBatches(list, { first = FIRST_BATCH, firstChars = FIRST_CHARS, size = BATCH, chars = BATCH_CHARS, short = 40 } = {}) {
+    // 다 합쳐도 첫 묶음 상한 안이면 한 번에(이미 작아서 빨라요 — 요청을 늘리지 않아요)
+    if (list.length <= first && list.reduce((a, s) => a + s.length, 0) <= firstChars) return list.length ? [list] : [];
+    const head = [];
+    const shortHead = list.length > 0 && list[0].length <= short;
+    let len = 0, i = 0;
+    for (; i < list.length; i++) {
+        const s = list[i];
+        if (head.length && (head.length >= first || len + s.length > firstChars || (shortHead && s.length > short))) break;
+        head.push(s); len += s.length;
+    }
+    return head.length ? [head, ...batches(list.slice(i), size, chars)] : [];
+}
+/**
+ * 1.7.9 보이는 글부터: ① 먼저 보일 글(지도에 그려진 흐린 점 이름) ② 짧은 글(40자까지 · 칩 · 이름) ③ 그 밖 ④ 눌러야 보이는 글(흐린 점 카드 설명) — 같은 칸 안에서는 원래 차례
+ */
+export function viewOrder(list, { first = new Set(), last = new Set() } = {}) {
+    const tier = s => (first.has(s) ? 0 : last.has(s) ? 3 : s.length <= 40 ? 1 : 2);
+    return list.map((s, i) => [tier(s), i, s]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(x => x[2]);
 }
 
 // ───── 1.5.2: 고정 낱말이 글 속 낱말까지 바꾸던 것(「Complicated 아침 After」) · 칩의 「말로's」 ─────
@@ -602,6 +631,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         try { const hud = doc.getElementById?.('ss-hud'); if (hud && '_ssHtml' in hud) { hud._ssHtml = ''; core.app.renderHud?.(); } } catch { /* 다음 갱신 때 */ }
     };
 
+    const descSeen = new Map();   // 1.8.1 잘린 장소 설명 짝: 열쇠 → 테마가 마지막으로 셈한 값(이 세션)
     /** ⑤ AI 없이: 이어진 글의 조각 짝 + 고정 낱말 → 같은 사전(addPairs 한 번 = 채팅 메타 저장 한 번) */
     function tidy({ draw = true } = {}) {
         if (!view() || mbOff('trtidy', doc)) return 0;   // 1.7.3 끄면 사전(채팅 메타 tr)을 안 고쳐요
@@ -628,8 +658,15 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const koOf = (word, key) => { if (names.has(word)) return null; const v = Object.hasOwn(dict, word) && !keep.has(word) ? dict[word] : (base.get(word) ?? fixedValue(word, key)); return !v || /[A-Za-z]{2,}/.test(v) ? null : key === 'week' ? shortWeek(v) : v; };
         for (const [k, v] of slotPairs(items, koOf)) base.set(k, v);
         for (const [k, v] of chipSlotPairs(shownTexts, dict)) if (!names.has(k)) base.set(k, v);
-        for (const [k, v] of placeDescPairs(state?.data?.map?.places, dict)) base.set(k, v);   // 1.7.8 위치 칸 펼침의 잘린 장소 설명   // 1.6.8 「날씨: Sunny」 통째(플레이 기록 줄)
+        // 1.8.1 이미 들어간 잘린 설명 짝도 「번역 고치기」로 그 설명을 고치면 따라가요 — 테마가 넣은 값 그대로일 때만(그 짝을 손으로 고친 것은 그대로) · descSeen = 테마가 마지막으로 셈한 값
+        const redo = [];
+        for (const [k, v] of placeDescPairs(state?.data?.map?.places, dict)) {   // 1.7.8 위치 칸 펼침의 잘린 장소 설명   // 1.6.8 「날씨: Sunny」 통째(플레이 기록 줄)
+            base.set(k, v);
+            if (Object.hasOwn(dict, k) && dict[k] !== v && descSeen.get(k) === dict[k] && !keep.has(k) && !lock[k]) redo.push([k, v]);
+            descSeen.set(k, v);
+        }
         const pairs = [...base].filter(([en]) => !keep.has(en) && !lock[en] && !Object.hasOwn(dict, en));
+        pairs.push(...redo);
         // 1.6.6 나눔표를 괄호로 싼 번역 짝(sepQuoteValue)은 그 확장 addPairs 로 덮어요 — 사전 판이 올라 화면 번역이 다시 읽고 · 채팅 메타에 저장돼요
         pairs.push(...sepQuotePairs(dict, lock));
         const n = pairs.length ? (tr.addPairs(pairs) || 0) : 0;
@@ -693,82 +730,153 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
     }
 
     /** 1.7.6 지도 「아직 안 가 본 곳」 이름 · 설명 가운데 사전에 없고 화면 글에 영어가 남는 것(스위치 unvisited 를 끄면 없음) */
+    //   1.7.9 이름(지도에 바로 보임)과 설명(흐린 점을 눌러야 보임)을 나눠 돌려줘요 — 이름을 먼저 보내요
     function unvisitedGaps(dict) {
-        if (mbOff('unvisited', doc)) return [];
+        const names = [], sums = [];
+        if (mbOff('unvisited', doc)) return { names, sums };
         let items = []; try { const get = globalThis[UNVISITED]; items = typeof get === 'function' ? get() : []; } catch { items = []; }
-        const out = [];
         for (const it of Array.isArray(items) ? items : []) for (const [raw, soft] of [[it?.name, false], [it?.summary, true]]) {
             const k = String(raw ?? '').trim();
-            if (!k || k.length > 600 || tried.has(k) || Object.hasOwn(dict, k) || out.includes(k)) continue;
+            if (!k || k.length > 600 || tried.has(k) || Object.hasOwn(dict, k) || names.includes(k) || sums.includes(k)) continue;
             let shown = k; try { shown = tr.trString(k); } catch { shown = k; }
-            if (stillEnglish(shown, { soft })) out.push(k);
+            if (stillEnglish(shown, { soft })) (soft ? sums : names).push(k);
         }
-        return out;
+        return { names, sums };
     }
 
-    /** ② · ③ · ④ 칩 · 기록 · 알림 · 앨범 · 상태 칸에서 아직 영어인 글만 그 확장 번역 길로 → 같은 사전 (묶음 60개 · 8000자 · 짝은 끝에 한 번에) */
+    /**
+     * 1.7.9 누른 번역 한 차례(round): 누를 때 만들고, 그 확장 번역이 끝난 뒤의 메우기(click)가 끝나면 비워요.
+     *   early: 그 확장 번역을 기다리지 않고 바로 보낸 메우기(그 확장이 안 보내는 글만) · sent: 이미 한 번 보냄(이번 차례엔 영어 그대로 온 글을 다시 안 보내요)
+     *   skip: 누를 때 그 확장이 보낼 글(missingTr) — 같은 글을 두 번 보내지 않게 · done: 이번 차례에 번역한 수(끝 알림 한 번)
+     */
+    let round = null, queued = null, painted = -1;
+    const lanes = new Set(), inflight = new Set();
+    const draw = () => { repaint(); painted = dictSize(); };
+    const confirmOpen = () => !!doc.querySelector?.('dialog[open]:not(.ss-dlg) .popup-button-ok');
+    function endRound(sent, done, failed = 0) {
+        const r = round; round = null;
+        if (!sent && !r?.sent) return;
+        const n = done + (r?.done ?? 0), bad = failed + (r?.failed ?? 0);
+        try {
+            if (n) toast?.success?.(`화면에 영어로 남던 글 ${n}개도 번역했어요.`, 'Blue Lemonade', { timeOut: 3000 });
+            else if (bad) toast?.warning?.('이어 번역 요청이 안 됐어요(번역기 오류 · 답 꼴이 달라요). 번역 단추를 다시 누르면 한 번 더 보내요.', 'Blue Lemonade', { timeOut: 5000 });
+            else toast?.info?.('이번에는 번역기가 영어 그대로 돌려줬어요. 번역 단추를 다시 누르면 한 번 더 보내요.', 'Blue Lemonade', { timeOut: 5000 });
+        } catch { /* 알림 없이 */ }
+    }
+
+    /**
+     * ② · ③ · ④ 칩 · 기록 · 알림 · 앨범 · 상태 칸에서 아직 영어인 글만 그 확장 번역 길로 → 같은 사전.
+     *   1.7.9 보이는 글부터(viewOrder) · 첫 묶음은 작게(quickBatches) · 묶음이 돌아올 때마다 바로 사전에 넣고 다시 그려요(예전엔 묶음을 다 받은 뒤 한 번).
+     *   reason: click(누른 번역 · 그 확장 번역이 끝난 뒤) · early(누르자마자 · 그 확장이 안 보내는 글만) · auto(자동 번역 김에)
+     *   줄은 둘이에요: early 한 줄 · click/auto 한 줄. 같은 줄이 도는 중에 또 부르면 끝난 뒤 한 번 이어서 해요(예전엔 그 부름을 버렸어요).
+     *   두 줄이 같이 돌 때는 다른 줄이 보내는 중인 글(inflight)을 빼요 — 같은 글을 두 번 보내지 않아요.
+     */
     async function fill(reason = 'click') {
-        if (filling || !view() || mbOff('trfill', doc)) return 0;   // 1.7.3 끄면 남은 영어를 번역 길로 안 보내요(AI 0)
+        if (!view() || mbOff('trfill', doc)) return 0;   // 1.7.3 끄면 남은 영어를 번역 길로 안 보내요(AI 0)
+        const lane = reason === 'early' ? 'early' : 'main';
+        if (lanes.has(lane)) { if (lane === 'main' && (reason === 'click' || !queued)) queued = reason; return 0; }
         const current = core.app.current;
         if (!current?.state) return 0;
+        const early = reason === 'early', click = reason === 'click' || early;
         // 1.7.8 사용자가 누른 번역에서는 지난번에 번역기가 영어 그대로 돌려준 글도 한 번 더 보내요(그 접속 동안 굳히지 않아요) — 자동 번역은 예전처럼 다시 안 보내요
-        if (reason === 'click') tried.clear();
-        const tidied = tidy({ draw: false });
+        //   1.7.9 같은 차례에 미리 보낸 메우기가 있으면 그때 비웠어요(같은 글을 두 번 보내지 않게)
+        if (click && !round?.sent) tried.clear();
+        const tidied = early ? 0 : tidy({ draw: false });   // early 는 누를 때 이미 정리했어요
         const meta = core.getMeta();
         const dict = isObj(meta?.tr) ? meta.tr : {};
         const longs = stateTexts(current.state, isOn).map(x => x.text.replace(/\s+/g, ' ').trim()).filter(t => t.length >= 12);
         const full = pre => longs.find(t => t.length > pre.length && t.startsWith(pre)) ?? null;   // 잘린 알림 글 → 상태의 원문(화면 밖 기록 rel.life 등)
         const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => Object.hasOwn(dict, part), tried, full });
-        const { miss, half } = stateGaps(current.state, dict);
+        // early 는 상태 칸(그 확장이 지금 번역하는 글)을 건드리지 않아요 — 반쯤 번역 짝 되돌리기도 그 확장 번역이 끝난 뒤에만
+        const { miss, half } = early ? { miss: [], half: [] } : stateGaps(current.state, dict);
         // 1.7.6 지도 「아직 안 가 본 곳」(src/mb-map-floors.js 가 로어북에서 고른 곳)의 이름 · 설명은 그 확장 상태에 없어 번역 요청에 안 실렸어요 → 같은 길 · 같은 사전으로.
         //   번역 단추를 눌렀을 때, 또는 자동 번역이 다른 글을 보내는 김에만 실어요(이것 때문에 자동 요청을 따로 내지 않아요)
         const base = [...chipList, ...miss, ...half];
-        const lore = reason === 'click' || base.length ? unvisitedGaps(dict) : [];
-        const list = [...new Set([...base, ...lore])];
-        if (!list.length) { if (tidied) repaint(); return 0; }
-        filling = true;
-        // 1.7.8 그 확장 번역이 끝난 뒤 이어서 보내는 동안 아무 표시가 없어 「안 된다」 고 보였어요(사용자 폰 · 번역기 한 번 기다림) — 누른 번역이면 시작 때 한 줄
-        if (reason === 'click') try { toast?.info?.(`아직 영어로 남은 글 ${list.length}개를 이어서 번역하고 있어요. 지도 이름도 같이 바뀌어요.`, 'Blue Lemonade', { timeOut: 4000 }); } catch { /* 알림 없이 */ }
-        let done = 0;
+        const lore = click || base.length ? unvisitedGaps(dict) : { names: [], sums: [] };
+        let list = [...new Set([...base, ...lore.names, ...lore.sums])];
+        const mapped = lore.names.length + lore.sums.length > 0;   // 버그 사냥 4: 지도 글이 없으면 「지도 이름」 을 안 붙여요
+        if (early) {
+            const skip = round?.skip ?? new Set(), own = new Set(stateTexts(current.state, isOn).map(x => x.text.trim()));
+            list = list.filter(s => !skip.has(s) && !own.has(s));
+        }
+        list = viewOrder(list.filter(s => !inflight.has(s)), { first: new Set(lore.names), last: new Set(lore.sums) });
+        if (!list.length) { if (tidied) draw(); if (reason === 'click') finishClick(false, 0); return next(0); }
+        lanes.add(lane); filling = true;
+        for (const s of list) inflight.add(s);
+        if (early && round) { round.sent = true; round.running = true; }
+        // 1.7.8 이어서 보내는 동안 아무 표시가 없어 「안 된다」 고 보였어요(사용자 폰 · 번역기 한 번 기다림) — 누른 번역이면 시작 때 한 줄(1.7.9 한 차례에 한 번)
+        if (click && !round?.told) {
+            if (round) round.told = true;
+            try { toast?.info?.(early ? `${mapped ? '지도 이름 · ' : ''}남은 글 ${list.length}개도 같이 번역하고 있어요. 보이는 것부터 바로 바뀌어요.` : `아직 영어로 남은 글 ${list.length}개를 이어서 번역하고 있어요.${mapped ? ' 지도 이름도 같이 바뀌어요.' : ''}`, 'Blue Lemonade', { timeOut: 4000 }); } catch { /* 알림 없이 */ }
+        }
+        let done = 0, failed = 0, moved = false;   // 버그 사냥 4: 실패한 묶음 · 기다리는 사이 채팅이 바뀜은 「영어 그대로 돌려줬어요」 가 아니에요
         const chat = chatId();
-        const pairs = [];
         // 실리 기본 번역 길은 사전에 있는 글을 안 보내요 — 반쯤 번역 짝은 잠깐 빼 두었다가, 새 번역이 안 오면 되돌려요
         const back = new Map();
         if (engine() === 'st') for (const k of half) if (Object.hasOwn(dict, k)) { back.set(k, dict[k]); delete dict[k]; }
         try {
-            for (const part of batches(list)) {
+            for (const part of quickBatches(list)) {
                 const src = { list: part };
                 const out = await tr.trJSON(src);
-                // 1.5.0: 번역을 기다리는 사이 채팅을 바꾸면 addPairs 가 새 채팅 사전(getMeta)에 넣어요 — 그 채팅 것이 아니니 멈춰요
-                if (chatId() !== chat) { pairs.length = 0; done = 0; break; }
-                if (out === src || !Array.isArray(out?.list) || out.list.length !== src.list.length) continue;   // 실패 · 개수 어긋남 → 다음에 다시
+                // 1.5.0: 번역을 기다리는 사이 채팅을 바꾸면 addPairs 가 새 채팅 사전(getMeta)에 넣어요 — 그 채팅 것이 아니니 멈춰요(앞 묶음은 그 채팅 사전에 이미 들어갔어요)
+                if (chatId() !== chat) { moved = true; break; }
+                if (out === src || !Array.isArray(out?.list) || out.list.length !== src.list.length) { failed++; continue; }   // 실패 · 개수 어긋남 → 다음에 다시
+                const pairs = [];
                 src.list.forEach((p, k) => { const got = pairsFor(p, out.list[k], owners); if (got.length) { pairs.push(...got); done++; } else tried.add(p); });
+                // 1.7.9 묶음마다 바로 사전에 넣고 열린 지도 · 상태창 · 칩을 다시 그려요(예전엔 묶음을 다 받은 뒤 한 번 — 긴 설명 묶음이 이름까지 붙잡았어요)
+                if (pairs.length) { if (watch) watch.own += tr.addPairs(pairs) || 0; else tr.addPairs(pairs); draw(); }
             }
         } finally {
-            filling = false;
+            lanes.delete(lane); filling = lanes.size > 0;
+            for (const s of list) inflight.delete(s);
             for (const [k, v] of back) if (!Object.hasOwn(dict, k)) dict[k] = v;
         }
-        if (pairs.length && chatId() === chat) tr.addPairs(pairs);
-        if (done || tidied) repaint();
-        if (reason === 'click') try {
-            if (done) toast?.success?.(`화면에 영어로 남던 글 ${done}개도 번역했어요.`, 'Blue Lemonade', { timeOut: 3000 });
-            else toast?.info?.('이번에는 번역기가 영어 그대로 돌려줬어요. 번역 단추를 다시 누르면 한 번 더 보내요.', 'Blue Lemonade', { timeOut: 5000 });
-        } catch { /* 알림 없이 */ }
+        if (moved) { round = null; queued = null; return 0; }
+        if (tidied && !done) draw();
+        if (early) {
+            const r = round;
+            if (r) { r.done += done; r.failed = (r.failed ?? 0) + failed; r.running = false; if (r.end) endRound(true, r.end.done, r.end.failed); }   // 그 확장 번역 뒤 메우기가 먼저 끝났으면 끝 알림은 여기서 한 번
+        } else if (reason === 'click') finishClick(true, done, failed);
+        return lane === 'main' ? next(done) : done;
+    }
+    /** 누른 번역의 마지막 메우기가 끝남 — 먼저 보낸 메우기가 아직 돌면 그게 끝날 때 끝 알림을 한 번 띄워요 */
+    function finishClick(sent, done, failed = 0) {
+        if (round?.running) { round.end = { done, failed }; return; }
+        endRound(sent, done, failed);
+    }
+    /** 메우는 동안 밀린 부름 하나를 이어서(그 확장 번역이 끝났다는 알림 · 자동 번역) */
+    function next(done) {
+        const q = queued; queued = null;
+        if (q) timers.setTimeout(() => { fill(q).catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e)); }, 0);
         return done;
     }
     const engine = () => { try { return core.settings()?.trEngine === 'st' ? 'st' : 'llm'; } catch { return 'llm'; } };
 
     /** 누른 뒤: 그 확장이 번역을 끝낼 때까지(사전 크기가 두 번 그대로 · 확인 창 닫힘 · 본편 답 안 씀) 기다렸다가 한 번 */
-    function arm() {
+    //   1.7.9 그리고 누르자마자(확인 창이 있으면 「예」 뒤에) 그 확장이 안 보내는 글(지도 흐린 점 이름 · 칩)을 따로 먼저 보내요(early) — 예전엔 그 확장 번역이 다 끝날 때까지 기다렸어요.
+    //   kind: go(「남은 글 번역하기」 · 확인 창 없음) · sheet(「상태창 전체 번역」 · 확인 창 「예」를 본 뒤에만)
+    function arm(kind = 'go') {
         if (!view()) return;
         if (watch) { watch.until = now() + WATCH_MAX; return; }
-        let empty = false;
-        try { empty = tr.missingTr().length === 0; } catch { empty = false; }
-        watch = { start: dictSize(), last: -1, same: 0, empty, cancelled: false, until: now() + WATCH_MAX };
+        let empty = false, missing = [];
+        try { missing = tr.missingTr(); empty = missing.length === 0; } catch { empty = false; }
+        watch = { start: dictSize(), last: -1, same: 0, empty, cancelled: false, until: now() + WATCH_MAX, kind, saw: false, t0: now(), own: 0 };
+        round = { sent: false, done: 0, told: false, skip: new Set((Array.isArray(missing) ? missing : []).map(s => String(s).trim())) };
+        const w = watch;
+        const early = () => {
+            if (watch !== w || w.cancelled || !round || round.sent) return;
+            const open = confirmOpen();
+            if (w.kind === 'sheet' && !w.saw) { if (open) w.saw = true; else if (now() - w.t0 > EARLY_SHEET_MAX) return; timers.setTimeout(early, EARLY_MS); return; }
+            if (open || mb.busy()) { if (now() < w.until) timers.setTimeout(early, EARLY_MS); return; }
+            fill('early').catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e));
+        };
+        if (!mbOff('trfill', doc)) timers.setTimeout(early, EARLY_MS);
         const tick = () => {
             if (!watch) return;
             const size = dictSize();
-            const grew = size > watch.start;
+            // 1.7.9 그 확장이 묶음을 넣는 동안에도 사전이 늘면 바로 다시 그려요(그 확장은 다 끝난 뒤 한 번 그려요) — 테마가 넣은 짝은 이미 그렸어요
+            if (watch.last >= 0 && size > watch.last && size > painted && !filling) draw();
+            const grew = size - watch.own > watch.start;   // 1.7.9 테마가 먼저 넣은 짝은 「그 확장 번역이 끝남」으로 안 세요
             if (watch.cancelled && !grew) { watch = null; return; }   // 그 확장의 확인 창에서 취소 — 아무것도 안 해요
             // 1.7.8 확인 창(「번역할까요?」)만 기다려요 — 미트볼 상태창 · 지도 창(.ss-dlg)도 「확인」 단추가 있는 창이라, 예전엔 그 창을 닫을 때까지 이어 번역이 안 돌았어요
             const open = !!doc.querySelector?.('dialog[open]:not(.ss-dlg) .popup-button-ok');
@@ -786,8 +894,11 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
     function mbToast(kind, message) {
         if (!watch) return false;
         const m = String(message ?? '');
-        if (!/번역했어요|번역 안 된 글이 없어요|번역하지 못했어요/.test(m)) return false;
+        // 버그 사냥 4: ① 번역 중에 단추를 다시 눌러 멈추면 그 확장이 「N개 번역했어요 (멈춤)」 을 띄워요 — 전엔 그 알림에도 남은 글 전부를 번역 길로 보냈어요(사람이 멈춘 번역)
+        //   ② 「번역하지 못했어요」 는 끝 알림이 아니에요 — 그 확장은 그 뒤 실리 기본 번역이 못 바꾼 글을 번역 모델로 한 번 더 보내고 끝에 「N개 번역했어요」 를 또 띄워요(전엔 두 길이 같은 글을 같이 보냈어요)
+        if (!/번역했어요|번역 안 된 글이 없어요/.test(m)) return false;
         watch = null;
+        if (/\(멈춤\)/.test(m)) return true;
         timers.setTimeout(() => { fill('click').catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e)); }, 300);   // 그 확장 addPairs · 저장이 먼저
         return true;
     }
@@ -829,7 +940,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const t = event.target;
         if (!t?.closest) return;
         // 1.5.1: 그 확장이 번역할 글을 모으기 전에(이 누름은 문서 잡기 단계라 그 확장 손잡이보다 먼저예요) 고정 낱말을 사전에 넣어 둬요 — 그 확장도 사전에 있는 글은 안 보내요
-        if (t.closest(TRIGGER)) { try { tidy({ draw: false }); } catch (e) { console.warn('[Blue Lemonade] 미트볼 번역 조각', e); } arm(); }
+        if (t.closest(TRIGGER)) { try { tidy({ draw: false }); } catch (e) { console.warn('[Blue Lemonade] 미트볼 번역 조각', e); } arm(t.closest('.ss-trf-go') ? 'go' : 'sheet'); }
         // 1.6.8: 알림함을 열면 쌓인 알림 글(화면 밖 · 단계 …)도 — 그 확장 자동 번역 규칙(끔 · 실리 기본 번역일 때만 · 항상) 그대로
         else if (t.closest('[data-hud="inbox"]') && view() && autoOn()) { timers.clearTimeout(autoTimer); autoTimer = timers.setTimeout(() => { if (!mb.busy()) fill('auto').catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e)); }, 300); }
         // 번역을 묻는 창에서 사람이 누른 취소만(「남은 글 번역하기」는 번역 고치기 창을 스스로 닫아요 — 그 누름은 isTrusted 가 false) · 이미 번역이 늘었으면 그건 메워요

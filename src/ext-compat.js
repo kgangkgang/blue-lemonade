@@ -37,9 +37,11 @@ export const SETS = [
     //     새 그림 글자 0 · 시각 달력(「시간 적는 법」 시각)에서 테마 관계 바로잡기 · 날씨 다리가 시간대 낱말로만 보던 것을 고침(src/mb-prompt.js · src/weather-meatball.js · 시험 tools/tests/mb-29x.mjs).
     //   같은 날 개발 판 4c7df674(판 번호 그대로 2.9.0): 관리 › 전체 설정(이 설정 칸과 같은 칸을 상태창 안에 한 벌 더 · id 없음 · 찾기 칸) · 상태창 검색에 설정 · 찾은 말 칠하기 · 새 단추 넷 —
     //     이름 281개 가운데 사라진 것 0 · 새 그림 글자 다섯(검색 결과)은 선 아이콘 글꼴의 대체 그림 범위 안. 분류 탭 · 정리한 보기 · 레몬 탭은 서랍(#ss-settings)에만 걸려요.
-    //   2.9.1(11-18 밤 · 원작 d61af0b1): 서랍 칸들이 내용 칸 안 .ss-set-body 한 겹 아래로 · 맨 위 원작 설정 찾기 칸 · 새 칸 다섯 — 분류 탭 · 정리한 보기 · 레몬 탭을 새 겹에 다시 걸었어요(bodyOf · 시험 tools/tests/mb-291.mjs).
+    //   2.9.1(11-19 리그 — 원작 d61af0b1 · 폰 384 밤 낮 · PC 1280): 서랍 칸들이 .ss-set-body 한 겹 아래 · 맨 위 원작 「설정 찾기」 · 「관리 › 전체 설정」 탭 빠짐 — 분류 탭 · 정리한 보기 · 레몬 탭 · 기능 다리를 새 겹에(bodyOf) ·
+    //     원작이 가져간 블루레몬 기능(앨범 단추 · 영어 저장 묻기 · 맨 위로 · 짝 칸 두 열 · 그래프 사람 색 · 흐림)은 원작에 맡겨요(src/mb-upstream.js).
+    //   2.10.0(11-19 리그 — 원작 3b78a56 · 💭 속마음 탭 · 관전자 · 세포들 · 장신구 여러 개): 기대는 이름 296개 가운데 사라진 것 0 · 서랍 구조 그대로 · 모든 화면 2.9.1 과 견줘 늘어난 깨짐 0.
     //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
-    { root: '#ss-settings', css: './ext-status.gen.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0', '2.9.0', '2.9.1'],
+    { root: '#ss-settings', css: './ext-status.gen.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0', '2.9.0', '2.9.1', '2.10.0'],
         strips: ['.ss-scope .ss-tabs', '.ss-scope .ss-mg-tabs'] },   // 맞춤 시트가 「한 줄 · 스크롤바 없음」으로 바꾼 그 확장의 탭 줄 — 등록부에 넣어야 휠로 넘친 탭에 닿고, 그 확장이 판을 다시 그린 뒤에도 고른 탭이 보여요
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   1.9.61(2026-11-14 점검 대본 대조): 바뀐 것은 백그라운드 답장의 반쪽 답을 건너뛰는 사건 처리뿐 — 화면 · CSS · 선택자 39개 · 구조 표식 8개 그대로라 맞춤도 그대로예요.
@@ -86,6 +88,13 @@ function revealTab(tab) {
     tab.scrollIntoView?.('blHit' in (tab.dataset || {}) ? CENTER : SCROLL);   // 설정 찾기가 찾은 줄(data-bl-hit)은 화면 가운데로 — 굴리기는 이 한 곳
 }
 
+/** 탭을 따르는 줄들: 칸들(탭 줄 곁) + 미트볼 2.9.1(.ss-set-body 한 겹) 뒤로 내용 칸 바로 아래에 남는 테마 「확장 탭에 보이기」 줄(src/headswitch.js · 내용 칸 맨 앞에 끼워요) */
+const HS_ROW = 'bl-hs-row';
+function tabbed(root, nav) {
+    const list = [...nav.parentElement.children], outer = root.querySelector('.inline-drawer-content');
+    if (outer && outer !== nav.parentElement) for (const child of outer.children) if (child.classList?.contains(HS_ROW)) list.push(child);
+    return list;
+}
 /** 고른 묶음만 보이게 (index: 0 = 머리 없는 앞머리) */
 export function showGroup(root, index) {
     const nav = root.querySelector(`.${NAV}`);
@@ -97,7 +106,7 @@ export function showGroup(root, index) {
         tab.setAttribute('aria-selected', String(on));
         if (on) revealTab(tab);
     }
-    for (const child of nav.parentElement.children) {
+    for (const child of tabbed(root, nav)) {
         if (!('blTabG' in child.dataset)) continue;
         if (child.dataset.blTabG === want) delete child.dataset.blTabOff; else child.dataset.blTabOff = '';
     }
@@ -547,7 +556,7 @@ export function adoptStray(root) {
     const nav = root.querySelector(`.${NAV}`);
     if (!nav) return 0;
     let n = 0;
-    for (const child of nav.parentElement.children) {
+    for (const child of tabbed(root, nav)) {   // 미트볼 2.9.1: 내용 칸 바로 아래에 남는 「확장 탭에 보이기」 줄도(앞 판처럼 첫 탭 것)
         if ('blTabG' in child.dataset || /(^|\s)bl-ext-/.test(String(child.className || ''))) continue;
         child.dataset.blTabG = '0';
         if ((root.dataset.blTabs || '0') !== '0') child.dataset.blTabOff = '';
@@ -669,6 +678,30 @@ export function markFinding(box) {
     return on;
 }
 
+/** 미트볼 2.9.1(d61af0b1) 🔎 상태창 검색에서 설정을 누르면 그 확장이 서랍을 열고 그 칸으로 굴린 뒤 반짝 표시(.ss-set-flash)를 달아요 —
+ *  그 칸이 안 고른 분류 탭 · 접힌 갈래에 있으면 테마가 가린 자리라 아무것도 안 보였어요. 그 확장은 찾기 칸에 가려진 칸이면 찾기 칸을 (입력 사건 없이) 비워서
+ *  찾기 표식(data-bl-finding)도 남아 탭 줄이 사라진 채였어요. 반짝 표시가 달릴 때(맞춤 시트가 그 확장의 키프레임을 0.001초 빌려요 · 감시자 없음)
+ *  찾기 표식을 다시 맞추고, 그 줄의 탭으로 바꾸고 접힌 갈래를 펼친 뒤 다시 굴려요. 돌려줌: 무엇을 바꿨으면 true */
+export function revealFlash(el) {
+    const root = el?.closest?.('#ss-settings');
+    if (!root) return false;
+    const box = root.querySelector('.ss-set-q');
+    if (box) markFinding(box);
+    if (root.hasAttribute('data-bl-finding') || root.dataset.blView === 'raw') return false;   // 찾는 동안 · 원작 그대로 보기는 탭 · 갈래가 안 가려요
+    const body = bodyOf(root);
+    let row = el;
+    while (row && row.parentElement !== body) row = row.parentElement;
+    if (!row) return false;
+    let moved = false;
+    if (root.dataset.blView === 'org' && row.dataset.blFold && 'blFoldOff' in row.dataset) {
+        const fold = root.querySelector(`.bl-ext-fold[data-bl-fold-for="${row.dataset.blFold}"]`);
+        if (fold) { toggleFold(root, fold); moved = true; }
+    }
+    if (root.querySelector(`.${NAV}`) && 'blTabG' in row.dataset && 'blTabOff' in row.dataset) { showGroup(root, Number(row.dataset.blTabG) || 0); moved = true; }
+    if (moved) revealTab(el);   // 굴리기는 한 곳(revealTab · 시작 덮개 동안이면 걷힌 뒤)
+    return moved;
+}
+
 let started = false;
 /** 여러 번 불러도 돼요 — 누름 감시자 · 시트는 한 번, 칸 찾기(탭)와 등록부 넣기는 부를 때마다 */
 export function startExtCompat(doc = globalThis.document) {
@@ -703,7 +736,7 @@ export function startExtCompat(doc = globalThis.document) {
                 }
                 if (target.closest('.bl-ext-top')) { const pane = dlg.querySelector('.popup-content'); if (pane) pane.scrollTop = 0; return; }
                 if (dlg.classList.contains('ss-dlg')) {
-                    if (!plain(doc)) armTop(dlg);
+                    if (!plain(doc) && !mbOff('helpers', doc)) armTop(dlg);   // 미트볼 2.9.1 은 제 「맨 위로」(.ss-totop)를 늘 둬요 — 그 판에서는 끔 표식(원작에 맡김)으로 쉬어요
                     const ava = target.closest('.ss-ava-btn');
                     if (ava && !doc.body.hasAttribute('data-bl-ext-raw') && !mbOff('avapick', doc)) {   // 1.7.3 「얼굴 고르개」 를 끄면 원작 창 그대로   // 얼굴 바꾸기 창은 입력칸에 초점이 올 때 열린 것을 알아요(타이머 없이) — 그때 한 번 고르개를 놓고 받기를 떼요
                         const who = ava.dataset.arg || '', since = Date.now();
@@ -758,6 +791,7 @@ export function startExtCompat(doc = globalThis.document) {
                 // 1.7.3 미트볼 맞춤 스위치: 끈 묶음의 표식은 안 달아요(이미 단 표식은 시트 묶음 문이 꺼요)
                 if (el?.classList?.contains('ss-tb')) { if (!mbOff('dot', doc)) syncDots(doc, el); if (!mbOff('bandrow', doc)) fitActs(el); if (!mbOff('band', doc)) markBars(el); if (!mbOff('badge', doc)) markBadge(el); if (!mbOff('weekday', doc)) markWeekday(el); } else if (el?.tagName === 'DL') { if (!mbOff('grid', doc)) markLong(el); }
                 else if (el?.classList?.contains('ss-wz-head') && el.parentElement?.classList?.contains('ss-tw')) { if (!mbOff('deco', doc)) decoTheme(el.parentElement); }
+                else if (el?.classList?.contains('ss-set-flash')) { if (!mbOff('tabs', doc)) revealFlash(el); }   // 미트볼 2.9.1 🔎 검색 › 설정으로 가기
                 else if (el?.matches?.(FACES) && !facesQueued) { facesQueued = true; queueMicrotask(() => { facesQueued = false; try { paintFaces(doc); } catch { /* 아이콘 그대로 */ } }); }   // 얼굴 여럿이 한꺼번에 그려져도 한 번만 훑어요
             } catch { /* 원래 배치 그대로 */ }
         }, true);

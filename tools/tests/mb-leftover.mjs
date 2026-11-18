@@ -75,5 +75,21 @@ await ok('③ 숨김은 그 칸 인라인 display 만 · 표식이 없어지면 
     assert.ok(read('.github/workflows/release-check.yml').includes('node tools/tests/mb-leftover.mjs . tools'), 'CI 목록');
 });
 
+await ok('④ 버그 사냥 4: 문단 둘로 나뉜 덩이뿐인 답 · 테마 끔 · 카드 머리 줄(날짜 · 시간 · 장소만)은 그대로 · 테마 켬끔 사건에 다시 맞춤', () => {
+    need();
+    let doc = dom('<p>loc: Harbor Office<br>npc: +Mira (present)</p><p>aff: Oskar +2<br>trust: Oskar +2, Mira +4</p>');
+    assert.equal(M.markLeftovers(doc.querySelector('.mes'), msg()), 0, '숨기면 빈 답');
+    assert.equal(doc.querySelectorAll(`[${M.ATTR}]`).length, 0);
+    assert.ok([...doc.querySelectorAll('.mes_text > p')].every(p => !p.style.display), '인라인 숨김도 되돌림');
+    doc = dom('<p>She smiled.</p><p>loc: Harbor Office<br>npc: +Mira</p><p>aff: Oskar +2<br>trust: Mira +4</p>');
+    assert.equal(M.markLeftovers(doc.querySelector('.mes'), msg()), 2, '다른 문단이 있으면 둘 다 숨겨요');
+    doc = dom('<p>She smiled.</p><p>' + BLOCK_KO + '</p>'); doc.body.classList.remove('salty');
+    assert.equal(M.markLeftovers(doc.querySelector('.mes'), msg()), 0, '테마 끔');
+    doc = dom('<p><b>Date:</b> Day 3 <b>Time:</b> 21:00 <b>Location:</b> Harbor</p><p>She smiled.</p>');
+    assert.equal(M.markLeftovers(doc.querySelector('.mes'), msg()), 0, '카드 머리 줄');
+    assert.equal(M.statusRun('loc: 뒤뜰 aff: 미라 +2'), true, '장소 + 변화 키는 덩이');
+    assert.ok(read('src/mb-leftover.js').includes("addEventListener('bl-mb-hidden-sync', all)"), '테마 켬끔 사건');
+});
+
 if (bad.length) { console.error(`mb-leftover: ${bad.length}개 실패`); process.exit(1); }
 console.log(`mb-leftover: ${n}개 통과`);

@@ -168,7 +168,7 @@ await ok('채팅을 열 때(치우기) · 눈으로 감길 때 알려요 — 같
 });
 await ok('걸기: 문서 누름 하나(잡는 단계) · 설정 바뀜 · 채팅 바뀜 · 생성 시작만 — 감시자 없음', async () => {
     assert.equal(M.startMbHidden(doc), true); assert.equal(M.startMbHidden(doc), false);
-    assert.deepEqual([...listeners.keys()].sort(), ['bl-mb-hidden-sync', 'bl-mes-fold', 'click']); assert.equal(listeners.get('click')[0][1], true);
+    assert.deepEqual([...listeners.keys()].sort(), ['bl-mb-hidden-sync', 'bl-mb-namekey', 'bl-mes-fold', 'click']); assert.equal(listeners.get('click')[0][1], true);   // 버그 사냥 4: bl-mb-namekey 는 눈 감기 · 삭제 바로 반영(mb-autosub)이 지우기 전 기억을 다시 찍는 사건
     assert.deepEqual([...handlers.keys()].sort(), ['chat_id_changed', 'generation_started']);
     const src = fs.readFileSync(path.join(root, 'src/mb-hidden.js'), 'utf8');
     assert.ok(!/MutationObserver|setInterval|\.emit\(/.test(src), '감시자 · 되풀이 타이머 · 사건 쏘기 없음');

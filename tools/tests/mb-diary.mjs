@@ -62,6 +62,14 @@ await ok('③ 칩 점검 창: 넘어간 줄 칸을 저장된 글 그대로(.ss-n
     assert.equal(D.pipIndex('퀵리플라이 · 슬래시: /ss-pip (마지막 답) · /ss-pip 12 · /ss-pip 12 fix (자동으로 고치기)'), 12);
     assert.equal(D.pipIndex('없음'), null);
 });
+await ok('버그 사냥 4: 칩 점검 창의 줄 칸은 그 확장이 보인 줄 그대로 — 칩이 붙은 답은 진짜 못 읽은 줄 · 칩 없는 「값 모양이 달라」 창은 못 읽은 줄 전부 · 다른 창은 안 건드려요', () => {
+    const snap = { labels: ['♥ Mira +2'], miss: ['mood: calm', 'aff: Mira lots'], missKey: ['mood: calm'] };
+    assert.deepEqual(D.pipLines(snap, '일부 줄을 못 읽었어요 (1개)'), ['aff: Mira lots']);
+    const bare = { labels: [], miss: ['mood: calm', 'aff: Mira lots'], missKey: ['mood: calm'] };
+    assert.deepEqual(D.pipLines(bare, '읽었지만 값 모양이 달라 못 썼어요'), ['mood: calm', 'aff: Mira lots'], '전엔 「mood: calm」 이 빠졌어요');
+    assert.equal(D.pipLines(bare, '읽었지만 모르는 키예요'), null, '변화 줄 목록 창은 그대로');
+    assert.equal(D.pipLines({ labels: [], miss: [] }, ''), null);
+});
 await ok('④ 시트: 표식 붙은 ⚠ 칩만 숨김 · 「답 아래 변동 칩 모양」(chips) 문 · 원작 그대로 보기면 안 걸림 · CI · 미트볼 문에서 받음', () => {
     const src = read('src/ext-status.css'); need();
     const at = src.indexOf(`.ss-mchip.pip[${D.ATTR}]`); assert.ok(at > 0, '숨김 규칙');

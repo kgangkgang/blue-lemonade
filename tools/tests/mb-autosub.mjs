@@ -270,8 +270,18 @@ await ok('1.7.6 지움 사건이 잇달아 와도(여러 답 지우기 · /cut �
     const wire = () => { C.eventSource = es; C.event_types = T; };
     const wait = ms => new Promise(r => setTimeout(r, ms));
     world(); wire(); S.useEngine(fake);
+    const docOn = {}; globalThis.document.addEventListener = (t, fn) => { (docOn[t] ||= []).push(fn); };
     assert.equal(S.startAutoSub(globalThis.document), true);
     assert.equal(S._snap().length, 6, '시작할 때 한 번 기억');
+    {   // 버그 사냥 4: 이름 앞 키 고치기가 서랍을 새 배열로 바꾸면(실리태번 사건 없음) 다시 기억해요
+        const m = C.chat[1], sid = m.swipe_id ?? 0, by = m.extra.statussim.bySwipe, was = by[sid];
+        by[sid] = [['aff', 'Mira +1']];
+        assert.equal(docOn['bl-mb-namekey']?.length, 1, '고침 사건을 들어요');
+        for (const fn of docOn['bl-mb-namekey']) fn(); await wait(5);
+        assert.equal(S._snap()[1].ops, by[sid], '새 서랍을 기억');
+        by[sid] = was; for (const fn of docOn['bl-mb-namekey']) fn(); await wait(5);
+    }
+    delete globalThis.document.addEventListener;
     C.chat.splice(3, 1); emit('del', C.chat.length);   // 4번째(Mira +20, Oskar +4 · 우정 +5)
     C.chat.splice(1, 1); emit('del', C.chat.length);   // 2번째(Mira +10) — 300ms 안에 잇달아
     await wait(700);

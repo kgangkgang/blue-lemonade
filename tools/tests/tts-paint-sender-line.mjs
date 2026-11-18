@@ -26,6 +26,12 @@ await test('From: · Sender: · 送信者: · 보낸 사람: 머리도 같아요
         assert.equal(g?.paraHead, true, head);
     }
 });
+await test('버그 사냥 4: 보낸 사람은 머리 줄 안의 이름만 — 앞 서술 · 받는 사람 줄의 이름이 아니에요 · 모르는 발신자는 안 칠해요', () => {
+    const one = s => X.segmentMessage(s, { knownNames: ['미나', '렉스'], userName: '하람', charName: '렉스', paragraphs: true }).filter(g => g.kind === 'dialogue').map(g => [g.paraName || '', !!g.paraHead]);
+    assert.deepEqual(one('렉스의 폰이 울렸다.\n【발신자: 미확인 번호】\n『거기 있어?』'), [['렉스', false]], '모르는 발신자: 예전처럼 문단 짐작(안 칠함)');
+    assert.deepEqual(one('【수신자: 렉스】\n【발신자: 미나】\n『확인했어.』'), [['미나', true]]);
+    assert.deepEqual(one('렉스가 답장을 보냈다.\n【발신자: 미나】\n『확인했어.』'), [['미나', true]]);
+});
 await test('칠하기: 발신자 머리 줄로 안 화자(header)는 그 인물 색으로 · 보통 문단 이름(paragraph)은 예전처럼 안 칠해요', () => {
     assert.ok(core.PAINT_SOURCES.has('header'));
     assert.ok(!core.PAINT_SOURCES.has('paragraph'));

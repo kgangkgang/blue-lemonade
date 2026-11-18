@@ -29,11 +29,10 @@ test('고급 서식 접힘 머리 ? : 줄 가운데(올림 0) · 글 줄 속 작
 });
 test('미트볼 큰 창(폰) ✕ 띠: 누름을 받아요(pointer-events: none 없음) · 모양은 그대로', () => {
     const css = strip(read('src/ext-status.css'));
-    const rule = css.split('}').find(r => /large_dialogue_popup \.popup-content:is\(\[data-bl-fade-y="top"\], \[data-bl-fade-y="both"\]\)::before \{/.test(r));
-    assert.ok(rule, '띠 규칙');
-    assert.doesNotMatch(rule, /pointer-events/, '띠가 누름을 통과시키지 않아요');
-    for (const p of ['position: sticky', 'top: 0', 'z-index: 1', 'height: var(--bl-ui-icon, 34px)', 'margin-bottom: calc(-1 * var(--bl-ui-icon, 34px))', 'background: var(--bl-fill-card, var(--bl-card))']) assert.ok(rule.includes(p), p);
-    assert.match(css, /dialog\.popup\.ss-dlg\.large_dialogue_popup > \.popup-button-close \{[^}]*z-index: 2 !important;/, '✕ 는 띠 위(z 2)라 그대로 눌려요');
+    // 11-19 사용자 「위에 뭔가 빈 블럭이 따라다님」: 내린 동안 붙던 띠를 걷었어요(빈 블록 0) — ✕ 만 불투명 카드 면으로 떠요
+    assert.ok(!/large_dialogue_popup \.popup-content:is\(\[data-bl-fade-y="top"\], \[data-bl-fade-y="both"\]\)::before \{/.test(css), '붙박이 띠 없음');
+    assert.match(css, /dialog\.popup\.ss-dlg\.large_dialogue_popup:not\(\.ss-xclose\) > \.popup-button-close \{[^}]*z-index: 2 !important;/, '✕ 는 띠 위(z 2)라 그대로 눌려요');
+    assert.match(css, /dialog\.popup\.ss-dlg\.large_dialogue_popup\.ss-xclose > \.ss-popx \{[^}]*z-index: 2;/, '미트볼 2.9.1 원작 ✕ 도 띠 위(z 2)');
 });
 test('미트볼 띠 퀘스트 칸: 두루마리 · 숫자를 같은 기준선에 · 옮김(transform) 없음 · 원작 그대로 보기에서는 안 걸림 · 다른 칸은 그대로', () => {
     const css = strip(read('src/ext-status.css'));

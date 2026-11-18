@@ -35,6 +35,9 @@
 .lvs-panel { width: 100%; min-width: 0; container-type: inline-size; container-name: lvs; }
 .lvs-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .lvs-toolbar { margin-bottom: 10px; }
+/* 1.7.9 디자인 전수(철칙 5절 셋 이상은 같은 폭 격자): 실행 취소 · 다시 실행 · + 대사 · + 효과음 · + 쉼 · 저장된 편집 지우기 가 글 길이대로 감겨 폭이 제각각(84 · 58 · 69 · 47 · 116px) → 같은 폭 칸 */
+.lvs-actions.lvs-toolbar { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.lvs-actions.lvs-toolbar > button { min-width: 0; }
 .lvs-rows, .lvs-sounds { display: grid; gap: 10px; margin-top: 12px; }
 .lvs-row, .lvs-sound { min-width: 0; padding: 12px; border: 1px solid var(--lvs-line); border-radius: var(--bl-r-md, 12px); background: var(--lvs-fill); overflow-wrap: anywhere; }
 .lvs-row { display: flex; flex-direction: column; gap: 10px; }

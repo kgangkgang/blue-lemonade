@@ -51,6 +51,16 @@ export function rawTail(shown, lines) {
     if (at < 0 || !Array.isArray(lines) || !lines.length) return null;
     return { head: s.slice(0, at + 2), tail: lines.join('\n') };
 }
+/**
+ * 버그 사냥 4: 칩 점검 창의 빈 줄 뒤 칸에 그 확장이 실제로 보인 줄(그 확장 pipDiag 와 같은 고르기) — 모르면 null(안 건드려요)
+ *   칩이 붙은 답(labels): 진짜 못 읽은 줄(seriousList — 여기 counted)만 · 칩이 없는 답의 「값 모양이 달라 못 썼어요」 창: 못 읽은 줄 전부 ·
+ *   그 밖의 창(모르는 키 · 바뀐 게 없음)은 변화 줄 목록이라 여기서 다시 못 만들어요. 전엔 늘 counted 로 갈아 끼워 꾸밈 키 줄이 창에서 빠지거나 다른 목록이 바뀌었어요
+ */
+export function pipLines(snap, title = '') {
+    if (!snap || !Array.isArray(snap.miss) || !snap.miss.length) return null;
+    if ((snap.labels ?? []).length || snap.roll) return snap.miss.filter(x => counted(x, snap)).slice(0, 8);
+    return /값 모양이 달라/.test(String(title ?? '')) ? snap.miss.slice(0, 8) : null;
+}
 /** 칩 점검 창 안내 줄의 「/ss-pip 12」 → 12 */
 export function pipIndex(text) { const m = /\/ss-pip\s+(\d+)/.exec(String(text ?? '')); return m ? Number(m[1]) : null; }
 
@@ -67,8 +77,7 @@ async function mbCore(doc) {
 function rawPip(box, snapOf) {
     const p = box?.querySelector?.('.ss-pip-res .ss-pre'); if (!p || p.querySelector('.ss-notr')) return false;
     const i = pipIndex(box.querySelector('.ss-hint')?.textContent); if (i === null) return false;
-    const snap = snapOf(i); if (!snap?.miss?.length) return false;
-    const lines = snap.miss.filter(x => counted(x, snap)).slice(0, 8);
+    const lines = pipLines(snapOf(i), box.querySelector('.ss-pip-res b')?.textContent); if (!lines?.length) return false;
     const t = rawTail(p.textContent, lines); if (!t) return false;
     const doc = p.ownerDocument, span = doc.createElement('span'); span.className = 'ss-notr'; span.textContent = t.tail;
     p.textContent = t.head; p.appendChild(span);

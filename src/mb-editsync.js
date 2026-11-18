@@ -130,6 +130,23 @@ export function stateOf(m, make = false) {
     if (!st.keep || typeof st.keep !== 'object') st.keep = {};
     return st;
 }
+/**
+ * 버그 사냥 4: 스와이프를 지우면 뒤 스와이프 번호가 하나씩 당겨져요 — 그 확장은 묶인 기록 열쇠(an)를 당기는데(shiftSwipeAnchors) 이 상태 칸 열쇠(스와이프 번호)는 그대로라,
+ *   뺀 인물이 다른 스와이프 칸으로 가거나 빠져 다음 고침 때 뺀 몫이 되살아났어요. 지운 번호 칸은 버리고 뒤 번호를 당겨요(메시지 칸 · 남은 스와이프 칸 모두) → 바꿨나
+ */
+export function shiftState(m, removed) {
+    if (!m || !Number.isInteger(removed) || removed < 0) return false;
+    const fix = all => { const out = {}; for (const [k, v] of Object.entries(all)) { const n = Number(k); if (!Number.isInteger(n) || n === removed) continue; out[String(n > removed ? n - 1 : n)] = v; } return out; };
+    const seen = new Set(); let changed = false;
+    for (const box of [m.extra, ...(Array.isArray(m.swipe_info) ? m.swipe_info.map(x => x?.extra) : [])]) {
+        if (!box || typeof box !== 'object' || seen.has(box)) continue; seen.add(box);
+        const all = box[STATE]; if (!all || typeof all !== 'object') continue;
+        const next = fix(all);
+        if (Object.keys(next).length) box[STATE] = next; else delete box[STATE];
+        changed = true;
+    }
+    return changed;
+}
 function tidyState(m) {
     const all = m?.extra?.[STATE]; if (!all || typeof all !== 'object') return;
     for (const [sid, st] of Object.entries(all)) if (!st || (!Object.keys(st.off || {}).length && !Object.keys(st.keep || {}).length)) delete all[sid];
@@ -183,7 +200,11 @@ export function syncEdit(c, eng, i, { tr = null } = {}) {
     const meta = sheet(c), chat = c?.chat, m = chat?.[i];
     if (!meta || !m || m.is_user || typeof eng?.compute !== 'function' || typeof eng?.anchorOf !== 'function') return out;
     const an = eng.anchorOf(m), ops = drawer(m), st = stateOf(m, !!m.extra?.[STATE]);
-    const mine = meta.adjust.filter(a => isEdit(a) && a.an === an);
+    // 버그 사냥 4: 그 확장은 내 메시지를 보낼 때 · 채팅을 열 때(rebindToUser) 답에 묶인 기록을 그 답 다음 내 메시지로 옮겨요(keep 을 안 봐요) — 그 뒤엔 a.an 이 답 열쇠와 달라
+    //   「사용자가 지운 기록」 으로 보고 되살리기 · 다시 구하기를 못 했어요. 만든 때의 답 열쇠(bl_sub.an)로도 찾고, 그 칸이 없는 옛 기록(1.7.6 ~ 1.7.8)은 바로 다음 내 메시지 열쇠 + 번호로 찾아요
+    let nextAn = null; try { nextAn = chat[i + 1]?.is_user ? eng.anchorOf(chat[i + 1]) : null; } catch { nextAn = null; }
+    const ownAn = a => a.an === an || a[Sub.TAG].an === an || (!a[Sub.TAG].an && nextAn !== null && a.an === nextAn && Array.isArray(a[Sub.TAG].ids) && a[Sub.TAG].ids.includes(i));
+    const mine = meta.adjust.filter(a => isEdit(a) && ownAn(a));
     // 사용자가 지운 기록
     for (const [k, o] of Object.entries(st.off)) if (o.t && !mine.some(a => a.t === o.t)) { delete st.off[k]; st.keep[k] = true; out.undone.push(o.name); out.changed = true; }
     const want = new Set(ops ? Object.keys(st.off) : []);
@@ -192,7 +213,9 @@ export function syncEdit(c, eng, i, { tr = null } = {}) {
     const start = Math.min(Number(meta.startAt) || 0, chat.length);
     if (ops && i >= start) {
         const S = { at: i + 1, t: Infinity }, bag = m.extra[META].bySwipe, sid = sidOf(m);
-        const at = extra => Sub.computeAt(eng, meta, chat, S, { limit: i + 1, drop: a => isEdit(a) && a.an === an, ...extra });
+        // 버그 사냥 4: 그 답 바로 뒤 자리(at = i + 1)의 칸 통째 저장은 빼고 셈해요 — 넣으면 두 계산이 같은 저장 값으로 덮여 뺄 몫이 0 이 되고, 뺀 인물 상태까지 지워 다시는 안 뺐어요
+        //   (그 답이 끝 답일 때 영어 저장 바꾸기 등을 한 번이라도 한 채팅) · 그 저장 뒤 값은 기록이 저장보다 뒤 시각이라 그 확장이 저장 뒤에 더해요
+        const at = extra => Sub.computeAt(eng, meta, chat, S, { limit: i + 1, drop: a => (isEdit(a) && ownAn(a)) || (!!a.set && a.at === i + 1), ...extra });
         let full = null;
         for (const k of want) {
             const had = mine.find(a => a[Sub.TAG].who === k);
@@ -207,7 +230,7 @@ export function syncEdit(c, eng, i, { tr = null } = {}) {
             if (had && JSON.stringify(had.ops) === JSON.stringify(delta)) { had.at = i + 1; continue; }
             if (had) meta.adjust = meta.adjust.filter(a => a !== had);
             const name = tr?.(st.off[k].name) || st.off[k].name;
-            const entry = { at: i + 1, t: pickT(meta, i + 1), an, ops: delta, label: label(i, name), silent: true, keep: true, [Sub.TAG]: { k: 'edit', who: k, ids: [i], made: had?.[Sub.TAG].made ?? Date.now() } };
+            const entry = { at: i + 1, t: pickT(meta, i + 1), an, ops: delta, label: label(i, name), silent: true, keep: true, [Sub.TAG]: { k: 'edit', who: k, ids: [i], an, made: had?.[Sub.TAG].made ?? Date.now() } };
             meta.adjust.push(entry); st.off[k].t = entry.t;
             out.made.push({ who: k, ops: delta }); out.changed = true;
         }
@@ -274,14 +297,22 @@ const helpers = async () => {
 
 let queue = Promise.resolve();
 const serial = fn => (queue = queue.then(fn, fn));
+const chatName = c => { try { return String(c?.getCurrentChatId?.() ?? ''); } catch { return ''; } };
+/** 1.8.1 맥락 c 가 아직 지금 채팅인가 — 채팅 이름 · 그 번호의 답 객체 · (실리태번 맥락이면) 지금 메타 칸이 같은지 */
+function sameChat(c, i, m, id) {
+    if (chatName(c) !== id || c?.chat?.[i] !== m) return false;
+    const now = ctx();
+    return !now || now === c || now.chatMetadata === c.chatMetadata;
+}
 /**
  * 편집 저장 뒤 한 답: 정하고 → 기록 맞추고 → 뒤 저장 이어 맞추고 → 저장 · 새로고침(알림 없이). before = 고치기 전 본문(없으면 되살리기 · 기록 맞추기만)
  *   돌려주는 것: { cut, back, changed } 또는 null(못 함)
  */
 export function applyEdit(c = ctx(), i, before, { eng = undefined } = {}) {
     return serial(async () => {
+        const id0 = chatName(c), m0 = c?.chat?.[i];
         const e = eng ?? await Sub.engine(); if (!e) return null;
-        const meta = sheet(c), m = c?.chat?.[i]; if (!meta || !m || m.is_user) return null;
+        const meta = sheet(c), m = c?.chat?.[i]; if (!meta || !m || m.is_user || !sameChat(c, i, m0, id0)) return null;
         // 1.7.8 상태창 시작점 앞(그 확장이 굳힌 답 · 「지금」 부터 다시 만든 상태창): 그 확장이 그 답의 변화를 다시 안 더해서 뺄 수도 없어요 — 칩만 흐려지거나,
         //   굳기로 사라진 뺀 기록을 「사용자가 되돌림」 으로 읽지 않게 손대지 않아요
         if (i < Sub.startOf(meta, c.chat)) return null;
@@ -292,9 +323,13 @@ export function applyEdit(c = ctx(), i, before, { eng = undefined } = {}) {
         const rel = state?.data?.rel ?? meta.base?.data?.rel ?? null;
         let d, r;
         const lore = await loreOf(c);
+        // 1.8.1 기다리는 사이(첫 로어북 읽기 · 계산 모듈 받기) 채팅이 바뀌었으면 손대지 않아요 — 실리태번은 메시지 배열을 그 자리에서 갈아 끼우고 메타 칸만 새 객체라,
+        //   들고 있던 맥락으로 이어 가면 옛 메타 칸 + 새 채팅의 같은 번호 답을 섞어 맞추고 새 채팅을 저장했어요
+        if (!sameChat(c, i, m, id0)) return null;
         try { d = decide(m, before, m.mes, e, { rel, tr: h.tr, find: h.find, state, lore }); r = syncEdit(c, e, i, { tr: h.tr }); } catch { return null; }
         if (!r.changed && !d.cut.length && !d.back.length) return { ...d, changed: false };
         try { await Sub.applyHidden(c, { kind: 'edit', eng: e, save: false }); } catch { /* 뒤 저장은 다음 맞추기 때 */ }
+        if (!sameChat(c, i, m, id0)) return { ...d, changed: true };   // 1.8.1 그 사이 채팅이 바뀌었으면 새 채팅을 저장하지 않아요(옛 채팅은 다음에 열 때 맞춰요)
         // 1.7.9 저장은 한 번 — 실리태번 saveMetadata 는 saveChatConditional 그대로라(메타 칸도 채팅 파일 머리에 같이 적혀요) 둘 다 부르면 채팅 전체를 두 번 썼어요
         try { await (typeof c?.saveChat === 'function' ? c.saveChat() : c?.saveMetadata?.()); } catch { /* 다음 저장 때 */ }
         try { (h.core ?? await core())?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
@@ -329,27 +364,38 @@ export function startEditSync(doc = globalThis.document, { decorate = null, filt
     started = true;
     const before = new Map();   // 메시지 → 편집을 연 때의 본문(사용자가 편집 단추를 누른 답만 — 번역 · 다른 확장이 바꾼 글에는 안 움직여요)
     const mesAt = id => ctx()?.chat?.[id];
+    let pending = null;   // 연필 단추 뒤 확인 창을 기다리는 듣는 곳(하나뿐)
+    const disarm = () => { if (!pending) return; try { doc.removeEventListener('click', pending.once, true); doc.removeEventListener('keydown', pending.esc, true); } catch { /* 옛 문서 */ } pending = null; };
     doc.addEventListener('click', event => {
         const t = event.target; if (!t?.closest) return;
         const pen = t.closest('.mes_edit');
-        if (pen) { const id = Number(pen.closest('.mes')?.getAttribute('mesid')); const m = mesAt(id); if (m && !m.is_user && typeof m.mes === 'string') before.set(m, m.mes); return; }
+        if (pen) { const id = Number(pen.closest('.mes')?.getAttribute('mesid')); const m = mesAt(id); if (m && !m.is_user && typeof m.mes === 'string') before.set(m, { mes: m.mes, sid: m.swipe_id ?? 0 }); return; }
+        // 1.8.1 편집 취소: 기억한 본문을 버려요 — 남겨 두면 스와이프를 넘긴 뒤 다른 확장 · 명령이 낸 편집 사건에 옛 글을 「고치기 전」 으로 봤어요
+        const cancel = t.closest('.mes_edit_cancel');
+        if (cancel) { const m = mesAt(Number(cancel.closest('.mes')?.getAttribute('mesid'))); if (m) before.delete(m); return; }
         // 그 확장의 연필 단추(변화 줄 직접 고치기): 고친 뒤 뺀 기록을 새 변화 줄에 맞게 다시 구해요(확인 창 「예」 뒤)
         const chip = t.closest('.ss-mchip.edit[data-ss-edit]');
         if (chip) {
             const id = Number(chip.getAttribute('data-ss-edit'));
-            const once = e => { if (!e.target?.closest?.('.popup-button-ok, .popup-button-cancel')) return; doc.removeEventListener('click', once, true); if (e.target.closest('.popup-button-ok')) setTimeout(() => { if (active(doc) && mesAt(id)?.extra?.[STATE]) applyEdit(ctx(), id, null).then(() => repaint(id)).catch(() => { /* 다음 편집 때 */ }); }, 700); };
-            doc.addEventListener('click', once, true);
+            // 버그 사냥 4: 확인 창을 Esc · 바깥 누름으로 닫으면 이 듣는 곳이 남아 나중의 다른 확인 창(지우기 등) 「예」 에 이 답을 다시 구했고, 연필을 여러 번 누르면 쌓였어요 — 기다리는 것은 늘 하나 · Esc 면 그만
+            disarm();
+            const once = e => { if (!e.target?.closest?.('.popup-button-ok, .popup-button-cancel')) return; disarm(); if (e.target.closest('.popup-button-ok')) setTimeout(() => { if (active(doc) && mesAt(id)?.extra?.[STATE]) applyEdit(ctx(), id, null).then(() => repaint(id)).catch(() => { /* 다음 편집 때 */ }); }, 700); };
+            const esc = e => { if (e?.key === 'Escape') disarm(); };
+            pending = { once, esc };
+            doc.addEventListener('click', once, true); doc.addEventListener('keydown', esc, true);
         }
     }, true);
     const repaint = id => { try { const el = doc.querySelector?.(`#chat .mes[mesid="${id}"]`); if (el) setTimeout(() => { paint([el], doc).catch(() => { /* 다음에 그릴 때 */ }); }, 150); } catch { /* 다음에 그릴 때 */ } };
     on(T.MESSAGE_EDITED, id => {
         const i = Number(id), m = mesAt(i); if (!m || m.is_user) return;
-        const was = before.get(m); before.delete(m);
+        const kept = before.get(m); before.delete(m);
+        const was = kept && kept.sid === (m.swipe_id ?? 0) ? kept.mes : undefined;   // 1.8.1 연필을 누른 뒤 다른 스와이프로 넘겼으면 그 글은 「고치기 전」 이 아니에요
         if (!active(doc) || !sheet(ctx())) return;
         if (was === undefined && !m.extra?.[STATE]) return;   // 사용자가 편집 창으로 고친 것이 아니고 뺀 것도 없는 답
         setTimeout(() => { applyEdit(ctx(), i, was ?? null).then(() => repaint(i)).catch(() => { /* 원래 동작 그대로 */ }); }, 350);   // 그 확장의 편집 처리(서랍 다시 읽기 · 다시 계산)가 먼저
     });
-    if (T.CHAT_CHANGED) on(T.CHAT_CHANGED, () => before.clear());
+    if (T.CHAT_CHANGED) on(T.CHAT_CHANGED, () => { before.clear(); disarm(); });
+    if (T.MESSAGE_SWIPE_DELETED) on(T.MESSAGE_SWIPE_DELETED, d => { try { const m = mesAt(Number(d?.messageId)); if (m && !m.is_user) shiftState(m, Number(d?.swipeId)); } catch { /* 다음 고침 때 */ } });   // 버그 사냥 4(위 shiftState) · 실리태번이 보이는 스와이프를 바꾸기 전에 내요
     try { decorate?.('미트볼 본문 고침 칩', list => { paint(list, doc).catch(() => { /* 다음에 그릴 때 */ }); }, { settle: 0, live: true, order: 96, filter }); } catch { /* 편집 직후에만 */ }
     return true;
 }

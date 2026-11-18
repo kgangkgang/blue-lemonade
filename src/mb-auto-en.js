@@ -10,6 +10,7 @@
 //   감시자 · 타이머 없음. getContext 감싸개는 한 번만 걸고 걷지 않아요(끈 동안에는 받은 그대로 넘겨요). 시험: tools/tests/mb-auto-en.mjs
 
 const MARK = Symbol.for('blue-lemonade.mb-auto-en.v1');
+import { upHas } from './mb-upstream.js';
 export const TITLE = '미트볼 상태창';
 const HEAD = /^\s*한국어로 저장된 (\d+)칸을 영어 저장으로 바꿔요(?:\s*\((.*?)\)\.?\s*(?:<br\s*\/?>|$))?/;
 const unescape = text => String(text || '').replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&amp;/g, '&').trim();
@@ -116,7 +117,7 @@ export function startMbAutoEn({ host = () => globalThis.SillyTavern, doc = globa
     const holder = host();
     if (!holder || typeof holder.getContext !== 'function') return false;
     if (holder.getContext[MARK]) return false;
-    const on = () => doc?.body?.getAttribute?.('data-bl-mb-auto-en') === 'on';
+    const on = () => doc?.body?.getAttribute?.('data-bl-mb-auto-en') === 'on' && !upHas('autoen');   // 미트볼 2.9.1 은 「바꾸기 전에 묻기」(trConvertAsk)를 스스로 가져요 — 그 판에서는 원작 설정에 맡기고 창을 가로채지 않아요(테마 값은 한 번 옮겨요 · src/mb-upstream.js)
     const dress = makeDresser({ on, notify, skipNote, panels, chatKey });
     const inner = holder.getContext;
     const outer = function (...args) {

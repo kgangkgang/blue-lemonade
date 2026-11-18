@@ -641,8 +641,11 @@ export function timeLabel(t, c = ctx()) {
 const TIME_WORDS = [[/late\s*night|midnight|심야|한밤/i, '심야'], [/dawn|새벽/i, '새벽'], [/evening|dusk|sunset|저녁|해질/i, '저녁'], [/night|밤/i, '밤'], [/morning|아침/i, '아침'], [/noon|afternoon|\bday(?:time)?\b(?!\s*\d)|lunch|낮|점심/i, '낮']];
 const HALF_WORDS = [[/오전/, '아침'], [/오후/, '낮']];
 /** 시각 글(「23:30」 · 「오후 11시」 · 「6:30 AM」) → 그 확장 timeWords 의 시간대 이름(못 읽으면 null) */
+// 버그 사냥 4: 「+2시간」 · 「2시간 후」 · 「Day 3: 10 minutes later」 는 지난 시간(그 확장도 「N시간 지남」 으로 읽어요)이지 시각이 아니에요 — 「2시」 · 「3: 10」 으로 읽어 심야로 덮었어요
+const RELATIVE = /^[+＋]\s*\d|\d\s*(?:시간|時間)|\d\s*(?:hours?|hrs?|minutes?|mins?)\b|\d\s*분\s*(?:후|뒤|지나)|\blater\b/i;
 function clockSlot(s) {
     let h, m = 0, x;
+    if (RELATIVE.test(s)) return null;
     if ((x = s.match(/(\d{1,2})\s*[:：]\s*(\d{2})(?!\d)/))) { h = +x[1]; m = +x[2]; }
     else if ((x = s.match(/(\d{1,2})\s*[시時](?:\s*(\d{1,2})\s*[분分]|\s*(반))?/))) { h = +x[1]; m = x[3] ? 30 : +(x[2] ?? 0); }
     else if ((x = s.match(/(?:^|[^\d])(\d{1,2})\s*[ap]\.?m\b/i))) h = +x[1];

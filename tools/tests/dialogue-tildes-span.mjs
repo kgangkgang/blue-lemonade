@@ -52,6 +52,14 @@ test('대사 밖 띄어 쓴 ~~지운 글~~ 은 그대로', () => {
     const r = run('<p>말 <del>지울 글</del> 뒤<br>「다음 줄 대사」</p>', '말 ~~지울 글~~ 뒤\n「다음 줄 대사」');
     assert.equal(r.dels, 1);
 });
+test('버그 사냥 4: 굽은 따옴표를 곧은 따옴표로 닫은 대사(“…") 뒤 대사 밖 같은 꼴은 그대로 취소선', () => {
+    for (const [o, c] of [['“', '"'], ['"', '”']]) {
+        const r = run(`<p>${o}알았어.${c} 그는 웃었다. 응<del>~, 그래</del>~! 하고<br>끝</p>`, `${o}알았어.${c} 그는 웃었다. 응~~~, 그래~~~! 하고\n끝`);
+        assert.equal(r.dels, 1, o + c);
+    }
+    const r = run('<p>“응<del>~, 그래</del>~! 하하<br>알았어"</p>', '“응~~~, 그래~~~! 하하\n알았어"');
+    assert.equal(r.dels, 0, '섞인 따옴표 대사 안은 늘임표');
+});
 
 console.log(`dialogue-tildes-span: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

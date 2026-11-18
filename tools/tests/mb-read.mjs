@@ -254,6 +254,17 @@ await ok('⑨ 1.7.7 미트볼 2.9.0(그 확장 설정에 genRead 가 있음): �
         sel.value = 'base'; doc.fire('change', { target: sel }); await tick();
         assert.equal(P.onceLevel(), ''); assert.equal(P.levelOf(w.set.prompts[P.KEY]), 'recent');              // 「안 씀」 을 다시 골라도 그대로(옛 꼴은 이번만 「기본」 으로 내렸어요)
     }
+    {   // 버그 사냥 4: 평소 단계가 「기억 요약」 이면 「쓰기」 로 뜨고, 「안 씀」 은 이번만 끄기(전엔 기억 요약이 그대로 실렸어요)
+        mem.clear(); const m = await fresh(); const doc = makeDoc(); const w = world('memo'); w.set.genRead = 'short';
+        await P.syncMbPrompt('memo', 9, 2000, { c: w.c, retry: false }).catch(() => null); await P.syncPrompt('memo', { c: w.c, def: DEF }); w.toasts.length = 0;
+        m.startMbRead(doc, { watch: doc.watch, settings: async () => ({ chat: w.chat }), load: async () => w.Pw });
+        const z = wizard(doc); doc.fire('animationstart', { animationName: m.ANIM, target: z.ta }); await tick();
+        const sel = z.sec.querySelector('.bl-mb-read-sel');
+        assert.equal(sel.value, 'memo', '평소가 기억 요약이면 「쓰기」');
+        sel.value = 'base'; doc.fire('change', { target: sel }); await tick();
+        assert.equal(P.onceLevel(), 'off', '「안 씀」 = 이번만 끄기');
+        await P.endOnce({ force: true, quiet: true });
+    }
     {
         const m = await fresh(); const doc = makeDoc(); const w = world('off'); assert.equal(m.slim(), false);
         m.startMbRead(doc, { watch: doc.watch, settings: async () => ({ chat: w.chat }), load: async () => w.Pw });

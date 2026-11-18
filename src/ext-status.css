@@ -464,7 +464,9 @@ body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-body > .popup-contr
 body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-body > .popup-content { margin-top: 0; }
 /* PC: 테마 팝업 여백이 위 20 · 아래 16 이라 위만 4 더 넓었어요 → 이 큰 창만 위도 16(폰은 아래 700 묶음에서 12 · 12 그대로) */
 body.salty dialog.popup.ss-dlg.large_dialogue_popup { padding-top: var(--bl-s4, 16px) !important; }
-body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close {
+/* 미트볼 2.9.1(원작 766314d · 설정 popX): 「닫기」 하나뿐인 창에 원작이 제 ✕(.ss-popx · 창 표식 ss-xclose)를 달아요 — 큰 창에서 테마 ✕ 와 거의 같은 자리에 두 겹이었어요(리그 4px 어긋남).
+   ✕ 는 원작에 맡기고(테마 ✕ 는 원작 ✕ 가 없는 창에서만) · 원작 ✕ 에 테마 ✕ 꼴(자리 · 크기 · 면 · 모서리)을 입혀요 — 누르면 원작이 「닫기」를 눌러요 */
+body.salty dialog.popup.ss-dlg.large_dialogue_popup:not(.ss-xclose) > .popup-button-close {
   display: block !important; position: absolute !important;
   top: 12px !important; right: var(--bl-s3, 12px) !important;   /* 1.6.6: 오른쪽 위 모서리 — 다른 테마 창(css/85-addon-unify.css 의 top 12)과 같은 자리. 22 에서는 ✕ 가 빈 띠 가운데에 떠 있었어요 */
   width: var(--bl-ui-icon, 34px) !important; height: var(--bl-ui-icon, 34px) !important; z-index: 2 !important;
@@ -472,8 +474,14 @@ body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close {
   background: var(--bl-fill-card, var(--bl-card)) !important; color: var(--salty-text) !important; opacity: 1 !important; filter: none !important;   /* 창 면과 같은 색 — 내용이 밀려 올라와도 ✕ 밑에서 겹쳐 보이지 않아요 */
   font: 400 var(--bl-deco-glyph-22, 22px)/34px sans-serif !important; text-align: center !important;
 }
-body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close::before { content: "×" !important; font: inherit !important; }
-body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close:hover { box-shadow: inset 0 0 0 99px var(--bl-hover) !important; }
+body.salty dialog.popup.ss-dlg.large_dialogue_popup:not(.ss-xclose) > .popup-button-close::before { content: "×" !important; font: inherit !important; }
+body.salty dialog.popup.ss-dlg.large_dialogue_popup.ss-xclose > .ss-popx {
+  position: absolute; top: 12px; right: var(--bl-s3, 12px); z-index: 2;
+  display: grid; place-items: center; width: var(--bl-ui-icon, 34px); height: var(--bl-ui-icon, 34px); margin: 0; padding: 0;
+  border: 0; border-radius: var(--bl-ui-radius, 8px); background: var(--bl-fill-card, var(--bl-card)); color: var(--salty-text); box-shadow: none;
+}
+body.salty dialog.popup.ss-dlg.large_dialogue_popup.ss-xclose > .ss-popx:hover { box-shadow: inset 0 0 0 99px var(--bl-hover); }
+body.salty dialog.popup.ss-dlg.large_dialogue_popup:not(.ss-xclose) > .popup-button-close:hover { box-shadow: inset 0 0 0 99px var(--bl-hover) !important; }
 /* ✕ 자리만큼 첫 줄 오른쪽을 비워요 */
 body.salty dialog.popup.ss-dlg.large_dialogue_popup :is(.ss-head, .ss-wz-head) { padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s1, 4px)); }
 
@@ -755,6 +763,8 @@ body.salty #ss-settings[data-bl-view="raw"] :is(.bl-ext-tabs, .bl-ext-intro, .bl
 body.salty #ss-settings[data-bl-view="org"]:not([data-bl-finding]) :is(.inline-drawer-content, .ss-set-body) > [data-bl-fold-off] { display: none !important; }
 /* 원작 「설정 찾기」에 적는 동안은 테마가 끼운 탭 줄 · 탭 설명 · 갈래 줄 · 길잡이도 가려요(「원작 그대로」와 같은 꼴 · 정리한 보기 규칙보다 세게)(찾은 줄만 남게 · 원작이 [hidden] 으로 숨긴 줄은 그대로) */
 body.salty #ss-settings[data-bl-finding] :is(.inline-drawer-content, .ss-set-body) > :is(.bl-ext-tabs, .bl-ext-intro, .bl-ext-fold, .bl-ext-more, .bl-ext-start) { display: none !important; }   /* 레몬 칸 · 한 줄은 제 시트(src/mb-lemon.css) */
+/* 1.8.1 미트볼 2.9.1 🔎 검색 › 설정으로 가기: 그 확장이 칸에 다는 반짝 표시(.ss-set-flash)를 알아채는 신호 — 띠 신호와 같은 빌린 키프레임 0.001초(src/ext-compat.js revealFlash) */
+body.salty:not([data-bl-ext-raw]) #ss-settings .ss-set-body .ss-set-flash { animation: ss-pulse .001s 1 !important; }
 /* 내용 칸을 2열 격자로 — 모든 줄은 두 칸을 다 쓰고, 숫자 줄(data-bl-col)은 한 칸씩(홀수면 마지막 칸은 왼쪽 열만). 실리태번이 서랍을 펼쳐 둔 동안에만(인라인 display: block) — 접힌 서랍은 건드리지 않아요 */
 body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content[style*="display: block"] { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bl-s3, 12px); align-items: start; }
 body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > .ss-set-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bl-s3, 12px); align-items: start; }   /* 미트볼 2.9.1(d61af0b1): 칸들이 .ss-set-body 한 겹 아래 — 같은 2열 격자를 그 겹에 */
@@ -828,7 +838,7 @@ body.salty #ss-settings :is(.inline-drawer-content, .ss-set-body) > small:not(.b
   /* 1.7.8 띠가 누름을 받아요(디자인 관문 남은 줄 「만들기 창 카드 × ✕」): 전에는 띠가 누름을 통과시켜(pointer-events: none) 띠 밑으로 굴러 올라간 카드 · 단추가 안 보이는 채로 눌렸어요.
      이제 띠 자리를 누르면 아무것도 안 눌려요(끌어 굴리기는 그대로 — 띠는 굴리는 칸 자신의 가상 요소). 보이는 모양은 같아요 */
   /* 1.6.6: 띠 높이 40 → ✕ 높이(34) — ✕ 를 모서리(위 12)로 올리고 본문 위 여백을 뺀 만큼, 내린 동안 창 위 끝에서 내용이 가려지는 높이가 63 → 47 */
-  body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: var(--bl-ui-icon, 34px); margin-bottom: calc(-1 * var(--bl-ui-icon, 34px)); background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); }
+  /* 11-19 사용자 「위에 뭔가 빈 블럭이 따라다님 스크롤을」(만들기 진행 목록 · 폰): 내린 동안 창 위에 붙던 ✕ 줄 높이의 띠(1.5.5 ~ 1.7.8)를 걷어요 — 빈 띠가 고양이 그림 · 머리를 반쯤 가린 채 따라다녔어요. ✕ 는 제 카드 면(불투명)이라 그 밑으로 지나가는 내용은 ✕ 자리 34 만 가려요 */
   /* 번역 고치기(폰): 목록(제 스크롤 55vh) + 위 칸 + 맨 아래 안내 글이 창 높이를 넘어 안내 글 첫 줄이 창 바닥 흐림 아래로 목록과 겹쳐 보였어요 → 목록을 조금 줄여 안내 글까지 창 안에 */
   body.salty .ss-scope.ss-trfix .ss-trf-list { max-height: 46vh; }
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
@@ -929,7 +939,7 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-pills > small { align-self: cent
   body.salty dialog.popup.ss-dlg::backdrop { background: var(--salty-bg, Canvas) !important; }
   /* 가장자리 손잡이: 손잡이 가운데 44 칸(채팅 쪽 14px · 마우스 화면엔 없음) */
   body.salty .ss-side-handle::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }
-  body.salty .ss-scope :is(.ss-btn, .ss-ib, .ss-pill, .ss-seg > button, .ss-tabs > button, .ss-groups > button, .ss-tog, .ss-tool, .ss-chip.btn, button.ss-chip, button.ss-mchip, .ss-x, .ss-step button, .ss-t-btn, button.ss-t-x, details > summary)::after, body.salty :is(.bl-ext-tab, #ss-hud .ss-hud-t, .ss-side-x)::after, body.salty dialog.popup.ss-dlg.large_dialogue_popup > .popup-button-close::after {
+  body.salty .ss-scope :is(.ss-btn, .ss-ib, .ss-pill, .ss-seg > button, .ss-tabs > button, .ss-groups > button, .ss-tog, .ss-tool, .ss-chip.btn, button.ss-chip, button.ss-mchip, .ss-x, .ss-step button, .ss-t-btn, button.ss-t-x, details > summary)::after, body.salty :is(.bl-ext-tab, #ss-hud .ss-hud-t, .ss-side-x)::after, body.salty dialog.popup.ss-dlg.large_dialogue_popup:not(.ss-xclose) > .popup-button-close::after, body.salty dialog.popup.ss-dlg.large_dialogue_popup.ss-xclose > .ss-popx::after {
     content: '';
     position: absolute;
     left: 50%;

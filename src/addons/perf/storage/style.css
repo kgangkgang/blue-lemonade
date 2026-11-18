@@ -15,6 +15,9 @@
 .bls-panel h3 { margin: 0; font-size: 1em; font-weight: 700; color: var(--bls-ink); }
 .bls-panel .bls-row { display: flex; align-items: center; gap: 8px; }
 .bls-panel .bls-wrap { flex-wrap: wrap; }
+/* 1.7.9 디자인 전수(사용자 「버튼 크기 맞는지」 · 철칙 5절 셋 이상은 같은 폭 격자): 지우기 단추 줄이 글 길이대로 감겨 폭이 제각각(110 · 100 · 162 · 134px)이던 것 → 같은 폭 칸(폰 384 에서 2열 · 넓으면 더) · 홀수면 마지막은 왼쪽 칸 */
+.bls-panel .bls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.bls-panel .bls-grid > .bls-btn { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .bls-panel .bls-between { justify-content: space-between; }
 .bls-panel .bls-end { justify-content: flex-end; }
 .bls-panel .bls-num { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--bls-ink); font-weight: 600; }

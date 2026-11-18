@@ -41,7 +41,9 @@ export function quoteOpenedBefore(del) {
     walk(block); text = text.slice(-SCAN_MAX);
     const stack = [];
     for (const ch of text) {
-        if (stack.length && ch === stack.at(-1)) stack.pop();
+        const top = stack.at(-1);
+        // 버그 사냥 4: 모델이 「“…"」 · 「"…”」 처럼 굽은 따옴표와 곧은 따옴표를 섞어 닫으면 닫힘으로 못 봐 문단 끝까지 대사 안으로 봤어요(대사 밖 진짜 취소선이 물결로)
+        if (stack.length && (ch === top || (top === '”' && STRAIGHT.has(ch)) || (STRAIGHT.has(top) && ch === '”'))) stack.pop();
         else if (CLOSER[ch]) stack.push(CLOSER[ch]);
         else if (STRAIGHT.has(ch)) stack.push(ch);
     }

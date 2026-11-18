@@ -422,6 +422,8 @@ await ok('1.6.5 진짜 모델 다시 넣기에서 찾은 것: 직함이 다른 �
     assert.deepEqual(['저녁 (오후 7시)', '밤 (오후 10시)', '오후 11시', 'Sunday night', 'Sunday', '23:30', '오후 2:00', '6:30 AM', 'Dawn => Night', 'Morning ➡ Evening'].map(x => M.timeOfDay(x, T)), ['저녁', '밤', '밤', '밤', null, '밤', '낮', '새벽', '밤', '저녁']);
     assert.equal(M.timeLabel('Sunday night', { getCurrentLocale: () => 'ko-KR' }), '밤', '보이는 이름도 같은 차례');
     assert.deepEqual(['午後11時', 'Day 3, 23:30', 'Day 3'].map(x => M.timeOfDay(x, T)), ['밤', '밤', null], '독립 검토: 時 · 「Day 3」 의 day');
+    // 버그 사냥 4: 지난 시간 줄은 시각이 아니에요(전엔 넷 다 「심야」) · 같은 줄에 시간대 낱말이 있으면 낱말로
+    assert.deepEqual(['+2시간 (#12)', '2시간 후', '1시간 뒤', 'Day 3: 10 minutes later', '+1 hour', '3時間後', '2시간 후 밤'].map(x => M.timeOfDay(x, T)), [null, null, null, null, null, null, '밤'], '지난 시간 줄');
     {   // 시각 달력(clock)은 그 확장이 시각으로 적어요 — 테마가 「밤」 같은 낱말로 덮지 않아요
         const cc = { chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: { statussim: { bySwipe: { 0: [['period', 'Night']] } } } }],
             chatMetadata: { statussim: { base: { data: { calendar: { time: '21:00', times: T, clock: '24' }, rel: { user: [] } } } } } };

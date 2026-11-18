@@ -126,6 +126,17 @@ await ok('⑦ 2.9.1 새 칸은 이웃 갈래에(접힌 갈래 밖으로 새지 �
     assert.match(read('src/ext-status.css'), /> label > :is\(select, textarea, \.ss-set-inline\)[^{]*\{ margin: var\(--bl-s2, 8px\) 0 0; \}/);
     assert.match(read('src/ext-bridge.css'), /body\.salty \.bl-ext-bridge-pick \{ gap: var\(--bl-s2, 8px\); margin-top: var\(--bl-s2, 8px\); \}/);
 });
+await ok('⑧ 원작 「모델 이름만」 칸에 이름이 있으면 테마 모델 칸에 그 사실을 알려요(원작이 테마 모델을 지나쳐요)', async () => {
+    const B = await load('src/ext-bridge-ui.js');
+    assert.match(B.upModelNote({ aiModelOnly: 'gemini-2.5-flash' }), /gemini-2\.5-flash.*비워야/);
+    assert.equal(B.upModelNote({ aiModelOnly: '' }), ''); assert.equal(B.upModelNote(undefined), '');
+});
+await ok('⑨ 원작 ✕(.ss-popx · 창 표식 ss-xclose)가 있는 창은 테마 ✕ 를 안 띄우고 원작 ✕ 에 테마 꼴을 입혀요(두 겹 ✕)', () => {
+    const css = read('src/ext-status.css');
+    assert.match(css, /dialog\.popup\.ss-dlg\.large_dialogue_popup:not\(\.ss-xclose\) > \.popup-button-close \{/);
+    assert.ok(!/dialog\.popup\.ss-dlg\.large_dialogue_popup > \.popup-button-close/.test(css), '테마 ✕ 규칙은 모두 원작 ✕ 없는 창만');
+    assert.match(css, /dialog\.popup\.ss-dlg\.large_dialogue_popup\.ss-xclose > \.ss-popx \{[^}]*top: 12px; right: var\(--bl-s3, 12px\)/);
+});
 await ok('CI 목록(release-check.yml)에 이 시험', () => {
     assert.match(read('.github/workflows/release-check.yml'), /tools\/tests\/mb-291\.mjs/);
 });

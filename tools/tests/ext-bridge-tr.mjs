@@ -681,6 +681,22 @@ await test('1.7.8 번역 단추를 누른 뒤: 그 확장이 「N개 번역했�
         assert.deepEqual(toasts, []); assert.equal(f.calls.json.length, 1);
         // 누르지 않았는데 뜬 그 확장 알림(다른 일)에는 안 움직여요
         fill.mbToast('success', '3개 번역했어요.'); await tm.run(400); assert.equal(f.calls.json.length, 1);
+        // 버그 사냥 4: 번역 중에 단추를 다시 눌러 멈춤 → 「(멈춤)」 알림에는 이어 번역 안 함 · 오류 알림은 끝이 아니라 기다려요(그 확장이 번역 모델로 한 번 더 · 끝 알림에 이어요)
+        {
+            const h = fakeTarget({ ko: { Lobby: '로비', 'Staff Canteen': '구내식당' } }); h.mb.core.app.current.snaps = new Map(); h.mb.tr.missingTr = () => ['Office'];
+            const fh = T.createTrFill(h.mb, { doc: window.document, now: tm.now, timers: tm.timers, toast: null, chatId: () => 'A' });
+            const go = () => fh.onClick({ target: Object.assign(window.document.createElement('button'), { className: 'ss-trf-go' }), isTrusted: true });
+            go(); go();   // 누름 · 번역 중에 다시 누름(그 확장은 멈춤)
+            assert.equal(fh.mbToast('success', '1개 번역했어요 (멈춤).'), true); await tm.run(400);
+            assert.deepEqual(h.calls.json, [], '멈춘 번역은 안 이어요'); assert.equal(fh.watching, false);
+            go();
+            assert.equal(fh.mbToast('error', '번역하지 못했어요: 429'), false); await tm.run(400);
+            // 1.7.9 통합: 누르자마자 먼저 보내기(그 확장이 안 보내는 글만 · 1.7.9 번역 늦음 고침)는 돌아요 — 오류 알림으로 이어 메우기(그 확장이 다시 보낼 글까지)는 안 해요
+            assert.deepEqual(h.calls.json, [['Lobby', 'Staff Canteen']], '오류 알림에는 이어 메우기를 안 보내요(그 확장이 번역 모델로 한 번 더 보내는 중)');
+            assert.ok(!h.calls.json.flat().includes('Office'), '그 확장이 보낼 글은 안 보내요'); assert.equal(fh.watching, true);
+            assert.equal(fh.mbToast('success', '0개 번역했어요.'), true); await tm.run(400);
+            assert.equal(h.calls.json.length, 1, '끝 알림에 이어요(먼저 보낸 글은 다시 안 보내요)'); assert.equal(fh.watching, false);
+        }
         // 번역기가 영어 그대로 돌려줌 → 끝 알림이 그렇다고 · 다음 누름에 다시 보내요
         const g = fakeTarget({ ko: {} }); g.mb.core.app.current.snaps = new Map(); const msgs = [];
         const fill2 = T.createTrFill(g.mb, { doc: window.document, now: tm.now, timers: tm.timers, toast: { success: m => msgs.push(m), info: m => msgs.push(m) }, chatId: () => 'A' });
@@ -688,6 +704,23 @@ await test('1.7.8 번역 단추를 누른 뒤: 그 확장이 「N개 번역했�
         assert.equal(msgs.length, 2); assert.match(msgs[1], /다시/);
         await fill2.fill('click'); assert.equal(g.calls.json.length, 2);
     } finally { delete globalThis[REG]; }
+});
+await test('버그 사냥 4: 이어 번역 끝 알림 — 요청 실패는 「영어 그대로」 가 아니라 실패로 · 기다리는 사이 채팅이 바뀌면 알림 없음 · 지도 글이 없으면 「지도 이름도」 를 안 붙여요', async () => {
+    const mk = () => fakeTarget({ ko: { 'Honey Lemon Drop': '꿀레몬 사탕' } });   // 남은 글: 칩 「+Honey Lemon Drop」
+    const REG = Symbol.for('blue-lemonade.mb-unvisited.v1'), old = globalThis[REG];
+    globalThis[REG] = () => [];
+    try {
+        let g = mk(); let msgs = [];
+        const toast = { success: m => msgs.push(['success', m]), info: m => msgs.push(['info', m]), warning: m => msgs.push(['warning', m]) };
+        g.mb.tr.trJSON = async src => src;   // 그 확장 번역 길이 실패하면 받은 것을 그대로 돌려줘요
+        await T.createTrFill(g.mb, { doc: window.document, toast, chatId: () => 'A' }).fill('click');
+        assert.equal(msgs.at(-1)?.[0], 'warning', JSON.stringify(msgs)); assert.match(msgs.at(-1)[1], /안 됐어요/);
+        assert.ok(!/지도 이름/.test(msgs[0][1]), '지도 글이 없어요');
+        g = mk(); msgs = []; let chat = 'A';
+        const real = g.mb.tr.trJSON; g.mb.tr.trJSON = async src => { const out = await real(src); chat = 'B'; return out; };
+        await T.createTrFill(g.mb, { doc: window.document, toast, chatId: () => chat }).fill('click');
+        assert.deepEqual(msgs.map(x => x[0]), ['info'], '시작 알림만(새 채팅에 「영어 그대로」 를 안 띄워요)');
+    } finally { globalThis[REG] = old; }
 });
 await test('1.7.8 받침 길: 미트볼 창(상태창 · 지도)이 열려 있어도 사전이 잠잠해지면 이어요 — 확인 창만 기다려요', async () => {
     // 리그(사용자 채팅 사본 · 1.7.7): 미트볼 상태창도 「확인」 단추가 있는 창이라 그 창을 닫을 때까지 이어 번역이 안 돌았어요(40초 넘게 · 닫자 그제야)
@@ -727,11 +760,114 @@ await test('1.7.8 위치 칸 펼침 머리 줄 「1층 후정 — Quiet walled g
     // 원문에 공백이 겹쳐 있어도 그 확장 short 와 같은 꼴로
     assert.ok(new Map(T.placeDescPairs([{ name: 'X', desc: desc.replace(' behind', '  behind') }], { [desc.replace(' behind', '  behind')]: ko })).has(key));
 });
+await test('1.8.1 잘린 장소 설명 짝: 「번역 고치기」로 그 설명의 번역을 고치면 짝도 따라가요 · 그 짝을 손으로 고친 것 · 📌 고정은 그대로', () => {
+    const desc = 'Quiet walled garden behind the 1F Security wing planted with Heavenly willows and Infernal ash trees.';
+    const key = '— ' + desc.slice(0, 59) + '…';
+    const setup = () => {
+        const f = fakeTarget();
+        f.app.current.snaps = new Map();
+        f.app.current.state = { data: { map: { places: [{ name: 'Courtyard', desc }] } }, recent: [] };
+        f.meta.tr[desc] = '1층 경비부 별관 뒤편에 자리한 조용한 담장 정원으로, 천계의 버드나무와 지옥의 물푸레나무가 심겨 있어요.';
+        f.meta.trLock = {};
+        const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+        fill.tidy({ draw: false });
+        assert.ok(f.meta.tr[key]?.startsWith('— 1층 경비부'), f.meta.tr[key]);
+        return { f, fill };
+    };
+    let { f, fill } = setup();
+    f.meta.tr[desc] = '경비동 1층 뒤 조용한 안뜰이에요. 하늘 버드나무와 지옥 물푸레나무가 있어요.';   // 번역 고치기
+    fill.tidy({ draw: false });
+    assert.ok(f.meta.tr[key].startsWith('— 경비동 1층 뒤'), `옛 번역이 남았어요: ${f.meta.tr[key]}`);
+    // 짝을 손으로 고쳤으면(테마가 넣은 값이 아니면) 설명을 다시 고쳐도 그대로
+    ({ f, fill } = setup());
+    f.meta.tr[key] = '— 손으로 고친 안뜰 설명…';
+    fill.tidy({ draw: false });
+    f.meta.tr[desc] = '다시 고친 번역이에요. 조용한 안뜰이에요.';
+    fill.tidy({ draw: false });
+    assert.equal(f.meta.tr[key], '— 손으로 고친 안뜰 설명…');
+    // 📌 고정한 짝은 늘 사용자 것
+    ({ f, fill } = setup());
+    const was = f.meta.tr[key]; f.meta.trLock[key] = true;
+    f.meta.tr[desc] = '또 고친 번역이에요. 조용한 안뜰이에요.';
+    fill.tidy({ draw: false });
+    assert.equal(f.meta.tr[key], was);
+});
 await test('1.7.8 그 확장 알림 감싸기: 제 이름 알림이면 본 것을 알려 줘요(seen)', () => {
     const seen = []; const fake = { success() {}, info() {}, warning() {}, error() {} };
     T.wrapMbToasts(fake, { title: '미트볼 상태창', trs: t => t, seen: (k, m) => seen.push([k, m]) });
     fake.success('3개 번역했어요.', '미트볼 상태창'); fake.info('다른 것', 'Other');
     assert.deepEqual(seen, [['success', '3개 번역했어요.']]);
+});
+
+// 1.7.9 번역이 늦게 보이던 것(11-18 사용자 폰: 「나머지 번역」 을 눌러도 한참 뒤 「20개 번역」 알림과 함께야 지도가 바뀜)
+//   가짜 번역기는 글이 길수록 늦게 돌려줘요(1초 + 1자마다 10ms · 가상 시계)
+const slowTr = (f, tm, ms = (n) => 1000 + 10 * n) => { f.mb.tr.trJSON = src => new Promise(res => { const n = src.list.join('').length; f.calls.json.push(src.list); tm.timers.setTimeout(() => res({ list: src.list.map(s => f.ko[s] ?? s) }), ms(n)); }); };
+await test('1.7.9 누르자마자 그 확장이 안 보내는 글(지도 흐린 점 이름 · 칩)부터 작은 묶음으로 · 묶음마다 바로 다시 그림 · 그 확장이 보낼 글은 안 보냄 · 같은 글 두 번 0 · 끝 알림 한 번', async () => {
+    const REG = Symbol.for('blue-lemonade.mb-unvisited.v1');
+    const S1 = 'A wide hall where employees of every department share their meals. '.repeat(6).trim(), S2 = 'The harbor hall keeps the old ledgers of every ship that ever docked here. '.repeat(5).trim();
+    globalThis[REG] = () => [{ name: 'Lobby', summary: '' }, { name: 'Staff Canteen', summary: S1 }, { name: 'Harbor Hall', summary: S2 }];
+    try {
+        const ko = { Lobby: '로비', 'Staff Canteen': '구내식당', 'Harbor Hall': '항구 홀', 'Honey Lemon Drop': '꿀레몬 사탕', [S1]: '모든 부서 직원이 함께 먹는 넓은 식당이에요.', [S2]: '항구에 닿은 배의 옛 장부를 두는 홀이에요.' };
+        const f = fakeTarget({ ko }); f.ko = ko;
+        f.app.current.state = { core: { here: 'Office' }, recent: [] };
+        const tm = fakeTimers(); slowTr(f, tm);
+        const draws = []; f.app.rerenderPanels = () => draws.push(tm.now());
+        const toasts = [];
+        const fill = T.createTrFill(f.mb, { doc: window.document, now: tm.now, timers: tm.timers, toast: { success: m => toasts.push(['success', m]), info: m => toasts.push(['info', m]) }, chatId: () => 'A' });
+        f.mb.tr.missingTr = () => (Object.hasOwn(f.meta.tr, 'Office') ? [] : ['Office']);
+        fill.onClick({ target: Object.assign(window.document.createElement('button'), { className: 'ss-trf-go' }), isTrusted: true });
+        await tm.run(350);
+        assert.deepEqual(f.calls.json, [['Lobby', 'Staff Canteen', 'Harbor Hall', 'Honey Lemon Drop']], '0.3초에 이름 · 칩만 먼저(그 확장 번역을 기다리지 않아요 · 긴 설명은 다음 묶음)');
+        await tm.run(1500);   // 첫 묶음이 돌아옴(1초 + 45자 → 1.75초)
+        assert.equal(f.meta.tr.Lobby, '로비'); assert.equal(f.meta.tr['Harbor Hall'], '항구 홀');
+        assert.ok(draws.some(x => x === 1750), `돌아오자마자 다시 그림: ${draws}`);
+        assert.deepEqual(f.calls.json[1], [S1, S2], '설명은 이어서 한 묶음');
+        f.meta.tr.Office = '사무실'; fill.mbToast('success', '1개 번역했어요.');   // 그 확장 번역이 끝남(설명 묶음은 아직 가는 중)
+        await tm.run(1000);
+        assert.equal(f.calls.json.length, 2, '가는 중인 설명을 다시 보내지 않아요');
+        assert.deepEqual(toasts.map(x => x[0]), ['info'], '끝 알림은 설명 묶음까지 끝난 뒤');
+        await tm.run(10000);
+        assert.equal(f.meta.tr[S2], ko[S2]);
+        assert.deepEqual(toasts.map(x => x[0]), ['info', 'success']); assert.match(toasts[1][1], /6개/);
+        const sent = f.calls.json.flat(); assert.equal(new Set(sent).size, sent.length, '같은 글 두 번 0'); assert.equal(sent.includes('Office'), false, '그 확장이 보낼 글은 안 보내요');
+        assert.equal(fill.watching, false);
+        // 다시 눌러도 보낼 것이 없으면 요청 0 · 알림 0
+        toasts.length = 0; fill.onClick({ target: Object.assign(window.document.createElement('button'), { className: 'ss-trf-go' }), isTrusted: true });
+        await tm.run(500); fill.mbToast('success', '번역 안 된 글이 없어요.'); await tm.run(2000);
+        assert.equal(f.calls.json.length, 2); assert.deepEqual(toasts, []);
+    } finally { delete globalThis[REG]; }
+});
+await test('1.7.9 「상태창 전체 번역」(확인 창이 뜸): 「예」 를 본 뒤에만 먼저 보내요 · 취소하면 0 · 확인 창이 안 뜨면 그 확장 번역 뒤에', async () => {
+    const REG = Symbol.for('blue-lemonade.mb-unvisited.v1');
+    globalThis[REG] = () => [{ name: 'Lobby', summary: '' }];
+    const sheetBtn = () => { const b = window.document.createElement('button'); b.setAttribute('data-act', 'trsheet'); return b; };
+    const confirm = () => { const d = window.document.createElement('dialog'); d.setAttribute('open', ''); d.innerHTML = '<button class="popup-button-ok"></button><button class="popup-button-cancel"></button>'; window.document.body.append(d); return d; };
+    try {
+        for (const step of ['ok', 'cancel', 'none']) {
+            const ko = { Lobby: '로비' };
+            const f = fakeTarget({ ko }); f.ko = ko; f.mb.core.app.current.snaps = new Map();
+            const tm = fakeTimers(); slowTr(f, tm);
+            const fill = T.createTrFill(f.mb, { doc: window.document, now: tm.now, timers: tm.timers, toast: null, chatId: () => 'A' });
+            f.mb.tr.missingTr = () => ['Office'];
+            fill.onClick({ target: sheetBtn(), isTrusted: true });
+            if (step === 'none') { await tm.run(11000); assert.equal(f.calls.json.length, 0, '확인 창을 못 봤으면 먼저 안 보내요'); fill.mbToast('success', '1개 번역했어요.'); await tm.run(3000); assert.deepEqual(f.calls.json, [['Lobby']], '그 확장 번역 뒤에는 예전처럼'); continue; }
+            await tm.run(100); const d = confirm(); await tm.run(1000);
+            assert.equal(f.calls.json.length, 0, '확인 창이 떠 있는 동안은 안 보내요');
+            if (step === 'cancel') fill.onClick({ target: d.querySelector('.popup-button-cancel'), isTrusted: true });
+            d.remove(); await tm.run(2000);
+            assert.equal(f.calls.json.length, step === 'ok' ? 1 : 0, step);
+        }
+    } finally { delete globalThis[REG]; window.document.querySelectorAll('dialog').forEach(d => d.remove()); }
+});
+await test('1.7.9 묶음 고르기: 보이는 글부터(흐린 점 이름 → 짧은 글 → 긴 글 → 카드 설명) · 첫 묶음만 작게 · 다 합쳐 작으면 한 번에', () => {
+    const long = 'x'.repeat(300);
+    assert.deepEqual(T.viewOrder(['A long sentence that is surely more than forty letters.', 'Chip', 'Desc', 'Name'], { first: new Set(['Name']), last: new Set(['Desc']) }), ['Name', 'Chip', 'A long sentence that is surely more than forty letters.', 'Desc']);
+    assert.deepEqual(T.quickBatches(['a', 'b', 'c']), [['a', 'b', 'c']], '작으면 나누지 않아요');
+    assert.deepEqual(T.quickBatches(['Lobby', 'Hall', long, long, long]), [['Lobby', 'Hall'], [long, long, long]], '이름만 먼저');
+    const many = Array.from({ length: 30 }, (_, i) => `Item ${i}`);
+    const b = T.quickBatches(many); assert.equal(b[0].length, 12); assert.equal(b.flat().length, 30); assert.equal(b.length, 2);
+    assert.deepEqual(T.quickBatches([long, long, long]).map(x => x.length), [2, 1], '긴 글만이면 600자까지 먼저');
+    assert.deepEqual(T.quickBatches([]), []);
 });
 
 console.log(`ext-bridge-tr: ${passed} 통과`);

@@ -8,6 +8,7 @@
 //     알림은 없어요. 옮겼는지는 테마 설정 chat.mbMoved(열쇠 목록)에 적어, 그 뒤 사용자가 그 확장 설정을 바꾸면 그 값을 그대로 따라요(다시 덮지 않아요).
 //     쓰는 곳은 그 확장이 화면 체크 칸으로 바꾸는 것과 같은 설정 값 하나씩뿐이에요(그 확장 파일 · 채팅 자료는 안 건드려요).
 //   시험: tools/tests/mb-upstream.mjs
+import { setHanded, syncOffAttr, offAttrValue } from './mb-switch.js';
 const META = 'statussim';
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 
@@ -20,7 +21,21 @@ export const UP = {
     ask: { key: 'askDelete', on: v => v !== false, since: '2.9.0', tab: '다른 확장과 같이 쓰기', label: '되돌릴 수 없는 지우기는 한 번 물어보기' },
     note: { key: 'genNote', on: v => v === true, since: '2.9.0', tab: '확장 AI', label: '생성 때 이 채팅의 작가 노트도 읽기' },
     read: { key: 'genRead', on: () => true, since: '2.9.0', tab: '확장 AI', label: '생성 때 채팅 읽는 방식', part: '만들기 화면에는 미트볼에 없는 「기억 요약」 고르기만 남겨요' },
+    // 2.9.1(원작 766314d · 0112545 「블루레몬 개조를 원작에」 · d61af0b1): 사용자가 작가에게 넘긴 블루레몬 개조를 원작이 가져갔어요 — 같은 일은 원작에 맡겨요
+    //   css: 맞춤 시트 묶음(@mb 열쇠)을 원작에 맡긴 동안 끔 표식(data-bl-mb-off)에 같이 적어요 — 시트 · 모듈이 「끈 스위치」와 똑같이 손을 떼요(offAttrValue)
+    //   always: 원작에 설정이 없고 늘 켜져 있어요(판을 알아보는 표지로 2.9.1 부터 늘 채워지는 키 popX 를 봐요)
+    album: { key: 'albumBtn', on: v => v !== false, since: '2.9.1', tab: '데이터 · 화면', label: '답마다 「추억 앨범에 담기」 단추', css: true },
+    autoen: { key: 'trConvertAsk', on: v => v === false, since: '2.9.1', tab: '상태창 언어 · 번역', label: '「한국어 칸을 영어 저장으로」 바꾸기 전에 묻기(끄면 바로 바꿔요)' },
+    helpers: { key: 'popX', on: () => true, since: '2.9.1', always: true, label: '설정 찾기(서랍 맨 위) · 맨 위로 단추', css: true },
+    grid: { key: 'popX', on: () => true, since: '2.9.1', always: true, label: '이름표 → 값 두 열(짝 칸)', css: true },
+    trend: { key: 'popX', on: () => true, since: '2.9.1', always: true, label: '변화 그래프 사람 색 · 가까운 색 점선 · 범례 강조', css: true },   // 테마가 다시 그리던 판은 원작 새 그래프(선을 g 안에 · hsl 색)를 못 읽어 선이 빠졌어요 — 원작 그래프에 맡겨요
+    blur: { key: 'blurFx', on: v => v !== false, since: '2.9.1', tab: '데이터 · 화면', label: '옆 서랍 · 알림 뒤 흐림 효과', part: '창 안 굴림 가장자리 흐림 끄기 · 면 색은 블루레몬이 계속해요' },
 };
+/** 원작에 맡겨 맞춤 시트 묶음을 끄는 열쇠(지금 그 확장이 그 기능을 가진 것만) — offAttrValue(src/mb-switch.js)가 끔 표식에 더해요 */
+export function upCssKeys(c = ctx(), doc = globalThis.document) {
+    return Object.keys(UP).filter(name => UP[name].css && !UP[name].part && upHas(name, c, doc));
+}
+setHanded(() => upCssKeys());   // 끔 표식(offAttrValue)이 이 모듈이 받힌 뒤부터 맡긴 묶음을 같이 적어요
 export const UP_KEYS = Object.keys(UP);
 /**
  * 같은 뜻의 설정이 그 확장에도 생겼지만 테마 것을 그대로 두는 것 — 레몬 탭에 한 줄로 알려요(옮기지도 걷지도 않아요).
@@ -67,6 +82,7 @@ export function upOn(name, c = ctx(), doc = globalThis.document) {
 /** 레몬 탭 안내 줄: 그 확장 설정 어디서 켜고 끄는지 */
 export function upWhere(name) {
     const u = UP[name];
+    if (u?.always) return `미트볼 ${u.since} 부터 미트볼이 스스로 해요 — 「${u.label}」은 미트볼에 늘 켜져 있어요${u.part ? ` · ${u.part}` : ''}`;
     return u ? `미트볼 ${u.since} 부터 미트볼이 스스로 해요 — 미트볼 설정 칸 › ${u.tab} › 「${u.label}」에서 켜고 꺼요${u.part ? ` · ${u.part}` : ''}` : '';
 }
 
@@ -87,6 +103,13 @@ export function planMoves(chat, up, ver = '') {
         ask: () => (off.has('ask') && up.askDelete !== false ? false : undefined),
         note: () => undefined,
         read: () => undefined,
+        // 2.9.1: 테마에서 쓰던 꼴을 그대로 이어요 — 앨범 단추는 테마가 숨겨 왔고(보이기로 둔 때만 보임) · 흐림은 테마가 꺼 왔고 · 영어 저장 전환은 테마가 묻지 않고 바로 했어요
+        album: () => (chat.mbAlbumBtn !== true && up.albumBtn !== false ? false : undefined),
+        autoen: () => (chat.mbAutoEn !== false && up.trConvertAsk !== false ? false : undefined),
+        blur: () => (!off.has('blur') && up.blurFx !== false ? false : undefined),
+        helpers: () => undefined,
+        grid: () => undefined,
+        trend: () => undefined,
     };
     for (const name of UP_KEYS) {
         if (moved.has(name) || !Object.hasOwn(up, UP[name].key) || (ver && older(ver, UP[name].since))) continue;
@@ -108,6 +131,7 @@ export function moveOnce({ c = ctx(), settings = null } = {}) {
         if (!up) { moving = null; return []; }   // 그 확장 설정을 아직 못 읽었어요 — 다음에 다시
         const st = settings || await themeSettings();
         const plan = planMoves(st.get()?.chat, up, upVersion());
+        try { syncOffAttr(offAttrValue(st.get())); } catch { /* 다음 설정 적용 때 같이 */ }   // 2.9.1 원작에 맡긴 시트 묶음(upCssKeys) — 그 확장 설정을 읽은 뒤에야 알 수 있어요
         if (!plan.done.length) return [];
         for (const [key, value] of plan.set) up[key] = value;
         if (plan.set.length) { try { c.saveSettingsDebounced?.(); } catch { /* 다음 저장 때 같이 가요 */ } }

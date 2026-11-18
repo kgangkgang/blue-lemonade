@@ -49,3 +49,14 @@ body.salty .bl-pbind-list { min-height:0; }
  .salty-panel.bl-editor .bl-editor-group-head { gap:6px; }
  body.salty .bl-pbind-dialog { width:calc(100vw - 20px); padding:10px; gap:8px; }
 }
+/* 디자인 전수 179(11-18 · 사용자 「한 줄 아래만 빈 줄만큼 여백이 생겨 단추가 홀로 떠요」): 비어 있는 안내 · 상태 줄(p · small)이 바깥 여백이나 묶음 틈만 남겨
+   그 자리만 틈이 커지던 것(설정 › 업데이트 · 데우스 · 과일 계열 「도구」 아래 빈 상태 줄 10px · 애드온 창 빈 안내 줄 등). 비어 있는 동안만 자리를 걷고, 글이 들어오면 그대로예요.
+   읽어 주는 줄(role=status · aria-live)은 display 를 끄면 알림이 끊길 수 있어 높이 · 여백만 0 으로 둬요. 재는 법: 자동화 census 규칙 rhythm 의 phantom · gap-odd */
+body.salty :is(p, small, div:where([class*="result"], [class*="hint"], [class*="note"])):where([class*="note"], [class*="hint"], [class*="help"], [class*="desc"], [class*="meta"], [class*="error"], [class*="warn"], [class*="count"], [class*="result"], [class*="status"], [class*="state"], [class*="problem"], [class*="summary"]):empty:not([role="status"], [aria-live]):where(:not(.mes_text *, .mes_reasoning *)) { display: none !important; }
+body.salty :is(p, small, div):is([role="status"], [aria-live]):empty:where(:not(.mes_text *, .mes_reasoning *)) { margin-block: 0 !important; padding-block: 0 !important; min-height: 0 !important; border-block-width: 0 !important; }
+body.salty :is(p, small):is([data-unavailable], [data-hint], [data-note], [data-error], [data-warn]):empty:not([role="status"], [aria-live]):where(:not(.mes_text *, .mes_reasoning *)) { display: none !important; }   /* 클래스 없이 data 표시로 찾는 빈 안내 줄(번역 「의심 번역 모아보기」 등) */
+/* 디자인 전수 179: 번역 창 카드 안 체크 줄 — 공용 체크 줄 최소 높이 36(21-witidy)이 설명 없는 한 줄 체크 줄에만 위아래 8px 빈 자리를 남겨, 체크 줄끼리 틈(22)이 설명 → 체크 줄 틈(16)보다 커 들쭉날쭉했어요.
+   카드 묶음 틈(10)으로 모두 같게 — 누를 자리 44 는 줄의 투명 상자(86-touch-targets · dialog 안 체크 줄)가 그대로 맡아요. 미트볼 설정 칸의 같은 고침(1.7.8)과 같은 꼴 */
+body.salty .llmt-card-body > label.checkbox_label.llmt-check { min-height: 0; }
+/* 디자인 전수 179: 프롬프트 템플릿 카드 — 「카드의 <% %> 코드가 …」 안내 줄 바로 아래 「ZIP 설치 도우미 준비」 단추가 2.5px 로 붙던 것 → 설명 → 단추 틈 8(간격 눈금 s2) */
+body.salty .blpt-card-hint + .bl-addon-actions { margin-top: var(--bl-s2, 8px); }
