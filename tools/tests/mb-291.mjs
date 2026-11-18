@@ -137,6 +137,13 @@ await ok('⑨ 원작 ✕(.ss-popx · 창 표식 ss-xclose)가 있는 창은 테�
     assert.ok(!/dialog\.popup\.ss-dlg\.large_dialogue_popup > \.popup-button-close/.test(css), '테마 ✕ 규칙은 모두 원작 ✕ 없는 창만');
     assert.match(css, /dialog\.popup\.ss-dlg\.large_dialogue_popup\.ss-xclose > \.ss-popx \{[^}]*top: 12px; right: var\(--bl-s3, 12px\)/);
 });
+await ok('⑩ 11-19 사용자 사진 셋: 큰 창 위 빈 띠 없음 · 스타일로 고르기 · 기능 정리 단추 왼쪽 맞춤 · 그림 하나 · 접힌 접기 줄 틈 0', () => {
+    const css = read('src/ext-status.css');
+    assert.ok(!/large_dialogue_popup \.popup-content:is\(\[data-bl-fade-y="top"\], \[data-bl-fade-y="both"\]\)::before \{/.test(css), '붙박이 띠 없음');
+    assert.match(css, /\.ss-sp-row > button\.ss-btn\.ss-sp-open \{[^}]*text-align: start;/);
+    assert.match(css, /\.ss-sp-row > button\.ss-sp-open > i \{ display: none; \}/);
+    assert.match(css, /\.ss-scope details:not\(\[open\]\) \{ row-gap: 0; \}/);
+});
 await ok('CI 목록(release-check.yml)에 이 시험', () => {
     assert.match(read('.github/workflows/release-check.yml'), /tools\/tests\/mb-291\.mjs/);
 });

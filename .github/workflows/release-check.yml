@@ -1047,6 +1047,8 @@ jobs:
           node tools/tests/mb-291.mjs . tools
           # 1.8.1 미트볼 2.9.1 서랍: 🔎 검색 › 설정으로 가기가 가린 탭 · 갈래를 열고 찾기 표식을 맞춤 · 「확장 탭에 보이기」 줄은 첫 탭에서만(jsdom)
           node tools/tests/mb-291-jump.mjs . tools
+          # 1.8.2 미트볼 2.10 「속마음」 번역: 번역을 기다렸다가 번역본으로 처음부터 · 늦으면 원문 → 그 자리에서 바꿔 끼움 · 탭 글 · 번역 단추(가짜 확장 · 지연 넣은 가짜 번역기 · jsdom)
+          node tools/tests/mb-mind-tr.mjs . tools
           # 1.7.6 미트볼 「간격 체계」(2.9.0 개편): 구조로 거는 넓은 규칙이 붙던 꼴에 걸리고 나란한 단추 · 띠는 안 건드림(jsdom 선택자 맞음)
           node tools/tests/mb-spacing-system.mjs . tools
           # 1.7.8 모델이 <meatball> 아닌 태그로 감싼 변화 덩이가 본문에 남은 것 숨기기(jsdom)

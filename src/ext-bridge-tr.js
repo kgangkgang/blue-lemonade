@@ -552,8 +552,8 @@ export function wrapMbToasts(toastr, { title, trs, on = () => true, seen = null 
     return true;
 }
 
-/** 그 확장 폴더(실리태번이 붙인 모듈 script 주소) — 이름으로 먼저, 없으면 manifest 의 이름으로 */
-async function findBase(doc) {
+/** 그 확장 폴더(실리태번이 붙인 모듈 script 주소) — 이름으로 먼저, 없으면 manifest 의 이름으로 · 1.8.2 속마음 번역(src/mb-mind-tr.js)도 같이 써요 */
+export async function findBase(doc) {
     const bases = [];
     for (const el of doc.querySelectorAll?.('script[type="module"][src*="/scripts/extensions/third-party/"]') ?? []) {
         const m = /^(.*\/scripts\/extensions\/third-party\/([^/?#]+)\/)/.exec(el.src || '');

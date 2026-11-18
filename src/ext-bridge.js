@@ -356,6 +356,8 @@ export function startExtBridge(doc = globalThis.document) {
         const late = () => setTimeout(() => {
             try { bridge.sync(); } catch (error) { console.warn('[Blue Lemonade] 확장 기능 다리', error); }
             import('./ext-bridge-tr.js').then(module => module.startTrFill(doc)).catch(error => console.warn('[Blue Lemonade] 미트볼 번역 메우기', error));
+            // 1.8.2 미트볼 2.10 「속마음」 말풍선 · 탭 글 번역(src/mb-mind-tr.js) — 그 판에 말풍선이 없으면(2.9.x) 스스로 쉬어요
+            import('./mb-mind-tr.js').then(module => module.startMindTr(doc)).catch(error => console.warn('[Blue Lemonade] 속마음 번역', error));
         }, 0);
         try {
             const { eventSource, event_types } = globalThis.SillyTavern.getContext();
