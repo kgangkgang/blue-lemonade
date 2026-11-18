@@ -15,7 +15,7 @@ import { getSettings } from './settings.js';
 import { addonsEnabled } from './usage-mode.js';
 import * as Core from './ext-bridge-core.js';
 import { isObj } from './ext-bridge-core.js';
-import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 「번역 용어집 싣기」 · 「고른 모델로 보내기」 — 끄면 골라 둔 값은 그대로 두고 쓰지만 않아요
+import { mbOff, onMbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 「번역 용어집 싣기」 · 「고른 모델로 보내기」 — 끄면 골라 둔 값은 그대로 두고 쓰지만 않아요
 
 const MARK = Symbol.for('blue-lemonade.ext-bridge.v1');
 const LOG = Symbol.for('st.request-log.v1');   // 요청 로그 이름표(성능 보조 애드온 · 없으면 버려져요)

@@ -11,7 +11,7 @@
 //   예전 신호(ss-pulse)는 안전망으로 그대로예요 — 같은 표식을 같은 값으로 다시 쓰는 것뿐이라 두 번 와도 화면이 안 바뀌어요.
 import { watchDom } from './dom-watch.js';
 import { paintFaces, FACES, markBadge, decoTheme, markLong } from './ext-compat.js';
-import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
+import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치
 
 /** 이 기록에 얼굴 요소가 새로 붙었나(얼굴 자신이거나 얼굴을 품은 가지) */
 export function faceRecord(record) {

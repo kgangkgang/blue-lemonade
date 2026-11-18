@@ -3,7 +3,7 @@
 //   그 확장의 파일 · 자료 · 속성 · 입력칸은 안 건드려요. 그림은 맞춤 시트(src/ext-status.css)가 그려요. 시험: tools/tests/mb-arrow.mjs
 import { watchDom } from './dom-watch.js';
 import { addMessageDecorator } from './message-decor.js';
-import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 「「->」 를 화살표 그림으로」
+import { mbOff, onMbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 「「->」 를 화살표 그림으로」
 
 /** 1.6.0 사용자 「저녁 -> 밤 이 꺽쇠 … 귀여운 화살표로」: 그 확장의 값(때 · 장소)에는 AI 가 적은 「->」 가 그대로 와요(「저녁 -> 밤」 · 「집 -> 편의점」).
  *  양옆에 공백을 낀 「->」 · 「-->」 · 「=>」 를 테마의 선 화살표 그림(「이어 쓰기」 단추의 기본 그림 — 단추 아이콘을 바꿔도 이 그림 고정)으로 「보이게만」 해요.

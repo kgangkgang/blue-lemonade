@@ -17,7 +17,7 @@
 //   「안 씀」 = 평소 그대로(테마 설정의 미트볼 문구 단계는 안 건드려요). 옛 판(2.8.0 까지)은 고르기 다섯 그대로예요.
 import { watchDom } from './dom-watch.js';
 import { upHas } from './mb-upstream.js';
-import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
+import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치
 export const ANIM = 'bl-mb-note-seen';   // 작가 노트 넣기(src/mb-note.js · mb-note.css)가 지시칸에 거는 신호 이름 — 시험이 같은 이름인지 봐요
 // 문구 모듈(src/mb-prompt.js)은 만들기 창이 처음 뜰 때 받아요 — 미트볼만 깔고 이 기능을 안 쓰는 동안에는 안 받아요
 let promptMod = null;

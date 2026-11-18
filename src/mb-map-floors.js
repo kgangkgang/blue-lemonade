@@ -6,7 +6,7 @@
 //   끌기 · 확대 · 구역 탭 · 지금 위치 강조는 그 확장 것을 그대로 써요(그 확장은 viewBox 만 바꿔요). 「현재 위치로」 단추만 이 배치의 자리로 가게 받아 줘요.
 //   켜고 끄기: 테마 설정 chat.mbMapFloors(기본 켬) → body[data-bl-mb-floors] · 「원작 그대로 보기」 를 켜면 안 해요. 시험: tools/tests/mb-map-floors.mjs
 import { watchDom } from './dom-watch.js';
-import { mbFit, onMbOff } from './mb-switch.js';
+import { mbFit, onMbOff } from './mb-switch-core.js';
 
 export const FLOOR_ATTR = 'data-bl-mb-floors';
 const SVG_NS = 'http://www.w3.org/2000/svg';

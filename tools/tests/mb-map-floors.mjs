@@ -1025,8 +1025,9 @@ await ok('1.7.9 「＋」 확대: 그림 몫 가운데를 축으로 · 건물 �
     assert.match(src, /\[data-act="mapzoom"\]\[data-arg="in"\]/); assert.match(src, /zoomFloors\(vb, svg\._blContent, svg\._blFit/);
 });
 await ok('1.7.9 스위치 annex: 표 · 화면만 · 기본 켬 · 붙이기가 mbFit 로 봐요', () => {
-    const sw = read('src/mb-switch.js');
-    assert.match(sw, /key: 'annex', kind: 'screen', group: 'add'/);
+    // 1.7.9 시작 묶음 나누기: 열쇠 · 갈래는 열쇠 표(src/mb-switch-core.js) · 묶음 · 이름은 글 표(src/mb-switch.js)
+    assert.match(read('src/mb-switch-core.js'), /\{ key: 'annex', kind: 'screen' \}/);
+    assert.match(read('src/mb-switch.js'), /annex: \{ group: 'add'/);
     const src = read('src/mb-map-floors.js');
     assert.match(src, /mbFit\('annex', doc\)/); assert.match(src, /onMbOff\(doc, \[[^\]]*'annex'/);
 });

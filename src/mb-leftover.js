@@ -8,7 +8,7 @@
 //   감시자를 새로 걸지 않아요(메시지 꾸미기 · 공용 #chat 구독). 시험: tools/tests/mb-leftover.mjs
 import { addMessageDecorator } from './message-decor.js';
 import { onMbRawChange } from './mb-arrow.js';   // 1.7.8 「원작 그대로 보기」 바뀜은 화살표 모듈의 구독을 나눠 써요(감시 허브 구독 자리를 늘리지 않게)
-import { mbOff, onMbOff } from './mb-switch.js';
+import { mbOff, onMbOff } from './mb-switch-core.js';
 
 export const ATTR = 'data-bl-mb-left';
 const KEY = 'chips';   // 미트볼 맞춤 「답 아래 변동 칩 모양」 — 끄거나 「원작 그대로 보기」면 숨기지 않아요

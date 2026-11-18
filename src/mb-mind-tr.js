@@ -14,7 +14,7 @@
 //         번역 단추를 누르면 늘 · 글이 이미 내 언어(번역 언어)면 아무것도 안 해요 · 스위치 「속마음 번역해서 띄우기」(mindtr)를 끄면 원작 그대로(바꿔 적은 글도 원문으로 되돌려요).
 //   원작 파일 · 함수는 고치지 않아요 — 그 확장이 내보낸 함수(app.mindPop · trText · numOf)를 같은 주소로 불러요. 원작 코드 · 글은 옮기지 않았어요.
 //   시험: tools/tests/mb-mind-tr.mjs
-import { mbOff, onMbOff } from './mb-switch.js';
+import { mbOff, onMbOff } from './mb-switch-core.js';
 import { holdSheet } from './boot-gate.js';
 
 export const KEY = 'mindtr';

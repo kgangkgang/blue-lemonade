@@ -17,7 +17,7 @@
 
 import { addMessageDecorator } from './message-decor.js';
 import { ruleValue } from './addons/translator/card-values.js';
-import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 — 칩 번역 다시 적기(trchip) · 알림 번역(trtoast) · 사전에 고정 낱말(trtidy) · 남은 영어 메우기(trfill)   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
+import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 — 칩 번역 다시 적기(trchip) · 알림 번역(trtoast) · 사전에 고정 낱말(trtidy) · 남은 영어 메우기(trfill)   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
 
 const FOLDER = /meatball|statussim|미트볼/i;
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';

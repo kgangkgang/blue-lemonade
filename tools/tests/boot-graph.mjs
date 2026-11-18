@@ -131,7 +131,8 @@ await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
     // 1.8.2 미트볼 속마음 스위치 두 줄(mb-switch.js 표 mindpop · mindtr · +1.4KB · 본체 mb-mind-tr.js 는 동적 import)과 1.8.1 까지 쌓인 몫으로 687,802 바이트 — 672KB.
     //   브라우저가 받는 정적 묶음은 bundle-fresh.mjs 상한 · dist 상한(출시 도구) 안 그대로예요
     // 1.8.3 스위치 설명 두 줄이 길어짐(mindpop 에 욕구 딱지 · annex 에 장소 이름 앞 기호 — mb-switch.js +488B) — 688,290 바이트 · 673KB
-    assert.ok(bytes <= 673 * 1024, `${bytes} 바이트`);
+    // 1.8.4 시작 묶음 나누기(boot-183 — 스위치 열쇠 표 src/mb-switch-core.js · 글 표는 설정 창 · 찾기만)로 672KB → 645KB — 1.8.2 · 1.8.3 에 올린 상한을 되돌리고 더 낮춰 650KB
+    assert.ok(bytes <= 650 * 1024, `${bytes} 바이트`);
 });
 
 await test('1.1.5 시작 묶음 다이어트: 설정 창에서만 쓰는 조각은 시작 그래프 밖이에요', () => {
@@ -140,6 +141,28 @@ await test('1.1.5 시작 묶음 다이어트: 설정 창에서만 쓰는 조각�
     notAtBoot('src/addons-panel.js', '설정 창 › 확장 탭의 애드온 카드 — panel.js 가 받아요');
     notAtBoot('src/addon-layout.js', '애드온 카드의 접는 칸 — 카드와 같이 받아요');
     notAtBoot('src/fonts-ui.js', '글꼴 고르기 목록 미리보기 · 내 글꼴 추가 · 지우기 — 설정 창 · 첫 설정 · 메모가 받아요');
+});
+
+await test('1.7.9 미트볼 맞춤 스위치: 시작 묶음에는 열쇠 · 설정 자리만(이름 · 설명 · 찾기 낱말은 설정 창 · 레몬 탭이 받아요)', async () => {
+    notAtBoot('src/mb-switch.js', '스위치 이름 · 설명 · 찾기 낱말 표(한글 약 13KB) — 설정 창 · 레몬 탭 · 설정 찾기 · 미트볼 모듈이 받아요');
+    assert.ok(graph.has('src/mb-switch-core.js'), 'apply.js 가 시작할 때 끈 열쇠 표식(data-bl-mb-off)을 적어요');
+    const core = await import(pathToFileURL(path.join(root, 'src/mb-switch-core.js')).href);
+    const full = await import(pathToFileURL(path.join(root, 'src/mb-switch.js')).href);
+    assert.deepEqual(full.MB_SWITCHES.map(sw => sw.key), core.MB_CORE.map(sw => sw.key), '두 표의 열쇠 · 차례가 같아요');
+    for (const sw of full.MB_SWITCHES) {
+        const c = core.MB_CORE.find(x => x.key === sw.key);
+        for (const k of ['kind', 'setting', 'invert', 'choice']) assert.deepEqual(sw[k], c[k], `${sw.key}.${k}`);
+        for (const k of ['group', 'file', 'name', 'desc', 'more', 'words']) assert.equal(typeof sw[k], 'string', `${sw.key}.${k} 글이 있어요`);
+        assert.ok(full.switchOf(sw.key) === sw, `${sw.key}: switchOf 는 이름 · 설명까지 든 줄을 돌려줘요`);
+    }
+    for (const name of ['MB_OFF_ATTR', 'MB_OFF_EVENT', 'MB_KEYS', 'switchOn', 'setHanded', 'offAttrValue', 'setSwitch', 'setAll', 'mbOff', 'mbFit', 'syncOffAttr', 'onMbOff']) assert.equal(full[name], core[name], `mb-switch.js 는 ${name} 를 그대로 내보내요`);
+    // 미트볼 칸이 있으면 부팅 때 받는 맞춤 모듈(index.js 미트볼 문)도 글 표를 끌고 오지 않아요 — 글 표는 설정 창 · 설정 찾기 · 변경한 설정만
+    for (const rel of ['src/ext-compat.js', 'src/ext-bridge.js', 'src/mb-note.js', 'src/mb-face-now.js', 'src/mb-arrow.js', 'src/mb-hidden.js', 'src/mb-ask.js', 'src/mb-back.js', 'src/mb-auto-en.js', 'src/mb-read.js', 'src/mb-map-floors.js', 'src/mb-trend.js', 'src/mb-diary.js', 'src/mb-leftover.js', 'src/mb-namekey.js', 'src/mb-lemon.js', 'src/mb-upstream.js', 'src/mb-mind-tr.js']) {
+        const g = staticGraph(rel);
+        assert.ok(!g.has('src/mb-switch.js'), `${rel} 이 부팅 때 스위치 글 표(src/mb-switch.js)를 끌고 와요`);
+    }
+    const coreText = stripComments(read('src/mb-switch-core.js'));
+    assert.doesNotMatch(coreText, /\b(?:desc|more|words|name):/, '시작 묶음 표에는 이름 · 설명 · 낱말이 없어요');
 });
 
 await test('9.0.2 부팅 2 · 3층 모듈은 시작 그래프 밖이에요 (첫 프레임 뒤 · 유휴 · 처음 쓸 때 받아요)', () => {

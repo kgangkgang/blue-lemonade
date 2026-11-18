@@ -30,7 +30,7 @@ function lateSync(name, load, want, call) {
 /** 시험 · 진단: 2층 그리기 모듈이 다 붙을 때까지 */
 export const lateApplyReady = () => Promise.allSettled([...late.values()].map(slot => slot.job));
 import { syncDemGlow } from './dem-glow.js';   // 데우스 「테두리 빛」 — :root 가 아니라 상태창 요소에만 (문서 전체 재계산 없이)
-import { offAttrValue, syncOffAttr } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치(html 표식 하나 · 다 켜져 있으면 없음)
+import { offAttrValue, syncOffAttr } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치(html 표식 하나 · 다 켜져 있으면 없음) · 1.7.9 시작 묶음에는 열쇠 표만(이름 · 설명은 mb-switch.js)
 
 const gradientFor = (...args) => appearance?.gradientFor(...args);
 const gradientSvg = (...args) => appearance?.gradientSvg(...args) || '';

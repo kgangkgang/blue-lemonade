@@ -11,7 +11,7 @@
 //   켜고 끄기: 맞춤 시트가 걸리는 때(body.salty · 「원작 그대로 보기」 아님)만. 시험: tools/tests/mb-trend.mjs
 import { watchDom } from './dom-watch.js';
 import { faceColorPicker, contrastOf } from './ext-compat.js';
-import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
+import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치
 
 export const TREND = '.ss-trend';
 const SVG_NS = 'http://www.w3.org/2000/svg';

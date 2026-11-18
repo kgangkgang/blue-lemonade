@@ -20,7 +20,7 @@
 import { booting, afterBoot, holdSheet } from './boot-gate.js';
 import { armGuard } from './cheap-guards.js';
 import { cardColorTable, tableColor } from './card-colors.js';   // 1.5.9 카드별 색 기억(인물표 공급자와 같은 표)
-import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치(끈 묶음은 그 일을 안 해요 · 시트는 src/ext-status.gen.css 묶음 문)
+import { mbOff, onMbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치(끈 묶음은 그 일을 안 해요 · 시트는 src/ext-status.gen.css 묶음 문)
 import { buildLemon, setLemon, LEMON } from './mb-lemon.js';   // 1.7.4 레몬 탭(「블루레몬 · 미트볼 맞춤」 — 맞춤을 다 꺼도 남아요)
 import { organize, toggleFold, toggleMore, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind, recall, remember, bodyOf } from './ext-organize.js';
 

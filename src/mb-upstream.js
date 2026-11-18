@@ -8,7 +8,7 @@
 //     알림은 없어요. 옮겼는지는 테마 설정 chat.mbMoved(열쇠 목록)에 적어, 그 뒤 사용자가 그 확장 설정을 바꾸면 그 값을 그대로 따라요(다시 덮지 않아요).
 //     쓰는 곳은 그 확장이 화면 체크 칸으로 바꾸는 것과 같은 설정 값 하나씩뿐이에요(그 확장 파일 · 채팅 자료는 안 건드려요).
 //   시험: tools/tests/mb-upstream.mjs
-import { setHanded, syncOffAttr, offAttrValue } from './mb-switch.js';
+import { setHanded, syncOffAttr, offAttrValue } from './mb-switch-core.js';
 const META = 'statussim';
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 

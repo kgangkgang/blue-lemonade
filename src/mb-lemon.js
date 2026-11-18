@@ -7,7 +7,7 @@
 //     그래서 모양은 묶음 문이 없는 제 시트(src/mb-lemon.css)에 둬요 — 맞춤 시트(src/ext-status.gen.css)의 스위치 문에 걸리지 않아요.
 //   · 그 확장의 요소는 옮기거나 지우지 않아요 — 우리 칸(.bl-ext-lemonpane · .bl-ext-lemonbar · 탭 단추 · 머리 단추)만 끼워요.
 //   시험: tools/tests/mb-lemon-tab.mjs
-import { MB_SWITCHES } from './mb-switch.js';
+import { MB_CORE as MB_SWITCHES } from './mb-switch-core.js';   // 1.7.9 열쇠 · 설정 자리만 써요(글 표 src/mb-switch.js 는 부팅 때 안 받아요)
 
 export const LEMON = 'bl';            // 레몬 탭의 묶음 자리(data-bl-tab-to · data-bl-tab-g) — 숫자 묶음과 겹치지 않게 글자
 export const LEMON_NAME = '블루레몬';

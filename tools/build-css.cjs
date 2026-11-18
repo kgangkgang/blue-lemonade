@@ -339,9 +339,9 @@ function appearanceText() {
 // 1.7.3 미트볼 맞춤 스위치: 맞춤 시트 원본(src/ext-status.css · 손으로 고쳐요)의 규칙마다 묶음 문(tools/css-mb-gate.cjs)을 달고 주석을 뺀 사본을 브라우저에 줘요
 const MB_STATUS_IN = path.join(ROOT, 'src', 'ext-status.css');
 const MB_STATUS_OUT = path.join(ROOT, 'src', 'ext-status.gen.css');
-/** 스위치 표(src/mb-switch.js)의 열쇠 — ESM 이라 글에서 읽어요 */
+/** 스위치 표의 열쇠 — ESM 이라 글에서 읽어요(1.7.9 열쇠 표는 src/mb-switch-core.js · 이름 · 설명은 src/mb-switch.js) */
 function mbKeys() {
-    const src = fs.readFileSync(path.join(ROOT, 'src', 'mb-switch.js'), 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'mb-switch-core.js'), 'utf8');
     return new Set([...src.matchAll(/\{ key: '([a-z]+)'/g)].map(m => m[1]));
 }
 function mbStatusText() {

@@ -12,7 +12,7 @@
 //     「나왔다」고 못 봐서 빼지도 않아요. 굳힌 옛 답(그 확장이 합쳐 둔 구간)은 안 바뀌어요. 애정 · 우정만 봐요(돈 · 물건 · 장소는 인물에 안 묶여요).
 //   스위치: 미트볼 맞춤 「데이터를 고치는 것」 › 「본문을 고치면 수치도 따라 바꾸기」(열쇠 editsync · 기본 켬). 끄면 더는 안 하고 이미 넣은 기록은 그대로예요.
 //   시험: tools/tests/mb-editsync.mjs
-import { mbOff } from './mb-switch.js';
+import { mbOff } from './mb-switch-core.js';
 import * as Sub from './mb-autosub.js';
 
 export const KEY = 'editsync';

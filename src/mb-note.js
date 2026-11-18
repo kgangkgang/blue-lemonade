@@ -14,7 +14,7 @@
 //   신호(시트)는 만들기 화면 「채팅 읽기」(src/mb-read.js)가 같이 써서 그대로 붙여요.
 import { holdSheet } from './boot-gate.js';
 import { upHas } from './mb-upstream.js';
-import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 「「작가 노트 넣기」 단추」 — 끄면 단추 · 알림을 안 둬요(신호는 만들기 화면 「채팅 읽기」 와 같이 써서 시트에 남아요)
+import { mbOff, onMbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 「「작가 노트 넣기」 단추」 — 끄면 단추 · 알림을 안 둬요(신호는 만들기 화면 「채팅 읽기」 와 같이 써서 시트에 남아요)
 
 export const SHEET_ID = 'bl-mb-note-css';
 export const ANIM = 'bl-mb-note-seen';

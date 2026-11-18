@@ -15,7 +15,7 @@
 //   원작 파일 · 원작 함수는 고치지 않아요. 그 확장의 채팅 메타(statussim.adjust)에 기록을 더하고 빼는 것만 해요(테마가 단 기록에는 bl_sub 칸이 있어요 · 그것만 지워요).
 //   스위치: 미트볼 맞춤 「데이터를 고치는 것」 › 「눈 감기 · 삭제 바로 반영」(열쇠 autosub · 기본 켬). 끄면 더는 안 끼우고 1.7.3 알림만 띄워요(이미 끼운 기록은 그대로 · 되돌리기는 원작).
 //   시험: tools/tests/mb-autosub.mjs
-import { mbOff } from './mb-switch.js';
+import { mbOff } from './mb-switch-core.js';
 
 export const KEY = 'autosub';
 export const TAG = 'bl_sub';

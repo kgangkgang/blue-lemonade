@@ -11,7 +11,7 @@
 //   · 줄인 키(1.7.9 · 알려진 별칭 표 KEY_ALIASES — 지금은 「fri」 → trust 하나)도 같은 길로 「trust: 이름 +2」 로 적어요.
 //   스위치: 미트볼 맞춤 「데이터를 고치는 것」 › 「이름 앞 · 줄인 키 변화 줄도 읽기」(열쇠 namekey · 기본 켬). 끄면 더는 안 나눠요(이미 나눈 줄은 그대로).
 //   시험: tools/tests/mb-namekey.mjs
-import { mbOff } from './mb-switch.js';
+import { mbOff } from './mb-switch-core.js';
 import * as Sub from './mb-autosub.js';
 
 export const KEY = 'namekey';
