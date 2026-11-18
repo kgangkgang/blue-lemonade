@@ -707,6 +707,7 @@ await test('1.7.8 띠 날짜 칸을 누르면 펼쳐지는 줄 「4/7(월) · �
     const ko = (w, key) => T.fixedValue(w, key);
     const pairs = new Map(T.slotPairs([{ text: 'Clear', key: 'weather' }, { text: 'Light rain', key: 'weather' }, { text: 'Noon', key: 'times' }, { text: 'Spring', key: 'season' }], ko));
     assert.equal(pairs.get('· Clear'), '· 맑음');
+    assert.equal(pairs.get('· Clear ·'), '· 맑음 ·', '그날 일정이 뒤에 붙으면 덩이가 「 · Clear · 」 예요(리그: 일정 있는 날)');
     assert.ok(pairs.get('· Light rain') && !/[A-Za-z]/.test(pairs.get('· Light rain')), String(pairs.get('· Light rain')));
     assert.equal(pairs.get('· Spring'), '· 봄');
     // 날씨 칸이 아닌 값(사람 이름 Clear · 자유 글)은 안 만들어요

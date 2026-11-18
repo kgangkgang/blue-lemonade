@@ -110,6 +110,13 @@ await ok('⑥ 4c7df674 「관리 › 전체 설정」(서랍과 같은 칸을 �
     assert.ok(rulesOf(/\.ss-seg\.wrap\.ss-mg-tabs \{ flex-wrap: nowrap; overflow-x: auto;/).length, '관리 탭 줄 한 줄');
     assert.match(read('src/ext-compat.js'), /strips: \['\.ss-scope \.ss-tabs', '\.ss-scope \.ss-mg-tabs'\]/, '관리 탭 줄도 가로 탭 줄 등록부에');
 });
+await ok('⑦ 4c7df674 상태창 검색의 찾은 말 칠하기(<mark>): 원작은 강조색 28% 섞음에 글자색 그대로 — 흐린 글 위에서 대비 3.5 ~ 3.7(리그 11-18) → 테마 고른 면 · 고른 글자색(다른 「고른 것」과 같은 짝) · 색 토큰만', () => {
+    const at = src.indexOf('body.salty .ss-scope .ss-search .ss-results mark {');
+    assert.ok(at > 0, '칠하기 규칙'); assert.equal(keyAt(at), 'palette', '「색을 테마 팔레트로」 묶음 안');
+    const body = src.slice(at, src.indexOf('}', at));
+    assert.match(body, /background: var\(--bl-ui-pick-face\)/); assert.match(body, /color: var\(--bl-ui-pick-ink\)/);
+    assert.doesNotMatch(body, /#[0-9a-f]{3,8}\b|rgba?\(|color-mix/i, '박힌 색 · 섞음 없음');
+});
 await ok('CI 목록(release-check.yml)에 이 시험', () => {
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/mb-29x\.mjs \./);
 });

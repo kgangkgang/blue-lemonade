@@ -352,7 +352,7 @@ export function slotPairs(items, ko) {
     for (const m of months) { const km = ko(m, 'month'); if (km) out.set(`년 ${m}`, `년 ${km}`); }
     // 1.7.8 띠 날짜 칸 펼침 줄(그 확장 「4/7(월) · <b>정오</b> · Clear」): 날씨는 「 · Clear」 한 글 덩이로 그려져요 — 짧아서(12자 아래) 그 확장이 덩이를 나누지 않고,
     //   낱말 바꾸기에서는 고정 낱말 열쇠를 뺐으니(hideFixedKeys) 영어로 남았어요 → 덩이 통째 짝. 칸 종류(날씨 · 계절)로만 · 낱말 하나 · 묶음일 때만(자유 글 날씨는 번역 길로)
-    for (const [w, key] of tails) { const kw = ko(w, key); if (kw) out.set(`· ${w}`, `· ${kw}`); }
+    for (const [w, key] of tails) { const kw = ko(w, key); if (kw) { out.set(`· ${w}`, `· ${kw}`); out.set(`· ${w} ·`, `· ${kw} ·`); } }   // 그날 일정이 <em> 으로 뒤에 붙으면 덩이가 「 · Clear · 」
     return [...out];
 }
 /**

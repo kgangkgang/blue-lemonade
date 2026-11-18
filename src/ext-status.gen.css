@@ -58,6 +58,7 @@ font-family: var(--bl-mb-ico, bl-mb-none), var(--salty-font-mb, var(--salty-font
 :where(:root:not([data-bl-mb-off~="palette"])) > body.salty .ss-scope :is(.ss-cashbox, .ss-tab-mast.board) :is(small, span) { opacity: 1; color: var(--ss-dim); }
 :where(:root:not([data-bl-mb-off~="palette"])) > body.salty .ss-scope .ss-ai { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
 :where(:root:not([data-bl-mb-off~="palette"])) > body.salty .ss-scope .ss-btn.pri .ss-ai { background: transparent; color: inherit; }
+:where(:root:not([data-bl-mb-off~="palette"])) > body.salty .ss-scope .ss-search .ss-results mark { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
 :where(:root:not([data-bl-mb-off~="band"])) > body.salty #ss-hud:not(.bottom) { anchor-name: --bl-ss-hud; }
 :where(:root:not([data-bl-mb-off~="band"])) > body.salty .ss-toasts:not(.bottom) { top: calc(var(--topBarBlockSize, 40px) + 8px); }
 :where(:root:not([data-bl-mb-off~="band"])) > body.salty .ss-toasts:not(.bottom) { top: calc(anchor(--bl-ss-hud bottom, calc(var(--topBarBlockSize, 40px) + 2px)) + 6px); }
@@ -487,6 +488,9 @@ html:not(#bl-num-off):where(:not([data-bl-mb-off~="drawer"])) body.salty :is(#rm
 :where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-q { margin: 0; }
 :where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-n:not(:empty) { margin-top: var(--bl-s1, 4px); }
 :where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet > .ss-hint { display: block; margin: var(--bl-s2, 8px) 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet > .bl-mb-link { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0 0; padding: var(--bl-s3, 12px); border: 1px solid var(--salty-line); border-radius: var(--bl-r-md, 12px); background: var(--bl-hover); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet > .bl-mb-link > small { flex: 1 1 14em; min-width: 0; margin: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet > .bl-mb-link > .ss-btn { flex: none; min-height: var(--bl-ui-ctl, 36px); margin: 0; }
 :where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-body > :first-child { margin-top: var(--bl-s3, 12px); }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty #ss-settings[data-bl-view="raw"] :is(.bl-ext-tabs, .bl-ext-intro, .bl-ext-fold, .bl-ext-more, .bl-ext-start) { display: none !important; }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > [data-bl-fold-off] { display: none !important; }
@@ -542,7 +546,7 @@ html:not(#bl-num-off):where(:not([data-bl-mb-off~="tabs"])) body.salty #rm_exten
 }
 @media (max-width: 700px) {
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup { padding-top: var(--bl-s3, 12px) !important; }
-:where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: var(--bl-ui-icon, 34px); margin-bottom: calc(-1 * var(--bl-ui-icon, 34px)); background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); pointer-events: none; }
+:where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: var(--bl-ui-icon, 34px); margin-bottom: calc(-1 * var(--bl-ui-icon, 34px)); background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty .ss-scope.ss-trfix .ss-trf-list { max-height: 46vh; }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-t { flex: 1 1 calc(100% - 60px); padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s3, 12px)); }
@@ -938,3 +942,4 @@ html:not(#bl-tab-scroll-off):where(:not([data-bl-mb-off~="blur"])) body.salty :i
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc > .ss-relc-h { margin-bottom: var(--bl-s2, 8px); }
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button { line-height: 1.5; }
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > span { line-height: inherit; }
+:where(:root:not([data-bl-mb-off~="controls"])) > body.salty:not([data-bl-ext-raw]) #ss-hud .ss-tg > .ss-t > .c > .ci > :is(i.fa-scroll, i.fa-scroll + span) { align-self: baseline; }

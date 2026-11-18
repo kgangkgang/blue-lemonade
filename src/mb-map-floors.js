@@ -849,12 +849,14 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
     // 1.7.5 같은 로어북에서 장소 후보(lorePlaces)도 같이 — 채팅 · 로어북이 바뀔 때만 읽어요(메시지마다 안 돌아요)
     // 1.7.6 캐릭터(모임)가 바뀌면 앞 캐릭터의 목록을 비우고 다 읽을 때까지 입히기를 미뤄요(wait) — 예전엔 앞 캐릭터의 장소로 한 번 그렸다가 다시 그렸어요(리그: B 의 지도에 A 의 「달빛 찻집」).
     //   같은 캐릭터의 다른 채팅은 로어북이 거의 같아 예전처럼 바로 그리고, 달라졌을 때만 다시 그려요
-    const dirNow = { key: null, card: null, wait: false, list: [], lore: [], gen: 0, reads: 0 };
+    const dirNow = { key: null, card: null, wait: false, stale: false, list: [], lore: [], gen: 0, reads: 0 };
     const loadDir = () => {
         let c, key, card; try { c = stCtx(); if (!c) return; card = `${c.groupId ?? ''}|${c.characterId ?? ''}`; key = `${card}|${c.getCurrentChatId?.() ?? ''}|${c.chatMetadata?.world_info ?? ''}`; } catch { return; }
         if (key === dirNow.key) return;
         dirNow.key = key; const gen = ++dirNow.gen;
         if (card !== dirNow.card) { dirNow.card = card; dirNow.list = []; dirNow.lore = []; dirNow.wait = true; }
+        else if (dirNow.stale) dirNow.wait = true;   // 1.7.9 지도가 없는 동안 로어북이 저장됐어요 — 옛 목록으로 먼저 그리지 않고 읽은 뒤 한 번에 입혀요
+        dirNow.stale = false;
         if (dirNow.wait) setTimeout(() => { if (gen === dirNow.gen && dirNow.wait) { dirNow.wait = false; sweep(); } }, 3000);   // 로어북 읽기가 안 끝나도 지도는 입혀요(안내 없이)
         (async () => {
             const texts = [], entries = [], names = new Set(); dirNow.reads++;
@@ -874,7 +876,10 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
         }).catch(() => { if (gen === dirNow.gen && dirNow.wait) { dirNow.wait = false; sweep(); } });   // 못 읽으면 안내 없이 입혀요
     };
     // 1.7.6 층별 보기 · 안 가 본 곳이 다 꺼져 있으면 읽지 않아요(다시 켜면 그릴 때 loadDir 가 읽어요)
-    try { const c = stCtx(), ev = c?.eventTypes ?? c?.event_types; for (const k of ['WORLDINFO_UPDATED', 'CHARACTER_EDITED']) if (ev?.[k]) c.eventSource?.on?.(ev[k], () => { dirNow.key = null; if (active()) loadDir(); }); } catch { /* 채팅이 바뀔 때만 새로 읽어요 */ }
+    // 1.7.9 지도가 화면에 없을 때도 읽지 않아요 — 로어북 편집 창은 글자를 칠 때마다 저장해서, 그때마다 걸린 로어북 전부를 훑었어요(node: 300항목 1.8ms · 1,000항목 6ms · 폰 4배면 그 4배).
+    //   표시만 해 두고(stale) 다음에 지도를 그릴 때 한 번 읽어요(dress → loadDir)
+    const mapShown = () => { try { return (typeof doc.getElementsByClassName === 'function' ? doc.getElementsByClassName('ss-map') : doc.querySelectorAll('svg.ss-map')).length > 0; } catch { return true; } };
+    try { const c = stCtx(), ev = c?.eventTypes ?? c?.event_types; for (const k of ['WORLDINFO_UPDATED', 'CHARACTER_EDITED']) if (ev?.[k]) c.eventSource?.on?.(ev[k], () => { dirNow.key = null; if (!active()) return; if (mapShown()) loadDir(); else dirNow.stale = true; }); } catch { /* 채팅이 바뀔 때만 새로 읽어요 */ }
     (load ? Promise.resolve(load()) : mbCore(doc)).then(m => { core = m; sweep(); }).catch(() => { /* 그 확장 그림 그대로 */ });
     try {
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 층별 지도' }, records => {

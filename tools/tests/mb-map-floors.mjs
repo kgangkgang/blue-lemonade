@@ -846,5 +846,43 @@ await tryOk('1.7.8 안 가 본 곳 줄: 「<이름>의 집」 이 한 줄에 들
     const spots = m.plainSpots([{ x: 10, y: 10 }, { x: 90, y: 40 }], names.map((label, i) => ({ key: 'p' + i, label, zone: 'below' })));
     for (const s of spots) assert.equal(m.wrapLabel(s.g.label, s.o.w - 1.5).length, 1, s.g.label + ' 은 한 줄(그 확장 배치)');
 });
+await tryOk('1.7.9 로어북 · 캐릭터 편집을 저장해도 지도가 화면에 없으면 로어북을 다시 읽지 않고, 다음에 지도를 그릴 때 한 번 읽어 그 자리에서 입혀요', async () => {
+    const fresh = await import(pathToFileURL(path.join(root, 'src/mb-map-floors.js')).href + '?lazy-dir');
+    const places = office(), map = { places };
+    let cb = null, renders = 0, wiReads = 0, shop = '달빛 찻집'; const live = [], on = {};
+    const doc = {
+        body: { getAttribute: k => (k === fresh.FLOOR_ATTR ? 'on' : null), hasAttribute: () => false, classList: { contains: c => c === 'salty' } },
+        documentElement: { getAttribute: () => null },
+        querySelectorAll: sel => (sel.includes('svg.ss-map') ? live.filter(s => (sel.includes(':not([data-bl-floors])') ? !s.getAttribute('data-bl-floors') : sel.includes('[data-bl-floors]') ? !!s.getAttribute('data-bl-floors') : true)) : []), addEventListener: () => {},
+    };
+    const ctx = { characterId: 0, getCurrentChatId: () => 'chat-a', chatMetadata: {}, eventTypes: { WORLDINFO_UPDATED: 'wi', CHARACTER_EDITED: 'ce' }, eventSource: { on: (k, fn) => { (on[k] ||= []).push(fn); } },
+        characters: [{ data: { extensions: { world: 'book' } } }],
+        loadWorldInfo: async () => { wiReads++; return { entries: { 0: { comment: '[장소]' + shop, content: '작은 가게예요.' } } }; } };
+    const core = { app: { current: { state: { data: { map } } }, renderPanel() { renders++; } } };
+    assert.equal(fresh.startMbFloors(doc, { watch: (_t, o, fn) => { if (o.childList) cb = fn; }, load: () => core, stCtx: () => ctx }), true);
+    const tick = (ms = 5) => new Promise(res => setTimeout(res, ms));
+    const names = svg => svg.querySelectorAll('g.bl-unv').map(g => g._blGhost.label);
+    const draw = () => { const svg = drawn(makeDoc(), places); live.push(svg); cb([{ addedNodes: [svg] }]); return svg; };
+    const emit = k => { for (const fn of on[k] || []) fn(); };
+    await tick(); draw(); await tick();
+    assert.deepEqual(names(draw()), ['달빛 찻집']); assert.equal(wiReads, 1);
+    // 지도 창을 닫은 채 로어북을 고쳐 저장(글자를 칠 때마다 저장돼요) — 읽지 않아요
+    live.length = 0; shop = '별빛 서점';
+    for (let i = 0; i < 6; i++) emit(i % 2 ? 'ce' : 'wi');
+    await tick(20);
+    assert.equal(wiReads, 1, '지도가 없는데 로어북을 다시 읽었어요: ' + wiReads);
+    // 다음에 지도를 그릴 때 한 번 읽고, 옛 장소로 먼저 그리지 않아요
+    const b = draw();
+    assert.ok(!names(b).includes('달빛 찻집'), '옛 로어북 장소로 먼저 그렸어요 — ' + names(b).join(','));
+    await tick(20);
+    assert.equal(wiReads, 2, '지도를 그릴 때 한 번');
+    assert.deepEqual(names(b), ['별빛 서점'], '읽은 뒤 그 자리에서 입혀요');
+    assert.equal(renders, 0, '그 확장에 다시 그리기를 시키지 않아요(한 번에 입힘)');
+    draw(); await tick(); assert.equal(wiReads, 2, '그 뒤에는 다시 안 읽어요');
+    // 지도가 떠 있을 때 저장하면 예전처럼 바로 읽고, 달라졌으면 다시 그리게 해요
+    shop = '은빛 온실'; emit('wi'); await tick(20);
+    assert.equal(wiReads, 3, '지도가 떠 있으면 바로 읽어요');
+    assert.equal(renders >= 0, true);
+});
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

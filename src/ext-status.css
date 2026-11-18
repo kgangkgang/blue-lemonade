@@ -102,6 +102,9 @@ body.salty .ss-scope :is(.ss-cashbox, .ss-tab-mast.board) :is(small, span) { opa
 /* AI 딱지: 옅은 강조 면 + 색 글자, 주요 단추 안에서는 단추 글자색 그대로 */
 body.salty .ss-scope .ss-ai { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
 body.salty .ss-scope .ss-btn.pri .ss-ai { background: transparent; color: inherit; }
+/* 1.7.9 상태창 검색의 찾은 말 칠하기(그 확장 2.9.0 개발 판 4c7df674 · <mark>): 원작은 강조색 28% 섞음에 글자색 그대로라 흐린 설명 글 위에서는 대비 3.5 ~ 3.7(리그)
+   → 다른 「고른 것」(아이콘 단추 켬 · AI 딱지)과 같은 고른 면 + 고른 글자색 짝 — 밤 · 낮 · 에이드 팔레트가 대비를 맞춰 둔 토큰 */
+body.salty .ss-scope .ss-search .ss-results mark { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); }
 /* @mb band */
 /* 알림은 위 띠 아래에서(위 띠 단추를 덮지 않게) — 채팅 위 상태 띠가 있으면 그 띠 바로 아래에서 시작해 수치 줄을 덮지 않아요.
    (anchor 를 모르는 브라우저 · 띠가 없을 때는 첫 줄 값 그대로)
@@ -727,6 +730,10 @@ body.salty .ss-scope .ss-set-sheet .ss-set-find { position: static; margin: 0; p
 body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-q { margin: 0; }
 body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-n:not(:empty) { margin-top: var(--bl-s1, 4px); }
 body.salty .ss-scope .ss-set-sheet > .ss-hint { display: block; margin: var(--bl-s2, 8px) 0 0; }
+/* 1.7.9 블루레몬 맞춤 바로가기 한 줄(src/mb-allset-link.js · 조정자 결정 1): 레몬 탭 줄과 같은 옅은 면 · 1px 선 · 모서리 12 · 안쪽 12 · 글과 단추 8 — 좁으면 단추가 아랫줄로 */
+body.salty .ss-scope .ss-set-sheet > .bl-mb-link { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0 0; padding: var(--bl-s3, 12px); border: 1px solid var(--salty-line); border-radius: var(--bl-r-md, 12px); background: var(--bl-hover); }
+body.salty .ss-scope .ss-set-sheet > .bl-mb-link > small { flex: 1 1 14em; min-width: 0; margin: 0; }
+body.salty .ss-scope .ss-set-sheet > .bl-mb-link > .ss-btn { flex: none; min-height: var(--bl-ui-ctl, 36px); margin: 0; }
 body.salty .ss-scope .ss-set-sheet .ss-set-body > :first-child { margin-top: var(--bl-s3, 12px); }
 
 /* @mb tabs */
@@ -809,8 +816,10 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
   /* 1.5.5 상태창을 내리면 맨 위 탭 줄(「관리」)이 ✕ 밑으로 지나가며 겹치고, 위 흐림 때문에 줄이 ✕ 높이에서 잘려 보였어요 → 내린 동안(스크롤 흐림 표식 top · both)만 ✕ 줄 높이의 창 면 띠를 맨 위에 붙여
      내용이 그 밑으로 지나가요. 맨 위에 있을 때(머리 줄이 ✕ 자리를 비워 둔 상태)는 띠가 없어요. 띠는 높이만큼 아래 여백을 접어 자리를 차지하지 않아요. PC 는 ✕ 가 내용 칸 밖이라 그대로예요. */
   body.salty dialog.popup.ss-dlg.large_dialogue_popup { padding-top: var(--bl-s3, 12px) !important; }   /* 폰은 위 · 아래 12(위 PC 줄을 되돌려요) */
+  /* 1.7.8 띠가 누름을 받아요(디자인 관문 남은 줄 「만들기 창 카드 × ✕」): 전에는 띠가 누름을 통과시켜(pointer-events: none) 띠 밑으로 굴러 올라간 카드 · 단추가 안 보이는 채로 눌렸어요.
+     이제 띠 자리를 누르면 아무것도 안 눌려요(끌어 굴리기는 그대로 — 띠는 굴리는 칸 자신의 가상 요소). 보이는 모양은 같아요 */
   /* 1.6.6: 띠 높이 40 → ✕ 높이(34) — ✕ 를 모서리(위 12)로 올리고 본문 위 여백을 뺀 만큼, 내린 동안 창 위 끝에서 내용이 가려지는 높이가 63 → 47 */
-  body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: var(--bl-ui-icon, 34px); margin-bottom: calc(-1 * var(--bl-ui-icon, 34px)); background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); pointer-events: none; }
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup .popup-content:is([data-bl-fade-y="top"], [data-bl-fade-y="both"])::before { content: ''; display: block; position: sticky; top: 0; z-index: 1; height: var(--bl-ui-icon, 34px); margin-bottom: calc(-1 * var(--bl-ui-icon, 34px)); background: var(--bl-fill-card, var(--bl-card)); box-shadow: 0 1px 0 var(--salty-line); }
   /* 번역 고치기(폰): 목록(제 스크롤 55vh) + 위 칸 + 맨 아래 안내 글이 창 높이를 넘어 안내 글 첫 줄이 창 바닥 흐림 아래로 목록과 겹쳐 보였어요 → 목록을 조금 줄여 안내 글까지 창 안에 */
   body.salty .ss-scope.ss-trfix .ss-trf-list { max-height: 46vh; }
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
@@ -1581,3 +1590,7 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc > .ss-relc-h { margin-botto
 /* 묶음 탭 글 줄 높이를 아래 탭 줄과 같게(같은 글자 크기인데 14.8 · 19.4 로 달랐어요) */
 body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button { line-height: 1.5; }
 body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > span { line-height: inherit; }
+/* 1.7.8 띠 퀘스트 칸 「두루마리 + 숫자」 세로 가운데(디자인 관문 남은 줄 · 2.8.0 0.56px · 2.9.0 0.50px — 기준 0.5 에 걸침): 칸 안 줄(flex 가운데)에서 그림과 숫자가 따로 가운데에 서
+   기준선이 달라, 칸이 놓인 소수점 높이마다 둘이 다르게 화소에 맞춰졌어요(리그에서 칸을 0 ~ 0.88px 옮겨 재면 −0.44 ~ −1.38px). 끝 칸 늘리기(가로 자리)와는 상관없어요 — 늘리기를 떼도 같은 값.
+   → 두 칸을 같은 기준선에 세워요(그림 글꼴 · 숫자 글꼴이 같은 기준선에서 함께 맞춰져요): 같은 옮김에서 2.9.0 −0.50 ~ +0.38 · 2.8.0 −0.44 ~ +0.44 · 지금 자리 +0.38 · +0.31px */
+body.salty:not([data-bl-ext-raw]) #ss-hud .ss-tg > .ss-t > .c > .ci > :is(i.fa-scroll, i.fa-scroll + span) { align-self: baseline; }

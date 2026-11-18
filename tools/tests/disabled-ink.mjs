@@ -86,5 +86,24 @@ test('미트볼 상태창 · 과일의 마음의 꺼진 단추: 테마 맞춤 �
     assert.ok(un.includes('#fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn:is(.solid, .primary):disabled { background: transparent; border-color: var(--line); color: inherit; }'), '과일의 마음 채운 단추 — 꺼진 동안 면을 걷고 창 글자색');
     assert.ok(un.includes('#fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn.danger:disabled { border-color: var(--line); color: inherit; }'), '과일의 마음 위험 단추 — 꺼진 동안 창 글자색');
 });
+test('(1.7.8) 공통 단추(.menu_button — 실리태번 · 확장 · 애드온 단추)도 같은 방식: 반투명 .55 + 본문색 · 강조색 면(확인 단추)은 보통 단추 면 · 인라인 색은 안 덮음', () => {
+    const css = strip(read('css/01-smear-topbar-drawers.css'));
+    assert.match(css, /body\.salty \.menu_button:is\(\.disabled, \[disabled\]\):not\(#salty-none\) \{\s*opacity: \.55 !important;\s*filter: grayscale\(1\) !important;\s*\}/, '반투명 .55(옛 .45 는 낮 보통 단추 면에서 2.5 : 1 안팎)');
+    assert.doesNotMatch(css, /opacity:\s*0?\.45 !important/, '옛 .45 가 남지 않아요');
+    assert.match(css, /body\.salty \.menu_button:is\(\.disabled, \[disabled\]\):not\(#salty-none\):where\(:not\(\[style\*="color:"\], \[style\*="background:"\]\)\) \{\s*color: var\(--salty-text\) !important;\s*\}/, '글자는 본문색 토큰 · 인라인 색은 지킴');
+    assert.match(css, /body\.salty \.menu_button\.popup-button-ok:is\(\.disabled, \[disabled\]\):not\(#salty-none\):where\(:not\(\.redWarningBG, \[style\*="color:"\], \[style\*="background:"\]\)\) \{\s*background: var\(--bl-fill-control, var\(--bl-control\)\) !important;\s*box-shadow: none !important;\s*\}/, '확인 단추는 꺼진 동안 보통 단추 면');
+    // 세기: 꺼짐 규칙(ID 하나 · 클래스 셋)이 위험 단추 빨강(17-semantic · 클래스 셋) · 확인 단추 면(03-menus · 클래스 다섯)의 !important 를 이겨요
+    assert.match(strip(read('css/17-semantic.css')), /body\.salty \.menu_button:is\(\.redWarningBG, \.red_button, \.danger, \.is-danger, \[class\*="-danger"\], \[class\*="_danger"\]\):where\([^)]*\)\) \{\s*background: var\(--bl-fill-control, var\(--bl-control\)\) !important;\s*box-shadow: var\(--bl-e2\) !important;\s*color: var\(--bl-danger\) !important;/);
+    assert.match(strip(read('css/03-menus.css')), /body\.salty \.popup \.popup-controls \.menu_button\.popup-button-ok:not\(\.redWarningBG\) \{/);
+    // 보통 단추 면(--salty-control = 본문색 4.5% 섞인 떠 있는 면 · 낮은 면) 위 본문색 × .55 가 내장 팔레트 전부 3 : 1 이상 · 옛 .45 는 낮 팔레트에서 3 아래
+    let oldMin = 99;
+    for (const id of Object.keys(P.PALETTES)) {
+        const pal = P.paletteColors({ palette: id, colorOverrides: {} });
+        const face = P.paletteMode(id) === 'dark' ? P.mixColor(pal.text, pal.raised, 0.045) : pal.surface;
+        const now = cr(P.mixColor(pal.text, face, OFF), face); assert.ok(now >= 3, `${id} 보통 단추 면 꺼진 글자 ${now.toFixed(2)} : 1`);
+        oldMin = Math.min(oldMin, cr(P.mixColor(pal.text, face, 0.45), face));
+    }
+    assert.ok(oldMin < 3, `옛 .45 가장 낮은 값 ${oldMin.toFixed(2)} : 1 — 이 시험이 실제 빚을 봐요`);
+});
 test('CI 등록', () => assert.ok(read('.github/workflows/release-check.yml').includes('node tools/tests/disabled-ink.mjs .')));
 console.log(`disabled-ink: ${pass} passed`);

@@ -35,7 +35,7 @@ function sheet(c) {
     if (c?.extensionSettings?.[META]?.enabled === false) return null;
     return meta;
 }
-function startOf(meta, chat) {
+export function startOf(meta, chat) {
     let st = Math.min(Number(meta.startAt) || 0, chat.length);
     if (meta.startKey && chat[st - 1]?.send_date !== meta.startKey) { const j = chat.findIndex(m => m?.send_date === meta.startKey); if (j >= 0) st = j + 1; }
     return st;

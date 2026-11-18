@@ -18,9 +18,20 @@ body.salty :is(.drawer-icon, .menu_button, .mes_button, .mes_buttons, .inline-dr
   #options_button, #extensionsMenuButton, input[type="checkbox"], input[type="range"], .neo-range-input, .swipe_left, .swipe_right) {
   filter: none !important;
 }
+/* 1.7.8 꺼진(disabled) 공통 단추 글자 명암(디자인 관문 남은 줄 · 1.7.5 화면 다듬기와 같은 방식 — 사용자 결정): 반투명 .45 는 낮 팔레트 보통 단추 면에서 글자가 2.5 : 1 안팎이었어요
+   (확장 서랍 미트볼 단추 줄 · 성능 보조 · 연출 · 읽어 주기 창의 꺼진 단추 — 기준 3 : 1). → 반투명 .55 · 글자는 본문색(--salty-text) — 새 색 없이 토큰만(tools/tests/disabled-ink.mjs).
+   빨간 위험 단추 · 켜진 단추의 색 글자도 꺼진 동안은 본문색, 강조색 면 위 글자(확인 단추)는 반투명만으로는 3 : 1 이 안 나와 꺼진 동안 보통 단추 면이에요.
+   다른 확장이 단추에 직접(인라인 style) 칠한 색은 덮지 않아요(02-controls 와 같은 지킴). 아이콘 · 회색 거르기는 그대로 */
 body.salty .menu_button:is(.disabled, [disabled]):not(#salty-none) {
-  opacity: 0.45 !important;
+  opacity: .55 !important;
   filter: grayscale(1) !important;
+}
+body.salty .menu_button:is(.disabled, [disabled]):not(#salty-none):where(:not([style*="color:"], [style*="background:"])) {
+  color: var(--salty-text) !important;
+}
+body.salty .menu_button.popup-button-ok:is(.disabled, [disabled]):not(#salty-none):where(:not(.redWarningBG, [style*="color:"], [style*="background:"])) {
+  background: var(--bl-fill-control, var(--bl-control)) !important;
+  box-shadow: none !important;
 }
 /* 2.9.4: 선택 색은 body 한 곳에만 — 자식 요소들은 브라우저가 ::selection 을 부모에게서 물려받는다(highlight inheritance).
    예전의 `body.salty ::selection` 은 모든 요소마다 body 까지 조상을 거슬러 올라가 맞춰 봐서, 스트리밍으로 글자가 들어올 때

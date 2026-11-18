@@ -888,6 +888,7 @@ jobs:
           node tools/tests/fruit-skin-contrast.mjs .
           node tools/tests/seg-muted-ink.mjs .
           node tools/tests/disabled-ink.mjs .
+          node tools/tests/gate-debt-178.mjs .
           node tools/tests/chip-row-gaps.mjs .
           node tools/tests/role-icons.mjs .
           node tools/tests/fruit-entry-rows.mjs .
@@ -1046,6 +1047,8 @@ jobs:
           node tools/tests/mb-spacing-system.mjs . tools
           # 1.7.8 모델이 <meatball> 아닌 태그로 감싼 변화 덩이가 본문에 남은 것 숨기기(jsdom)
           node tools/tests/mb-leftover.mjs . tools
+          # 1.7.9 미트볼 「전체 설정」 안 블루레몬 맞춤 바로가기(jsdom)
+          node tools/tests/mb-allset-link.mjs . tools
           # 1.6.0 jsdom 을 쓰는 시험은 모두 위 npm ci 뒤에 — 앞 단계에는 tools/node_modules 가 없어 「jsdom 을 못 찾았어요」(종료 2)로 Release consistency 가 실패했어요(1.5.9)
           node tools/tests/translator-message-template.mjs . tools
           node tools/tests/icon-text-prescan-slices.mjs . tools

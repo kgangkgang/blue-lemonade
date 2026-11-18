@@ -228,6 +228,17 @@ await ok('칩 표식: 뺀 인물의 애정 · 우정 칩에만 data-bl-cut · �
     assert.match(fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8'), /\/\* @mb editsync \*\/\n[^@]*\.ss-mchip\[data-bl-cut\] \{[^}]*line-through/);
     assert.ok(fs.readFileSync(path.join(root, 'src/ext-status.gen.css'), 'utf8').includes('data-bl-mb-off~="editsync"'), '생성 시트에 스위치 문');
 });
+await ok('1.7.9 본문 고침 저장은 채팅 저장 한 번 — 실리태번 saveMetadata 는 saveChatConditional 그대로라 둘 다 부르면 채팅 전체를 두 번 써요', async () => {
+    world(); let saves = 0; C.saveMetadata = async () => { saves++; }; C.saveChat = async () => { saves++; };
+    const before = edit(3, LONG.slice(0, 10).join('\n\n'));
+    const r = await go(3, before);
+    assert.ok(r?.changed, '뺀 것이 있어야 저장해요');
+    assert.equal(saves, 1, '저장 ' + saves + '번');
+    // saveChat 이 없는 옛 실리태번이면 saveMetadata 로
+    world(); saves = 0; C.saveMetadata = async () => { saves++; }; delete C.saveChat;
+    const b2 = edit(3, LONG.slice(0, 10).join('\n\n')); await go(3, b2);
+    assert.equal(saves, 1, '옛 판 저장 ' + saves + '번');
+});
 await ok('1.7.7 칩 표식 훑기: 뺀 인물이 없고 표식을 단 적도 없는 답은 칩을 찾지 않아요(채팅을 열 때 메시지마다 훑지 않게) · 되살린 답은 한 번 떼고 그 뒤로 안 훑어요', async () => {
     const prev = globalThis.SillyTavern;
     const chip = text => { const attrs = {}; return { textContent: text, classList: { contains: () => false }, hasAttribute: k => k in attrs, setAttribute: (k, v) => { attrs[k] = v; }, removeAttribute: k => { delete attrs[k]; }, attrs }; };
@@ -288,6 +299,24 @@ await ok('1.7.8 본문이 다른 언어 · 본명으로 이름을 부를 때(영
     // 되돌리면 되살아나요(일본어 이름으로 돌아와도)
     r = await go(3, edit(3, before)); assert.deepEqual(r.back.sort(), ['Mira', 'Sua']);
     E.useLore(null);
+});
+await ok('1.7.8 상태창 시작점 앞(그 확장이 굳힌 답 · 다시 만든 상태창): 고쳐도 안 빼고 · 뺀 기록이 굳기로 사라진 것을 「되돌림」 으로 보지 않아요', async () => {
+    // 사용자 폰(1.7.7): 답을 고쳐 네 사람을 뺐는데, 그 뒤 상태창 시작점이 12번 뒤로 옮겨지며(굳히기 · 다시 만들기) 뺀 기록이 사라졌어요.
+    //   다음 편집 때 테마가 그걸 「사용자가 관리 탭에서 되돌림」 으로 읽어 칩 흐림을 풀었고, 시작점 앞 답이라 숫자도 못 바꾸는데 칩만 흐려지기도 했어요
+    world(); const before = edit(3, LONG.slice(0, 10).join('\n\n'));
+    await go(3, before);
+    assert.equal(ours().length, 2);
+    // 그 확장이 굳힘: 시작점을 뒤로 · 기록은 처음 상태에 녹이고 지움
+    const meta = C.chatMetadata.statussim; meta.base.data = clone(fake.compute(6, { bake: true }).state.data); meta.startAt = 6; meta.adjust = [];
+    const stBefore = JSON.stringify(C.chat[3].extra[E.STATE]);
+    const r = await go(3, edit(3, LONG.slice(0, 9).join('\n\n')));
+    assert.equal(r, null, '시작점 앞 답은 손대지 않아요');
+    assert.equal(JSON.stringify(C.chat[3].extra[E.STATE]), stBefore, '뺀 표시를 「되돌림」 으로 바꾸지 않아요');
+    assert.equal(ours().length, 0);
+    // 처음부터 시작점 앞이던 답: 칩만 흐려지지 않아요
+    world(); C.chatMetadata.statussim.startAt = 5;
+    assert.equal(await go(3, edit(3, LONG.slice(0, 10).join('\n\n'))), null);
+    assert.equal(C.chat[3].extra[E.STATE], undefined);
 });
 await ok('CI 등록(release-check.yml)', async () => {
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/mb-editsync.mjs .'));

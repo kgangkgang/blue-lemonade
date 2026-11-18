@@ -7697,7 +7697,7 @@ body.salty.salty-icons-line #chat .mes :is(.extraMesButtons > .lv_script, .bl-pi
 #lv_settings .lv-card-head { margin:-10px -10px 0; padding:10px 12px; border-bottom:1px solid var(--salty-line,var(--lv-border)); border-radius:calc(var(--bl-r-md,12px) - 1px) calc(var(--bl-r-md,12px) - 1px) 0 0; background:var(--salty-shade,var(--lv-fill)); font-size:var(--bl-ts-ui,14px); font-weight:600; line-height:1.2; }
 #lv_settings .lv-card-head > i:first-child { width:1.2em; font-size:1em; }
 #lv_settings .lv-card-help { margin:0; }
-#lv_settings .lv-field { gap:6px; }
+#lv_settings .lv-field { gap:8px; }
 #lv_settings .lv-label { color:var(--salty-text,var(--lv-text)); font-size:var(--bl-ts-ui,14px); line-height:1.35; }
 #lv_settings .lv-row-label { color:var(--salty-text,var(--lv-text)); font-size:var(--bl-ts-ui,14px); }
 #lv_settings :is(.lv-desc,.lv-empty,.lv-key-state,.lv-balance,.lv-test-result,.lv-help-note,.lv-warn-note) { font-size:var(--bl-ts-meta,12.5px); line-height:1.5; }

@@ -282,6 +282,9 @@ export function applyEdit(c = ctx(), i, before, { eng = undefined } = {}) {
     return serial(async () => {
         const e = eng ?? await Sub.engine(); if (!e) return null;
         const meta = sheet(c), m = c?.chat?.[i]; if (!meta || !m || m.is_user) return null;
+        // 1.7.8 상태창 시작점 앞(그 확장이 굳힌 답 · 「지금」 부터 다시 만든 상태창): 그 확장이 그 답의 변화를 다시 안 더해서 뺄 수도 없어요 — 칩만 흐려지거나,
+        //   굳기로 사라진 뺀 기록을 「사용자가 되돌림」 으로 읽지 않게 손대지 않아요
+        if (i < Sub.startOf(meta, c.chat)) return null;
         // 변화 블록이 본문에 그대로 있는 답(그 확장 「본문에서 떼어 보관」 을 끈 때)은 그 확장이 본문에서 바로 읽어요 — 거기서 고치면 되니 여기서는 안 건드려요(두 번 빼지 않게)
         try { if (typeof e.hasStatus === 'function' && e.hasStatus(m.mes)) return null; } catch { /* 서랍으로 봐요 */ }
         const h = await helpers();
@@ -292,8 +295,8 @@ export function applyEdit(c = ctx(), i, before, { eng = undefined } = {}) {
         try { d = decide(m, before, m.mes, e, { rel, tr: h.tr, find: h.find, state, lore }); r = syncEdit(c, e, i, { tr: h.tr }); } catch { return null; }
         if (!r.changed && !d.cut.length && !d.back.length) return { ...d, changed: false };
         try { await Sub.applyHidden(c, { kind: 'edit', eng: e, save: false }); } catch { /* 뒤 저장은 다음 맞추기 때 */ }
-        try { await c?.saveMetadata?.(); } catch { /* 다음 저장 때 */ }
-        try { await c?.saveChat?.(); } catch { /* 다음 저장 때 */ }
+        // 1.7.9 저장은 한 번 — 실리태번 saveMetadata 는 saveChatConditional 그대로라(메타 칸도 채팅 파일 머리에 같이 적혀요) 둘 다 부르면 채팅 전체를 두 번 썼어요
+        try { await (typeof c?.saveChat === 'function' ? c.saveChat() : c?.saveMetadata?.()); } catch { /* 다음 저장 때 */ }
         try { (h.core ?? await core())?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ }
         return { ...d, changed: true };
     });
