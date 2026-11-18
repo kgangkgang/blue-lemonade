@@ -442,12 +442,25 @@ function stepWarm() {
 /** 푼 메시지를 다시 건너뛸 수 있게 돌려놓는다 — 서랍이 열릴 때 · 답장을 받기 시작할 때.
  *  표식을 모두 떼도 보이는 메시지는 content-visibility:auto 라 그대로 그려지고(화면 밖 것만 건너뜀), 자리를 재지 않는다 —
  *  서랍이 열리는 순간 · 토큰이 막 바뀐 순간에 재면 그때 더러워진 스타일 · 배치를 푼 메시지 전부와 함께 강제로 계산해 버린다. */
-export function coolOffscreen(doc = document) {
+export function coolOffscreen(doc = document, keep = 0) {
     stopWarm(); warm.cool = true;
     const el = doc.getElementById('chat');
-    const warmed = el ? mesKids(el).filter(mes => mes.hasAttribute(WARM_ATTR)) : [];
-    for (const mes of warmed) mes.removeAttribute(WARM_ATTR);
-    return warmed.length;
+    const all = el ? mesKids(el) : [];
+    const band = keep > 0 ? keepBand(el, all.length, keep) : null;
+    let n = 0;
+    all.forEach((mes, i) => { if (mes.hasAttribute(WARM_ATTR) && !(band && i >= band.lo && i <= band.hi)) { mes.removeAttribute(WARM_ATTR); n++; } });
+    return n;
+}
+// (1.8.3 perf-jank) 답을 받는 동안에도 보는 자리 바로 위 STREAM_KEEP 개(와 아래 VIEW_GUARD 개)는 표식을 남겨요.
+//   예전에는 첫 토큰에 표식을 전부 뗐어요. 답이 끝나고 곧바로 글을 치면(프레임마다 한 글자 — 관문 「답 받고 1초 치고 곧바로 굴리기」) 입력 문(onInputGate)이
+//   묶음을 프레임마다 미뤄 굴리기 전까지 150개 중 12개만 다시 풀렸고, 위로 세게 굴리는 첫 1.5초(90px × 100프레임 ≈ 메시지 30개 남짓)가 전부 처음 그리는 메시지였어요
+//   (리그 폰 4배 · f6: 50ms 넘는 프레임 4 ~ 11개). 굴리면 가장 먼저 들어올 바로 위 몇십 개만 남기면 답 받는 동안 다시 계산하는 몫은 전부(150개)가 아니라 그만큼이에요.
+//   보는 자리는 마지막 scroll 사건의 viewGuard 기억(자리를 새로 재지 않아요) — 모르면(채팅이 바뀐 뒤 · 아직 안 굴림) 바닥(답을 받을 때 채팅은 바닥을 따라가요).
+export const STREAM_KEEP = 40;   // 바닥 10개(data-bl-tail · 늘 그려짐)를 포함한 띠 — 그 위로 30개 남짓
+function keepBand(el, count, keep) {
+    const last = warm.view && warm.kidsOf === el && warm.kids && warm.kids.length === count ? warm.view.last : count - 1;
+    const hi = Math.min(count - 1, last + VIEW_GUARD);
+    return { lo: Math.max(0, hi - VIEW_GUARD - keep), hi };
 }
 /** (1.1.1 restyle) 문서 전체 다시 계산을 앞두고 — 테마 설정 적용(src/apply.js applyAll: :root 변수 시트 · body class · html 속성)처럼 모든 요소가 다시 계산될 쓰기 직전에 불러요
  *  (features.js coolChatForRestyle 다리). 푼(미리 그린) 메시지를 되돌려 그 계산이 화면 밖 메시지 안쪽(2,000개면 요소 14만 개)을 건너뛰게 하고, 조용해지면(WARM_QUIET_MS) 다시 미리 그려요.
@@ -601,8 +614,8 @@ function listenWarm() {
         const ctx = globalThis.SillyTavern?.getContext?.(); const es = ctx?.eventSource, T = ctx?.eventTypes || ctx?.event_types;
         if (!es?.on || !T) return;
         warmEvents = es;
-        const onToken = () => { if (!on) return; if (!warm.cool) coolOffscreen(); kickWarm(STREAM_QUIET_MS); };
-        const onStart = (_type, _opts, dryRun) => { if (!on || dryRun) return; coolOffscreen(); kickWarm(STREAM_QUIET_MS); };
+        const onToken = () => { if (!on) return; if (!warm.cool) coolOffscreen(document, STREAM_KEEP); kickWarm(STREAM_QUIET_MS); };
+        const onStart = (_type, _opts, dryRun) => { if (!on || dryRun) return; coolOffscreen(document, STREAM_KEEP); kickWarm(STREAM_QUIET_MS); };
         const onEnd = () => { if (on) kickWarm(); };
         if (T.STREAM_TOKEN_RECEIVED) es.on(T.STREAM_TOKEN_RECEIVED, onToken);
         if (T.GENERATION_STARTED) es.on(T.GENERATION_STARTED, onStart);

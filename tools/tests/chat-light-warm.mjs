@@ -138,6 +138,8 @@ let n = 0, failed = 0;
 const test = (name, fn) => { try { fn(); n++; console.log(`ok ${n + failed} - ${name}`); } catch (e) { failed++; console.log(`not ok ${n + failed} - ${name}\n  ${e.stack || e.message}`); } };
 const warmCount = () => mes.filter(m => m.attrs.has('data-bl-warm')).length;
 const candidates = () => mes.filter(m => !m.excluded).length;
+// (1.8.3 perf-jank) 답장 토큰 뒤에도 남는 띠 — 보는 자리를 모르면 바닥에서 위로 STREAM_KEEP + VIEW_GUARD 개(바닥 10개 포함)
+const keptAfterToken = () => mes.filter(m => !m.excluded && m.i >= mes.length - 1 - M.VIEW_GUARD - M.STREAM_KEEP).length;
 const settle = (ms = 30000) => advance(ms);
 const press = (type = 'keydown') => docListeners.get(type)?.f({ type });
 const trackOrder = () => { const order = []; for (const m of mes) { const set = m.setAttribute; m.setAttribute = (a, v) => { if (a === 'data-bl-warm' && !m.attrs.has(a)) order.push(m.i); set(a, v); }; } return order; };
@@ -237,8 +239,8 @@ test('(1.0.0 scroll-919) 답장(토큰)을 받은 뒤 글을 치다 바로 굴�
     for (const type of ['keydown', 'input', 'pointerdown']) assert.deepEqual(docListeners.get(type)?.opts, { capture: true, passive: true }, type + ' 는 프레임 문만');
     setMessages(100); M._warm.stop(); M.kickWarm(0); settle();
     assert.equal(warmCount(), 90);
-    es.emit('tok', '답장');   // 답장을 받는 동안 화면 밖을 다시 건너뛰게
-    assert.equal(warmCount(), 0);
+    es.emit('tok', '답장');   // 답장을 받는 동안 화면 밖을 다시 건너뛰게(바로 위 띠만 남김)
+    assert.equal(warmCount(), keptAfterToken());
     advance(M.STREAM_QUIET_MS + 50);   // 토큰이 멎고 곧바로 치기 시작
     for (let i = 0; i < 40; i++) { press('keydown'); press('input'); advance(60); }   // 2.4초 동안 친다(관문 타이핑 꼴)
     advance(300);   // 0.3초 뒤 굴린다
@@ -280,15 +282,17 @@ test('(1.2.1 opt121-warm) 키 · 입력 · 누름을 처리한 뒤 그 프레임
     finally { globalThis.requestAnimationFrame = realRaf; }
     settle(); assert.equal(warmCount(), 90);
 });
-test('답장 토큰이 오면 표식을 다 떼고(자리를 재지 않음) 토큰이 STREAM_QUIET_MS 끊긴 뒤에야 다시 푼다', () => {
+test('답장 토큰이 오면 바로 위 띠(STREAM_KEEP)만 남기고 표식을 떼고(자리를 재지 않음) 토큰이 STREAM_QUIET_MS 끊긴 뒤에야 다시 푼다', () => {
     assert.equal(warmCount(), 90);
     rectReads = 0; const f0 = forcedOutside;
     es.emit('tok', '하나');
-    assert.equal(warmCount(), 0, '토큰이 오면 화면 밖 것을 다시 건너뛰게');
+    assert.ok(keptAfterToken() > 20 && keptAfterToken() < 90, `띠 ${keptAfterToken()}`);
+    assert.equal(warmCount(), keptAfterToken(), '토큰이 오면 띠 밖 것을 다시 건너뛰게');
+    assert.ok(mes.filter(m => m.attrs.has('data-bl-warm')).every(m => m.i >= mes.length - 1 - M.VIEW_GUARD - M.STREAM_KEEP), '남는 것은 바닥 쪽 띠뿐');
     assert.equal(rectReads, 0, '떼는 순간 자리를 재지 않는다(더러워진 스타일 · 배치를 강제로 계산하지 않게)');
     assert.equal(forcedOutside, f0);
     advance(M.STREAM_QUIET_MS - 50); es.emit('tok', '둘'); advance(M.STREAM_QUIET_MS - 50);
-    assert.equal(warmCount(), 0, '토큰이 이어지는 동안은 쉰다');
+    assert.equal(warmCount(), keptAfterToken(), '토큰이 이어지는 동안은 쉰다(띠 밖은 더 풀지 않음)');
     settle();
     assert.equal(warmCount(), 90, '끊기면 다시 푼다');
 });
@@ -297,9 +301,9 @@ test('생성 시작(드라이런 아님)은 떼고, 드라이런(토큰 세기)�
     assert.equal(warmCount(), 90, '드라이런은 건너뛴다');
     document.body.dataset.generating = 'true';
     es.emit('gs', 'normal', {}, false);
-    assert.equal(warmCount(), 0);
+    assert.equal(warmCount(), keptAfterToken());
     settle(5000);
-    assert.equal(warmCount(), 0, '생성 중(body data-generating)에는 다시 풀지 않는다');
+    assert.equal(warmCount(), keptAfterToken(), '생성 중(body data-generating)에는 더 풀지 않는다');
     delete document.body.dataset.generating;
     es.emit('ge', 100);
     settle();
@@ -535,6 +539,30 @@ test('(배선) scroll 은 문서에서 capture · passive 로 한 번 · 글 고
     assert.equal((js.match(/addEventListener\('scroll', onChatScroll/g) || []).length, 1);
     assert.match(js, /if \(!warm\.cool && document\.body\?\.dataset\?\.generating !== 'true'\) \{[^\n]*\n\s+viewGuard\(el\);\n\s+if \(!warm\.moved\) \{ warm\.held\+\+; return; \}/);
     assert.match(read('css/05-chat.css'), /^:where\(html\.bl-chat-light\[data-bl-chat-sel\]\) body\.salty \[id="chat"\]:not\(#salty-none\) > \.mes/m, '고르는 동안 크기 기억 규칙(1.5.9)');
+});
+test('(1.8.3 perf-jank) 답장 토큰 · 생성 시작에 보는 자리(마지막 scroll 의 기억) 바로 위 STREAM_KEEP 띠는 남긴다 — 자리를 새로 재지 않고, 서랍 · 설정 적용은 예전처럼 전부 뗀다', () => {
+    // 고치기 전: 첫 토큰에 표식을 전부 떼서, 답 끝 → 프레임마다 치기 → 곧바로 굴리기에서 굴리기 전 150개 중 12개만 다시 풀려 있었어요(리그 f6)
+    begin(500, 300); scrollEvent(); settle(120000);
+    assert.ok(mes[300].attrs.has('data-bl-warm') && mes[280].attrs.has('data-bl-warm'));
+    const r0 = rectReads, f0 = forcedOutside;
+    es.emit('tok', '하나');
+    assert.equal(rectReads, r0, '떼는 순간 자리를 재지 않는다'); assert.equal(forcedOutside, f0);
+    const kept = warmed();
+    const view = M._warm.state(); void view;
+    assert.ok(kept.length >= M.STREAM_KEEP - 2 && kept.length <= M.STREAM_KEEP + 2 * M.VIEW_GUARD + 2, '남긴 수 ' + kept.length);
+    assert.ok(kept.every(i => i >= 300 - M.STREAM_KEEP - 2 * M.VIEW_GUARD - 2 && i <= 304 + M.VIEW_GUARD), '보는 자리 위쪽 띠만: ' + kept[0] + ' ~ ' + kept.at(-1));
+    assert.ok(kept.includes(290) && kept.includes(275), '바로 위가 남는다');
+    // 토큰이 끊기면 둘레를 다시 풀고, 남긴 것은 다시 달지 않는다(그대로)
+    settle(120000); assert.ok(warmed().length > kept.length);
+    // 서랍 · 설정 적용(문서 전체 다시 계산)은 예전처럼 전부 뗀다
+    openDrawer = { pinned: false }; M.warmOnDrawers(); assert.equal(warmed().length, 0); openDrawer = null; M.warmOnDrawers(); settle(120000);
+    assert.ok(M.coolForRestyle() > 0); assert.equal(warmed().length, 0);
+    // 보는 자리를 모르면(채팅이 바뀌어 기억이 비었음) 바닥 띠
+    begin(200, 189); M.kickWarm(0); settle(120000);
+    es.emit('tok', '둘');
+    const k2 = warmed();
+    assert.ok(k2.length > 0 && k2.every(i => i >= 200 - 1 - M.VIEW_GUARD - M.STREAM_KEEP), '바닥 띠: ' + k2[0]);
+    M._warm.stop();
 });
 console.log(`chat-light-warm: ${n}/${n + failed} 통과`);
 process.exit(failed ? 1 : 0);
