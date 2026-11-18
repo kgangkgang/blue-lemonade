@@ -492,7 +492,15 @@ export function visitedPlace(c, places, { tr = null, index = null } = {}) {
         if (ix.keys.has(placeNorm(n)) || ix.keys.has(placeNorm(noGeneric(n)))) return true;
         if (ix.list.some(m => sameName(m, n))) return true;
     }
-    for (const o of c.owners || []) { const w = String(o).toLowerCase(); if (ix.low.some(m => [`${w}'s `, `${w}’s `, `${w}의 `, `${w}の`, `${w}家`].some(p => m.includes(p) || m.endsWith(p.trim())))) return true; }
+    for (const o of c.owners || []) { const w = String(o).toLowerCase(); if (w && ix.low.some(m => [`${w}'s `, `${w}’s `, `${w}의 `].some(p => headAt(m, p) || headAt(m, p.trim(), true)) || [`${w}の`, `${w}家`].some(p => m.includes(p)))) return true; }   // 띄어 쓰지 않는 일본어 꼴은 예전처럼 어디든
+    return false;
+}
+/** 1.7.6 글 m 에 조각 p 가 낱말 머리(맨 앞 · 글자 · 숫자가 아닌 것 뒤)에서 시작하나 — end = 글 끝에서만. 「ann's 」 가 「joann's cafe」 에, 「수아의 」 가 「지수아의 방」 에 걸리지 않게 */
+function headAt(m, p, end = false) {
+    for (let i = end ? m.length - p.length : m.indexOf(p); i >= 0; i = end ? -1 : m.indexOf(p, i + 1)) {
+        if (end && !m.endsWith(p)) return false;
+        if (i === 0 || !/[\p{L}\p{N}]/u.test(m[i - 1])) return true;
+    }
     return false;
 }
 /** 지도에 없는 후보만(지도 자료는 그대로) — 같은 장소 목록 · 같은 후보면 앞 결과를 써요(그 확장이 창을 다시 그릴 때마다 불려요) */
@@ -504,6 +512,27 @@ export function unvisitedOf(map, lore, opt = {}) {
     const index = mapIndex(places, opt.tr), out = list.filter(c => !visitedPlace(c, places, { ...opt, index }));
     if (places && typeof places === 'object') unvMemo.set(places, { lore, tr: !!opt.tr, out });
     return out;
+}
+
+/** 1.7.6 그릴 흐린 점: 지도에 없는 후보(unvisitedOf) 가운데 번역 이름이 지도 장소의 번역 이름과 겹치는 것은 빼고, 이름(label) · 설명(sum)을 번역 사전 값으로(원문 summary 는 그대로) */
+function shownGhosts(map, lore, tr) {
+    const list = unvisitedOf(map, lore, { tr });
+    if (!tr) return list.map(g => ({ ...g }));
+    const look = s => { let v = null; try { v = tr(s); } catch { v = null; } return typeof v === 'string' && v.trim() ? v : null; };
+    const there = new Set();
+    for (const p of Array.isArray(map?.places) ? map.places : []) { const t = p?.name && look(p.name); if (t) { there.add(placeNorm(t)); there.add(placeNorm(labelOf(t))); } }
+    const out = [];
+    for (const g of list) {
+        const t = look(g.label), sum = g.summary ? look(g.summary) : null;
+        if (t && t !== g.label && there.has(placeNorm(t))) continue;
+        out.push({ ...g, label: t || g.label, ...(sum && sum !== g.summary ? { sum } : {}) });
+    }
+    return out;
+}
+/** 1.7.6 번역 다리에 내줄 글: 지금 흐린 점으로 그릴 곳의 이름 · 설명 원문 [{ name, summary }] */
+export function unvisitedTexts(map, lore, { tr = null } = {}) {
+    if (!Array.isArray(lore) || !lore.length) return [];
+    return unvisitedOf(map, lore, { tr }).map(g => ({ name: String(g.label ?? ''), summary: String(g.summary ?? '') }));
 }
 
 /** 두 장소 사이 꺾인 선(점 목록). L = floorLayout 결과 · shown = 지금 보이는 장소 이름 모음(같은 줄 사이에 낀 점 판정) */
@@ -547,7 +576,6 @@ export function mergeSegments(routes, skip = null) {
     const d = out.map(({ k, u, v }) => { const [o, c] = k.split('|'), n = Number(c); return o === 'h' ? `M${r1(u)} ${n} L${r1(v)} ${n}` : `M${n} ${r1(u)} L${n} ${r1(v)}`; }).join(' ');
     return { d, lines: map };
 }
-export const pathD = pts => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ');
 
 /** 보이는 장소(와 그 건물 띠)를 감싸는 viewBox — 그 확장 fitBox 와 같은 여백. 건물이 높으면 세로로 조금(최대 TALL 배) 길게 둬요(글자가 덜 작아지게) */
 export const TALL = 1.25;
@@ -577,12 +605,12 @@ const graphemer = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segme
 const PICTO = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
 const chars = t => (graphemer ? [...graphemer.segment(String(t ?? ''))].map(x => x.segment) : [...String(t ?? '')]);
 export const textW = t => chars(t).reduce((s, c) => s + (PICTO.test(c) ? 4.4 : /[ᄀ-ᇿ　-鿿가-힯＀-￯]/.test(c) ? 3.2 : c === ' ' ? 1 : 1.9), 0);
-/** 칸 너비 w 에 맞게 이름을 한 줄 또는 두 줄로 — 띄어쓰기에서 가운데 가까운 곳을 먼저, 없으면 글자 가운데에서 끊어요(줄임표 없이 전체 이름) */
 /** 1.7.0 이름표에 쓸 이름: 「장소 — 설명」 · 「장소 | 설명」 꼴(지금 장소 줄이 그대로 장소 이름이 된 것)은 앞 조각만 */
 export function labelOf(name) {
     const t = String(name ?? '').trim(), head = t.split(/\s+[—–|]\s+|,\s+/)[0].trim();   // 1.7.0 쉼표 뒤 묘사도 떼요
     return head && [...head].length >= 2 ? head : t;
 }
+/** 칸 너비 w 에 맞게 이름을 한 줄 또는 두 줄로 — 띄어쓰기에서 가운데 가까운 곳을 먼저, 없으면 글자 가운데에서 끊어요(줄임표 없이 전체 이름) */
 export function wrapLabel(text, w) {
     const t = labelOf(text); if (!t || textW(t) <= w) return [t];
     const sp = [...t.matchAll(/ /g)].map(m => m.index);
@@ -602,7 +630,9 @@ const VB_MODE = 'blFloorsVB';   // ui 에 적는 「보던 칸을 어느 배치 
 export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null, dir = null, floors = true, lore = null } = {}) {
     if (!svg || svg.getAttribute('data-bl-floors')) return null;
     // 1.7.5 아직 안 가 본 곳: 로어북 장소(lore — lorePlaces) 가운데 지도 자료에 없는 곳 · 구역 탭(ui.mapArea)을 고른 때는 안 그려요(「전체」 에서만)
-    const ghosts = lore?.length && !ui?.mapArea ? unvisitedOf(map, lore, { tr }).map(g => ({ ...g, label: (tr?.(g.label) || g.label) })) : [];
+    // 1.7.6 화면만 번역: 이름 · 카드 설명을 그 확장 번역 사전(tr)으로 — 사전에 없으면 영어 그대로 두고, 번역 단추를 누를 때 번역 다리(src/ext-bridge-tr.js)가 같은 사전에 채워요(unvisitedTexts).
+    //   번역 이름이 지도 장소의 번역 이름과 같으면(다른 영어 이름으로 이미 들어온 곳) 흐린 점을 또 그리지 않아요
+    const ghosts = lore?.length && !ui?.mapArea ? shownGhosts(map, lore, tr) : [];
     const L = floors ? floorLayout(map?.places, { find, tr, dir, ghosts }) : null;
     // 버그 사냥 9b: 그 확장이 기억한 보던 칸(ui.mapVB — 끌기 · 확대)은 그때 그린 배치의 눈금이에요. 장소가 바뀌어 층별 배치가 새로 생기거나 없어지면
     //   다른 눈금의 칸이 남아 엉뚱한 곳(빈 곳)을 보여 줬어요 → 어느 배치로 그렸는지 ui 에 적어 두고, 바뀌면 보던 칸을 버려요.
@@ -751,7 +781,7 @@ export function showGhostCard(panel, g) {
     head.append(mk('b', '', g.label), mk('span', 'ss-chip bl-unv-chip', GH_TAG));
     if (Number.isFinite(g.f) && g.f) head.append(mk('span', 'ss-chip', FLOOR_TAG(g.f)));
     card.append(head);
-    if (g.summary) card.append(mk('p', 'ss-pre ss-dim ss-notr', g.summary));   // 로어북 원문 그대로(그 확장 화면 번역이 낱말만 바꿔 섞이지 않게 · .ss-notr = 그 확장이 건너뛰는 표식)
+    if (g.sum ?? g.summary) card.append(mk('p', 'ss-pre ss-dim ss-notr', g.sum ?? g.summary));   // 로어북 원문 그대로(그 확장 화면 번역이 낱말만 바꿔 섞이지 않게 · .ss-notr = 그 확장이 건너뛰는 표식)
     card.append(mk('p', 'ss-hint', `로어북${g.from ? ` 「${g.from}」` : ''}에 적힌 곳이에요 · 이야기에 나와 지도에 들어오면 흐린 표시가 사라지고 원래 점으로 그려져요.`));
     const theirs = [...(panel.querySelectorAll?.('.ss-place') || [])].find(c => c !== card && !c.classList.contains('bl-unv-card'));
     if (theirs) { theirs.style.display = 'none'; theirs.setAttribute('data-bl-unv-hid', ''); theirs.parentNode.insertBefore(card, theirs); }
@@ -781,11 +811,14 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
     // 1.7.5 「아직 안 가 본 곳」(미트볼 맞춤 스위치 unvisited · 기본 켬)은 층별 보기를 꺼도 그 확장 그림 위에 따로 그려요
     const ghostOn = () => mbFit('unvisited', doc);
     const active = () => isOn(doc) || ghostOn();
+    // 1.7.6 번역 다리(src/ext-bridge-tr.js)가 번역 단추를 누른 뒤 가져가는 글 — 서로 부르지 않게 문서 밖 등록부 하나(스위치를 껐거나 로어북을 아직 못 읽었으면 빈 목록)
+    try { globalThis[Symbol.for('blue-lemonade.mb-unvisited.v1')] = () => { try { return ghostOn() && core && !dirNow.wait ? unvisitedTexts(mapNow(), dirNow.lore, { tr: trFn() }) : []; } catch { return []; } }; } catch { /* 번역은 그 확장이 아는 글만 */ }
     const dress = svg => {
         if (!active() || !core || svg.getAttribute('data-bl-floors')) return;
         const map = mapNow(); if (!map) return;
         const panel = svg.closest?.('.ss-panel'), ui = panel?._ss?.ui ?? null;
         loadDir();
+        if (dirNow.wait) return;   // 1.7.6 다른 캐릭터의 로어북을 읽는 중 — 앞 캐릭터의 층 안내 · 장소로 그리지 않고, 다 읽으면 그 자리에서 입혀요(아래 loadDir)
         try { applyFloors(svg, map, { ui, find: findFn(), tr: trFn(), dir: dirNow.list, floors: isOn(doc), lore: ghostOn() ? dirNow.lore : null }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
         // 누른 흐린 점이 있으면(그 확장이 다시 그려도) 카드를 다시 놓아요
         if (ui?.blGhost) { const g = svg._blGhosts?.find(x => x.key === ui.blGhost); if (g) showGhostCard(panel, g); else ui.blGhost = null; }
@@ -802,11 +835,15 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
     };
     // 1.7.4 로어북 층 안내: 이 채팅에 걸린 로어북(카드 · 카드 안 책 · 채팅 로어북)을 한 번 읽어 두고, 안내가 바뀌면 떠 있는 지도를 다시 그려요
     // 1.7.5 같은 로어북에서 장소 후보(lorePlaces)도 같이 — 채팅 · 로어북이 바뀔 때만 읽어요(메시지마다 안 돌아요)
-    const dirNow = { key: null, list: [], lore: [], gen: 0, reads: 0 };
+    // 1.7.6 캐릭터(모임)가 바뀌면 앞 캐릭터의 목록을 비우고 다 읽을 때까지 입히기를 미뤄요(wait) — 예전엔 앞 캐릭터의 장소로 한 번 그렸다가 다시 그렸어요(리그: B 의 지도에 A 의 「달빛 찻집」).
+    //   같은 캐릭터의 다른 채팅은 로어북이 거의 같아 예전처럼 바로 그리고, 달라졌을 때만 다시 그려요
+    const dirNow = { key: null, card: null, wait: false, list: [], lore: [], gen: 0, reads: 0 };
     const loadDir = () => {
-        let c, key; try { c = stCtx(); if (!c) return; key = `${c.groupId ?? ''}|${c.characterId ?? ''}|${c.getCurrentChatId?.() ?? ''}|${c.chatMetadata?.world_info ?? ''}`; } catch { return; }
+        let c, key, card; try { c = stCtx(); if (!c) return; card = `${c.groupId ?? ''}|${c.characterId ?? ''}`; key = `${card}|${c.getCurrentChatId?.() ?? ''}|${c.chatMetadata?.world_info ?? ''}`; } catch { return; }
         if (key === dirNow.key) return;
         dirNow.key = key; const gen = ++dirNow.gen;
+        if (card !== dirNow.card) { dirNow.card = card; dirNow.list = []; dirNow.lore = []; dirNow.wait = true; }
+        if (dirNow.wait) setTimeout(() => { if (gen === dirNow.gen && dirNow.wait) { dirNow.wait = false; sweep(); } }, 3000);   // 로어북 읽기가 안 끝나도 지도는 입혀요(안내 없이)
         (async () => {
             const texts = [], entries = [], names = new Set(); dirNow.reads++;
             const cards = c.groupId ? (c.groups?.find?.(g => g.id === c.groupId)?.members || []).map(a => c.characters?.find?.(x => x.avatar === a)) : [c.characters?.[c.characterId]];
@@ -816,11 +853,16 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
             return { list: floorDirectory(texts), lore: lorePlaces(entries, { tr: trFn() }) };
         })().then(({ list, lore }) => {
             if (gen !== dirNow.gen) return;
+            const waited = dirNow.wait; dirNow.wait = false;
             const was = JSON.stringify([dirNow.list, dirNow.lore]); dirNow.list = list; dirNow.lore = lore;
-            if (JSON.stringify([list, lore]) !== was && active()) redraw();
-        }).catch(() => { /* 안내 없이 */ });
+            // 기다리던 지도(아직 안 입힌 것)는 그 자리에서 입히고, 이미 입혀 둔 지도가 있으면(창을 연 채 넘어온 때 · 같은 캐릭터에서 바뀐 때) 그 확장이 다시 그리게 해요
+            const dressed = !waited || [...doc.querySelectorAll('svg.ss-map[data-bl-floors]')].length > 0;
+            if (dressed && JSON.stringify([list, lore]) !== was && active()) redraw();
+            if (waited) sweep();
+        }).catch(() => { if (gen === dirNow.gen && dirNow.wait) { dirNow.wait = false; sweep(); } });   // 못 읽으면 안내 없이 입혀요
     };
-    try { const c = stCtx(), ev = c?.eventTypes ?? c?.event_types; for (const k of ['WORLDINFO_UPDATED', 'CHARACTER_EDITED']) if (ev?.[k]) c.eventSource?.on?.(ev[k], () => { dirNow.key = null; loadDir(); }); } catch { /* 채팅이 바뀔 때만 새로 읽어요 */ }
+    // 1.7.6 층별 보기 · 안 가 본 곳이 다 꺼져 있으면 읽지 않아요(다시 켜면 그릴 때 loadDir 가 읽어요)
+    try { const c = stCtx(), ev = c?.eventTypes ?? c?.event_types; for (const k of ['WORLDINFO_UPDATED', 'CHARACTER_EDITED']) if (ev?.[k]) c.eventSource?.on?.(ev[k], () => { dirNow.key = null; if (active()) loadDir(); }); } catch { /* 채팅이 바뀔 때만 새로 읽어요 */ }
     (load ? Promise.resolve(load()) : mbCore(doc)).then(m => { core = m; sweep(); }).catch(() => { /* 그 확장 그림 그대로 */ });
     try {
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 층별 지도' }, records => {

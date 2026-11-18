@@ -452,6 +452,21 @@ export function planFromDividers(order, promptOf) {
 const nameKey = name => String(name ?? '').normalize('NFC').replace(/\s+/g, ' ').trim();
 /** 프리셋 이름에서 판 번호를 뺀 줄기 — 같은 프리셋의 다른 판을 먼저 보여 줘요 */
 export const presetStem = name => nameKey(name).toLowerCase().replace(/[\s_.v-]*\d+(?:\.\d+)*\s*$/i, '').replace(/[\d.]+/g, '').trim();
+/** 폴더를 가져올 수 있는 다른 프리셋 — 지금 보이는 모습 그대로(프리셋 파일 폴더 + 테마 설정 칸 · mergeFolders).
+ *  1.5.2 부터 손 안 댄 폴더는 프리셋 파일에만 있어서, 설정 칸만 보면 그 프리셋이 목록에 안 나왔어요(11-18).
+ *  here: 지금 프리셋 이름 · slots: 테마 설정 promptFolders.presets · files: Map(프리셋 이름 → 그 파일의 폴더 목록) → [{ key, count, near, folders }]
+ *  같은 프리셋의 다른 판(이름에서 판 번호만 다름)을 위에, 그 안에서는 새 판부터. 설정 칸 · 파일 값은 고치지 않아요 */
+export function importSources(here, slots, files) {
+    const box = isObj(slots) ? slots : {}, fileOf = files instanceof Map ? files : new Map();
+    const keys = new Set([...Object.keys(box), ...fileOf.keys()].filter(safeKey)), stem = presetStem(here), out = [];
+    for (const key of keys) {
+        if (key === here) continue;
+        const seed = tidyFolders(fileOf.get(key)), raw = Object.hasOwn(box, key) && isObj(box[key]) ? box[key] : null;
+        const folders = dropEmpty(mergeFolders(seed, raw ? migrateFolderSlot(structuredClone(raw), seed) : null));
+        if (folders.length) out.push({ key, count: folders.length, near: !!stem && presetStem(key) === stem, folders });
+    }
+    return out.sort((a, b) => (b.near - a.near) || b.key.localeCompare(a.key, undefined, { numeric: true }));
+}
 /** 다른 프리셋의 폴더를 지금 프리셋에 맞춘다. 항목은 ① 같은 id ② 같은 이름(지금 프리셋에 그 이름이 하나일 때)으로 찾고 못 찾으면 뺌.
  *  아직 폴더에 없는 항목은 실제 순서에서 앞뒤 항목이 같은 폴더면 그 안에 넣어요.
  *  source: 폴더 목록 · names: 원본 프리셋 { id: 이름 } · prompts: 지금 프리셋 프롬프트 · order: 지금 순서 → { folders, stats } */

@@ -31,8 +31,10 @@ export const SETS = [
     //   2.7.21(11-14 · 원작이 저장소 역사를 새로 정리한 판): 점검 대본 대조 + 리그 사진(폰 384 · PC 1280 × 낮 · 밤) — 띠 · 옆 미니창이 타일 판으로 바뀜(이름이 겹친 알림 닫기 규칙을 좁힘) · 새 설정 줄 두 꼴 · 그림 글자 일곱.
     //   2.7.22(11-15 리그 — 만들기 창 빠른 세트 · 번역 고치기 창 맞춤) · 2.7.23(11-15 대조 · 11-16 리그: 폰 384 낮 · 밤 · PC 1280 — 창 여섯 · 상태창 탭 전부 · 변화 그래프 · 최면 어플 · 새 설정 탭) — 맞춤이 기대는 이름 그대로.
     //   2.8.0(11-16 리그 — 폰 384 낮 · 밤 · 기본 모양과 「같은 모양」 켬 둘 다: 창 여섯 · 상태창 탭 전부 · 전체화면 미니홈피 · 띠): 관계 카드 이름 단추 줄 · 일곱 칸 묶음 줄 · 루트 비교 두 열 · 띠 펼친 칸 · 창 안 알림 자리를 맞춤.
+    //   2.9.0(11-18 리그 — 원작 98f696c4 · 사용자 설치판 af3b1a1(화면 쪽 차이 없음) · 폰 384 밤 낮 · PC 1280 · 합성 세계와 사용자 실제 채팅 사본): 이름 262개 가운데 사라진 것 0.
+    //     새 화면(점집 · 새 지도 · 게임 모드 욕구 · 꾸미기 · 쓸 기능 한 화면 · 심플 모드 · 위치 칸 「갈 곳」)은 맞춤 시트의 「간격 체계」(구조 규칙) · 「갈 곳」 묶음으로 맞췄어요.
     //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
-    { root: '#ss-settings', css: './ext-status.gen.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0'],
+    { root: '#ss-settings', css: './ext-status.gen.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0', '2.9.0'],
         strips: ['.ss-scope .ss-tabs'] },   // 맞춤 시트가 「한 줄 · 스크롤바 없음」으로 바꾼 그 확장의 탭 줄 — 등록부에 넣어야 휠로 넘친 탭에 닿고, 그 확장이 판을 다시 그린 뒤에도 고른 탭이 보여요
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   1.9.61(2026-11-14 점검 대본 대조): 바뀐 것은 백그라운드 답장의 반쪽 답을 건너뛰는 사건 처리뿐 — 화면 · CSS · 선택자 39개 · 구조 표식 8개 그대로라 맞춤도 그대로예요.
@@ -380,9 +382,12 @@ export function fitActs(tb) {
         const n = rowCols(tiles, cols);
         if (n) { fit = 'row'; if (host.style.getPropertyValue('--bl-tcols') !== String(n)) host.style.setProperty('--bl-tcols', String(n)); }
         else if (cols === 4 && actsFit(tiles, 4, acts.children.length > 5 ? 3 : acts.children.length <= 2 ? 1 : 2)) { fit = 'in'; grow = growTile(tiles, 4); }   // 미트볼 다음 판(2.9) 심플 모드 띠는 단추가 둘(일시정지 · 톱니) — 빈 열 하나(폰 4열 판 한 열 72px 위 · 단추 둘 64px)에 들어가요
+        // 1.7.5 단추가 못 올라가는 판(폰 기본 배치 — 마지막 줄 「돈 · 연락 · 퀘스트」 옆에 빈 열이 하나뿐): 단추 줄은 원작대로 아래에 두고, 마지막 줄 가장 오른쪽 칸이 판 끝까지 늘어나 빈 열을 채워요
+        //   (단추 수 0 으로 달아요 — 시트의 같은 식이 빈 열만큼만 늘려요). 한 줄 높이 칸만: 여러 줄에 걸친 칸은 윗줄의 오른쪽 칸을 덮을 수 있어 그대로 둬요
+        else if (cols === 4) { const g = growTile(tiles, 4); const t = g && tiles.find(x => x.k === g.k); if (t && t.h === 1) grow = g; }
     }
     if (fit) { if (host.getAttribute('data-bl-acts') !== fit) host.setAttribute('data-bl-acts', fit); } else if (host.hasAttribute?.('data-bl-acts') ?? true) host.removeAttribute('data-bl-acts');
-    setGrow(host, grow, acts?.children.length || 0);
+    setGrow(host, grow, fit === 'in' ? acts?.children.length || 0 : 0);
     return fit;
 }
 /** 1.7.4 수치 칸 고르게(사용자 「2줄이 돼도 저 상태창 알잘딱하게 크기 바뀌어야지」): 그 확장은 게이지 칸의 수치 묶음을 글 폭 그대로 가운데에 모으고(칸 양옆이 빔)
@@ -398,14 +403,36 @@ export function barsMin(rows) {
     }
     return Math.round((max + 0.6) * 100) / 100;   // + 이름 ↔ 숫자 틈(4px 남짓)
 }
+/** 1.7.5 PC 게이지 칸 폭(사용자 결정 「PC 에서 게이지 칸에 폭을 더」): PC 넓은 판(12열)에서 게이지 칸이 제 열 몫(1280 · 넷 열 약 238px)뿐이라 수치 넷이 둘씩 두 줄이 됐어요.
+ *  게이지 칸이 걸친 열만 「한 줄에 다 들어가는 폭」을 바닥으로 받는 열 틀을 만들어요 — 나머지 열은 남는 폭을 고르게. 바닥 값은 시트가 --bl-bn · --bl-bmin 으로 셈해요(src/ext-status.css · 701px 이상에서만).
+ *  여기서는 칸 자리(c 열부터 w 열 · 판 n 열)만 봐요(배치를 재지 않아요). 판을 다 쓰는 칸 · 자리를 모르는 칸은 '' */
+export function barsCols(c, w, n) {
+    if (!(c >= 1 && w >= 1 && n > w && c + w - 1 <= n)) return '';
+    const rep = (k, v) => (k > 0 ? `repeat(${k}, ${v})` : '');
+    return [rep(c - 1, 'minmax(0, 1fr)'), rep(w, 'minmax(var(--bl-btmin, 0px), 1fr)'), rep(n - c - w + 1, 'minmax(0, 1fr)')].filter(Boolean).join(' ');
+}
+const BCOL_VARS = ['--bl-btpl', '--bl-bw', '--bl-bo', '--bl-bnc'];
+function setBarsCols(host, tb, tile) {
+    const tg = tile?.parentElement, cols = Number(tg?.style?.getPropertyValue?.('--cols'));
+    let tpl = '', w = 0, n = 0;
+    if (cols > 4 && !tb.classList?.contains?.('editing')) {
+        const m = SPAN.exec(tile.style.gridColumn || tile.style.gridColumnStart + ' / ' + tile.style.gridColumnEnd);
+        n = host.getAttribute('data-bl-acts') === 'row' ? Number(host.style.getPropertyValue('--bl-tcols')) || cols : cols;   // 한 줄 판(row)은 쓰인 열 수로 줄인 판
+        if (m) { w = +m[2]; tpl = barsCols(+m[1], w, n); }
+    }
+    if (!tpl) { if (host.hasAttribute?.('data-bl-bcols')) { host.removeAttribute('data-bl-bcols'); for (const v of BCOL_VARS) host.style.removeProperty(v); } return; }
+    for (const [v, x] of [['--bl-btpl', tpl], ['--bl-bw', w], ['--bl-bo', n - w], ['--bl-bnc', n]]) if (host.style.getPropertyValue(v) !== String(x)) host.style.setProperty(v, String(x));
+    if (host.getAttribute('data-bl-bcols') !== String(w)) host.setAttribute('data-bl-bcols', String(w));
+}
 export function markBars(tb) {
     const host = tb.closest?.('#ss-hud') || tb;
     const gs = [...(tb.querySelectorAll?.('.ss-tg > .ss-t.t-bars:not(.tall) > .c > .ci > .g') || [])];
-    if (!gs.length) { if (host.hasAttribute?.('data-bl-bars')) { host.removeAttribute('data-bl-bars'); host.style.removeProperty('--bl-bn'); host.style.removeProperty('--bl-bmin'); } return 0; }
+    if (!gs.length) { if (host.hasAttribute?.('data-bl-bars')) { host.removeAttribute('data-bl-bars'); host.style.removeProperty('--bl-bn'); host.style.removeProperty('--bl-bmin'); } setBarsCols(host, tb, null); return 0; }
     const min = `${barsMin(gs.map(g => ({ name: g.querySelector('em')?.textContent, value: g.querySelector('b')?.textContent })))}em`;
     if (host.style.getPropertyValue('--bl-bn') !== String(gs.length)) host.style.setProperty('--bl-bn', String(gs.length));
     if (host.style.getPropertyValue('--bl-bmin') !== min) host.style.setProperty('--bl-bmin', min);
     if (host.getAttribute('data-bl-bars') !== String(gs.length)) host.setAttribute('data-bl-bars', String(gs.length));
+    setBarsCols(host, tb, gs[0].closest?.('.ss-t') || null);
     return gs.length;
 }
 /** 1.5.5 사용자 「아침 4/1 뒤에 (화)(월) 이런 식으로 요일」: 그 확장의 날짜 칸은 칩에 「때 + 월/일」만 적고, 칸 설명(title)엔 「월/일(요일) 때 …」 를 적어요.
@@ -447,9 +474,6 @@ export function markBadge(tb) {
     }
     return n;
 }
-/** 이름표 → 값 목록(프로필 · 관계 · 장소): 값이 긴 칸(열세 자 넘거나 줄바꿈 — 폰 반 폭에 한 줄로 안 들어가는 길이)에 표식 — 두 단을 가로질러 통째 한 줄(src/ext-status.css). 글자 수만 봐요(배치를 재지 않아요) */
-/** 1.5.4 사용자 「프로필 설명 왜 세로 2열 아니지」: 13자 넘는 값을 두 단 통째로 돌렸더니 문장 값뿐인 프로필은 전부 한 열이 됐어요(여러 단 흐름이라 칸 사이 간격도 들쭉날쭉).
- *  → 두 열 격자에 칸(이름표 위 · 값 아래)을 차례로 놓고, 값이 아주 길 때(마흔 자 넘거나 줄바꿈)만 그 칸이 두 열을 차지해요. 칸 자리는 변수(--bl-c · --bl-rt · --bl-rd)로 — 배치를 재지 않아요. */
 /** 칸 모서리의 빨간 점(.ss-t-dot · 그 확장의 「방금 AI 답에서 바뀐 칸」 표시 · 1.5.9 사용자 「눌러 봤는데도 남아요」): 그 확장은 다음 AI 답까지 점을 남겨요.
  *  눌러서 펼쳐 본 칸의 점만 테마가 화면에서 숨겨요 — 본 칸 이름을 적은 작은 시트 하나(#bl-mb-dot-seen)로요. 그 확장의 파일 · 자료 · 요소는 안 건드려요(띠를 새로 그려도 시트는 그대로).
  *  새 AI 답 · 채팅 바꾸기 신호에 비우고, 띠가 다시 그려졌을 때 그 칸에 점이 없으면(그 확장이 스스로 끔) 그 칸을 잊어요 — 다음에 켜지는 점은 다시 보여요. 「원작 그대로 보기」 에서는 안 숨겨요. */
@@ -488,6 +512,9 @@ function hookDots(doc) {
     for (const name of ['MESSAGE_RECEIVED', 'CHAT_CHANGED']) if (types[name]) try { on(types[name], () => { try { clearDots(doc); } catch { /* 점 그대로 */ } }); } catch { /* 신호를 못 걸면 띠 다시 그리기로만 */ }
     return true;
 }
+/** 이름표 → 값 목록(프로필 · 관계 · 장소): 값이 긴 칸(열세 자 넘거나 줄바꿈 — 폰 반 폭에 한 줄로 안 들어가는 길이)에 표식 — 두 단을 가로질러 통째 한 줄(src/ext-status.css). 글자 수만 봐요(배치를 재지 않아요) */
+/** 1.5.4 사용자 「프로필 설명 왜 세로 2열 아니지」: 13자 넘는 값을 두 단 통째로 돌렸더니 문장 값뿐인 프로필은 전부 한 열이 됐어요(여러 단 흐름이라 칸 사이 간격도 들쭉날쭉).
+ *  → 두 열 격자에 칸(이름표 위 · 값 아래)을 차례로 놓고, 값이 아주 길 때(마흔 자 넘거나 줄바꿈)만 그 칸이 두 열을 차지해요. 칸 자리는 변수(--bl-c · --bl-rt · --bl-rd)로 — 배치를 재지 않아요. */
 export const LONG_VALUE = 40;
 export function markLong(dl) {
     let n = 0, row = 1, col = 1;

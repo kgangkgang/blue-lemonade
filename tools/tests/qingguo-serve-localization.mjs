@@ -289,4 +289,141 @@ await test('1.4 스크립트 이름도 헬퍼 목록에서 한글로 보여요',
     assert.ok(data.helpers.some(([zh]) => zh === '拉刻西斯-出杯·工具调用1.2（青果无缝移植版）'), '옛 1.2 이름도 그대로');
 });
 
+// ── 11-18 도구 호출 1.5: 따로 뜨던 창이 과일의 마음 창(#fruit-heart-v6) 안 탭으로 들어갔어요 ──
+/** 과일의 마음 창 + 본문 칸 + (serve 면) 도구 호출 화면 머리. 돌려주는 것: { heart, main, nav } */
+function heartIn(body, { serve = true } = {}) {
+    const heart = body.append(new El('div', { id: 'fruit-heart-v6', class: 'open' }));
+    const main = heart.append(new El('div', { class: 'fh-main' }));
+    if (serve) main.append(new El('div', { class: 'fh-page-head fh-exp-head', 'data-fh-serve-view': '1' })).append(new El('h2', {}, '出杯·工具调用'));
+    const nav = heart.append(new El('div', { class: 'fh-bottom-nav' }));
+    return { heart, main, nav };
+}
+
+await test('1.5 사전: 번역문에 중국어가 남지 않고 무늬가 올바른 정규식이에요', () => {
+    const { ui, patterns, parts, tail } = data.serve.fh;
+    assert.ok(Object.keys(ui).length >= 90, '탭 고정 문구');
+    for (const [zh, ko] of [...Object.entries(ui), ...parts, ...tail]) {
+        assert.ok(zh.trim() && ko.trim(), zh);
+        assert.ok(!HAN.test(ko.replace(KEPT, '').replace(/抗截断/g, '')), `중국어가 남았어요: ${ko}`);   // 「抗截断」 모델 이름 낱말도 원문
+        assert.ok(/[가-힣]/.test(ko) || !HAN.test(zh), ko);
+    }
+    for (const [pattern, to] of patterns) { assert.doesNotThrow(() => new RegExp(pattern)); assert.ok(!HAN.test(to)); }
+    // 긴 풀이 문장이 짧은 낱말보다 먼저 — 먼저 바뀐 낱말이 뒤 문장을 깨지 않아요
+    const order = [...parts, ...data.serve.status, ...tail].map(([zh]) => zh);
+    order.forEach((zh, i) => order.slice(0, i).forEach(before => assert.ok(!zh.includes(before) || zh === before, `「${before}」가 먼저 바뀌어 「${zh}」가 깨져요`)));
+});
+
+await test('1.5 탭 안 고정 문구가 모두 한글로 보여요 (옛 창 표의 오류 풀이도 같이)', () => {
+    const { main } = heartIn(boot());
+    const fhKeys = Object.keys(data.serve.fh.ui), oldKeys = ['没有工具调用：', 'ggchan 124 秒断流：', '渠道策略', 'Google 原生', 'OpenAI 兼容', '语义伪装', '随机噪音'];
+    const nodes = [...fhKeys, ...oldKeys].map(zh => main.append(new El('div', {}, zh)));
+    install();
+    for (const [i, zh] of fhKeys.entries()) assert.equal(nodes[i].shown, data.serve.fh.ui[zh], zh);
+    for (const [i, zh] of oldKeys.entries()) assert.equal(nodes[fhKeys.length + i].shown, data.serve.ui[zh], zh);
+    assert.equal(main.querySelector('h2').shown, '도구 호출');
+});
+
+await test('1.5 탭: 「꺼짐」 값은 옛 창의 「닫기」가 아니에요 · 지은이 표시는 그대로', () => {
+    const { main } = heartIn(boot());
+    const value = main.append(new El('span', { class: 'fh-serve-val' }, '关闭')), sign = main.append(new El('em', { class: 'fh-sign' }, '@拉刻西斯'));
+    install();
+    assert.equal(value.shown, '꺼짐');
+    assert.equal(sign.shown, '@拉刻西斯');
+});
+
+await test('1.5 탭: 이어 붙인 글(점검 칸 안내 · 모델 줄 · HTTP 풀이 제목 · 문장 가운데 굵은 글)', () => {
+    const { main } = heartIn(boot());
+    const add = (text, cls = '') => main.append(new El('span', cls ? { class: cls } : {}, text));
+    const hint1 = add('应为「未处理」', 'fh-hint'), hint2 = add('应为「无工具严格」', 'fh-hint'), model = add('模型：gemini-4-argon-抗截断', 'fh-serve-lmodel');
+    const http = ['HTTP 200 正常返回：', 'HTTP 400 渠道拒绝工具参数：', 'HTTP 429 请求过频：', 'HTTP 500 上游报错：', 'HTTP 502 / 503 网关或上游不可用：', 'HTTP 504 / 524 超时：'].map(t => add(t));
+    const note = main.append(new El('p', { class: 'fh-note' }));
+    const a = note.append({ nodeType: 3, nodeValue: '💡 当前处于' }), b = note.append(new El('b', {}, '普通模式')), c = note.append({ nodeType: 3, nodeValue: '，切换到「工具模式（出杯）」后上述两项传输层防护立即生效。' });
+    install();
+    assert.equal(hint1.shown, '「처리 안 함」이어야 해요');
+    assert.equal(hint2.shown, '「엄격 (도구 없음)」이어야 해요');
+    assert.equal(model.shown, '모델: gemini-4-argon-抗截断', '모델 이름은 그대로');
+    assert.deepEqual(http.map(n => n.shown), ['HTTP 200 정상 응답:', 'HTTP 400 연결이 도구 인수를 거부했어요:', 'HTTP 429 요청이 너무 잦아요:', 'HTTP 500 서버 오류:', 'HTTP 502 / 503 게이트웨이나 서버를 쓸 수 없어요:', 'HTTP 504 / 524 시간 초과:']);
+    assert.equal(a.nodeValue + b.shown + c.nodeValue, '💡 지금은 보통 모드 상태예요. 「도구 모드」로 바꾸면 위 두 전송 보호가 바로 적용돼요.');
+});
+
+await test('1.5 탭 기록: 제목 · 풀이의 아는 낱말만 바꾸고 서버 원문 · 시각은 그대로', () => {
+    const { main } = heartIn(boot());
+    const title = main.append(new El('span', { class: 'fh-serve-ltitle' }, '已还原出酒口正文'));
+    const title2 = main.append(new El('span', { class: 'fh-serve-ltitle' }, '网关超时'));
+    const meta = main.append(new El('span', { class: 'fh-serve-lmeta' }, 'HTTP 504 · 03:14:15'));
+    const detail = main.append(new El('div', { class: 'fh-serve-ldetail' }, '代理等模型超时。这轮没生成，不是没调工具。\nerror code: 504 upstream 原文'));
+    install();
+    assert.equal(title.shown, '본문 도구 내용을 되살렸어요');
+    assert.equal(title2.shown, '게이트웨이 시간 초과');
+    assert.equal(meta.shown, 'HTTP 504 · 03:14:15');
+    assert.equal(detail.shown, '프록시가 모델을 기다리다 시간 초과됐어요. 이번에는 생성되지 않았고, 도구를 안 부른 게 아니에요.\nerror code: 504 upstream 原文');
+});
+
+await test('1.5 아래 메뉴 단추 · 홈 카드 한 줄은 다른 탭을 볼 때도 한글이에요', () => {
+    const { main, nav } = heartIn(boot(), { serve: false });
+    const btn = nav.append(new El('button', { class: 'fh-nav-item', 'data-nav': 'serve', title: '出杯' }));
+    btn.append(new El('b', {}, '🍸')); const label = btn.append(new El('span', {}, '出杯'));
+    const card = main.append(new El('button', { 'data-action': 'open-serve-panel' })).append(new El('span', { class: 'fh-qr-copy' }));
+    const sub = card.append(new El('small', {}, '当前：普通模式（流式直连） · 点击进入出杯控制台'));
+    install();
+    assert.equal(label.shown, '도구', '다섯 칸(칸마다 65px)에 들어가게 두 글자 — 「도구 호출」은 옆 칸을 덮었어요(리그 사진)'); assert.equal(btn.getAttribute('title'), '도구');
+    assert.equal(sub.shown, '지금: 보통 모드 (스트리밍 바로 연결) · 눌러서 도구 호출 조작판 열기');
+    sub.text('当前：工具模式 · 抗外审+抗截断 · 最近：已还原出酒口正文'); changed(sub);
+    assert.equal(sub.shown, '지금: 도구 모드 · 외부 검열 대응 + 끊김 방지 · 최근: 본문 도구 내용을 되살렸어요');
+    sub.text('当前：工具模式 · 抗外审（流式） · 最近：正文直接返回'); changed(sub);
+    assert.equal(sub.shown, '지금: 도구 모드 · 외부 검열 대응 (스트리밍) · 최근: 본문이 바로 왔어요');
+});
+
+await test('1.5: 과일의 마음 창의 다른 탭 글은 이 표로 바꾸지 않아요 · 탭을 열면 바로 바뀌어요', () => {
+    const { main } = heartIn(boot(), { serve: false });
+    const other = main.append(new El('div', { class: 'fh-row' }, '普通模式')), other2 = main.append(new El('div', {}, '关闭'));
+    install();
+    assert.equal(other.shown, '普通模式'); assert.equal(other2.shown, '关闭');
+    // 도구 호출 탭으로 다시 그림
+    main.childNodes = [];
+    main.append(new El('div', { class: 'fh-page-head', 'data-fh-serve-view': '1' }));
+    const mode = main.append(new El('button', { 'data-serve-mode': 'normal' }, '普通模式'));
+    changed(main);
+    assert.equal(mode.shown, '보통 모드');
+    // 다른 탭으로 돌아가면 다시 손대지 않아요
+    main.childNodes = [];
+    const back = main.append(new El('div', {}, '普通模式'));
+    changed(main);
+    assert.equal(back.shown, '普通模式');
+});
+
+// 리그(11-18 · 거울의 청과 4.4 + 스크립트 1.5)에서 본 것: 과일의 마음 창 공용 번역이 먼저 지나가 전각 쌍점이 「: 」로 바뀐 글 21곳이 중국어로 남았고, 상태 값 「开启」가 「켜기」로 보였어요
+await test('1.5 탭: 공용 번역이 먼저 바꾼 쌍점(「: 」) 꼴 · 상태 값(켜기 → 켜짐)도 한글로', () => {
+    const { main } = heartIn(boot());
+    const add = (text, attrs = {}) => main.append(new El('span', attrs, text));
+    const zh = ['当前: 普通模式', '自动识别: 当前插头判定为「OpenAI 兼容」。全部防护与反路由开关均可使用。', 'OpenAI 兼容:', '没有工具调用:', 'ggchan 124 秒断流:', 'HTTP 200 正常返回:', 'HTTP 504 / 524 超时:', '参数不是合法 JSON:', '响应不是 JSON:',
+        '往非用户消息间随机穿插高数/物理题解与侍酒师知识稀释提示词特征（注意: 开启噪音会影响上游缓存命中）。', '酒馆常把 Vertex 的 400 和网关超时 524 包成 500。看原文: 有 524 或 timeout 就是超时，重试即可。'];
+    const nodes = zh.map(t => add(t));
+    const on = add('켜기', { class: 'fh-serve-val' }), off = add('끄기', { class: 'fh-serve-val' }), button = main.append(new El('button', { class: 'fh-btn' }, '켜기'));
+    const detail = main.append(new El('div', { class: 'fh-serve-ldetail' }, 'error code: 524 그대로'));
+    const { nav } = heartIn(doc.body);
+    const btn = nav.append(new El('button', { class: 'fh-nav-item', 'data-nav': 'serve' })); const icon = btn.append(new El('b', {}, '🍸'));
+    const homeIcon = main.append(new El('button', { 'data-action': 'open-serve-panel' })).append(new El('span', { class: 'fh-qr-ico' }, '🍸'));
+    install();
+    for (const [i, text] of zh.entries()) assert.ok(!HAN.test(nodes[i].shown), `${text} → ${nodes[i].shown}`);
+    assert.equal(nodes[0].shown, '지금: 보통 모드'); assert.equal(nodes[5].shown, 'HTTP 200 정상 응답:');
+    assert.equal(on.shown, '켜짐'); assert.equal(off.shown, '꺼짐'); assert.equal(button.shown, '켜기', '단추 말은 그대로');
+    assert.equal(detail.shown, 'error code: 524 그대로', '서버 원문의 쌍점은 건드리지 않아요');
+    assert.equal(icon.shown, '⚒\uFE0E', '아래 메뉴 그림 문자는 선 글자로');
+    assert.equal(homeIcon.shown, '🍸', '홈 카드 그림 칸은 스크립트가 되돌리므로 그대로');
+    // 홈 카드 한 줄은 과일의 마음 창 공용 번역(fruit-heart)이 맡아요 — 시험은 fruit-localization.mjs
+});
+
+await test('1.5 알림 · 헬퍼 목록 이름 · 옛 1.4 창은 그대로', () => {
+    const body = boot();
+    const zh = ['已开启抗外审（本轮输入转工具回执）', '已关闭抗外审', '已开启抗截断（非流式）', '已关闭抗截断', '已开启「语义伪装」', '已关闭「随机噪音」', '已一键校对酒馆设置', '已清空请求记录', '复制失败，请手动复制', '未检测到果实之心面板，请先启用果实之心脚本'];
+    const shown = zh.map(text => toastIn(body, '出杯·工具调用', text));
+    const old = panelIn(body).append(new El('div', {}, '关闭'));
+    install();
+    for (const [i, text] of zh.entries()) { assert.equal(shown[i].title.shown, '도구 호출'); assert.ok(!HAN.test(shown[i].message.shown), `${text} → ${shown[i].message.shown}`); }
+    assert.equal(shown[4].message.shown, '「의미 위장」을(를) 켰어요'); assert.equal(shown[5].message.shown, '「무작위 잡음」을(를) 껐어요');
+    assert.equal(old.shown, '닫기', '옛 창의 「关闭」는 닫기');
+    assert.deepEqual(data.helpers.find(([name]) => name === '拉刻西斯-出杯·工具调用1.5（果心内嵌UI版）'), ['拉刻西斯-出杯·工具调用1.5（果心内嵌UI版）', '라케시스 · 도구 호출 1.5 (과일의 마음 내장판)']);
+});
+
 done();

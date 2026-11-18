@@ -54,7 +54,7 @@
 .salty-panel .salty-custom-color input[aria-invalid="true"] { color: var(--salty-danger); outline: 1px solid var(--salty-danger); border-radius: 5px; }
 .salty-panel .salty-custom-foot { display: flex; justify-content: space-between; gap: 4px; margin: 8px 1px; color: var(--salty-muted); font-size: 12px; }
 .salty-panel .salty-custom-save { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; height: var(--bl-settings-control, 34px); background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent); border: 0; border-radius: 8px; cursor: pointer; }
-.salty-panel .salty-custom-save:disabled { opacity: .45; cursor: default; }
+.salty-panel .salty-custom-save:disabled { opacity: .55; cursor: default; }   /* 1.7.5 꺼진 단추 반투명 .45 → .55 · 면 · 글자색은 56-control-consistency 의 꺼짐 규칙(보통 단추 면 + 본문색) */
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header:not(:has(> .drag-handle)) { grid-template-columns: 0 28px minmax(0, 1fr) 36px 30px; }
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls { grid-template-columns: minmax(0, 1.5fr) minmax(0, .8fr) minmax(0, 1.1fr); }
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls:has(input[name="depth"]:not(:disabled)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }

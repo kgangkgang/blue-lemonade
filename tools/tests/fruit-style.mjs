@@ -87,6 +87,12 @@ test('switches share one thin geometry and switch rows keep title, switch and no
   assert.match(css, /\.fh-toggle > \.fh-sw \{ grid-column:2; grid-row:1 \/ span 2/);
   assert.match(css, /\.fh-toggle > span > small \{ grid-column:1; grid-row:2/);
   assert.match(css, /\.fh-nav-item \{[^}]*flex-direction:row/);
+  // 11-18 청과 도구 호출 1.5 탭: 새 부품 글자는 이 창의 눈금(1em · .85em) — 아래 메뉴 칸 규칙은 건드리지 않아요(스크립트가 다섯 칸을 스스로 정해요 · 리그에서 확인)
+  assert.match(css, /:is\(\.fh-serve-btitle,\.fh-serve-ltitle\) \{ font-size:1em; line-height:1\.5; \}/);
+  assert.match(css, /:is\(\.fh-serve-bsub,[^)]*\.fh-serve-erritem span\) \{ font-size:\.85em; line-height:1\.5; \}/);
+  assert.match(css, /:is\(\.fh-serve-pill,\.fh-serve-lmeta\) \{ font-size:\.75em;/);
+  assert.match(css, /\.fh-bottom-nav \{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.ok(!/fh-bottom-nav[^{]*(:has\(|nth-last-child)/.test(css), '아래 메뉴 칸 규칙은 예전 그대로');
   assert.match(css, /\.fh-row \{ display:flex; flex-wrap:wrap; align-items:center/);
   assert.match(css, /\.fh-sel \{[^}]*white-space:nowrap; overflow:hidden; text-overflow:ellipsis/);
   assert.match(css, /\.fh-sortrow \.fh-grip \{[^}]*touch-action:none; cursor:grab/);

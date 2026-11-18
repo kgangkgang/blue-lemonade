@@ -194,6 +194,37 @@ await test('다른 프리셋에서 가져오기: 같은 id → 같은 이름(하
     assert.equal(source[0].ids.length, 3, '원본 폴더는 그대로');
     assert.equal(core.presetStem('시트라 6.6'), core.presetStem('시트라 6.2')); assert.notEqual(core.presetStem('시트라 6.6'), core.presetStem('과일 6.6'));
 });
+// 원작 따라가기(11-18 · 원작 1.4.6 이 가져오기 목록을 프리셋 파일까지 넓힌 것과 같은 꼴): 1.5.2 부터 손 안 댄 폴더는 프리셋 파일에만 있고
+//   테마 설정 칸에는 펼침만(또는 아무것도) 남아요. 가져올 프리셋 목록이 설정 칸의 folders 만 봐서, 파일에 폴더가 든 프리셋이 목록에 안 나왔어요.
+await test('가져올 프리셋 목록: 프리셋 파일에만 폴더가 있는 프리셋도 · 고친 폴더는 파일 새 항목과 합친 지금 모습으로 · 다 푼 프리셋 · 지금 프리셋은 빼요', () => {
+    const seedA = [{ id: 's1', name: '문체', ids: ['a', 'b'], open: true }];
+    const seedB = [{ id: 's1', name: '문체', ids: ['a', 'b', 'c'], open: true }, { id: 's2', name: '시점', ids: ['d'], open: true }];
+    const slots = {
+        '과일 6.2': { v: 2, open: { s1: false } },                                                              // 접기만 한 칸 — 폴더는 파일에
+        '과일 6.4': { v: 2, open: {}, folders: [{ id: 's1', name: '내 문체', ids: ['a'] }], base: core.seedBase(core.tidyFolders(seedA)) },   // 고친 폴더 + 파일 새 판(c · 시점)
+        '옛 칸': { folders: [{ id: 'o1', name: '굳은 폴더', ids: ['x', 'y'], open: true }] },                       // 1.5.1 까지의 칸
+        '다 풂': { v: 2, open: {}, folders: [], base: core.seedBase(core.tidyFolders(seedA)) },
+        '여기 1.0': { v: 2, open: {} },
+    };
+    const slotsBefore = JSON.stringify(slots);
+    const files = new Map([['과일 6.2', seedA], ['과일 6.4', seedB], ['파일만 2.0', seedA], ['다 풂', seedA], ['여기 1.0', seedA], ['빈 프리셋', []]]);
+    const list = core.importSources('여기 1.0', slots, files);
+    assert.deepEqual(list.map(x => x.key).sort(), ['과일 6.2', '과일 6.4', '옛 칸', '파일만 2.0'].sort(), '파일에만 있는 프리셋도 · 다 푼 것 · 지금 것 · 빈 것은 없음');
+    const of = key => list.find(x => x.key === key);
+    assert.deepEqual(of('파일만 2.0').folders.map(f => [f.name, f.ids]), [['문체', ['a', 'b']]]);
+    assert.equal(of('파일만 2.0').count, 1);
+    assert.deepEqual(of('과일 6.2').folders.map(f => [f.name, f.ids, f.open]), [['문체', ['a', 'b'], false]], '펼침은 설정 칸에서');
+    assert.deepEqual(of('과일 6.4').folders.map(f => [f.name, f.ids]), [['내 문체', ['a', 'c']], ['시점', ['d']]], '고친 폴더 + 새 판이 더한 항목 · 폴더(b 는 사용자가 뺀 것)');
+    assert.deepEqual(of('옛 칸').folders.map(f => [f.name, f.ids]), [['굳은 폴더', ['x', 'y']]]);
+    assert.equal(JSON.stringify(slots), slotsBefore, '설정 칸은 그대로(보기만)');
+    // 차례: 같은 프리셋의 다른 판 먼저 · 그 안에서는 새 판부터
+    const near = core.importSources('과일 6.6', slots, files);
+    assert.deepEqual(near.slice(0, 2).map(x => [x.key, x.near]), [['과일 6.4', true], ['과일 6.2', true]]);
+    assert.ok(near.slice(2).every(x => !x.near));
+    // 깨진 입력
+    assert.deepEqual(core.importSources('P', null, null), []);
+    assert.deepEqual(core.importSources('P', { Q: 'nope', R: null }, new Map([['', seedA], ['__proto__', seedA]])), []);
+});
 await test('프리셋 칸 읽기: version 1 만 · 깨진 값은 빈 목록', () => {
     assert.deepEqual(core.readPresetFolders({ blPromptFolders: { version: 1, folders: [{ id: 'a', name: '문체', ids: ['x'] }] } }).map(f => f.ids), [['x']]);
     for (const value of [undefined, {}, { blPromptFolders: { version: 2, folders: [] } }, { blPromptFolders: 'x' }, { blPromptFolders: { version: 1, folders: 'x' } }]) assert.deepEqual(core.readPresetFolders(value), []);
@@ -884,6 +915,36 @@ await test('1.0.3 폴더 창 위 · 아래: 저장하면 보내는 순서가 바
     assert.ok(heads().some(h => h.querySelector('.bl-pf-title').textContent === '새로'));
     settings.promptFolders.presets.P1.folders = made.filter(f => ['fa', 'fb', 'fc'].includes(f.id));
     drawList(); await settle();
+});
+await test('도구 메뉴 「다른 프리셋에서 가져오기」: 프리셋 파일에만 폴더가 든 프리셋도 목록에 나와요(설정 칸을 만들지 않고 프리셋 파일도 그대로)', async () => {
+    const keys = Object.keys(settings.promptFolders.presets), kept = {};
+    for (const key of keys) if (key !== 'P1') { kept[key] = settings.promptFolders.presets[key]; delete settings.promptFolders.presets[key]; }
+    const filePreset = { prompts: [{ identifier: 'p30', name: '항목 30' }], extensions: { blPromptFolders: { version: 1, folders: [{ id: 'sf', name: '파일 묶음', ids: ['p30', 'p31', 'gone'], open: true }] } } };
+    const fileBefore = JSON.stringify(filePreset);
+    const oldManager = ctx.getPresetManager;
+    try {
+        assert.ok(!toolsMenu().some(b => b.textContent === '다른 프리셋에서 가져오기'), '다른 프리셋에 폴더가 없으면 메뉴에 없어요');
+        ctx.getPresetManager = () => ({ getSelectedPresetName: () => preset, getPresetList: () => ({ presets: [{ extensions: {} }, filePreset], preset_names: { P1: 0, '파일만 3.0': 1 } }), getCompletionPresetByName: name => (name === '파일만 3.0' ? filePreset : null) });
+        const menu = toolsMenu();
+        assert.ok(menu.some(b => b.textContent === '다른 프리셋에서 가져오기'), '파일에만 폴더가 있어도 메뉴에 나와요');
+        pick(menu, '다른 프리셋에서 가져오기');
+        const sub = [...document.querySelectorAll('.bl-pf-layer button')];
+        assert.deepEqual(sub.map(b => b.textContent), ['파일만 3.0 · 폴더 1개']);
+        footer.querySelector('.bl-pf-tools').dispatchEvent(new Event('click', { bubbles: true }));   // 메뉴를 다시 열어 앞 메뉴를 닫아요
+        assert.equal(settings.promptFolders.presets['파일만 3.0'], undefined, '남의 프리셋 칸을 만들지 않아요');
+        assert.equal(JSON.stringify(filePreset), fileBefore, '프리셋 파일은 그대로');
+        // 배열 꼴 이름 목록(다른 API 의 프리셋 관리자 꼴)도 같은 결과
+        ctx.getPresetManager = () => ({ getSelectedPresetName: () => preset, getPresetList: () => ({ presets: [{ extensions: {} }, filePreset], preset_names: ['P1', '파일만 3.0'] }) });
+        assert.ok(toolsMenu().some(b => b.textContent === '다른 프리셋에서 가져오기'));
+        // 프리셋 목록을 못 읽어도 메뉴는 열려요(설정 칸만 봐요)
+        ctx.getPresetManager = () => ({ getSelectedPresetName: () => preset, getPresetList: () => { throw new Error('없음'); } });
+        assert.deepEqual(toolsMenu().map(b => b.textContent).slice(0, 1), ['새 폴더']);
+    } finally {
+        ctx.getPresetManager = oldManager;
+        Object.assign(settings.promptFolders.presets, kept);
+        document.querySelectorAll('.bl-pf-layer').forEach(el => el.remove());
+        drawList(); await settle();
+    }
 });
 await test('1.0.6 다른 도구 그룹은 편집창에서 확인하고 저장해요 · 취소·되돌리기·원본 보존', async () => {
     const before = structuredClone(settings.promptFolders.presets.P1.folders), originalOrder = structuredClone(order), saves = calls.save;

@@ -6942,5 +6942,46 @@
     "len": 606
    }
   ]
+ },
+ "v44c": {
+  "about": "11-18 청과 헤스페리데스 V4.4C — 새 항목 넷과 이름 · 본문이 바뀐 안내 · ASMR 대사. id · 이름 · 본문 지문 · 글자 수만(원문 본문 없음).",
+  "items": [
+   {
+    "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+    "name": "🍏 青果·赫斯帕里得斯 V4.4C 说明｜别开",
+    "hash": "dd82dd55d3976623a16fe5544a8fec5bd478ca7084b4e78b39e87332a6a3707c",
+    "len": 655
+   },
+   {
+    "id": "fruit-qg-pace-free",
+    "name": "🎬 推进自由·随戏快慢｜节奏单选",
+    "hash": "7dc6eefd51fd8636fdc56ddb5ed698a829a9ee04e2e7dd771bed6d463952a5eb",
+    "len": 502
+   },
+   {
+    "id": "fruit-v42-user-embodiment",
+    "name": "🎭 主角入戏｜演活User七情六欲与人设反应｜选开",
+    "hash": "cce191ef9d2344a0107e154f22f6aca46ed41222f3621e5dc350c3eb9ca9091b",
+    "len": 1473
+   },
+   {
+    "id": "fruit-qg-exclamation-restraint",
+    "name": "🍇 少用感叹号｜防咆哮与傲娇炸毛｜选开",
+    "hash": "054746917f91b7c3026ad3e69bfbbc717e25e852f97ca3d0ecfda2cfd4b58901",
+    "len": 510
+   },
+   {
+    "id": "fruit-v42-body-measurement-rule",
+    "name": "🧩 身段白描与尺码分寸｜去参数播报腔 #GEMINI",
+    "hash": "f5aa6cb6abbabf365391e90c903105b33e5199fe945fbe88c7ab21d21c94cb15",
+    "len": 558
+   },
+   {
+    "id": "9d760b48-1911-4876-b8e6-819dc147d7b9",
+    "name": "🔞 ASMR 对白｜淫语单选",
+    "hash": "7c99286428040fcb2770e70701a9fec1c060ef39cc682fe2fed50dd9f7585f68",
+    "len": 1315
+   }
+  ]
  }
 }

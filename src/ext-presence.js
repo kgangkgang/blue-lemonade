@@ -11,7 +11,7 @@ import { folderBase } from './extension-folder.js';
 export const OTHERS = {
     cocktail: { label: '칵테일', folders: ['cocktail'], names: [/鸡尾酒/] },
     baibai: { label: '바이바이', folders: ['ST-BaiBai-Tools'], names: [/柏宝箱/, /baibai/i] },
-    promptgroups: { label: '프롬프트 그룹', folders: ['SillyTavern-PromptFolders'], names: [/^프롬프트 그룹$/, /^Prompt Folders$/i] },
+    promptgroups: { label: '프롬프트 그룹', folders: ['SillyTavern-PromptFolders'], names: [/^프롬프트 ?(?:토글 )?그룹$/, /^Prompt Folders$/i] },   // 표시 이름이 판마다 달랐어요: 프롬프트그룹 → 프롬프트 그룹 → 프롬프트 토글 그룹(11-18 원작 따라가기)
     chatsplus: { label: 'ChatsPlus', folders: ['SillyTavern-ChatPlus', 'stjchatMod'], names: [/^ChatsPlus\b/i] },
     qrshelf: { label: 'QR 책장 확장', folders: ['kkangtong-QR-shelf'], names: [/^QR 책장$/] },   // 1.0.3
     quickactions: { label: '편의성 모음', folders: ['ST-QuickActions'], names: [/^QuickActions\b/i, /^편의성 모음/] },   // 1.0.3 편의 기능과 같은 일을 하는 확장

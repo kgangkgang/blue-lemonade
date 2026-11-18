@@ -21,6 +21,7 @@ import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 �
 const FOLDER = /meatball|statussim|미트볼/i;
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';
 const SLOT = 'custom-ss-slot';
+const UNVISITED = Symbol.for('blue-lemonade.mb-unvisited.v1');   // 지도 「아직 안 가 본 곳」 글 등록부(src/mb-map-floors.js 가 걸어요)
 const SLOTS = '.ss-slot, .custom-ss-slot';
 const BATCH = 60, BATCH_CHARS = 8000;
 const WATCH_MS = 1500, WATCH_MAX = 15 * 60 * 1000, AUTO_MS = 8000, TIDY_MS = 3000, TIDY_REPLY_MS = 1200, TRANSLATED_MS = 1500;
@@ -664,6 +665,20 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         return { miss: [...miss], half: [...half] };
     }
 
+    /** 1.7.6 지도 「아직 안 가 본 곳」 이름 · 설명 가운데 사전에 없고 화면 글에 영어가 남는 것(스위치 unvisited 를 끄면 없음) */
+    function unvisitedGaps(dict) {
+        if (mbOff('unvisited', doc)) return [];
+        let items = []; try { const get = globalThis[UNVISITED]; items = typeof get === 'function' ? get() : []; } catch { items = []; }
+        const out = [];
+        for (const it of Array.isArray(items) ? items : []) for (const [raw, soft] of [[it?.name, false], [it?.summary, true]]) {
+            const k = String(raw ?? '').trim();
+            if (!k || k.length > 600 || tried.has(k) || Object.hasOwn(dict, k) || out.includes(k)) continue;
+            let shown = k; try { shown = tr.trString(k); } catch { shown = k; }
+            if (stillEnglish(shown, { soft })) out.push(k);
+        }
+        return out;
+    }
+
     /** ② · ③ · ④ 칩 · 기록 · 알림 · 앨범 · 상태 칸에서 아직 영어인 글만 그 확장 번역 길로 → 같은 사전 (묶음 60개 · 8000자 · 짝은 끝에 한 번에) */
     async function fill(reason = 'click') {
         if (filling || !view() || mbOff('trfill', doc)) return 0;   // 1.7.3 끄면 남은 영어를 번역 길로 안 보내요(AI 0)
@@ -676,7 +691,11 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const full = pre => longs.find(t => t.length > pre.length && t.startsWith(pre)) ?? null;   // 잘린 알림 글 → 상태의 원문(화면 밖 기록 rel.life 등)
         const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => Object.hasOwn(dict, part), tried, full });
         const { miss, half } = stateGaps(current.state, dict);
-        const list = [...new Set([...chipList, ...miss, ...half])];
+        // 1.7.6 지도 「아직 안 가 본 곳」(src/mb-map-floors.js 가 로어북에서 고른 곳)의 이름 · 설명은 그 확장 상태에 없어 번역 요청에 안 실렸어요 → 같은 길 · 같은 사전으로.
+        //   번역 단추를 눌렀을 때, 또는 자동 번역이 다른 글을 보내는 김에만 실어요(이것 때문에 자동 요청을 따로 내지 않아요)
+        const base = [...chipList, ...miss, ...half];
+        const lore = reason === 'click' || base.length ? unvisitedGaps(dict) : [];
+        const list = [...new Set([...base, ...lore])];
         if (!list.length) { if (tidied) repaint(); return 0; }
         filling = true;
         let done = 0;

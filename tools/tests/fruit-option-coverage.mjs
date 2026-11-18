@@ -31,6 +31,13 @@ for(const it of fixture.extras.items){
     if(!FRUIT_OPTION_EFFECTS[it.hash])missing.push(`추가: ${it.name} (지문 없음)`);
     if(!FRUIT_OPTION_BASELINES[it.id])missing.push(`추가: ${it.name} (id 기본 설명 없음)`);
 }
+// 11-18 청과 V4.4C — 새 항목 넷과 이름 · 본문이 바뀐 둘도 지문(확인된 설명)과 id 기본 설명 둘 다
+assert(fixture.v44c.items.length>=6);
+for(const it of fixture.v44c.items){
+    total++;
+    if(!FRUIT_OPTION_EFFECTS[it.hash])missing.push(`V4.4C: ${it.name} (지문 없음)`);
+    if(!FRUIT_OPTION_BASELINES[it.id])missing.push(`V4.4C: ${it.name} (id 기본 설명 없음)`);
+}
 assert.deepEqual(missing,[],`도움말이 빠진 항목 ${missing.length}개`);
 // 설명 글 자체: 해요체 문장 · 길이 · 금지어 · 영어 문장 없음
 // 금지어는 글자 코드로 만들어요(이 시험 파일이 출하 검사의 금지어 검사에 걸리지 않게)

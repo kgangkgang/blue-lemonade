@@ -14,6 +14,7 @@
 // 감시자 · 타이머 없음: 눈 단추 누름(문서 한 곳) · 채팅 바뀜 · 생성 시작 때만 봐요. 설정은 body 표식(data-bl-mb-hidden-sync = on · off — src/apply.js)으로 읽어요.
 // 1.7.4 감긴 답보다 뒤에 칸 통째 저장이 있으면 그 저장 바로 뒤에 빼는 기록을 끼워 바로 반영해요(src/mb-autosub.js · 스위치 autosub · 기본 켬). 못 하면 1.7.3 알림이에요.
 import * as Sub from './mb-autosub.js';
+import { startEditSync } from './mb-editsync.js';   // 1.7.6 본문을 고치면 수치도 따라 바꾸기
 const META = 'statussim';   // 그 확장의 채팅 메타 칸 이름(읽기만)
 export const MARK = 'bl-hidden';
 export const ATTR = 'data-bl-mb-hidden-sync';
@@ -208,6 +209,8 @@ export function startMbHidden(doc = globalThis.document) {
         if (on && types.GENERATION_STARTED) on(types.GENERATION_STARTED, (_type, _opts, dry) => { if (!dry) run(); });
         setTimeout(run, 1200);
         Sub.startAutoSub(doc);   // 1.7.4 지운 답 · 지운 스와이프(실리태번 지움 사건)
+        // 1.7.6 편집 창으로 본문을 고친 답 — 칩 표식은 메시지 꾸미기(공용 #chat 구독)에 얹어요: 칩 자리 · 칩 카드 안이 새로 그려진 기록만(본문 · 스트리밍 글은 안 봐요)
+        Promise.all([import('./message-decor.js'), import('./mb-arrow.js')]).then(([d, a]) => startEditSync(doc, { decorate: d.addMessageDecorator, filter: a.arrowRecord })).catch(() => startEditSync(doc));
     } catch { /* 눈 단추만 */ }
     return true;
 }

@@ -228,6 +228,12 @@ body.salty .ss-scope .ss-btn.ghost:hover { background: var(--bl-hover); }
 body.salty .ss-scope .ss-btn.sm { min-height: 30px; padding: 0 10px; font-size: var(--bl-ts-meta, 13px); }
 body.salty .ss-scope .ss-btn.big { min-height: var(--bl-h-lg, 44px); padding: 0 20px; font-size: var(--bl-ts-ui, 14px); }
 body.salty .ss-scope .ss-grid-btns .ss-btn, body.salty .ss-scope .ss-btn.wide { border-radius: var(--bl-ui-radius, 8px); }
+/* 1.7.5 꺼진(disabled) 단추 글자 명암(화면 묵은 빚 · 사용자 결정): 그 확장은 꺼진 단추를 반투명 .4 로 그려 글자가 밤 2.7 · 낮 2.1 ~ 2.3 : 1, 「AI」 딱지는 2.2 · 1.7 : 1 이었어요(기준 3 : 1).
+   → 반투명 .55 · 글자는 본문색(--salty-text) · 딱지 · 작은 글은 단추 글자색 그대로 · 채운 주요 단추(.pri)는 보통 단추 면 — 테마 설정 창의 꺼진 단추(css/56-control-consistency.css)와 같은 값이에요.
+   「원작 그대로 보기」에서는 원작대로. */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-btn:disabled { opacity: .55; color: var(--salty-text); }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-btn.pri:disabled { background: var(--salty-control); border-color: var(--salty-line); }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-btn:disabled :is(.ss-ai, small) { color: inherit; }
 /* ---------- 입력칸: 높이 36 · 모서리 8 · 칸 면 + 안쪽 1px 선 ---------- */
 body.salty .ss-scope .ss-in {
   min-height: var(--bl-ui-ctl, 36px);
@@ -520,6 +526,25 @@ body.salty .ss-scope .ss-instruct { margin-top: var(--bl-s2, 8px); padding: var(
 body.salty .ss-scope .ss-editbar { gap: var(--bl-s2, 8px); margin-top: var(--bl-s3, 12px); padding: var(--bl-s2, 8px) 0 var(--bl-s1, 4px); background: var(--salty-surface); border-top-color: var(--salty-line); }
 
 /* @mb spacing */
+/* ========== 간격 체계 (1.7.6 · 미트볼 상태창 2.9.0 개편 — 사용자 「글자 막 버튼에 붙고 버튼끼리 붙고 … UI UX 대대적으로 다시」) ==========
+   그 확장이 화면을 더할 때마다(2.9.0: 점집 · 새 지도 · 게임 모드 · 꾸미기 · 쓸 기능 한 화면) 이웃 덩이 사이가 0 ~ 6px 로 붙었어요 — 판마다 「이 class 다음 저 class」를 더하는 대신 구조로 한 번에 정해요.
+   눈금(테마 간격 토큰): 칩 · 아이콘 단추 사이 4 · 단추 ↔ 단추 · 글자 ↔ 단추 8 · 세로로 쌓인 덩이 ↔ 덩이 최소 8 · 설명 ↔ 설명 4 · 절 ↔ 절 24(아래 「간격 한 벌」).
+   ① 흐름(세로): 창 본문 · 절 · 카드 · 접는 칸의 바로 아래 자식끼리 — 조작 줄 · 상자(고르기 · 알약 줄 · 단추 줄 · 묶음 · 칸 · 카드 · 접는 칸 · 「…wrap」 상자 · 「…head」 머리 줄)가 이웃하면 8,
+      이름표 달린 칸(.ss-f) 뒤 칸은 12(이름표 → 제 칸 4 보다 넓어야 어느 칸의 이름표인지 보여요) · 설명 글(.ss-hint)은 앞이 무엇이든 8(설명 뒤 설명은 4) · 설명 다음 덩이도 8. 낱 단추는 앞이 줄 · 상자일 때만(나란히 놓인 단추는 건드리지 않아요).
+      무게를 낮춰(0,3,1) 이 묶음 뒤의 세부 규칙(12 · 16 을 주는 자리)이 그대로 이겨요. 블록 흐름이라 여백은 겹쳐져 더해지지 않아요(이미 8 넘게 떨어진 곳은 그대로).
+   ② 줄(가로): 아이콘 단추 줄(창 머리 · 칸 도구 줄 · 「…-acts」 · ± 「…-adj」)은 틈 4, 쌓인 넓은 단추 · 딱지 · 물건 · 세트 목록은 8.
+   class 이름을 하나하나 세지 않고 꼴(「wrap」 · 「-acts」)로도 받아, 다음 판이 같은 이름 버릇으로 부품을 더하면 저절로 걸려요. :has 는 쓰지 않아요. */
+body.salty:not([data-bl-ext-raw]) .ss-scope { --bl-mb-g-chip: var(--bl-s1, 4px); --bl-mb-g-btn: var(--bl-s2, 8px); --bl-mb-g-block: var(--bl-s2, 8px); --bl-mb-g-note: var(--bl-s1, 4px); --bl-mb-g-field: var(--bl-s3, 12px); }
+body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > :is(.ss-seg, .ss-pills, .ss-chips, .ss-sets, .ss-row-btns, .ss-grid-btns, .ss-inline, .ss-stack, .ss-f, .ss-card, .ss-callout, details, [class*="wrap"], [class*="head"]) + :is(.ss-seg, .ss-pills, .ss-chips, .ss-sets, .ss-row-btns, .ss-grid-btns, .ss-inline, .ss-stack, .ss-f, .ss-card, .ss-callout, details, [class*="wrap"], [class*="head"]) { margin-top: var(--bl-mb-g-block); }
+body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > .ss-f + .ss-f { margin-top: var(--bl-mb-g-field); }
+body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > :is(.ss-seg, .ss-pills, .ss-chips, .ss-sets, .ss-row-btns, .ss-grid-btns, .ss-inline, .ss-stack, .ss-f, .ss-card, .ss-callout, details, [class*="wrap"], [class*="head"]) + .ss-btn, body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > .ss-hint + .ss-btn, body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > .ss-btn.wide + .ss-btn.wide { margin-top: var(--bl-mb-g-block); }
+body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > * + .ss-hint { margin-top: var(--bl-mb-g-block); }
+body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > .ss-hint + .ss-hint { margin-top: var(--bl-mb-g-note); }
+body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > .ss-hint + :is(.ss-seg, .ss-pills, .ss-chips, .ss-sets, .ss-row-btns, .ss-grid-btns, .ss-inline, .ss-stack, .ss-f, .ss-card, .ss-callout, details, [class*="wrap"], [class*="head"]) { margin-top: var(--bl-mb-g-block); }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-head-a, body.salty:not([data-bl-ext-raw]) .ss-scope .ss-tools, body.salty:not([data-bl-ext-raw]) .ss-scope [class*="-acts"]:not(.ss-tb-acts), body.salty:not([data-bl-ext-raw]) .ss-scope [class*="-adj"] { gap: var(--bl-mb-g-chip); }
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-notes, .ss-achs, .ss-goods, .ss-life-sets, .ss-sm-mods) { gap: var(--bl-mb-g-block); }
+/* ========== 간격 체계 끝 ========== */
+/* @mb spacing */
 /* ---------- 면 · 줄: 간격 사다리 ---------- */
 body.salty .ss-scope .ss-card { padding: var(--bl-s3, 12px); }
 body.salty .ss-scope .ss-stack { gap: var(--bl-s2, 8px); }
@@ -624,6 +649,10 @@ body.salty .ss-scope .ss-note.new { background: var(--bl-ui-pick-face); border-c
 /* @mb chips */
 body.salty .ss-msgcard { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); }
 body.salty .ss-mchip { min-height: 22px; padding: 0 var(--bl-s2, 8px); line-height: 1.5; }
+
+/* @mb editsync */
+/* 1.7.6 본문을 고쳐 뺀 인물의 변동 칩(src/mb-editsync.js 가 data-bl-cut 을 달아요): 흐리게 · 줄 그어요(원래 값은 그대로 — 이름이 본문에 돌아오면 되살아나요) */
+body.salty .ss-msgcard .ss-mchip[data-bl-cut] { opacity: 0.5; text-decoration: line-through; }
 
 /* @mb layout */
 /* ---------- 꾸미기 창 ----------
@@ -755,7 +784,7 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
   /* 번역 고치기(폰): 목록(제 스크롤 55vh) + 위 칸 + 맨 아래 안내 글이 창 높이를 넘어 안내 글 첫 줄이 창 바닥 흐림 아래로 목록과 겹쳐 보였어요 → 목록을 조금 줄여 안내 글까지 창 안에 */
   body.salty .ss-scope.ss-trfix .ss-trf-list { max-height: 46vh; }
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head { flex-wrap: wrap; row-gap: var(--bl-s1, 4px); padding-inline-end: 0; }
-  body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-t { flex: 1 1 calc(100% - 60px); padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s1, 4px)); }
+  body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-t { flex: 1 1 calc(100% - 60px); padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s3, 12px)); }   /* 1.7.6 긴 제목의 말줄임 끝이 ✕ 상자와 1px 겹쳤어요(여백 4 − ✕ 오른쪽 자리 5) → 여백 12 = 제목 끝 ↔ ✕ 상자 7 */
   body.salty dialog.popup.ss-dlg.large_dialogue_popup .ss-head-a { flex: 1 1 100%; justify-content: flex-end; }
   /* @mb band */
   /* 폰: 띠를 딱 두 줄로(11-14 사용자 「빈 공간 많은데 왜 이렇게 자리 차지하냐」 · 「위에 2줄만 써도 될 것 같다」)
@@ -783,8 +812,57 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
      화면 가장자리에서 내용까지 27px 씩(384 중 54px)이 여백과 겹 테로 나갔어요 → 안쪽 판은 면 · 모서리 · 여백 없이(틀은 창 하나), 창의 좌우 안 여백은 4 로. 내용 폭 330 → 354px. PC · 태블릿은 그대로예요. */
   body.salty:not([data-bl-ext-raw]) dialog.popup.ss-dlg.ss-dlg { padding-inline: var(--bl-s1, 4px) !important; }
   body.salty:not([data-bl-ext-raw]) dialog.popup.ss-dlg .popup-content > :is(.ss-root, .ss-panel) > .ss-root, body.salty:not([data-bl-ext-raw]) dialog.popup.ss-dlg .popup-content > .ss-root { padding: 0; border-radius: 0; background: transparent; }
+  /* @mb layout */
+  /* 미트볼 상태창 2.9.0 달력 「시간 적는 법」 고르기(.ss-clockrow · 이 채팅만): 그 확장은 이름표와 고르기를 한 줄에 두고 고르기 넷(이름 + 보기 「오후 2:30」)을 한 줄에 넣어요 —
+     폰 384 에서 한 칸이 60 ~ 90px 라 「오전 · / 오후 / 오후 2:30」처럼 세 줄로 꺾였어요. → 좁은 화면에서만 이름표는 위 한 줄(이름표 → 제 칸 4) · 고르기는 두 열 격자 · 칸 글은 한 줄. PC 는 원작 한 줄 그대로예요. */
+  body.salty:not([data-bl-ext-raw]) .ss-scope .ss-clockrow { gap: var(--bl-s1, 4px) var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0 0; }
+  body.salty:not([data-bl-ext-raw]) .ss-scope .ss-clockrow > small { flex: 1 0 100%; }
+  body.salty:not([data-bl-ext-raw]) .ss-scope .ss-clockrow > .ss-seg { flex: 1 1 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body.salty:not([data-bl-ext-raw]) .ss-scope .ss-clockrow > .ss-seg > button { white-space: nowrap; }
 }
 
+/* @mb band */
+/* 미트볼 상태창 2.9.0 위치 칸 펼침(.ss-t-det.loc — 「갈 곳」 미니 이동판. 2.8.0 까지는 장소 이름 한 줄이었어요 · 옛 판에는 .loc 가 없어 아래 규칙이 안 걸려요).
+   바탕(이 묶음): 2.8.0 까지의 펼친 칸 그대로 — 장소 이름 한 줄 + 「이 탭 열기 ›」. 갈 곳 · 지금 여기 줄과 2.9.0 이 이름 뒤에 붙이는 장소 설명을 숨기고, 그 확장의 세로 쌓기 · 아래 여백 20 을 한 줄 꼴로 둬요.
+   「위치를 누르면 갈 곳 보기」(locgo · 기본 켬)가 켜져 있으면 바로 아래 묶음이 이 넷을 덮어 다듬은 이동판을 보여요. 둘 다 끄면(「전부 끄기」) 원작 2.9.0 펼침 칸 그대로예요. */
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc { flex-direction: row; gap: 8px; padding: 5px 8px; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-loc-row { display: none; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-mini-line > span { font-size: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-mini-line > span > b { font-size: 10.12px; font-weight: 400; }
+/* @mb locgo */
+/* 다듬은 이동판(사용자 11-18 「안쪽이 휑하고 · 이름표와 단추 줄이 어긋나고 · 테두리가 이중 … 너무 못생김」).
+   그 확장 꼴: 칸에 제 테두리(판 테두리 안에 한 겹 더) · 세로로 쌓은 세 줄(장소 / 갈 곳 / 「이 탭 열기」) · 이름표는 위 여백 3px 로 내려 단추(30)와 글자 가운데가 3.3px 어긋남 · 갈 곳 하나에 칸 83px · 아홉이면 151px(폰 384).
+   → 테두리 없이 띠 칸과 같은 선(왼쪽 6)에서 시작 · 머리 한 줄(지금 장소 왼쪽 · 「이 탭 열기」 오른쪽 끝 작은 단추) · 그 아래 「이름표 | 내용」 줄(이름표 열 폭은 줄끼리 같게 · 이름표와 칩은 같은 높이 상자의 세로 가운데).
+   갈 곳 칩 = 띠 칸과 같은 꼴(높이 26 · 모서리 9 · 같은 면) · 칩 사이 4 · 꼬리 정보(도착 시간대 · 요금)는 흐린 보조 글자 · 요금이 모자란 곳은 흐리게(그 확장 그대로).
+   마우스 화면: 칩이 많으면 줄바꿈. 손가락 화면(아래 손가락 화면 묶음): 한 줄에서 가로로 밀어 봐요 — 갈 곳이 몇이든 칸 높이 56 이라 채팅을 덜 밀어내요 · 누를 자리 44.
+   줄을 감싼 .ss-loc-row 는 display: contents 로 풀어 이름표 · 내용이 한 격자의 칸이 돼요(:has 없이 이름표 열을 맞춰요). */
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--bl-s1, 4px) var(--bl-s2, 8px); padding: 0 0 0 6px; border: 0; border-radius: 0; font-size: 12px; line-height: 1.3; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-mini-line { grid-column: 1 / span 2; min-height: 26px; font-size: inherit; }
+/* 세로 가운데(배율 4 로 찍어 잉크로 잰 값 · 폰 384 · PC 1280): 한글 잉크는 줄 상자 가운데보다 1.2 ~ 1.4px 위라 이름 · 칩 글자를 0.06 ~ 0.08em 내려 줄 가운데 ±0.5px 안으로(띠 칸 글자는 −0.6px). 핀은 이 줄에서는 내리지 않아요. */
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-mini-line > span { position: relative; top: .08em; color: var(--salty-muted); font-size: inherit; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-mini-line > span > b { color: var(--salty-text); font-size: inherit; font-weight: var(--bl-ui-strong, 650); }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-mini-line > i { top: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .go { grid-column: 3; grid-row: 1; position: relative; inset: auto; z-index: 1; display: inline-flex; align-items: center; box-sizing: border-box; height: 26px; padding: 0 var(--bl-s2, 8px); border: 1px solid var(--salty-line); border-radius: 9px; font-size: 11px; line-height: 1; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .go:hover { background: var(--bl-hover); }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-loc-row { display: contents; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-loc-row > small { grid-column: 1; align-self: start; display: flex; align-items: center; min-width: 0; height: 26px; padding: 0; color: var(--salty-muted); font-size: 11px; line-height: 1; white-space: nowrap; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-loc-row > small + * { grid-column: 2 / -1; min-width: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-loc-row > span:not(.ss-loc-gos) { overflow: hidden; color: var(--salty-text); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .ss-loc-row > span.ss-dim { color: var(--salty-muted); }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-gos { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bl-s1, 4px); }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-gos > small { flex: none; color: var(--salty-muted); font-size: 11px; line-height: 1; white-space: nowrap; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go { position: relative; flex: none; box-sizing: border-box; gap: var(--bl-s1, 4px); max-width: 100%; height: 26px; min-height: 0; padding: 0 var(--bl-s2, 8px); border: 1px solid transparent; border-radius: 9px; background: var(--bl-hover); color: var(--salty-text); font-size: 12px; line-height: 1; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go:hover { border-color: transparent; background: var(--bl-ui-pick-face); }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go:focus-visible { outline: 2px solid var(--salty-accent); outline-offset: 1px; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go > .e { flex: none; font-size: 12px; line-height: 1; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go > b { position: relative; top: .06em; font-weight: 400; line-height: 1.3; }
+body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go > small { position: relative; top: .07em; flex: none; color: var(--salty-muted); font-size: 11px; line-height: 1.3; }
+
+/* @mb layout */
+/* 소지금 카드의 단추 줄: 2.9.0 이 「수정」 옆에 화폐 · 환율 아이콘 단추를 더해 두 단추가 위아래로 쌓였어요(폰의 단추 줄 세로 쌓기가 카드 안까지 걸림) → 제 폭만 · 가로 한 줄 · 세로 가운데 */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-cashbox > .ss-row-btns { flex: none; flex-direction: row; flex-wrap: nowrap; align-items: center; }
+/* 알약 줄 맨 앞의 이름표(관리 › 쓸 기능 「탭 하나씩」 · 2.9.0): 줄 위쪽에 붙어 알약 글자와 높이가 어긋났어요 → 줄 세로 가운데 */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-pills > small { align-self: center; }
 /* @mb touch */
 /* ---------- 손가락 화면: 누르는 넓이 44 — 보이는 크기는 그대로, 가운데 맞춘 투명 상자(86-touch-targets 와 같은 방식) ---------- */
 @media (pointer: coarse) {
@@ -814,6 +892,13 @@ body.salty #ss-settings .inline-drawer-content > small:not(.bl-ext-compat) { max
   }
   /* 2.8 준비 갈래의 이름 붙은 아이콘 단추(data-l · 「속마음」 「연락」 …)는 이름을 ::after 로 그려요 — 위의 누를 자리 상자(같은 ::after)가 그 글자를 지우지 않게 */
   body.salty .ss-scope .ss-ib[data-l]::after { content: attr(data-l); position: static; width: auto; height: auto; transform: none; }
+  /* @mb locgo */
+  /* 위치 칸 펼침의 갈 곳 칩 줄(2.9.0): 한 줄 가로 밀기(줄 위아래 9 씩은 누를 자리 몫 — 굴리는 상자가 칩의 누를 자리를 자르지 않게 안쪽 여백으로 두고 같은 만큼 바깥 여백을 당겨 줄 높이는 26 그대로) · 칩 · 「이 탭 열기」 누를 자리 44 */
+  body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-gos { flex-wrap: nowrap; margin-block: -9px; padding-block: 9px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go::after, body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .go::after { content: ''; position: absolute; inset: -10px -1px; }
+  /* @mb trend */
+  /* 1.7.5 칩 줄 틈(사용자 결정): 손가락 화면에서는 변화 그래프 범례 줄 사이를 12 → 16 으로 — 알약 28 + 누를 자리 위아래 8 씩 = 44 가 이웃 줄 자리와 겹치지 않아요(예전엔 4px 겹침). 마우스 화면은 12 그대로 */
+  body.salty:not([data-bl-ext-raw]) .ss-scope .ss-trend-box > .ss-trend-legend.bl-tr-legend { row-gap: var(--bl-s4, 16px); }   /* 아래 범례 규칙(gap 12 8)보다 앞에 있어 갈래를 한 칸 세게 */
 }
 
 /* @mb spacing */
@@ -1076,7 +1161,7 @@ body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t.t-loc > .c > .ci > span { min-wid
    묶음 안: 이름 · 숫자는 가운데에 같은 틈 4px · 이름이 길면 이름 끝을 말줄임 · 막대는 묶음 폭 그대로. 칸 줄은 「줄 높이(폰 26 · PC 30) 이상」이라 두 줄이 되면 칸이 그만큼 커져요.
    글자를 줄이지 않아요(zoom 1) — 띠 안 다른 칩과 글자 크기가 같아요. 「원작 그대로 보기」 · 칸 편집 중 · 키 큰 칸은 원작 그대로예요. */
 body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-t.t-bars:not(.tall) > .c { height: auto; min-height: 100%; }
-body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-t.t-bars:not(.tall) > .c > .ci { --bl-bgap: 10px; zoom: 1 !important; width: 100% !important; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--bl-bgap); row-gap: 3px; padding-block: 2px; }
+body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-t.t-bars:not(.tall) > .c > .ci { --bl-bgap: var(--bl-band-bgap, 10px); zoom: 1 !important; width: 100% !important; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--bl-bgap); row-gap: 3px; padding-block: 2px; }
 body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-t.t-bars:not(.tall) .g { --bl-bq: calc((100% - (var(--bl-bn, 1) - 1) * var(--bl-bgap)) / var(--bl-bn, 1) - .5px); --bl-bh: calc((100% - var(--bl-bgap)) / 2 - .5px); flex: 1 1 max(var(--bl-bq), min(var(--bl-bh), (var(--bl-bmin, 0em) - var(--bl-bq)) * 1000 + var(--bl-bq)), min(100%, (var(--bl-bmin, 0em) - var(--bl-bh)) * 1000 + var(--bl-bh))); min-width: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: 4px; row-gap: 1px; }
 body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-t.t-bars:not(.tall) .g > em { flex: 0 1 auto; min-width: 0; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap; }
 body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-t.t-bars:not(.tall) .g > b { flex: none; }
@@ -1084,6 +1169,14 @@ body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing)
 body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-tg { grid-auto-rows: minmax(var(--bl-band-row, 30px), auto); }
 /* 다른 칸은 크기 담음(contain: size) — 「26 이상」 줄에서 제 글 높이로 줄을 키우지 않고(원작처럼 넘치면 글자만 줄어요) 줄 높이에 늘어나요 */
 body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars] .ss-tb.hud:not(.editing) .ss-tg > .ss-t:not(.t-bars) { contain: size; }
+/* 1.7.5 PC 게이지 칸 폭(사용자 결정 「PC 에서 게이지 칸에 폭을 더」): PC 넓은 판에서 게이지 칸은 제 열 몫(1280 · 넷 열 약 238px)뿐이라 수치 넷이 둘씩 두 줄(띠 40 → 56px)이었어요.
+   → 게이지 칸이 걸친 열(맞춤 모듈이 단 열 틀 --bl-btpl · 걸친 열 수 --bl-bw · 나머지 열 수 --bl-bo · 판 열 수 --bl-bnc)만 「수치가 한 줄에 다 들어가는 폭」을 바닥으로 받아요. 나머지 열은 남는 폭을 고르게 나눠요.
+   바닥 = 수치 수 × (가장 긴 「이름 숫자」 어림 폭 + 0.5) + 수치 사이 틈 + 칸 안 여백(좌우 7 + 여유 2). 글자 크기는 그대로예요(수치 사이 틈만 10 → 6 — 옆 칸에 3px 씩 돌려줘요).
+   나머지 칸이 열 하나에 40px(두 열 칸 84px) 아래로 눌리게 되면 넓히지 않고 예전처럼 둘씩 꺾어요(×1000 계단 — 넘자마자 0).
+   표식(data-bl-bcols)은 그 확장이 PC 넓은 판(12열 · 창 폭 701px 이상)을 그릴 때만 달려요 — 폰 판(4열)은 그대로 · 「원작 그대로 보기」 · 칸 편집 중도 그대로. 이 시트의 조건 묶음은 셋뿐이라 @media 를 더 두지 않아요. */
+/* 셈 변수는 열 틀(--bl-btpl)이 적힌 바깥 틀에 같이 둬요 — 변수 안의 var() 는 그 변수가 적힌 요소에서 풀려서, 칸 판(.ss-tg)에 두면 열 틀이 바닥 0 으로 굳어요. 퍼센트 · em 은 쓰는 자리(칸 판)에서 풀려요 */
+body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars][data-bl-bcols] { --bl-band-bgap: 6px; --bl-bneed: calc(var(--bl-bn, 1) * (var(--bl-bmin, 0em) + .5px) + (var(--bl-bn, 1) - 1) * var(--bl-band-bgap, 10px) + 16px); --bl-bt: calc((var(--bl-bneed) - (var(--bl-bw, 1) - 1) * var(--bl-band-gap, 4px)) / var(--bl-bw, 1)); --bl-bcap: calc((100% - (var(--bl-bnc, 1) - 1) * var(--bl-band-gap, 4px) - var(--bl-bo, 0) * 40px) / var(--bl-bw, 1)); --bl-btmin: clamp(0px, (var(--bl-bcap) - var(--bl-bt)) * 1000, var(--bl-bt)); }
+body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-bars][data-bl-bcols] .ss-tb.hud:not(.editing) > .ss-tb-row > .ss-tg { grid-template-columns: var(--bl-btpl); }
 /* @mb weekday */
 body.salty:not([data-bl-ext-raw]) #ss-hud[data-bl-wd] .ss-tb.hud .ss-t.t-date:not(.L) > .c > .ci > small:first-of-type::after { content: var(--bl-wd, ""); }
 /* @mb grid */
@@ -1429,3 +1522,29 @@ body.salty.salty-dark:not([data-bl-ext-raw]) .ss-scope .ss-tama-btn { color: var
 body.salty.salty-dark:not([data-bl-ext-raw]) .ss-scope .ss-tama { --shell: var(--ss-surface2); background: var(--shell); }
 /* 같은 판 미트볼 상점 진열대의 효과 글(.ss-good-fx · 그 확장 강조색): 낮 카드 면 위에서 4.43 : 1 → 고른 칸 글자색(--ss-pick · 4.5 위로 맞춘 강조색). */
 body.salty:not([data-bl-ext-raw]) .ss-scope .ss-good-fx { color: var(--ss-pick); }
+
+
+/* @mb icons */
+/* ---------- 1.7.6 아이콘 줄 세로 가운데 · 크기(디자인 관문 · 미트볼 상태창 2.8.0 · 2.9.0 둘 다 0 이 되게) ----------
+   한 벌로: 「면 안 아이콘」(창 머리 36 면)과 「글 옆 아이콘」(묶음 탭)의 그림 잉크가 줄 가운데에서 0.5px 안에 오게 그림(::before)만 살짝 옮겨요 — 상자 · 누를 자리는 그대로예요. */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-wz-head > i::before { position: relative; top: .04em; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-head-a > .ss-ib[data-act="inbox"] > i[class*="fa-"] { font-size: .88em; transform: translateY(calc(.05em + .45px)); }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-tools > .ss-tool[data-act="hidetog"] > i { display: inline-block; transform: translateY(.7px); font-size: 1.13em; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h > .ss-ib[data-act="talk"] > i[class*="fa-"] { font-size: 1.08em; transform: translateY(calc(.05em + .82px)); }
+/* 떠나기(비둘기): 한 화소 단 위로 — 속마음 단추가 같은 줄에 있는 옛 판(2.8.0)은 줄 가운데가 달라 그대로 둬요 */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h > .ss-ib[data-act="leave"] > i[class*="fa-"] { transform: translateY(calc(.05em - .15px)); }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h > .ss-ib[data-act="peek"] ~ .ss-ib[data-act="leave"] > i[class*="fa-"] { transform: translateY(.05em); }
+/* @mb touch */
+/* 띠 단추(고양이 · 종 · 멈춤 · 연필 — 30 × 26): 누를 자리를 가로로만 40 까지(양옆 5 씩 · 세로는 그대로라 위아래 칸을 가리지 않아요) */
+/* @mb icons */
+/* 옆 창 손잡이(폭 16): 계기판 그림이 왼쪽 여백 4 에 놓여 가운데에서 1.3px 오른쪽이었어요 → 손잡이 가운데 */
+body.salty:not([data-bl-ext-raw]) #ss-side > .ss-side-handle { display: flex; align-items: center; justify-content: center; }
+/* @mb touch */
+body.salty:not([data-bl-ext-raw]) #ss-hud .ss-tb-acts > .ss-t.ic { position: relative; }
+body.salty:not([data-bl-ext-raw]) #ss-hud .ss-tb-acts > .ss-t.ic::after { content: ''; position: absolute; inset: 0 -5px; }
+/* @mb controls */
+/* 관계 카드 머리 → 첫 게이지: 머리 아래 여백 6 이 눈금 밖(6) → 8 */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc > .ss-relc-h { margin-bottom: var(--bl-s2, 8px); }
+/* 묶음 탭 글 줄 높이를 아래 탭 줄과 같게(같은 글자 크기인데 14.8 · 19.4 로 달랐어요) */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button { line-height: 1.5; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-groups > button > span { line-height: inherit; }

@@ -349,7 +349,7 @@ function startWarm() {
     if (!lightNow(el)) return;   // 짧은 채팅이면 고를 것도 없다
     warm.look = findAnchor(el, anchor => {
         warm.look = null;
-const all = mesKids(el);
+        const all = mesKids(el);
         const win = warmWindow(all.length, Number.isFinite(anchor) && anchor >= 0 ? anchor : all.length - 1, warm.dir);
         // 둘레에서 멀리 벗어난 푼 메시지는 되돌려요(쓰기만 · 자리를 재지 않음 — 화면 밖이고 크기는 기억돼 있어요)
         for (let i = 0; i < all.length; i++) if ((i < win.lo - WARM_KEEP || i > win.hi + WARM_KEEP) && all[i].hasAttribute(WARM_ATTR)) { all[i].removeAttribute(WARM_ATTR); warm.cooled++; }
@@ -379,7 +379,6 @@ export function findAnchor(el, cb) {
     timer = setTimeout(() => finish(null), ANCHOR_WAIT_MS);
     return { cancel() { if (done) return; done = true; io.disconnect(); clearTimeout(timer); index.clear(); } };
 }
-/** 건너뛰는 메시지(SKIP_SELECTOR · 표식 없음)를 anchor 에서 DOM 차례로 가까운 것부터 — 계산된 스타일 · 자리를 읽지 않아요 */
 /** 보는 자리 at(:scope > .mes 안 번호 · 반 칸도 됨) 둘레의 번호 범위 { lo, hi }(둘 다 포함). dir: -1 = 위(작은 번호)로 굴리던 중 · 1 = 아래 · 0 = 모름.
  *  굴리던 쪽으로 ahead, 반대쪽으로 around − ahead. 한쪽이 채팅 끝에 닿아 남는 몫은 반대쪽으로 넘겨요(바닥에서 열면 위로 around 개). */
 export function warmWindow(count, at, dir = 0, around = WARM_AROUND, ahead = WARM_AHEAD) {
@@ -391,6 +390,7 @@ export function warmWindow(count, at, dir = 0, around = WARM_AROUND, ahead = WAR
     if (hi > count - 1) { lo -= hi - (count - 1); hi = count - 1; }
     return { lo: Math.max(0, lo), hi };
 }
+/** 건너뛰는 메시지(SKIP_SELECTOR · 표식 없음)를 anchor 에서 DOM 차례로 가까운 것부터 — 계산된 스타일 · 자리를 읽지 않아요 */
 export function warmCandidates(el, anchor = Infinity, win = null) {
     const all = mesKids(el);
     const at = Number.isFinite(anchor) && anchor >= 0 ? anchor : all.length - 1;

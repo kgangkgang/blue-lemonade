@@ -273,6 +273,11 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-btn, .fh-chip, .fh-tag, .fh-sel) { border: 1px solid var(--line); box-shadow: none; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-btn.primary, .fh-btn.solid) { border-color: var(--acc); }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(.fh-btn.on, .fh-chip.on, .fh-sel.on) { border-color: var(--acc); }
+/* 1.7.5 꺼진(disabled) 단추 글자 명암(화면 묵은 빚 · 사용자 결정): 과일의 마음의 꺼진 단추는 반투명 .45 — 채운 단추(.solid · .primary) 글자가 밤 2.7 · 낮 2.1 : 1 이었어요(기준 3 : 1).
+   → 반투명 .6. 채운 단추는 강조색 면 위 글자라 반투명만으로는 낮 팔레트에서 2.6 : 1 → 꺼진 동안은 면을 걷고 창 글자색(테두리는 보통 단추 선) — 테마 설정 창의 꺼진 채운 단추와 같은 방식. 새 색 없음 */
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn:disabled { opacity: .6; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn:is(.solid, .primary):disabled { background: transparent; border-color: var(--line); color: inherit; }
+:is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn.danger:disabled { border-color: var(--line); color: inherit; }   /* 위험 단추의 빨간 글자는 켜진 채로도 3.8 : 1 안팎이라 꺼지면 3 아래 — 꺼진 동안은 창 글자색 */
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(input[type=text], input[type=search], input[type=number], textarea, select) { border: 1px solid var(--line); box-shadow: none; }
 :is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) :is(input[type=text], input[type=search], input[type=number], textarea, select):focus { border-color: var(--acc); outline: none; }
 /* 고르기 칸은 테마와 같은 ▾ (창이 body 밖이라 02-controls 의 select 규칙이 닿지 않는다 — 같은 그림을 그대로) */

@@ -5,6 +5,7 @@ import { PALETTES, paletteColors } from './palettes.js';
 import './palette-data.js';   // 1.0.0 팔레트 11벌 · 커스텀 색 정의 (시작 그래프 밖 — 이 모듈은 지연으로 받아요)
 import { FILTER_KEYS } from './capture-style.js';
 import { ROLE_IDS } from './role-icons-tidy.js';
+import { switchOf, switchOn, setSwitch } from './mb-switch.js';   // 1.7.6 끈 미트볼 맞춤 스위치도 「변경한 설정」에 한 줄씩
 const read = (obj, path) => path.split('.').reduce((v, k) => v != null && Object.hasOwn(v,k) ? v[k] : undefined, obj);
 // 날씨 양의 기본값 칸은 옛 세 단계 값을 이어받으려고 null 이고, 정리하면 100 이 돼요. 비교 · 복원은 정리된 값으로 해요
 const SETTLED_DEFAULTS = { 'chat.weatherAmount': 100, 'chat.weather2Amount': 100 };
@@ -12,8 +13,16 @@ const equal = (a, b) => a === b || (!!a && !!b && typeof a === 'object' && typeo
 export const OMITTED_KEYS = new Set(['appearanceHistory',   /* 9.0.2 그라데이션 · 기기별 배치는 걷어 「변경한 설정」에서도 뺀다 */
     'version','noticeSeen','addonCarry','frameLibrary','customFonts','styles','charStyles','promptBinds','headSwitches','headSwitchMove','activeStyle','baseStyle','weatherImages','customPalettes','activeCustomPalette','wordTools','multiAvatar','extcheck']);   // extcheck: 1.0.3 확장 충돌 검사의 AI 전송 동의 · 고른 연결(기억)
 const omittedPaths = new Set(['promptFolders.presets','promptSaves.presets','presetFolders.folders','presetFolders.seen','chatOrganizer.folders','chatOrganizer.chats','qrShelf.items','qrShelf.recent','deviceLayouts.pc','deviceLayouts.mobile','image.masks','image.maskId','chat.weatherImageId','compat.cssAsked','logCopy.shape','logCopy.palette','logCopy.category','logCopy.recent','logCopy.fav','logCopy.custom','logCopy.tagsOff','logCopy.titleOff','logCopy.dateOff','logCopy.namesOff','logCopy.topOff','logCopy.bottomOff','logCopy.lemonLink','logCopy.lemonAt','logCopy.blank','logCopy.basicInfo','logCopy.basicHeight','logCopy.wrap']);   // cssAsked: 「쓰던 테마가 있어요」에 답한 지문 (설정이 아니라 기억) · logCopy.*: 로그 복사 시트가 기억하는 마지막 모양 · 색 · 최근 · 즐겨찾기 · 내 글꾸 (켜기만 설정)
+/** 1.7.6 끈 목록(chat.mbOff)으로 저장하는 미트볼 맞춤 스위치의 가짜 경로 「chat.mbOff.<열쇠>」 → 열쇠(아니면 '').
+ *  그 스위치들은 기본값 표에 칸이 없어 「변경한 설정」에 하나도 안 나왔어요(40여 개) — 켬이 기본값 · 끈 것만 한 줄씩 보여 주고 「기본값」으로 다시 켜요. 제 설정 키가 있는 스위치(뒤로 가기 · 지도 층 …)는 그 키로 이미 나와요. */
+export function mbOffKey(path) {
+    const m = /^chat\.mbOff\.([a-z]+)$/.exec(String(path || ''));
+    const sw = m ? switchOf(m[1]) : null;
+    return sw && !sw.setting && !sw.choice ? m[1] : '';
+}
 const safe = path => typeof path === 'string' && !path.split('.').some(k => ['__proto__','constructor','prototype'].includes(k));
 export function settingDefault(settings, path) {
+    if (mbOffKey(path)) return { allowed: true, value: true };
     if (!safe(path) || OMITTED_KEYS.has(path.split('.')[0]) || omittedPaths.has(path)) return { allowed: false };
     if (path === 'gradients.overrides' || path.startsWith('gradients.overrides.')) {
         const [, , palette, token, extra] = path.split('.');
@@ -43,11 +52,13 @@ export function settingDefault(settings, path) {
     return { allowed: value !== undefined, value };
 }
 export function settingChanged(settings, path) {
+    const mb = mbOffKey(path); if (mb) return !switchOn(settings, mb);
     const def = settingDefault(settings, path);
     return def.allowed && !equal(read(settings, path), def.value);
 }
 export function resetSetting(settings, path) {
     if (path === 'usageMode') return false; // The dedicated control saves durably before reloading.
+    const mb = mbOffKey(path); if (mb) { if (!settings.chat || typeof settings.chat !== 'object') return false; return setSwitch(settings.chat, mb, true); }
     const def = settingDefault(settings, path);
     if (!def.allowed) return false;
     const keys = path.split('.'), key = keys.pop(); let target = settings;
@@ -82,6 +93,7 @@ export function changedSettings(settings) {
         for (const key of Object.keys(defaults)) visit(defaults[key], value?.[key], path ? `${path}.${key}` : key);
     }
     for (const key of Object.keys(DEFAULTS)) if (key !== 'colorOverrides') visit(DEFAULTS[key], settings[key], key);
+    for (const key of Array.isArray(settings.chat?.mbOff) ? settings.chat.mbOff : []) if (mbOffKey(`chat.mbOff.${key}`)) result.push({ path: `chat.mbOff.${key}`, before: true, value: false });   // 1.7.6 끈 미트볼 맞춤 스위치
     for (const role of ROLE_IDS) if (typeof settings.roleIcons?.[role] === 'string') result.push({ path: `roleIcons.${role}`, before: undefined, value: settings.roleIcons[role] });
     for (const [slug, entry] of Object.entries(settings.pickedIcons || {})) if (entry && typeof entry === 'object') result.push({ path: `pickedIcons.${slug}`, before: undefined, value: entry });
     for (const [palette, colors] of Object.entries(settings.colorOverrides || {})) for (const [token, value] of Object.entries(colors || {})) {

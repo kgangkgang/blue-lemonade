@@ -179,7 +179,7 @@ await ok('설정 찾기: 옛 이름 · 별칭 그대로 · 길은 레몬 탭 · 
     assert.equal(by('뒤로 가기로 미트볼 창 닫기').breadcrumb, '확장 › 미트볼 상태창 › 블루레몬');
     const panel = read('src/panel.js');
     assert.match(panel, /const navigate = entry => \{\r?\n\s+if \(isLemonPath\(entry\.path\)\) \{ goMbLemon\(root, entry\.path\); return; \}/);
-    assert.match(panel, /function jumpToSetting\(root, path\) \{\r?\n\s+if \(isLemonPath\(path\)\) \{ goMbLemon\(root, path\); return; \}/);
+    assert.match(panel, /function jumpToSetting\(root, path\) \{\r?\n\s+if \(isLemonPath\(path\)\) \{ goMbLemon\(root, [^;]*\bpath\); return; \}/);   // 1.7.6 끈 스위치 줄(chat.mbOff.<열쇠>)은 그 스위치로 바꿔 넘겨요
 });
 await ok('찾기에서 고르면: 확장 서랍 → 레몬 탭 → 그 줄 표시', async () => {
     const { r } = page();

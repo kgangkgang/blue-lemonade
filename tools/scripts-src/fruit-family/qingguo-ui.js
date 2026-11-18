@@ -19,6 +19,30 @@ function installQingguoKorean(BlueLemonade, data) {
   const servePhrases = new Map(Object.entries(serve.ui || {}).map(([a,b])=>[normalize(a),b]));
   const servePatterns = (serve.patterns || []).map(([pattern,replacement])=>[new RegExp(pattern),replacement]);
   const serveStatus = serve.status || [];
+  // 도구 호출 1.5(11-18): 따로 뜨던 창 대신 과일의 마음 창(#fruit-heart-v6) 안 탭으로 그려요 — 본문 칸 안의 [data-fh-serve-view] 가 든 화면 · 아래 메뉴 [data-nav="serve"] · 홈 카드 [data-action="open-serve-panel"].
+  //   그 자리에서만 serve.fh 표(먼저) → 옛 창 표 순서로 찾아요. 과일의 마음 창의 다른 탭 글은 건드리지 않아요. 옛 1.4 창(#serve-anti-host)은 아래 예전 길 그대로예요.
+  const fh = serve.fh || {};
+  const fhPhrases = new Map(Object.entries(fh.ui || {}).map(([a,b])=>[normalize(a),b]));
+  const fhPatterns = [...(fh.patterns || []), ...(serve.patterns || [])].map(([pattern,replacement])=>[new RegExp(pattern),replacement]);
+  const fhParts = [...(fh.parts || []), ...serveStatus, ...(fh.tail || [])];
+  let fhServeView = null;
+  const inFhServe = element => !!element.closest('#fruit-heart-v6') && ((!!fhServeView && fhServeView.contains(element)) || !!element.closest('[data-nav="serve"],[data-action="open-serve-panel"]'));
+  const fhWords = value => { let out = value; for (const [from,to] of fhParts) out = out.split(from).join(to); return out; };
+  // 과일의 마음 창 공용 번역이 먼저 지나가면 한자 뒤 전각 쌍점(：)이 「: 」로 바뀌어 있어요(리그에서 확인) — 그 꼴도 같은 글로 봐요
+  const colonBack = text => text.replace(/(\p{Script=Han}): ?/gu, '$1：').replace(/: ?$/, '：');
+  // 띄어쓰기 · 쌍점 꼴만 다른 글도 같은 글로 찾아요(공용 번역이 먼저 손댄 꼴 · 「JSON:」처럼 한자 뒤가 아닌 쌍점)
+  const loose = text => text.replace(/\s+/g, '').replace(/：/g, ':');
+  const fhLoose = new Map([...servePhrases, ...fhPhrases].map(([a,b])=>[loose(a),b]));
+  // 그 공용 번역이 상태 값 「开启 · 关闭」를 단추 말(켜기 · 끄기)로 먼저 바꾼 것을 상태 말로
+  const fhValues = new Map(fh.values || []);
+  function fhText(core) {
+    const exact = fhPhrases.get(core) ?? servePhrases.get(core) ?? fhLoose.get(loose(core));
+    if (exact !== undefined) return exact;
+    for (const text of core === colonBack(core) ? [core] : [core, colonBack(core)]) {
+      for (const [pattern,replacement] of fhPatterns) if (pattern.test(text)) return fhWords(text.replace(pattern,replacement));
+    }
+    return undefined;
+  }
   // 출잔 스크립트가 띄우는 알림(제목이 「出杯·工具调用」인 토스트)만 골라 바꿔요. 다른 알림은 건드리지 않아요.
   const toast = serve.toast || {};
   const toastTitle = toast.title ? normalize(toast.title[0]) : null;
@@ -62,6 +86,14 @@ function installQingguoKorean(BlueLemonade, data) {
         return out;
       }
     }
+    if (!quality && inFhServe(element)) {
+      // 홈 카드 그림 칸(.fh-qr-ico)은 스크립트가 주기마다 제 글자로 되돌려요 — 건드리면 서로 다퉈서 그대로 둬요
+      const hit = element.closest('.fh-qr-ico') ? undefined : fhText(core);
+      if (hit !== undefined) next = hit;
+      else if (element.closest('.fh-serve-val') && fhValues.has(core)) next = fhValues.get(core);
+      // 기록 제목 · 기록 풀이 · 홈 카드 한 줄은 서버 원문 · 모델 이름이 섞여요 — 아는 낱말만 바꾸고 나머지는 그대로
+      else if (element.closest('.fh-serve-ltitle,.fh-serve-ldetail,.fh-qr-copy')) { const out = fhWords(colonBack(value)); return out === colonBack(value) ? value : out; }
+    }
     if (quality && element.closest('.qgp-score-pill')) {
       const match = /^白描纯净度 (\d+) 分 ｜ 命中 (\d+) 处$/.exec(core);
       if (match) next = `문장 점수 ${match[1]}점 · 규칙에 걸린 곳 ${match[2]}개`;
@@ -77,6 +109,7 @@ function installQingguoKorean(BlueLemonade, data) {
     texts.set(node, {before:value,shown:next}); node.nodeValue = next;
   }
   function paintRoot(root) {
+    if (root.getAttribute('id') === 'fruit-heart-v6') fhServeView = root.querySelector('[data-fh-serve-view]')?.parentElement || null;
     const walker = doc.createTreeWalker(root, host.NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) paintNode(walker.currentNode);
     for (const element of [root,...root.querySelectorAll('[title],[aria-label],[placeholder]')]) {

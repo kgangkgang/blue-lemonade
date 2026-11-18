@@ -61,6 +61,11 @@ test('② 기능: 가장 안쪽의 아는 함수 — 만들기 안의 번역은 
     assert.deepEqual(C.slotOf(nested, MB), { slot: 'translate', fn: 'trJSON' });
     const truth = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['truthReply', `${BASE}/${MB}/src/ai.js`, 'async ']));
     assert.deepEqual(C.slotOf(truth, MB), { slot: 'contact', fn: 'truthReply' }, '2.7.23 최면 어플 답장은 연락 칸');
+    const minds = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['fetchMinds', `${BASE}/${MB}/src/ai.js`, 'async ']));
+    assert.deepEqual(C.slotOf(minds, MB), { slot: 'contact', fn: 'fetchMinds' }, '2.9.0 속마음 가져오기는 옛 엿보기(peekMind)와 같은 연락 칸');
+    assert.equal(C.FN_SLOT.peekMind, 'contact', '옛 판(2.8.0 까지)의 엿보기도 그대로');
+    const fortune = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], ['fortuneRead', `${BASE}/${MB}/src/ai.js`, 'async ']));
+    assert.deepEqual(C.slotOf(fortune, MB), { slot: '', fn: '' }, '2.9.0 점집 점괘는 표에 없어요 — 「확장 AI 전체」 칸으로');
     for (const [fn, file, slot] of [['groupReply', 'ai.js', 'contact'], ['roomSummaryAI', 'addons.js', 'contact'], ['gbWrite', 'minihome.js', 'contact'], ['ilchonWrite', 'minihome.js', 'contact'], ['noteReplyAI', 'minihome.js', 'contact'], ['ledgerScan', 'story.js', 'analyze']]) {
         const frames = C.parseFrames(chrome(['aiGenerateOnce', `${BASE}/${MB}/src/prompts.js`], [fn, `${BASE}/${MB}/src/${file}`, 'async ']));
         assert.deepEqual(C.slotOf(frames, MB), { slot, fn }, `2.8.0 ${fn}`);

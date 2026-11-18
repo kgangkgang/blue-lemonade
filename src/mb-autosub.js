@@ -152,7 +152,8 @@ export function syncHidden(c, eng) {
     const R = rec(c);
     const sets = liveSets(meta), setT = new Set(sets.map(a => a.t));
     // 테마 기록 가운데 그 저장이 사라진 것(원작 되돌리기 · 굳히기)은 같이 지워요(지운 답 기록도)
-    const orphan = meta.adjust.filter(a => isOurs(a) && !setT.has(a[TAG].of));
+    //   1.7.6 본문 고침 기록(k = 'edit' — src/mb-editsync.js)은 저장이 아니라 답에 묶인 것이라 여기서 안 지워요(그 뒤 저장의 「이어 맞추기」 만 여기서 구해요)
+    const orphan = meta.adjust.filter(a => isOurs(a) && a[TAG].k !== 'edit' && !setT.has(a[TAG].of));
     if (orphan.length) { meta.adjust = meta.adjust.filter(a => !orphan.includes(a)); out.changed = true; out.dropped += orphan.length; }
     for (const t of Object.keys(R.pos)) if (!setT.has(Number(t))) delete R.pos[t];
     const old = meta.adjust.filter(a => isOurs(a) && a[TAG].k === 'hid');
@@ -200,7 +201,7 @@ export function syncHidden(c, eng) {
  * 지운 답(들): 지우기 전 기억(snap)과 지금 채팅을 견줘 사라진 AI 답 · 바뀐 스와이프를 찾아, 그 뒤 칸 통째 저장마다 「저장 당시 계산」 이 바뀐 몫을 끼워요(bl_sub.k = 'del').
  *   몫 = (지운 뒤 · 참 자리 · 감긴 답 셈) − (지우기 전 · 참 자리 · 감긴 답 셈) — 둘 다 그 저장보다 나중에 만든 테마 기록은 빼요. 지운 답은 되살릴 수 없어 이 기록은 다시 구하지 않아요.
  *   그다음 맞추기(syncHidden)가 「저장 당시」 → 「지금」 을 이어요(감긴 답 · 앞 저장 몫).
- *   snap = [{ m, sid, mes, ops }] (지우기 전 채팅 차례) · 돌려주는 것: { changed, made }
+ *   snap = [{ m, sid, mes, ops }] (지우기 전 채팅 차례 · snap.ats = 통째 저장의 지우기 전 자리) · 돌려주는 것: { changed, made }
  */
 export function syncGone(c, eng, snap) {
     const out = { changed: false, made: [] };
@@ -220,7 +221,11 @@ export function syncGone(c, eng, snap) {
     const pre = chat.slice(); for (const r of restore) pre.splice(r.at, 0, r.insert);
     const fresh = new Set();
     for (const S of liveSets(meta)) {
-        const p0 = posOf(R, S);                                   // 지우기 전 참 자리
+        // 1.7.6 지우기 전 참 자리: 그 확장은 지움 사건마다 끝을 넘은 저장 자리(at)를 남은 메시지 수로 당겨요(clampAdjust) — 맨 끝에 있던 저장은 여기 올 때 이미 당겨져 있어서
+        //   지금 at 을 지우기 전 자리로 믿으면 참 자리를 한 칸 더 당기고 끝 답 몫을 한 번 더 더했어요. 기억해 둔 지우기 전 at(snap.ats)이 있으면 그것으로 봐요
+        //   기억한 뒤에 생긴 저장(그 확장 화면에서 한 편집은 실리태번 사건이 없어요)은 그때 메시지 수(= 기억한 채팅 길이)에 적혔어요
+        const at0 = snap.ats ? Number(snap.ats.get(S.t) ?? snap.length) : NaN, p = Number(R.pos[String(S.t)]);
+        const p0 = Number.isFinite(at0) ? Math.min(Number.isFinite(p) ? p : Infinity, Math.max(at0, S.at)) : posOf(R, S);
         const p1 = p0 - lost.filter(x => x.i < p0).length;        // 지운 뒤 참 자리
         if (p1 !== p0) { if (p1 === S.at) delete R.pos[String(S.t)]; else R.pos[String(S.t)] = p1; }
         if (R.no.includes(S.t)) continue;
@@ -248,7 +253,11 @@ export function syncGone(c, eng, snap) {
 }
 
 /** 지우기 전 기억: 메시지 참조 · 그 스와이프 번호 · 글 · 변화 줄(참조만) */
-export const remember = (chat) => (Array.isArray(chat) ? chat : []).map(m => ({ m, sid: m?.swipe_id ?? 0, mes: m?.mes, ops: m?.extra?.[META]?.bySwipe?.[m?.swipe_id ?? 0] }));
+export function remember(chat, meta = null) {
+    const out = (Array.isArray(chat) ? chat : []).map(m => ({ m, sid: m?.swipe_id ?? 0, mes: m?.mes, ops: m?.extra?.[META]?.bySwipe?.[m?.swipe_id ?? 0] }));
+    if (Array.isArray(meta?.adjust)) out.ats = new Map(liveSets(meta).map(a => [a.t, a.at]));   // 1.7.6 통째 저장의 지우기 전 자리(그 확장이 지움 뒤 당기기 전)
+    return out;
+}
 
 // ── 실리태번 · 그 확장과 잇기 ─────────────────────────
 async function mbMod(file, doc = globalThis.document) {
@@ -327,24 +336,32 @@ export function startAutoSub(doc = globalThis.document) {
     const c = ctx(), on = c?.eventSource?.on?.bind(c.eventSource), T = c?.event_types ?? c?.eventTypes ?? {};
     if (!on) return false;
     started = true;
-    const keep = () => { try { snap = remember(ctx()?.chat); } catch { snap = []; } };
+    const keep = () => { try { const c = ctx(); snap = remember(c?.chat, c?.chatMetadata?.[META]); } catch { snap = []; } };
+    // 1.7.6 같은 차례에 겹쳐 온 사건(답 하나에 받음 · 그림 · 끝)은 기억하기를 한 번만 — 걸린 뒤 올 사건은 다시 걸어요(찍는 채팅 상태는 같아요)
+    let keepQueued = false;
+    const keepSoon = () => { if (keepQueued) return; keepQueued = true; setTimeout(() => { keepQueued = false; keep(); }, 0); };
     for (const ev of ['CHAT_CHANGED', 'MESSAGE_RECEIVED', 'MESSAGE_SENT', 'MESSAGE_SWIPED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'GENERATION_ENDED', 'MORE_MESSAGES_LOADED', 'CHARACTER_MESSAGE_RENDERED'])
-        if (T[ev]) on(T[ev], () => setTimeout(keep, 0));
-    if (T.MESSAGE_DELETED) on(T.MESSAGE_DELETED, () => {
-        const was = snap;
-        setTimeout(() => {
+        if (T[ev]) on(T[ev], keepSoon);
+    // 1.7.6 지움 사건이 잇달아 오면(답 여러 개 지우기 · /cut 범위 · 지운 직후 또 지움) 한 묶음으로 — 예전엔 사건마다 같은 「지우기 전 기억」 으로 따로 돌아
+    //   첫 사건이 다 뺀 것을 둘째 사건이 또 빼고 참 자리(pos)도 두 번 당겼어요. 첫 사건의 기억 하나를 들고 마지막 사건 뒤에 한 번만 돌아요.
+    //   돌기 직전에 지금 채팅을 다시 기억해서(keep) 도는 사이에 온 다음 지움은 「지운 뒤」 기억에서 시작해요. 그 사이 채팅이 바뀌었으면 안 돌아요(옛 채팅 기억으로 새 채팅을 고치지 않게).
+    let pend = null;   // { was, id, timer }
+    const gone = (ms, mark = null) => {
+        if (!pend) pend = { was: snap, id: chatId(ctx()), timer: 0 };
+        if (mark) { const ats = pend.was.ats; pend.was = mark(pend.was); pend.was.ats = ats; }
+        clearTimeout(pend.timer);
+        pend.timer = setTimeout(() => {
+            const { was, id } = pend; pend = null;
             const cx = ctx();
-            if (!active(doc) || !sheet(cx)) { keep(); return; }
+            keep();
+            if (chatId(cx) !== id || !active(doc) || !sheet(cx)) return;
             applyGone(cx, was).catch(() => { /* 원래 동작 그대로 */ }).finally(keep);
-        }, 300);   // 그 확장의 지움 처리(clampAdjust)가 먼저
-    });
+        }, ms);
+    };
+    if (T.MESSAGE_DELETED) on(T.MESSAGE_DELETED, () => gone(300));   // 그 확장의 지움 처리(clampAdjust)가 먼저
     if (T.MESSAGE_SWIPE_DELETED) on(T.MESSAGE_SWIPE_DELETED, e => {
-        const id = Number(e?.messageId); const was = snap.map((x, i) => (i === id && Number(e?.swipeId) === x.sid ? { ...x, swDel: true } : x));
-        setTimeout(() => {
-            const cx = ctx();
-            if (!active(doc) || !sheet(cx)) { keep(); return; }
-            applyGone(cx, was).catch(() => { /* 원래 동작 그대로 */ }).finally(keep);
-        }, 400);   // 실리태번이 새 스와이프 글을 옮겨 적은 뒤
+        const id = Number(e?.messageId);
+        gone(400, was => was.map((x, i) => (i === id && Number(e?.swipeId) === x.sid ? { ...x, swDel: true } : x)));   // 실리태번이 새 스와이프 글을 옮겨 적은 뒤
     });
     keep();
     return true;

@@ -386,6 +386,16 @@ function Rt(mt,bt){function pt(h,k){let s=bt;try{for(;s.parent&&s.parent!==s&&s.
 }\r
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) .fh-nav-item b { display:inline-flex; align-items:center; justify-content:center; flex:none; width:auto; font-size:1.05em; line-height:1; margin:0; color:inherit; }\r
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) .fh-nav-item span { display:inline; word-break:keep-all; overflow-wrap:normal; }\r
+/* 11-18 청과 도구 호출 1.5 탭(.fh-serve-*): 스크립트가 글자를 10.5 ~ 12.5px 로 박아 둬요 — 이 창의 다른 탭과 같은 눈금으로(리그에서 잰 값: 창 바탕 15.5px · 설명 글 13.2px = .85em) — 제목 1em · 설명 .85em · 꼬리표 .75em. 색 · 면은 창 변수를 써서 그대로 둬요 */\r
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.fh-serve-btitle):is(.fh-serve-btitle,.fh-serve-ltitle),
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.fh-serve-ltitle):is(.fh-serve-btitle,.fh-serve-ltitle) { font-size:1em; line-height:1.5; }\r
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.fh-serve-bsub):is(.fh-serve-bsub,.fh-serve-lmodel,.fh-serve-ldetail,.fh-serve-erritem b,.fh-serve-erritem span),
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.fh-serve-lmodel):is(.fh-serve-bsub,.fh-serve-lmodel,.fh-serve-ldetail,.fh-serve-erritem b,.fh-serve-erritem span),
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.fh-serve-ldetail):is(.fh-serve-bsub,.fh-serve-lmodel,.fh-serve-ldetail,.fh-serve-erritem b,.fh-serve-erritem span),
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(b):is(.fh-serve-bsub,.fh-serve-lmodel,.fh-serve-ldetail,.fh-serve-erritem b,.fh-serve-erritem span),
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(span):is(.fh-serve-bsub,.fh-serve-lmodel,.fh-serve-ldetail,.fh-serve-erritem b,.fh-serve-erritem span) { font-size:.85em; line-height:1.5; }\r
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.fh-serve-pill):is(.fh-serve-pill,.fh-serve-lmeta),
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) :where(.fh-serve-lmeta):is(.fh-serve-pill,.fh-serve-lmeta) { font-size:.75em; line-height:1.45; }\r
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6) .fh-nav-item.on { color:var(--bl-fh-acc-ink); background:var(--acc-soft); font-weight:600; }\r
 \r
 @container bl-fruit-settings (min-width:18em) {\r

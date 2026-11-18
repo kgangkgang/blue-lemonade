@@ -49,6 +49,8 @@ export const billedMaybe = reason => /(?<![\d.,])\b524\b(?![.,]\d)/.test(String(
  *  2.7.9 전수(원작 사본을 구문 분석해 aiGenerate · aiJSON · 번역 함수를 부르는 곳을 모두 뽑음): 새 길은 칩 점검(pipFix → analyzeMessage) 하나 — 안쪽 함수가 같아 그대로 걸려요.
  *  2.8.0 대조(11-16): 새 길 여섯 — 단체방 답장 · 단체방 요약 · 방명록 · 일촌평 · 방명록 답글은 그 확장이 선톡 · 메신저 답장과 같은 모델 칸을 써서 연락 칸으로, 장부 정리는 별도 분석과 같은 칸이라 분석 칸으로.
  *    이야기 장치(공략 · 비밀 · 기억 왜곡 · 채팅 간 우편)는 이름 없는 안쪽 함수라 못 알아봐요 — 「확장 AI 전체」 칸 그대로예요.
+ *  2.9.0 대조(11-18 · 원작 98f696c4): 「엿보기」(peekMind)가 없어지고 프로필의 속마음 가져오기(fetchMinds — 그 확장에서 같은 'peek' 길)로 바뀌었어요 → 같은 연락 칸. peekMind 는 옛 판(2.8.0 까지)용으로 남겨요.
+ *    새 길 둘 — 점집 점괘(fortuneRead) · 굿(gutRite)은 표에 넣지 않았어요(못 알아본 이름 = 「확장 AI 전체」 칸으로 조용히 가요 · 어느 칸에 둘지는 사용자 결정).
  *  2.7.23 대조(11-16): 새 길은 연락의 「최면 어플」 답장(truthReply) 하나 — 그 확장이 메신저 답장과 같은 모델 칸을 쓰는 길이라 연락 칸으로 걸어요. 나머지 이름은 그대로예요.
  *  2.7.21 전수(11-14 · 저장소 역사를 새로 정리함): 부르는 곳 · 기능 이름이 바로 앞 2.7.17 과 같아요(편지 답장을 부르는 곳 하나 늘고 「남은 글 번역하기」의 trJSON 두 번이 한 번으로 — 칸은 그대로).
  *    연결 프로필이 실패하면 글 한 줄로 다시 보내던 것을 원작이 뺐고(sendRequest 한 번), 「실패하면 메인으로」(aiFallbackMain) 기본이 꺼짐으로 바뀌었어요 — 다리는 그 설정을 그대로 따라요.
@@ -58,7 +60,7 @@ export const billedMaybe = reason => /(?<![\d.,])\b524\b(?![.,]\d)/.test(String(
  *  2.7.7 부터 메인 연결 요청은 「본편이 다 쓸 때까지 기다리기」 await 뒤에 나가요 → 기능 함수는 비동기 프레임으로만 남아요(남지 않는 엔진은 ext-bridge.js 가 받은 때의 스택으로 봐요). */
 export const FN_SLOT = Object.freeze({
     analyzeMessage: 'analyze', ledgerScan: 'analyze',
-    phoneReply: 'contact', letterReply: 'contact', pingMessage: 'contact', summarizeThread: 'contact', peekMind: 'contact', truthReply: 'contact',
+    phoneReply: 'contact', letterReply: 'contact', pingMessage: 'contact', summarizeThread: 'contact', peekMind: 'contact', fetchMinds: 'contact', truthReply: 'contact',
     groupReply: 'contact', roomSummaryAI: 'contact', gbWrite: 'contact', ilchonWrite: 'contact', noteReplyAI: 'contact',
     genModule: 'gen', genGroup: 'gen', instructModule: 'gen', askPrice: 'gen', detectPlay: 'gen', fillWants: 'gen',
     freshItems: 'feeds', snsReactions: 'feeds', musicPicks: 'feeds', boardReplies: 'feeds',

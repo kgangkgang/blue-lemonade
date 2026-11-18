@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 79fecf855a43) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 99f015e7adcc) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b28fbbf5e0cf7922"}
 /* css/00-base.css */
-:root{--bl-release:"1.7.6";}
+:root{--bl-release:"1.7.7";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -14097,7 +14097,7 @@ body.salty #right-nav-panel:is(bl-s, *) {
 .salty-panel .salty-custom-color input[aria-invalid="true"] { color: var(--salty-danger); outline: 1px solid var(--salty-danger); border-radius: 5px; }
 .salty-panel .salty-custom-foot { display: flex; justify-content: space-between; gap: 4px; margin: 8px 1px; color: var(--salty-muted); font-size: 12px; }
 .salty-panel .salty-custom-save { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; height: var(--bl-settings-control, 34px); background: var(--salty-fill-accent, var(--salty-accent)); color: var(--salty-on-accent); border: 0; border-radius: 8px; cursor: pointer; }
-.salty-panel .salty-custom-save:disabled { opacity: .45; cursor: default; }
+.salty-panel .salty-custom-save:disabled { opacity: .55; cursor: default; }
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header:where(body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header):not(:has(> .drag-handle)) { grid-template-columns: 0 28px minmax(0, 1fr) 36px 30px; }
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls { grid-template-columns: minmax(0, 1.5fr) minmax(0, .8fr) minmax(0, 1.1fr); }
 body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls:where(body.salty #WorldInfo .world_entry > form > .inline-drawer > .inline-drawer-header > .world_entry_thin_controls > .flex-container > .WIEnteryHeaderControls):has(input[name="depth"]:not(:disabled)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -17802,9 +17802,14 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
 .salty-panel :where(button):is(.salty-seg button):disabled,
 .salty-panel :where(button):is(.salty-fonttags button):disabled,
 .salty-panel :where(button):is(.bl-editor-category button):disabled {
-  opacity: .45;
+  opacity: .55;
+  color: var(--salty-text);
   cursor: default;
   box-shadow: none;
+}
+.salty-panel .salty-btn.primary:disabled,
+.salty-panel .salty-btn.salty-custom-save:disabled {
+  background: var(--salty-fill-shade, var(--shade));
 }
 .salty-panel .salty-btn:is(bl-s, *):focus-visible,
 .salty-panel :where(button):is(.salty-seg button):focus-visible,
@@ -19795,7 +19800,7 @@ body.salty .popup .bl-diag-file input[data-diag-index]:focus { background-color:
 .bl-mav-tools { display:flex; flex-wrap:wrap; align-items:center; gap:4px; min-width:0; }
 .bl-mav-label { flex:1 1 100%; color:var(--salty-muted); font-size:11px; line-height:1.4; }
 .bl-mav .bl-mav-danger { color:color-mix(in oklab, var(--danger, #d33) 80%, var(--salty-text)); }
-.bl-mav .salty-btn:disabled { opacity:.45; cursor:default; }
+.bl-mav .salty-btn:disabled { opacity:.55; cursor:default; }
 .bl-mav-foot { display:grid; gap:8px; padding:10px 14px 14px; border-top:1px solid var(--salty-line); }
 .bl-mav-foot .salty-btn { position:relative; min-height:36px; }
 .bl-mav-foot .salty-note { margin:0; line-height:1.55; font-size:12px; color:var(--salty-muted); }
@@ -20722,6 +20727,9 @@ html body.salty :where(.po-item):is(dialog.popup:not(.bl-settings-dialog) .po-di
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn.on,
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-chip.on,
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-sel.on { border-color: var(--acc); }
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn:disabled { opacity: .6; }
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn:is(.solid, .primary):disabled { background: transparent; border-color: var(--line); color: inherit; }
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-btn.danger:disabled { border-color: var(--line); color: inherit; }
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=text],
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=search],
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) input[type=number],
@@ -20945,9 +20953,10 @@ html body:is(.salty, *) :where(dialog) .bl-hs-switch:is(#bl-s, *)::before {
 :where(button):where(:is(.bl-notes-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .blpt-dialog, .bl-direction-dialog, .bl-mermaid-dialog, .blzi-dialog, .bl-translator-dialog) > header > button),
 :where(summary):where(:is(.bl-roomy-dialog, .bl-notes-dialog, .bl-assets-dialog, .bl-ctsi-dialog, .blpt-dialog, .bl-direction-dialog, .bl-mermaid-dialog, .blzi-dialog, .bl-translator-dialog, #cg-panel, #pt-panel, .rl-root, .pa-hub, .bwr_settings, #lv_settings, #model_register_settings, #model-switch-settings, .po-dialog, #regex-link-settings, .bl-embedded-settings, .salty-panel, #char_assets_settings, .jj-settings-body) summary),
 :where(#fruit-heart-v6 :is(button.fh-btn, .fh-tags > button.fh-tag, button.fh-chip, .fh-sec-head, .fh-seg > button, .fh-nav-item, .fh-theme, .fh-fullscreen, .fh-close, .fh-more, .bl-fruit-help-button)),
-:where(.dq-help-button):where(#bl-deus-popover :is(.dq-help-button, .dq-close, .bl-ft-shortcut)),
-:where(.dq-close):where(#bl-deus-popover :is(.dq-help-button, .dq-close, .bl-ft-shortcut)),
-:where(.bl-ft-shortcut):where(#bl-deus-popover :is(.dq-help-button, .dq-close, .bl-ft-shortcut)),
+:where(.dq-help-button):where(#bl-deus-popover :is(.dq-help-button, .dq-close, .bl-ft-shortcut, .dq-tabs > button)),
+:where(.dq-close):where(#bl-deus-popover :is(.dq-help-button, .dq-close, .bl-ft-shortcut, .dq-tabs > button)),
+:where(.bl-ft-shortcut):where(#bl-deus-popover :is(.dq-help-button, .dq-close, .bl-ft-shortcut, .dq-tabs > button)),
+:where(button):where(#bl-deus-popover :is(.dq-help-button, .dq-close, .bl-ft-shortcut, .dq-tabs > button)),
 :where(.bl-ft-reset):where(.bl-fruit-type-editor .bl-ft-reset),
 :where([data-act="editor-catalog-close"]):where(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]),
 :where([data-capture-remove]):where(.salty-panel .bl-name-row > button[data-capture-remove]),
@@ -21032,9 +21041,10 @@ dialog > .popup-button-close:is(#bl-s, *):is(.bl-s, *)::after,
 #fruit-heart-v6 .fh-close:is(.bl-s, *):is(bl-s, *)::after,
 #fruit-heart-v6 .fh-more:is(.bl-s, *):is(bl-s, *)::after,
 #fruit-heart-v6 .bl-fruit-help-button:is(.bl-s, *):is(bl-s, *)::after,
-#bl-deus-popover .dq-help-button:is(.bl-s, *):is(bl-s, *)::after,
-#bl-deus-popover .dq-close:is(.bl-s, *):is(bl-s, *)::after,
-#bl-deus-popover .bl-ft-shortcut:is(.bl-s, *):is(bl-s, *)::after,
+#bl-deus-popover .dq-help-button:is(bl-s, *):is(.bl-s, *)::after,
+#bl-deus-popover .dq-close:is(bl-s, *):is(.bl-s, *)::after,
+#bl-deus-popover .bl-ft-shortcut:is(bl-s, *):is(.bl-s, *)::after,
+#bl-deus-popover :where(button):is(.dq-tabs > button):is(.bl-s, *)::after,
 .bl-fruit-type-editor .bl-ft-reset:is(#bl-s, *):is(bl-s, *)::after,
 :where([data-act="editor-catalog-close"]):where(.salty-panel .bl-editor-directory-head > [data-act="editor-catalog-close"]):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
 :where([data-capture-remove]):where(.salty-panel .bl-name-row > button[data-capture-remove]):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
@@ -21073,6 +21083,11 @@ dialog > .popup-button-close:is(#bl-s, *):is(.bl-s, *)::after,
     box-sizing: border-box;
   }
     html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) .jj-stepper input[data-field="depth"] { min-width: 44px; }
+  html body.salty #bl-deus-popover .dq-tabs { padding-top: 4px; }
+  :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-tags,
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-chips { row-gap: 10px; }
+  :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-qr-acts,
+:where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-pad { row-gap: 8px; }
 }
 /* css/88-ui-parts.css */
 :root, body, #fruit-heart-v6 {

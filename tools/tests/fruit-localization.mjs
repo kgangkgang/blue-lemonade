@@ -88,6 +88,29 @@ check('청과 V4.0C 프롬프트 · 정규식 이름이 모두 한글 제목에 
   // 이름이 바뀐 V3.5 안내 · 마무리 2 는 옛 이름도 그대로 지원해요
   for(const old of ['🍏 青果·赫斯帕里得斯 V3.5 说明｜别开','🔌尾2 #GEMINI 3.7F #GEMINI 3.8F #CLAUDE #GEMINI 4A'])assert.ok(dictionary.prompts.some(p=>p.name===old),old);
 });
+// 11-18 청과 헤스페리데스 V4.4C(도구 호출 1.5): 프롬프트 330개 · 정규식 24개가 모두 한글 제목에 걸리고, 이름이 바뀐 항목의 4.0 이름도 계속 걸려요.
+const qingguoV44C=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/fixtures/qingguo-hesperides-v44c-names.json'),'utf8'));
+check('청과 V4.4C 프롬프트 · 정규식 이름이 모두 한글 제목에 걸려요 (남은 중국어 0 · 옛 4.0 이름도 그대로)',()=>{
+  assert.equal(qingguoV44C.prompts.length,330);assert.equal(qingguoV44C.regex.length,24);
+  const same=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
+  const marks=s=>[...String(s).matchAll(/#[^#｜]+/gu)].map(m=>m[0].trim());
+  const bare=s=>String(s).replace(/@[^\s@｜#]+/gu,'').replace(/#[^#｜]*/gu,'');
+  const missing=[];
+  for(const kind of ['prompts','regex'])for(const row of qingguoV44C[kind]){
+    const list=dictionary[kind],key=same(row.name);
+    const entry=list.find(p=>p.id===row.id&&same(p.name)===key)||list.find(p=>same(p.name)===key);
+    if(!entry){missing.push(`${kind}: ${row.name}`);continue;}
+    if(/\p{Script=Han}/u.test(bare(entry.title)))missing.push(`${kind}: ${row.name} → ${entry.title} (중국어가 남았어요)`);
+    for(const m of marks(row.name))if(!entry.title.includes(m))missing.push(`${kind}: ${row.name} → ${entry.title} (${m} 표시가 빠졌어요)`);
+    if(kind==='prompts'&&entry.title.split('｜').length!==row.name.split('｜').length)missing.push(`${kind}: ${row.name} → ${entry.title} (｜ 칸 수)`);
+  }
+  assert.deepEqual(missing,[],`한글 제목이 없는 V4.4C 이름 ${missing.length}개`);
+  // 새 항목 넷은 길게 누르기 설명(desc)까지 · 이름이 바뀐 셋은 옛 이름도
+  for(const id of ['fruit-qg-pace-free','fruit-v42-user-embodiment','fruit-qg-exclamation-restraint','fruit-v42-body-measurement-rule'])assert.ok(dictionary.prompts.find(p=>p.id===id)?.desc,id);
+  for(const old of ['🍏 青果·赫斯帕里得斯 V4.0C 说明｜别开','🔞 ASMR 对白','🧩 真实气场与能力边界｜抗超雄与反低级霸总 #GEMINI'])assert.ok(dictionary.prompts.some(p=>same(p.name)===same(old)),old);
+  // V4.0C 고정물의 이름은 지금도 모두 걸려요
+  for(const row of qingguoV40C.prompts)assert.ok(dictionary.prompts.some(p=>same(p.name)===same(row.name)),row.name);
+});
 {const src=path.join(root,'tools/scripts-src/fruit-family'),read=n=>JSON.parse(fs.readFileSync(path.join(src,n),'utf8'));
  const parts=['common','fruit','qingguo','sese'].map(n=>read(`prompts-${n}.json`)),norm=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
  check('family dictionary: priority 20, partial, at least 460 prompt and 48 regex titles',()=>{assert.equal(dictionary.priority,20);assert.equal(dictionary.partial,true);assert.ok(dictionary.prompts.length>=460);assert.ok(dictionary.regex.length>=48)});
@@ -108,7 +131,15 @@ const qr=add(panel,'button',{'data-qr':'synthetic','data-qr-label':'推进剧情
 const firstPart=text=>text.replace(/\s*#.*$/,'').replace(/\s*@[^\s@#]+/g,'').split('｜')[0].trim();
 const qingguoV2Nodes=qingguoV2.map(row=>({row,node:add(panel,'span',{class:'fh-item-name','data-prompt-id':row.id},firstPart(row.name))}));
 const qingguoV2Hints=qingguoV2.flatMap(row=>row.name.split('｜').slice(1).filter(text=>/\p{Script=Han}/u.test(text)).map(text=>({text,node:add(panel,'span',{class:'fh-item-meta'},text)})));
+// 11-18 청과 도구 호출 1.5 의 홈 카드 한 줄 — 이 창 공용 번역이 「묶음：값」 무늬로 쌍점만 바꾸고 중국어로 두던 줄(리그에서 확인)
+const serveHome=['当前：普通模式（流式直连） · 点击进入出杯控制台','当前：工具模式','当前：工具模式 · 抗外审+抗截断','当前：工具模式 · 抗外审（流式）','当前：工具模式 · 抗截断（非流式）'].map(text=>add(add(add(panel,'button',{class:'fh-qr-entry','data-action':'open-serve-panel'}),'span',{class:'fh-qr-copy'}),'small',{},text));
 e.run();
+check('청과 도구 호출 1.5 홈 카드 한 줄을 한글로 보여 줘요(원문은 지문으로만)',()=>{
+  const shown=serveHome.map(node=>node.text);
+  assert.deepEqual(shown,['지금: 보통 모드 (스트리밍 바로 연결) · 눌러서 도구 호출 조작판 열기','지금: 도구 모드','지금: 도구 모드 · 외부 검열 대응 + 끊김 방지','지금: 도구 모드 · 외부 검열 대응 (스트리밍)','지금: 도구 모드 · 끊김 방지 (비스트리밍)']);
+  const bundle=fs.readFileSync(path.join(root,'src/scripts/plain/fruit-heart.js'),'utf8');
+  assert.ok(!bundle.includes('点击进入出杯控制台'),'긴 원문은 사전에 넣지 않아요');
+});
 check('과일의 마음에서 청과 V2의 짧은 항목 이름을 한글로 보여 주고 식별자는 유지해요',()=>{
   for(const {row,node}of qingguoV2Nodes){
     // 같은 짧은 원문에 이전 판의 한글 별칭이 있으면 그 표시를 유지할 수 있어요.

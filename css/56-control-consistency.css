@@ -185,11 +185,21 @@ html body .salty-panel.bl-editor .bl-settings-toprow .bl-settings-close {
   font-weight: 650;
   box-shadow: inset 3px 0 0 var(--salty-accent);
 }
+/* 1.7.5 꺼진(disabled) 단추 글자 명암(화면 묵은 빚 181종 · 사용자 결정): 반투명 .45 는 안 고른 칸의 보조색 잉크 위에서 글자가 밤 2.2 ~ 2.4 · 낮 1.8 ~ 1.9 : 1 까지 흐려졌어요(기준 3 : 1).
+   → 꺼진 동안은 글자를 본문색(--salty-text)으로 바꾸고 반투명을 .55 로 — 내장 팔레트 두 벌의 바탕 · 면 · 음영 두 겹 어디서나 3 : 1 이상(tools/tests/disabled-ink.mjs).
+   새 색은 없어요(본문색 토큰 + 반투명). 고른 칸은 면 · 체크가 그대로라 안 고른 칸과 구분되고, 켜진 칸(보조색 잉크 · 본문색 100%)보다는 흐려요.
+   채운 단추(.primary · 팔레트 만들기 저장 — 강조색 면 위 글자)는 반투명만으로는 3 : 1 이 안 나와요(낮 팔레트 흰 글자 4.5 : 1 × .6 = 2.6) → 꺼진 동안은 보통 단추와 같은 면(--salty-fill-shade) · 본문색. */
 .salty-panel :is(.salty-btn, .salty-seg button, .salty-fonttags button, .bl-editor-category button):disabled {
-  opacity: .45;
+  opacity: .55;
+  color: var(--salty-text);
   cursor: default;
   box-shadow: none;
 }
+.salty-panel :is(.salty-btn.primary, .salty-btn.salty-custom-save):disabled {
+  background: var(--salty-fill-shade, var(--shade));
+}
+/* 지금 화면 표시(aria-current)가 붙은 목록 칸은 색 글자 규칙이 같은 세기라 따로 한 번 더 — 꺼진 동안은 본문색(면 · 왼쪽 선은 그대로라 「지금 화면」은 계속 보여요) */
+.salty-panel .bl-editor-directory .bl-editor-category.bl-editor-category button[aria-current="page"]:disabled { color: var(--salty-text); }   /* 50-settings-screens 의 지금 화면 규칙(html body.salty …)보다 세게 — 클래스를 한 번 더 적어요. html body.salty 로 시작하면 설정 창 규칙 떼기(css-gates)가 한 장 빌드와 어긋나요 */
 .salty-panel :is(.salty-btn, .salty-seg button, .salty-fonttags button, .bl-editor-category button):focus-visible {
   outline: 2px solid var(--salty-accent);
   outline-offset: 2px;

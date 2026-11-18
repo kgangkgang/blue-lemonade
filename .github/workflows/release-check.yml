@@ -254,6 +254,7 @@ jobs:
           node tools/tests/mb-dot-seen.mjs .
           node tools/tests/mb-hidden.mjs .
           node tools/tests/mb-autosub.mjs .
+          node tools/tests/mb-editsync.mjs .
           node tools/tests/mb-ask.mjs .
           node tools/tests/layer-back.mjs .
           node tools/tests/mb-back.mjs .
@@ -264,6 +265,7 @@ jobs:
           node tools/tests/mb-arrow.mjs .
           node tools/tests/mb-map-floors.mjs .
           node tools/tests/mb-toggles.mjs .
+          node tools/tests/mb-locgo.mjs .
           node tools/tests/mb-rowbtn-gap.mjs .
           node tools/tests/mb-face-now.mjs .
           node tools/tests/name-people.mjs .
@@ -874,6 +876,8 @@ jobs:
           node tools/tests/fruit-style-hub.mjs .
           node tools/tests/fruit-skin-contrast.mjs .
           node tools/tests/seg-muted-ink.mjs .
+          node tools/tests/disabled-ink.mjs .
+          node tools/tests/chip-row-gaps.mjs .
           node tools/tests/role-icons.mjs .
           node tools/tests/fruit-entry-rows.mjs .
           node tools/tests/manifest-reuse.mjs .
@@ -1025,6 +1029,8 @@ jobs:
           node tools/tests/an-keep.mjs . tools
           # 1.7.4 미트볼 설정 칸의 「블루레몬」 레몬 탭: 탭 줄 끝 · 머리 레몬 단추 · 맞춤을 다 꺼도 남음 · 설정 찾기 → 그 탭(jsdom)
           node tools/tests/mb-lemon-tab.mjs . tools
+          # 1.7.6 미트볼 「간격 체계」(2.9.0 개편): 구조로 거는 넓은 규칙이 붙던 꼴에 걸리고 나란한 단추 · 띠는 안 건드림(jsdom 선택자 맞음)
+          node tools/tests/mb-spacing-system.mjs . tools
           # 1.6.0 jsdom 을 쓰는 시험은 모두 위 npm ci 뒤에 — 앞 단계에는 tools/node_modules 가 없어 「jsdom 을 못 찾았어요」(종료 2)로 Release consistency 가 실패했어요(1.5.9)
           node tools/tests/translator-message-template.mjs . tools
           node tools/tests/icon-text-prescan-slices.mjs . tools

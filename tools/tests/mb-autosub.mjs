@@ -263,6 +263,64 @@ await ok('원작 파일 · 원작 함수는 안 고쳐요(그 확장 모듈은 �
     assert.ok(!/\.emit\(|MutationObserver|setInterval/.test(src));
     assert.ok(!/eng(?:ine)?\.\w+\s*=[^=]/.test(src), '그 확장 함수를 바꿔 끼우지 않아요');
 });
+await ok('1.7.6 지움 사건이 잇달아 와도(여러 답 지우기 · /cut 범위) 한 번만 빼요 · 그 사이 채팅이 바뀌면 안 빼요', async () => {
+    // 고치기 전: 사건마다 같은 「지우기 전 기억」 으로 따로 돌아, 첫 사건이 두 답을 다 뺀 뒤 둘째 사건이 또 빼고 참 자리도 두 번 당겼어요
+    const bus = {}; const es = { on: (t, fn) => { (bus[t] ||= []).push(fn); } }; const emit = (t, ...a) => { for (const fn of bus[t] || []) fn(...a); };
+    const T = { MESSAGE_DELETED: 'del', MESSAGE_SWIPE_DELETED: 'swdel', CHAT_CHANGED: 'chat' };
+    const wire = () => { C.eventSource = es; C.event_types = T; };
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    world(); wire(); S.useEngine(fake);
+    assert.equal(S.startAutoSub(globalThis.document), true);
+    assert.equal(S._snap().length, 6, '시작할 때 한 번 기억');
+    C.chat.splice(3, 1); emit('del', C.chat.length);   // 4번째(Mira +20, Oskar +4 · 우정 +5)
+    C.chat.splice(1, 1); emit('del', C.chat.length);   // 2번째(Mira +10) — 300ms 안에 잇달아
+    await wait(700);
+    const dels = C.chatMetadata.statussim.adjust.filter(a => a[S.TAG]?.k === 'del');
+    assert.equal(dels.length, 1, `지운 답 기록은 하나(지금 ${dels.length}개: ${dels.map(a => JSON.stringify(a.ops)).join(' / ')})`);
+    assert.deepEqual(now(), { Mira: [7, 0], Oskar: [0, 0] }, '두 답 몫만 한 번씩 빠져요');
+    assert.equal(C.chatMetadata[S.REC].pos['100'], 2, '참 자리는 한 번만 당겨요(4 → 2)');
+    assert.equal(S._snap().length, 4, '끝나면 지금 채팅으로 다시 기억');
+    // 지운 직후 다른 채팅으로 넘어가면(300ms 안): 옛 채팅의 기억으로 새 채팅을 고치지 않아요
+    world(); wire(); await wait(5); emit('chat'); await wait(5);
+    C.chat.splice(3, 1); emit('del', C.chat.length);
+    const other = world(); wire(); other.getCurrentChatId = () => 'chat-2'; emit('chat');
+    await wait(700);
+    assert.equal(other.chatMetadata.statussim.adjust.filter(a => a[S.TAG]).length, 0, '다른 채팅에는 기록을 안 끼워요');
+    assert.equal(other.chatMetadata[S.REC], undefined);
+    S.useEngine(null);
+});
+await ok('1.7.6 통째 저장이 채팅 맨 끝에 있을 때(그 확장이 지움마다 저장 자리를 남은 끝으로 당겨요) 앞 답을 지워도 그 답 몫만 빠져요', async () => {
+    // 리그(실제 미트볼 2.8.0)에서 본 것: 저장 자리 at = 메시지 수일 때 앞 답을 지우면 그 확장 clampAdjust 가 at 을 하나 당겨요.
+    //   고치기 전: 당겨진 자리를 「지우기 전 자리」 로 믿어 참 자리를 한 칸 더 당기고, 마지막 답 몫을 「이어 맞추기」 로 한 번 더 더했어요(애정 +7 이 두 번)
+    const clampLikeTheirs = () => { for (const a of C.chatMetadata.statussim.adjust) if (!a.an && a.at > C.chat.length) a.at = C.chat.length; };
+    const endSave = () => { world(); const meta = C.chatMetadata.statussim; meta.adjust.length = 0; meta.adjust.push({ at: 6, t: 100, set: { mod: 'rel', data: clone(fake.compute(6, { bake: true }).state.data.rel) }, label: '' }); };
+    endSave(); assert.deepEqual(now(), { Mira: [37, 5], Oskar: [4, 0] });
+    let snap = S.remember(C.chat, C.chatMetadata.statussim);
+    C.chat.splice(3, 1); clampLikeTheirs();
+    S.syncGone(C, fake, snap); S.syncHidden(C, fake);
+    let ours = C.chatMetadata.statussim.adjust.filter(a => a[S.TAG]);
+    assert.deepEqual(ours.map(a => [a[S.TAG].k, a.ops.map(o => o.join(' ')).sort()]), [['del', ['aff Mira -20', 'aff Oskar -4', 'trust Mira -5']]], JSON.stringify(ours.map(a => [a[S.TAG].k, a.ops])));
+    assert.deepEqual(now(), { Mira: [17, 0], Oskar: [0, 0] });
+    assert.equal(C.chatMetadata[S.REC].pos, undefined, '참 자리는 당겨진 저장 자리와 같아 따로 안 적어요');
+    // 두 답을 잇달아(한 묶음): 자리는 두 번 당겨졌고 지우기 전 번호는 3 · 5
+    endSave(); snap = S.remember(C.chat, C.chatMetadata.statussim);
+    C.chat.splice(5, 1); clampLikeTheirs(); C.chat.splice(3, 1); clampLikeTheirs();
+    S.syncGone(C, fake, snap); S.syncHidden(C, fake);
+    ours = C.chatMetadata.statussim.adjust.filter(a => a[S.TAG]);
+    assert.equal(ours.length, 1, JSON.stringify(ours.map(a => [a[S.TAG].k, a[S.TAG].ids, a.ops])));
+    assert.deepEqual(ours[0][S.TAG].ids, [3, 5]);
+    assert.deepEqual(now(), { Mira: [10, 0], Oskar: [0, 0] });
+    // 기억한 뒤에 생긴 저장(그 확장 화면에서 한 편집 — 실리태번 사건 없음)도 같아요
+    world(); C.chatMetadata.statussim.adjust.length = 0; snap = S.remember(C.chat, C.chatMetadata.statussim);
+    C.chatMetadata.statussim.adjust.push({ at: 6, t: 100, set: { mod: 'rel', data: clone(fake.compute(6, { bake: true }).state.data.rel) }, label: '' });
+    C.chat.splice(3, 1); clampLikeTheirs();
+    S.syncGone(C, fake, snap); S.syncHidden(C, fake);
+    assert.deepEqual(C.chatMetadata.statussim.adjust.filter(a => a[S.TAG]).map(a => a[S.TAG].k), ['del']); assert.deepEqual(now(), { Mira: [17, 0], Oskar: [0, 0] });
+    // 저장 뒤에 있던 끝 답을 지운 것은 빼지 않아요(지우기 전 자리 4 · 끝 답 5)
+    world(); snap = S.remember(C.chat, C.chatMetadata.statussim);
+    C.chat.splice(5, 1); clampLikeTheirs();
+    assert.equal(S.syncGone(C, fake, snap).made.length, 0);
+});
 await ok('CI 등록(release-check.yml)', async () => {
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/mb-autosub.mjs .'));
 });

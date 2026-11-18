@@ -23,7 +23,7 @@ import { showThemeModal } from './modal.js';
 import { mouseDevice } from './prompt-card-picker.js';
 import { promptChoiceGroups, withFolderChoices } from './prompt-choice-core.js';
 import { setFolderSource } from './prompt-choice.js';
-import { LIMITS, tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, presetStem, readPresetFolders, readBoxPresetFolders, folderIndex, ungroupFolder, moveFolderBlock, shiftInFolder, scopeFolders, migrateFolderSlot, mergeFolders, seedBase, undoRestored } from './prompt-folders-core.js';
+import { LIMITS, tidyFolders, newFolderId, folderRuns, detectMove, adoptMove, assignIds, gatherOrder, runStats, planToggleAll, planFromDividers, isDivider, folderItems, dropEmpty, remapFolders, importSources, readPresetFolders, readBoxPresetFolders, folderIndex, ungroupFolder, moveFolderBlock, shiftInFolder, scopeFolders, migrateFolderSlot, mergeFolders, seedBase, undoRestored } from './prompt-folders-core.js';
 import { planFolderNames, applyFolderNamePlan } from './prompt-folder-labels.js';
 
 const CONTAINER = 'completion_prompt_manager';
@@ -524,13 +524,20 @@ async function autoFolders() {
     commit(made); lastIds = null; apply();
     offerUndo(before, `폴더 ${made.length}개를 만들었어요.`);
 }
-/** 폴더가 있는 다른 프리셋 — 같은 프리셋의 다른 판(이름에서 판 번호만 다름)을 위에, 그 안에서는 새 판부터 */
-function importable() {
-    const here = presetName(), stem = presetStem(here);
-    return Object.entries(store().presets).filter(([key, slot]) => key !== here && Array.isArray(slot?.folders) && slot.folders.length)
-        .map(([key, slot]) => ({ key, count: slot.folders.length, near: !!stem && presetStem(key) === stem }))
-        .sort((a, b) => (b.near - a.near) || b.key.localeCompare(a.key, undefined, { numeric: true }));
+/** 프리셋 이름 → 그 프리셋 파일에 든 폴더(있는 것만). 프리셋 목록을 한 번만 훑어요 — 이름마다 따로 찾으면 그때마다 목록을 다시 훑어요.
+ *  이름 목록은 API 마다 { 이름: 번호 } 이거나 배열이에요. 못 읽으면 빈 표(설정 칸만 봐요) */
+function filePresetFolders() {
+    const out = new Map();
+    try {
+        const { presets, preset_names: names } = SillyTavern.getContext().getPresetManager?.('openai')?.getPresetList?.() || {};
+        const at = Array.isArray(names) ? names.map((name, i) => [name, i]) : Object.entries(names || {});
+        for (const [name, i] of at) { const seed = readPresetFolders(presets?.[i]?.extensions); if (seed.length) out.set(String(name), seed); }
+    } catch { /* 프리셋 관리자가 없거나 꼴이 달라요 */ }
+    return out;
 }
+/** 폴더가 있는 다른 프리셋 — 같은 프리셋의 다른 판(이름에서 판 번호만 다름)을 위에, 그 안에서는 새 판부터.
+ *  11-18 프리셋 파일에만 폴더가 든 프리셋(1.5.2 부터 손 안 댄 폴더는 설정에 없어요)도 나와요 · 고친 폴더는 지금 보이는 모습으로(core importSources) */
+function importable() { return importSources(presetName(), store().presets, filePresetFolders()); }
 function openImportMenu(anchor) {
     openMenu(anchor, importable().map(item => ({ label: `${item.key} · 폴더 ${item.count}개`, run: () => importFrom(item.key) })));
 }
@@ -539,7 +546,8 @@ async function importFrom(key) {
     if (!pm || !order) return;
     let names = {};
     try { names = Object.fromEntries((SillyTavern.getContext().getPresetManager?.('openai')?.getCompletionPresetByName?.(key)?.prompts || []).map(p => [p.identifier, p.name || ''])); } catch { /* 프리셋이 없으면 번호로만 */ }
-    const { folders: made, stats } = remapFolders(tidyFolders(store().presets[key]?.folders), names, pm.serviceSettings?.prompts || [], order.map(e => e.identifier));
+    const source = importable().find(item => item.key === key)?.folders || [];
+    const { folders: made, stats } = remapFolders(source, names, pm.serviceSettings?.prompts || [], order.map(e => e.identifier));
     if (!made.length) { globalThis.toastr?.info?.(`「${key}」 폴더의 항목이 이 프리셋에 없어요.`, 'Blue Lemonade'); return; }
     const had = folders().length;
     const line = `같은 번호 ${stats.kept} · 같은 이름 ${stats.byName} · 없는 항목 ${stats.missing} · 새 항목을 옆 폴더에 ${stats.placed}`;

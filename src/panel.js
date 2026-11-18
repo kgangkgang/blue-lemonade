@@ -38,7 +38,7 @@ import { catalogMarkup, chipsMarkup, screenTitle, changedByScreen } from './sett
 import { SettingsHistory } from './settings-history.js';
 import { bindTouchSliders } from './touch-sliders.js';
 import { restorePreviewRules } from './lite.js';
-import { changedSettings, settingChanged, settingDefault, resetSetting, settingRoute, TEXT_TOKEN_ROUTE } from './settings-differences.js';
+import { changedSettings, settingChanged, settingDefault, resetSetting, settingRoute, TEXT_TOKEN_ROUTE, mbOffKey } from './settings-differences.js';
 const TEXT_SCREEN_TOKENS = new Set(Object.keys(TEXT_TOKEN_ROUTE));   // 1.0.0 중복 정리: 글자 모양 화면에 있는 색(색 고치기에서는 뺌)
 import { SETTING_LABELS, SETTING_VALUES } from './settings-labels.js';
 import { FRAME_RANGE } from './frames.js';
@@ -195,6 +195,7 @@ function historyLabel(path) {
         return `${PALETTES[path.split('.')[2]]?.label || '테마'} · 그라데이션 · ${label}`;
     }
     const scope = ({'type.dialogueSize':'대사','type.uiSize':'메뉴','type.codeSize':'코드'})[path] ?? { markdown:'마크다운', ui:'메뉴', code:'코드', profile: '캐릭터 프로필', userProfile: '내 프로필', image: '에셋 이미지', type: '본문', dialogue: '대사', em: '속마음', strong: '강조', chat: '채팅' }[path.split('.')[0]];
+    if (mbOffKey(path)) return `미트볼 맞춤 · ${MB_SWITCHES.find(sw => sw.key === mbOffKey(path))?.name || path}`;   // 1.7.6 끈 미트볼 맞춤 스위치(가짜 경로 chat.mbOff.<열쇠>)
     if (path.startsWith('roleIcons.')) return `단추 아이콘 · ${roleLabel(path.split('.')[1])}`;
     if (path.startsWith('pickedIcons.')) return '단추 아이콘 · 내 단추';   // 화면에서 고른 단추 (어느 단추인지는 값 쪽 이름에)
     if (path.startsWith('colorOverrides.')) {
@@ -299,7 +300,7 @@ function syncSettingResets() {
     for (const panel of panels) for (const button of panel.querySelectorAll('.bl-setting-reset')) { const hide = !settingChanged(settings, button.dataset.setting) || button.dataset.setting === 'replyNotify.on' && globalThis.Notification?.permission !== 'granted'; if (button.hidden !== hide) button.hidden = hide; }
 }
 function jumpToSetting(root, path) {
-    if (isLemonPath(path)) { goMbLemon(root, path); return; }   // 1.7.4 레몬 탭으로 옮긴 설정
+    if (isLemonPath(path)) { goMbLemon(root, mbOffKey(path) ? `@mb:${mbOffKey(path)}` : path); return; }   // 1.7.4 레몬 탭으로 옮긴 설정 · 1.7.6 끈 스위치는 그 줄로
     if (!settingDefault(getSettings(),path).allowed) return;
     const route = settingRoute(path);
     root._catalogOpen = false; ui.tab = route.tab; ui.subs[route.tab] = route.sub; ui.picker = null; ui.mbOnly = /^(chat\.mbFace(Tone|Look)?|fonts\.mb(\..+)?)$/.test(path);   // 미트볼 꾸미기 칸은 그 세 칸만 보이는 보기로
@@ -2650,10 +2651,11 @@ function bind(root) {
                 case 'setting-reset': {
                     const path = el.dataset.setting, settings = getSettings();
                     if (path === 'usageMode' || !settingChanged(settings,path)) break;
-                    const before = historyValue(getPath(settings,path),path);
+                    const shown = st => mbOffKey(path) ? switchOn(st, mbOffKey(path)) : getPath(st, path);   // 1.7.6 끈 미트볼 맞춤 스위치는 저장 칸이 따로 없어 켜짐 여부로
+                    const before = historyValue(shown(settings),path);
                     update(st => { resetSetting(st,path); if (/^(image|profile|userProfile)\.decor\./.test(path)) refreshPreset(st[path.split('.')[0]].decor); });
                     await syncChangedAddons([path]);
-                    toastr.info(`${esc(historyLabel(path))}: ${esc(before)} → ${esc(historyValue(getPath(getSettings(),path),path))}`, '기본값으로 복원했어요', {escapeHtml:false});
+                    toastr.info(`${esc(historyLabel(path))}: ${esc(before)} → ${esc(historyValue(shown(getSettings()),path))}`, '기본값으로 복원했어요', {escapeHtml:false});
                     break;
                 }
                 case 'history-undo': await stepHistory(false); break;

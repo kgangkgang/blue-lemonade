@@ -316,5 +316,27 @@ await ok('「미트볼 맞춤」 묶음(전부 · 화면만 · 데이터) — 1.
     assert.match(read('src/mb-lemon.js'), /panel\.mountMbFit\(body\)/);
 });
 
+// ── ⑥ 「변경한 설정」 목록(1.7.6): 끈 목록(chat.mbOff)으로 저장하는 스위치도 한 줄씩 ─────────────────────────────
+await ok('변경한 설정: 끈 스위치마다 한 줄(가짜 경로 chat.mbOff.<열쇠>) · 「기본값」으로 다시 켜요 · 제 설정 키가 있는 스위치 · 모르는 열쇠는 안 나와요', async () => {
+    const D = await load('src/settings-differences.js');
+    const { DEFAULTS } = await load('src/settings.js');
+    const base = D.changedSettings(structuredClone(DEFAULTS)).length;
+    const s = structuredClone(DEFAULTS); s.chat.mbOff = ['locgo', 'arrow', 'nope', 'back'];
+    const rows = D.changedSettings(s).filter(x => x.path.startsWith('chat.mbOff'));
+    assert.deepEqual(rows, [{ path: 'chat.mbOff.locgo', before: true, value: false }, { path: 'chat.mbOff.arrow', before: true, value: false }]);
+    assert.equal(D.changedSettings(s).length, base + 2, '다른 줄은 그대로');
+    assert.equal(D.mbOffKey('chat.mbOff.locgo'), 'locgo'); assert.equal(D.mbOffKey('chat.mbOff.back'), '', '제 설정 키(chat.mbBack)가 있는 스위치는 그 키로 나와요'); assert.equal(D.mbOffKey('chat.mbOff.face'), '', '고르는 칸은 빼요'); assert.equal(D.mbOffKey('chat.mbOff'), '');
+    assert.equal(D.settingChanged(s, 'chat.mbOff.locgo'), true); assert.equal(D.settingChanged(s, 'chat.mbOff.icons'), false);
+    assert.deepEqual(D.settingDefault(s, 'chat.mbOff.locgo'), { allowed: true, value: true });
+    assert.equal(D.resetSetting(s, 'chat.mbOff.locgo'), true);
+    assert.deepEqual(s.chat.mbOff, ['arrow', 'nope', 'back'], '되돌리면 그 열쇠만 끈 목록에서 빠져요');
+    assert.equal(SW.switchOn(s, 'locgo'), true);
+    const lemon = await load('src/mb-lemon.js');
+    assert.equal(lemon.isLemonPath('chat.mbOff.locgo'), true, '「설정으로」는 레몬 탭으로 데려가요');
+    const panel = read('src/panel.js');
+    assert.match(panel, /if \(mbOffKey\(path\)\) return `미트볼 맞춤 · \$\{MB_SWITCHES\.find\(sw => sw\.key === mbOffKey\(path\)\)\?\.name \|\| path\}`;/, '목록 이름은 한국어 스위치 이름');
+    assert.match(panel, /goMbLemon\(root, mbOffKey\(path\) \? `@mb:\$\{mbOffKey\(path\)\}` : path\)/, '그 스위치 줄을 표시해요');
+});
+
 console.log(`mb-toggles: ${n}개 통과${bad ? ` · ${bad}개 실패` : ''}`);
 if (bad) process.exitCode = 1;

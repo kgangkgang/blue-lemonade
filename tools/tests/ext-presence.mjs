@@ -60,6 +60,19 @@ t('1.0.1 프롬프트 그룹 확장(PromptFolders): 켜져 있으면 프롬프�
     assert.equal(ep.detectPresence(['third-party/pf-fork2'], [], () => ({ display_name: 'Prompt Folders' })).promptgroups, true);
     assert.equal(ep.detectPresence(['third-party/other'], [], () => ({ display_name: '프롬프트 그룹 도우미' })).promptgroups, false, '비슷한 이름은 아님');
 });
+// 원작 따라가기(11-18): 그 확장의 표시 이름이 판마다 달랐어요(「프롬프트그룹」 → 「프롬프트 그룹」 → 지금 「프롬프트 토글 그룹」).
+//   폴더 이름을 바꿔 깐 사람은 표시 이름으로만 알아보는데, 지금 이름을 몰라 두 기능이 같은 목록에 함께 붙었어요.
+t('프롬프트 그룹 확장의 지금 표시 이름(프롬프트 토글 그룹)과 옛 이름도 알아봐요 · 비슷한 이름은 아님', () => {
+    for (const display_name of ['프롬프트 토글 그룹', '프롬프트그룹', '프롬프트 그룹', 'Prompt Folders']) {
+        const p = ep.detectPresence(['third-party/my-groups'], [], () => ({ display_name }));
+        assert.equal(p.promptgroups, true, display_name);
+        assert.equal(ep.restingFor('promptFolders', p), '프롬프트 그룹', display_name);
+    }
+    for (const display_name of ['프롬프트 토글 그룹 도우미', '내 프롬프트 토글 그룹', '프롬프트 토글', '토글 그룹']) {
+        assert.equal(ep.detectPresence(['third-party/my-groups'], [], () => ({ display_name })).promptgroups, false, display_name);
+    }
+    assert.equal(ep.detectPresence(['third-party/my-groups'], ['third-party/my-groups'], () => ({ display_name: '프롬프트 토글 그룹' })).promptgroups, false, '꺼 두면 없음');
+});
 
 t('1.0.2 ChatsPlus(원작 · 한국어판): 켜져 있으면 채팅 정리만 쉬고 · 꺼져 있으면 없음 · 표시 이름으로도', () => {
     const p = ep.detectPresence(['third-party/SillyTavern-ChatPlus'], []);

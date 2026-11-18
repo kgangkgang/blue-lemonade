@@ -594,4 +594,34 @@ await test('㉖ 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는
     assert.deepEqual(seen, [['success', '빵 구매!', '미트볼 상태창'], ['info', 'Leon joined', 'Other'], ['info', 'Leon와(과) 연인이 되었어요', '미트볼 상태창']]);
 });
 
+await test('1.7.6 지도 「아직 안 가 본 곳」 이름 · 설명도 같은 번역 길 · 같은 사전으로(누를 때만 · 이미 있으면 안 보냄 · 스위치를 끄면 안 실어요)', async () => {
+    const REG = Symbol.for('blue-lemonade.mb-unvisited.v1');
+    const ko = { 'Honey Lemon Drop': '꿀레몬 사탕', Lobby: '로비', 'Staff Canteen': '구내식당', 'A restaurant where employees eat together.': '직원들이 함께 먹는 식당이에요.' };
+    globalThis[REG] = () => [{ name: 'Lobby', summary: '' }, { name: 'Staff Canteen', summary: 'A restaurant where employees eat together.' }, { name: '달빛 찻집', summary: '골목 끝 찻집이에요.' }];
+    try {
+        // 자동(답이 끝난 뒤): 다른 빈틈이 없으면 이것 때문에 번역 요청을 내지 않아요
+        let f = fakeTarget({ ko }); f.mb.core.app.current.snaps = new Map();
+        let fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+        assert.equal(await fill.fill('auto'), 0); assert.deepEqual(f.calls.json, [], '자동으로는 따로 안 보내요');
+        // 누르면: 이름 둘 + 영어 설명 하나(한국어 이름 · 설명은 안 보내요) → 같은 사전
+        assert.equal(await fill.fill('click'), 3);
+        assert.deepEqual(f.calls.json, [['Lobby', 'Staff Canteen', 'A restaurant where employees eat together.']]);
+        assert.equal(f.meta.tr.Lobby, '로비'); assert.equal(f.meta.tr['Staff Canteen'], '구내식당'); assert.equal(f.meta.tr['A restaurant where employees eat together.'], '직원들이 함께 먹는 식당이에요.');
+        assert.equal(await fill.fill('click'), 0); assert.equal(f.calls.json.length, 1, '한 번 번역한 이름은 다시 안 물어요');
+        // 자동이라도 다른 빈틈과 같이 갈 때는 같은 묶음에 실어요(요청 수는 그대로)
+        f = fakeTarget({ ko }); fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+        await fill.fill('auto'); assert.equal(f.calls.json.length, 1); assert.ok(f.calls.json[0].includes('Honey Lemon Drop') && f.calls.json[0].includes('Lobby'));
+        // 번역기가 영어 그대로 돌려준 이름은 이번 접속에 다시 안 보내요
+        f = fakeTarget({ ko: {} }); f.mb.core.app.current.snaps = new Map(); fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+        await fill.fill('click'); await fill.fill('click'); assert.equal(f.calls.json.length, 1);
+        // 「지도에 아직 안 가 본 곳」 스위치를 끄면 안 실어요
+        f = fakeTarget({ ko }); f.mb.core.app.current.snaps = new Map(); fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+        window.document.documentElement.setAttribute('data-bl-mb-off', 'unvisited');
+        assert.equal(await fill.fill('click'), 0); assert.deepEqual(f.calls.json, []);
+        window.document.documentElement.removeAttribute('data-bl-mb-off');
+        // 원문 보기(화면만 번역 아님)에서는 아무것도 안 해요
+        f = fakeTarget({ ko, view: false }); assert.equal(await T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' }).fill('click'), 0);
+    } finally { delete globalThis[REG]; window.document.documentElement.removeAttribute('data-bl-mb-off'); }
+});
+
 console.log(`ext-bridge-tr: ${passed} 통과`);

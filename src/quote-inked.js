@@ -3,7 +3,8 @@
 // 감싸서 대사 띠가 따로 칠해졌어요. 구간 = 기울임 · 굵게 · 형광펜(mark) · 글자색(font[color] · style 의 color · 속마음 data-tt).
 // 그 구간에 대사 말고 다른 글(글자 · 숫자)이 있을 때만 — *『…』* 처럼 대사만 감싼 기울임, 프리셋이 대사만 감싼 인물색 font 는 그대로 대사예요.
 // 줄 · 블록 · 대사(q) 에서 멈춰요: 대사 안의 대사는 바깥 대사 규칙(q q)이 맡아요.
-// 조판(typography.js writeRoot)이 q 마다 부르고, 요소에서는 nodeName · parentElement · getAttribute · hasAttribute · className · textContent 만 읽어요 (계산 스타일 없음).
+// 1.7.6 「다른 글」 은 그 구간 글에서 그 안 대사(q) 전부의 글을 뺀 나머지예요 — 옆 대사의 글을 다른 글로 세서, 인물색 font 가 대사 둘을 감싼 줄의 형광펜이 사라졌어요.
+// 조판(typography.js writeRoot)이 q 마다 부르고, 요소에서는 nodeName · parentElement · getAttribute · hasAttribute · className · textContent · querySelectorAll('q') 만 읽어요 (계산 스타일 없음).
 export const INKED = 'bl-q-inked';
 const PASS = /^(EM|I|STRONG|B|MARK|FONT|SPAN|U|S|DEL|STRIKE|SMALL|SUB|SUP|A|ABBR|CITE|DFN|INS|BDI|TIME|DATA)$/;
 const EMPHASIS = /^(EM|I|STRONG|B|MARK)$/;
@@ -19,16 +20,30 @@ function inks(el) {
     return el.hasAttribute('data-tt') || THOUGHT.test(el.className || '');
 }
 
-/** q 가 이미 색 · 강조가 입혀진 구간(그 구간에 대사 말고 다른 글이 있다) 안인가. texts = 조상 글 캐시(Map, 한 번의 조판 안에서 같은 조상을 여러 q 가 볼 때) */
-export function inkedQuote(q, texts = null) {
-    const own = q.textContent;
+/** 구간(a)에 그 안 대사(q)들 말고 다른 글(글자 · 숫자)이 있나 — 대사 안의 대사는 바깥 대사 글에 들어 있어 건너뛰어요 */
+function hasOther(a) {
+    const text = a.textContent;
+    let rest = '', at = 0;
+    for (const q of a.querySelectorAll('q')) {
+        let p = q.parentElement, nested = false;
+        for (; p && p !== a; p = p.parentElement) if (p.nodeName === 'Q') { nested = true; break; }
+        if (nested) continue;
+        const own = q.textContent, i = text.indexOf(own, at);
+        if (i < 0) continue;
+        rest += text.slice(at, i); at = i + own.length;
+    }
+    return WORD.test(rest + text.slice(at));
+}
+
+/** q 가 이미 색 · 강조가 입혀진 구간(그 구간에 대사 말고 다른 글이 있다) 안인가. seen = 조상 판정 캐시(Map, 한 번의 조판 안에서 같은 조상을 여러 q 가 볼 때) */
+export function inkedQuote(q, seen = null) {
     let a = q.parentElement;
     for (let n = 0; a && n < LIMIT; n++, a = a.parentElement) {
         if (!PASS.test(a.nodeName)) return false;
         if (!inks(a)) continue;
-        let text = texts?.get(a);
-        if (text === undefined) { text = a.textContent; texts?.set(a, text); }
-        if (text.length > own.length && WORD.test(text.replace(own, ''))) return true;
+        let other = seen?.get(a);
+        if (other === undefined) { other = hasOther(a); seen?.set(a, other); }
+        if (other) return true;
     }
     return false;
 }

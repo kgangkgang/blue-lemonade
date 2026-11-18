@@ -20,7 +20,7 @@ const PANEL = 'bl-ext-lemonpane', BAR = 'bl-ext-lemonbar', TAB = 'bl-ext-lemon-t
 const OLD_KEYS = new Set(MB_SWITCHES.map(sw => sw.setting).filter(p => p && !/^chat\.mbFace/.test(p)));
 export function isLemonPath(path) {
     const p = String(path || '');
-    return p === '@mb' || p.startsWith('@mb:') || p === 'chat.mbOff' || p === 'chat.mbAllWas' || /^chat\.mbPrompt/.test(p) || OLD_KEYS.has(p);
+    return p === '@mb' || p.startsWith('@mb:') || p === 'chat.mbOff' || p.startsWith('chat.mbOff.') || p === 'chat.mbAllWas' || /^chat\.mbPrompt/.test(p) || OLD_KEYS.has(p);
 }
 
 /** 제 시트 한 번(묶음 문 없음) */

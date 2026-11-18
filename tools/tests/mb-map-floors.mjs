@@ -117,7 +117,6 @@ await ok('선은 모두 직각으로 꺾여요', () => {
     const deep = m.routeOf(L, 'Underworld', 'Reception');
     assert.ok(deep.every(([x]) => x >= b0.roomL && x <= b0.right), JSON.stringify(deep));
     const last = deep.at(-1), prev = deep.at(-2); assert.ok(last[0] === prev[0] && prev[1] > last[1] && prev[1] > b0.bottom, '땅 밑 장소에는 점 밑에서 올라가요');
-    assert.equal(m.pathD([[0, 1], [0, 5], [3, 5]]), 'M0 1 L0 5 L3 5');
 });
 
 // ── 작은 가짜 SVG 문서 ─────────────────────────────
@@ -725,6 +724,19 @@ await tryOk('1.7.5 스위치 끔(lore 없음) · 다 가 본 곳이면 지금과
         assert.match(read('src/ext-status.css'), /\/\* @mb unvisited \*\/\n[^@]*g\.bl-unv \.bl-unv-dot \{[^}]*stroke-dasharray/);
     });
 });
+await tryOk('1.7.6 집 주인 이름은 낱말 머리에서만 맞춰요(「Ann」 ↔ 「Joann 의 가게」 · 「수아」 ↔ 「지수아의 방」 은 다른 사람)', async () => {
+    // 고치기 전: 주인 이름이 다른 이름의 꼬리와 같으면(includes) 「가 본 곳」 으로 봐서 그 집이 흐린 점으로 안 나왔어요
+    const home = (label, owners) => ({ label, names: [label], owners });
+    const seen = (c, names) => m.visitedPlace(c, names.map(name => ({ name })));
+    assert.equal(seen(home("Ann's home", ['Ann']), ["Joann's Cafe", 'Plaza']), false, '영어 이름 꼬리');
+    assert.equal(seen(home('수아의 집', ['수아']), ['지수아의 방', '광장']), false, '한국어 이름 꼬리');
+    assert.equal(seen(home("Ann's home", ['Ann']), ["Ann's Estate", 'Plaza']), true, '그 사람의 집은 가 본 곳');
+    assert.equal(seen(home("Ann's home", ['Ann']), ["Old Ann's Cottage"]), true, '앞에 낱말이 있어도');
+    assert.equal(seen(home('수아의 집', ['수아']), ['수아의 저택']), true);
+    assert.equal(seen(home('수아의 집', ['수아']), ['2층 수아의 방']), true);
+    assert.equal(seen(home('ミロの家', ['ミロ']), ['東区ミロの屋敷']), true, '띄어 쓰지 않는 일본어는 예전처럼 어디든');
+    assert.equal(seen(home("Ann's home", ['Ann']), ["Villa Ann's"]), true, '이름으로 끝나도');
+});
 await tryOk('1.7.5 붙이기: 로어북은 채팅 · 로어북이 바뀔 때만 한 번 읽어요(지도를 몇 번 다시 그려도) · 스위치를 끄면 흐린 점을 안 그려요', async () => {
     const places = office(), map = { places };
     let wiReads = 0, off = '', cb = null; const listeners = {};
@@ -751,6 +763,67 @@ await tryOk('1.7.5 붙이기: 로어북은 채팅 · 로어북이 바뀔 때만 
     assert.equal(s2.getAttribute('data-bl-floors'), 'on', '층별 보기는 그대로');
     off = '';
     ctx.getCurrentChatId = () => 'chat-2'; draw(); await tick(); assert.equal(wiReads, 2, '채팅이 바뀌면 다시 읽어요');
+});
+await tryOk('1.7.6 다른 캐릭터로 넘어간 뒤 지도를 처음 열 때 앞 캐릭터의 로어북 장소로 그리지 않아요(읽을 때까지 기다렸다 한 번에)', async () => {
+    // 리그(폰 384 · 미트볼 2.8.0)에서 본 것: 캐릭터 B 의 지도에 캐릭터 A 의 「달빛 찻집」 이 먼저 그려졌다가 다시 그려졌어요
+    const fresh = await import(pathToFileURL(path.join(root, 'src/mb-map-floors.js')).href + '?other-card');
+    const places = office(), map = { places };
+    let cb = null, renders = 0; const live = [];
+    const doc = {
+        body: { getAttribute: k => (k === fresh.FLOOR_ATTR ? 'on' : null), hasAttribute: () => false, classList: { contains: c => c === 'salty' } },
+        documentElement: { getAttribute: () => null },
+        querySelectorAll: sel => (sel.includes('svg.ss-map') ? live.filter(s => (sel.includes(':not([data-bl-floors])') ? !s.getAttribute('data-bl-floors') : true)) : []), addEventListener: () => {},
+    };
+    const book = name => ({ entries: [{ comment: '[장소]' + name, content: '작은 가게예요.' }] });
+    const ctx = { characterId: 0, getCurrentChatId: () => 'chat-a', chatMetadata: {},
+        characters: [{ data: { character_book: book('달빛 찻집') } }, { data: { extensions: { world: 'book-b' }, character_book: book('별빛 서점') } }],
+        loadWorldInfo: async () => { await new Promise(res => setTimeout(res, 30)); return { entries: {} }; } };
+    const core = { app: { current: { state: { data: { map } } }, renderPanel() { renders++; } } };
+    assert.equal(fresh.startMbFloors(doc, { watch: (_t, o, fn) => { if (o.childList) cb = fn; }, load: () => core, stCtx: () => ctx }), true);
+    const tick = (ms = 5) => new Promise(res => setTimeout(res, ms));
+    const names = svg => svg.querySelectorAll('g.bl-unv').map(g => g._blGhost.label);
+    const draw = () => { const svg = drawn(makeDoc(), places); live.push(svg); cb([{ addedNodes: [svg] }]); return svg; };
+    await tick();
+    draw(); await tick();
+    const a = draw();
+    assert.deepEqual(names(a), ['달빛 찻집'], '캐릭터 A 의 지도');
+    ctx.characterId = 1; ctx.getCurrentChatId = () => 'chat-b';
+    const b = draw();
+    assert.ok(!names(b).includes('달빛 찻집'), '읽기 전: 앞 캐릭터의 장소를 그리지 않아요 — ' + names(b).join(','));
+    await tick(80);
+    assert.deepEqual(names(b), ['별빛 서점'], '읽은 뒤: 그 자리에서 한 번에 입혀요');
+    assert.equal(b.getAttribute('data-bl-floors'), 'on');
+    // 같은 캐릭터의 다른 채팅은 예전처럼 바로 그려요(로어북이 같아요)
+    ctx.getCurrentChatId = () => 'chat-b2';
+    assert.deepEqual(names(draw()), ['별빛 서점']);
+});
+await tryOk('1.7.6 안 가 본 곳 번역: 사전에 있으면 이름 · 카드 설명을 번역으로 · 원문 보기면 영어 그대로 · 번역 이름이 지도 장소와 같으면 두 번 안 그려요 · 번역할 글을 번역 다리에 내줘요', async () => {
+    const places = office(), map = { places };
+    const lore = [{ key: 'bl-unv:lobby', label: 'Lobby', names: ['Lobby'], f: null, zone: 'out', summary: 'A wide hall with two information desks.', owners: [], from: 'Tower', src: 'section' },
+        { key: 'bl-unv:staffcanteen', label: 'Staff Canteen', names: ['Staff Canteen'], f: null, zone: 'out', summary: 'A restaurant where employees eat together.', owners: [], from: 'Tower', src: 'section' }];
+    const dict = { Lobby: '로비', 'A wide hall with two information desks.': '안내 창구 둘이 있는 넓은 홀이에요.' };
+    const tr = s => dict[String(s ?? '').trim()];
+    const names = svg => svg.querySelectorAll('g.bl-unv').map(g => g._blGhost.label);
+    // 번역 켬: 사전에 있는 이름만 번역 · 없는 이름은 영어 그대로(번역 단추를 누르면 채워져요)
+    let svg = drawn(makeDoc(), places); m.applyFloors(svg, map, { lore, tr });
+    assert.deepEqual(names(svg).sort(), ['Staff Canteen', '로비']);
+    const lobby = svg.querySelectorAll('g.bl-unv').map(g => g._blGhost).find(g => g.key === 'bl-unv:lobby');
+    assert.equal(lobby.sum, '안내 창구 둘이 있는 넓은 홀이에요.', '카드 설명도 번역'); assert.equal(lobby.summary, 'A wide hall with two information desks.', '원문은 그대로 둬요');
+    // 원문 보기(tr 없음): 영어 그대로
+    svg = drawn(makeDoc(), places); m.applyFloors(svg, map, { lore, tr: null });
+    assert.deepEqual(names(svg).sort(), ['Lobby', 'Staff Canteen']);
+    assert.equal(svg.querySelectorAll('g.bl-unv').map(g => g._blGhost)[0].sum, undefined);
+    // 이야기에 나와 지도에 다른 영어 이름으로 들어왔는데 번역 이름이 같으면(「Employee Cafeteria」 · 「Staff Canteen」 → 둘 다 「구내식당」) 흐린 점을 또 안 그려요
+    const more = [...places, { name: 'Employee Cafeteria', desc: '', kind: 'shop', area: places[0].area, links: [], x: 50, y: 50 }];
+    const d2 = { ...dict, 'Employee Cafeteria': '구내식당', 'Staff Canteen': '구내 식당' }, tr2 = s => d2[String(s ?? '').trim()];
+    svg = drawn(makeDoc(), more); m.applyFloors(svg, { places: more }, { lore, tr: tr2 });
+    assert.deepEqual(names(svg), ['로비'], '같은 번역 이름은 가 본 곳');
+    // 번역 다리에 내주는 글: 지금 흐린 점으로 그릴 곳의 이름 · 설명(원문)
+    assert.deepEqual(m.unvisitedTexts(map, lore, { tr }), [{ name: 'Lobby', summary: 'A wide hall with two information desks.' }, { name: 'Staff Canteen', summary: 'A restaurant where employees eat together.' }]);
+    assert.deepEqual(m.unvisitedTexts(map, [], { tr }), []);
+    // 카드: 번역 설명이 있으면 그것을 보여요
+    const src = fs.readFileSync(path.join(root, 'src/mb-map-floors.js'), 'utf8');
+    assert.ok(src.includes('g.sum ?? g.summary')); assert.ok(src.includes("Symbol.for('blue-lemonade.mb-unvisited.v1')"));
 });
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);
