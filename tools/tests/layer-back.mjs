@@ -15,10 +15,10 @@ const fakeWin = (entries = [{ app: 1 }], at = entries.length - 1) => {
     w.history = {
         get state() { return w.entries[w.at]; },
         pushState(state, title, url) { assert.equal(url, undefined, '주소는 안 바꿔요'); w.entries.length = w.at + 1; w.entries.push(state); w.at++; },
-        go(d) { w.moves.push(d); w.queue = w.queue.then(() => { const to = w.at + d; if (to < 0) { w.left++; return; } if (to >= w.entries.length) return; w.at = to; for (const fn of w.listeners) fn({ state: w.entries[w.at] }); }); },
+        go(d) { w.moves.push(d); w.queue = w.queue.then(() => { const to = w.at + d; if (to < 0) { w.left++; return; } if (to >= w.entries.length) return; w.at = to; const ev = { state: w.entries[w.at], stopped: false, stopImmediatePropagation() { this.stopped = true; } }; for (const l of [...w.listeners.filter(x => x.capture), ...w.listeners.filter(x => !x.capture)]) { if (ev.stopped) break; l.fn(ev); } }); },
         back() { this.go(-1); }, forward() { this.go(1); },
     };
-    w.addEventListener = (type, fn) => { assert.equal(type, 'popstate'); w.listeners.push(fn); };
+    w.addEventListener = (type, fn, capture = false) => { assert.equal(type, 'popstate'); w.listeners.push({ fn, capture: capture === true || capture?.capture === true }); };   // 창이 과녁인 사건: 잡는 단계 듣는 곳이 먼저 불려요(걸린 차례와 상관없이)
     w.idle = async () => { for (let i = 0; i < 8; i++) { await w.queue; await new Promise(r => setTimeout(r, 0)); } };
     return w;
 };
@@ -87,5 +87,33 @@ await ok('⑧ 창을 닫자마자(기록이 아직 물러나는 중) 다른 창�
     await w.idle();
     assert.equal(closed, 0); assert.equal(L.size, 1); assert.equal(depth(w), 1); assert.equal(w.at, 1);
     w.history.back(); await w.idle(); assert.equal(closed, 1); assert.equal(L.size, 0); assert.equal(w.at, 0);
+});
+await ok('⑨ 1.7.6 테마가 스스로 물린 이동(겹을 ✕ · 고르기로 닫은 뒤 기록 한 칸 물리기) · 테마 겹이 쓴 뒤로 가기는 다른 확장의 뒤로 가기 듣는 곳에 안 보여요 — 테마가 닫을 게 없는 뒤로 가기는 그대로 보여요', async () => {
+    // 미트볼 상태창 2.9.0 처럼 「뒤로 가기 신호가 오면 제 창을 닫는」 다른 확장을 흉내 내요: 제 창을 열 때 기록 한 칸 · 신호가 오면 닫음
+    const w = fakeWin(); const other = { open: true, pops: 0 };
+    w.addEventListener('popstate', () => { other.pops++; other.open = false; });   // 테마보다 먼저 걸려 있어도
+    w.history.pushState({ app: 1, otherDlg: 1 }, '');                               // 그 확장 창이 열림
+    const L = M.createLayers(w);
+    const done = L.open(() => true);                                                // 그 창 위에 테마 겹(고르기 목록 · 확인 창)
+    assert.deepEqual(w.entries.at(-1), { app: 1, otherDlg: 1, [M.DEPTH_KEY]: 1 });
+    done(); await w.idle();                                                         // 목록에서 값을 고름 → 테마가 제 칸을 스스로 물려요
+    assert.deepEqual(w.moves, [-1]); assert.equal(w.at, 1);
+    assert.equal(other.pops, 0, '테마가 스스로 물린 이동을 남이 사용자 뒤로 가기로 읽으면 그 창이 닫혀요'); assert.equal(other.open, true);
+    // 연달아 두 겹을 닫아도(한 번 물러난 뒤 다시 맞추는 이동까지) 안 보여요
+    const d1 = L.open(() => true), d2 = L.open(() => true); d2(); d1(); await w.idle();
+    assert.equal(other.pops, 0); assert.equal(w.at, 1); assert.equal(L.size, 0);
+    // 사용자가 누른 뒤로 가기: 테마 겹이 그 한 번을 썼으면(맨 위 칸이 테마 칸) 남에게 안 넘겨요 — 목록만 닫히고 그 확장 창은 남아요
+    let closed = 0; L.open(() => { closed++; }); w.history.back(); await w.idle();
+    assert.equal(closed, 1); assert.equal(other.pops, 0); assert.equal(other.open, true); assert.equal(w.at, 1);
+    // 안 닫힌 겹(다시 채움)이 쓴 뒤로 가기도 안 넘겨요
+    const keep = L.open(() => false); w.history.back(); await w.idle(); assert.equal(other.pops, 0); assert.equal(L.size, 1); keep(); await w.idle(); assert.equal(other.pops, 0); assert.equal(w.at, 1);
+    // 테마 겹이 없을 때의 뒤로 가기는 그대로 넘겨요(그 확장이 제 창을 닫아요)
+    w.history.back(); await w.idle(); assert.equal(other.pops, 1); assert.equal(other.open, false); assert.equal(w.at, 0);
+    // 맨 위 칸이 남의 칸이면(테마 겹 위에 그 확장 창) 테마는 닫을 게 없고 그대로 넘겨요
+    const w2 = fakeWin(); let heard = 0; const L2 = M.createLayers(w2); let c2 = 0; L2.open(() => { c2++; });
+    w2.addEventListener('popstate', () => { heard++; }); w2.history.pushState({ ...w2.history.state, otherDlg: 1 }, '');
+    w2.history.back(); await w2.idle(); assert.equal(heard, 1); assert.equal(c2, 0); assert.equal(L2.size, 1);
+    const src = (await import('node:fs')).readFileSync(path.join(root, 'src/layer-back.js'), 'utf8');
+    assert.ok(src.includes("addEventListener('popstate', onPop, true)"));                              // 잡는 단계 — 나중에 걸려도 먼저 불려요
 });
 console.log(`layer-back: ${n}개 통과`);

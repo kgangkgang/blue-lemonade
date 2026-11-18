@@ -8,6 +8,11 @@
 //   기록을 스스로 움직이는 동안(travel)에는 새로 움직이지 않고, 그 이동이 끝난 신호(popstate)에서 다시 맞춰요 — 연달아 닫아도 한 칸씩 더 물러나지 않아요.
 //   스스로 물린 이동의 신호에서는 겹을 닫지 않아요 — 창을 닫자마자 다른 창을 여는 흐름(알림을 눌러 그 탭으로 가기)에서 새 창이 닫히지 않게.
 //   실리태번은 기록을 쓰지 않아요(주소 그대로 · 페이지를 떠나지 않으니 떠남 경고도 안 떠요). 남이 적어 둔 기록 상태는 그대로 두고 깊이 칸 하나만 더해요.
+//   1.7.6 스스로 물린 이동의 신호는 다른 듣는 곳에 넘기지 않아요(잡는 단계에서 먼저 받아 거기서 멈춰요) — 미트볼 상태창 2.9.0 이 「뒤로 가기로 창 닫기」를 스스로 갖게 되면서,
+//     미트볼 창 위에서 테마 겹(고르기 목록 · 확인 · 입력 창 · 색 고르기)을 닫을 때 테마가 제 칸을 물린 신호를 그 확장이 사용자의 뒤로 가기로 읽어 미트볼 창까지 닫았어요
+//     (11-18 사용자 「상태창 만들기 누르고 뭐 조금 조작만 하면 꺼지더라」).
+//     사용자가 누른 뒤로 가기도 테마 겹이 그 한 번을 썼으면(맨 위 칸이 테마 칸이었어요) 넘기지 않아요 — 미트볼 창 위의 고르기 목록에서 뒤로 가기 한 번에 목록과 미트볼 창이 같이 닫혔어요.
+//     테마 겹이 없거나 맨 위 칸이 남의 칸이면(테마가 닫을 게 없으면) 그대로 넘겨요.
 //   시험: tools/tests/layer-back.mjs
 export const DEPTH_KEY = 'blLayer';
 
@@ -26,9 +31,10 @@ export function createLayers(win = globalThis) {
         else for (let n = have + 1; n <= want; n++) if (!push(n)) break;
     }
     const aliveOf = layer => { try { return layer.alive() !== false; } catch { return true; } };
-    function onPop() {
-        const mine = travel; travel = false;          // 테마가 스스로 물린 이동의 신호면 겹을 닫지 않아요(창을 닫자마자 다른 창을 연 때 — 새 창이 닫히면 안 돼요) · 아래 settle 이 모자란 칸을 채워요
+    function onPop(event) {
+        const mine = travel; travel = false;
         const have = depth();
+        if (mine || stack.length > have) { try { event?.stopImmediatePropagation?.(); } catch { /* 옛 엔진 — 그대로 */ } }   // 1.7.6 테마가 스스로 물린 이동 · 테마 겹이 쓴 뒤로 가기는 남(다른 확장의 뒤로 가기 듣는 곳)에게 안 보여요
         let want = mine ? 0 : stack.length - have;   // 닫아 달라는 겹 수
         while (want > 0 && stack.length) {                 // 뒤로 가기: 맨 위 겹부터
             const layer = stack[stack.length - 1];
@@ -45,7 +51,7 @@ export function createLayers(win = globalThis) {
     function wire() {
         if (wired || typeof win.addEventListener !== 'function') return;
         wired = true;
-        win.addEventListener('popstate', onPop);
+        win.addEventListener('popstate', onPop, true);   // 잡는 단계: 창이 과녁인 사건이라 나중에 걸려도 다른 듣는 곳보다 먼저 불려요
         settle();                                     // 새로 고친 뒤 깊이만 남은 칸에 서 있으면 물러나요
     }
     return {
