@@ -1,4 +1,4 @@
-/* src/panel.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 175개(테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요) — 고치지 말 것. src/lite.js 가 테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js) 테마 시트 뒤에 붙여요 (build 99f015e7adcc) */
+/* src/panel.gen.css — tools/build-css.cjs 가 tools/css-gates.cjs 기준으로 첫 장 · 전체 장에서 뗀 규칙 177개(테마 설정 창(.salty-panel — src/panel.js mountPanel 만 만들어요) 안에서만 맞는 규칙. index.js loadPanel · first-run.js 가 창을 만들기 전에 이 시트를 받아요) — 고치지 말 것. src/lite.js 가 테마 설정 창을 만들기 전에(index.js loadPanel · first-run.js) 테마 시트 뒤에 붙여요 (build f1cb3ab3b08c) */
 body.salty-dark .salty-panel {
   --danger: var(--salty-danger);
 }
@@ -334,6 +334,7 @@ html:not(#bl-groups-off) body.salty .salty-panel :is(.salty-group, .bl-editor-gr
 html:not(#bl-groups-off) body.salty .salty-panel .bl-tool-grid.bl-word-options:not([data-bl-cols="1"]) { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: var(--bl-s2, 8px) var(--bl-s3, 12px) !important; }
 html:not(#bl-groups-off) body.salty .salty-panel .bl-tool-grid.bl-word-options[data-bl-cols="1"] { grid-template-columns: minmax(0, 1fr) !important; }
 @media (pointer: coarse) {
+html body .salty-panel .bl-settings-toprow .bl-editor-actions > button::after { width: calc(100% + 2px); }
 html body .salty-panel label.salty-switch::before {
     content: '';
     position: absolute;
@@ -371,6 +372,7 @@ html body .salty-panel .bl-prompt-name-row > select {
 html[data-bl-puffy] body.salty .salty-panel .salty-switch span::after {
   box-shadow: var(--bl-knob);
 }
+html:not(#bl-checkrow-off) body.salty .salty-panel label[data-bl-row-check]:is(bl-s, *) { cursor: pointer; }
 html:root body .salty-panel :is(.salty-seg button).on:not(:disabled),
 html:root body .salty-panel :is(.salty-fonttags button).on:not(:disabled),
 html:root body .salty-panel :is(.salty-fontempty button).on:not(:disabled) { box-shadow:none!important; }

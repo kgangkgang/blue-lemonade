@@ -167,6 +167,11 @@ await test('③ 옛 내장 글꾸 띠가 있을 때 그 새 판을 붙여 넣으
     assert.equal(w.$('[data-lc-retired]').hidden, true);
     assert.ok(!S.getSettings().logCopy.retiredFrom);
     assert.ok(toasts.some(t => t[0] === 'success' && /「빼빼로데이」 새 판으로 이어서 써요/.test(t[1])), JSON.stringify(toasts));
+    // 버그 사냥 2: 받은 뒤 같은 창에서 깡통 로그 칩을 누르면 옛 글꾸 띠(「…이제 글꾸 마트에 있어요」)가 다시 떴어요 — 창 안 값을 안 지워서
+    w.$('[data-cat="basic"]').click(); await settle();
+    w.$('[data-shape="kkangtong"]').click(); await settle();
+    assert.equal(w.on(), 'kkangtong');
+    assert.equal(w.$('[data-lc-retired]').hidden, true, '받은 뒤에는 띠가 다시 안 떠요');
 });
 
 await test('③ 내 글꾸가 꽉 차면(직접 붙인 HTML): 지금 n/20 과 지우는 길', async () => {

@@ -1,4 +1,5 @@
 // 1.2.1 옛 판 공지 압축 — 1.0.0 앞 판(465판) 공지를 눌러 담아(src/notice-old.gen.js) 공지 창을 열 때 풀어 이어 붙여요. 글은 한 글자도 안 바뀌어야 해요.
+//   1.7.8 옛 판 공지는 「압축본으로 옮길 때만」 바뀌어요: 최근 구간(notice-data.js)이 상한(④ 120KB)에 닿아 1.0.0 ~ 1.0.5(계열 2 · 여섯 판)를 옛 구간 맨 앞으로 옮겼어요 — 옮긴 판 지문은 v1.7.7 의 그 판들과 같아요(②).
 //   ① 생성물이 원본(tools/notice-old.src.mjs)에서 다시 뜬 것과 같아요(--check)
 //   ② 풀어서 나온 목록 = 원본 목록(깊은 비교) · 옛 구간 원본 지문이 1.2.0 의 그 구간과 같아요(글을 고치면 지문이 달라져요)
 //   ③ 공지 창(openNotice)을 가짜 DOM 에서 열면: 처음엔 최근 구간만 · 풀린 뒤 DOM(innerHTML) · 글(textContent)이 전체를 한꺼번에 그린 것과 같아요
@@ -21,9 +22,12 @@ const load = rel => import(pathToFileURL(path.join(root, rel)).href);
 let pass = 0, fail = 0;
 const test = async (name, fn) => { try { await fn(); pass++; console.log('ok ' + name); } catch (e) { fail++; console.error('FAIL ' + name + '\n' + (e.stack || e)); } };
 
-// 1.2.0(v1.2.0 = becc79ac7) src/notice-data.js 의 1.0.0 앞 판 465개를 JSON.stringify 한 것의 sha256 — 옛 판 공지는 더는 안 바뀌어요
+// 1.2.0(v1.2.0 = becc79ac7) src/notice-data.js 의 1.0.0 앞 판 465개를 JSON.stringify 한 것의 sha256 — 옛 판 공지는 압축본으로 옮길 때만 바뀌어요
 const OLD_SHA = '4ba7c517f1f114bd54111f2fd50734584ea9dee70753f71bc73678211f92ab2c';
-const OLD_COUNT = 465;
+// 1.7.8 최근 구간에서 옮겨 온 판(새 판 → 옛 판 차례) · v1.7.7 src/notice-data.js 의 그 여섯 판을 JSON.stringify 한 것의 sha256
+const MOVED = ['1.0.5', '1.0.4', '1.0.3', '1.0.2', '1.0.1', '1.0.0'];
+const MOVED_SHA = '415143aca354bfbff257179dfeb6b4db30bc7af5290b155e3eff861d22839ecb';
+const OLD_COUNT = 465 + MOVED.length;
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 
 const { RECENT, OLD_NOTICES, NOTICES: ALL } = await load('tools/notice-all.mjs');
@@ -34,11 +38,14 @@ await test('① 생성물 = 원본에서 다시 뜬 것(node tools/notice-old-ge
     assert.match(read('src/notice-old.gen.js'), /^export const OLD_NOTICES_Z = "[A-Za-z0-9+/=]+";$/m);
 });
 
-await test('② 원본 지문 · 풀린 목록 = 원본 · 경계(1.0.0 | 8.2.5)는 다른 날', async () => {
+await test('② 원본 지문 · 풀린 목록 = 원본 · 경계(1.0.6 | 1.0.5)는 다른 날 · 계열 1 은 8.2.5 부터', async () => {
     assert.equal(OLD_NOTICES.length, OLD_COUNT);
-    assert.equal(sha(JSON.stringify(OLD_NOTICES)), OLD_SHA, '옛 판 공지 글이 1.2.0 과 달라요');
-    assert.equal(RECENT.at(-1).version, '1.0.0'); assert.equal(RECENT.at(-1).series, 2);
-    assert.equal(OLD_NOTICES[0].version, '8.2.5'); assert.equal(OLD_NOTICES[0].series, undefined, '옛 구간은 계열 1');
+    assert.deepEqual(OLD_NOTICES.slice(0, MOVED.length).map(n => n.version), MOVED, '1.7.8 에 옮긴 판이 옛 구간 맨 앞에');
+    assert.equal(sha(JSON.stringify(OLD_NOTICES.slice(0, MOVED.length))), MOVED_SHA, '옮긴 판 공지 글이 v1.7.7 과 달라요');
+    assert.equal(sha(JSON.stringify(OLD_NOTICES.slice(MOVED.length))), OLD_SHA, '옛 판 공지 글이 1.2.0 과 달라요');
+    assert.equal(RECENT.at(-1).version, '1.0.6'); assert.equal(RECENT.at(-1).series, 2);
+    assert.ok(OLD_NOTICES.slice(0, MOVED.length).every(n => n.series === 2), '옮긴 판은 계열 2 그대로');
+    assert.equal(OLD_NOTICES[MOVED.length].version, '8.2.5'); assert.equal(OLD_NOTICES[MOVED.length].series, undefined, '그 뒤는 계열 1');
     assert.ok(RECENT.every(n => n.series === 2), '최근 구간은 계열 2 만');
     assert.notEqual(RECENT.at(-1).date, OLD_NOTICES[0].date, '같은 날을 가르면 날짜 장이 쪼개져요');
     const { loadOldNotices } = await load('src/notice.js');
@@ -164,7 +171,7 @@ await test('⑥ 옛 공지 조각을 한 번 못 받아도 다음에 다시 받�
     assert.deepEqual(await fresh.loadOldNotices(), [], '못 받으면 옛 구간 없이(창은 최근 구간으로 열려요)');
     const again = await fresh.loadOldNotices();
     assert.equal(again.length, OLD_COUNT, '다음에 열 때 다시 받아요');
-    assert.equal(sha(JSON.stringify(again)), OLD_SHA);
+    assert.equal(sha(JSON.stringify(again.slice(MOVED.length))), OLD_SHA); assert.equal(sha(JSON.stringify(again.slice(0, MOVED.length))), MOVED_SHA);
     assert.equal(await fresh.loadOldNotices(), again, '받은 뒤로는 한 번 푼 것을 다시 써요');
     assert.match(read('src/notice.js'), /await \(oldTry \? import\(`\.\/notice-old\.gen\.js\?retry=\$\{oldTry\}`\) : import\('\.\/notice-old\.gen\.js'\)\)/);
     assert.match(read('tools/build-bundle.mjs'), /'src\/notice\.js': \['src\/notice-old\.gen\.js', /, '묶음에서도 다시 받는 주소가 달라요(RETRY_IMPORT)');

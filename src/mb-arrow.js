@@ -73,6 +73,11 @@ export function arrowRecord(record) {
     if (![...record.addedNodes].some(n => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'BL-ARWT'))) return false;
     return t.classList.contains('custom-ss-slot') || t.classList.contains('ss-slot') || !!t.closest?.('.ss-msgcard');
 }
+/** 1.7.8 같은 두 구독을 같이 쓰는 이웃 모듈(src/mb-diary.js 칩 점검 창 · src/mb-leftover.js 「원작 그대로 보기」) — 감시 허브 구독 자리를 늘리지 않게 여기서 나눠 불러요 */
+const addedFns = new Set(), rawFns = new Set();
+export const onMbAdded = fn => { addedFns.add(fn); return () => addedFns.delete(fn); };
+export const onMbRawChange = fn => { rawFns.add(fn); return () => rawFns.delete(fn); };
+const tell = (fns, arg) => { for (const fn of fns) try { fn(arg); } catch { /* 그 모듈 일 · 화살표는 그대로 */ } };
 let arrowsOn = false;
 export function startArrows(doc = globalThis.document, { watch = watchDom, decorate = addMessageDecorator, soon = fn => queueMicrotask(fn) } = {}) {
     if (arrowsOn || !doc?.body) return false;
@@ -81,8 +86,8 @@ export function startArrows(doc = globalThis.document, { watch = watchDom, decor
     let wait = null;
     const flush = () => { const list = wait; wait = null; if (!list || rawView(doc)) return; for (const n of list) try { if (n.isConnected !== false) wrapArrows(n); } catch { /* 글자 그대로 */ } };
     // 그 확장의 화면 번역(같은 작업의 감시 콜백)이 글을 옮긴 뒤에 감싸게 한 박자(마이크로태스크) 미뤄요 — 여전히 그리기 전이에요
-    try { watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 화살표' }, records => { if (rawView(doc)) return; const had = wait; wait = arrowTargets(records, wait || new Set()); if (!wait.size) wait = null; else if (!had) soon(flush); }); } catch { /* 시작할 때 훑은 것만 */ }
-    try { watch(doc.body, { attributes: ['data-bl-ext-raw'], name: '미트볼 화살표 (원작 그대로 보기)' }, () => { try { if (rawView(doc)) unwrapArrows(doc); else sweepArrows(doc); } catch { /* 글자 그대로 */ } }); } catch { /* 다음에 그릴 때부터 */ }   // 「원작 그대로 보기」 를 켜면 되돌리고 끄면 다시 훑어요
+    try { watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 화살표' }, records => { if (addedFns.size) tell(addedFns, records); if (rawView(doc)) return; const had = wait; wait = arrowTargets(records, wait || new Set()); if (!wait.size) wait = null; else if (!had) soon(flush); }); } catch { /* 시작할 때 훑은 것만 */ }
+    try { watch(doc.body, { attributes: ['data-bl-ext-raw'], name: '미트볼 화살표 (원작 그대로 보기)' }, () => { tell(rawFns); try { if (rawView(doc)) unwrapArrows(doc); else sweepArrows(doc); } catch { /* 글자 그대로 */ } }); } catch { /* 다음에 그릴 때부터 */ }   // 「원작 그대로 보기」 를 켜면 되돌리고 끄면 다시 훑어요
     onMbOff(doc, ['arrow'], () => { try { if (rawView(doc)) unwrapArrows(doc); else sweepArrows(doc); } catch { /* 글자 그대로 */ } });   // 1.7.3 스위치를 끄면 되돌리고 켜면 다시 훑어요
     try { decorate('미트볼 화살표', list => { if (rawView(doc)) return; for (const mes of list) for (const card of mes?.querySelectorAll?.('.ss-msgcard') || []) wrapArrows(card); }, { settle: 0, live: true, order: 95, filter: arrowRecord }); } catch { /* 채팅 밖만 */ }
     return true;

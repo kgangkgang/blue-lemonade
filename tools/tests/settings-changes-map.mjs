@@ -81,6 +81,38 @@ await test('1.7.5 화면을 안 열어도 저장 값 대신 고르기 이름: �
     for (const [, v, label] of picks) assert.equal(SETTING_VALUES[`captureTools.format:${v}`], label, `captureTools.format:${v}`);
 });
 
+await test('1.7.7 고르기 값 이름: 화면을 안 열어도 저장 값이 그대로 안 보이게 — 설정 창의 고르기(seg · 여러 값 고르기)와 글자 값 기본값을 표와 대조', async () => {
+    const { SETTING_VALUES } = await import(pathToFileURL(path.join(root, 'src/settings-labels.js')).href);
+    const { MARKDOWN_CONTROLS } = await import(pathToFileURL(path.join(root, 'src/markdown.js')).href);
+    const strip = t => t.replace(/<[^>]*>/g, '');
+    const bad = []; let calls = 0; const shown = new Map();   // 길:값 → 화면에 보이는 글들(같은 설정을 두 화면에서 고르면 글이 조금 다를 수 있어요)
+    // ① seg('길', [[값, '글'], …]) — 글자 그대로 적힌 고르기 전부(값이 숫자여도). 화면에 보이는 글과 표의 글이 같아야 해요
+    for (const file of fs.readdirSync(path.join(root, 'src')).filter(f => f.endsWith('.js') && !f.endsWith('.gen.js'))) {
+        const text = fs.readFileSync(path.join(root, 'src', file), 'utf8');
+        for (const m of text.matchAll(/\bseg\(\s*'([\w.]+)'\s*,\s*(\[\[[^\n]*?\]\])\s*[,)]/g)) {
+            if (/\$\{|\.\.\./.test(m[2])) continue;   // 그릴 때 만드는 목록은 ③ 이 봐요
+            calls++;
+            for (const o of m[2].matchAll(/\[\s*(?:'([^']*)'|(\d+))\s*,\s*'([^']*)'/g)) {
+                const key = `${m[1]}:${o[1] ?? o[2]}`;
+                if (!shown.has(key)) shown.set(key, new Set()); shown.get(key).add(strip(o[3]));
+            }
+        }
+        // ② 여러 값을 한 번에 바꾸는 고르기: { '길': '값' } 가운데 글자 값
+        for (const m of text.matchAll(/segMulti\([^\n]*/g)) for (const o of m[0].matchAll(/'([\w.]+)':\s*'(\w+)'/g)) if (SETTING_VALUES[`${o[1]}:${o[2]}`] === undefined) bad.push(`${file} 여러 값 고르기 ${o[1]}:${o[2]}`);
+    }
+    assert.ok(calls >= 30, '고르기를 못 읽음: ' + calls);
+    for (const [key, labels] of shown) if (!labels.has(SETTING_VALUES[key])) bad.push(`${key} 화면 「${[...labels].join(' / ')}」 · 표 「${SETTING_VALUES[key] ?? '없음'}」`);
+    // ③ 기본값이 영어 낱말인 설정(= 고르기 값)은 표나 제 길이 있어야 해요. 자유 글 · 파일 · 고유 이름 · 화면 상태는 빼요(목록에 그대로 보여도 되는 값)
+    const FREE = /^(noticeSeen|customName|palette|activeCustomPalette|fruitEntryIcon|fruitTypography\.kind|fonts\..*|chat\.weather(Image|ImageId)?|captureTools\.preset|searchAi\.(profileId|provider|customUrl)|extcheck\.profileId|image\.(mask|maskId|scratchDirection|scratchTexture)|.*\.decor\.(art|mask))$/;
+    const md = new Set(MARKDOWN_CONTROLS.map(c => 'markdown.' + c.key));
+    const leaves = []; const walkD = (o, p) => { for (const [k, v] of Object.entries(o)) { const q = p ? `${p}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) walkD(v, q); else if (typeof v === 'string' && /^[a-z][a-z0-9_-]*$/i.test(v)) leaves.push([q, v]); } };
+    walkD(DEFAULTS, '');
+    for (const [p, v] of leaves) if (changed.includes(p) && !FREE.test(p) && !md.has(p) && SETTING_VALUES[`${p}:${v}`] === undefined) bad.push(`기본값 ${p}:${v}`);
+    assert.deepEqual(bad, []);
+    // 본보기: 화면을 안 열어도
+    for (const [k, label] of [['chat.noteCarry:ask', '물어보기'], ['chat.mbPrompt:all', '채팅 전체'], ['chat.weatherFogArea:both', '위아래'], ['bgWindow.mode:pip', '작은 창'], ['image.shape:custom', '커스텀'], ['captureTools.mask:tape', '마스킹 테이프'], ['chat.weather2Level:3', '강하게']]) assert.equal(SETTING_VALUES[k], label, k);
+});
+
 await test('연결: CI 목록에 이 시험', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/settings-changes-map\.mjs \./);
 });

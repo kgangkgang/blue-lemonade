@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', import.meta.url)));
 const panelSource = fs.readFileSync(path.join(root, 'src/addons/bookmarks/panel.js'), 'utf8');
@@ -46,6 +46,7 @@ const context = {
     otherRecord,
     listOtherChats: async owner => { T.listCalls.push(owner.name); return (T.lists[owner.name] || []).filter(key => key !== T.chatKey).map(key => otherRecord(owner, key, { favorites: favs.get(key) || [] })); },
     setTimeout: () => 0, clearTimeout() {}, nameAliases: () => [], backLayer: () => () => {},
+    chatTimeMs: (await import(pathToFileURL(path.join(root, 'src/chat-organizer-core.js')).href)).chatTimeMs,   // 버그 사냥 2: 옛 꼴 시각도 읽는 공용 읽기
 };
 const plain = panelSource.split('\n').filter(line => !line.startsWith('import ')).join('\n').replace(/^export /gm, '');
 vm.runInNewContext(plain + `

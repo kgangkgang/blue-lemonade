@@ -47,7 +47,8 @@ const api = new Function('env', `with (env) {
     ${line('hasCodeBlock')}
     ${cut(src, 'autoSkipReason')}
     ${cut(src, 'translateIncomingMessage')}
-    return { autoSkipReason, koreanShare, chatPromptTargetsKorean, liveChatPrompt, translateIncomingMessage };
+    ${cut(src, 'translateOutgoingMessage')}
+    return { autoSkipReason, koreanShare, chatPromptTargetsKorean, liveChatPrompt, translateIncomingMessage, translateOutgoingMessage };
 }`)(env);
 
 let pass = 0, fail = 0;
@@ -183,6 +184,20 @@ await test('TTS paint.js: 번역 애드온이 눈 끈 답으로 건너뛸 때만
     } finally { if (saved === undefined) delete globalThis[API]; else globalThis[API] = saved; }
     const body = cut(paint, 'maybeAnalyze');
     assert.match(body, /if \(tried\.get\(mes\) === key \|\| !needsAnalysis\(mesId\)\) return;\s*(?:\/\/[^\n]*\n\s*)?if \(translatorSkipReason\(mes\) === 'system'\) \{ log\([^\n]*return; \}\s*tried\.set\(mes, key\);/, '눈 끈 답만 쉬고(tried 에 적지 않음) 한국어 답은 분석한다');
+});
+
+// 버그 사냥 2: 「모두 · 유저」 자동 번역이 내 메시지는 건너뛰기 판단 없이 보내서, 「좋아」 · 「응 그래」 같은 짧은 한국어 내 메시지도
+//   번역을 시작하고 요청이 나갔어요(한국어 원문 지키기는 4자 이상만 알아봐요). AI 답과 같은 판단(눈 끈 · 이미 한국어)을 거쳐요
+await test('내 메시지 자동 번역도 눈 끈 · 이미 한국어면 건너뛰어요 — 영어 · 섞인 글은 예전처럼', async () => {
+    delete DOM.llm_prompt_editor; delete DOM.prompt_select; delete env.extensionSettings.selected_translation_prompt_id; PM.selected = null;
+    assert.equal(api.chatPromptTargetsKorean(), true, '이 시험은 한국어로 옮기는 기본 칸에서');
+    const out = async (m) => { calls.length = 0; hidden.length = 0; await api.translateOutgoingMessage(CHAT.indexOf(m)); return [...calls]; };
+    for (const text of ['좋아', '응 그래', KO]) assert.deepEqual(await out(message(text, { is_user: true })), [], text);
+    assert.deepEqual(await out(message('ok', { is_user: true, is_system: true })), [], '눈 끈 내 메시지');
+    const en = message('See you tomorrow at the station.', { is_user: true });
+    assert.deepEqual(await out(en), [[CHAT.indexOf(en), false, 'auto']]);
+    const mixed = message('오늘은 dinner at the station, okay?', { is_user: true });
+    assert.equal((await out(mixed)).length, 1, '영어가 많이 섞인 글은 번역');
 });
 
 console.log(`translator-auto-skip: ${pass} passed, ${fail} failed`);

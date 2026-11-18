@@ -210,6 +210,11 @@ body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, de
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
+/* 1.7.8 대사만 감싼 굵게(**『…』** — 메신저 · 문자 장면): 강조 노랑(글자색 · 띠)이 아니라 대사 모습 — 굵기만 남겨요(src/quote-inked.js STRONG_Q) */
+:is(body.salty #chat .mes .mes_text, .salty-sample) :is(strong.bl-strong-q, b.bl-strong-q) {
+  color: inherit;
+  box-shadow: none;
+}
 :is(body.salty #chat .mes .mes_text, .salty-sample) u {
   text-decoration-color: var(--salty-accent-70);
   text-decoration-thickness: 2px;

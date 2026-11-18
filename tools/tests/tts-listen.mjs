@@ -515,12 +515,11 @@ await test('6.1.8 a slow translator: the late answer is kept and the next tap re
 
 // ---------- 1.9.1 이미 그 언어인 줄은 번역을 기다리지 않음 · 막대 글은 옮길 때만 몇 줄인지 · 서술 속 낱말 인용은 읽지 않음
 //   (원문 대사가 이미 일본어인데 막대에 「일본어로 번역 중…」 — 서술 속 영어 인용 몇 줄을 옮기느라 메시지 전체가 멈췄다)
-await test('1.9.1 막대 글: 옮길 줄이 없으면 「번역 중」이 아님 · 있으면 「영어 2줄 일본어로 번역 중…」 (언어가 섞이면 「2줄 …」)', async () => {
+await test('1.9.1 막대 글: 옮길 줄이 없으면 「번역 중」이 아님 · 있으면 「대사 2줄을 일본어로 옮기는 중…」 (1.7.8 원문 언어 이름 없이)', async () => {
     reset('ja');
     const T9 = P._forTest;
-    assert.equal(T9.listenText(['Good night.', 'See you.']), '영어 2줄 일본어로 번역 중…');
-    assert.equal(T9.listenText(['Good night.', '잘 자.']), '2줄 일본어로 번역 중…');
-    assert.equal(T9.listenText([]), '일본어로 번역 중…');
+    assert.equal(T9.listenText(['Good night.', 'See you.']), '대사 2줄을 일본어로 옮기는 중…');   // 1.7.8 원문 언어 이름은 말하지 않음
+    assert.equal(T9.listenText([]), '일본어로 옮기는 중…');
     assert.ok(!/번역/.test(T9.PREP_TEXT), '첫 막대 글');
     const src = (await import('node:fs')).readFileSync(path.join(root, 'player.js'), 'utf8');
     const prep = src.slice(src.indexOf('async function prepareThen'), src.indexOf('// ---------- 소리용 대본'));
@@ -563,6 +562,42 @@ await test('1.9.1 서술 속 낱말 인용(영어 낱말 뒤에 한글 · 일본
     assert.ok(P.lineJobs(0, mes, [{ ...C, dialogueIndex: 2 }]).jobs.length === 1, '직접 누르면 읽음');
     settings().join_paragraph = false;
     assert.ok(TX.segmentMessage(mes.mes, {}).every(g => !g.term), '끄면 1.9.0 그대로 (표시 없음)');
+});
+// ---------- 1.7.8 영어 서술 · 일본어 대사 답장: 서술 속 영어 기울임을 「말」로 보고 일본어로 옮기느라 막대에 「영어 3줄 일본어로 번역 중…」
+//   (11-18 사용자 답장 — 대사 「」 · 속마음 태그는 모두 일본어, 옮길 줄은 서술 속 영어 기울임 셋)
+await test('1.7.8 대사와 서술의 언어가 다른 답장: 서술 언어로 쓴 기울임은 말이 아니라 서술 — 서술을 안 읽으면 읽지도 옮기지도 않음', () => {
+    reset('ja');
+    settings().text_source = 'original';
+    settings().join_paragraph = true;
+    const mes = message('「おはようございます。」\n\nHe recalled how the club had let *strays* into the team. *How charitable of them.* The words stung.\n\n*Not again.*\n\n「……シャーッッッ！！」\n\nShe set the tray down.');
+    const jobs = P._forTest.autoJobs(0);
+    assert.deepEqual(jobs.map(j => j.text), ['おはようございます。', '……シャーッッッ！！'], '일본어 대사만 읽음');
+    assert.deepEqual(P._forTest.listenNeeds(0, mes), [], '옮길 줄 없음 → 「번역 중」 막대도 · 번역 요청도 없음');
+    assert.equal(API.calls.length, 0);
+    // 서술을 읽는 설정이면 그 기울임도 서술처럼 읽음 (말 목소리가 아니라 서술 길)
+    const keep = settings().routes;
+    settings().routes = { ...keep, narration: 'character' };
+    try {
+        const all = P._forTest.autoJobs(0).map(j => j.text);
+        assert.ok(all.includes('How charitable of them.'), `서술을 읽으면 같이 읽음: ${JSON.stringify(all)}`);
+    } finally { settings().routes = keep; }
+});
+await test('1.7.8 대사도 서술도 같은 언어면 기울임 말은 예전처럼 대사 (영어 소설체 · 일본어 소설체)', () => {
+    reset('ja');
+    settings().text_source = 'original';
+    settings().join_paragraph = true;
+    message('"Morning."\n\nShe looked away. *I can\'t believe this.* The rain kept on.');
+    assert.deepEqual(P._forTest.listenNeeds(0, T.ctx.chat[0]).sort(), ['I can\'t believe this.', 'Morning.'].sort(), '영어 답장은 그대로 옮김');
+    message('「おはよう。」\n\n彼女は目を逸らした。*信じられない。*雨は止まない。');
+    assert.ok(P._forTest.autoJobs(0).some(j => j.text === '信じられない。'), '일본어 소설체 기울임 말은 그대로 읽음');
+});
+await test('1.7.8 막대 글: 화면과 어긋나는 원문 언어 이름을 말하지 않음 — 「대사 3줄을 일본어로 옮기는 중…」', () => {
+    reset('ja');
+    const T9 = P._forTest;
+    assert.equal(T9.listenText(['Good night.', 'See you.', 'Bye.']), '대사 3줄을 일본어로 옮기는 중…');
+    assert.equal(T9.listenText(['Good night.', '잘 자.']), '대사 2줄을 일본어로 옮기는 중…');
+    assert.equal(T9.listenText([]), '일본어로 옮기는 중…');
+    assert.ok(!/영어/.test(T9.listenText(['Good night.'])));
 });
 
 // ---------- 6.3.8 누른 화면 글의 줄임표 (실리태번 마크다운이 '...' 를 '…' 로 그림)

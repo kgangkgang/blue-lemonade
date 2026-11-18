@@ -24,6 +24,14 @@ const ROOM_MAX = 2.4;        // 칸 너비를 채우려고 방 칸을 넓힐 때
 const GH_STEP = 19;          // 1.7.5 아직 안 가 본 곳 줄 사이(이름표 두 줄 + 점 밑 「아직 안 가 본 곳」 글이 윗줄과 안 겹치게)
 const GH_SLOT = 24;          // 아직 안 가 본 곳 줄의 한 칸(「<이름>의 집」 이 한 줄에 들도록 방 칸보다 조금 넓게)
 const GH_CAP0 = 4;           // 아직 안 가 본 곳 한 줄에 적어도 몇 곳
+const GH_SLOT_MAX = 34;      // 1.7.8 한 칸을 이름 폭만큼 넓힐 때 상한(이보다 긴 이름은 두 줄로 접어요)
+/** 1.7.8 안 가 본 곳 줄의 칸 너비 · 줄 사이 — 그 줄 이름이 한 줄에 들도록 칸을 넓히고(사용자 폰: 다섯 글자 넘는 「<이름>의 / 집」 만 꺾임), 그래도 두 줄로 접히는 이름이 있으면 줄 사이를 한 줄만큼 더 벌려요
+ *  (둘째 줄의 두 줄 이름표가 윗줄 「아직 안 가 본 곳」 글에 붙어 보였어요) */
+function ghostGrid(labels) {
+    const slot = r1(Math.min(GH_SLOT_MAX, Math.max(GH_SLOT, ...labels.map(l => textW(labelOf(l)) + 2.5))));
+    const tall = labels.some(l => wrapLabel(l, slot - 1.5).length > 1);
+    return { slot, step: GH_STEP + (tall ? LINE_H : 0) };
+}
 const GH_TAG_W = 18;         // 「아직 안 가 본 곳」 글 폭(글자 2.5)
 export const GH_TAG = '아직 안 가 본 곳';
 
@@ -315,10 +323,11 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null,
         // 1.7.5 아직 안 가 본 하늘 · 땅 밑 곳: 진짜 줄 바깥쪽(하늘은 더 위 · 땅 밑은 더 아래)에 따로 줄 — 건물 폭만큼 채우고 넘치면 다음 줄
         const g = [...ghZone].filter(([, v]) => v === z).map(([k]) => k);
         if (g.length) {
-            const cap = Math.max(GH_CAP0, Math.floor((bRight - bLeft) / GH_SLOT)), sign = z === 'above' ? -1 : 1, first = a.length ? 1 : 0;
+            const { slot, step } = ghostGrid(g.map(shownName));
+            const cap = Math.max(GH_CAP0, Math.floor((bRight - bLeft) / slot)), sign = z === 'above' ? -1 : 1, first = a.length ? 1 : 0;
             g.forEach((k, i) => {
                 const row = Math.floor(i / cap), inRow = Math.min(cap, g.length - row * cap), col = i % cap;
-                pos.set(k, { x: r1(mid + (col - (inRow - 1) / 2) * GH_SLOT), y: r1(y + sign * (row + first) * GH_STEP), zone: z, row: null, b: null, w: GH_SLOT, ghost: true });
+                pos.set(k, { x: r1(mid + (col - (inRow - 1) / 2) * slot), y: r1(y + sign * (row + first) * step), zone: z, row: null, b: null, w: slot, ghost: true });
             });
         }
     }
@@ -755,11 +764,14 @@ export function plainSpots(dots, ghosts) {
     if (!dots.length || !ghosts.length) return [];
     const xs = dots.map(d => d.x), ys = dots.map(d => d.y);
     const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), mid = (x0 + x1) / 2;
-    const cap = Math.max(GH_CAP0, Math.floor((x1 - x0) / GH_SLOT) + 1), out = [];
+    const out = [];
     for (const [side, list] of [[-1, ghosts.filter(g => g.zone === 'above')], [1, ghosts.filter(g => g.zone !== 'above')]]) {
+        if (!list.length) continue;
+        const { slot, step } = ghostGrid(list.map(g => g.label));
+        const cap = Math.max(GH_CAP0, Math.floor((x1 - x0) / slot) + 1);
         list.forEach((g, i) => {
             const row = Math.floor(i / cap), inRow = Math.min(cap, list.length - row * cap), col = i % cap;
-            out.push({ g, o: { x: r1(mid + (col - (inRow - 1) / 2) * GH_SLOT), y: r1(side < 0 ? y0 - GH_STEP * (row + 1) : y1 + GH_STEP * (row + 1)), w: GH_SLOT, zone: g.zone || 'out' } });
+            out.push({ g, o: { x: r1(mid + (col - (inRow - 1) / 2) * slot), y: r1(side < 0 ? y0 - step * (row + 1) : y1 + step * (row + 1)), w: slot, zone: g.zone || 'out' } });
         });
     }
     return out;

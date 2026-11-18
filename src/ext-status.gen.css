@@ -241,10 +241,10 @@ position: relative;
 top: -1px;
 opacity: 1 !important;
 }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content small:not(.bl-ext-compat) { font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content small:not(.bl-ext-compat):where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); opacity: 1; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-btns { gap: var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-btns > .menu_button {
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) small:not(.bl-ext-compat) { font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) small:not(.bl-ext-compat):where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); opacity: 1; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns { gap: var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button {
 flex: 1 1 calc(50% - var(--bl-s2, 8px));
 min-width: max-content;
 max-width: 100%;
@@ -256,17 +256,17 @@ justify-content: center;
 white-space: nowrap;
 font-size: var(--bl-ui-btn-fs, 14px);
 }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label { margin: var(--bl-s3, 12px) 0 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label:has(> input[type="number"]) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 1fr auto; align-items: center; column-gap: var(--bl-s3, 12px); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label > input[type="number"] { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label:not(.checkbox_label) > small { grid-column: 1; grid-row: 2; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label.checkbox_label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label.checkbox_label > small { grid-column: 2; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-inline { gap: var(--bl-s2, 8px); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-h { margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s4, 16px); font-size: var(--bl-ui-h-sub, 16px); font-weight: var(--bl-ui-strong, 650); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-h:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top: 1px solid var(--salty-line); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-more > summary { padding: var(--bl-s2, 8px) 0; cursor: pointer; opacity: 1; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-more > summary:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label { margin: var(--bl-s3, 12px) 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label:has(> input[type="number"]) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 1fr auto; align-items: center; column-gap: var(--bl-s3, 12px); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label > input[type="number"] { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label:not(.checkbox_label) > small { grid-column: 1; grid-row: 2; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label > small { grid-column: 2; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline { gap: var(--bl-s2, 8px); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-h { margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s4, 16px); font-size: var(--bl-ui-h-sub, 16px); font-weight: var(--bl-ui-strong, 650); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-h:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top: 1px solid var(--salty-line); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-more > summary { padding: var(--bl-s2, 8px) 0; cursor: pointer; opacity: 1; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-more > summary:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty .bl-ext-tabs { display: flex !important; flex-wrap: nowrap; gap: 6px; min-width: 0; max-width: 100%; margin: var(--bl-s1, 4px) 0 0; padding: var(--bl-s1, 4px) 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty .bl-ext-tabs > .bl-ext-tab { flex: 1 0 auto; width: auto; min-width: max-content; }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty #ss-settings:not([data-bl-view="raw"]) .inline-drawer-content > [data-bl-tab-off] { display: none !important; }
@@ -375,6 +375,8 @@ font: 400 var(--bl-deco-glyph-22, 22px)/34px sans-serif !important; text-align: 
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-chip:is(.hi, .warn) { background: var(--bl-hover); border-color: var(--salty-line); }
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-chip.hi { color: var(--ss-hi); }
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-chip.warn { color: var(--ss-warn); }
+:where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-st-f[data-f="promise"] .ss-st-row small > b { display: inline-flex; align-items: center; box-sizing: border-box; height: 18px; margin-inline-start: var(--bl-s1, 4px); padding: 0 6px; border: 1px solid var(--salty-line); border-radius: var(--bl-r-pill, 999px); background: var(--bl-hover); color: var(--salty-text); font-size: var(--bl-ts-micro, 11.5px); font-weight: var(--bl-ui-strong, 650); line-height: 1; white-space: nowrap; vertical-align: middle; }
+:where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-st-f[data-f="promise"] .ss-st-row small > b.ss-warn { color: var(--ss-warn); }
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope :is(.ss-role, .ss-stage) { background: var(--bl-hover); color: var(--salty-text); }
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-role.user { color: var(--ss-pos); }
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-role.main { color: var(--ss-hi); }
@@ -445,6 +447,7 @@ font: 400 var(--bl-deco-glyph-22, 22px)/34px sans-serif !important; text-align: 
 :where(:root:not([data-bl-mb-off~="band"])) > body.salty .ss-scope .ss-note.new { background: var(--bl-ui-pick-face); border-color: transparent; }
 :where(:root:not([data-bl-mb-off~="chips"])) > body.salty .ss-msgcard { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); }
 :where(:root:not([data-bl-mb-off~="chips"])) > body.salty .ss-mchip { min-height: 22px; padding: 0 var(--bl-s2, 8px); line-height: 1.5; }
+:where(:root:not([data-bl-mb-off~="chips"])) > body.salty:not([data-bl-ext-raw]) .ss-msgcard .ss-mchip.pip[data-bl-mb-diary] { display: none; }
 :where(:root:not([data-bl-mb-off~="editsync"])) > body.salty .ss-msgcard .ss-mchip[data-bl-cut] { opacity: 0.5; text-decoration: line-through; }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope.ss-tw .ss-swatches { display: block; }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope.ss-tw .ss-swatches > .ss-swatch { display: none; }
@@ -453,27 +456,38 @@ font: 400 var(--bl-deco-glyph-22, 22px)/34px sans-serif !important; text-align: 
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope.ss-tw .ss-tog { min-height: var(--bl-ui-ctl, 36px); margin-inline-end: 0; }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope.ss-tw .ss-f { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); font-size: var(--bl-ts-ctl, 14px); }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope.ss-tw .ss-f.wide > span { color: var(--salty-text); font-size: var(--bl-ts-ctl, 14px); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label > :is(select, textarea, .ss-set-inline), :where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label > input.text_pole:not([type="number"]) { margin: var(--bl-s1, 4px) 0 0; }
-html:not(#bl-num-off):where(:not([data-bl-mb-off~="drawer"])) body.salty #rm_extensions_block #ss-settings .inline-drawer-content label > input[type="number"] { box-sizing: border-box; width: calc(6ch + 28px) !important; min-width: calc(6ch + 28px) !important; font-variant-numeric: tabular-nums; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label.checkbox_label { column-gap: var(--bl-s2, 8px); align-items: start; padding: 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label.checkbox_label > input[type="checkbox"] { margin: 1px 0 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label.checkbox_label > small { margin-top: 2px; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content > small { display: block; margin: var(--bl-s2, 8px) 0 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label > input[type="range"] { display: block; width: 100%; margin: var(--bl-s2, 8px) 0 0; accent-color: var(--salty-accent); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-inline > select { flex: 1 1 auto; min-width: 0; margin: 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-inline > .menu_button:not(.ss-set-btn) { flex: none; width: var(--bl-ui-ctl, 36px); min-width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content > .ss-set-inline { gap: var(--bl-s3, 12px); margin: var(--bl-s2, 8px) 0 0; align-items: stretch; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content > .ss-set-inline > label { flex: 1 1 0; min-width: 0; margin: 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-inline > .ss-set-btn { min-height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0 10px; justify-content: center; font-size: var(--bl-ui-btn-fs, 14px); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content > .ss-set-inline.ss-set-wrap { gap: var(--bl-s1, 4px) var(--bl-s3, 12px); align-items: start; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content > .ss-set-inline > label:has(> input[type="number"]) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: var(--bl-s1, 4px); align-items: start; }
-html:not(#bl-num-off):where(:not([data-bl-mb-off~="drawer"])) body.salty #rm_extensions_block #ss-settings .inline-drawer-content > .ss-set-inline > label > input[type="number"] { grid-column: 1; grid-row: 2; width: 100% !important; min-width: 0 !important; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-more { margin: var(--bl-s2, 8px) 0 0; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary { display: flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-ui-ctl, 36px); padding: 0; list-style: none; font-size: var(--bl-ts-ctl, 14px); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::-webkit-details-marker { display: none; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::after { content: ''; flex: none; width: var(--bl-ui-chev, 14px); height: var(--bl-ui-chev, 14px); margin-inline-start: auto; background-color: currentColor; -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat; mask: var(--bl-ui-glyph-chev) center / contain no-repeat; }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more)[open] > summary::after { transform: rotate(180deg); }
-:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .ss-set-btns { margin: var(--bl-s3, 12px) 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.inline-drawer-content, .ss-set-body, .ss-set-more) > label > :is(select, textarea, .ss-set-inline), :where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.inline-drawer-content, .ss-set-body, .ss-set-more) > label > input.text_pole:not([type="number"]) { margin: var(--bl-s1, 4px) 0 0; }
+html:not(#bl-num-off):where(:not([data-bl-mb-off~="drawer"])) body.salty :is(#rm_extensions_block #ss-settings .inline-drawer-content, dialog.ss-dlg .ss-set-sheet .ss-set-body) label > input[type="number"] { box-sizing: border-box; width: calc(6ch + 28px) !important; min-width: calc(6ch + 28px) !important; font-variant-numeric: tabular-nums; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label { column-gap: var(--bl-s2, 8px); align-items: start; padding: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label > input[type="checkbox"] { margin: 1px 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label > small { margin-top: 2px; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty #ss-settings .inline-drawer-content label.checkbox_label, :where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-body label.checkbox_label { min-height: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > label.checkbox_label + .ss-set-btns > .menu_button:only-child:is([data-s-act="whatsnew"], [data-s-act="tipreset"], [data-s-act="stashall"]) { margin-block-start: calc(var(--bl-s1, 4px) - var(--bl-s3, 12px)); margin-inline-start: calc(var(--bl-mb-cbox, 20px) + var(--bl-s2, 8px)); width: auto !important; justify-self: start; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > small { display: block; margin: var(--bl-s2, 8px) 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label > input[type="range"] { display: block; width: 100%; margin: var(--bl-s2, 8px) 0 0; accent-color: var(--salty-accent); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > select { flex: 1 1 auto; min-width: 0; margin: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > .menu_button:not(.ss-set-btn) { flex: none; width: var(--bl-ui-ctl, 36px); min-width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline { gap: var(--bl-s3, 12px); margin: var(--bl-s2, 8px) 0 0; align-items: stretch; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline > label { flex: 1 1 0; min-width: 0; margin: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > .ss-set-btn { min-height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0 10px; justify-content: center; font-size: var(--bl-ui-btn-fs, 14px); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline.ss-set-wrap { gap: var(--bl-s1, 4px) var(--bl-s3, 12px); align-items: start; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline > label:has(> input[type="number"]) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: var(--bl-s1, 4px); align-items: start; }
+html:not(#bl-num-off):where(:not([data-bl-mb-off~="drawer"])) body.salty :is(#rm_extensions_block #ss-settings .inline-drawer-content, dialog.ss-dlg .ss-set-sheet .ss-set-body) > .ss-set-inline > label > input[type="number"] { grid-column: 1; grid-row: 2; width: 100% !important; min-width: 0 !important; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-more { margin: var(--bl-s2, 8px) 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more) > summary { display: flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-ui-ctl, 36px); padding: 0; list-style: none; font-size: var(--bl-ts-ctl, 14px); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more) > summary::-webkit-details-marker { display: none; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more) > summary::after { content: ''; flex: none; width: var(--bl-ui-chev, 14px); height: var(--bl-ui-chev, 14px); margin-inline-start: auto; background-color: currentColor; -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat; mask: var(--bl-ui-glyph-chev) center / contain no-repeat; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more)[open] > summary::after { transform: rotate(180deg); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns { margin: var(--bl-s3, 12px) 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-s2, 8px); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button { box-sizing: border-box; width: 100% !important; min-width: 0; white-space: normal; text-align: center; padding-block: 6px; line-height: 1.25; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+:where(:root:not([data-bl-mb-off~="icons"])) > body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button[data-s-act="chaton"]::before { content: '\1F4A1'; font-family: 'bl-mb-icons', var(--salty-font-ui); font-weight: 400; line-height: 1; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-find { position: static; margin: 0; padding: 0; background: none; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-q { margin: 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-n:not(:empty) { margin-top: var(--bl-s1, 4px); }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet > .ss-hint { display: block; margin: var(--bl-s2, 8px) 0 0; }
+:where(:root:not([data-bl-mb-off~="drawer"])) > body.salty .ss-scope .ss-set-sheet .ss-set-body > :first-child { margin-top: var(--bl-s3, 12px); }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty #ss-settings[data-bl-view="raw"] :is(.bl-ext-tabs, .bl-ext-intro, .bl-ext-fold, .bl-ext-more, .bl-ext-start) { display: none !important; }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content > [data-bl-fold-off] { display: none !important; }
 :where(:root:not([data-bl-mb-off~="tabs"])) > body.salty #ss-settings[data-bl-view="org"] .inline-drawer-content[style*="display: block"] { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bl-s3, 12px); align-items: start; }
@@ -686,6 +700,8 @@ transform: translate(-50%, -50%);
 :where(:root:not([data-bl-mb-off~="controls"])) > body.salty .ss-scope .ss-groups > button .ss-fresh.ss-fresh { top: 2px; right: 2px; }
 :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty .ss-scope .ss-more > summary > i:first-child { margin-inline-end: var(--bl-s1, 4px); }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-seg.wrap:not(.stack) > button { flex: 1 1 0; min-width: max-content; max-width: 100%; }
+:where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-seg.wrap.ss-mg-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
+:where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-seg.wrap.ss-mg-tabs > button { flex: 1 0 auto; min-width: max-content; }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-seg.wrap.stack, :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-sets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-s2, 8px); padding: 0; border: 0; background: transparent; }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope :is(.ss-seg.wrap.stack, .ss-sets) > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-seg.wrap.stack > button, :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-sets > button.ss-btn {

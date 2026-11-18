@@ -145,6 +145,11 @@ await ok('통째 저장 알림 한 줄: 어느 기록 · 몇 번 뒤 · 관리 �
     const line = M.frozenLine(M.frozenBy([2], frozenChat()));
     for (const w of ['관계 칸 바뀜', '4번 뒤', '✏️ 재산 직접 편집', '5번 뒤', '관리 탭', '편집 기록', '지우']) assert.ok(line.includes(w), `${w} 가 들어 있어요: ${line}`);
     assert.ok(!line.includes('\n'), '한 줄');
+    // 1.7.7 바로 반영을 못 한 까닭이 있으면 앞에 한마디
+    const why = M.frozenLine(M.frozenBy([2], frozenChat()), '미트볼의 계산 부분을 불러오지 못해서 바로 빼지 못했어요.');
+    assert.ok(why.startsWith('미트볼의 계산 부분을 불러오지 못해서 바로 빼지 못했어요. 눈 감긴 답보다'), why.slice(0, 60));
+    const got = []; assert.equal(M.tellGone('chat-x', { info: t => got.push(t) }), true); assert.equal(M.tellGone('chat-x', { info: t => got.push(t) }), false, '채팅마다 한 번');
+    assert.equal(got.length, 1); for (const w of ['지운 답', '통째로 저장', '불러오지 못해서', '직접 고쳐']) assert.ok(got[0].includes(w), w);
 });
 await ok('채팅을 열 때(치우기) · 눈으로 감길 때 알려요 — 같은 채팅 · 같은 기록 묶음은 한 번만', async () => {
     const c = frozenChat(); const before0 = JSON.stringify(c.chatMetadata.statussim); toasts.length = 0;

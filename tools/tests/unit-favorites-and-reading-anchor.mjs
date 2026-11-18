@@ -50,6 +50,13 @@ await test('readFavorites: path 가 점 · 글자 · 숫자가 아니면 비우�
     assert.equal(e.anchor.length, 100);
 });
 
+// 버그 사냥 2: 1.7.4 레몬 탭으로 옮긴 「미트볼 맞춤」 길(@mb · @mb:열쇠)이 지워져 즐겨찾기 칩이 옛 자리(채팅 › 화면 맨 위)로 갔어요
+await test('readFavorites: 미트볼 레몬 탭 길(@mb · @mb:열쇠)은 그대로 남아요 · 다른 @ 꼴은 비워요', () => {
+    reset();
+    store.set(KEY, JSON.stringify([entry({ anchor: 'a', path: '@mb' }), entry({ anchor: 'b', path: '@mb:arrow' }), entry({ anchor: 'c', path: '@mb:x y' }), entry({ anchor: 'd', path: '@other' })]));
+    assert.deepEqual(fav.readFavorites().map(e => e.path), ['@mb', '@mb:arrow', '', '']);
+});
+
 await test('readFavorites: 16개까지만', () => {
     reset();
     store.set(KEY, JSON.stringify(Array.from({ length: 30 }, (_, i) => entry({ anchor: 'n' + i }))));

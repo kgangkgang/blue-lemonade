@@ -134,6 +134,9 @@ input[type="checkbox"] { --bl-q-sw: inherit; --bl-q-tg: inherit; }
    체크박스 20 · 체크박스 → 글자 8 · 글자 크기는 그 창의 글자(따로 작게 줄이지 않음). 체크박스 제 여백 0. 스위치 · 메뉴 단추 모양 체크는 제외.
    한 곳에서 바꾸기: --bl-check-gap. 끄기: html#bl-checkrow-off */
 html:not(#bl-checkrow-off) body.salty { --bl-check-gap: 8px; }
+/* 1.7.7 테마 설정 창의 체크 줄은 줄 전체가 눌려요(라벨) — 손가락 커서를 줄에 줘서 눌리는 줄인 것이 보이게(체크박스 칸에만 손가락이 떴어요).
+   누를 자리 44 상자는 이미 이 줄(86-touch-targets 의 체크 줄 라벨 묶음)에 달려 있어요. 모양 · 배치는 그대로예요. */
+html:not(#bl-checkrow-off) body.salty .salty-panel label[data-bl-row-check]:is(bl-s, *) { cursor: pointer; }
 html:not(#bl-checkrow-off) body.salty :is(dialog, .salty-panel, .pa-hub, #pt-panel, .lv-settings, .llmt-settings) label[data-bl-row-check]:is(bl-s, *):not(.salty-switch, [class*="switch"], [role=switch], .menu_button, .po-visible-toggle) { column-gap: var(--bl-check-gap) !important; }
 /* 1.1.1 restyle3: 조상 칸(label)의 :not([class*="switch"]) 는 크로미움에서 어느 요소든 class 가 바뀌면 아래 전부를 다시 계산시켜요(2,000개 채팅 ~18ms).
    label 의 「class 에 switch」 표시를 물려주지 않는 사용자 속성으로 달고 체크박스는 부모 표시를 style() 로 물어요 — :not 의 특이도는 남은 갈래(전부 0,1,0)와 같아요 */

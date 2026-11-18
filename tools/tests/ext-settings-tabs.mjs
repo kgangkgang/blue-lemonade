@@ -182,7 +182,7 @@ test('⑧ 공용 가로 탭 줄 등록부: 모듈이 먼저 떠도 등록부가 
     doc[KEY] = { owner: 'blue-lemonade', ver: 1, add(list) { calls.push(list); } };   // 확장 서랍을 열면 생겨요(src/tab-scroll.js)
     const { box } = settings('2.6.1', [['가'], ['나']]);
     listeners.click[0]({ target: box.querySelector('.inline-drawer-header').children[0] });   // 머리줄 누름
-    assert.deepEqual(calls, [['.bl-ext-tabs', '.ss-scope .ss-tabs']], '머리줄을 누를 때 분류 탭 줄과 그 확장의 안쪽 탭 줄(한 줄 · 스크롤바 없음으로 바꾼 줄)을 넣어요');
+    assert.deepEqual(calls, [['.bl-ext-tabs', '.ss-scope .ss-tabs', '.ss-scope .ss-mg-tabs']], '머리줄을 누를 때 분류 탭 줄과 그 확장의 안쪽 탭 줄(한 줄 · 스크롤바 없음으로 바꾼 줄)을 넣어요');
     listeners.click[0]({ target: box.querySelector('.inline-drawer-header').children[0] });
     listeners.click[0]({ target: tabsOf(box)[1] });
     startExtCompat(doc);
@@ -201,11 +201,12 @@ test('⑧-2 안쪽 탭 줄(감사 고침): 설정 서랍을 거치지 않아도 
     const calls = [];
     page[KEY] = { owner: 'blue-lemonade', ver: 1, add(list) { calls.push(list); } };
     page.taps[0]({ target: { closest: () => null } });   // 그 확장의 판을 여는 누름(설정 서랍 머리줄 · 분류 탭이 아님)
-    assert.deepEqual(calls, [['.bl-ext-tabs', '.ss-scope .ss-tabs']]);
+    assert.deepEqual(calls, [['.bl-ext-tabs', '.ss-scope .ss-tabs', '.ss-scope .ss-mg-tabs']]);
     page.taps[0]({ target: { closest: () => null } });
     assert.equal(calls.length, 1, '한 번만');
-    assert.deepEqual(SET.strips, ['.ss-scope .ss-tabs']);
+    assert.deepEqual(SET.strips, ['.ss-scope .ss-tabs', '.ss-scope .ss-mg-tabs']);
     const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.match(css, /body\.salty \.ss-scope \.ss-seg\.wrap\.ss-mg-tabs \{ flex-wrap: nowrap; overflow-x: auto;[^}]*scrollbar-width: none;/, '1.7.8 관리 탭 줄도 한 줄 가로 밀기');
     assert.match(css, /body\.salty \.ss-scope \.ss-tabs \{ flex-wrap: nowrap; overflow-x: auto;[^}]*scrollbar-width: none;/, '맞춤 시트가 그 줄을 한 줄 · 스크롤바 없음으로 바꿔요 — 그래서 등록부에 넣어요');
 });
 test('⑨ 그 확장이 칸을 다시 그려도 확장 서랍 단추를 누르면 다시 봐요 · 머리줄 그림 글자에는 표식을 달지 않아요', () => {

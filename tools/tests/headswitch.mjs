@@ -125,7 +125,7 @@ await test('1.4.6 검토 2: 옛 번호 열쇠 알아보기 = 확장 순서 애�
     for (const k of ['cls:inline-drawer', 'cls:inline-drawer#8', 'cls:inline-drawer.wide100p', 'cls:inline-drawer.wide100p#3', 'cls:flex-container.inline-drawer', 'tag:div#2']) assert.ok(H.isLegacyKey(k), k);
     for (const k of ['cls:ap-root.inline-drawer', 'id:salty-drawer', 't:Quick Reply', 'u:cls:inline-drawer#2', 'x:이름']) assert.ok(!H.isLegacyKey(k), k);
     const src = fs.readFileSync(path.join(root, 'src/headswitch.js'), 'utf8');
-    assert.match(src, /import \{ ambiguousLegacyKey \} from '\.\/addons\/order\/panel-keys\.js';/, '같은 함수를 써요');
+    assert.match(src, /import \{ ambiguousLegacyKey(?:, [\w ]+)? \} from '\.\/addons\/order\/panel-keys\.js';/, '같은 함수를 써요');   // 버그 사냥 2: 확장 순서 이름표(keyOf as orderKeyOf)도 같이 가져와요
 });
 await test('1.4.6 검토 1: 옮기기 짝 — 남은 옛 열쇠만 · 켜기 스위치와 이름 열쇠가 있는 창만 · 기록(done)이 있으면 다시 안 함', () => {
     const hs = { 'cls:inline-drawer#8': true, 'cls:inline-drawer#7': true, 'cls:ap-root.inline-drawer': true };

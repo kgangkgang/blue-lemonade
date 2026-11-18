@@ -1,4 +1,5 @@
 import { buildChatGraph, collectBranchHints } from './chat-graph-data.js';
+import { chatTimeMs } from './chat-organizer-core.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
@@ -57,7 +58,7 @@ function ownerFromContext(ctx) {
 }
 function dateLabel(value) {
     if (!value) return '';
-    const date = new Date(value);
+    const date = new Date(chatTimeMs(value) || NaN);   // 버그 사냥 2: 옛 꼴 시각도(채팅 정리와 같은 읽기)
     return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 

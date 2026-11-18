@@ -6,13 +6,21 @@
 //   · 창이 ✕ · 단추로 닫혀 문서에서 빠지면 겹을 내려요(기록 한 칸도 같이 물려요).
 //   · 감시는 공용 감시 허브(src/dom-watch.js)의 body 직속 구독 하나 — 실리태번 팝업은 body 바로 아래에 붙었다 떼져요. 타이머 없음.
 //   · 「원작 그대로 보기」 · 테마 꺼짐 · 설정 끔(data-bl-mb-back="off")이면 새 겹을 올리지 않아요(이미 올린 겹은 창이 닫힐 때 내려요).
+//   · 1.7.7 미트볼 2.9.0 부터는 그 확장이 스스로 해요(설정 backClose · 기본 켬 · 손가락 화면에서만) — 그 판의 손가락 화면에서는 새 겹을 올리지 않고 그 확장에 맡겨요(둘이 같은 창에 기록을 한 칸씩 올리던 두 겹).
+//     그 확장이 안 하는 마우스 화면(PC)에서는 그 확장 설정이 켜져 있는 동안 테마가 지금까지처럼 해요 · 그 확장 설정을 끄면 어디서도 안 해요.
+//     옛 판(2.8.0 까지)에서는 지금까지처럼 테마가 해요. 테마에서 손수 꺼 둔 값은 그 확장 설정에 한 번 옮겨요(src/mb-upstream.js).
 //   시험: tools/tests/mb-back.mjs
 import { watchDom } from './dom-watch.js';
 import { layers } from './layer-back.js';
+import { upHas, upOn, moveOnce } from './mb-upstream.js';
 
 export const MB_DIALOG = 'dialog.ss-dlg';
 export const ATTR = 'data-bl-mb-back';
-const wants = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw') && doc.body.getAttribute?.(ATTR) !== 'off';
+/** 손가락 화면인가(그 확장과 같은 물음) — 물을 길이 없으면 손가락 화면으로 봐요(그 확장에 맡겨요) */
+export const coarse = doc => { try { const mm = doc?.defaultView?.matchMedia; return typeof mm === 'function' ? !!mm.call(doc.defaultView, '(pointer: coarse)').matches : true; } catch { return true; } };
+/** 그 확장이 이 화면에서 스스로 하나(또는 그 확장 설정에서 꺼 뒀나) — 그러면 테마는 겹을 안 올려요 */
+export const handed = doc => upHas('back') && (!upOn('back') || coarse(doc));
+const wants = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw') && doc.body.getAttribute?.(ATTR) !== 'off' && !handed(doc);
 const shown = el => !!el && (typeof el.getClientRects !== 'function' || el.getClientRects().length > 0);
 /** 그 창을 사람이 닫을 때처럼 닫아요 → 누른 단추(없으면 null) */
 export function closeDialog(dlg, isShown = shown) {
@@ -35,6 +43,7 @@ let on = false;
 export function startMbBack(doc = globalThis.document, { watch = watchDom, stack = layers(), isShown = shown } = {}) {
     if (on || !doc?.body) return false;
     on = true;
+    moveOnce().catch(() => { /* 다음 시작에 */ });   // 1.7.7 테마에서 꺼 둔 값이 있으면 그 확장 설정으로 한 번
     const open = new Map();                           // 창 → 겹 내리기
     const add = dlg => { if (open.has(dlg) || !wants(doc)) return; open.set(dlg, stack.open(() => backOnce(doc, dlg, isShown))); };
     const drop = dlg => { const done = open.get(dlg); if (!done) return; open.delete(dlg); try { done(); } catch { /* 다음 맞추기에 */ } };

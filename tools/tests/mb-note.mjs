@@ -158,5 +158,23 @@ await test('알림은 채팅마다 한 번', async () => {
     assert.ok(events.chat_id_changed?.length === 1, '채팅 바뀜 받기 하나');
 });
 
+await test('1.7.7 미트볼 2.9.0(그 확장 설정에 genNote 가 있음): 단추도 알림도 없어요 — 그 확장이 노트를 스스로 읽어요 · 옛 판은 그대로', async () => {
+    const store = new Map(); const storage = { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
+    for (const el of doc.querySelectorAll('.' + M.BTN + ', .bl-mb-note-r')) el.remove();
+    chatId = 'chat-c'; toasts.length = 0;
+    for (const genNote of [false, true]) {   // 그 확장에서 꺼 둬도(처음 값) 테마가 대신 하지 않아요 — 켜는 곳은 그 확장 설정이에요
+        context.extensionSettings = { statussim: { genNote } };
+        seen(doc.querySelector('#sheet .ss-instruct')); seen(doc.querySelector('#wz .ss-w-ins'));
+        assert.equal(doc.querySelectorAll('.' + M.BTN).length, 0);
+        assert.equal(M.tellOnce(context, { storage, toast: toastr }), false);
+    }
+    assert.equal(toasts.length, 0);
+    context.extensionSettings = { statussim: { albumOn: true } };   // 2.8.0 까지
+    seen(doc.querySelector('#sheet .ss-instruct'));
+    assert.equal(doc.querySelectorAll('#sheet .' + M.BTN).length, 1);
+    assert.equal(M.tellOnce(context, { storage, toast: toastr }), true);
+    delete context.extensionSettings;
+});
+
 console.log(`\n미트볼 작가 노트 넣기: 통과 ${pass} · 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

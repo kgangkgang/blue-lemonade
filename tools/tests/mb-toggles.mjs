@@ -44,6 +44,11 @@ await ok('표: 열쇠는 하나씩 · 갈래는 화면 / 데이터 · 이름 · 
         assert.ok(!/[^ ]·|·[^ ]/.test(sw.name + sw.desc), `${sw.key} 가운뎃점 앞뒤 띄움`);
         assert.ok(!/」 (로|으로|을|를|은|는|이|가|와|과|에서|일 때)[ ,.]/.test(sw.name + sw.desc), `${sw.key} 낫표 뒤 조사는 붙여요`);
         assert.ok(sw.file, sw.key);
+        // 1.7.7 줄 밑 한마디는 22자 안(폰 384 한 줄) · 자세한 설명(more)은 묶음 「?」 창으로 — 뜻이 줄지 않게 more 는 한마디보다 길어요
+        assert.ok([...sw.desc].length <= 22, `${sw.key} 한마디 ${[...sw.desc].length}자`);
+        assert.ok(typeof sw.more === 'string' && [...sw.more].length > [...sw.desc].length, `${sw.key} 자세한 설명`);
+        assert.match(sw.more.replace(/\([^()]*\)$/, ''), /요$/, `${sw.key} 자세한 설명도 해요체`);
+        assert.ok(!/[^ ]·|·[^ ]/.test(sw.more) && !/버튼|입력칸/.test(sw.more), `${sw.key} 자세한 설명 낱말 · 가운뎃점`);
     }
     assert.ok(SW.MB_SWITCHES.filter(sw => sw.kind === 'screen').length >= 30 && SW.MB_SWITCHES.filter(sw => sw.kind === 'data').length >= 12);
     // 이미 있던 스위치는 키를 바꾸지 않았어요
@@ -315,6 +320,16 @@ await ok('「미트볼 맞춤」 묶음(전부 · 화면만 · 데이터) — 1.
     assert.match(panel, /root\.innerHTML = mbFitGroups\(getSettings\(\)\);/);
     assert.match(read('src/mb-lemon.js'), /panel\.mountMbFit\(body\)/);
 });
+await ok('1.7.7 줄 밑은 한마디 · 자세한 설명은 묶음 「?」 창: 맨 위 · 화면 묶음마다 · 데이터 묶음에 단추 하나씩', () => {
+    const panel = read('src/panel.js');
+    assert.ok(panel.includes("case 'mb-fit-help':") && panel.includes("import('./help-sheet.js')"), '누르면 공용 도움말 창');
+    assert.match(panel, /bl-mb-fit-sub">\$\{label\}\$\{mbFitHelpBtn\(id, label\)\}<\/p>/, '화면 묶음 이름 옆 ?');
+    assert.match(panel, /mbFitHead\('전부', 'top'/); assert.match(panel, /mbFitHead\('데이터를 고치는 것', 'data'/);
+    assert.match(panel, /sw\.more \|\| sw\.desc/, '창에는 자세한 설명');
+    // 줄 밑에 남은 글은 전부 22자 안(개수 표시 · 스위치 한마디 · 딸린 줄)
+    for (const m of panel.matchAll(/'((?:이 기기에서만|다음 미트볼|미트볼 꾸미기)[^']*)'\)/g)) assert.ok([...m[1]].length <= 22, m[1]);
+    assert.ok(!/row\('전부', mbFitButtons|row\('<b>화면만 바꾸는 것<\/b>'|row\('<b>데이터를 고치는 것<\/b>'/.test(panel), '머리 줄의 긴 설명은 ? 창으로 옮겼어요');
+});
 
 // ── ⑥ 「변경한 설정」 목록(1.7.6): 끈 목록(chat.mbOff)으로 저장하는 스위치도 한 줄씩 ─────────────────────────────
 await ok('변경한 설정: 끈 스위치마다 한 줄(가짜 경로 chat.mbOff.<열쇠>) · 「기본값」으로 다시 켜요 · 제 설정 키가 있는 스위치 · 모르는 열쇠는 안 나와요', async () => {
@@ -336,6 +351,20 @@ await ok('변경한 설정: 끈 스위치마다 한 줄(가짜 경로 chat.mbOff
     const panel = read('src/panel.js');
     assert.match(panel, /if \(mbOffKey\(path\)\) return `미트볼 맞춤 · \$\{MB_SWITCHES\.find\(sw => sw\.key === mbOffKey\(path\)\)\?\.name \|\| path\}`;/, '목록 이름은 한국어 스위치 이름');
     assert.match(panel, /goMbLemon\(root, mbOffKey\(path\) \? `@mb:\$\{mbOffKey\(path\)\}` : path\)/, '그 스위치 줄을 표시해요');
+});
+
+// ── ⑦ 1.7.7 미트볼이 스스로 하게 된 스위치(src/mb-upstream.js): 그 판에서는 「변경한 설정」에 안 올리고, 레몬 탭은 스위치 대신 안내 줄 ─────────────────────────────
+await ok('1.7.7 미트볼 2.9.0(원작이 가진 기능): 끈 뒤로 가기 · 묻기 · 작가 노트 단추는 「변경한 설정」에 안 나와요 · 옛 판은 그대로 나와요 · 레몬 탭 연결', async () => {
+    const D = await load('src/settings-differences.js');
+    const { DEFAULTS } = await load('src/settings.js');
+    const s = structuredClone(DEFAULTS); s.chat.mbOff = ['ask', 'note', 'arrow', 'read']; s.chat.mbBack = false;
+    const paths = st => D.changedSettings(st).map(x => x.path).filter(p => p.startsWith('chat.mbOff') || p === 'chat.mbBack').sort();
+    const withUp = (up, fn) => { const had = globalThis.SillyTavern; globalThis.SillyTavern = { getContext: () => ({ extensionSettings: { statussim: up } }) }; try { return fn(); } finally { if (had === undefined) delete globalThis.SillyTavern; else globalThis.SillyTavern = had; } };
+    withUp({ albumOn: true }, () => assert.deepEqual(paths(s), ['chat.mbBack', 'chat.mbOff.arrow', 'chat.mbOff.ask', 'chat.mbOff.note', 'chat.mbOff.read']));   // 2.8.0 까지 — 1.7.8 버그 사냥 2 가 제 키가 있는 스위치(뒤로 가기 chat.mbBack 등)도 기본값 표에 넣어 이 목록에 나와요(settings-defaults-complete)
+    withUp({ backClose: true, askDelete: true, genNote: false, genRead: 'short' }, () => assert.deepEqual(paths(s), ['chat.mbOff.arrow', 'chat.mbOff.read']));   // 2.9.0 — 「채팅 읽기」는 일부만 맡겨 스위치가 남아요
+    const panel = read('src/panel.js');
+    for (const piece of ["const mbHanded = sw => upHas(sw.key) && !UP[sw.key].part;", '<span data-mb-up="${sw.key}" hidden></span>', "미트볼이 스스로 하게 된 것${mbFitHelpBtn('up', '미트볼이 스스로 하게 된 것')}</p>${handed.map(mbUpRow).join('')}", "!handed.includes(sw) && (kind === 'all' || sw.kind === kind)"]) assert.ok(panel.includes(piece), piece);   // 안내 줄 · 켜짐 수에서 빼요
+    assert.ok(read('src/mb-lemon.js').includes('[data-mb-up="${key}"]'));                                  // 설정 찾기가 안내 줄로 데려가요
 });
 
 console.log(`mb-toggles: ${n}개 통과${bad ? ` · ${bad}개 실패` : ''}`);

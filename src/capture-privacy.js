@@ -1,6 +1,6 @@
 import { normalizeMaskStyle } from './capture-style.js';
 import { replaceText } from './word-tools-core.js';
-import { withNameAliases } from './name-aliases.js';   // 6.3.x 적은 이름의 다른 표기(영 · 한 · 일)도 가린다
+import { withNameAliases, namePattern } from './name-aliases.js';   // 6.3.x 적은 이름의 다른 표기(영 · 한 · 일)도 가린다
 
 function textMap(root) {
     const entries=[];let text='';
@@ -15,9 +15,8 @@ function textMap(root) {
     visit(root);return {entries,text};
 }
 function hideNames(root,names) {
-    const list=[...new Set(names.map(n=>String(n).trim()).filter(Boolean))].sort((a,b)=>b.length-a.length);
-    if(!list.length)return 0;
-    const pattern=new RegExp(list.map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'giu');
+    const pattern=namePattern(names);   // 버그 사냥 2: 로마자 이름은 낱말 경계에서만(name-aliases.js · 로그 복사와 같은 틀)
+    if(!pattern)return 0;
     const {entries,text}=textMap(root),matches=[...text.matchAll(pattern)];
     for(const match of matches.reverse()) {
         const start=match.index,end=start+match[0].length;

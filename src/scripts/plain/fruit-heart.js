@@ -370,7 +370,17 @@ function installFruitHeartKorean(BlueLemonade, data) {
   }
   // 창이 열리는 class 변화는 rAF 를 기다리지 않고 그 작업 끝(microtask)에서 바로 칠해요 — 닫힌 동안 안 칠한 글이 한 frame 도 보이지 않게.
   const opened = records => Array.isArray(records) && records.some(r => r.type === 'attributes' && r.attributeName === 'class' && r.target?.id === 'fruit-heart-v6' && r.target.matches?.('.open'));
+  // BL 1.7.7: 청과 도구 호출 스크립트(1.5)는 이 창이 열려 있는 동안 0.2초마다 홈 카드 한 줄(.fh-qr-copy small)을 새로 써요(값이 같아도).
+  //   그때마다 창 전체를 다시 칠하던 것(1초에 다섯 번 · 감시 떼고 붙이기 · 문서 훑기)을 그 줄의 글자만 바로 칠하고 끝내요 — 결과는 같고(같은 번역 · 기억해 둔 결과), 원문이 칠해질 틈도 없어요.
+  const serveLine = node => { const el = node?.nodeType === 3 ? node.parentElement : node; return el?.closest?.('[data-action="open-serve-panel"] .fh-qr-copy small') || null; };
+  const onlyServeLine = records => Array.isArray(records) && records.length > 0 && records.every(r => !!serveLine(r.target));
   const observer = new host.MutationObserver(records => {
+    if (!stopped && onlyServeLine(records)) {
+      const lines = new Set(records.map(r => serveLine(r.target)));
+      for (const line of lines) { const walker = doc.createTreeWalker(line, 4); while (walker.nextNode()) paintText(walker.currentNode); }
+      for (const node of texts.keys()) if (!node.isConnected) texts.delete(node);   // 창 전체 다시 칠하기가 안 도는 동안에도 떨어진 글 노드 기억은 치워요(0.2초마다 하나씩 쌓이지 않게)
+      return;
+    }
     if (stopped || !opened(records)) return schedule();
     if (frame) host.cancelAnimationFrame(frame);
     flush();

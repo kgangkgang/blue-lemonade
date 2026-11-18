@@ -825,5 +825,26 @@ await tryOk('1.7.6 안 가 본 곳 번역: 사전에 있으면 이름 · 카드 
     const src = fs.readFileSync(path.join(root, 'src/mb-map-floors.js'), 'utf8');
     assert.ok(src.includes('g.sum ?? g.summary')); assert.ok(src.includes("Symbol.for('blue-lemonade.mb-unvisited.v1')"));
 });
+await tryOk('1.7.8 안 가 본 곳 줄: 「<이름>의 집」 이 한 줄에 들고(한 이름만 꺾이지 않게) · 둘째 줄 이름표가 윗줄 「아직 안 가 본 곳」 글과 안 붙어요 · 옆 이름표끼리 안 겹쳐요', async () => {
+    // 사용자 폰 사진(1.7.7): 땅 밑 줄 다섯 · 여섯 글자 이름의 「<이름>의 / 집」 둘만 두 줄로 꺾이고, 둘째 줄 이름표가 윗줄 「아직 안 가 본 곳」 에 붙어 보였어요
+    const names = ['하늘의 집', '바다별의 집', '솔의 집', '은빛호수숲의 집', '푸른달빛언덕의 집', '노을의 집'];   // 지어낸 이름(글자 수는 사진의 이름과 같게 2 · 3 · 1 · 5 · 6 · 2)
+    const ghosts = names.map((label, i) => ({ key: 'bl-unv:h' + i, label, zone: 'below', f: null }));
+    const L = m.floorLayout(office(), { ghosts });
+    const items = names.map((label, i) => ({ label, o: L.pos.get('bl-unv:h' + i) }));
+    const NAME_UP = 2.6, TAG_DOWN = 0.7;   // 글자 3.2 의 윗부분 · 글자 2.5 의 아랫부분(어림)
+    const rows = new Map(); for (const it of items) { if (!rows.has(it.o.y)) rows.set(it.o.y, []); rows.get(it.o.y).push(it); }
+    const ys = [...rows.keys()].sort((a, b) => a - b);
+    assert.ok(ys.length >= 2, '두 줄 넘게(본보기)');
+    for (const it of items) assert.equal(m.wrapLabel(it.label, it.o.w - 1.5).length, 1, it.label + ' 은 한 줄');
+    for (let r = 1; r < ys.length; r++) {
+        const lines = Math.max(...rows.get(ys[r]).map(it => m.wrapLabel(it.label, it.o.w - 1.5).length));
+        const nameTop = ys[r] - 4.4 - (lines - 1) * 3.4 - NAME_UP, tagBottom = ys[r - 1] + 5.6 + TAG_DOWN;
+        assert.ok(nameTop - tagBottom >= 2, `줄 ${r}: 이름표 위 ${nameTop.toFixed(1)} · 윗줄 글 아래 ${tagBottom.toFixed(1)}`);
+    }
+    for (const row of rows.values()) { row.sort((a, b) => a.o.x - b.o.x); for (let k = 1; k < row.length; k++) { const a = row[k - 1], b = row[k]; assert.ok(b.o.x - a.o.x >= (m.textW(a.label) + m.textW(b.label)) / 2 + 1, a.label + ' · ' + b.label + ' 안 겹침'); } }
+    // 그 확장 배치 위(층별 보기가 아닌 지도)도 같은 규칙
+    const spots = m.plainSpots([{ x: 10, y: 10 }, { x: 90, y: 40 }], names.map((label, i) => ({ key: 'p' + i, label, zone: 'below' })));
+    for (const s of spots) assert.equal(m.wrapLabel(s.g.label, s.o.w - 1.5).length, 1, s.g.label + ' 은 한 줄(그 확장 배치)');
+});
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

@@ -640,6 +640,9 @@ export const innerLike = (text) => INNER_RE.test(String(text || '').trim());
  *   주인 후보(paraName)는 앞 서술 문단에 처음 나오는 아는 이름 (없으면 재생기가 보낸 쪽 = 내 캐릭터). 서술 문단 사이 한 줄 기울임이 가장 흔한 꼴
  *   povName = 모든 기울임의 시점 인물 후보 (그 문단 · 앞 서술 문단의 이름) — 눌러서 읽을 때만 쓴다 (player buildJobs tapped)
  */
+// 1.7.8 메신저 · 문자 머리 줄(【발신자: 부서・이름】 · From: 이름 · 送信者: …): 그 문단의 이름은 짐작이 아니라 보낸 사람이에요 — 화면 화자 색(paint)도 그 이름으로 칠해요(paraHead)
+const SENDER_HEAD = /^[\s*_~>]*[[【(〔<「『]?\s*(?:발신자|발신인|보낸\s*사람|송신자|from|sender|送信者|差出人|発信者)\s*[:：]/iu;
+export const senderHead = (text) => SENDER_HEAD.test(String(text || ''));
 function markParagraphs(segs, names) {
     const byPara = new Map();
     for (const g of segs) { if (!byPara.has(g.para)) byPara.set(g.para, []); byPara.get(g.para).push(g); }
@@ -655,6 +658,7 @@ function markParagraphs(segs, names) {
         }
         const own = narration.length ? firstNameIn(narration.map(g => g.raw || g.text).join('\n'), names) : null;
         if (own) for (const g of list) if (g.text && (g.kind === 'dialogue' || g.speech)) g.paraName = own;
+        if (own && narration.some(g => senderHead(g.raw || g.text))) for (const g of list) if (g.paraName) g.paraHead = true;
         if (!narration.length && lastName) for (const g of list) if (g.inner) g.paraName = lastName;   // 문단 전체 기울임 속마음 — 앞 서술 문단의 이름
         const pov = own || lastName;
         if (pov) for (const g of list) if (g.kind === 'action' && g.text) g.povName = pov;

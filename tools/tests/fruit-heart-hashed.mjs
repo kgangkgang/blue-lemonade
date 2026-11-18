@@ -75,7 +75,7 @@ function environment(source) {
     const host = { document: doc, MutationObserver: Observer, requestAnimationFrame: fn => { const id = next++; frames.set(id, fn); return id; }, cancelAnimationFrame: id => frames.delete(id), setInterval: () => next++, clearInterval() {}, confirm: message => { calls.push(message); return false; } }; host.parent = host;
     const cleanups = [];
     const settle = () => { for (let i = 0; frames.size && i < 10; i++) { const jobs = [...frames.values()]; frames.clear(); jobs.forEach(f => f()); } };
-    return { html, body, host, calls, cleanups, run: () => { vm.runInNewContext(source, { window: host, BlueLemonade: { onCleanup: f => cleanups.push(f) }, console }, { timeout: 2000 }); settle(); }, settle, click(target) { listeners.get('click')?.({ target }); settle(); }, mutate() { observers.filter(o => o.targets.length).forEach(o => o.fn()); settle(); } };
+    return { html, body, host, calls, cleanups, observers, frames, run: () => { vm.runInNewContext(source, { window: host, BlueLemonade: { onCleanup: f => cleanups.push(f) }, console }, { timeout: 2000 }); settle(); }, settle, click(target) { listeners.get('click')?.({ target }); settle(); }, mutate() { observers.filter(o => o.targets.length).forEach(o => o.fn()); settle(); } };
 }
 const add = (parent, tag, attrs, text) => parent.append(new Element(tag, attrs, text));
 
@@ -129,6 +129,21 @@ e.host.confirm(LONG_CONFIRM);
 check('확인 창은 지문(확인 창 종류)으로 바꾸고 숫자를 채워요', () => assert.equal(e.calls.at(-1), '42번을 지울까요?'));
 e.host.confirm(LONG);
 check('글 종류 지문은 확인 창 판정에 쓰지 않아요', () => assert.equal(e.calls.at(-1), LONG));
+
+// 1.7.7 청과 도구 호출 스크립트가 0.2초마다 새로 쓰는 홈 카드 한 줄: 그 줄의 글자만 바로 칠하고 창 전체 다시 칠하기는 예약하지 않아요
+const serveSub = add(add(add(panel, 'button', { 'data-action': 'open-serve-panel' }), 'span', { class: 'fh-qr-copy' }), 'small', {}, LONG);
+e.mutate();
+const SHOWN = '시험용 긴 문장이에요. 7번째 지문 찾기 점검.';
+const fire = records => e.observers.filter(o => o.targets.length).forEach(o => o.fn(records));
+const rec = target => ({ type: 'childList', target, addedNodes: [], removedNodes: [] });
+check('홈 카드 한 줄: 처음에는 창을 칠할 때 같이 번역돼요', () => assert.equal(serveSub.text, SHOWN));
+for (let i = 0; i < 3; i++) { serveSub.children = []; serveSub.append({ nodeType: 3, nodeValue: LONG }); fire([rec(serveSub)]); }
+check('홈 카드 한 줄을 새로 써도 그 자리만 바로 번역하고 다음 박자를 잡지 않아요', () => { assert.equal(serveSub.text, SHOWN); assert.equal(e.frames.size, 0); });
+fire([rec(serveSub.children[0])]);
+check('그 줄의 글자 노드가 바뀐 기록도 같은 길이에요', () => { assert.equal(serveSub.text, SHOWN); assert.equal(e.frames.size, 0); });
+fire([rec(serveSub), rec(panel)]);
+check('다른 변화가 섞이면 예전처럼 다음 박자에 창을 다시 칠해요', () => assert.equal(e.frames.size, 1));
+e.settle();
 
 e.mutate();
 check('다시 칠해도 묶음 결과가 같아요', () => assert.equal(stat.text, '항목 5개 · 9묶음'));

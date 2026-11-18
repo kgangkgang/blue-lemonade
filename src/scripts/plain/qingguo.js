@@ -95,6 +95,11 @@ function installQingguoKorean(BlueLemonade, data) {
       const hit = element.closest('.fh-qr-ico') ? undefined : fhText(core);
       if (hit !== undefined) next = hit;
       else if (element.closest('.fh-serve-val') && fhValues.has(core)) next = fhValues.get(core);
+      // 1.7.7 홈 카드 한 줄(「지금: … · … · 최근: …」)은 「 · 」 조각마다 따로 — 과일의 마음 창 공용 번역이 앞 조각만 먼저 바꿔 둔 꼴(「지금: 도구 모드 · 抗外审… · 最近：…」)도 뒤 조각까지 바꿔요
+      else if (element.closest('.fh-qr-copy') && core.includes(' · ')) {
+        const out = core.split(' · ').map(part => fhText(part) ?? fhWords(colonBack(part))).join(' · ');
+        if (out !== core) next = out;
+      }
       // 기록 제목 · 기록 풀이 · 홈 카드 한 줄은 서버 원문 · 모델 이름이 섞여요 — 아는 낱말만 바꾸고 나머지는 그대로
       else if (element.closest('.fh-serve-ltitle,.fh-serve-ldetail,.fh-qr-copy')) { const out = fhWords(colonBack(value)); return out === colonBack(value) ? value : out; }
     }
@@ -157,13 +162,33 @@ function installQingguoKorean(BlueLemonade, data) {
     for(const el of present)if(el===node||el.contains(node)||node.contains(el))return true;
     return false;
   };
+  // 1.7.7 도구 호출 스크립트는 과일의 마음 창이 열려 있는 동안 0.2초마다 홈 카드 한 줄을 새로 쓰고(값이 같아도), 탭을 바꾸면 아래 메뉴 단추를 다시 끼워요.
+  //   그때마다 다음 그리기 박자(rAF)에 창 전체를 훑던 것을, 그 자리(홈 카드 한 줄 · 아래 메뉴 단추)만 그 작업 끝(microtask)에서 바로 바꿔요 —
+  //   원문이 한 번도 칠해지지 않고(깜빡임 없음 · 그리기 박자가 느린 화면에서 단추 이름이 몇 초 원문이던 것), 창 전체 훑기도 안 돌아요. 그 밖의 변화는 예전 길 그대로예요.
+  const QUICK='[data-action="open-serve-panel"] .fh-qr-copy small,.fh-bottom-nav [data-nav="serve"]';
+  const quickSpot=node=>{const el=node?.nodeType===3?node.parentElement:node;const hit=el?.closest?.(QUICK);return hit&&hit.closest('#fruit-heart-v6')?hit:null;};
   const observer=new host.MutationObserver(records=>{
+    if(stopped)return;
+    const spots=new Set();let rest=false;
+    for(const record of records){
+      const spot=quickSpot(record.target);
+      if(spot){spots.add(spot);continue;}
+      let added=0,quick=0;
+      for(const node of record.addedNodes){added++;const hit=node.nodeType===1&&node.matches?.('[data-nav="serve"]')?quickSpot(node):null;if(hit){spots.add(hit);quick++;}}
+      if(!added||quick!==added){rest=true;}
+    }
+    for(const spot of spots)if(spot.isConnected!==false)paintRoot(spot);
+    if(spots.size){for(const node of texts.keys())if(!node.isConnected)texts.delete(node);for(const node of attrs.keys())if(!node.isConnected)attrs.delete(node);}   // 창 전체 훑기가 안 도는 동안에도 떨어진 노드 기억은 치워요
+    if(!rest)return;
+    records=records.filter(record=>!quickSpot(record.target));
     const present=[];for(const id of rootIds)for(const el of doc.querySelectorAll('#'+id))present.push(el);
     // 8.2.7 기록 수만 개가 같은 부모에 몰려요(스트리밍 글자 · 메시지마다 단추 줄) — 부모마다 판정은 한 번만(이 판정은 읽기만 해서 답이 같아요) · 기록마다 새 배열 없이
     const relevant=relevantTo(present),seen=new Map(),targetRelevant=node=>{let hit=seen.get(node);if(hit===undefined){hit=relevant(node);seen.set(node,hit);}return hit;};
     if(records.some(record=>{if(targetRelevant(record.target.nodeType===3?record.target.parentElement:record.target))return true;for(const node of record.addedNodes)if(relevant(node))return true;return false;}))schedule();
   });
-  observer.observe(doc.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']});
+  // 1.7.7 과일의 마음 창(#fruit-heart-v6)은 body 안이 아니라 body 옆(html 바로 아래)에 붙어요 — body 만 지켜보면 그 창 안의 변화(탭을 바꿔 다시 끼운 아래 메뉴 단추 · 홈 카드 한 줄)를
+  //   못 보고, body 쪽에 다른 변화가 생길 때에야 같이 번역됐어요(아래 메뉴 「出杯」가 몇 초 ~ 계속 원문). 문서 뿌리부터 지켜봐요(판정은 위 relevantTo 그대로).
+  observer.observe(doc.documentElement||doc.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']});
   function stop(){
     if(stopped)return;stopped=true;observer.disconnect();host.cancelAnimationFrame(frame);
     if(host.confirm===localizedConfirm)host.confirm=originalConfirm;

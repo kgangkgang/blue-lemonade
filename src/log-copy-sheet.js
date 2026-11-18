@@ -20,7 +20,7 @@ import { templateColors } from './log-copy-template.js';   // 1.0.1 글꾸 마�
 import { readSaved, RETIRED_FALLBACK } from './log-copy-retired.js';   // 1.1.7 뺀 옛 내장 글꾸 48종의 이름표(저장된 id 읽기만) · 1.1.8 복사 뒤에도 옛 id 기억
 import { PAGES } from './repo.js';   // 1.1.7 뺀 내장 글꾸의 마트 새 판 바로가기 · 1.1.8 빈 「내 글꾸」 · 붙여 넣기 칸의 마트 열기
 import { motionCss, motionStyleFor } from './log-copy-motion.js';   // 1.0.1 글꾸 움직임 · 누르면 반응(미리보기 칸 · HTML 복사 맨 앞 <style>)
-import { sanitizeHtml, sanitizeTree, slotPath, fromPath, guessSlot, imagesFromCode } from './log-copy-sanitize.js';
+import { sanitizeHtml, sanitizeTree, slotPath, fromPath, guessSlot, touchesLock, imagesFromCode } from './log-copy-sanitize.js';
 import { attachPics, picList, picPlan, codesFrom } from './log-copy-pics.js';   // 11-14 글 속 그림(메시지 맨 앞 · 깡통에 올린 주소로)
 import { applyFade, revealTab } from './tab-scroll.js';
 import { transformLog, recolorLog } from './log-copy-words.js';   // 이름 숨김 · 단어 바꾸기 (채팅 캡처 「로그 공유 · 이름 가림」 설정을 같이 써요) · 고른 에이드로 역할 색 다시 계산
@@ -118,7 +118,7 @@ function chipOrder(s) {
 
 // ── 시트 ─────────────────────────────────────────────────────
 
-let open = null;
+let open = null, opening = 0;   // 버그 사냥 2: opening = 여는 중인 차례 번호 — 받는 사이 또 열면 앞 것은 창을 안 만들어요
 let stageBig = false;   // 1.1.6 폰 화면 미리보기 크기 — 작게(화면 약 30%)로 시작 · 크게로 바꾸면 이 탭이 열려 있는 동안 기억해요(설정에는 안 남겨요 — 시작 묶음 0바이트)
 const PHONE = '(max-width: 600px)';   // 1.1.6 폰 화면 규칙이 걸리는 폭(STYLE 의 @media 와 같아요)
 const MART_GEULKKU = `${PAGES}/mart/geulkku/`;   // 1.1.8 글꾸를 얻는 곳(1.1.7 부터 내장 글꾸 없이 마트 → 「테마용 복사」 → 여기 붙여 넣기 하나)
@@ -133,6 +133,7 @@ const FLIP_NONE = '이 글꾸는 낮 · 밤 두 판이 없어요';   // log-copy
 export async function openLogSheet(model) {
     if (!model?.messages?.length) { toastr.warning('글을 다시 골라 주세요.', '', { timeOut: 1800 }); return; }
     open?.close();
+    const ticket = ++opening;   // 버그 사냥 2: 추천 글꾸 · 색 자료를 받는 사이 한 번 더 열면(폰 두 번 누름) 앞 창이 안 닫혀 두 장이 겹쳤어요 — 나중 것만
     ensureStyle();
     await ensurePalettes();
     const s = store();
@@ -143,6 +144,7 @@ export async function openLogSheet(model) {
     let flipMod = null;
     const needFlip = async () => { if (!flipMod) { try { flipMod = await import('./log-copy-flip.js'); } catch { /* 전환 없이 */ } } return flipMod; };
     if (flipSaved()) await needFlip();
+    if (ticket !== opening) return;
     const pickOn = id => !!pk.mod && pk.mod.pickIds(pk.picks, store().custom).includes(id);   // 보이는 추천 글꾸인가(마트에서 같은 틀을 받아 뒀으면 받은 쪽이 이겨요)
     const catOf = id => (pickOn(id) ? pk.mod.PICK_CATEGORY.id : categoryOf(id));
     const catList = pk.picks.length ? [CATEGORIES[0], pk.mod.PICK_CATEGORY, ...CATEGORIES.slice(1)] : CATEGORIES;   // 「기본」 바로 뒤
@@ -171,13 +173,15 @@ export async function openLogSheet(model) {
         flip: !!flipMod, flipPlan: null, flipDrawn: false, flipLive: false, flipWhy: false,   // 「전환 넣기」 켬 (켜 둔 사람은 위에서 조각을 받았어요 — 못 받았으면 끈 채) · 막 그린 글의 전환 계획(못 다는 글꾸면 null) · 계획을 세워 봤나 · 미리보기에 알약이 얹혔나 · 못 다는 까닭 줄을 눌러 열었나
     };
     // 1.0.8 비워 둔 머리 칸(깡통 · 모델 · 프롬프트 알약 · 날짜 · 제목)은 다음에 열어도 빈 채로 — 전엔 열 때마다 지금 연결 이름으로 다시 채워 지운 알약이 돌아왔어요(사용자 「없애 뒀으면 없는 상태로 시작」)
+    // 버그 사냥 2: 열 때 값이 있던 칸만 「비워 둔 칸」 이 될 수 있어요 — 처음부터 빈 칸(연결 안 함 → 모델 · 프롬프트 이름 없음)까지 적어 연결한 뒤에도 알약이 안 돌아왔어요
+    const filledAtOpen = new Set(Object.keys(state.fields).filter(key => String(state.fields[key] ?? '').trim()));
     for (const key of s.blank || []) state.fields[key] = '';
     // 1.1.7 뺀 옛 내장 글꾸(빼빼로데이 등)를 고른 채였으면 — 저장 값은 그대로 두고 읽기만 바꿔요: 마트 새 판을 받아 뒀으면 그 글꾸로 이어서 · 아니면 기본 틀(깡통 로그)로
     //   1.1.8 옛 id 는 retiredFrom 에 남겨요 — 깡통 로그로 복사해 모양이 바뀌어도 나중에 새 판을 받으면 이어져요. 안내는 9초 알림 대신 시트 안 띠(닫을 때까지 · drawRetired)
     const read = readSaved(s, pk.mod ? pk.mod.pickIds(pk.picks, s.custom).map(id => ({ id })) : []);   // 1.1.8 추천 글꾸에 마트 새 판이 있으면 그 판으로(택배 상자 · 속보 방송)
     if (read.from && s.retiredFrom !== read.from) s.retiredFrom = read.from;
     if (read.retired) { state.shape = read.shape; state.category = catOf(read.shape); }
-    const retired = read.retired && read.shape === RETIRED_FALLBACK ? read : null;   // 띠에 쓸 것(새 판으로 이어 그렸으면 없음)
+    let retired = read.retired && read.shape === RETIRED_FALLBACK ? read : null;   // 띠에 쓸 것(새 판으로 이어 그렸으면 없음 · 버그 사냥 2: 새 판을 받으면 창 안에서도 끝 — received)
     if (!PRESETS.some(p => p.id === state.shape) && !s.custom.some(c => c.id === state.shape) && !pickOn(state.shape)) state.shape = 'card';
     // 깡통 로그 틀이면 접힌 채 · 다른 틀을 쓰던 설정이면 예전 그대로 펼친 채. 접힌 줄에서 켜 둔 것이 지금 글을 바꾸고 있으면(이름 숨김 · 바꾸기 · 이름 줄 끔) 펼쳐서 보여요
     { const ct = getSettings().captureTools; state.more = s.custom.some(c => c.id === state.shape) || pickOn(state.shape) || !isToneShape(state.shape) || !!(ct?.redact || ct?.replace || s.namesOff); }
@@ -496,7 +500,7 @@ export async function openLogSheet(model) {
     const rememberBlank = () => {
         if (toneOn()) return;   // 1.1.3 깡통 로그 틀 묶음의 빈 제목은 그 틀의 기본이라 「비워 둔 머리 칸」으로 적지 않아요(다른 틀의 제목까지 비게 돼요)
         const s4 = store(), before = (s4.blank || []).join();
-        const next = FIELD_INPUTS.map(([key]) => key).filter(key => !String(state.fields[key] ?? '').trim());
+        const next = FIELD_INPUTS.map(([key]) => key).filter(key => !String(state.fields[key] ?? '').trim() && filledAtOpen.has(key));   // 열 때(비워 둔 칸을 입히기 전) 값이 있던 칸만 — 옛 판이 잘못 적은 빈 칸도 이때 걸러요
         if (next.join() !== before) { s4.blank = next; saveSettings(); }
     };
     const spoilerColors = (nodes, sp) => { for (const n of nodes || []) { if (n.kind === 'spoiler') n.sp = sp; if (n.children) spoilerColors(n.children, sp); } };
@@ -697,16 +701,18 @@ export async function openLogSheet(model) {
     };
     // 1.2.0 내 글꾸 지우기(칩 옆 ✕) — 바로 지우고 알림의 ↶ 로 되돌려요. 고른 글꾸였으면 깡통 로그로
     const dropMine = (id) => {
-        const s2 = store(), name = s2.custom.find(c => c.id === id)?.name ?? '내 글꾸', was = state.shape === id;
+        const s2 = store(), name = s2.custom.find(c => c.id === id)?.name ?? '내 글꾸', was = state.shape === id, savedWas = s2.shape === id;
         const undo = removeMine(s2, id);
         if (!undo) return;
         if (was) { state.shape = TONE_SHAPES[0]; state.picking = false; }
+        if (savedWas) s2.shape = TONE_SHAPES[0];   // 버그 사냥 2: 저장된 틀이 지운 글꾸면 저장값도 — 복사 없이 닫으면 다음에 없는 id 라 옛 기본 「카드」 가 고른 칩 없이 열렸어요
         saveSettings();
         drawShapes(); drawColors(); if (was) draw();
         const note = toastr.info(`「${name}」를 지웠어요 — ↶ 를 누르면 되돌려요`, '내 글꾸', { timeOut: 8000 });
         attachUndo(note, () => {
             const s3 = store();
             if (!restoreMine(s3, undo)) { toastr.warning(s3.custom.length >= MINE_MAX ? `내 글꾸가 꽉 차서(${MINE_MAX}/${MINE_MAX}) 되돌리지 못했어요` : '같은 글꾸를 그새 다시 받아서 되돌릴 것이 없어요', '내 글꾸', { timeOut: 4000 }); return; }
+            if (savedWas && s3.shape === TONE_SHAPES[0]) s3.shape = id;   // 그새 다른 틀로 복사했으면 그 틀 그대로
             saveSettings();
             if (!dialog.isConnected) return;
             const back = was && state.shape === TONE_SHAPES[0];   // 그새 다른 틀을 골랐으면 그 틀 그대로
@@ -862,7 +868,8 @@ export async function openLogSheet(model) {
             if (!doc) return;
             [...doc.body.querySelectorAll(PROP)].forEach((d, i, all) => { if (d.open) return; d.setAttribute('data-bl-peek', ''); if (held?.length === all.length && held[i]) d.open = true; });
             if (rawOf(mine)) {   // 마트 글꾸(template · 1.1.4 심플 frame)는 자리가 정해져 있어 고르지 않아요
-                const slot = state.picking ? null : (Array.isArray(mine.slot) && fromPath(doc.body, mine.slot)) || guessSlot(doc.body);
+                const kept = !state.picking && Array.isArray(mine.slot) ? fromPath(doc.body, mine.slot) : null;   // 버그 사냥 2: 골드 잠금이 든 칸은 로그 자리가 아니에요(부으면 잠금이 지워져요)
+                const slot = state.picking ? null : (kept && !touchesLock(kept) ? kept : null) || guessSlot(doc.body);
                 if (slot) { slot.innerHTML = logHtml(shown.model, { frameless: false, names: !s3.namesOff }); slot.setAttribute('data-bl-slot', ''); }
                 if (state.picking) {
                     doc.body.style.cursor = 'crosshair';
@@ -871,6 +878,7 @@ export async function openLogSheet(model) {
                         event.preventDefault();
                         const target = event.target.nodeType === 1 ? event.target : event.target.parentElement;
                         if (!target || target === doc.body || !doc.body.contains(target)) return;
+                        if (touchesLock(target)) { toastr.info('골드 잠금이 든 칸에는 로그를 넣을 수 없어요 — 다른 칸을 눌러요', '로그 복사', { timeOut: 3000 }); return; }
                         doc.removeEventListener('click', onPick);
                         const live = custom();   // 설정을 다시 읽으면 새 객체 — 지금 것에 적는다
                         if (live) live.slot = slotPath(target, doc.body);
@@ -1055,12 +1063,13 @@ export async function openLogSheet(model) {
         const back = retired?.retired.mart && result.geulkku.includes(retired.retired.mart) ? retired.retired.mart : '';
         const first = back || result.geulkku[0];
         if (!first) return '';
-        if (back) { const s2 = store(); s2.retiredFrom = ''; s2.retiredOff = false; saveSettings(); }
+        const backName = back ? retired.retired.name : '';
+        if (back) { const s2 = store(); s2.retiredFrom = ''; s2.retiredOff = false; saveSettings(); retired = null; }   // 버그 사냥 2: 창 안 값도 — 같은 창에서 깡통 로그를 누르면 띠가 다시 떴어요
         $('[data-lc-paste] textarea').value = '';
         showPaste(false);
         state.shape = first; state.category = 'mine'; state.picking = false; state.more = true;
         drawMore(); drawShapes(); drawColors(); draw();
-        return back ? retired.retired.name : '';
+        return backName;
     };
     const tellTaken = (head, lines, back) => {
         toastr.success(back ? `「${back}」 새 판으로 이어서 써요` : head, '내 글꾸', { timeOut: 4000 });
@@ -1133,6 +1142,9 @@ export async function openLogSheet(model) {
     }, { passive: false });
 
     dialog.addEventListener('click', async (event) => {
+        // 버그 사냥 2: 자리를 안 고른 직접 붙인 HTML 글꾸의 「로그 넣을 곳을 눌러요」 줄 — 받은 직후가 아니면(칩을 누름 · 다시 엶) 눌러도 고르기가 안 켜졌어요.
+        //   줄(「자동으로」 단추 말고)을 누르면 고르기를 다시 켜요. 미리보기를 늘 고르기로 받으면 글 고치기 · 숨기기 누름까지 먹어서 줄을 누를 때만
+        if (!state.picking && event.target.closest?.('[data-lc-pick]') && !event.target.closest('button')) { const mine = custom(); if (rawOf(mine) && !mine.slot) { state.picking = true; draw(); } return; }
         const target = event.target.closest('button');
         if (!target || !dialog.contains(target)) return;
         if (target.dataset.lcFold) {   // 1.1.6 폰: 접는 갈래 — 「머리 칸」 갈래는 펴면 칸이 보여요(PC 의 「머리 칸」 칩과 같은 상태)

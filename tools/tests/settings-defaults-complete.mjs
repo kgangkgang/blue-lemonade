@@ -44,6 +44,28 @@ for (const [old, want] of [[true, true], [false, false], [undefined, false]]) {
 }
 console.log('PASS 스위치 있는 키가 기본값 표 · 변경 목록 · 복원에 다 들어가요');
 
+// 버그 사냥 2: 제 설정 키가 있는 미트볼 · 뒤로 가기 스위치 일곱이 기본값 표에 없어 꺼도 「변경한 설정」에 안 뜨고 ↺ 도 없었어요(1.7.6 의심 「사」 남은 것)
+{
+    const mb = { 'chat.mbBack': true, 'chat.backClose': true, 'chat.mbMapFloors': true, 'chat.mbHelpers': true, 'chat.mbHiddenSync': true, 'chat.mbAutoEn': true, 'chat.mbAlbumBtn': false };
+    for (const [key, value] of Object.entries(mb)) assert.equal(read(S.DEFAULTS, key), value, `${key} 기본값(지금 동작과 같게)`);
+    const raw = structuredClone(S.DEFAULTS);
+    for (const [key, value] of Object.entries(mb)) raw.chat[key.slice(5)] = !value;
+    ctx.extensionSettings = { salty: raw };
+    S.invalidateSettings(); s = S.getSettings();
+    const listed = D.changedSettings(s).map(c => c.path);
+    for (const [key, value] of Object.entries(mb)) {
+        assert.ok(listed.includes(key), `${key} 가 변경 목록에 떠요`);
+        assert.equal(D.resetSetting(s, key), true, `${key} 복원`);
+        assert.equal(read(s, key), value);
+        assert.ok(SETTING_LABELS[key], `${key} 라벨`);
+    }
+    // 키가 없던 옛 설정은 지금 동작 그대로(켬 · 앨범 단추는 숨김)
+    ctx.extensionSettings = { salty: { chat: {} } };
+    S.invalidateSettings(); s = S.getSettings();
+    for (const [key, value] of Object.entries(mb)) assert.equal(read(s, key), value, `${key} 옛 설정`);
+    console.log('PASS 미트볼 · 뒤로 가기 스위치 일곱도 기본값 표 · 변경 목록 · 복원에 들어가요');
+}
+
 // 솔라 새 스타일은 사용자가 고른 값만 이어받고, 모르는 값은 원작으로 돌아가요.
 for (const [saved,want] of [[undefined,'original'],[null,'original'],['unknown','original'],['lemon','lemon']]) {
  const raw=structuredClone(S.DEFAULTS);raw.chat.solaStyle=saved;ctx.extensionSettings.salty=raw;S.invalidateSettings();assert.equal(S.getSettings().chat.solaStyle,want);

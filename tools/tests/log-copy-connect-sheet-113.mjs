@@ -213,5 +213,29 @@ await test('그릴 때와 복사 · 내려받기 직전에 점검을 거쳐요(�
     assert.match(src, /\$\{motionCss\(\)\}\$\{toneNow \? sitePreviewCss\(toneMode\) : ''\}<\/style>/);
 });
 
+// 버그 사냥 2: 처음부터 비어 있던 칸(연결 안 함 → 모델 · 프롬프트 이름 없음)까지 「비워 둔 칸」 으로 적어서, 연결한 뒤에도 알약이 안 돌아왔어요
+await test('처음부터 빈 머리 칸은 「비워 둔 칸」 으로 적지 않아요 · 값이 있던 칸을 지우면 적어요', async () => {
+    const w = await open(two, { ...OLD, shape: 'card' });
+    const empty = ['model', 'prompt', 'char', 'date', 'title'].filter(k => !w.pick(`[data-lc-field="${k}"]`)?.value);
+    assert.ok(empty.length, `이 가짜 연결에서 처음부터 빈 칸이 있어야 해요(${empty})`);
+    const title = w.pick('[data-lc-field="title"]');
+    title.value = '첫 장'; title.dispatchEvent(new Event('input', { bubbles: true })); await settle(400);
+    assert.deepEqual(w.store().blank.filter(k => empty.includes(k) && k !== 'title'), [], '처음부터 빈 칸은 안 적어요');
+    const full = ['date', 'char'].find(k => w.pick('[data-lc-field="' + k + '"]')?.value);
+    assert.ok(full, '값이 있는 칸(날짜 · 깡통)');
+    const box = w.pick('[data-lc-field="' + full + '"]');
+    box.value = ''; box.dispatchEvent(new Event('input', { bubbles: true })); await settle(400);
+    assert.ok(w.store().blank.includes(full), '지운 칸은 적어요(1.0.8 그대로)');
+});
+// 독립 검토: 옛 판이 이미 잘못 적어 둔 빈 칸(열 때 값이 없던 모델 · 프롬프트)도 다음에 고칠 때 걸러요 — 이미 겪은 사람도 풀려요
+await test('옛 판이 잘못 적은 빈 칸(열 때 값이 없던 칸)은 다음 고침에 빠져요', async () => {
+    const empty = ['model', 'prompt'];
+    const w = await open(two, { ...OLD, shape: 'card', blank: [...empty] });
+    const gone = empty.filter(k => !w.pick(`[data-lc-field="${k}"]`)?.value);
+    const title = w.pick('[data-lc-field="title"]');
+    title.value = '둘째 장'; title.dispatchEvent(new Event('input', { bubbles: true })); await settle(400);
+    assert.deepEqual(w.store().blank.filter(k => gone.includes(k)), [], JSON.stringify(w.store().blank));
+});
+
 console.log(`log-copy-connect-sheet-113: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

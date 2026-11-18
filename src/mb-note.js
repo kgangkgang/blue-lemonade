@@ -9,7 +9,11 @@
 //   작가 노트가 있고 · 페르소나 설명이 짧고(이름 정도) · 유저 시트가 처음 만든 그대로(그 뒤 손댄 기록 없음)일 때. 하나라도 모르면 알리지 않아요(잘못 뜨는 알림보다 없는 편이 나아요).
 // 감시자 · 타이머 없음: 맞춤 시트(mb-note.css)가 그 두 칸에 0.001초 애니메이션을 걸어, 그 칸이 그려질 때 나는 animationstart 하나로 알아채요(src/ext-compat.js 의 띠 알아채기와 같은 방법).
 //   그 확장이 화면을 다시 그리면 새 칸에서 다시 나요. 구조를 모르면(다른 판) 조용히 아무것도 안 해요. 원작 그대로 보기(data-bl-ext-raw) · 테마 꺼짐이면 시트 규칙이 안 걸려 단추도 없어요.
+// 1.7.7 미트볼 2.9.0 부터는 그 확장이 작가 노트를 스스로 읽어요(설정 genNote · 만들기 창의 「작가 노트」 체크 칸 · 확장 AI 설정 — 만들기 · 칸 다시 생성 · AI로 수정의 재료로) —
+//   그 판에서는 단추도 알림도 두지 않아요(단추로 붙이고 그 확장 설정도 켜면 노트가 두 번 실리고, 「작가 노트를 읽지 않아요」 알림은 틀린 말이 돼요). 옛 판(2.8.0 까지)은 그대로예요.
+//   신호(시트)는 만들기 화면 「채팅 읽기」(src/mb-read.js)가 같이 써서 그대로 붙여요.
 import { holdSheet } from './boot-gate.js';
+import { upHas } from './mb-upstream.js';
 import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치 「「작가 노트 넣기」 단추」 — 끄면 단추 · 알림을 안 둬요(신호는 만들기 화면 「채팅 읽기」 와 같이 써서 시트에 남아요)
 
 export const SHEET_ID = 'bl-mb-note-css';
@@ -129,7 +133,7 @@ function told(storage) {
 }
 /** 채팅마다 한 번: 알렸으면 true */
 export function tellOnce(c = ctx(), { storage = globalThis.localStorage, toast = globalThis.toastr, doc = globalThis.document } = {}) {
-    if (mbOff('note', doc)) return false;   // 1.7.3 스위치를 끄면 알림도 안 띄워요
+    if (mbOff('note', doc) || upHas('note', c)) return false;   // 1.7.3 스위치를 끄면 알림도 안 띄워요 · 1.7.7 그 확장이 노트를 읽는 판이면 알릴 일이 없어요
     const id = c?.getCurrentChatId?.();
     if (!id || !shouldTell(c)) return false;
     const list = told(storage);
@@ -156,7 +160,7 @@ export function startMbNote(doc = globalThis.document) {
     started = true;
     attachSheet(doc);
     doc.addEventListener('animationstart', event => {
-        if (event.animationName !== ANIM || mbOff('note', doc)) return;
+        if (event.animationName !== ANIM || mbOff('note', doc) || upHas('note')) return;
         try { place(event.target); } catch { /* 원래 화면 그대로 */ }
     }, true);
     doc.addEventListener('click', event => {

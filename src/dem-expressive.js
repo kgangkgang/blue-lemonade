@@ -33,6 +33,42 @@ export function findExpressive(source) {
     return hits;
 }
 
+// 버그 사냥 2: 같은 글의 대사가 한 메시지에 여러 번 나오면(「응」 · 「멈춰!」) 화면에서 「글이 같은 첫 칸」 을 골라, 태그 없는 앞 대사가 감싸지거나
+//   다시 훑을 때(80 · 800 · 3000ms) 태그 없는 뒤 대사까지 감쌌어요. 원문에서 같은 글 대사 가운데 몇 번째인지(nth)를 세어 화면에서도 그 차례의 자리만 감싸요.
+/** 원문 감정 대사 + 같은 글 대사 가운데 차례(nth · 0 부터 · 태그 없는 것까지 셈) */
+function hitsOf(source) {
+    const raw = String(source || ''), out = [];
+    for (const m of raw.matchAll(FIND)) {
+        const tags = [...m[1].matchAll(TAG_NAME)].map(t => t[1].toLowerCase());
+        if (!tags.length) continue;
+        const text = shown(m[2]), before = shown(raw.slice(0, m.index + m[0].length - m[2].length));   // 화면 글처럼 ... → … 로 바꾼 글에서 세요(섞여 적혀도 차례가 맞게)
+        let nth = 0;
+        for (let i = before.indexOf(text); i >= 0; i = before.indexOf(text, i + text.length)) nth++;
+        out.push({ tags, text, nth });
+    }
+    return out;
+}
+/** 화면 글(body 의 글 노드를 이어 붙인 글)에서 text 의 nth 번째 자리 — 없으면 -1 */
+function nthAt(all, text, nth) {
+    let i = all.indexOf(text);
+    for (let k = 0; i >= 0 && k < nth; k++) i = all.indexOf(text, i + text.length);
+    return i;
+}
+/** 글 노드 → body 글 안 시작 자리 */
+function textIndex(body) {
+    const map = new Map(), nodes = [];
+    let pos = 0;
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) { map.set(n, pos); nodes.push(n); pos += n.data.length; }
+    return { map, nodes, all: nodes.map(n => n.data).join('') };
+}
+/** 요소 글의 (앞 빈칸을 뺀) 시작 자리 */
+function startOf(el, map) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) { const i = n.data.search(/\S/); if (i >= 0) return (map.get(n) ?? -1) + i; }
+    return -1;
+}
+
 function wrap(node, tags) {
     const span = document.createElement('span');
     span.className = `custom-dem-expressive ${tags.map(t => `custom-dem-expressive--${t}`).join(' ')} ${MADE}`;
@@ -55,14 +91,23 @@ function dress(mes, message) {
 }
 // 본문이 아직 문서에 붙기 전(북마크 카드를 글자로 만드는 중)에도 쓰이므로 isConnected 가 아니라 body 안인지로 본다
 function dressInto(body, message) {
-    const hits = [...findExpressive(message.extra?.display_text), ...findExpressive(message.mes)];
+    const hits = [...hitsOf(message.extra?.display_text), ...hitsOf(message.mes)];
     if (!hits.length) return;
+    // 버그 사냥 2: 화면에서 그 차례(nth)의 자리 — 화면에 같은 글 대사 수가 원문보다 적으면(번역 · 다른 확장이 고침) 예전처럼 「아직 안 감싼 첫 칸」
+    const placeOf = (hit) => {
+        const idx = textIndex(body), at = nthAt(idx.all, hit.text, hit.nth);
+        return at < 0 ? null : { idx, at };
+    };
     // 1) 칸 하나가 통째로 그 대사인 경우(테마의 대사 칸 q · 대사 색상의 span/font): 가장 바깥 칸을 감싼다 — 프리셋이 만드는 모양(감정 칸 > 색 칸 > q)과 같게.
     //    q 안쪽에 넣으면 형광펜 · 줄 나눔 규칙과 엉켜 줄이 잘려 보였다 (2026-09-21 실제 화면에서 확인)
     const boxes = [...body.querySelectorAll('q, font, span[style]')];
     const rest = [];
     for (const hit of hits) {
-        let box = boxes.find(el => body.contains(el) && el.textContent.trim() === hit.text && !el.closest('.custom-dem-expressive'));
+        const place = placeOf(hit);
+        let box = place
+            ? boxes.find(el => body.contains(el) && el.textContent.trim() === hit.text && startOf(el, place.idx.map) === place.at)
+            : boxes.find(el => body.contains(el) && el.textContent.trim() === hit.text && !el.closest('.custom-dem-expressive'));
+        if (box?.closest('.custom-dem-expressive')) continue;   // 그 차례 대사는 이미 감쌌어요(다시 훑기)
         if (!box) { rest.push(hit); continue; }
         while (box.parentElement !== body && box.parentElement.matches('q, font, span[style]') && box.parentElement.textContent.trim() === hit.text) box = box.parentElement;
         wrap(box, hit.tags);
@@ -73,9 +118,17 @@ function dressInto(body, message) {
     const nodes = [];
     for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.data.includes('「') || n.data.includes('『')) nodes.push(n);
     for (const hit of rest) {
-        const node = nodes.find(n => body.contains(n) && n.data.includes(hit.text) && !n.parentElement.closest('.custom-dem-expressive'));
-        if (!node) continue;
-        const start = node.data.indexOf(hit.text);
+        const place = placeOf(hit);
+        let node = null, start = -1;
+        if (place) {
+            node = place.idx.nodes.find(n => { const o = place.idx.map.get(n); return o <= place.at && place.at + hit.text.length <= o + n.data.length; }) ?? null;
+            if (!node || node.parentElement.closest('.custom-dem-expressive')) continue;   // 여러 글 노드에 걸쳤거나(예전에도 못 감쌈) 이미 감쌌어요
+            start = place.at - place.idx.map.get(node);
+        } else {
+            node = nodes.find(n => body.contains(n) && n.data.includes(hit.text) && !n.parentElement.closest('.custom-dem-expressive'));
+            if (!node) continue;
+            start = node.data.indexOf(hit.text);
+        }
         const target = start > 0 ? node.splitText(start) : node;
         // 5.3.4: 잘라 낸 뒤쪽 조각도 목록에 — 한 글자 노드에 「」 대사가 둘이면 둘째가 이 조각에 남는데 목록에 없어 놓쳤다
         if (target.data.length > hit.text.length) nodes.push(target.splitText(hit.text.length));

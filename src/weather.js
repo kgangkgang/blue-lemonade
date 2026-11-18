@@ -15,6 +15,8 @@ import { getSettings, saveSettings } from './settings.js';
 import { loadWeatherModule } from './weather-load.js';
 import { readMeatballWeather, meatballWeatherModes } from './weather-meatball.js';
 
+// 코드 정리(버그 사냥 2): syncWeather · previewWeather 가 따로 적던 효과 이름 목록 하나로(weather-profiles.js WEATHER_MODES 와 같은 값)
+const MODES = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'];
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let rendererRetryAfter = 0;
 // 8.0.6 데우스 V3 트래커는 안쪽이 바뀌었어요 — 날씨 칸 .dem-track__sky(그림 글자 + 날씨), 복구판은 .dem-track__place--context(장소 → … 날씨 한 줄).
@@ -411,7 +413,7 @@ function listen() {
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
 export function syncWeather(on, chat = {}) {
-    const mode = activeWeather(chat.weather) && ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = activeWeather(chat.weather) && MODES.includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     wanted = { on: !!on && mode !== 'off', mode, level, chat: { ...chat, weather: mode }, params: paramsFrom(chat), sprite: chat.weatherImage || '' };
     if (!wanted.on) {
@@ -465,7 +467,7 @@ function seeThrough(stage, on) {
 }
 /** 채팅 표본(.salty-preview[data-prev="chat"])에 작은 효과. 트래커 따라면 지금 채팅의 날씨, 없으면 비를 보여 준다 */
 export function previewWeather(stage, chat = {}) {
-    const mode = activeWeather(chat.weather) && ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'].includes(chat.weather) ? chat.weather : 'off';
+    const mode = activeWeather(chat.weather) && MODES.includes(chat.weather) ? chat.weather : 'off';
     const level = [1, 2, 3].includes(Number(chat.weatherLevel)) ? Number(chat.weatherLevel) : 2;
     let preview = stage._blWeather;
     if (mode === 'off' || !stage.isConnected) {

@@ -256,6 +256,41 @@ await test('마 ⑦ 고르지 않은 글꾸를 지우면 지금 틀은 그대로
     assert.deepEqual(lc().custom.map(c => c.id), ['c1', 'c2']);
 });
 
+// 버그 사냥 2: 마지막에 쓰던(저장된) 내 글꾸를 ✕ 로 지우고 복사 없이 닫으면, 저장된 틀 id 가 없는 글꾸로 남아 다음에 열 때 옛 기본 틀 「카드」 가 고른 칩 없이 열렸어요
+await test('마 ⑦ 저장된 틀을 지우고 닫으면 다음에는 깡통 로그로 열려요 · 닫은 뒤 ↶ 하면 다시 그 글꾸', async () => {
+    let w = await open({ custom: [RAW('c1'), RAW('c2')], shape: 'c2', category: 'mine' });
+    w.$('[data-lc-del="c2"]').click(); await settle();
+    const undo = toasts.at(-1).at(-1).querySelector('.bl-toast-undo');
+    assert.equal(lc().shape, TONE_SHAPES[0], '저장된 틀도 깡통 로그로');
+    w.dialog.close(); await settle();
+    const saved = structuredClone(lc());
+    w = await open(saved);
+    assert.match(w.$('[data-lc-stage-name]').textContent, /깡통 로그/, '다시 열면 깡통 로그(전엔 「카드」)');
+    assert.equal(w.on(), TONE_SHAPES[0]);
+    w.dialog.close(); await settle();
+    undo.click(); await settle();
+    assert.equal(lc().shape, 'c2', '↶ 하면 저장된 틀도 그 글꾸로');
+});
+
+// 버그 사냥 2: 직접 붙인 HTML 글꾸를 받은 뒤 자리를 고르기 전에 다른 칩을 누르면, 「로그 넣을 곳을 눌러요」 줄은 그대로인데 고르기가 꺼져
+//   미리보기를 눌러도 자리가 안 정해졌어요(창을 다시 열어도). 고르기를 켜는 자리가 받는 순간 한 곳뿐이었어요 — 미리보기 iframe 은 이 가짜 브라우저가 못 그려 글로 봐요
+// 버그 사냥 2: 창을 여는 중(추천 글꾸 · 색 자료를 받는 사이) 한 번 더 열면 앞 창이 닫히지 않고 두 장이 겹쳤어요(폰 두 번 누름)
+await test('창을 빨리 두 번 열어도 한 장만 떠요(나중 것)', async () => {
+    ctx.extensionSettings.salty = { enabled: true, logCopy: structuredClone(BASE), captureTools: { redact: false, names: [], mask: 'auto', maskWord: '○○' } };
+    S.invalidateSettings();
+    const a = sheet.openLogSheet(model), b = sheet.openLogSheet(model);
+    await Promise.all([a, b]); await settle(120);
+    assert.equal(document.querySelectorAll('dialog.bl-lc').length, 1, '겹친 창 없음');
+});
+
+await test('마 ⑨ 자리를 안 고른 직접 붙인 HTML 글꾸는 칩을 다시 누르거나 다시 열어도 눌러 고를 수 있어요(줄과 같게 · 어림 자리 로그는 보인 채)', async () => {
+    // 독립 검토: 자리 없을 때 미리보기 누름을 늘 고르기로 받으면 글 고치기 · 숨기기 누름까지 먹어요 — 「눌러요」 줄을 누를 때 고르기를 다시 켜요
+    assert.match(SRC, /if \(state\.picking\) \{\s*doc\.body\.style\.cursor = 'crosshair';/, '미리보기 손잡이는 고르기 중에만');
+    assert.match(SRC, /if \(!state\.picking && event\.target\.closest\?\.\('\[data-lc-pick\]'\) && !event\.target\.closest\('button'\)\) \{ const mine = custom\(\); if \(rawOf\(mine\) && !mine\.slot\) \{ state\.picking = true; draw\(\); \} return; \}/, '줄을 누르면 고르기를 다시 켜요');
+    const w = await open({ custom: [RAW('c1')], shape: 'c1', category: 'mine' });
+    assert.equal(w.$('[data-lc-pick]').hidden, false, '줄은 그대로 떠요');
+});
+
 await test('마 ⑧ 「내 글꾸 n/20」: 분류 줄 아래 한 줄 + 「+ 내 글꾸」 칩 · 꽉 차면 할 일(✕ 로 지워요)', async () => {
     const w = await open({ custom: [RAW('c1'), RAW('c2')], shape: 'c1', category: 'mine' });
     const row = w.$('[data-lc-mine]');

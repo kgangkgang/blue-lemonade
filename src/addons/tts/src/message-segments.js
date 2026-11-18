@@ -273,7 +273,7 @@ export function dialogueSpeakers(mesId) {
         // 1.9.1 그래도 보낸 쪽이면 그 문단 서술에 처음 나온 아는 이름 (재생기 buildJobs 와 같게. 화면용이라 목소리는 고르지 않는다 — 엑스트라 배정이 생기지 않게)
         if (source === 'sender' && seg.paraName) {
             const p = safeResolve({ speakerHint: seg.paraName }, rctx);
-            if (p.source === 'hint' && p.name) { name = p.name; source = 'paragraph'; flag = typeof p.isUser === 'boolean' ? p.isUser : null; }
+            if (p.source === 'hint' && p.name) { name = p.name; source = seg.paraHead ? 'header' : 'paragraph'; flag = typeof p.isUser === 'boolean' ? p.isUser : null; }   // 1.7.8 발신자 머리 줄 이름은 칠해요(paint-core PAINT_SOURCES)
         }
         // 6.3.6 뒤 고침: 재생이 「나」로 읽는 줄인가 — 읽을 때(speakSegments 의 isUser)와 같은 판단 (색 · 별명 · 이름 다리로 찾은 내 다른 이름도). 이름 창은 이 줄을 뺀다
         const said = /^\{\{user\}\}$/i.test(String(name || '')) ? String(userName || '') : String(name || '');

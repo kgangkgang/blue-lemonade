@@ -163,4 +163,29 @@ await test('1.6.9 표지 굵기 · 눈크기: 옆 선 아이콘(24칸 · 선 1.8
     assert.ok(bundled.includes('stroke-width:var(--dq-mark-sw,1.8)') && !bundled.includes('stroke-width:1.4}'), '가는 선 따로 두지 않음');
     assert.ok(bundled.includes('width:var(--bottomFormIconSize,24px)'), '입력줄 단추 그림 = ✦ 와 같은 아이콘 크기');
 });
+// 버그 사냥 2: 한 택1 묶음 안에 영어 꼬리표 [PICK 1: MIND] 와 한국어 꼬리표 [택1: 마음] 이 섞이면 묶음 열쇠(꼬리표 원문)가 달라
+//   마음 하나가 「개별 설정」 켜기 스위치로 빠졌어요 — 둘이 함께 켜진 채 저장될 수 있었어요. 보이는 이름(솔라의 마음)으로 묶어요
+await test('솔라 택1: 영어 · 한국어 꼬리표가 섞여도 한 묶음(솔라의 마음)', () => {
+    const p = solaFixturePreset();
+    const one = p.prompts.find(x => x.name.startsWith('🏮'));
+    assert.ok(one, '시험 자료의 등불 솔라');
+    one.name = '🏮 등불 솔라 [택1: 마음]';
+    const v = api.solaVariant(p);
+    const mind = v.groups.filter(g => g.label === '솔라의 마음');
+    assert.equal(mind.length, 1, '묶음 하나');
+    assert.ok(mind[0].options.some(o => /등불/.test(o.label)), '섞인 꼬리표도 그 묶음 안');
+    assert.ok(!v.toggles.some(t => /등불/.test(t.label)), '따로 켜는 스위치로 빠지지 않아요');
+});
+// 독립 검토: 표에 없는 꼬리표는 대소문자만 다르면 한 묶음(예전 tag:대문자 열쇠와 같게)
+await test('솔라 택1: 표에 없는 꼬리표는 대소문자를 접어 묶어요', () => {
+    assert.match(bundled, /addRule\(`pick:\$\{label\.toUpperCase\(\)\}`, label, prompt\.identifier\); \}   \/\/ 버그 사냥 2:/);
+});
+// 버그 사냥 2: 킨들링에 언어 택1 이 없으면 「진행」 탭이 없는데 고른 탭을 「진행」 으로 되돌려 눌린 탭 없이 빈 창으로 열렸어요
+await test('킨들링: 「진행」 탭이 없으면 첫 탭으로 열어요', () => {
+    assert.match(bundled, /if \(!names\.includes\(tab\)\) tab = names\.includes\('진행'\) \? '진행' : \(names\[0\] \?\? '진행'\);/);
+    const rows = [['k-oath', '🚫 맹세 시험 뼈대', true], ['k-opt', '🎙️ 시험 말투 규칙 [선택]', true], ['k-review', '⚡ 번개 검토 시험', true], ['k-feel', '📊 감정 엔진 시험 [선택]', false], ['k-easel', '🎭 솔라의 이젤 시험 [선택]', false], ['k-post', '대화 기록 뒤 지시 시험', true]];
+    const k = { prompts: rows.map(([identifier, name]) => ({ identifier, name, content: 'x' })), prompt_order: [{ character_id: 100001, order: rows.map(([identifier, , enabled]) => ({ identifier, enabled })) }], extensions: {} };
+    const kv = api.quickVariant(k);
+    assert.ok(kv && !kv.tabs.includes('진행'), '언어 택1 없는 킨들링은 「진행」 탭이 없어요(이 시험의 전제)');
+});
 console.log(`Sola quick settings: ${passed} passed`);

@@ -1,5 +1,6 @@
 import { deviceKind } from './device-layout-options.js';
-import { MB_SWITCHES, MB_GROUPS, switchOn, setSwitch, setAll as mbSetAll } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
+import { MB_SWITCHES, MB_GROUPS, switchOf, switchOn, setSwitch, setAll as mbSetAll } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
+import { UP, upHas, upWhere, upAlso } from './mb-upstream.js';   // 1.7.7 미트볼 원작이 스스로 갖게 된 기능(그 판에서는 스위치 대신 안내 한 줄)
 import { ruleTokens as mbRuleTokens, ruleBlock as mbRuleBlock, estimate as mbPromptEstimate, block as mbPromptBlock, LEVELS as MB_PROMPT_LEVELS, allText as mbPromptAllText, onceActive as mbPromptOnceActive, armOnce as mbPromptArmOnce, endOnce as mbPromptEndOnce } from './mb-prompt.js';   // 1.6.0 미트볼 문구: 블루레몬 추천 — 토큰 어림 · 덧붙는 글(순수 함수만)
 import { armGuard, disarmGuard } from './cheap-guards.js';
 import { leaveSettingsDialog } from './settings-dialog.js';   // 1.7.4 레몬 탭으로 데려갈 때 설정 창(맨 위 층)을 먼저 닫아요
@@ -725,15 +726,38 @@ function mbPromptRows(s) {
     const all = mbPromptAll(s);
     const allLine = all ? `채팅 전체: 지금 채팅 보이는 메시지 ${mbNum(all.total)}개 · ${mbBig(all.tokens)} 토큰 · 상태창 만들기 1번(5회쯤) = ${mbBig(all.tokens * 5)} 토큰${all.summarized || all.cut || all.dropped ? ` · 상한 때문에 ${[all.summarized ? `오래된 ${mbNum(all.summarized)}개는 기억 요약으로` : '', all.cut ? `${mbNum(all.cut)}개는 앞 1,000자만` : '', all.dropped ? `${mbNum(all.dropped)}개는 뺐어요` : ''].filter(Boolean).join(' · ')}(상한 없이는 ${mbBig(all.full)})` : cap ? '' : ' · 상한 없음 — 다 실어요'}` : '채팅 전체: 지금 채팅을 못 읽었어요';
     const cost = `요청 1회에 더 드는 토큰(지금 채팅 기준 어림) — 가볍게 약 ${tok('light')} · 마지막 답 전체 약 ${tok('last')} · 최근 답 여러 개 약 ${tok('recent')} · 칸 다시 생성 · AI로 수정은 1회, 상태창 만들기는 5회쯤 보내요 · 어느 단계든 본편 답마다 약 ${mbNum(mbRuleTokens())}(줄 꼴 규칙: 시간 · 장소는 새 값만 · 인물은 한 줄에 한 사람)`;
-    return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), '미트볼이 상태창을 만들거나 칸을 다시 생성할 때 채팅을 메시지마다 앞 몇백 자만 읽어요 · 고르면 미트볼 「프롬프트 · 토큰 › 수정 › 생성 시스템 프롬프트」 끝에 블루레몬 줄을 덧붙여 채팅 본문을 더 읽게 해요 · 본편 「출력 규칙」 · 「별도 분석」 문구 끝에는 줄 꼴 규칙 한 덩이를 붙여요 · 「적용 안 함」으로 돌리면 그 줄만 떼요(손으로 고친 문구는 그대로)')}
+    return `${stack('미트볼 문구: 블루레몬 추천', seg('chat.mbPrompt', [['off', '적용 안 함'], ['light', '가볍게'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체']], 'off', 'bl-seg-2col'), switchOf('prompt').desc)}
             <p class="salty-note">${cost}</p>
             <p class="salty-note bl-mb-prompt-all" data-keep-note>${allLine}</p>
-            ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 미트볼의 상태창 만들기 화면에서도 고를 수 있어요(「채팅 읽기」) · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요')}
+            ${row('이번 한 번만 채팅 전체로', `<button class="salty-btn" data-act="mb-prompt-once">${mbPromptOnceActive() ? '거두기' : '한 번만 싣기'}</button>`, '다음 미트볼 생성에만 실어요')}
             ${slider('chat.mbPromptCap', '채팅 전체: 요청 1회 상한(어림 토큰 · 0 = 없음 · 기본 0 = 다 실어요)', 0, 500000, 10000, 0)}
             ${lv === 'recent' ? `${slider('chat.mbPromptCount', '마지막 답 앞의 메시지 수', 0, 30, 1, 9)}${slider('chat.mbPromptChars', '앞 메시지마다 읽을 글자 수', 500, 8000, 100, 2000)}` : ''}
             ${lv !== 'off' ? `<details class="salty-note bl-mb-prompt-peek"><summary>덧붙는 글 보기</summary><pre>${esc(mbPromptBlock(lv))}</pre><pre>${esc(mbRuleBlock())}</pre></details>` : ''}`;
 }
 // 1.7.3 미트볼 맞춤 스위치(src/mb-switch.js): 블루레몬이 미트볼 상태창에 손대는 것 하나하나 — 머리에 전부 끄기 · 켜기, 화면만 바꾸는 것 / 데이터를 고치는 것 두 갈래
+// 1.7.7 줄 밑에는 한마디(22자 안)만 두고, 자세한 설명은 묶음 이름 옆 「?」 창(src/help-sheet.js)으로 — 설정 창의 긴 설명 → 묶음 「?」 와 같은 길이에요
+const MB_FIT_TOP = [
+    ['전부 끄기 · 켜기', '고르는 칸(얼굴 표시 · 미트볼 문구)은 「전부 켜기」로 저절로 고르지 않고, 「전부 끄기」 전에 고른 값으로 돌아가요'],
+    ['원작 그대로 보기 (이 기기)', '켜면 이 기기에서만 맞춤 화면을 통째로 쉬어요(아래 스위치 값은 그대로) · 데이터를 고치는 것 가운데 화면에 붙는 것만 같이 쉬어요 · 이 탭은 그대로 남아요'],
+    ['화면만 바꾸는 것', '미트볼의 자료 · 설정은 그대로 두고 보이는 모양 · 동작만 바꿔요 · 끄면 다시 읽지 않아도 바로 원작 모양이에요'],
+    ['데이터를 고치는 것', '미트볼의 저장 자료 · 설정 값 · AI 요청을 바꿔요 · 끄면 더는 안 고쳐요(이미 고친 기록은 그대로 · 되돌리기는 미트볼 되돌리기)'],
+];
+// 스위치 줄 바로 아래에 딸린 줄의 자세한 설명(그 스위치 다음에 실어요)
+const MB_FIT_EXTRA = {
+    face: [['미트볼 글꼴 · 얼굴 표시', '미트볼 상태창 › 꾸미기 화면에도 있어요(「블루레몬 꾸미기」 묶음) · 여기서도 열 수 있어요']],
+    prompt: [['이번 한 번만 채팅 전체로', '추천 — 단계는 그대로 두고, 다음 미트볼 생성(상태창 만들기 · 칸 다시 생성 · AI로 수정)에만 채팅 전체를 실어요 · 미트볼의 상태창 만들기 화면에서도 고를 수 있어요(「채팅 읽기」) · 생성이 끝나고 4분쯤 조용하거나 10분 안에 안 만들면 저절로 원래 단계로 돌아가고 알려요']],
+};
+/** 묶음 「?」 창에 실을 것 — id: top(맨 위 네 줄) · 스위치 묶음(look · place · add · tr · data) */
+export function mbFitHelp(id) {
+    if (id === 'top') return { title: '미트볼 맞춤', list: MB_FIT_TOP };
+    if (id === 'up') return { title: '미트볼이 스스로 하게 된 것', list: MB_SWITCHES.filter(mbHanded).map(sw => [sw.name, upWhere(sw.key)]) };   // 통합 1.7.8: 안내 줄의 긴 글은 여기로
+    const group = MB_GROUPS.find(([g]) => g === id); if (!group) return null;
+    // 통합 1.7.8(겹침 걷기 × 다듬기): 일부만 맡긴 스위치의 미트볼 쪽 자리 · 미트볼에도 생긴 같은 뜻의 설정은 줄 밑이 아니라 여기 한 줄 더
+    const upMore = sw => [UP[sw.key]?.part && upHas(sw.key) ? upWhere(sw.key) : '', sw.key === 'hidden' ? upAlso('hidden') : ''].filter(Boolean).join(' · ');
+    return { title: group[1], list: MB_SWITCHES.filter(sw => sw.group === id && !mbHanded(sw)).flatMap(sw => [[sw.name, [sw.more || sw.desc, upMore(sw)].filter(Boolean).join(' · ')], ...(MB_FIT_EXTRA[sw.key] || [])]) };
+}
+const mbFitHelpBtn = (id, name) => `<button type="button" class="bl-help-btn" data-act="mb-fit-help" data-group="${id}" aria-label="${esc(name)} 설명"><i class="fa-solid fa-question" aria-hidden="true"></i></button>`;
+const mbFitHead = (name, id, control, note) => `<div class="salty-row bl-mb-fit-head" data-search-anchor="${esc(name)}"><span><b>${esc(name)}</b>${id ? mbFitHelpBtn(id, name) : ''}<small>${note}</small></span>${control}</div>`;
 function mbFitSwitch(sw, s) {
     return `<label class="salty-switch"><input type="checkbox" data-act="mb-fit" data-key="${sw.key}" aria-label="${esc(sw.name)}" ${switchOn(s, sw.key) ? 'checked' : ''}><span></span></label>`;
 }
@@ -748,27 +772,35 @@ const MB_OLD_TOGGLES = {
     autoen: s => toggle('chat.mbAutoEn', s.chat.mbAutoEn !== false),
     helpers: s => toggle('chat.mbHelpers', s.chat.mbHelpers !== false),
 };
+/** 1.7.7 미트볼이 스스로 하게 돼 테마가 통째로 손을 뗀 스위치인가(일부만 맡긴 것은 스위치가 남아요) */
+const mbHanded = sw => upHas(sw.key) && !UP[sw.key].part;
+/** 그런 스위치의 안내 줄 — 스위치 없이 이름과 「미트볼 설정 어디서 켜고 끄는지」 한 줄만(숨긴 표식 data-mb-up 으로 설정 찾기가 이 줄을 찾아요) */
+const mbUpRow = sw => row(sw.name, `<span data-mb-up="${sw.key}" hidden></span>`, '미트볼 설정에서 켜고 꺼요');   // 통합 1.7.8: 줄 밑은 한마디(22자 안) · 어디서 켜고 끄는지(upWhere)는 묶음 「?」 창
 function mbFitRow(sw, s) {
+    if (UP[sw.key]?.part && upHas(sw.key)) return row(sw.name, mbFitSwitch(sw, s), '끄면 그 고르기도 없어요');   // 일부만 맡긴 것(만들기 화면 「채팅 읽기」) — 미트볼 쪽 자리(upWhere)는 묶음 「?」 창
+    if (sw.key === 'hidden' && upAlso('hidden')) return row(sw.name, MB_OLD_TOGGLES.hidden(s), sw.desc);   // 미트볼에도 생긴 같은 뜻의 설정(upAlso)은 묶음 「?」 창
     if (MB_OLD_TOGGLES[sw.key]) return row(sw.name, MB_OLD_TOGGLES[sw.key](s), sw.desc);
     if (sw.key === 'prompt') return mbPromptRows(s);
-    if (sw.key === 'face') return `${stack(sw.name, seg('chat.mbFace', [['icon', '아이콘 (원작)'], ['initial', '이름 첫 글자']], 'icon'), sw.desc)}${row('미트볼 글꼴 · 얼굴 표시', '<button class="salty-btn" data-act="mb-deco">열기</button>', '미트볼 상태창 › 꾸미기 화면에도 있어요(「블루레몬 꾸미기」 묶음) · 여기서도 열 수 있어요')}`;
+    if (sw.key === 'face') return `${stack(sw.name, seg('chat.mbFace', [['icon', '아이콘 (원작)'], ['initial', '이름 첫 글자']], 'icon'), sw.desc)}${row('미트볼 글꼴 · 얼굴 표시', '<button class="salty-btn" data-act="mb-deco">열기</button>', '미트볼 꾸미기 화면에도 있어요')}`;
     return row(sw.name, mbFitSwitch(sw, s), sw.desc);
 }
 function mbFitRaw() {
     let raw = false; try { raw = localStorage.getItem('bl-ext-view:ss-settings') === 'raw'; } catch { raw = false; }
-    return row('원작 그대로 보기 (이 기기)', `<label class="salty-switch"><input type="checkbox" data-act="mb-fit-raw" aria-label="원작 그대로 보기" ${raw ? 'checked' : ''}><span></span></label>`, '켜면 이 기기에서만 맞춤 화면을 통째로 쉬어요(아래 스위치 값은 그대로) · 데이터를 고치는 것 가운데 화면에 붙는 것만 같이 쉬어요 · 이 탭은 그대로 남아요');
+    return row('원작 그대로 보기 (이 기기)', `<label class="salty-switch"><input type="checkbox" data-act="mb-fit-raw" aria-label="원작 그대로 보기" ${raw ? 'checked' : ''}><span></span></label>`, '이 기기에서만 맞춤 화면을 쉬어요');
 }
 function mbFitGroups(s) {
-    const count = kind => { const list = MB_SWITCHES.filter(sw => !sw.choice && (kind === 'all' || sw.kind === kind)); return `${list.filter(sw => switchOn(s, sw.key)).length} / ${list.length}개 켜짐`; };
-    const groupRows = (kind) => MB_GROUPS.map(([id, label]) => { const list = MB_SWITCHES.filter(sw => sw.kind === kind && sw.group === id); return list.length ? `${kind === 'screen' ? `<p class="salty-note bl-mb-fit-sub">${label}</p>` : ''}${list.map(sw => mbFitRow(sw, s)).join('')}` : ''; }).join('');
+    const handed = MB_SWITCHES.filter(mbHanded);   // 1.7.7 미트볼이 스스로 하게 된 것 — 묶음 · 켜짐 수에서 빼고 맨 아래 안내 줄로
+    const count = kind => { const list = MB_SWITCHES.filter(sw => !sw.choice && !handed.includes(sw) && (kind === 'all' || sw.kind === kind)); return `${list.filter(sw => switchOn(s, sw.key)).length} / ${list.length}개 켜짐`; };
+    const groupRows = (kind) => MB_GROUPS.map(([id, label]) => { const list = MB_SWITCHES.filter(sw => sw.kind === kind && sw.group === id && !handed.includes(sw)); return list.length ? `${kind === 'screen' ? `<p class="salty-note bl-mb-fit-sub">${label}${mbFitHelpBtn(id, label)}</p>` : ''}${list.map(sw => mbFitRow(sw, s)).join('')}` : ''; }).join('');
     // 1.7.4 미트볼 설정 칸의 「블루레몬」 탭 안(mountMbFit)에만 그려요 — 묶음 제목 · 설명은 그 탭 머리가 맡아요. 갈래는 묶음 안 머리 줄(끄기 · 켜기)로 나눠요
     return `<div class="salty-group bl-mb-fit">
-            ${row('전부', mbFitButtons('all', true), `${count('all')} · 고르는 칸(얼굴 표시 · 미트볼 문구)은 「전부 켜기」로 저절로 고르지 않고, 「전부 끄기」 전에 고른 값으로 돌아가요`)}
+            ${mbFitHead('전부', 'top', mbFitButtons('all', true), count('all'))}
             ${mbFitRaw()}
-            ${row('<b>화면만 바꾸는 것</b>', mbFitButtons('screen'), `${count('screen')} · 미트볼의 자료 · 설정은 그대로 두고 보이는 모양 · 동작만 바꿔요 · 끄면 다시 읽지 않아도 바로 원작 모양이에요`)}
+            ${mbFitHead('화면만 바꾸는 것', '', mbFitButtons('screen'), count('screen'))}
             ${groupRows('screen')}
-            ${row('<b>데이터를 고치는 것</b>', mbFitButtons('data'), `${count('data')} · 미트볼의 저장 자료 · 설정 값 · AI 요청을 바꿔요 · 끄면 더는 안 고쳐요(이미 고친 기록은 그대로 · 되돌리기는 미트볼 되돌리기)`)}
+            ${mbFitHead('데이터를 고치는 것', 'data', mbFitButtons('data'), count('data'))}
             ${groupRows('data')}
+            ${handed.length ? `<p class="salty-note bl-mb-fit-sub">미트볼이 스스로 하게 된 것${mbFitHelpBtn('up', '미트볼이 스스로 하게 된 것')}</p>${handed.map(mbUpRow).join('')}` : ''}
         </div>`;
 }
 /** 「채팅 전체」 를 고르거나 한 번만 싣기 전에 한 번 묻는 글 */
@@ -3132,6 +3164,11 @@ function bind(root) {
                 case 'mb-fit': {   // 1.7.3 미트볼 맞춤 스위치 하나
                     const key = el.dataset.key, on = !switchOn(getSettings(), key);
                     update(st => { setSwitch(st.chat, key, on); });
+                    break;
+                }
+                case 'mb-fit-help': {   // 1.7.7 묶음 「?」 — 자세한 설명 창
+                    const help = mbFitHelp(el.dataset.group);
+                    if (help) import('./help-sheet.js').then(m => m.openHelpSheet(help)).catch(error => console.warn('[Blue Lemonade] 미트볼 맞춤 설명', error));
                     break;
                 }
                 case 'mb-fit-all': {   // 1.7.3 전부 · 화면만 · 데이터만 끄기 · 켜기

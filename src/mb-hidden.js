@@ -105,18 +105,28 @@ export function frozenBy(ids, c = ctx()) {
     return meta.adjust.filter(a => a && !a._off && a.set && typeof a.set.mod === 'string' && a.set.data && typeof a.set.data === 'object' && Number(a.at) > first)
         .map(a => ({ mod: a.set.mod, at: Number(a.at), t: a.t, name: String(a.label || '').trim() || `${MOD_NAME[a.set.mod] || a.set.mod} 칸 바뀜` }));
 }
-export function frozenLine(list) {
+export function frozenLine(list, why = '') {
     const rows = list.map(x => `「${x.name}」(${x.at}번 뒤)`).join(' · ');
-    return `눈 감긴 답보다 뒤에 미트볼이 칸을 통째로 저장한 기록이 있어요: ${rows}. 그 칸은 그때 값으로 덮여서 감긴 답의 변화(애정 · 우정 등)가 거기 들어가 있으면 안 빠져요 — 빼려면 미트볼 관리 탭 › 저장 · 되돌리기 › 「편집 기록 — 골라서 지우기」에서 그 기록을 지워요(그 기록이 한 영어 저장 바꾸기 · 직접 고친 글도 같이 없던 일이 돼요).`;
+    return `${why ? `${why} ` : ''}눈 감긴 답보다 뒤에 미트볼이 칸을 통째로 저장한 기록이 있어요: ${rows}. 그 칸은 그때 값으로 덮여서 감긴 답의 변화(애정 · 우정 등)가 거기 들어가 있으면 안 빠져요 — 빼려면 미트볼 관리 탭 › 저장 · 되돌리기 › 「편집 기록 — 골라서 지우기」에서 그 기록을 지워요(그 기록이 한 영어 저장 바꾸기 · 직접 고친 글도 같이 없던 일이 돼요).`;
 }
 const told = new Set();   // 같은 채팅 · 같은 기록 묶음은 한 번만
-function warnFrozen(c, toast) {
+async function warnFrozen(c, toast) {
     const list = frozenBy(hiddenIds(c), c); if (!list.length) return false;
     let chat = ''; try { chat = String(c?.getCurrentChatId?.() ?? c?.chatId ?? ''); } catch { /* 이름 없이 */ }
     const key = `${chat}|${list.map(x => x.t).join(',')}`;
     if (told.has(key)) return false;
     told.add(key);
-    try { toast?.info?.(frozenLine(list), '', { timeOut: 15000, extendedTimeOut: 5000 }); } catch { /* 알림 없이 */ }
+    let why = ''; try { why = Sub.WHY_TEXT[await Sub.whyNot()] || ''; } catch { why = ''; }   // 1.7.7 바로 반영을 못 한 까닭(스위치 끔 · 계산 부분 못 받음)을 앞에 한마디
+    try { toast?.info?.(frozenLine(list, why), '', { timeOut: 15000, extendedTimeOut: 5000 }); } catch { /* 알림 없이 */ }
+    return true;
+}
+
+/** 1.7.7 지운 답을 바로 못 뺀 때: 까닭과 손으로 고치는 길을 채팅마다 한 번 알려요(전에는 조용히 넘어가 숫자가 왜 남았는지 알 길이 없었어요) */
+const toldGone = new Set();
+export function tellGone(id, toast = globalThis.toastr) {
+    if (toldGone.has(id)) return false;
+    toldGone.add(id);
+    try { toast?.info?.(`지운 답보다 뒤에 미트볼이 칸을 통째로 저장한 기록이 있어서 그 답의 변화(애정 · 우정 등)가 저장 값에 남아 있어요. ${Sub.WHY_TEXT.module} 숫자는 미트볼 상태창에서 직접 고쳐 주세요.`, '', { timeOut: 15000, extendedTimeOut: 5000 }); } catch { /* 알림 없이 */ }
     return true;
 }
 
@@ -141,7 +151,7 @@ export async function onEye(id, wantHidden, { c = ctx(), on = enabled(), toast =
     const subbed = baked(id, c) ? '' : await autoSub(c, { kind: how === 'out' ? 'hid' : 'open' });   // 1.7.4 조용히 반영(알림 없음)
     await after(c);
     if (how === 'out' && baked(id, c)) { try { toast?.info?.('오래된 답이라 미트볼이 이미 합쳐 둔 기록이에요 — 눈을 감겨도 숫자는 그대로예요.', '', { timeOut: 6000 }); } catch { /* 알림 없이 */ } }
-    else if (how === 'out' && !subbed) warnFrozen(c, toast);   // 1.7.3 뒤에 칸 통째 저장이 있으면 알려요(바로 반영을 껐거나 못 할 때만)
+    else if (how === 'out' && !subbed) await warnFrozen(c, toast);   // 1.7.3 뒤에 칸 통째 저장이 있으면 알려요(바로 반영을 껐거나 못 할 때만)
     return how;
 }
 
@@ -171,7 +181,7 @@ export async function tidy(c = ctx(), on = enabled(), sure = known(), toast = gl
     // 1.7.4 감긴 답 기록 맞추기(표식이 없어졌으면 끼운 기록도 빼요) — 못 하면 1.7.3 알림을 채팅을 열 때 한 번
     const subbed = await autoSub(c, { kind: 'tidy' });
     if (subbed === 'changed') { try { await c?.saveChat?.(); } catch { /* 다음 저장 때 */ } }
-    else if (!subbed && on && sheetOf(c)) warnFrozen(c, toast);
+    else if (!subbed && on && sheetOf(c)) await warnFrozen(c, toast);
     return r;
 }
 
@@ -208,9 +218,10 @@ export function startMbHidden(doc = globalThis.document) {
         if (on && types.CHAT_CHANGED) on(types.CHAT_CHANGED, () => setTimeout(run, 1200));   // 그 확장이 제 메타를 읽은 뒤에
         if (on && types.GENERATION_STARTED) on(types.GENERATION_STARTED, (_type, _opts, dry) => { if (!dry) run(); });
         setTimeout(run, 1200);
-        Sub.startAutoSub(doc);   // 1.7.4 지운 답 · 지운 스와이프(실리태번 지움 사건)
+        Sub.startAutoSub(doc, { onFail: id => tellGone(id) });   // 1.7.4 지운 답 · 지운 스와이프(실리태번 지움 사건)
         // 1.7.6 편집 창으로 본문을 고친 답 — 칩 표식은 메시지 꾸미기(공용 #chat 구독)에 얹어요: 칩 자리 · 칩 카드 안이 새로 그려진 기록만(본문 · 스트리밍 글은 안 봐요)
         Promise.all([import('./message-decor.js'), import('./mb-arrow.js')]).then(([d, a]) => startEditSync(doc, { decorate: d.addMessageDecorator, filter: a.arrowRecord })).catch(() => startEditSync(doc));
+        import('./mb-namekey.js').then(m => m.startNameKey(doc)).catch(() => { /* 원래 동작 그대로 */ });   // 1.7.9 이름이 앞에 온 변화 줄도 읽기
     } catch { /* 눈 단추만 */ }
     return true;
 }

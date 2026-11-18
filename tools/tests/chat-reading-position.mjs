@@ -232,4 +232,22 @@ await check('a scroll run that sits at the bottom (ST auto-scroll while streamin
         assert.equal(readerRestsIn(f.chat), 0);
     } finally { stop(); }
 });
+// 버그 사냥 2: 그룹 채팅은 차례 동안 멤버마다 characterId 를 바꾸고 끝나면 undefined 로 돌려요(실리태번 group-chats.js) —
+//   열쇠에 characterId 가 들어 있어 같은 채팅인데 「채팅이 바뀜」 으로 보고 지킴을 멈춰, 다시 그리는 사이 차례가 끝나면 바닥으로 밀렸어요
+await check('group chat: the turn ending (characterId → undefined) mid-repaint is still the same chat', async f => {
+    const ctx = { characterId: 3, groupId: 'g1', chatId: 'c', chat: [{ mes: 'x' }], powerUserSettings: { auto_scroll_chat_to_bottom: true } };
+    globalThis.SillyTavern = { getContext: () => ctx };
+    let finish; const p = keep(f.body, () => new Promise(r => { finish = r; }));
+    ctx.characterId = undefined;
+    f.replace(40); finish(); await p;
+    assert.equal(f.chat.scrollTop, 600, '읽던 문단 그대로(바닥 720 아님)');
+});
+await check('group chat: another group or chat still stops the hold', async f => {
+    const ctx = { characterId: undefined, groupId: 'g1', chatId: 'c', chat: [{ mes: 'x' }], powerUserSettings: { auto_scroll_chat_to_bottom: true } };
+    globalThis.SillyTavern = { getContext: () => ctx };
+    let finish; const p = keep(f.body, () => new Promise(r => { finish = r; }));
+    ctx.chatId = 'other';
+    f.replace(40); finish(); await p;
+    assert.notEqual(f.chat.scrollTop, 600);
+});
 console.log(`chat-reading-position: ${count} passed`);

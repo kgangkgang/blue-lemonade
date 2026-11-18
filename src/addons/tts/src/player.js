@@ -109,13 +109,12 @@ const DISPLAY_LANG = 'ko';          // 번역기가 붙이는 번역문의 언�
 listen.setListenEngine({ ready: () => analysis.listenReady(), tag: () => analysis.listenTag(), translateLines: (lines, target, opts) => analysis.translateLines(lines, target, opts) });
 const WAIT_TEXT = '번역 기다리는 중…';
 const ANALYSE_TEXT = '분석 중…';
-/** 1.4.4 듣는 언어로 옮기는 동안 막대 글 ("일본어로 번역 중…"). 1.9.1 옮길 줄(srcs)을 주면 몇 줄인지 — 「영어 3줄 일본어로 번역 중…」 (언어가 섞였으면 「3줄 …」) */
+/** 1.4.4 듣는 언어로 옮기는 동안 막대 글 ("일본어로 옮기는 중…"). 1.9.1 옮길 줄(srcs)을 주면 몇 줄인지 — 「대사 3줄을 일본어로 옮기는 중…」.
+ *  1.7.8 원문 언어 이름(「영어 3줄」)은 말하지 않는다 — 화면 번역 채팅에선 화면이 한국어라 「영어는 한 글자도 없는데」로 읽혔다 */
 const listenText = (srcs = null) => {
-    const to = `${listen.langName(listen.listenTarget(settings()))}로 번역 중…`;
-    if (!Array.isArray(srcs) || !srcs.length) return to;
-    const langs = new Set(srcs.map(t => detectLang(t) || '?'));
-    const from = langs.size === 1 && !langs.has('?') ? `${listen.langName([...langs][0])} ` : '';
-    return `${from}${srcs.length}줄 ${to}`;
+    const lang = listen.langName(listen.listenTarget(settings()));
+    if (!Array.isArray(srcs) || !srcs.length) return `${lang}${ro(lang)} 옮기는 중…`;
+    return `대사 ${srcs.length}줄을 ${lang}${ro(lang)} 옮기는 중…`;
 };
 // 1.9.1 듣는 언어만 남은 준비의 첫 막대 글 — 옮길 줄이 정해지기 전엔 「번역 중」이라 하지 않는다 (이미 그 언어인데 「번역 중」이 뜨던 것)
 const PREP_TEXT = '읽을 준비 중…';
@@ -488,6 +487,28 @@ function needsDisplay(seg, voice, want, an) {
     return voice.lang === DISPLAY_LANG;
 }
 /**
+ * 1.7.8 대사와 서술을 다른 언어로 쓴 답장(영어 서술 · 일본어 「」 대사 프리셋): 서술 언어로 쓴 말 기울임(seg.speech — 이름 규칙 · 대사 분석)은
+ * 말이 아니라 서술의 강조 · 떠올린 말이다 (*Not again.*) → 서술 길로. 그 답장의 말은 대사 언어로 쓰였으니.
+ * 언어는 글자가 있는 대사 · 서술 조각 가운데 60 % 넘게 같은 것 — 그런 언어가 없거나 둘이 같으면 아무것도 바꾸지 않음 (() => false)
+ */
+function narrationLangItalic(list) {
+    const major = (kind) => {
+        const n = new Map();
+        let all = 0;
+        for (const x of list) {
+            if (!x?.text || x.kind !== kind || x.term) continue;
+            const l = detectLang(x.text);
+            if (!l) continue;
+            n.set(l, (n.get(l) || 0) + 1); all++;
+        }
+        for (const [l, c] of n) if (c / all > 0.6) return l;
+        return '';
+    };
+    const dl = major('dialogue'), nl = dl ? major('narration') : '';
+    if (!dl || !nl || dl === nl) return () => false;
+    return (seg) => detectLang(seg.text) === nl;
+}
+/**
  * 세그먼트 → 작업(엔진 값·캐시 키 전). primary 는 text_source 에 맞는 목록, 목소리별 우선 글로 바꿔 탐
  * startSeg·exclude 는 원문 조각 번호. final=false(스트리밍) 면 번역문을 우선하는 목소리의 조각은 미루고 그 첫 번호를 deferredAt 에 준다 (없으면 -1)
  * lookup = 조각 → 분석 결과 (없으면 저장된 분석으로 만듦; 스트리밍·언어 세기엔 () => null)
@@ -512,6 +533,7 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
     // 대화문이 하나도 없는 답장: 서술을 캐릭터 목소리로
     const hasDialogue = primary.some(x => ((x?.kind === 'dialogue' && !x.term) || x?.speech) && x.text);   // 1.9.1 말 기울임도 대사 · 낱말 인용은 아님
     if (final && !mes.is_user && !hasDialogue && routes.dialogue !== 'skip' && routes.narration === 'skip' && s.no_dialogue_fallback === 'narration') routes.narration = 'character';
+    const proseItalic = narrationLangItalic(primary);   // 1.7.8 대사와 서술의 언어가 다른 답장 — 서술 언어로 쓴 기울임은 서술
     const jobs = [];
     const tagsFromOrig = pregenOn(s) && primaryIsDisplay;   // 1.2.2: 감정 태그는 원문 조각에서 (번역에서 태그가 빠져도 미리 만든 키와 같게)
     let missing = false, missingUser = false, missingSpeaker = false, deferredAt = -1, held = 0;
@@ -532,7 +554,8 @@ function buildJobs(mesId, mes, { orig, disp }, { startSeg = 0, final = true, exc
         const oi = origIdxOf(seg);
         if (exclude && oi !== undefined && exclude.has(oi)) continue;   // 스트리밍 때 이미 읽음
         if (seg.term && !tapped) continue;   // 1.9.1 서술 속 낱말 인용 (「"Old-friend"라고」 — text.js quotedTerm)은 대사가 아니다 (누르면 읽음)
-        const kind = seg.kind === 'action' && seg.speech ? 'dialogue' : seg.kind === 'action' && tapped ? 'thought' : seg.kind;   // 1.9.1 말 기울임(소설체 문단의 *…* — text.js markParagraphs)은 대사의 길 · 목소리로 · 1.9.2 서술이라 가른 기울임도 누르면 속마음으로 (누른 건 듣고 싶은 것)
+        const kind = seg.kind === 'action' && seg.speech && !tapped && proseItalic(seg) ? 'narration'   // 1.7.8 (누르면 아래처럼 대사 · 속마음)
+            : seg.kind === 'action' && seg.speech ? 'dialogue' : seg.kind === 'action' && tapped ? 'thought' : seg.kind;   // 1.9.1 말 기울임(소설체 문단의 *…* — text.js markParagraphs)은 대사의 길 · 목소리로 · 1.9.2 서술이라 가른 기울임도 누르면 속마음으로 (누른 건 듣고 싶은 것)
         let name = userName, source = 'user', flag = null, g = undefined;
         if (!mes.is_user) {
             const r = safeResolve(seg, speakerCtx); name = r.name; source = r.source; if (typeof r.isUser === 'boolean') flag = r.isUser;

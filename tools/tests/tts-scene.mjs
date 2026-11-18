@@ -805,7 +805,7 @@ await test('1.9.1 listening language: lines already in that language play while 
         assert.deepEqual(T.requests.map(r=>r.text),['おはよう。','今日は晴れだね。'],'Japanese lines are read before the translation comes');
         assert.equal(calls.length,1,'one translation request for the message');
         await until(()=>T.ends.filter(x=>x.kind==='voice').length>=2,2000);await sleep(20);
-        assert.equal(P._forTest.waitingText(),'영어 1줄 일본어로 번역 중…','the bar waits at the untranslated line and says how many');
+        assert.equal(P._forTest.waitingText(),'대사 1줄을 일본어로 옮기는 중…','the bar waits at the untranslated line and says how many');
         assert.ok(P.isPlaying(),'still reading this message');
         gate.open();
         await until(()=>T.plays.filter(x=>x.kind==='voice').length>=4,2000);await idle();
@@ -825,7 +825,7 @@ await test('1.9.1 listening language: lines already in that language play while 
         await until(()=>T.plays.filter(x=>x.kind==='voice').length>=1,2000);await sleep(30);
         assert.deepEqual(T.requests.map(r=>r.text),['こんばんは。'],'script path: the Japanese row first');
         await until(()=>T.ends.some(x=>x.kind==='voice'),2000);await sleep(30);
-        assert.equal(P._forTest.waitingText(),'영어 1줄 일본어로 번역 중…');
+        assert.equal(P._forTest.waitingText(),'대사 1줄을 일본어로 옮기는 중…');
         assert.equal(T.requests.length,1,'the untranslated line is not synthesised before its translation');
         gate2.open();
         await until(()=>T.plays.filter(x=>x.kind==='voice').length>=3,2000);await idle();

@@ -145,7 +145,7 @@ const READ_CARDS = {
             help: '같은 문단에서 같은 사람의 대사와 기울임(*…*)이 서술로만 끊겨 있으면 한 번에 자연스럽게 이어 읽어요. 대사 분석(화자 찾기)을 켜 두면 기울임을 말 · 속마음 · 서술로 가르고 주인을 정해요 — 서술은 안 읽어요. 분석이 없으면 따옴표 대사 없이 서술 사이에 낀 기울임을 그 문단 인물의 말로 보고, 그 문단 서술에 처음 나오는 아는 이름의 목소리로 읽어요. 서술을 읽는 설정이면 지금 순서 그대로예요.' },
     ]],
     text: ['fa-font', '본문과 제외할 내용', [
-        { key: 'text_source', label: '읽을 글', type: 'select', options: [{ value: 'display', label: '번역문 (있으면)' }, { value: 'original', label: '원문' }] },
+        { key: 'text_source', label: '읽을 글', type: 'select', options: [{ value: 'display', label: '번역문 (있으면)' }, { value: 'original', label: '원문' }], desc: '원문은 화면 번역 전 AI 가 쓴 글이에요' },   // 1.7.8 화면만 번역하는 채팅에서 원문이 무엇인지
         { key: 'listen_lang', label: '듣는 언어', type: 'select', options: LISTEN_OPTS, desc: listenDesc, help: LISTEN_HELP },   // 1.4.4
         { key: 'max_chars', label: '한 번에 최대 글자', type: 'number', min: 0, step: 100, default: 3000, desc: '0 = 제한 없음' },
         { key: 'emotion_from_tags', label: '대사 태그로 감정', type: 'toggle', desc: '감정 힌트를 살려 읽어요' },

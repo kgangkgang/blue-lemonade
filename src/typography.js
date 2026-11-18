@@ -2,7 +2,7 @@
 import { normalizeTrackerSpacing } from './addons/bookmarks/tracker-spacing.js';
 import { restoreDialogueTildes, resetDialogueTildes } from './dialogue-tildes.js';
 import { wrapSpanningQuotes, resetSpanningQuotes } from './dialogue-span.js';
-import { inkedQuote, INKED } from './quote-inked.js';
+import { inkedQuote, INKED, strongOnlyQuote, STRONG_Q } from './quote-inked.js';
 import { watchDom } from './dom-watch.js';
 import { addMessageDecorator, recordPlaceMemo } from './message-decor.js';
 let active=false, observer=null, decor=null;
@@ -232,6 +232,7 @@ function writeRoot({root,quotes,starts}){
         const q=quotes[i],{line,mark}=starts[i];
         // 1.7.4 이미 색 · 강조가 입혀진 구간(속마음 · 인물색 · 굵게) 안의 대사는 형광펜을 또 칠하지 않아요 (quote-inked.js · css/06-chat-text.css). 같은 상태면 쓰지 않아요
         const inked=inkedQuote(q,texts);if(q.classList.contains(INKED)!==inked)q.classList.toggle(INKED,inked);
+        const bold=strongOnlyQuote(q);if(bold&&!bold.classList.contains(STRONG_Q))bold.classList.add(STRONG_Q);   // 1.7.8 대사만 감싼 굵게 = 대사 모습(css/06)
         // 형광펜 칸이 줄 머리면 들여쓰기는 그 칸에 (q 에 주면 칸 배경이 들여 쓴 빈자리까지 칠해진다)
         q.classList.toggle('bl-line-dialogue',line&&!mark);
         if(line&&mark){if(!mark.classList.contains('bl-line-dialogue'))mark.classList.add('bl-line-dialogue');marks.add(mark);}   // 1.2.1 이미 붙은 표시는 다시 쓰지 않아요 — 브라우저는 같은 class 를 add 해도 속성 기록을 만들어 실리태번 keyboard.js 가 그 요소를 다시 훑어요
@@ -279,6 +280,7 @@ export function syncTypography(on) {
         resetDialogueTildes();resetSpanningQuotes();
         originals.clear();document.querySelectorAll('.bl-line-dialogue').forEach(node=>node.classList.remove('bl-line-dialogue'));
         document.querySelectorAll(`.${INKED}`).forEach(node=>node.classList.remove(INKED));
+        document.querySelectorAll(`.${STRONG_Q}`).forEach(node=>node.classList.remove(STRONG_Q));
         document.querySelectorAll(`.${LINE_INDENT}`).forEach(node=>node.remove());
         document.querySelectorAll(`br.${IMG_BR}`).forEach(node=>node.classList.remove(IMG_BR));
         document.querySelectorAll(`br.${STYLE_BR}`).forEach(node=>node.classList.remove(STYLE_BR));

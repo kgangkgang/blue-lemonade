@@ -369,11 +369,11 @@ html:not(#bl-pill-off) body.salty #rm_extensions_block #ss-settings .inline-draw
 }
 /* 머리줄 그림 글자(2.7.0 고양이 · 2.6.1 그릇)도 위 선 아이콘 글꼴이 그려요 — 다른 자리와 같은 세로 가운데 · 같은 크기. 따로 가리거나 덧그리지 않아요 */
 /* 작은 글(설명): 설명 단 · 보조색(원작 75% 흐림은 테마 글자색과 겹쳐 대비가 모자라요) · 안내 줄은 제 규칙대로 */
-body.salty #ss-settings .inline-drawer-content small:not(.bl-ext-compat) { font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
-body.salty #ss-settings .inline-drawer-content small:not(.bl-ext-compat):where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); opacity: 1; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) small:not(.bl-ext-compat) { font-size: var(--bl-ts-meta, 13px); line-height: 1.45; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) small:not(.bl-ext-compat):where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); opacity: 1; }
 /* 단추 줄: 한 줄 글자 · 높이 36 · 간격 8 · 반반 — 글자가 반 칸에 안 들어가는 단추는 한 줄을 다 써요(글자를 꺾지 않아요) */
-body.salty #ss-settings .ss-set-btns { gap: var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0; }
-body.salty #ss-settings .ss-set-btns > .menu_button {
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns { gap: var(--bl-s2, 8px); margin: var(--bl-s2, 8px) 0; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button {
   flex: 1 1 calc(50% - var(--bl-s2, 8px));
   min-width: max-content;
   max-width: 100%;
@@ -386,18 +386,18 @@ body.salty #ss-settings .ss-set-btns > .menu_button {
   font-size: var(--bl-ui-btn-fs, 14px);
 }
 /* 줄: 이름표와 숫자 칸은 양 끝으로(설정 줄 꼴) · 체크 줄의 덧글은 아랫줄로 */
-body.salty #ss-settings .inline-drawer-content label { margin: var(--bl-s3, 12px) 0 0; }
-body.salty #ss-settings .inline-drawer-content label:has(> input[type="number"]) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 1fr auto; align-items: center; column-gap: var(--bl-s3, 12px); }
-body.salty #ss-settings .inline-drawer-content label > input[type="number"] { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
-body.salty #ss-settings .inline-drawer-content label:not(.checkbox_label) > small { grid-column: 1; grid-row: 2; }   /* 숫자 칸 줄(격자)에서만 뜻이 있어요 — 다른 줄은 격자가 아니라 무시돼요 */
-body.salty #ss-settings .inline-drawer-content label.checkbox_label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
-body.salty #ss-settings .inline-drawer-content label.checkbox_label > small { grid-column: 2; }
-body.salty #ss-settings .ss-set-inline { gap: var(--bl-s2, 8px); }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label { margin: var(--bl-s3, 12px) 0 0; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label:has(> input[type="number"]) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 1fr auto; align-items: center; column-gap: var(--bl-s3, 12px); }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label > input[type="number"] { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label:not(.checkbox_label) > small { grid-column: 1; grid-row: 2; }   /* 숫자 칸 줄(격자)에서만 뜻이 있어요 — 다른 줄은 격자가 아니라 무시돼요 */
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label > small { grid-column: 2; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline { gap: var(--bl-s2, 8px); }
 /* 묶음 머리: 절 제목 단 · 팔레트 선 */
-body.salty #ss-settings .ss-set-h { margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s4, 16px); font-size: var(--bl-ui-h-sub, 16px); font-weight: var(--bl-ui-strong, 650); }
-body.salty #ss-settings .ss-set-h:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top: 1px solid var(--salty-line); }
-body.salty #ss-settings .ss-set-more > summary { padding: var(--bl-s2, 8px) 0; cursor: pointer; opacity: 1; }   /* 11-15: 원작 85% 흐림 + 보조색 = 3.93 : 1(리그) — 흐림을 풀어요 */
-body.salty #ss-settings .ss-set-more > summary:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-h { margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s4, 16px); font-size: var(--bl-ui-h-sub, 16px); font-weight: var(--bl-ui-strong, 650); }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-h:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { border-top: 1px solid var(--salty-line); }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-more > summary { padding: var(--bl-s2, 8px) 0; cursor: pointer; opacity: 1; }   /* 11-15: 원작 85% 흐림 + 보조색 = 3.93 : 1(리그) — 흐림을 풀어요 */
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-more > summary:where(:not([data-bl-native-ext-colors], [data-bl-native-ext-colors] *)) { color: var(--salty-muted); }
 
 /* @mb tabs */
 /* ---------- 설정 서랍의 분류 탭(src/ext-compat.js) — 탭 모양은 공용 글자 탭(88) ---------- */
@@ -567,6 +567,10 @@ body.salty .ss-scope .ss-chip { min-height: 22px; padding: 2px var(--bl-s2, 8px)
 body.salty .ss-scope .ss-chip:is(.hi, .warn) { background: var(--bl-hover); border-color: var(--salty-line); }
 body.salty .ss-scope .ss-chip.hi { color: var(--ss-hi); }
 body.salty .ss-scope .ss-chip.warn { color: var(--ss-warn); }
+/* 1.7.8 약속 장부 D-day 딱지(미트볼 2.9.0 개발 판 3af88894 — 원작은 줄 끝 굵은 글자 「D-3」 · 「오늘까지」 하나만): 칩과 같은 옅은 면 · 1px 선 · 작은 글 · 앞 글과 4
+   하루 남음 · 오늘까지(원작 ss-warn)만 있던 강조 글자색 — 새 색 0 · 줄바꿈 안 함(「D-12」 가 꺾이지 않게) */
+body.salty .ss-scope .ss-st-f[data-f="promise"] .ss-st-row small > b { display: inline-flex; align-items: center; box-sizing: border-box; height: 18px; margin-inline-start: var(--bl-s1, 4px); padding: 0 6px; border: 1px solid var(--salty-line); border-radius: var(--bl-r-pill, 999px); background: var(--bl-hover); color: var(--salty-text); font-size: var(--bl-ts-micro, 11.5px); font-weight: var(--bl-ui-strong, 650); line-height: 1; white-space: nowrap; vertical-align: middle; }
+body.salty .ss-scope .ss-st-f[data-f="promise"] .ss-st-row small > b.ss-warn { color: var(--ss-warn); }
 body.salty .ss-scope :is(.ss-role, .ss-stage) { background: var(--bl-hover); color: var(--salty-text); }   /* 흐린 글 + 옅은 면은 낮 판에서 대비 4.38(리그) — 본문색으로 */
 body.salty .ss-scope .ss-role.user { color: var(--ss-pos); }
 body.salty .ss-scope .ss-role.main { color: var(--ss-hi); }
@@ -649,6 +653,8 @@ body.salty .ss-scope .ss-note.new { background: var(--bl-ui-pick-face); border-c
 /* @mb chips */
 body.salty .ss-msgcard { gap: var(--bl-s1, 4px); margin-top: var(--bl-s2, 8px); }
 body.salty .ss-mchip { min-height: 22px; padding: 0 var(--bl-s2, 8px); line-height: 1.5; }
+/* 1.7.8 못 읽은 줄이 일지 꼴 event 줄(날짜 없는 「방금 있었던 일」)뿐인 답의 ⚠ 칩 — 반영할 것이 없는데 답마다 붙었어요(src/mb-diary.js 가 표식) · 칩 점검(/ss-pip)으로는 그대로 봐요 */
+body.salty:not([data-bl-ext-raw]) .ss-msgcard .ss-mchip.pip[data-bl-mb-diary] { display: none; }
 
 /* @mb editsync */
 /* 1.7.6 본문을 고쳐 뺀 인물의 변동 칩(src/mb-editsync.js 가 data-bl-cut 을 달아요): 흐리게 · 줄 그어요(원래 값은 그대로 — 이름이 본문에 돌아오면 되살아나요) */
@@ -673,31 +679,55 @@ body.salty .ss-scope.ss-tw .ss-f.wide > span { color: var(--salty-text); font-si
    · 체크 줄: 상자(테마 체크 20)는 첫 줄 글자 높이 가운데 · 글은 8 띄우고 · 덧글은 글 아래
    · 접는 줄: 높이 36 · 오른쪽 끝 화살표 하나(공용 접힘 머리) — 같은 서랍에 끼는 기능 다리의 접힌 묶음(.bl-ext-bridge-more)도 같은 꼴 */
 /* (그 확장의 줄에만 — 기능 다리 칸(.bl-ext-bridge)은 제 시트의 간격을 그대로 써요) */
-body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label > :is(select, textarea, .ss-set-inline), body.salty #ss-settings :is(.inline-drawer-content, .ss-set-more) > label > input.text_pole:not([type="number"]) { margin: var(--bl-s1, 4px) 0 0; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.inline-drawer-content, .ss-set-body, .ss-set-more) > label > :is(select, textarea, .ss-set-inline), body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.inline-drawer-content, .ss-set-body, .ss-set-more) > label > input.text_pole:not([type="number"]) { margin: var(--bl-s1, 4px) 0 0; }
 /* 숫자 칸 폭 하나: 테마의 「값 길이만큼」 규칙(css/95-fields-i2.css · html:not(#bl-num-off) … !important)보다 앞서야 해서 같은 문 + 서랍 id 를 더해요 — 여섯 자리(100000)까지 들어가는 폭 */
-html:not(#bl-num-off) body.salty #rm_extensions_block #ss-settings .inline-drawer-content label > input[type="number"] { box-sizing: border-box; width: calc(6ch + 28px) !important; min-width: calc(6ch + 28px) !important; font-variant-numeric: tabular-nums; }
-body.salty #ss-settings .inline-drawer-content label.checkbox_label { column-gap: var(--bl-s2, 8px); align-items: start; padding: 0; }
-body.salty #ss-settings .inline-drawer-content label.checkbox_label > input[type="checkbox"] { margin: 1px 0 0; }
-body.salty #ss-settings .inline-drawer-content label.checkbox_label > small { margin-top: 2px; }
-body.salty #ss-settings .inline-drawer-content > small { display: block; margin: var(--bl-s2, 8px) 0 0; }
-body.salty #ss-settings .inline-drawer-content label > input[type="range"] { display: block; width: 100%; margin: var(--bl-s2, 8px) 0 0; accent-color: var(--salty-accent); }
-body.salty #ss-settings .ss-set-inline > select { flex: 1 1 auto; min-width: 0; margin: 0; }
-body.salty #ss-settings .ss-set-inline > .menu_button:not(.ss-set-btn) { flex: none; width: var(--bl-ui-ctl, 36px); min-width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0; }
-body.salty #ss-settings .inline-drawer-content > .ss-set-inline { gap: var(--bl-s3, 12px); margin: var(--bl-s2, 8px) 0 0; align-items: stretch; }
-body.salty #ss-settings .inline-drawer-content > .ss-set-inline > label { flex: 1 1 0; min-width: 0; margin: 0; }
+html:not(#bl-num-off) body.salty :is(#rm_extensions_block #ss-settings .inline-drawer-content, dialog.ss-dlg .ss-set-sheet .ss-set-body) label > input[type="number"] { box-sizing: border-box; width: calc(6ch + 28px) !important; min-width: calc(6ch + 28px) !important; font-variant-numeric: tabular-nums; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label { column-gap: var(--bl-s2, 8px); align-items: start; padding: 0; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label > input[type="checkbox"] { margin: 1px 0 0; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label.checkbox_label > small { margin-top: 2px; }
+/* 통합 1.7.8: 서랍 갈래(체크 줄 틈 · 짝 단추)와 미트볼 새 판 갈래(서랍 규칙을 상태창 안 「전체 설정」 에도 · 단추 줄 같은 폭 두 칸 격자)가 같은 줄을 고쳤어요 —
+   두 자리 모두에 걸고, 짝 단추는 격자 칸 폭(100% !important)을 풀어 글 시작선에서 제 폭으로 서요 —
+   짝 단추는 :is() 한 선택자로(두 갈래로 나누면 상태창 쪽은 id 가 없어 격자 규칙에 져요 · 두 자리 다 1,8,1) */
+/* 1.7.8 체크 줄 높이는 글만큼(사용자 「업데이트 내역도 너무 밑에 있음 … 여백 너무 많아」): 테마 공용 체크 줄 최소 높이 36(css/21-witidy · data-bl-row-check)이
+   이 서랍의 위 맞춤(align-items: start) 체크 줄에 걸려, 한 줄짜리 줄만 아래에 빈 14px 가 남았어요(두세 줄 줄은 36 을 넘어 안 보임) → 줄 사이가 들쭉날쭉.
+   최소 높이를 풀어 줄 사이를 설명 유무와 상관없이 같은 틈(간격 체계의 8)으로 — 누를 자리 44 는 줄의 투명 상자(86-touch-targets)가 그대로 맡아요 */
+body.salty #ss-settings .inline-drawer-content label.checkbox_label, body.salty .ss-scope .ss-set-sheet .ss-set-body label.checkbox_label { min-height: 0; }
+/* 체크 줄 바로 아래 그 줄의 단추(「업데이트 내역」 · 「넘긴 추천 · 팁 다시 보기」 · 「옛 태그 모두 보관」): 줄에 붙은 짝으로 — 위 틈 4 · 글 시작선(체크 20 + 8)에 맞춰 들여요.
+   다른 단추 줄(한 번에 가볍게 · 진단 등)은 그대로예요 */
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > label.checkbox_label + .ss-set-btns > .menu_button:only-child:is([data-s-act="whatsnew"], [data-s-act="tipreset"], [data-s-act="stashall"]) { margin-block-start: calc(var(--bl-s1, 4px) - var(--bl-s3, 12px)); margin-inline-start: calc(var(--bl-mb-cbox, 20px) + var(--bl-s2, 8px)); width: auto !important; justify-self: start; }   /* 단추 줄의 위 틈 12 를 단추 쪽에서 4 로(부모 고르기 :has 없이) */
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > small { display: block; margin: var(--bl-s2, 8px) 0 0; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) label > input[type="range"] { display: block; width: 100%; margin: var(--bl-s2, 8px) 0 0; accent-color: var(--salty-accent); }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > select { flex: 1 1 auto; min-width: 0; margin: 0; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > .menu_button:not(.ss-set-btn) { flex: none; width: var(--bl-ui-ctl, 36px); min-width: var(--bl-ui-ctl, 36px); height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline { gap: var(--bl-s3, 12px); margin: var(--bl-s2, 8px) 0 0; align-items: stretch; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline > label { flex: 1 1 0; min-width: 0; margin: 0; }
 /* 2.7.19 부터: 한 줄에 글 단추 하나(.ss-set-btn · 「숨긴 것 모두 다시 보이기」) · 체크 칸 격자(.ss-set-wrap · 관계 「보일 것」) — 위 네모 아이콘 단추 · 숫자 칸 줄 규칙은 비켜 가요.
    글 단추는 단추 줄(.ss-set-btns)의 단추와 같은 꼴(높이 36 · 옆 10), 체크 격자는 원작 격자 그대로 두고 줄 틈만 테마 단(4 · 12)으로. 옛 판에는 두 이름이 없어 걸리지 않아요. */
-body.salty #ss-settings .ss-set-inline > .ss-set-btn { min-height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0 10px; justify-content: center; font-size: var(--bl-ui-btn-fs, 14px); }
-body.salty #ss-settings .inline-drawer-content > .ss-set-inline.ss-set-wrap { gap: var(--bl-s1, 4px) var(--bl-s3, 12px); align-items: start; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > .ss-set-btn { min-height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0 10px; justify-content: center; font-size: var(--bl-ui-btn-fs, 14px); }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline.ss-set-wrap { gap: var(--bl-s1, 4px) var(--bl-s3, 12px); align-items: start; }
 /* 한 줄에 숫자 둘(애정 · 우정 최대): 반 칸에 이름과 숫자 칸을 나란히 두면 이름이 꺾여요 — 칸마다 윗줄 이름 · 아랫줄 숫자 칸(2열 격자의 칸 꼴) */
-body.salty #ss-settings .inline-drawer-content > .ss-set-inline > label:has(> input[type="number"]) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: var(--bl-s1, 4px); align-items: start; }
-html:not(#bl-num-off) body.salty #rm_extensions_block #ss-settings .inline-drawer-content > .ss-set-inline > label > input[type="number"] { grid-column: 1; grid-row: 2; width: 100% !important; min-width: 0 !important; }
-body.salty #ss-settings .ss-set-more { margin: var(--bl-s2, 8px) 0 0; }
-body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary { display: flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-ui-ctl, 36px); padding: 0; list-style: none; font-size: var(--bl-ts-ctl, 14px); }
-body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::-webkit-details-marker { display: none; }
-body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more) > summary::after { content: ''; flex: none; width: var(--bl-ui-chev, 14px); height: var(--bl-ui-chev, 14px); margin-inline-start: auto; background-color: currentColor; -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat; mask: var(--bl-ui-glyph-chev) center / contain no-repeat; }
-body.salty #ss-settings :is(.ss-set-more, .bl-ext-bridge-more)[open] > summary::after { transform: rotate(180deg); }
-body.salty #ss-settings .ss-set-btns { margin: var(--bl-s3, 12px) 0 0; }
+body.salty :is(#ss-settings .inline-drawer-content, .ss-scope .ss-set-sheet .ss-set-body) > .ss-set-inline > label:has(> input[type="number"]) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: var(--bl-s1, 4px); align-items: start; }
+html:not(#bl-num-off) body.salty :is(#rm_extensions_block #ss-settings .inline-drawer-content, dialog.ss-dlg .ss-set-sheet .ss-set-body) > .ss-set-inline > label > input[type="number"] { grid-column: 1; grid-row: 2; width: 100% !important; min-width: 0 !important; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-more { margin: var(--bl-s2, 8px) 0 0; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more) > summary { display: flex; align-items: center; gap: var(--bl-s2, 8px); min-height: var(--bl-ui-ctl, 36px); padding: 0; list-style: none; font-size: var(--bl-ts-ctl, 14px); }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more) > summary::-webkit-details-marker { display: none; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more) > summary::after { content: ''; flex: none; width: var(--bl-ui-chev, 14px); height: var(--bl-ui-chev, 14px); margin-inline-start: auto; background-color: currentColor; -webkit-mask: var(--bl-ui-glyph-chev) center / contain no-repeat; mask: var(--bl-ui-glyph-chev) center / contain no-repeat; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) :is(.ss-set-more, .bl-ext-bridge-more)[open] > summary::after { transform: rotate(180deg); }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns { margin: var(--bl-s3, 12px) 0 0; }
+/* 1.7.8 단추 줄(11-18 사용자 「UI UX ㅈㄹ 났다」 — 미트볼 2.9.0 개발 판 4c7df674 「관리 › 전체 설정」 은 이 서랍과 같은 칸을 상태창 안에 한 벌 더 그려요): 줄마다 폭이 제각각이고 둘째 줄 오른쪽이 비던 것
+   → 같은 폭 두 칸 격자(그 확장 서랍 시트의 「단추 폭 = 글 폭 !important」 를 칸 폭으로 덮어요) · 홀수면 마지막 단추가 한 줄을 다 써요 · 긴 이름은 단추 안에서 줄을 바꿔요(옆 단추를 밀지 않게) · 아이콘 없던 「이 채팅에서 켜기」에도 선 아이콘(전구) — 서랍과 상태창 안 두 자리 같은 꼴 */
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bl-s2, 8px); }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button { box-sizing: border-box; width: 100% !important; min-width: 0; white-space: normal; text-align: center; padding-block: 6px; line-height: 1.25; }
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* @mb icons */
+body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-btns > .menu_button[data-s-act="chaton"]::before { content: '\1F4A1'; font-family: 'bl-mb-icons', var(--salty-font-ui); font-weight: 400; line-height: 1; }
+/* @mb drawer */
+/* 상태창 안 「전체 설정」 머리: 찾기 칸 둘레의 다른 면 띠(그 확장 창 면 변수로 칠한 붙박이 칸)를 걷고 · 안내 글 → 첫 줄 8 */
+body.salty .ss-scope .ss-set-sheet .ss-set-find { position: static; margin: 0; padding: 0; background: none; }
+body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-q { margin: 0; }
+body.salty .ss-scope .ss-set-sheet .ss-set-find .ss-set-n:not(:empty) { margin-top: var(--bl-s1, 4px); }
+body.salty .ss-scope .ss-set-sheet > .ss-hint { display: block; margin: var(--bl-s2, 8px) 0 0; }
+body.salty .ss-scope .ss-set-sheet .ss-set-body > :first-child { margin-top: var(--bl-s3, 12px); }
 
 /* @mb tabs */
 /* ---------- 설정 서랍 「정리한 보기」(src/ext-organize.js) ----------
@@ -1066,6 +1096,9 @@ body.salty .ss-scope .ss-more > summary > i:first-child { margin-inline-end: var
 /* @mb layout */
 /* 여러 줄로 넘어가는 고르기 띠(만들기 창 「만드는 방식」 · 「플레이 방식」 · 「연락 방식」): 같은 줄의 칸 폭이 글 길이대로라 좁은 칸 + 넓은 칸으로 들쭉날쭉했어요 → 같은 줄 칸은 같은 폭으로(줄이 넘어가는 자리는 그대로 · 위아래로 쌓는 띠 .stack 도 그대로) */
 body.salty .ss-scope .ss-seg.wrap:not(.stack) > button { flex: 1 1 0; min-width: max-content; max-width: 100%; }
+/* 1.7.8 관리 탭 줄(플레이 · 쓸 기능 · 저장 · 도구 · 전체 설정 · 문제 해결 · 초기화 — 4c7df674 에서 일곱 칸): 두 줄로 꺾이면 둘째 줄 두 칸만 넓게 퍼졌어요 → 안쪽 탭 줄과 같은 한 줄 가로 밀기(공용 가로 탭 줄 등록부 · src/ext-compat.js strips) */
+body.salty .ss-scope .ss-seg.wrap.ss-mg-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
+body.salty .ss-scope .ss-seg.wrap.ss-mg-tabs > button { flex: 1 0 auto; min-width: max-content; }
 /* 만들기 창 카드 고르기(2.7.22 · 11-15 사용자 실제 폰 사진): 「만드는 방식」 · 「상태창 언어」 · 「세계관」 · 「플레이 방식」(.ss-seg.wrap.stack) 과 새 「빠른 세트」(.ss-sets)를 같은 카드 꼴로.
    고르기 띠 규칙은 칸에 면이 없어(고른 칸만 면) 누를 자리로 안 보였고, 빠른 세트는 그 확장의 단추(.ss-btn)라 테마 단추 규칙(위아래 여백 0)이 이겨 제목이 카드 테두리에 붙었어요.
    고른 빠른 세트는 그 확장이 .pri(주요 단추 색)를 달아 설명 글(흐린 색)이 그 면 위에서 안 읽혔어요 → 고르기 띠의 고른 칸과 같은 옅은 면 + 색 글자로.

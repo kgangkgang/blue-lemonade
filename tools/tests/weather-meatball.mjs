@@ -103,6 +103,19 @@ await check('time of day: clear night shows stars, evening is warm', () => {
     assert.equal(modesOf('☀️ 맑음', '낮').warm, false);
     assert.equal(modesOf('☀️ 맑음', '아침').all[0], 'sun');
 });
+// 버그 사냥 2: 미트볼 달력이 시각 꼴(「23:30」 · 「오후 11:30」 · 「11:30 PM」)이면 낱말이 없어 밤 11시 반 · 새벽 2시에도 햇살이 나왔어요
+await check('time of day: clock times (24h · 오전/오후 · AM/PM) also turn night into stars', () => {
+    for (const t of ['23:30', '02:10', '오후 11:30', '오전 2:10', '11:30 PM', '2:10 AM', '11:30pm', '21:00', '午後11時30分']) assert.deepEqual(modesOf('☀️ 맑음', t).all, ['star'], `${t} 는 밤`);
+    for (const t of ['12:30', '오후 1:05', '10:00 AM', '9:15', '오전 11:59']) { const got = modesOf('☀️ 맑음', t); assert.deepEqual(got.all, ['sun'], `${t} 는 낮`); assert.equal(got.warm, false, `${t} 는 따뜻한 빛 아님`); }
+    for (const t of ['18:20', '오후 6:20', '6:20 PM']) assert.equal(modesOf('☀️ 맑음', t).warm, true, `${t} 는 저녁`);
+    assert.equal(modesOf('☀️ 맑음', '오후 12:10').all[0], 'sun', '오후 12시는 낮');
+    assert.deepEqual(modesOf('☀️ 맑음', '오전 12:10').all, ['star'], '오전 12시는 밤');
+    assert.deepEqual(modesOf('☀️ 맑음', '낮 · 23:30').all, ['sun'], '낱말이 있으면 낱말 먼저(예전 그대로)');
+    assert.deepEqual(modesOf('☀️ 맑음', '3일째').all, ['sun'], '시각이 아닌 숫자는 안 읽어요');
+    assert.deepEqual(modesOf('☀️ 맑음', 'Monday, 23:30').all, ['star'], '요일 이름 속 day 는 낮 낱말이 아니에요');
+    assert.equal(M.clockHour('9:00 pizza'), 9, 'a · p 는 뒤에 m 이 올 때만'); assert.equal(M.clockHour('11:30 p.m.'), 23);
+    assert.deepEqual(modesOf('☀️ 맑음', 'Day 3, 23:30').all, ['star'], '독립 검토: 「Day 3」 의 day 는 낮 낱말이 아니에요');
+});
 
 // ── ② 읽기 조건 ──────────────────────────────────────
 await check('read only when installed, enabled, chat on and calendar on', () => {

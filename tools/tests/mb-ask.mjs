@@ -126,4 +126,13 @@ await ok('⑥ 미트볼 문에서만 받아요(index.js) · 공개 시험 목록
     assert.ok(!/from '\.\/src\/mb-ask\.js'/.test(index));               // 정적으로 싣지 않아요(없는 사람은 한 바이트도 안 받아요)
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/mb-ask.mjs .'));
 });
+await ok('⑦ 1.7.7 미트볼 2.9.0(그 확장 설정에 askDelete 가 있음)에서는 테마가 안 물어요 — 그 확장이 스스로 물어요 · 옛 판에서는 그대로 물어요', async () => {
+    const withUp = async (up, fn) => { globalThis.SillyTavern = { getContext: () => ({ extensionSettings: { statussim: up } }) }; try { await fn(); } finally { delete globalThis.SillyTavern; } };
+    for (const up of [{ askDelete: true }, { askDelete: false }]) await withUp(up, async () => {   // 그 확장에서 꺼 둬도 테마가 대신 묻지 않아요
+        const m = await fresh(); const doc = makeDoc(); const { btn } = inbox(doc);
+        assert.equal(m.askTarget(btn, doc), null);
+    });
+    await withUp({ albumOn: true }, async () => { const m = await fresh(); const doc = makeDoc(); const { btn } = inbox(doc); assert.equal(m.askTarget(btn, doc).el, btn); });
+    assert.ok(fs.readFileSync(path.join(root, 'src/mb-ask.js'), 'utf8').includes("!upHas('ask')"));
+});
 console.log(`mb-ask: ${n}개 통과`);

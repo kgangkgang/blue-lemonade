@@ -36,6 +36,13 @@ check('시각 읽기: 12시간 · 24시간 · 오전/오후 · 시분 꼴', () =
     assert.equal(sky.minutesOf('3:20 PM'), 920); assert.equal(sky.minutesOf('15:20'), 920); assert.equal(sky.minutesOf('오후 3:20'), 920);
     assert.equal(sky.minutesOf('3시 20분 오후'), 920); assert.equal(sky.minutesOf('12:00 AM'), 0); assert.equal(sky.minutesOf('12:00 PM'), 720);
     assert.equal(sky.minutesOf('09:46 AM'), 586); assert.equal(sky.minutesOf('dawn'), null); assert.equal(sky.minutesOf(''), null);
+    // 버그 사냥 2: 때 낱말(밤 · 저녁 · 새벽 · 낮 · 아침)과 12시간 꼴 — 「밤 11:20」 · 「저녁 8:10」 을 오전으로 읽어 해 자리에 두고 달 모양을 안 그렸어요
+    assert.equal(sky.minutesOf('밤 11:20'), 1400); assert.equal(sky.minutesOf('저녁 8:10'), 1210); assert.equal(sky.minutesOf('밤 12:30'), 30);
+    assert.equal(sky.minutesOf('새벽 2:10'), 130); assert.equal(sky.minutesOf('낮 2:00'), 840); assert.equal(sky.minutesOf('아침 7:00'), 420);
+    assert.equal(sky.minutesOf('밤 23:10'), 1390, '24시간 꼴은 그대로');
+    // 독립 검토: 영어 때 낱말 · 낮 1 ~ 6시는 오후(미트볼 parseClock 과 같게)
+    assert.equal(sky.minutesOf('Night 11:20'), 1400); assert.equal(sky.minutesOf('evening 8:10'), 1210); assert.equal(sky.minutesOf('morning 7:00'), 420);
+    assert.equal(sky.minutesOf('낮 6시'), 1080); assert.equal(sky.minutesOf('낮 12:30'), 750); assert.equal(sky.minutesOf('午後11時20分'), 1400); assert.equal(sky.minutesOf('午前0時5分'), 5);
 });
 check('해 · 달 가름과 호 위의 자리(원작 칸 경계 6:00 · 19:00, 양 끝 3/97 · 33, 꼭대기 0)', () => {
     const a = sky.orbAt(360); assert.equal(a.sun, true); assert.equal(a.x, 3); assert.equal(a.y, 33);
@@ -51,6 +58,9 @@ check('날짜의 「일」 과 위상 8단계(1일 신월 · 16일 보름), 글�
     assert.equal(sky.dayOf('2026-10-27'), 27); assert.equal(sky.dayOf('16 October'), 16); assert.equal(sky.dayOf('3rd of May'), 3); assert.equal(sky.dayOf('없음'), null);
     assert.equal(sky.phaseOf(1), 0); assert.equal(sky.phaseOf(8), 2); assert.equal(sky.phaseOf(16), 4); assert.equal(sky.phaseOf(23), 6); assert.equal(sky.phaseOf(30), 0); assert.equal(sky.phaseOf(31), 0);
     assert.equal(sky.phaseOf(null), 1); assert.equal(sky.phaseOf(3, '오늘은 보름달이 떴다'), 4); assert.equal(sky.phaseOf(16, 'a thin crescent moon'), 1); assert.equal(sky.phaseOf(16, '그믐달'), 7);
+    // 버그 사냥 2: 트래커의 다른 글(장소 · 이름)은 달 이름일 때만 — 「반달곰 카페」 · 「상현관 강당」 · 「Crescent Street」 · 「Half Moon Bay」 가 달 모양을 바꿨어요
+    for (const free of ['📍 반달곰 카페', '상현관 강당', '📍 Crescent Street', 'Half Moon Bay', '반달리즘']) assert.equal(sky.phaseOf(16, '', free), 4, free);
+    assert.equal(sky.phaseOf(16, '', '하늘에 초승달이 걸렸다'), 1); assert.equal(sky.phaseOf(3, '', 'a full moon rose'), 4); assert.equal(sky.phaseOf(16, '', '반달이 떴다'), 2);
 });
 check('켜면 요소에 자리 · 달 마스크를 덧씌우고, 끄면 전부 떼어 원작으로', async () => {
     const sun = new El({ 'data-t': '3:20 PM' }, '…', '가상력 12년 5월 3일 목요일');

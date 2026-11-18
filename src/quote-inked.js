@@ -8,8 +8,10 @@
 export const INKED = 'bl-q-inked';
 const PASS = /^(EM|I|STRONG|B|MARK|FONT|SPAN|U|S|DEL|STRIKE|SMALL|SUB|SUP|A|ABBR|CITE|DFN|INS|BDI|TIME|DATA)$/;
 const EMPHASIS = /^(EM|I|STRONG|B|MARK)$/;
-const COLOR = /(^|;)\s*color\s*:/i;
-const THOUGHT = /(^|\s)(custom-)?tt(\s|$)/;
+// 버그 사냥 2: 값이 있는 글자색만 — 빈 조각(color:;) · 둘레를 따르는 값(inherit · currentColor …)은 색이 아니에요(전엔 「color:」 글자만 봐서 대사 띠가 빠졌어요)
+const COLOR = /(?:^|;)\s*color\s*:(?!\s*(?:(?:inherit|initial|unset|revert(?:-layer)?|currentcolor)\s*(?:!\s*important\s*)?)?(?:;|$))/i;
+// 버그 사냥 2: 이름 클래스만 단 속마음 칸(custom-tt-이름)도 — ink-contrast.js TT 와 같게(custom-ttl · custom-tts-box 는 아님)
+const THOUGHT = /(^|\s)((custom-)?tt|custom-tt-[^\s]+)(\s|$)/;
 const WORD = /[\p{L}\p{N}]/u;
 const LIMIT = 8;   // 이만큼 위 조상까지만 (꾸밈이 몇 겹이어도 이 안)
 
@@ -35,6 +37,20 @@ function hasOther(a) {
     return WORD.test(rest + text.slice(at));
 }
 
+// 1.7.8 대사만 감싼 굵게(**『…』** — 메신저 · 문자 장면에서 AI 가 대사 통째를 굵게 씀): 강조(노란 띠 · 강조 글자색)가 아니라 대사 모습으로.
+//   조판이 그 굵게에 STRONG_Q 를 달고 css/06-chat-text.css 가 강조 색 · 띠를 걷어요(굵기는 그대로) — 대사 색 · 화자 색이 보여요
+export const STRONG_Q = 'bl-strong-q';
+/** q 를 감싼 가장 가까운 굵게(strong · b)가 그 대사 하나만 품었으면(빈칸 · 문장부호만 더) 그 요소, 아니면 null */
+export function strongOnlyQuote(q) {
+    let a = q.parentElement;
+    for (let n = 0; a && n < LIMIT; n++, a = a.parentElement) {
+        if (!PASS.test(a.nodeName)) return null;
+        if (a.nodeName !== 'STRONG' && a.nodeName !== 'B') continue;
+        if (a.querySelectorAll('q').length !== 1) return null;
+        return hasOther(a) ? null : a;
+    }
+    return null;
+}
 /** q 가 이미 색 · 강조가 입혀진 구간(그 구간에 대사 말고 다른 글이 있다) 안인가. seen = 조상 판정 캐시(Map, 한 번의 조판 안에서 같은 조상을 여러 q 가 볼 때) */
 export function inkedQuote(q, seen = null) {
     let a = q.parentElement;

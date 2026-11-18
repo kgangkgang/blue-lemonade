@@ -89,4 +89,27 @@ await ok('⑤ 연결: 설정 「뒤로 가기로 미트볼 창 닫기」 기본 
     assert.ok(!/^import /m.test(read('src/layer-back.js')));            // 공용 부품은 아무것도 안 끌어와요
     const yml = read('.github/workflows/release-check.yml'); assert.ok(yml.includes('node tools/tests/mb-back.mjs .') && yml.includes('node tools/tests/layer-back.mjs .'));
 });
+await ok('⑥ 1.7.7 미트볼 2.9.0(그 확장 설정에 backClose 가 있음)에서는 겹을 안 올려요 — 그 확장이 스스로 해요 · 옛 판에서는 그대로 올려요', async () => {
+    const withUp = async (up, fn) => { globalThis.SillyTavern = { getContext: () => ({ extensionSettings: { statussim: up } }) }; try { await fn(); } finally { delete globalThis.SillyTavern; } };
+    for (const up of [{ backClose: true }, { backClose: false }]) await withUp(up, async () => {   // 그 확장에서 꺼 둬도 테마가 대신 하지 않아요(그 확장 설정을 따라요)
+        const m = await fresh(); const doc = makeDoc(); const stack = fakeStack(); m.startMbBack(doc, { watch: doc.watch, stack, isShown });
+        const win = dialog(doc); doc.show(win); assert.equal(stack.live().length, 0);
+    });
+    await withUp({ albumOn: true }, async () => {   // 2.8.0 까지: 그 키가 없어요
+        const m = await fresh(); const doc = makeDoc(); const stack = fakeStack(); m.startMbBack(doc, { watch: doc.watch, stack, isShown });
+        const win = dialog(doc); doc.show(win); assert.equal(stack.live().length, 1);
+    });
+    await withUp({ enabled: false, backClose: true }, async () => {   // 그 확장을 꺼 둠 — 창이 안 떠요 · 판정은 「없음」
+        const m = await fresh(); const doc = makeDoc(); const stack = fakeStack(); m.startMbBack(doc, { watch: doc.watch, stack, isShown });
+        const win = dialog(doc); doc.show(win); assert.equal(stack.live().length, 1);
+    });
+    await withUp({ backClose: true }, async () => {   // 마우스 화면(PC): 그 확장은 손가락 화면에서만 해요 — 테마가 지금까지처럼 해요 · 그 확장 설정을 끄면 안 해요
+        const m = await fresh(); const doc = makeDoc(); doc.defaultView = { matchMedia: q => ({ matches: false, q }) }; const stack = fakeStack(); m.startMbBack(doc, { watch: doc.watch, stack, isShown });
+        const win = dialog(doc); doc.show(win); assert.equal(stack.live().length, 1); assert.equal(m.coarse(doc), false); assert.equal(m.handed(doc), false);
+    });
+    await withUp({ backClose: false }, async () => {
+        const m = await fresh(); const doc = makeDoc(); doc.defaultView = { matchMedia: () => ({ matches: false }) }; assert.equal(m.handed(doc), true);
+    });
+    assert.ok(read('src/mb-back.js').includes('!handed(doc)'));
+});
 console.log(`mb-back: ${n}개 통과`);

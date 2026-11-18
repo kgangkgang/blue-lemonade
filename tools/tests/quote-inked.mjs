@@ -51,11 +51,20 @@ check('대사 안의 대사를 품은 대사 둘만 감쌈', false, q => box(el(
     const q1 = Q('『하나』'), q2 = Q('『둘』'); box(el('EM', {}, '속으로 ', q1, ' 그리고 ', q2)); const cache = new Map();
     assert.equal(inkedQuote(q1, cache), true); assert.equal(inkedQuote(q2, cache), true); assert.equal(cache.size, 1); n += 1;
 }
+// 버그 사냥 2: 값이 없는 color 조각 · 둘레를 따르는 값(inherit …)은 글자색이 아니에요 — 전엔 「color:」 글자만 봐서 색 없는 span 의 대사 띠가 빠졌어요
+check('빈 color 조각(color:;) span 은 글자색이 아님', false, q => box(el('SPAN', { style: 'font-style:normal;color:;font-weight:500' }, '앞 ', q, ' 뒤')));
+check('color: inherit span 은 글자색이 아님', false, q => box(el('SPAN', { style: 'color: inherit' }, '앞 ', q, ' 뒤')));
+check('color: currentColor / unset / initial 도 아님', false, q => box(el('SPAN', { style: 'color:currentColor' }, el('SPAN', { style: 'color: unset !important' }, el('SPAN', { style: 'color:initial' }, '앞 ', q, ' 뒤')))));
+check('color: var(--x) 는 글자색(프리셋 색)', true, q => box(el('SPAN', { style: 'color: var(--tt-x)' }, '앞 ', q, ' 뒤')));
+check('color 값 뒤 !important 도 글자색', true, q => box(el('SPAN', { style: 'color:#3ccfbf !important' }, '앞 ', q, ' 뒤')));
+// 버그 사냥 2: 이름 클래스만 단 속마음 칸(custom-tt-이름)도 속마음 — ink-contrast 의 속마음 칸 규칙(TT)과 같게
+check('이름 클래스만 단 속마음 span.custom-tt-이름', true, q => box(el('SPAN', { class: 'custom-tt-mira' }, '속으로 ', q, ' 하고')));
+check('custom-ttl · custom-tts-box 는 속마음이 아님(9b 와 같게)', false, q => box(el('SPAN', { class: 'custom-ttl custom-tts-box' }, '앞 ', q, ' 뒤')));
 console.log(`판정 ${n}개 통과`);
 
 // 조판이 q 마다 표시를 붙이고 떼요 (같은 상태면 다시 쓰지 않음 · 조판을 끄면 뗌)
 const typo = read('src/typography.js');
-assert.match(typo, /import \{ ?inkedQuote, ?INKED ?\} from '\.\/quote-inked\.js'/, 'typography.js 가 판정을 가져와요');
+assert.match(typo, /import \{ ?inkedQuote, ?INKED(?:, ?strongOnlyQuote, ?STRONG_Q)? ?\} from '\.\/quote-inked\.js'/, 'typography.js 가 판정을 가져와요');   // 1.7.8 대사만 감싼 굵게(STRONG_Q)도
 assert.match(typo, /inkedQuote\(q/, 'writeRoot 에서 q 마다 판정');
 assert.match(typo, /querySelectorAll\(`\.\$\{INKED\}`\)/, '조판을 끄면 표시를 떼요');
 

@@ -10,7 +10,9 @@
 // needsSpeakers(quotes, speakers) → 화자를 모르는(보낸 쪽 이름으로 떨어진) 색 없는 대사가 있나 — 그때만 대사 분석을 부른다
 
 export const PAINT_ATTR = 'data-lv-paint';
-export const PAINT_SOURCES = new Set(['hint', 'analysis']);
+// 1.7.8 'header' = 메신저 · 문자 머리 줄(【발신자: …】)에서 읽은 보낸 사람 — 음성 읽기도 그 목소리로 읽어요(사용자 「이건 그 인물 대사인데 왜 노란색」).
+//   보통 서술 문단의 첫 이름('paragraph')은 짐작이라 예전처럼 안 칠해요
+export const PAINT_SOURCES = new Set(['hint', 'analysis', 'header']);
 
 /** 대사 글 비교용 (clickplay.js 의 fold 와 같음): NFC · 꾸밈 글자 · 보이지 않는 글자 빼기 · 빈칸 하나로 · 소문자 */
 export const foldText = (s) => String(s || '').normalize('NFC').replace(/[*_~`​-‏﻿]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();

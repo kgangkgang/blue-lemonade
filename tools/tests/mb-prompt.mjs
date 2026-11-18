@@ -418,6 +418,15 @@ await ok('1.6.5 진짜 모델 다시 넣기에서 찾은 것: 직함이 다른 �
     const T = ['새벽', '아침', '낮', '저녁', '밤', '심야'];
     assert.deepEqual(['Evening -> Night', 'Late Night', 'Noon', 'Morning', 'dusk', '심야', 'Teatime'].map(x => M.timeOfDay(x, T)), ['밤', '심야', '낮', '아침', '저녁', '심야', null]);
     assert.equal(M.timeOfDay('Night', ['Morning', 'Night']), 'Night');
+    // 버그 사냥 2: 「낮」 규칙(오후 · day)을 저녁 · 밤보다 먼저 봐서 저녁 · 밤 기록이 「낮」 으로 바뀌어 달력에 적혔어요 · 시각만 적힌 글도
+    assert.deepEqual(['저녁 (오후 7시)', '밤 (오후 10시)', '오후 11시', 'Sunday night', 'Sunday', '23:30', '오후 2:00', '6:30 AM', 'Dawn => Night', 'Morning ➡ Evening'].map(x => M.timeOfDay(x, T)), ['저녁', '밤', '밤', '밤', null, '밤', '낮', '새벽', '밤', '저녁']);
+    assert.equal(M.timeLabel('Sunday night', { getCurrentLocale: () => 'ko-KR' }), '밤', '보이는 이름도 같은 차례');
+    assert.deepEqual(['午後11時', 'Day 3, 23:30', 'Day 3'].map(x => M.timeOfDay(x, T)), ['밤', '밤', null], '독립 검토: 時 · 「Day 3」 의 day');
+    {   // 시각 달력(clock)은 그 확장이 시각으로 적어요 — 테마가 「밤」 같은 낱말로 덮지 않아요
+        const cc = { chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: { statussim: { bySwipe: { 0: [['period', 'Night']] } } } }],
+            chatMetadata: { statussim: { base: { data: { calendar: { time: '21:00', times: T, clock: '24' }, rel: { user: [] } } } } } };
+        assert.equal(M.reconcileRel(cc).time, null); assert.equal(cc.chatMetadata.statussim.base.data.calendar.time, '21:00');
+    }
     const c = { chat: [{ name: 'A', mes: 'a', swipe_id: 0, extra: { statussim: { bySwipe: { 0: [['period', 'Evening -> Night'], ['aff', 'Captain +14']] } } } }],
         chatMetadata: { statussim: { base: { data: { calendar: { time: '아침', times: T }, rel: { user: [{ name: 'Captain', aff: 3, trust: 0, stage: 0 }, { name: 'Ozz', label: 'The very first Captain', aff: 0, trust: 8, stage: 0 }] } } } } } };
     const r = M.reconcileRel(c);

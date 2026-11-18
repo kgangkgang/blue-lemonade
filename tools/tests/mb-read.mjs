@@ -16,7 +16,7 @@ const tick = async (k = 6) => { for (let i = 0; i < k; i++) await new Promise(r 
 
 // ── 작은 가짜 문서 ─────────────────────────────
 class El {
-    constructor(doc, tag) { this.ownerDocument = doc; this.tagName = tag.toUpperCase(); this.nodeType = 1; this.kids = []; this.parent = null; this.cls = []; this.attrs = {}; this.textContent = ''; this.hidden = false; this.value = ''; }
+    constructor(doc, tag) { this.ownerDocument = doc; this.tagName = tag.toUpperCase(); this.nodeType = 1; this.kids = []; this.parent = null; this.cls = []; this.attrs = {}; this.textContent = ''; this.hidden = false; this.value = ''; this.dataset = {}; }
     set className(v) { this.cls = String(v).split(/\s+/).filter(Boolean); } get className() { return this.cls.join(' '); }
     get classList() { return { contains: c => this.cls.includes(c), add: c => { if (!this.cls.includes(c)) this.cls.push(c); } }; }
     get children() { return this.kids; }
@@ -237,6 +237,29 @@ await ok('⑧ 1.6.5 만들기 창이 닫히면(보낸 뒤) 관계 숫자 바로�
     doc.watchers[0]([{ removedNodes: [z2.dlg] }]); await tick();
     assert.equal(calls.length, 1, '안 보냈으면(요청 0) 안 불러요');
     delete w.c.chatMetadata;
+});
+await ok('⑨ 1.7.7 미트볼 2.9.0(그 확장 설정에 genRead 가 있음): 겹치는 고르기는 걷고 「기억 요약: 안 씀 / 쓰기」 만 — 「안 씀」 은 평소 단계 그대로 · 옛 판은 다섯 그대로', async () => {
+    {   // 가짜 세계의 그 확장 설정에 2.9.0 의 키를 넣어요
+        mem.clear(); const m = await fresh(); const doc = makeDoc(); const w = world('recent'); w.set.genRead = 'short';
+        await P.syncMbPrompt('recent', 9, 2000, { c: w.c, retry: false }).catch(() => null); await P.syncPrompt('recent', { c: w.c, def: DEF }); w.toasts.length = 0;
+        assert.equal(m.slim(), true);
+        m.startMbRead(doc, { watch: doc.watch, settings: async () => ({ chat: w.chat }), load: async () => w.Pw });
+        const z = wizard(doc); doc.fire('animationstart', { animationName: m.ANIM, target: z.ta }); await tick();
+        const row = z.sec.querySelector('.bl-mb-read'), sel = row.querySelector('.bl-mb-read-sel');
+        assert.equal(row.kids[0].textContent, '기억 요약'); assert.ok('blLean' in row.dataset);
+        assert.deepEqual(sel.kids.map(o => [o.value, o.textContent]), [['base', '안 씀'], ['memo', '쓰기']]);
+        assert.equal(sel.value, 'base');                                                                       // 평소 단계가 「최근 답」 이어도 고르기는 「안 씀」
+        assert.equal(z.sec.querySelector('.bl-mb-read-cost').textContent, '');
+        assert.equal(P.onceLevel(), ''); assert.equal(P.levelOf(w.set.prompts[P.KEY]), 'recent');              // 평소 단계는 안 건드려요
+        sel.value = 'base'; doc.fire('change', { target: sel }); await tick();
+        assert.equal(P.onceLevel(), ''); assert.equal(P.levelOf(w.set.prompts[P.KEY]), 'recent');              // 「안 씀」 을 다시 골라도 그대로(옛 꼴은 이번만 「기본」 으로 내렸어요)
+    }
+    {
+        const m = await fresh(); const doc = makeDoc(); const w = world('off'); assert.equal(m.slim(), false);
+        m.startMbRead(doc, { watch: doc.watch, settings: async () => ({ chat: w.chat }), load: async () => w.Pw });
+        const z = wizard(doc); doc.fire('animationstart', { animationName: m.ANIM, target: z.ta }); await tick();
+        const row = z.sec.querySelector('.bl-mb-read'); assert.equal(row.kids[0].textContent, '읽기'); assert.equal(row.querySelector('.bl-mb-read-sel').kids.length, 5); assert.ok(!('blLean' in row.dataset));
+    }
 });
 await ok('1.6.9 채팅을 열 때 정리: 「미트볼 문구」 를 안 써도 상태창 있는 채팅을 처음 열면 문구 모듈을 받아 채팅 감시를 한 번 걸어요 · 상태창 없는 채팅이면 안 받아요', async () => {
     const m = await fresh(); const doc = makeDoc(); let loads = 0, watched = 0; const on = {};

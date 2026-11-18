@@ -144,4 +144,25 @@ t('7.0.6 가로 넘침 없음: 줄 오른쪽 끝의 스위치는 상자를 오�
     assert.ok(!/bl-editor-directory-list[^{]*\{[^}]*overflow-x\s*:\s*(hidden|clip)/.test(otherCss + body), 'overflow-x 숨김 없음');
 });
 
+t('1.7.7 설정 창 맨 윗줄 아이콘 단추: 가로 상자는 제 칸 + 틈까지만(옆 단추의 보이는 면을 안 덮어요) · 세로는 44 그대로', () => {
+    const rule = /html body \.salty-panel \.bl-settings-toprow \.bl-editor-actions > button::after \{ width: calc\(100% \+ 2px\); \}/;
+    assert.match(body, rule);
+    // 44 상자 묶음(::after) 뒤에 와야 이겨요 · 높이는 건드리지 않아요
+    assert.ok(body.search(rule) > body.indexOf('#bl-onehand .bl-onehand-btn\n  )::after {'), '상자 묶음 뒤');
+    assert.ok(!/bl-editor-actions > button::after \{[^}]*height/.test(body), '세로 44 그대로');
+    // 실측: 폭 32 · 틈 2(폰) — 옛 상자는 옆 단추 면 안으로 (44 − 32) / 2 − 2 = 4px, 새 상자는 (34 − 32) / 2 − 2 < 0 이라 안 들어가요. 관문 「차」는 가로 · 세로 둘 다 40 미만일 때만 걸려요
+    const into = (box, w, gap) => (box - w) / 2 - gap;
+    assert.equal(into(44, 32, 2), 4); assert.ok(into(32 + 2, 32, 2) < 0); assert.ok(into(32 + 2, 32, 4) < 0);
+    assert.ok(Math.max(32 + 2, 44) >= 40);
+});
+
+t('1.7.7 체크 줄(라벨)은 줄 전체가 눌리는 칸 — 44 상자가 달린 그 줄에 손가락 커서도(체크박스 칸만 눌리는 것처럼 보이지 않게)', () => {
+    const checks = read('css/92-checkboxes.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.match(checks, /label\[data-bl-row-check\]:is\(bl-s, \*\) \{ cursor: pointer; \}/);
+    assert.ok(body.includes('.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)'), '상자는 86 의 같은 줄에');
+    // 배치 · 모양 속성은 이 규칙에 없어요
+    const rule = /label\[data-bl-row-check\]:is\(bl-s, \*\) \{([^}]*)\}/.exec(checks)[1];
+    assert.equal(rule.trim(), 'cursor: pointer;');
+});
+
 console.log(`touch-targets: ${n} passed, 0 failed`);

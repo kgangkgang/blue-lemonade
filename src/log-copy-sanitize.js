@@ -94,12 +94,16 @@ export function fromPath(root, path) {
 
 const PLACEHOLDER = /여기에|여기|로그|본문|내용|log|content|text here|lorem/i;
 /** 자리를 아직 안 정했으면: 자리 글(「여기에 · 로그 · 본문」)이 든 가장 큰 칸 → 없으면 글이 가장 긴 칸 */
+/** 버그 사냥 2: 깡통 골드 잠금(gold-lock-draft 꼴 · 보기용 gold-lock) — 로그를 부으면 잠금이 통째로 지워져요 */
+export const GOLD_LOCK = '[data-gold-lock-id], .gold-lock-draft, .gold-lock';
+export const touchesLock = el => !!(el?.closest?.(GOLD_LOCK) || el?.querySelector?.(GOLD_LOCK));
 export function guessSlot(root) {
-    const blocks = [...root.querySelectorAll('div, td, section, article, p, blockquote, span')].filter(el => !el.querySelector('div, td, section, article, p, blockquote'));
+    const blocks = [...root.querySelectorAll('div, td, section, article, p, blockquote, span')].filter(el => !el.querySelector('div, td, section, article, p, blockquote') && !touchesLock(el));
     const sized = el => (el.textContent || '').trim().length;
     const marked = blocks.filter(el => PLACEHOLDER.test(el.textContent || ''));
     const pick = list => list.reduce((best, el) => (!best || sized(el) > sized(best) ? el : best), null);
-    return pick(marked) ?? pick(blocks) ?? root.firstElementChild ?? null;
+    const first = root.firstElementChild;
+    return pick(marked) ?? pick(blocks) ?? (first && !touchesLock(first) ? first : null);
 }
 
 // ── 갤러리: 붙여 넣은 이미지 코드 · 주소 → 그림 목록 ──

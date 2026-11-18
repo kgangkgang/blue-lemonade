@@ -35,6 +35,17 @@ try {
         assert.ok(panel.includes('쓰는 방식(한글화 · 길게 눌러 도움말 · 입력창 동작 · 머리 스위치 줄'), '확인 창에 무엇이 남는지 한 줄');
         console.log('  PASS  「테마 모습」 초기화가 쓰는 방식 넷을 남기고 확인 창에 알려요');
     }
+    // 버그 사냥 2: 「테마 모습」 초기화가 미트볼 「채팅 전체」 상한의 옮긴 표시(mbPromptCapV)를 버려서, 일부러 12만으로 둔 상한이 다음 읽기에 0(없음)으로 바뀌었어요
+    {
+        const ext = { salty: structuredClone(S.DEFAULTS) };
+        ext.salty.chat = { ...ext.salty.chat, mbPrompt: 'all', mbPromptCap: 120000, mbPromptCapV: 2 };
+        globalThis.SillyTavern = { getContext: () => ({ extensionSettings: ext, saveSettingsDebounced() {} }) };
+        assert.equal(S.getSettings().chat.mbPromptCap, 120000, '옮긴 뒤 고른 12만은 그대로');
+        S.resetSettings({ look: true });
+        assert.equal(S.getSettings().chat.mbPromptCap, 120000, '모습 초기화 뒤에도 12만');
+        assert.equal(S.getSettings().chat.mbPromptCapV, 2);
+        console.log('  PASS  「테마 모습」 초기화 뒤에도 고른 미트볼 상한 12만이 그대로예요');
+    }
     console.log(`  PASS  자료 칸 ${D.OMITTED_KEYS.size}개가 모두 초기화 정책을 가져요`);
     console.log('reset-keep-drift: 1 passed');
 } catch (e) { console.log(`  FAIL  ${e.message}`); process.exitCode = 1; }

@@ -414,6 +414,44 @@ await test('1.5 탭: 공용 번역이 먼저 바꾼 쌍점(「: 」) 꼴 · 상�
     // 홈 카드 한 줄은 과일의 마음 창 공용 번역(fruit-heart)이 맡아요 — 시험은 fruit-localization.mjs
 });
 
+await test('1.7.7 홈 카드 한 줄 · 아래 메뉴 단추는 다음 그리기 박자를 기다리지 않고 그 자리만 바로 바꿔요(창 전체 훑기 없음)', () => {
+    const { main, nav } = heartIn(boot(), { serve: false });
+    const card = main.append(new El('button', { 'data-action': 'open-serve-panel' })).append(new El('span', { class: 'fh-qr-copy' }));
+    const sub = card.append(new El('small', {}, '当前：普通模式（流式直连） · 点击进入出杯控制台'));
+    install();
+    // 박자(settle)를 돌리지 않고 감시 기록만 넘겨요 — 그 스크립트가 0.2초마다 같은 글을 새로 쓰는 것처럼
+    const tick = (...targets) => { for (const o of observers) if (o.on) o.fn(targets.map(t => (Array.isArray(t) ? { target: t[0], addedNodes: t[1] } : { target: t, addedNodes: [] }))); };
+    frames.length = 0;
+    for (let i = 0; i < 5; i++) {
+        sub.text('当前：普通模式（流式直连） · 点击进入出杯控制台'); tick(sub);
+        assert.equal(sub.shown, '지금: 보통 모드 (스트리밍 바로 연결) · 눌러서 도구 호출 조작판 열기', `${i + 1}번째도 바로`);
+    }
+    assert.equal(frames.length, 0, '창 전체 훑기를 예약하지 않아요');
+    // 글 노드가 바뀐 기록(공용 번역 · 제가 바꾼 것)도 그 자리만
+    tick(sub.childNodes[0]); assert.equal(frames.length, 0);
+    // 과일의 마음 창 공용 번역이 앞 조각만 먼저 바꿔 둔 꼴(도구 모드 + 최근 기록) — 뒤 조각까지 바꿔요
+    sub.text('지금: 도구 모드 · 抗外审+抗截断 · 最近: 正文直接返回'); tick(sub);
+    assert.equal(sub.shown, '지금: 도구 모드 · 외부 검열 대응 + 끊김 방지 · 최근: 본문이 바로 왔어요');
+    sub.text('当前：工具模式 · 抗截断（非流式） · 最近：请求超时'); tick(sub);
+    assert.equal(sub.shown, '지금: 도구 모드 · 끊김 방지 (비스트리밍) · 최근: 요청 시간 초과');
+    assert.equal(frames.length, 0);
+    // 탭을 바꿔 아래 메뉴 단추를 다시 끼운 때: 끼운 그 작업 끝에 바로
+    const btn = new El('button', { class: 'fh-nav-item', 'data-nav': 'serve', title: '出杯' });
+    btn.append(new El('b', {}, '🍸')); const label = btn.append(new El('span', {}, '出杯')); nav.append(btn);
+    tick([nav, [btn]]);
+    assert.equal(label.shown, '도구'); assert.equal(btn.getAttribute('title'), '도구'); assert.equal(frames.length, 0, '단추 하나 끼운 것으로 창 전체를 훑지 않아요');
+    // 그 밖의 변화는 예전처럼 다음 박자에 창을 훑어요
+    main.append(new El('div', { class: 'fh-row' }, '普通模式')); tick(main);
+    assert.equal(frames.length, 1, '다른 변화는 예전 길');
+});
+
+await test('1.7.7 감시는 문서 뿌리부터 — 과일의 마음 창은 body 옆(html 바로 아래)에 붙어서 body 만 보면 그 창 안 변화를 못 봐요', () => {
+    assert.ok(source.includes("observer.observe(doc.documentElement||doc.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']});"));
+    assert.ok(!source.includes('observer.observe(doc.body,'), 'body 만 지켜보는 옛 줄이 없어요');
+    // 빠른 길에서도 떨어진 노드 기억을 치워요
+    assert.ok(source.includes('if(spots.size){for(const node of texts.keys())if(!node.isConnected)texts.delete(node);'));
+});
+
 await test('1.5 알림 · 헬퍼 목록 이름 · 옛 1.4 창은 그대로', () => {
     const body = boot();
     const zh = ['已开启抗外审（本轮输入转工具回执）', '已关闭抗外审', '已开启抗截断（非流式）', '已关闭抗截断', '已开启「语义伪装」', '已关闭「随机噪音」', '已一键校对酒馆设置', '已清空请求记录', '复制失败，请手动复制', '未检测到果实之心面板，请先启用果实之心脚本'];

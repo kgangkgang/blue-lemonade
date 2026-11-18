@@ -23,7 +23,7 @@ await ok('표: locgo 는 화면만 바꾸는 스위치 · 자리별 맞춤 묶�
     assert.ok(sw, '스위치 표에 locgo');
     assert.equal(sw.kind, 'screen'); assert.equal(sw.group, 'place'); assert.equal(sw.css, true); assert.equal(sw.setting, undefined, '끈 열쇠 목록(chat.mbOff)을 써요');
     assert.equal(sw.name, '위치를 누르면 갈 곳 보기');
-    assert.match(sw.desc, /2\.9\.0/); assert.match(sw.desc, /끄면 예전\(2\.8\.0\)처럼/);
+    assert.match(sw.more, /2\.9\.0/); assert.match(sw.more, /끄면 예전\(2\.8\.0\)처럼/); assert.match(sw.desc, /끄면 예전처럼/);   // 1.7.7 줄 밑은 한마디 · 자세한 설명은 「?」 창(more)
     assert.equal(SW.switchOn({ chat: {} }, 'locgo'), true, '옛 설정은 켬');
     const chat = {}; SW.setSwitch(chat, 'locgo', false);
     assert.deepEqual(chat.mbOff, ['locgo']); assert.equal(SW.offAttrValue({ chat }), 'locgo');

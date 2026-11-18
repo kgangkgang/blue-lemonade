@@ -633,17 +633,39 @@ export function timeLabel(t, c = ctx()) {
     const s = String(t ?? ''); let ko = false;
     try { ko = /^ko(?:[-_]|$)/i.test(String(c?.getCurrentLocale?.() ?? globalThis.document?.documentElement?.lang ?? '')); } catch { ko = false; }
     if (!ko || /[ㄱ-힣]/.test(s)) return s;
-    for (const [re, word] of TIME_WORDS) if (re.test(s)) return word;
-    return s;
+    return slotWord(s)?.word ?? s;
 }
 /** 마지막 시간대 글(「Evening -> Night」 면 화살표 뒤) → 그 확장 달력의 시간대 이름(달력 times 에 있을 때만) */
-const TIME_WORDS = [[/late\s*night|midnight|심야|한밤/i, '심야'], [/dawn|새벽/i, '새벽'], [/morning|아침/i, '아침'], [/noon|afternoon|day|lunch|낮|점심|오후/i, '낮'], [/evening|dusk|sunset|저녁|해질/i, '저녁'], [/night|밤/i, '밤']];
+// 버그 사냥 2: 저녁 · 밤을 낮보다 먼저 — 「낮」 규칙의 오후 · day 가 「저녁 (오후 7시)」 · 「Sunday night」 을 먼저 잡아 달력이 낮으로 바뀌었어요.
+//   day 는 낱말로만(Sunday 의 day 아님) · 오전/오후는 시각과 함께면 시각으로(「오후 11시」 = 밤) · 시각만 적힌 글은 그 확장 timeWords 와 같은 칸으로
+const TIME_WORDS = [[/late\s*night|midnight|심야|한밤/i, '심야'], [/dawn|새벽/i, '새벽'], [/evening|dusk|sunset|저녁|해질/i, '저녁'], [/night|밤/i, '밤'], [/morning|아침/i, '아침'], [/noon|afternoon|\bday(?:time)?\b(?!\s*\d)|lunch|낮|점심/i, '낮']];
+const HALF_WORDS = [[/오전/, '아침'], [/오후/, '낮']];
+/** 시각 글(「23:30」 · 「오후 11시」 · 「6:30 AM」) → 그 확장 timeWords 의 시간대 이름(못 읽으면 null) */
+function clockSlot(s) {
+    let h, m = 0, x;
+    if ((x = s.match(/(\d{1,2})\s*[:：]\s*(\d{2})(?!\d)/))) { h = +x[1]; m = +x[2]; }
+    else if ((x = s.match(/(\d{1,2})\s*[시時](?:\s*(\d{1,2})\s*[분分]|\s*(반))?/))) { h = +x[1]; m = x[3] ? 30 : +(x[2] ?? 0); }
+    else if ((x = s.match(/(?:^|[^\d])(\d{1,2})\s*[ap]\.?m\b/i))) h = +x[1];
+    else return null;
+    if (!(h >= 0 && h <= 24 && m >= 0 && m <= 59)) return null;
+    const pm = /오후|午後|\d\s*p\.?m\b/i.test(s), am = /오전|午前|\d\s*a\.?m\b/i.test(s);
+    if (pm && h < 12) h += 12; else if (am && h === 12) h = 0;
+    const min = (h % 24) * 60 + m;
+    return min < 300 ? '심야' : min < 420 ? '새벽' : min < 660 ? '아침' : min < 1080 ? '낮' : min < 1260 ? '저녁' : '밤';
+}
+/** 시간대 글 → { re, word } (낱말 → 시각 → 오전/오후) · 못 읽으면 null */
+function slotWord(s) {
+    for (const [re, word] of TIME_WORDS) if (re.test(s)) return { re, word };
+    const c = clockSlot(s); if (c) return { re: new RegExp(c), word: c };
+    for (const [re, word] of HALF_WORDS) if (re.test(s)) return { re, word };
+    return null;
+}
 export function timeOfDay(raw, times = []) {
-    const s = String(raw ?? '').split(/->|→/).pop().trim(); if (!s) return null;
+    const s = String(raw ?? '').split(/->|→|=>|⇒|\u27A1/).pop().replace(/^[\uFE0F\s]+/, '').trim(); if (!s) return null;   // 버그 사냥 2: 그 확장처럼 => · ⇒ · 굵은 오른쪽 화살표(U+27A1)도 나눠요
     const list = Array.isArray(times) ? times.map(String) : [];
     const exact = list.find(t => t.toLowerCase() === s.toLowerCase()); if (exact) return exact;
-    for (const [re, ko] of TIME_WORDS) if (re.test(s)) { const hit = list.find(t => t === ko) || list.find(t => re.test(t)); if (hit) return hit; }
-    return null;
+    const w = slotWord(s); if (!w) return null;
+    return list.find(t => t === w.word) || list.find(t => w.re.test(t)) || null;
 }
 /** 관계 숫자 바로잡기 — 바꾼 사람 목록을 돌려줘요. 자료는 그 자리에서 고쳐요(origin 도 같은 사람이면 같이) */
 export function reconcileRel(c = ctx(), { rel = true, fill = true } = {}) {   // 1.7.3 rel = 관계 숫자 · 시간대 바로잡기(스위치 relfix) · fill = 빈 프로필 채우기(스위치 fill)
@@ -651,7 +673,9 @@ export function reconcileRel(c = ctx(), { rel = true, fill = true } = {}) {   //
     const led = opsLedger(c), sums = led.sums;
     const changed = []; let checked = 0, time = null;
     // 시간대: 본편 AI 가 마지막으로 적은 시간대(그 확장 달력의 시간대 이름으로 바꿀 수 있을 때만) — 기본 틀 달력이 「아침」 에 머무는 것
-    if (rel && cal && led.time) { const t = timeOfDay(led.time, cal.times); if (t && t !== cal.time) { time = { from: cal.time, to: t }; cal.time = t; } }
+    //   1.7.8 시각 달력(그 확장 2.9.0 「시간 적는 법」 24시 · 오전 오후 · 시간대 + 시각 — cal.clock)은 그 확장이 시간 줄을 제 적는 법으로 읽어요. 여기서 시간대 낱말을 덮어쓰면
+    //   「갈 곳」 도착 시각 · 다음 시간 셈이 그 낱말을 시각으로 못 읽어 0시로 셈해요 → 시각 달력이면 손대지 않아요(시험 tools/tests/mb-29x.mjs ② · 버그 사냥 2 의 같은 고침과 합침)
+    if (rel && cal && led.time && !cal.clock) { const t = timeOfDay(led.time, cal.times); if (t && t !== cal.time) { time = { from: cal.time, to: t }; cal.time = t; } }
     if (!Array.isArray(list) || !list.length || !sums?.size) return { changed, checked, time, added: [] };
     const fix = (r, k, d) => { const v = Number(r[k]) || 0; if (!d) return v; return d > 0 ? Math.max(v, clampRel(d)) : Math.min(v, clampRel(d)); };
     if (rel) for (const r of list) {

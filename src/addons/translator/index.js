@@ -53,6 +53,7 @@ import { mountFallbackField } from '../modelswitch/fallback-field.js';   // 6.4.
 import { createGenerationParameters, getChatCompletionModel } from '../../../../../../openai.js';
 import { createTextGenGenerationData, getTextGenModel } from '../../../../../../textgen-settings.js';
 import { matchingTranslation, translationFromDisplay } from './archive-bridge.js';
+import { keepFold } from '../../fold-markup.js';   // 1.7.9 접은 답의 틀은 그대로 두고 안쪽만 고쳐요
 import { rememberSource, recordedSource, forgetSource, pruneSource, priorFromRecord, priorParagraph } from './translation-source.js';   // 6.9.5 번역 기기 간 공유 — 고칠 때 필요한 번역 글을 채팅 파일에도
 import * as LiveModels from '../../live-models.js'; // [2.2.8] 공용 모델 목록 · 모델별 요청 규칙
 import { withPromptCache, pureMacros } from '../../prompt-cache.js';   // 7.7.2 프롬프트 캐시 (Claude 직접 연결)
@@ -3293,9 +3294,14 @@ function repairShownTranslation(id, message, context = getContext()) {
     for (const field of ['display_text', 'original_translation_backup']) {
         const shown = extra[field];
         if (typeof shown !== 'string' || !shown || shown === original || shown.includes('llm-translator-details')) continue;
-        // 6.2.4 저장된 번역의 낱말 한 줄 · 6.4.0 용어집 이름 · 홀로 남은 「 (손으로 고친 번역은 그대로)
-        const cleaned = extra.translation_edited === extra.original_text_hash ? shown : tidyGlossaryOutput(original, dropStrayWords(shown, original));
-        const repaired = repairTagPairs(original, dropLeftoverPlaceholders(cleaned, original));
+        // 1.7.9 테마 「접기」 틀(빈 제목 <details>)은 원문에 없는 태그라 짝 고치기가 첫 문단에서 닫아 버렸어요 — 틀 안쪽만 고치고 틀은 그대로 ·
+        //       이미 깨진 틀은 테마가 접은 답(bl_folded)에서만 되살려요 (src/fold-markup.js)
+        const repaired = keepFold(shown, (shown) => {   // 안쪽 글(접힌 틀이 없으면 그대로)
+            if (shown === original) return shown;   // 접어 둔 원문 보기
+            // 6.2.4 저장된 번역의 낱말 한 줄 · 6.4.0 용어집 이름 · 홀로 남은 「 (손으로 고친 번역은 그대로)
+            const cleaned = extra.translation_edited === extra.original_text_hash ? shown : tidyGlossaryOutput(original, dropStrayWords(shown, original));
+            return repairTagPairs(original, dropLeftoverPlaceholders(cleaned, original));
+        }, { folded: extra.bl_folded === true, original });
         if (repaired !== shown) { extra[field] = repaired; changed = true; }
     }
     if (changed && extra.display_text) refreshMessageBlock(id, message);
@@ -5264,6 +5270,10 @@ function translateOutgoingMessage(messageId) {
     }
 
     if (message.extra?.llmt_sent_original !== undefined && extensionSettings.send_display === 'sent') return;
+
+    // 버그 사냥 2: AI 답과 같은 건너뛰기(눈 끈 메시지 · 이미 한국어) — 전엔 「좋아」 · 「응 그래」 같은 짧은 한국어 내 메시지도
+    //   「번역을 시작해요」 와 함께 요청이 나갔어요(한국어 원문 지키기 keepKorean 은 4자 이상만 알아봐요). 번역 단추('manual')는 그대로
+    if (autoSkipReason(message)) return;
 
     if (typeof message.extra !== 'object') {
         message.extra = {};

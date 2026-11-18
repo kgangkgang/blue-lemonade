@@ -255,6 +255,7 @@ jobs:
           node tools/tests/mb-hidden.mjs .
           node tools/tests/mb-autosub.mjs .
           node tools/tests/mb-editsync.mjs .
+          node tools/tests/mb-namekey.mjs .
           node tools/tests/mb-ask.mjs .
           node tools/tests/layer-back.mjs .
           node tools/tests/mb-back.mjs .
@@ -265,7 +266,10 @@ jobs:
           node tools/tests/mb-arrow.mjs .
           node tools/tests/mb-map-floors.mjs .
           node tools/tests/mb-toggles.mjs .
+          node tools/tests/mb-upstream.mjs .
           node tools/tests/mb-locgo.mjs .
+          node tools/tests/mb-29x.mjs .
+          node tools/tests/mb-diary.mjs .
           node tools/tests/mb-rowbtn-gap.mjs .
           node tools/tests/mb-face-now.mjs .
           node tools/tests/name-people.mjs .
@@ -353,6 +357,7 @@ jobs:
           node tools/tests/zipinstall-install.mjs .
           node tools/tests/zipinstall-batch.mjs .
           node tools/tests/translation-tag-pairs.mjs .
+          node tools/tests/fold-translation-repair.mjs .
           node tools/tests/translator-auto-skip.mjs .
           node tools/tests/translator-swipe-pending.mjs .
           node tools/tests/translator-buttons-template.mjs .
@@ -460,6 +465,12 @@ jobs:
           node tools/tests/tts-usage-728.mjs .
           node tools/tests/tts-picture-markers-729.mjs .
           node tools/tests/names-jp.mjs .
+          # 버그 사냥 2: 이름 숨김(로그 복사 · 채팅 캡처) — 로마자 이름은 낱말 경계에서만
+          node tools/tests/name-hide-latin.mjs .
+          # 버그 사냥 2: 옛 꼴 채팅 시각(채팅 그래프 날짜 · 북마크 다른 채팅 차례)
+          node tools/tests/chat-time-ms.mjs .
+          # 1.7.8 메신저 장면 『…』 이 강조 노랑으로 보이던 것: 발신자 머리 줄 화자 색 · 대사만 감싼 굵게는 대사 모습
+          node tools/tests/tts-paint-sender-line.mjs .
           node tools/tests/translator-speech.mjs .
           node tools/tests/bookmark-excerpts.mjs .
           node tools/tests/bookmark-images.mjs .
@@ -895,6 +906,8 @@ jobs:
           node tools/tests/settings-changes-map.mjs .
           node tools/tests/settings-new-keys.mjs .
           node tools/tests/settings-sync-race.mjs .
+          # 버그 사냥 2: 두 기기 합치기로 내 스타일이 상한을 넘어도 잘려 사라지지 않아요
+          node tools/tests/settings-styles-merge-cap.mjs .
           # 1.1.0 단위 시험 채움 (시험 없던 모듈: 소독 · 설정 잠금 · 보관함 · 즐겨찾기 · 되돌리기 기록 · 테두리 · 기기 배치 · 확장 이름표 · 읽던 자리 · ZIP · 그림 종류 …)
           node tools/tests/unit-paste-sanitize.mjs .
           node tools/tests/unit-setting-locks.mjs .
@@ -1031,6 +1044,8 @@ jobs:
           node tools/tests/mb-lemon-tab.mjs . tools
           # 1.7.6 미트볼 「간격 체계」(2.9.0 개편): 구조로 거는 넓은 규칙이 붙던 꼴에 걸리고 나란한 단추 · 띠는 안 건드림(jsdom 선택자 맞음)
           node tools/tests/mb-spacing-system.mjs . tools
+          # 1.7.8 모델이 <meatball> 아닌 태그로 감싼 변화 덩이가 본문에 남은 것 숨기기(jsdom)
+          node tools/tests/mb-leftover.mjs . tools
           # 1.6.0 jsdom 을 쓰는 시험은 모두 위 npm ci 뒤에 — 앞 단계에는 tools/node_modules 가 없어 「jsdom 을 못 찾았어요」(종료 2)로 Release consistency 가 실패했어요(1.5.9)
           node tools/tests/translator-message-template.mjs . tools
           node tools/tests/icon-text-prescan-slices.mjs . tools
@@ -1052,6 +1067,12 @@ jobs:
           node tools/tests/select-pick-esc.mjs . tools
           # 1.6.9 미트볼 변화 그래프: 프로필 얼굴 색 · 바탕 대비 · 비슷한 색 점선 · 범례 누르기 (같은 jsdom)
           node tools/tests/mb-trend.mjs . tools
+          # 버그 사냥 2: 깡통 골드 잠금 꼴이 로그 복사(소독 · HTML 복사 주석 · 자동 로그 자리 · 숨기기)를 거쳐도 그대로 (같은 jsdom)
+          node tools/tests/log-copy-gold-lock.mjs . tools
+          # 버그 사냥 2: 줄을 넘는 대사 안 늘임표(「응~~~, 그래~~~!」)가 취소선으로 남지 않아요 (같은 jsdom)
+          node tools/tests/dialogue-tildes-span.mjs . tools
+          # 버그 사냥 2: 데우스 감정 대사 — 같은 글 대사가 여럿이면 원문 차례의 자리만 감싸요 (같은 jsdom)
+          node tools/tests/dem-expressive-dup.mjs . tools
           git status --porcelain
           git diff --exit-code --stat
           test -z "$(git status --porcelain)"

@@ -248,8 +248,8 @@ function solaMap(prompts, order, metadata, kind = 'flame') {
       if (tag === '↓' || !run || run.header !== section.header) run = { key:`arrow:${prompt.identifier}`, header:section.header };
       addRule(run.key, '', prompt.identifier);
       if (tag === '↑') run = null;
-    } else if (tag) addRule(`tag:${tag.toUpperCase()}`, SOLA_PICK_TAGS[tag.toUpperCase()] || SOLA_PICK_TAGS[tag] || solaClean(tag), prompt.identifier);
-    else if (ko) { const label = solaClean(ko[1]); addRule(`ko:${label}`, SOLA_PICK_TAGS[label] || label, prompt.identifier); }
+    } else if (tag) { const label = SOLA_PICK_TAGS[tag.toUpperCase()] || SOLA_PICK_TAGS[tag] || solaClean(tag); addRule(`pick:${label.toUpperCase()}`, label, prompt.identifier); }   // 버그 사냥 2: 보이는 이름으로 묶어요 — 영어 [PICK 1: MIND] 와 한국어 [택1: 마음] 이 섞이면 묶음이 갈라졌어요
+    else if (ko) { const label = SOLA_PICK_TAGS[solaClean(ko[1])] || solaClean(ko[1]); addRule(`pick:${label.toUpperCase()}`, label, prompt.identifier); }
     else if (/\(\s*\d+\s*[-~–]\s*\d+\s*(?:Words|단어)\s*\)/i.test(name)) addRule(`words:${section.header}`, '답변 길이', prompt.identifier);
   }
   const usable = new Map(rows.map(x => [x.id, x]));
@@ -470,7 +470,7 @@ const solaBadge = name => { const n = (String(name || '').match(/(?:\bSola|솔�
   function syncTabs(current) {
     const rail = panel?.querySelector('.dq-tabs'); if (!rail) return;
     const names = tabsOf(current);
-    if (!names.includes(tab)) tab = '진행';
+    if (!names.includes(tab)) tab = names.includes('진행') ? '진행' : (names[0] ?? '진행');   // 버그 사냥 2: 「진행」 탭이 없는 킨들링(언어 택1 없음)은 첫 탭 — 전엔 눌린 탭 없이 빈 창
     const badge = panel.querySelector('.dq-version'), label = current?.badge ?? current?.variant?.label ?? '';
     const heading = panel.querySelector('.dq-head strong'), family = current?.variant?.title;
     const titleText = heading?.querySelector('.dq-title');

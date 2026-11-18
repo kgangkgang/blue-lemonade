@@ -33,10 +33,10 @@ const isObj = value => !!value && typeof value === 'object';
  */
 export function englishPart(text) {
     const s = String(text ?? '');
-    let a = s.search(/[A-Za-z]/);
+    let a = s.search(/\p{Script=Latin}/u);   // 버그 사냥 2: 악센트 글자(É · ë · Ö)도 라틴 — ASCII 만 보면 「Émile's Café」 가 「mile's Caf」 로 잘렸어요
     if (a < 0) return '';
     let b = s.length - 1;
-    while (b >= 0 && !/[A-Za-z]/.test(s[b])) b--;
+    while (b >= 0 && !/\p{Script=Latin}/u.test(s[b])) b--;
     while (a > 0 && /[0-9(["'#&]/.test(s[a - 1])) a--;
     while (b + 1 < s.length && /[)\]"'.!?0-9]/.test(s[b + 1])) b++;
     return s.slice(a, b + 1).trim();
@@ -44,7 +44,7 @@ export function englishPart(text) {
 /** 옮기지 않을 덩이: 너무 짧음 · 대문자 줄임말(HP · SNS · NPC) · SNS 아이디 · 주소 · 너무 김 */
 export function skipPart(part) {
     const p = String(part ?? '').trim();
-    if (p.replace(/[^A-Za-z]/g, '').length < 2) return true;
+    if (p.replace(/\P{Script=Latin}/gu, '').length < 2) return true;
     if (/^[A-Z0-9]{1,4}$/.test(p)) return true;
     if (/^@?[A-Za-z0-9_.]{2,30}$/.test(p) && (p.startsWith('@') || /[_.]/.test(p))) return true;
     if (/^[a-z]+:\/\//i.test(p) || p.length > 600) return true;
@@ -327,15 +327,16 @@ export function hideFixedKeys(dict, keep = new Set()) {
 }
 /**
  * 정해진 자리 열쇠(AI 0): 상태 칸에서 요일(week) · 시간대(times · time) · 달(month) · 일과(sched)를 보고
- *   「(Sat)」→「(토)」 · 「(Sat) Morning」→「(토) 아침」(띠 · 머리 날짜 줄 dateShort + 시간대) · 「(Morning)」→「(아침)」 · 「년 April」→「년 4월」 · 「Morning:Front Desk」→「아침:Front Desk」.
+ *   「(Sat)」→「(토)」 · 「(Sat) Morning」→「(토) 아침」(띠 · 머리 날짜 줄 dateShort + 시간대) · 「(Morning)」→「(아침)」 · 「년 April」→「년 4월」 · 「Morning:Front Desk」→「아침:Front Desk」 · 「· Clear」→「· 맑음」(1.7.8 날씨 · 계절).
  * ko(word, key): 그 낱말의 한국어(사전 값이 먼저) — 없으면 그 자리는 안 넣어요.
  */
 export function slotPairs(items, ko) {
-    const week = new Set(), times = new Set(), months = new Set(), out = new Map();
+    const week = new Set(), times = new Set(), months = new Set(), tails = new Map(), out = new Map();
     for (const { text, key } of items) {
         const t = String(text ?? '').trim();
         if (!t || !/[A-Za-z]/.test(t)) continue;
         if (key === 'week') week.add(t); else if (key === 'times' || key === 'time') times.add(t); else if (key === 'month') months.add(t);
+        else if (key === 'weather' || key === 'season') tails.set(t, key);
         else if (key === 'sched') for (const piece of t.split(/\s*,\s*/)) {
             const m = /^([A-Za-z][A-Za-z -]{1,18}?)\s*:\s*(.+)$/.exec(piece);
             const k = m && ko(m[1].trim(), 'slot');
@@ -349,7 +350,31 @@ export function slotPairs(items, ko) {
     }
     for (const t of times) { const kt = ko(t, 'time'); if (kt) out.set(`(${t})`, `(${kt})`); }
     for (const m of months) { const km = ko(m, 'month'); if (km) out.set(`년 ${m}`, `년 ${km}`); }
+    // 1.7.8 띠 날짜 칸 펼침 줄(그 확장 「4/7(월) · <b>정오</b> · Clear」): 날씨는 「 · Clear」 한 글 덩이로 그려져요 — 짧아서(12자 아래) 그 확장이 덩이를 나누지 않고,
+    //   낱말 바꾸기에서는 고정 낱말 열쇠를 뺐으니(hideFixedKeys) 영어로 남았어요 → 덩이 통째 짝. 칸 종류(날씨 · 계절)로만 · 낱말 하나 · 묶음일 때만(자유 글 날씨는 번역 길로)
+    for (const [w, key] of tails) { const kw = ko(w, key); if (kw) out.set(`· ${w}`, `· ${kw}`); }
     return [...out];
+}
+/**
+ * 1.7.8 위치 칸 펼침 머리 줄(그 확장 tiles.js locDet): 「<b>장소</b> — 설명」 의 설명을 60자로 잘라(short) 「 — …」 한 글 덩이로 그려요.
+ *   사전에 설명 통째 번역이 있어도 덩이 앞에 「— 」 가 붙고 잘려 있어 그 확장의 통째 · 앞부분 찾기가 모두 빗나가 영어로 남았어요(사용자 폰: 「1층 후정 — Quiet walled garden behind the 1F S…」).
+ *   → 사전에 번역이 있는 60자 넘는 설명만 그 덩이 통째 짝(「— 잘린 원문…」 → 「— 잘린 번역…」 · 번역은 그 확장의 앞부분 찾기와 같은 비율로 자름). AI 0 · 번역이 없으면 그 확장 「남은 글」 로 가요.
+ */
+const SHORT_N = 60;
+export function placeDescPairs(places, dict) {
+    const out = [];
+    if (!isObj(dict)) return out;
+    for (const p of Array.isArray(places) ? places : []) {
+        const raw = typeof p?.desc === 'string' ? p.desc : '';
+        const flat = raw.replace(/\s+/g, ' ').trim();
+        if (flat.length <= SHORT_N) continue;
+        const k = Object.hasOwn(dict, raw.trim()) ? raw.trim() : Object.hasOwn(dict, flat) ? flat : null;
+        const ko = k && String(dict[k] ?? '').replace(/\s+/g, ' ').trim();
+        if (!ko || !/[^\x00-\x7F]/.test(ko)) continue;
+        const pre = flat.slice(0, SHORT_N - 1), n = Math.max(12, Math.round(pre.length * 0.75));
+        out.push([`— ${pre}…`, `— ${ko.length > n + 1 ? `${ko.slice(0, n).trimEnd()}…` : ko}`]);
+    }
+    return out;
 }
 /**
  * 칩 글(그 확장 사전으로 바꾼 뒤) 마무리: 끝 덩이가 통째 고정 낱말이면(「🕐 Morning」 · 「날씨: Light rain」) 그 한국어로,
@@ -482,7 +507,7 @@ export function trToastMessage(message, trs, { html = true } = {}) {
     return changed ? out.join('') : message;
 }
 /** toastr 네 가지 알림을 한 번 감싸요 — 제목이 title 인 알림만 · on() 일 때만 trs 로 */
-export function wrapMbToasts(toastr, { title, trs, on = () => true } = {}) {
+export function wrapMbToasts(toastr, { title, trs, on = () => true, seen = null } = {}) {
     if (!toastr || toastr.__blMbTr || !title) return false;
     for (const kind of ['info', 'success', 'warning', 'error']) {
         const original = toastr[kind];
@@ -490,6 +515,7 @@ export function wrapMbToasts(toastr, { title, trs, on = () => true } = {}) {
         toastr[kind] = function (message, t, options) {
             let m = message;
             try { if (t === title && on()) m = trToastMessage(message, trs, { html: options?.escapeHtml === false || toastr.options?.escapeHtml !== true }); } catch { m = message; }
+            if (t === title && seen) try { seen(kind, String(message ?? '')); } catch { /* 알림은 그대로 */ }   // 1.7.8 누른 번역이 끝난 것을 알아채요
             return original.call(this, m, t, options);
         };
     }
@@ -601,7 +627,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const base = new Map([...fixedPairs(items, dict, names), ...piecePairs(dict, new Set(texts))]);   // 같은 조각이면 이 채팅 번역(조각 짝)이 이겨요
         const koOf = (word, key) => { if (names.has(word)) return null; const v = Object.hasOwn(dict, word) && !keep.has(word) ? dict[word] : (base.get(word) ?? fixedValue(word, key)); return !v || /[A-Za-z]{2,}/.test(v) ? null : key === 'week' ? shortWeek(v) : v; };
         for (const [k, v] of slotPairs(items, koOf)) base.set(k, v);
-        for (const [k, v] of chipSlotPairs(shownTexts, dict)) if (!names.has(k)) base.set(k, v);   // 1.6.8 「날씨: Sunny」 통째(플레이 기록 줄)
+        for (const [k, v] of chipSlotPairs(shownTexts, dict)) if (!names.has(k)) base.set(k, v);
+        for (const [k, v] of placeDescPairs(state?.data?.map?.places, dict)) base.set(k, v);   // 1.7.8 위치 칸 펼침의 잘린 장소 설명   // 1.6.8 「날씨: Sunny」 통째(플레이 기록 줄)
         const pairs = [...base].filter(([en]) => !keep.has(en) && !lock[en] && !Object.hasOwn(dict, en));
         // 1.6.6 나눔표를 괄호로 싼 번역 짝(sepQuoteValue)은 그 확장 addPairs 로 덮어요 — 사전 판이 올라 화면 번역이 다시 읽고 · 채팅 메타에 저장돼요
         pairs.push(...sepQuotePairs(dict, lock));
@@ -684,6 +711,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         if (filling || !view() || mbOff('trfill', doc)) return 0;   // 1.7.3 끄면 남은 영어를 번역 길로 안 보내요(AI 0)
         const current = core.app.current;
         if (!current?.state) return 0;
+        // 1.7.8 사용자가 누른 번역에서는 지난번에 번역기가 영어 그대로 돌려준 글도 한 번 더 보내요(그 접속 동안 굳히지 않아요) — 자동 번역은 예전처럼 다시 안 보내요
+        if (reason === 'click') tried.clear();
         const tidied = tidy({ draw: false });
         const meta = core.getMeta();
         const dict = isObj(meta?.tr) ? meta.tr : {};
@@ -698,6 +727,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const list = [...new Set([...base, ...lore])];
         if (!list.length) { if (tidied) repaint(); return 0; }
         filling = true;
+        // 1.7.8 그 확장 번역이 끝난 뒤 이어서 보내는 동안 아무 표시가 없어 「안 된다」 고 보였어요(사용자 폰 · 번역기 한 번 기다림) — 누른 번역이면 시작 때 한 줄
+        if (reason === 'click') try { toast?.info?.(`아직 영어로 남은 글 ${list.length}개를 이어서 번역하고 있어요. 지도 이름도 같이 바뀌어요.`, 'Blue Lemonade', { timeOut: 4000 }); } catch { /* 알림 없이 */ }
         let done = 0;
         const chat = chatId();
         const pairs = [];
@@ -719,7 +750,10 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         }
         if (pairs.length && chatId() === chat) tr.addPairs(pairs);
         if (done || tidied) repaint();
-        if (done && reason === 'click') try { toast?.success?.(`화면에 영어로 남던 글 ${done}개도 번역했어요.`, 'Blue Lemonade', { timeOut: 3000 }); } catch { /* 알림 없이 */ }
+        if (reason === 'click') try {
+            if (done) toast?.success?.(`화면에 영어로 남던 글 ${done}개도 번역했어요.`, 'Blue Lemonade', { timeOut: 3000 });
+            else toast?.info?.('이번에는 번역기가 영어 그대로 돌려줬어요. 번역 단추를 다시 누르면 한 번 더 보내요.', 'Blue Lemonade', { timeOut: 5000 });
+        } catch { /* 알림 없이 */ }
         return done;
     }
     const engine = () => { try { return core.settings()?.trEngine === 'st' ? 'st' : 'llm'; } catch { return 'llm'; } };
@@ -736,7 +770,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
             const size = dictSize();
             const grew = size > watch.start;
             if (watch.cancelled && !grew) { watch = null; return; }   // 그 확장의 확인 창에서 취소 — 아무것도 안 해요
-            const open = !!doc.querySelector?.('dialog[open] .popup-button-ok');
+            // 1.7.8 확인 창(「번역할까요?」)만 기다려요 — 미트볼 상태창 · 지도 창(.ss-dlg)도 「확인」 단추가 있는 창이라, 예전엔 그 창을 닫을 때까지 이어 번역이 안 돌았어요
+            const open = !!doc.querySelector?.('dialog[open]:not(.ss-dlg) .popup-button-ok');
             watch.same = size === watch.last ? watch.same + 1 : 0;
             watch.last = size;
             const settled = watch.same >= 2 && !open && !mb.busy();
@@ -746,13 +781,20 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         };
         timers.setTimeout(tick, WATCH_MS);
     }
+    /** 1.7.8 그 확장이 제 이름으로 띄운 알림(src/ext-bridge-tr.js wrapMbToasts 가 알려 줘요): 누른 번역이 끝났다는 알림이면 사전이 잠잠해지길(3초 넘게) 기다리지 않고 바로 이어요.
+     *  사전이 안 늘었어도(번역기가 영어로 돌려준 때 · 남은 글이 없던 때) 이어요 — 예전엔 그때 아무 일도 안 했어요 */
+    function mbToast(kind, message) {
+        if (!watch) return false;
+        const m = String(message ?? '');
+        if (!/번역했어요|번역 안 된 글이 없어요|번역하지 못했어요/.test(m)) return false;
+        watch = null;
+        timers.setTimeout(() => { fill('click').catch(e => console.warn('[Blue Lemonade] 미트볼 번역 메우기', e)); }, 300);   // 그 확장 addPairs · 저장이 먼저
+        return true;
+    }
     /** 그 확장의 자동 번역이 지금 번역 담당에 켜져 있나(그 확장 규칙 그대로: 끔 · 실리 기본 번역일 때만 · 항상) */
     function autoOn() {
-        try {
-            const set = core.settings();
-            const mode = set.trAuto === true ? 'st' : set.trAuto === false ? 'off' : (set.trAuto || 'st');
-            return mode === 'always' || (mode === 'st' && set.trEngine === 'st');
-        } catch { return false; }
+        const mode = autoMode();   // 코드 정리(버그 사냥 2): trAuto 풀기는 autoMode 한 곳에서
+        try { return mode === 'always' || (mode === 'st' && core.settings().trEngine === 'st'); } catch { return false; }
     }
     /** ⑤ 채팅을 열거나 답이 끝나면 잠시 뒤 AI 없는 조각 짝만(번역 단추를 안 눌러도 「Day」 같은 고정 낱말이 한국어로) — 바뀐 게 없으면 저장도 안 해요 */
     let tidyTimer = 0;
@@ -793,7 +835,12 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         // 번역을 묻는 창에서 사람이 누른 취소만(「남은 글 번역하기」는 번역 고치기 창을 스스로 닫아요 — 그 누름은 isTrusted 가 false) · 이미 번역이 늘었으면 그건 메워요
         else if (watch && event.isTrusted && t.closest('dialog[open] .popup-button-cancel')) watch.cancelled = true;
     }
-    return { paint, slotRecord, view, fill, tidy, tidySoon, stateGaps, arm, afterReply, afterTranslate, onClick, autoOn, guardTrFix, reveal, _tried: tried, get watching() { return !!watch; }, get fixOpen() { return fixOpen; } };
+    // 버그 사냥 2: 확인 창을 Esc 로 닫는 것도 취소예요(실리태번 Popup 기본) — 전엔 취소 단추 누름만 봐서, Esc 로 닫으면 15분 동안 지켜보다가
+    //   다음 답 뒤 고정 낱말 짝 하나로 사전이 늘면 유료 메우기가 저절로 돌았어요
+    function onKey(event) {
+        if (watch && event?.isTrusted && event.key === 'Escape' && doc.querySelector?.('dialog[open] .popup-button-cancel')) watch.cancelled = true;
+    }
+    return { paint, slotRecord, view, fill, tidy, tidySoon, stateGaps, arm, mbToast, afterReply, afterTranslate, onClick, onKey, autoOn, guardTrFix, reveal, _tried: tried, get watching() { return !!watch; }, get fixOpen() { return fixOpen; } };
 }
 
 let started = null;
@@ -811,8 +858,9 @@ export function startTrFill(doc = globalThis.document) {
         import('./ext-compat.js').then(m => { compat = m; m.setFaceName(name => (fill.view() ? mb.tr.trString(name) : name)); faces(); }).catch(() => { /* 얼굴은 원문 이름 첫 글자 그대로 */ });
         fill.guardTrFix();   // 1.5.3 「번역 고치기」 동안 숨긴 열쇠를 되돌려 고친 값이 저장되게(검토 1)
         doc.addEventListener('click', fill.onClick, true);
+        doc.addEventListener('keydown', fill.onKey, true);
         // 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는 글도 화면만 번역일 때 사전으로(그 확장 화면 번역 범위 밖이에요)
-        try { wrapMbToasts(globalThis.toastr, { title: typeof mb.core.TITLE === 'string' ? mb.core.TITLE : '미트볼 상태창', trs: t => mb.tr.trString(t), on: () => fill.view() && !mbOff('trtoast', doc) }); } catch { /* 알림은 원문 그대로 */ }
+        try { wrapMbToasts(globalThis.toastr, { title: typeof mb.core.TITLE === 'string' ? mb.core.TITLE : '미트볼 상태창', trs: t => mb.tr.trString(t), on: () => fill.view() && !mbOff('trtoast', doc), seen: (kind, m) => fill.mbToast(kind, m) }); } catch { /* 알림은 원문 그대로 */ }
         // 감시자를 새로 걸지 않고 메시지 꾸미기(공용 #chat 구독 하나)에 얹어요 — 칩 자리 안이 바뀐 기록만 · 답이 오는 동안에도 · 다음 프레임(그리기 전)
         addMessageDecorator('미트볼 칩 번역', list => fill.paint(list), { settle: 0, live: true, order: 90, filter: fill.slotRecord });   // 1.6.8: 굳힌 옛 답 날 칩은 한국어 저장에서도 다시 적어요(화면만 번역 확인은 paint 안에서)
         try {

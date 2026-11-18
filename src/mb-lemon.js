@@ -12,6 +12,7 @@ import { MB_SWITCHES } from './mb-switch.js';
 export const LEMON = 'bl';            // 레몬 탭의 묶음 자리(data-bl-tab-to · data-bl-tab-g) — 숫자 묶음과 겹치지 않게 글자
 export const LEMON_NAME = '블루레몬';
 export const LEMON_TITLE = '블루레몬 · 미트볼 맞춤';
+export const MB_MISSING = '미트볼 상태창 확장이 꺼져 있거나 깔려 있지 않아요. 확장 탭 › 「확장 관리」에서 미트볼 상태창을 켜면 그 칸의 「블루레몬」 탭에 이 설정이 나와요.';
 const SHEET_ID = 'bl-mb-lemon-css';
 const PANEL = 'bl-ext-lemonpane', BAR = 'bl-ext-lemonbar', TAB = 'bl-ext-lemon-tab', OPEN = 'bl-ext-lemon-open', BODY = 'bl-ext-lemon-body';
 
@@ -146,11 +147,18 @@ function unmountBody(root) {
     body.textContent = '';
 }
 
+/** 1.7.7 미트볼이 스스로 하게 돼 스위치 대신 안내 줄이 된 설정(예: chat.mbBack) → 그 안내 줄 */
+const upRowOf = (body, path) => { const sw = MB_SWITCHES.find(x => x.setting === path); return sw ? body?.querySelector(`[data-mb-up="${sw.key}"]`) : null; };
 /** 테마 설정(찾기 · 변경한 설정 · 즐겨찾기)에서 옮긴 설정을 고르면: 확장 서랍 → 미트볼 설정 칸 → 레몬 탭 → 그 줄
  *  path: isLemonPath 의 길(「@mb:열쇠」면 그 스위치 줄 · 키면 그 칸 줄). 칸이 없으면(미트볼이 없거나 꺼짐) 알리고 false */
 export async function gotoMbLemon(path = '', doc = globalThis.document) {
     const root = doc.querySelector('#ss-settings');
-    if (!root) { try { globalThis.toastr?.info?.('미트볼 상태창 확장이 켜져 있을 때 확장 탭의 미트볼 상태창 칸 › 「블루레몬」 탭에 있어요.', LEMON_TITLE); } catch { /* 알림 없이 */ } return false; }
+    if (!root) {   // 1.7.7 미트볼이 꺼져 있거나 안 깔린 때: 어디서 켜는지까지 알리고 확장 탭을 열어 둬요(전에는 「켜져 있을 때 … 있어요」 한 줄뿐이라 어디로 가야 할지 몰랐어요)
+        try { globalThis.toastr?.info?.(MB_MISSING, LEMON_TITLE, { timeOut: 9000 }); } catch { /* 알림 없이 */ }
+        const drawer = doc.getElementById('rm_extensions_block');
+        if (drawer && !drawer.classList.contains('openDrawer')) doc.querySelector('#extensions-settings-button .drawer-toggle')?.click();
+        return false;
+    }
     const drawer = doc.getElementById('rm_extensions_block');
     if (drawer && !drawer.classList.contains('openDrawer')) doc.querySelector('#extensions-settings-button .drawer-toggle')?.click();
     const content = root.querySelector('.inline-drawer-content');
@@ -164,8 +172,8 @@ export async function gotoMbLemon(path = '', doc = globalThis.document) {
     await mountBody(root);
     const key = path.startsWith('@mb:') ? path.slice(4) : '';
     const target = key === 'raw' ? body?.querySelector('[data-act="mb-fit-raw"]')
-        : key ? body?.querySelector(`[data-act="mb-fit"][data-key="${key}"]`)
-        : path && !path.startsWith('@mb') ? body?.querySelector(`[data-toggle="${path}"], [data-path="${path}"], [data-range="${path}"], [data-num="${path}"]`) : null;
+        : key ? body?.querySelector(`[data-act="mb-fit"][data-key="${key}"], [data-mb-up="${key}"]`)
+        : path && !path.startsWith('@mb') ? body?.querySelector(`[data-toggle="${path}"], [data-path="${path}"], [data-range="${path}"], [data-num="${path}"]`) || upRowOf(body, path) : null;
     const row = target?.closest?.('.salty-row, .salty-stack, .salty-slider') || root.querySelector(`.${PANEL}`);
     if (row) {
         for (const old of root.querySelectorAll('[data-bl-lemon-hit]')) old.removeAttribute('data-bl-lemon-hit');

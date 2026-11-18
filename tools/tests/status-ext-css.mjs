@@ -208,8 +208,8 @@ check('⑬ 2.7.21 타일 판과 이름이 겹치는 알림 단추는 좁혀 걸�
         assert.ok(!/\.ss-t-x\b/.test(sel.replace(/button\.ss-t-x/g, '')), `넓은 .ss-t-x: ${sel}`);
         assert.ok(!/\.ss-t-tip/.test(sel) || /\.ss-toast \.ss-t-tip/.test(sel), `넓은 .ss-t-tip: ${sel}`);
     }
-    assert.ok(rules.some(r => r.selectors.includes('body.salty #ss-settings .ss-set-inline > .menu_button:not(.ss-set-btn)') && /width: var\(--bl-ui-ctl, 36px\)/.test(r.body)), '네모 아이콘 단추(새로고침)만 36 칸');
-    assert.ok(rules.some(r => r.selectors.includes('body.salty #ss-settings .ss-set-inline > .ss-set-btn') && /padding: 0 10px/.test(r.body)), '글 단추는 단추 줄과 같은 꼴');
+    assert.ok(rules.some(r => r.selectors.includes('body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > .menu_button:not(.ss-set-btn)') && /width: var\(--bl-ui-ctl, 36px\)/.test(r.body)), '네모 아이콘 단추(새로고침)만 36 칸');
+    assert.ok(rules.some(r => r.selectors.includes('body.salty :is(#ss-settings, .ss-scope .ss-set-sheet) .ss-set-inline > .ss-set-btn') && /padding: 0 10px/.test(r.body)), '글 단추는 단추 줄과 같은 꼴');
     assert.ok(rules.some(r => r.selectors.some(s => /#ss-hud \.ss-t\.ic\.open/.test(s))), '2.7.21 띠의 여는 아이콘도 같은 고양이');
 });
 check('⑭ 검수(11-15): 얼굴 동그라미는 토큰만 · 「원작 그대로 보기」면 선 아이콘 글꼴을 빼요 · 세로 2열 격자 · 편의 기능은 표식 하나로 숨겨요', () => {
@@ -287,5 +287,16 @@ check('⑱ 부가 기능 탭(11-17 「버튼 글자 붙어 있는 거랑 버튼�
     assert.match(at(`${X} .ss-fold > .ss-mg-b > :first-child`), /margin-top:\s*0/, '첫 칸의 제 위 여백은 0 — 판마다 4 · 18 · 30 으로 달랐어요');
     assert.match(at(`${X} .ss-gd-who > .ss-pill`), /padding-block:\s*5px/, '공략 「누구」 칩 위아래 안쪽 5');
     for (const r of rules.filter(r => r.selectors.some(s => /\.ss-(story|fold|mg-b|gd-who)\b/.test(s) || /\.ss-groups(?: > button > span)?$/.test(s) && /grid-auto-columns|nowrap/.test(r.body)))) assert.ok(r.selectors.every(s => s.includes(':not([data-bl-ext-raw])')), `원작 그대로 보기에서는 안 걸려요: ${r.selectors[0]}`);
+});
+check('⑲ 1.7.8 설정 서랍 체크 줄 사이(「업데이트 내역도 너무 밑에 있음 … 여백 너무 많아」): 한 줄 체크 줄에 공용 최소 높이 36 이 남지 않게 · 체크 줄 짝 단추는 위 4 · 글 시작선에', () => {
+    const at = sel => rules.filter(r => r.selectors.includes(sel)).map(r => r.body).join(' ');
+    assert.ok(/min-height:\s*0/.test(at('body.salty #ss-settings .inline-drawer-content label.checkbox_label')), '체크 줄 높이는 글만큼');
+    const pair = rules.find(r => r.selectors.some(s => s.includes('label.checkbox_label + .ss-set-btns > .menu_button:only-child')));
+    assert.ok(pair, '짝 단추 규칙');
+    for (const act of ['whatsnew', 'tipreset', 'stashall']) assert.ok(pair.selectors[0].includes(`[data-s-act="${act}"]`), act);
+    assert.ok(!pair.selectors[0].includes('lightall'), '「한 번에 가볍게」는 짝이 아니라 그대로');
+    assert.ok(pair.body.includes('margin-block-start: calc(var(--bl-s1, 4px) - var(--bl-s3, 12px))'), '단추 줄 위 12 → 4');
+    assert.ok(pair.body.includes('margin-inline-start: calc(var(--bl-mb-cbox, 20px) + var(--bl-s2, 8px))'), '글 시작선(체크 20 + 8)');
+    assert.ok(!pair.selectors.join(',').includes(':has('), ':has 없이');
 });
 console.log(`status-ext-css: ${passed}개 통과`);

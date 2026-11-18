@@ -102,10 +102,30 @@ export function normalizeRow(item, toMs = defaultMs) {
     };
 }
 export const rowKey = r => `${r.k}\u0001${r.o}\u0001${r.f}`;
+// 버그 사냥 2: 실리태번이 ISO 로 바꾸기 전 옛 꼴 시각 둘도 읽어요(그 자리 시각) — 채팅 그래프 날짜가 빠지고 북마크 목록이 맨 뒤로 갔어요
+const OLD_HUMAN = /^(\d{4})-(\d{1,2})-(\d{1,2}) @(\d{1,2})h ?(\d{1,2})m ?(\d{1,2})s ?(\d{1,3})ms$/;
+const OLD_WORDS = /^([A-Za-z]{3,9})\.? (\d{1,2}),? (\d{4}),? (\d{1,2}):(\d{2}) ?([ap])\.?m\.?$/i;
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 export function defaultMs(value) {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
-    const t = Date.parse(String(value ?? ''));
-    return Number.isFinite(t) ? t : 0;
+    const text = String(value ?? '').trim();
+    const t = Date.parse(text);
+    if (Number.isFinite(t)) return t;
+    let m = OLD_HUMAN.exec(text);
+    if (m) { const v = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6], +m[7]).getTime(); return Number.isFinite(v) ? v : 0; }
+    m = OLD_WORDS.exec(text);
+    const month = m ? MONTHS.indexOf(m[1].slice(0, 3).toLowerCase()) : -1;
+    if (m && month >= 0) {
+        let h = +m[4] % 12; if (m[6].toLowerCase() === 'p') h += 12;
+        const v = new Date(+m[3], month, +m[2], h, +m[5]).getTime();
+        return Number.isFinite(v) ? v : 0;
+    }
+    return 0;
+}
+/** 채팅 시각 → ms: 실리태번 timestampToMoment(옛 꼴까지 아는 것)를 먼저 · 없거나 못 읽으면 defaultMs (채팅 정리 toMs 와 같은 길) */
+export function chatTimeMs(value, toMoment = globalThis.SillyTavern?.getContext?.()?.timestampToMoment) {
+    try { const v = toMoment?.(value)?.valueOf?.(); if (Number.isFinite(v) && v > 0) return v; } catch { /* 모름 */ }
+    return defaultMs(value);
 }
 
 /** 줄(또는 {k,o,f,integrity})에 맞는 저장 항목 id — integrity 가 같으면 먼저, 아니면 주인 · 이름이 같은 것 */

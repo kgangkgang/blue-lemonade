@@ -141,7 +141,7 @@ await ok('답을 지우면: 지우기 전 기억으로 그 답 몫을 저장 뒤
     const r = S.syncGone(C, fake, snap);
     assert.equal(r.changed, true);
     const e = C.chatMetadata.statussim.adjust.find(a => a[S.TAG]);
-    assert.equal(e[S.TAG].k, 'del'); assert.equal(e.label, '지운 답 #3 빼기 (블루레몬)');
+    assert.equal(e[S.TAG].k, 'del'); assert.equal(e.label, '지운 답 #3 빼기 (지우기 전 번호 · 블루레몬)');
     assert.deepEqual(now(), { Mira: [17, 0], Oskar: [0, 0] });
     assert.equal(S.syncHidden(C, fake).changed, false, '감긴 답 맞추기가 지운 답 기록을 건드리지 않아요');
     assert.deepEqual(now(), { Mira: [17, 0], Oskar: [0, 0] });
@@ -210,7 +210,7 @@ await ok('지운 스와이프: 옛 스와이프 몫을 빼고 지금 스와이�
     m.swipe_id = 0; m.mes = 'b'; m.extra.statussim.bySwipe = { 0: [['aff', 'Mira +2']] }; m.swipes = ['b'];
     S.syncGone(C, fake, snap);
     const e = C.chatMetadata.statussim.adjust.find(a => a[S.TAG]);
-    assert.equal(e.label, '지운 스와이프 #3 빼기 (블루레몬)');
+    assert.equal(e.label, '지운 스와이프 #3 빼기 (지우기 전 번호 · 블루레몬)');
     assert.deepEqual(now(), { Mira: [19, 0], Oskar: [0, 0] });   // 10 + 2 + 7
 });
 await ok('돈도 같은 원리(지갑 통째 저장)', async () => {
@@ -235,7 +235,7 @@ await ok('조용히 반영: 알림 0개 · 남는 것은 편집 기록 줄(번�
     await new Promise(r => setTimeout(r, 1700));   // 예전 알림 묶음 시간(1.5초)보다 길게
     assert.deepEqual(toasts, [], '알림 없음');
     const labels = C.chatMetadata.statussim.adjust.filter(a => a[S.TAG]).map(a => a.label);
-    assert.deepEqual(labels, ['지운 답 #3 빼기 (블루레몬)']);
+    assert.deepEqual(labels, ['지운 답 #3 빼기 (지우기 전 번호 · 블루레몬)']);
     for (const l of labels) assert.ok(!/Mira|Oskar/.test(l), '편집 기록 줄에 저장 이름(번역 전)이 안 들어가요');
     const src = fs.readFileSync(path.join(root, 'src/mb-autosub.js'), 'utf8');
     assert.ok(!/toastr|\.info\(/.test(src), '이 모듈은 알림을 안 띄워요');
@@ -320,6 +320,24 @@ await ok('1.7.6 통째 저장이 채팅 맨 끝에 있을 때(그 확장이 지�
     world(); snap = S.remember(C.chat, C.chatMetadata.statussim);
     C.chat.splice(5, 1); clampLikeTheirs();
     assert.equal(S.syncGone(C, fake, snap).made.length, 0);
+});
+await ok('1.7.7 못 하는 까닭: 스위치 끔 · 계산 부분 못 받음 · 지운 답은 할 일이 있을 때만 「못 함」', async () => {
+    const docOf = off => ({ documentElement: { getAttribute: () => off }, body: { classList: { contains: () => true } } });
+    S.useEngine(fake);
+    assert.equal(await S.whyNot(docOf('')), '', '할 수 있으면 까닭 없음');
+    assert.equal(await S.whyNot(docOf('autosub')), 'off', '스위치를 껐어요');
+    S.useEngine(null);
+    assert.equal(await S.whyNot(docOf('')), 'module', '그 확장의 계산 부분을 못 받았어요');
+    for (const k of ['off', 'module']) { assert.ok(S.WHY_TEXT[k].endsWith('.') && S.WHY_TEXT[k].includes('요'), '해요체 한 문장'); assert.ok(!/[^ ]·|·[^ ]/.test(S.WHY_TEXT[k])); }
+    // 지운 답: 통째 저장이 있는데 계산을 못 받으면 null(부르는 쪽이 까닭을 알려요) · 통째 저장이 없으면 할 일이 없어 false(알리지 않아요)
+    world(); let snap = S.remember(C.chat, C.chatMetadata.statussim); C.chat.splice(3, 1);
+    assert.equal(await S.applyGone(C, snap), null, '할 일이 있는데 못 함');
+    world(); snap = S.remember(C.chat, C.chatMetadata.statussim); C.chatMetadata.statussim.adjust = []; C.chat.splice(3, 1);
+    assert.equal(await S.applyGone(C, snap), false, '통째 저장이 없으면 원작이 알아서 빼요 — 못 받았어도 알릴 것이 없어요');
+    S.useEngine(fake);
+    const src = fs.readFileSync(path.join(root, 'src/mb-autosub.js'), 'utf8');
+    assert.ok(src.includes('if (r === null) onFail?.(id)'), '못 한 때만 부르는 쪽에 알려요');
+    assert.ok(fs.readFileSync(path.join(root, 'src/mb-hidden.js'), 'utf8').includes('startAutoSub(doc, { onFail: id => tellGone(id) })'));
 });
 await ok('CI 등록(release-check.yml)', async () => {
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/mb-autosub.mjs .'));

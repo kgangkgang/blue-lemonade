@@ -253,6 +253,42 @@ await ok('원작 파일 · 서랍은 안 고치고 · 알림을 안 띄우고 ·
     assert.ok(!/eng(?:ine)?\.\w+\s*=[^=]/.test(src), '그 확장 함수를 바꿔 끼우지 않아요');
     assert.match(fs.readFileSync(path.join(root, 'src/mb-hidden.js'), 'utf8'), /startEditSync\(doc/);
 });
+await ok('1.7.8 본문이 다른 언어 · 본명으로 이름을 부를 때(영어 저장 채팅 · 일본어 대사 · 「본명」): 로어북 인물 항목의 이름 줄로 같은 사람을 알아봐요', async () => {
+    // 사용자 폰(1.7.7): 변화 줄은 영어 이름(「Mira +2」), 본문은 일본어 대사(「ミラ」) · 영어 지문 · 본명(「Rafe」)으로 불러서 「고치기 전에도 안 나온 사람」 으로 보고 아무도 안 뺐어요
+    //   이름은 지어낸 것이에요. 로어북 항목: 이름(머리표) · Name 줄(영어 · 괄호 안 일본어) · Real Name 줄
+    const lore = [
+        { comment: '[천사]미라', content: '- **Name:** Mira (ミラ)\n- **Role:** Guard' },
+        { comment: '[악마]오스카', content: '* Name: Oskar Vale (オスカー・ヴェイル)' },
+        { comment: '[천사]수아', content: '- **Name:** Sua / Real Name: Rafe (a name set aside)' },
+    ];
+    const al = E.loreAliases(lore);
+    assert.ok(E.formsOf('Mira', { lore: al }).includes('ミラ')); assert.ok(E.formsOf('Mira', { lore: al }).includes('미라'));
+    assert.ok(E.formsOf('Sua', { lore: al }).includes('Rafe')); assert.ok(E.formsOf('Oskar', { lore: al }).includes('オスカー'));
+    assert.ok(!E.formsOf('Mira', { lore: al }).includes('Guard'), '이름 줄만 봐요');
+    // 다른 사람 항목의 부르는 말 목록으로도(이름 줄에 일본어가 없는 사람 — 「* Name: Mira」 만 있는 꼴)
+    const al2 = E.loreAliases([{ comment: '[천사]수아', content: '* Name: Sua' }, { comment: '[악마]오스카', content: '- **Name:** Oskar\n- **Sua:** "スアさん" / (Privately) "スア."\n- **Role:** "Guard"' }]);
+    assert.ok(E.formsOf('Sua', { lore: al2 }).includes('スア'), JSON.stringify(E.formsOf('Sua', { lore: al2 })));
+    assert.ok(E.formsOf('Sua', { lore: al2 }).includes('수아'));
+    assert.ok(!E.formsOf('Sua', { lore: E.loreAliases([{ content: '* Name: Sua' }, { content: '- **Sua:** "ぼくがうたうのは"' }]) }).includes('ぼくがうたうのは'), '히라가나 말은 이름이 아니에요');
+    assert.ok(!E.formsOf('Oskar', { lore: al2 }).includes('Guard') && !(al2.get('role') || []).length, '영어 값 · 역할 줄은 안 봐요');
+    world();
+    const m = C.chat[3];
+    m.extra.statussim.bySwipe[0] = [['aff', 'Mira +2, Sua +1'], ['trust', 'Oskar +1']];
+    const before = ['「警備部のミラでも呼びましょうか？」', 'Oskar leans back. オスカー smiles.', 'He keeps the chocolate for when Rafe drops by.', 'ミラ laughs.'].join('\n\n');
+    const after = 'Oskar leans back. オスカー smiles.';
+    m.mes = before;
+    E.useLore(null);
+    let r = await go(3, edit(3, after));
+    assert.deepEqual(r.cut, [], '로어북 없이는(예전처럼) 아무도 못 알아봐요');
+    world(); C.chat[3].extra.statussim.bySwipe[0] = [['aff', 'Mira +2, Sua +1'], ['trust', 'Oskar +1']]; C.chat[3].mes = before;
+    E.useLore(lore);
+    r = await go(3, edit(3, after));
+    assert.deepEqual(r.cut.sort(), ['Mira', 'Sua'], JSON.stringify(r));
+    assert.deepEqual(now().Mira, [17, 0], 'Mira 는 이 답의 +2 만 빠져요(앞뒤 답 +10 · +7 은 그대로)'); assert.deepEqual(now().Oskar, [0, 1], 'Oskar 는 남은 문단에 있어 그대로');
+    // 되돌리면 되살아나요(일본어 이름으로 돌아와도)
+    r = await go(3, edit(3, before)); assert.deepEqual(r.back.sort(), ['Mira', 'Sua']);
+    E.useLore(null);
+});
 await ok('CI 등록(release-check.yml)', async () => {
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/mb-editsync.mjs .'));
 });

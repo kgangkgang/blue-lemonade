@@ -26,6 +26,23 @@ export function nameAliases(name) {
     return out;
 }
 
+// 버그 사냥 2: 가릴 이름 찾기 틀(로그 복사 · 채팅 캡처가 같이 써요). 로마자로 시작 · 끝나는 이름은 그쪽 끝을 낱말 경계로 —
+//   「Eve」 가 Every · evening · never 속에서 걸려 ○○ry · ○○ning · n○○r 이 됐어요. 한글 조사(Eve와) · 끝 s(Eves) · 's 는 그대로 걸려요.
+//   한글 · 가나 이름은 예전처럼 어디서든(조사가 붙어요).
+const LATIN = /\p{Script=Latin}|\p{N}/u;
+const escapeRe = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** 가릴 이름 목록 → 찾기 정규식(gi · 긴 이름 먼저) — 이름이 없으면 null */
+export function namePattern(names) {
+    const list = [...new Set((Array.isArray(names) ? names : []).map(n => String(n ?? '').trim()).filter(Boolean))].sort((a, b) => b.length - a.length);
+    if (!list.length) return null;
+    return new RegExp(list.map((n) => {
+        const chars = [...n];
+        const head = LATIN.test(chars[0]) ? '(?<![\\p{Script=Latin}\\p{N}])' : '';
+        const tail = LATIN.test(chars.at(-1)) ? '(?=s?(?![\\p{Script=Latin}\\p{N}]))' : '';
+        return head + escapeRe(n) + tail;
+    }).join('|'), 'giu');
+}
+
 /** 이름 목록 + 이름마다 다른 표기 — 적은 목록은 적은 그대로(빈칸만 뺌 · 6.3.8 과 같다), 더하는 표기만 대소문자 무시 중복 없이 */
 export function withNameAliases(names) {
     const out = (Array.isArray(names) ? names : []).map(n => String(n ?? '').trim()).filter(Boolean);

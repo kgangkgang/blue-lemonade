@@ -67,8 +67,45 @@ export function mentions(text, form) {
     for (let i = t.indexOf(f); i >= 0; i = t.indexOf(f, i + 1)) if (i === 0 || CJK.test(f) || !/[\p{L}\p{N}]/u.test(t[i - 1])) return true;
     return false;
 }
+/**
+ * 1.7.8 로어북 인물 항목의 이름 줄로 같은 사람의 여러 꼴을 묶어요 → Map(이름 열쇠 → 꼴 목록)
+ *   사용자 폰(1.7.7 · 영어 저장 채팅): 변화 줄은 영어 이름(「Mira +2」)인데 본문은 일본어 대사(「ミラ」) · 본명(「Rafe」)으로 불러서,
+ *   「고치기 전에도 안 나온 사람」 으로 보고 아무도 안 뺐어요. 항목 머리표(「[…]미라」) · Name 줄(「Mira (ミラ)」 · 「Oskar Vale (オスカー・ヴェイル)」)
+ *   · Real / Original / Former Name 줄의 꼴을 한 사람으로 묶어요. 이름 줄만 봐요(역할 · 설명 줄은 안 봐요).
+ */
+const NAME_LINE = /^\s*(?:[-*•·]\s*)?(?:\*\*|__)?\s*(?:full\s+|real\s+|original\s+|former\s+|true\s+)?(?:name|이름|본명|성명|名前|本名|氏名)\s*(?:\*\*|__)?\s*[:：]\s*(.+)$/iu;
+const NAME_TAIL = /\s*(?:\*\*|__)?\s*(?:full\s+|real\s+|original\s+|former\s+|true\s+)?(?:name|이름|본명|名前|本名)\s*(?:\*\*|__)?\s*[:：]\s*/giu;
+const namePieces = v => String(v ?? '').replace(/\*\*|__|`/g, '').replace(NAME_TAIL, ' / ').replace(/\((?![^)]*[ぁ-ヿ㐀-鿿가-힯])[^)]*\)/gu, ' ')
+    .split(/\s*(?:[/／(（)）,，|]|\s[-–—]\s)\s*/u).map(s => s.trim()).filter(s => s && [...s].length >= 2 && [...s].length <= 30);
+const ADDRESS = /^\s*[-*•·]\s*(?:\*\*|__)?\s*([^:：*"「“]{2,40}?)\s*(?:\*\*|__)?\s*[:：]\s*(?:\*\*|__)?\s*["「“]([^"」”]{1,24})["」”]/u;
+const HONOR = /(?:さん|さま|様|君|くん|ちゃん|殿|どの|先輩|室長|部長|課長|局長|長官|님|씨)+$/u;
+const OTHER_SCRIPT = /[぀-ヿ㐀-鿿가-힯]/u;
+export function loreAliases(entries) {
+    const out = new Map();
+    for (const e of Array.isArray(entries) ? entries : []) {
+        const lines = String(e?.content ?? '').split(/\r?\n/);
+        const forms = new Set();
+        for (const line of lines.slice(0, 40)) { const m = NAME_LINE.exec(line); if (m) for (const p of namePieces(m[1])) { forms.add(p); for (const w of p.split(/[\s·・]+/u)) if ([...w].length >= 2) forms.add(w); } }
+        // 부르는 말 목록(「- **Mira:** "ミラさん"」 · 「- Mira: "ミラ"」): 한 사람을 다른 글자(가나 · 한자 · 한글)로 부르는 꼴 — 높임 꼬리를 떼고 그 사람 꼴에 더해요
+        for (const line of lines) {
+            const m = ADDRESS.exec(line); if (!m) continue;
+            const who = m[1].replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(), call = m[2].replace(HONOR, '').replace(/[.。!！?？]+$/u, '').trim();
+            if (!who || [...who].length > 30 || !OTHER_SCRIPT.test(call) || [...call].length < 2 || [...call].length > 12 || /[ぁ-ゖ]/u.test(call)) continue;   // 히라가나가 든 값은 이름이 아니라 말(노래 제목 · 대사)이에요
+            const k = norm(who), had = out.get(k) || [who];
+            out.set(k, [...new Set([...had, call])]);
+        }
+        if (!forms.size) continue;
+        const tag = String(e?.comment ?? '').replace(/^(?:\s*[[【(（][^\]】)）]{0,12}[\]】)）]\s*)+/u, '').trim();
+        if (tag && [...tag].length >= 2 && [...tag].length <= 16 && !/[:：]/.test(tag)) forms.add(tag);
+        const group = [...forms];
+        const all = new Set(group); for (const f of group) for (const g of out.get(norm(f)) || []) all.add(g);
+        const merged = [...all];
+        for (const f of merged) out.set(norm(f), merged);
+    }
+    return out;
+}
 /** 이름 하나의 여러 꼴: 그대로 · 괄호 뗀 것 · 띄어 쓴 조각(성 · 이름) · 관계 칸의 그 사람 이름 · 합친 이름(rel.alias) · 화면 번역 이름(tr) */
-export function formsOf(name, { rel = null, tr = null, find = null } = {}) {
+export function formsOf(name, { rel = null, tr = null, find = null, lore = null } = {}) {
     const out = new Set(), add = s => { const v = String(s ?? '').trim(); if ([...v].length >= 2) out.add(v); };
     const one = s => { const v = String(s ?? ''); add(v); const bare = v.replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(); add(bare); for (const w of bare.split(/[\s·・,，/]+/u)) add(w); for (const m of v.matchAll(/[(（]([^)）]+)[)）]/g)) add(m[1]); };
     const names = [name];
@@ -77,6 +114,7 @@ export function formsOf(name, { rel = null, tr = null, find = null } = {}) {
     const target = norm(who?.name ?? name);
     for (const [k, v] of Object.entries(rel?.alias && typeof rel.alias === 'object' ? rel.alias : {})) if (norm(v) === target) names.push(k);
     for (const n of names) { one(n); if (tr) { let t = null; try { t = tr(n); } catch { t = null; } if (t && t !== n) one(t); } }
+    if (lore?.size) for (const f of [...out]) for (const g of lore.get(norm(f)) || []) add(g);   // 1.7.8 로어북 이름 줄(다른 언어 · 본명)
     return [...out];
 }
 export const mentionsAny = (text, forms) => forms.some(f => mentions(text, f));
@@ -106,13 +144,13 @@ function tidyState(m) {
  *   빼기: 지금 안 뺀 인물 가운데 고치기 전에는 나왔고 고친 뒤에는 안 나오는 사람(되돌린 적 있는 사람 keep 은 빼요)
  *   되살리기: 뺀 인물 가운데 고친 뒤 본문에 다시 나오는 사람
  */
-export function decide(m, before, after, eng, { rel = null, tr = null, find = null, state = null } = {}) {
+export function decide(m, before, after, eng, { rel = null, tr = null, find = null, state = null, lore = null } = {}) {
     const out = { cut: [], back: [] };
     const ops = drawer(m); if (!ops) return out;
     const st = stateOf(m, true), seen = new Set();
     for (const p of personParts(ops, eng, state)) {
         const k = norm(p.name); if (seen.has(k)) continue; seen.add(k);
-        const forms = formsOf(p.name, { rel, tr, find });
+        const forms = formsOf(p.name, { rel, tr, find, lore });
         const now = mentionsAny(after, forms);
         if (st.off[k]) { if (now) { delete st.off[k]; out.back.push(p.name); } continue; }
         if (now || st.keep[k] || typeof before !== 'string' || !mentionsAny(before, forms)) continue;
@@ -179,9 +217,9 @@ export function syncEdit(c, eng, i, { tr = null } = {}) {
 }
 
 /** 이 답에서 뺀 인물의 화면 이름 꼴들(칩 흐리게 · 시험) */
-export function cutForms(m, { rel = null, tr = null, find = null } = {}) {
+export function cutForms(m, { rel = null, tr = null, find = null, lore = null } = {}) {
     const st = stateOf(m); const out = [];
-    for (const o of Object.values(st.off)) out.push(...formsOf(o.name, { rel, tr, find }));
+    for (const o of Object.values(st.off)) out.push(...formsOf(o.name, { rel, tr, find, lore }));
     return out;
 }
 /** 답 아래 칩 가운데 뺀 인물의 애정 · 우정 칩에 표식(data-bl-cut — 시트가 흐리게 · 줄 그어요). 표식을 단 수 */
@@ -208,6 +246,23 @@ async function mbCore(doc = globalThis.document) {
 }
 let coreP = null;
 const core = () => (coreP ??= mbCore().then(m => m || (coreP = null)));
+// 1.7.8 이 채팅에 걸린 로어북(카드 안 책 · 카드에 건 책 · 채팅 로어북 · 모임 멤버) 항목 — 채팅 · 캐릭터 · 로어북이 바뀔 때만 다시 읽어요
+let loreMemo = { key: null, p: null }, testLore = undefined;
+/** 시험용: 로어북 항목 대신 넣기(undefined 로 되돌림 · null 이면 없음) */
+export const useLore = entries => { testLore = entries; };
+async function loreOf(c) {
+    if (testLore !== undefined) return loreAliases(testLore || []);
+    let key = ''; try { key = `${c.groupId ?? ''}|${c.characterId ?? ''}|${c.getCurrentChatId?.() ?? ''}|${c.chatMetadata?.world_info ?? ''}`; } catch { return new Map(); }
+    if (loreMemo.key !== key) loreMemo = { key, p: (async () => {
+        const entries = [], names = new Set();
+        const cards = c.groupId ? (c.groups?.find?.(g => g.id === c.groupId)?.members || []).map(a => c.characters?.find?.(x => x.avatar === a)) : [c.characters?.[c.characterId]];
+        for (const ch of cards) { const w = ch?.data?.extensions?.world; if (w) names.add(String(w)); for (const e of ch?.data?.character_book?.entries || []) if (e?.enabled !== false) entries.push({ content: e?.content, comment: e?.comment ?? e?.name }); }
+        if (c.chatMetadata?.world_info) names.add(String(c.chatMetadata.world_info));
+        for (const n of names) { try { const b = await c.loadWorldInfo?.(n); for (const e of Object.values(b?.entries || {})) if (!e?.disable) entries.push({ content: e?.content, comment: e?.comment }); } catch { /* 그 책은 빼요 */ } }
+        return loreAliases(entries);
+    })().catch(() => new Map()) };
+    return loreMemo.p;
+}
 let testCore = undefined;
 /** 시험용: 그 확장 core 대신 넣기 */
 export const useCore = c => { testCore = c; };
@@ -233,7 +288,8 @@ export function applyEdit(c = ctx(), i, before, { eng = undefined } = {}) {
         let state = null; try { state = e.compute(i + 1, { bake: true })?.state ?? null; } catch { state = null; }
         const rel = state?.data?.rel ?? meta.base?.data?.rel ?? null;
         let d, r;
-        try { d = decide(m, before, m.mes, e, { rel, tr: h.tr, find: h.find, state }); r = syncEdit(c, e, i, { tr: h.tr }); } catch { return null; }
+        const lore = await loreOf(c);
+        try { d = decide(m, before, m.mes, e, { rel, tr: h.tr, find: h.find, state, lore }); r = syncEdit(c, e, i, { tr: h.tr }); } catch { return null; }
         if (!r.changed && !d.cut.length && !d.back.length) return { ...d, changed: false };
         try { await Sub.applyHidden(c, { kind: 'edit', eng: e, save: false }); } catch { /* 뒤 저장은 다음 맞추기 때 */ }
         try { await c?.saveMetadata?.(); } catch { /* 다음 저장 때 */ }
@@ -254,7 +310,7 @@ export async function paint(list, doc = globalThis.document) {
         if (has && !h) { h = await helpers(); rel = c.chatMetadata?.[META]?.base?.data?.rel ?? null; try { rel = h.core?.app?.current?.state?.data?.rel ?? rel; } catch { /* 처음 상태로 */ } }
         // 1.7.7 뺀 인물이 없고 표식을 단 적도 없는 답은 칩을 찾지 않아요 — 예전에는 꾸미기가 돌 때마다(채팅 열기 · 답 그리기) 메시지마다 칩을 찾았어요(거의 모든 답이 뗄 표식도 없는데)
         if (!has && !marked.has(mes)) continue;
-        const k = markChips(mes, has ? cutForms(m, { rel, tr: h.tr, find: h.find }) : []);
+        const k = markChips(mes, has ? cutForms(m, { rel, tr: h.tr, find: h.find, lore: await loreOf(c) }) : []);
         if (k) marked.add(mes); else marked.delete(mes);
         n += k;
     }

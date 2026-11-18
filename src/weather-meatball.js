@@ -31,6 +31,37 @@ export const MEATBALL_WEATHER = Object.freeze([
 const CALM = /구름|흐[림린리]|한파|추위|추운|쌀쌀|무더|더위|더운|덥|후텁|습함|습한|건조|포근|따뜻|선선|시원|잔잔|고요|cloud|overcast|gloom|cold|chill|frost|freez|heat|hot|humid|muggy|dry|mild|warm|cool|calm|still/i;
 const NIGHT_TIME = /밤|심야|자정|한밤|night|midnight/i;
 const DUSK_TIME = /저녁|새벽|해\s*질|노을|황혼|evening|dawn|dusk|twilight|sunset|sunrise/i;
+// 버그 사냥 2: 그 확장 달력이 시각 꼴(「23:30」 · 「오후 11:30」 · 「11:30 PM」 · 「午後11時」)이면 낱말이 없어 밤에도 햇살이 나왔어요 — 낱말이 없을 때만 시각으로 가려요
+const DAY_TIME = /낮|아침|정오|점심|\bday(?:time)?\b(?!\s*\d)|morning|noon|afternoon/i;   // 「Monday 23:30」 의 day 는 낱말이 아니에요
+const CLOCK = /(?:(오전|오후|午前|午後)\s*)?(\d{1,2})\s*(?::|時|시)\s*(?:(\d{1,2})\s*(?:分|분)?)?\s*(?:([ap])\.?\s?m\b\.?)?/i;   // a · p 는 뒤에 m 이 올 때만(「9:00 pizza」 의 p 는 오후가 아니에요)
+/** 시각 글 → 0 ~ 23 시(못 읽으면 null) */
+export function clockHour(time) {
+    const m = CLOCK.exec(String(time ?? ''));
+    if (!m) return null;
+    let h = Number(m[2]);
+    const mark = (m[1] || m[4] || '').toLowerCase();
+    if (!Number.isInteger(h) || h > 24 || (m[3] !== undefined && Number(m[3]) > 59)) return null;
+    if (/오후|午後|p/.test(mark) && h < 12) h += 12;
+    else if (/오전|午前|a/.test(mark) && h === 12) h = 0;
+    return h % 24;
+}
+/** 시간대 글 → { night, dusk } — 낱말이 먼저, 낱말이 없으면 시각(21 ~ 5시 밤 · 18 ~ 21시 · 5 ~ 7시 저녁 · 새벽빛) */
+function timeOfDay(time) {
+    const text = String(time ?? '');
+    const night = NIGHT_TIME.test(text), dusk = DUSK_TIME.test(text);
+    if (night || dusk || DAY_TIME.test(text)) return { night, dusk };
+    const h = clockHour(text);
+    if (h === null) return { night: false, dusk: false };
+    return { night: h >= 21 || h < 5, dusk: (h >= 18 && h < 21) || (h >= 5 && h < 7) };   // 그 확장 timeWords 의 칸(심야 < 5 · 새벽 < 7 · 저녁 18 ~ 21 · 밤 21 ~)과 같게
+}
+/**
+ * 1.7.8 그 확장 2.9.0 시각 달력(「시간 적는 법」 24시 · 오전 오후)의 시각 → 낱말 하나(밤 = 21시 ~ 새벽 4시대 · 새벽 = 5 ~ 6시대 · 저녁 = 17 ~ 20시대 · 그 밖 · 못 읽는 글 = '').
+ *   통합 1.7.8: 미트볼 새 판 갈래와 버그 사냥 2 가 같은 고침을 따로 해서 시각 읽기는 clockHour 하나로 모았어요(날씨 판정은 timeOfDay).
+ */
+export function clockWord(time) {
+    const h = clockHour(time); if (h === null) return '';
+    return h >= 21 || h < 5 ? '밤' : h < 7 ? '새벽' : h >= 17 ? '저녁' : '';
+}
 
 /** 비교용 꼴: 그림 글자 · 변형 선택자 · 앞뒤 기호를 떼고 소문자 · 빈칸 하나로 */
 export function weatherKey(text) {
@@ -61,7 +92,7 @@ export function meatballWeatherModes(text, time = '', detect = null) {
         else if (CALM.test(key)) all = [];
         else return { known: false, modes: [], all: [], warm: false };
     }
-    const night = NIGHT_TIME.test(String(time ?? '')), dusk = DUSK_TIME.test(String(time ?? ''));
+    const { night, dusk } = timeOfDay(time);
     if (night && all.includes('sun')) {
         all = all.filter(mode => mode !== 'sun');
         if (!all.includes('rain') && !all.includes('snow') && !all.includes('star')) all.unshift('star');

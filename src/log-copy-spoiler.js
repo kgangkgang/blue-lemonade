@@ -122,6 +122,10 @@ export function wrapSpoiler(doc, range, c, ui) {
     const inline = blockOf(doc, range.startContainer) === blockOf(doc, range.endContainer);
     const piece = range.cloneContents();
     if (!piece.textContent.trim() || crosses(piece)) return null;   // 메시지 둘에 걸친 글은 못 숨겨요(메시지 표지가 숨긴 글 안으로 들어가 거둘 때 글이 겹쳐요)
+    // 버그 사냥 2: 깡통 골드 잠금에 닿은 글은 못 숨겨요 — 가린 사본 · 내용 칸 · 쪼개진 조각마다 같은 잠금 id 가 생겨 잠금이 둘 · 셋이 됐어요
+    const LOCK = '[data-gold-lock-id], .gold-lock-draft, .gold-lock';
+    const inLock = n => (n?.nodeType === 1 ? n : n?.parentElement)?.closest?.(LOCK);
+    if (inLock(range.startContainer) || inLock(range.endContainer) || piece.querySelector?.(LOCK)) return null;
     const frag = range.extractContents();
     const details = make(doc, 'details', inline ? 'blsp-s' : 'blsp-s blsp-k', inline ? 'display:inline-block;max-width:100%;vertical-align:baseline;text-indent:0' : 'display:block;margin:8px 0');   // 글줄 안 숨긴 글: 펼침 칸(details 내용 칸)이 블록이라 inline 이면 줄이 끊겨요 → 인라인 블록
     details.setAttribute('data-bl-spoiler', '');

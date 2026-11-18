@@ -161,6 +161,41 @@ await test('검토 2 · 5 · 6 · 7: 공용 틀 class 가 더 붙은 창 · 판 
     H.syncHeadSwitch(false);
 });
 
+// 버그 사냥 2: 확장 순서 애드온이 붙이는 이름표(data-po-key = id:<바깥 칸 id>)를 머리 스위치 열쇠가 먼저 써서, 그 애드온을 켜고 끌 때마다
+//   공용 틀 class 창의 열쇠가 id:<칸> ↔ t:<제목> 으로 바뀌어 「확장 탭에 보이기」 로 꺼내 둔 스위치가 사라졌어요 — 두 꼴을 같은 창으로 봐요
+await test('확장 순서 애드온을 켜고 꺼도 꺼내 둔 머리 스위치가 남아요(id:<칸> ↔ 제목 열쇠)', async () => {
+    let { col1 } = stage(); col1.append(qr());
+    setHS({ 't:Quick Reply': true });   // 확장 순서를 끈 채 켬
+    let H = await loadHS();
+    document.querySelector('#qr_container > .inline-drawer').dataset.poKey = 'id:qr_container';   // 확장 순서를 켬(그 애드온이 이름표를 붙임)
+    H.syncHeadSwitch(true);
+    assert.equal(document.querySelectorAll('.bl-hs-head').length, 1, '확장 순서를 켠 뒤에도 보여요');
+    H.syncHeadSwitch(false);
+    ({ col1 } = stage()); col1.append(qr());
+    setHS({ 'id:qr_container': true });   // 확장 순서를 켠 채 켬
+    H = await loadHS(); H.syncHeadSwitch(true);
+    assert.equal(document.querySelectorAll('.bl-hs-head').length, 1, '확장 순서를 끈 뒤에도 보여요');
+    // 끄면 두 꼴 다 지워져 다시 켜지지 않아요
+    document.querySelector('#qr_container .bl-hs-opt').click();
+    assert.equal(document.querySelectorAll('.bl-hs-head').length, 0);
+    const hs = getSettings().headSwitches;
+    assert.ok(!hs['id:qr_container'] && !hs['t:Quick Reply'], JSON.stringify(hs));
+    H.syncHeadSwitch(false);
+});
+
+// 독립 검토: 같은 제목 창 둘이 확장 순서로 id:<칸> 이 따로여도 다른 꼴 열쇠(x:제목)는 겹쳐요 — 겹치면 안 써요(한 창을 켜면 둘 다 켜졌어요)
+await test('같은 제목 창 둘: 다른 꼴 열쇠가 겹치면 안 써요', async () => {
+    const { col1 } = stage();
+    const twin = () => html(`<div class="inline-drawer"><div class="inline-drawer-toggle"><b>Twin Tool</b></div><div class="inline-drawer-content"><label><input type="checkbox"> 사용</label></div></div>`);
+    col1.append(twin(), twin());   // 바깥 칸 id 없이 이름표만 따로(다른 애드온 이름표) — 창 자신의 열쇠는 둘 다 x:Twin Tool
+    [...col1.querySelectorAll(':scope > .inline-drawer')].forEach((d, i) => { d.dataset.poKey = `id:tw_${i}`; });
+    setHS({ 'x:Twin Tool': true });   // 확장 순서를 끈 채 첫 창만 켠 사람
+    const H = await loadHS(); H.syncHeadSwitch(true);
+    assert.deepEqual([...col1.querySelectorAll(':scope > .inline-drawer')].map(d => d.dataset.blHsAlt ?? ''), ['', ''], '겹친 다른 꼴 열쇠는 안 써요');
+    assert.equal(document.querySelectorAll('.bl-hs-head').length, 0, '둘 다 켜지지 않아요');
+    H.syncHeadSwitch(false);
+});
+
 await test('1.4.5 이름 열쇠(판 번호 든 제목 글)는 새 열쇠로 바로 옮겨요 — 1.4.5 에서 켠 스위치가 안 사라져요', async () => {
     const { col1 } = stage();
     col1.append(html(`<div class="inline-drawer"><div class="inline-drawer-toggle"><b>My Tool v2.3.1</b></div><div class="inline-drawer-content"><label><input type="checkbox"> 사용</label></div></div>`));

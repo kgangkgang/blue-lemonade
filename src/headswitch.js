@@ -8,7 +8,7 @@
 import { getSettings, saveSettings } from './settings.js';
 import { watchDom } from './dom-watch.js';   // 9.0.4 공용 감시 허브
 import { spreadPending, whenSpreadSettled, lateAddonsDone, whenLateDone } from './addon-start-state.js';
-import { ambiguousLegacyKey } from './addons/order/panel-keys.js';   // 1.4.6 검토 2: 공용 틀 class 기준을 확장 순서 애드온과 같게
+import { ambiguousLegacyKey, keyOf as orderKeyOf } from './addons/order/panel-keys.js';   // 1.4.6 검토 2: 공용 틀 class 기준을 확장 순서 애드온과 같게
 
 const COLUMNS = ['extensions_settings', 'extensions_settings2'];
 const STRIP = '.ext-version, [class*="-version"], [class*="_version"], .inline-drawer-icon, i, svg, button, input, select, textarea';
@@ -51,8 +51,10 @@ export function titleI18n(head) {
 }
 /** 제목 글 열쇠용: 판 번호(v1.2.3) · 숫자를 떼요(검토 5 — 확장을 업데이트하면 열쇠가 바뀌었어요) */
 export const titleWords = text => String(text || '').replace(/(?:\bv)?\d+(?:[._-]\d+)*/gi, ' ').replace(/\(\s*\)|\[\s*\]/g, ' ').replace(/\s+/g, ' ').replace(/^[^\p{L}\p{N}]+/u, '').replace(/[^\p{L}\p{N})\]]+$/u, '').slice(0, 40);   // 앞뒤 기호(「?」 도움말 · 「·」)는 확장 순서 애드온 이름처럼 떼요
-export function stableKeyOf(drawer, head = headOf(drawer)) {
-    const k = keyOf(drawer);
+/** 확장 순서 이름표(data-po-key)를 빼고 창 자신의 id · class · 태그로 */
+const ownKeyOf = el => (el.id ? `id:${el.id}` : (([...(el.classList || [])].filter(Boolean).sort().join('.')) ? `cls:${[...el.classList].filter(Boolean).sort().join('.')}` : `tag:${String(el.tagName || '').toLowerCase()}`));
+export function stableKeyOf(drawer, head = headOf(drawer), usePo = true) {
+    const k = usePo ? keyOf(drawer) : ownKeyOf(drawer);
     if (!isLegacyKey(k)) return k;
     const i18n = head ? titleI18n(head) : '';
     if (i18n) return `t:${i18n}`;
@@ -65,6 +67,13 @@ export function stableKeyOf(drawer, head = headOf(drawer)) {
     if (drawer.dataset && !drawer.dataset.blHsText && head) { const t = titleWords(textOf(head)); if (t) drawer.dataset.blHsText = t; }
     const text = drawer.dataset?.blHsText || (head ? titleWords(textOf(head)) : '');
     return text ? `x:${text}` : `${NAMELESS}${k}`;
+}
+/** 버그 사냥 2: 같은 창의 다른 꼴 열쇠 — 확장 순서 애드온을 켜면 공용 틀 class 창이 id:<바깥 칸>(data-po-key), 끄면 제목 · 감싼 id 열쇠라
+ *  그 애드온을 켜고 끌 때마다 꺼내 둔 스위치가 사라졌어요. 켜 둔 쪽에서는 끈 쪽 열쇠를, 끈 쪽에서는 켠 쪽 열쇠를 같은 창으로 봐요(없으면 '') */
+export function altKeyOf(drawer, head = headOf(drawer)) {
+    if (drawer.dataset?.poKey) { const own = stableKeyOf(drawer, head, false); return own.startsWith(NAMELESS) ? '' : own; }
+    const po = orderKeyOf(drawer);
+    return po && !isLegacyKey(po) ? po : '';
 }
 /** 1.4.5 가 같은 창에 만들던 열쇠 그대로(제목의 첫 data-i18n → 감싼 id → 판 번호 든 제목 글 → 옛 열쇠) — 같은 이름은 refresh 가 1.4.5 처럼 #n 을 붙여요 */
 export function stableKeyOf145(drawer, head = headOf(drawer)) {
@@ -186,7 +195,7 @@ const pendingLegacy = key => !!key && isLegacyKey(key) && isShown(key) && !Objec
 export function pendingLegacyKeys(switches, done) { return Object.keys(switches || {}).filter(k => switches[k] === true && isLegacyKey(k) && !Object.hasOwn(done || {}, k)); }
 /** 짝을 찾는 동안은 옛 열쇠도 봐요(v1.4.4 와 같은 모습) — 이름을 못 만든 창은 옛 열쇠를 읽지 않아요(검토 7)
  *  1.4.5 가 이미 옮긴 설정(from145)은 1.4.5 처럼 이름 열쇠만 봐요(검토 H1 — 1.4.5 에서 끈 창이 옛 열쇠로 다시 보이지 않게) */
-const shownFor = drawer => isShown(drawer.dataset.blHsStable) || (!drawer.dataset.blHsStable?.startsWith(NAMELESS) && !moveState().from145 && pendingLegacy(drawer.dataset.blHsKey));
+const shownFor = drawer => isShown(drawer.dataset.blHsStable) || isShown(drawer.dataset.blHsAlt) || (!drawer.dataset.blHsStable?.startsWith(NAMELESS) && !moveState().from145 && pendingLegacy(drawer.dataset.blHsKey));
 /** 검토 H1(순수 · 시험용): 1.4.5 가 이미 옮긴 설정의 첫 정리 — 지금 켜기 스위치가 있는 창(1.4.5 도 그때 봤을 창)의 옛 열쇠는
  *  다시 켜지 않고 끝으로 적어요(이름 열쇠가 켜져 있으면 그 열쇠 · 꺼져 있으면 '' — 1.4.5 에서 끈 것). 켜기 스위치가 없던 창만 남겨 다시 짝지어요 */
 export function settled145(switches, done, pairs) {
@@ -199,6 +208,7 @@ export function settled145(switches, done, pairs) {
 }
 function setShownFor(drawer, on) {
     if (!on && pendingLegacy(drawer.dataset.blHsKey)) { const s = getSettings(); if (s.headSwitches) delete s.headSwitches[drawer.dataset.blHsKey]; }   // 짝을 찾기 전 끄기는 옛 열쇠도 같이
+    if (!on && drawer.dataset.blHsAlt) { const s = getSettings(); if (s.headSwitches) delete s.headSwitches[drawer.dataset.blHsAlt]; }   // 버그 사냥 2: 같은 창의 다른 꼴 열쇠도 같이
     setShown(drawer.dataset.blHsStable, on);
 }
 /** 짝짓기: 늦은 애드온까지 다 시작한 뒤 그릴 때마다 — 남은 옛 열쇠 · 1.4.5 이름 열쇠를 지금 창의 이름 열쇠로 옮겨 적어요 */
@@ -323,12 +333,16 @@ export function refresh() {
         while (usedStable.has(stable)) stable = `${base}#${++n}`;
         if (drawer.dataset.blHsStable !== stable) drawer.dataset.blHsStable = stable;
         usedStable.add(stable);
+        // 버그 사냥 2: 확장 순서 애드온을 켜고 끌 때 바뀌는 다른 꼴 열쇠(같은 이름 창이 둘이면 #n 이 붙어 헷갈리니 그때는 안 봐요)
+        const alt = stable === base ? altKeyOf(drawer) : '';
+        if (alt && alt !== stable) { if (drawer.dataset.blHsAlt !== alt) drawer.dataset.blHsAlt = alt; } else if (drawer.dataset.blHsAlt !== undefined) delete drawer.dataset.blHsAlt;
         // 1.4.5 꼴도 1.4.5 처럼 같은 이름에 문서 차례로 #n (검토 H2)
         let old = '';
         if (oldNames) { const ob = stableKeyOf145(drawer); old = ob; let m = 1; while (usedOld.has(old)) old = `${ob}#${++m}`; usedOld.add(old); }
         if (old && /^[tx]:/.test(old) && old !== stable) drawer.dataset.blHsOld = old; else if (drawer.dataset.blHsOld !== undefined) delete drawer.dataset.blHsOld;
     }
     // 짝짓기는 그릴 때마다(남은 것만) — 옛 번호 열쇠는 늦은 애드온까지 다 시작한 뒤에만, 그 전엔 옛 열쇠로 보여요
+    { const seen = new Map(); for (const d of list) { const a = d.dataset.blHsAlt; if (a) seen.set(a, (seen.get(a) || 0) + 1); } for (const d of list) if (d.dataset.blHsAlt && seen.get(d.dataset.blHsAlt) > 1) delete d.dataset.blHsAlt; }   // 버그 사냥 2: 같은 이름 창 둘이 같은 다른 꼴 열쇠면 안 써요(한 창을 켜면 둘 다 켜졌어요)
     pairLegacy(list);
     if (!lateAddonsDone()) whenLateDone(schedule);
     if (openedAt) armNotice();   // 서랍을 연 뒤의 그리기는 「조용해질 때까지」를 다시 재요

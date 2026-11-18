@@ -3,6 +3,7 @@
 // 문단 · 줄바꿈 너머로는 찾지 않아요. 한국어 조사는 바꾼 말의 받침에 맞춰요(번역기 용어집의 particleFor 를 그대로).
 // 이름 숨기기는 채팅 캡처 「로그 공유 · 이름 가림」 설정(captureTools.redact · names · mask · maskStyles)을 같이 써요 — 원래 글자는 결과에 남지 않아요.
 import { particleFor } from './addons/translator/glossary-match.js';
+import { namePattern } from './name-aliases.js';
 import { parseColor, contrast, compose } from './shared/ink-paint.js';
 
 const escape = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -121,9 +122,8 @@ export function maskNode(name, { mask = 'auto', style = {}, dark = false, word =
 export const maskText = (name, mask, word = '○○') => (mask === 'mosaic' ? '▒'.repeat(Math.max(2, [...String(name)].length)) : String(word || '○○'));
 
 function nameFinder(names, options) {
-    const list = [...new Set(names.map(n => String(n ?? '').trim()).filter(n => n.length >= 1))].sort((a, b) => b.length - a.length);
-    if (!list.length) return null;
-    const pattern = new RegExp(list.map(escape).join('|'), 'giu');
+    const pattern = namePattern(names);   // 버그 사냥 2: 로마자 이름은 낱말 경계에서만(name-aliases.js)
+    if (!pattern) return null;
     return text => [...text.matchAll(pattern)].map(m => ({ start: m.index, end: m.index + m[0].length, replace: maskNode(m[0], options) }));
 }
 

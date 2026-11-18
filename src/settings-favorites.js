@@ -6,7 +6,7 @@ export const favoriteKey = e => [e.tab, e.sub, e.anchor || '', e.path || ''].joi
 function tidy(e) {
     if (!e || !['theme','text','chat','image','prompt','extensions'].includes(e.tab) || !/^[a-z-]+$/.test(e.sub)) return null;
     if ((e.tab==='theme'&&e.sub==='problems')||(e.tab==='prompt'&&e.sub==='regex')) return null;
-    return {tab:e.tab,sub:e.sub,title:String(e.title || e.sub).slice(0,100),anchor:String(e.anchor || '').slice(0,100),path:/^[\w.]*$/.test(e.path || '')?String(e.path || '').slice(0,100):''};
+    return {tab:e.tab,sub:e.sub,title:String(e.title || e.sub).slice(0,100),anchor:String(e.anchor || '').slice(0,100),path:/^(?:[\w.]*|@mb(?::\w+)?)$/.test(e.path || '')?String(e.path || '').slice(0,100):''};   // 버그 사냥 2: 1.7.4 레몬 탭 길(@mb · @mb:열쇠)도 — 지우면 칩이 옛 자리(채팅 › 화면 맨 위)로 갔어요
 }
 export function readFavorites() {
     try { const list=JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(list) ? [...new Map(list.map(tidy).filter(Boolean).map(e=>[favoriteKey(e),e])).values()].slice(0,LIMIT) : []; }

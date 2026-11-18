@@ -24,15 +24,20 @@ const WORDS = [[/보름달|만월|full\s*moon/i, 4], [/반달|상현|first\s*qua
 const MONTHS = /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?/i;
 
 /** 「3:20 PM」 · 「15:20」 · 「오후 3:20」 · 「3시 20분」 → 0~1439 분. 못 읽으면 null(원작 칸 규칙 그대로) */
+// 버그 사냥 2: 때 낱말(밤 · 저녁 · 새벽 · 낮 · 아침)과 12시간 꼴 · 일본어 午前/午後 · 時分 도 — 「밤 11:20」 · 「저녁 8:10」 을 오전으로 읽어 해 자리에 두었어요
+const MER = '오전|오후|午前|午後|한밤|밤|저녁|새벽|아침|낮|late night|night|evening|dawn|morning|afternoon|a\\.?m\\.?|p\\.?m\\.?';
+const CLOCK = new RegExp(`(${MER})?\\s*(\\d{1,2})\\s*[:시時]\\s*(\\d{1,2})?\\s*[분分]?\\s*(${MER})?`, 'i');
 export function minutesOf(text) {
     const s = String(text || '').trim();
-    const m = s.match(/(오전|오후|a\.?m\.?|p\.?m\.?)?\s*(\d{1,2})\s*[:시]\s*(\d{2})?\s*분?\s*(오전|오후|a\.?m\.?|p\.?m\.?)?/i);
+    const m = s.match(CLOCK);
     if (!m) return null;
     let h = Number(m[2]); const min = Number(m[3] || 0);
     const mer = (m[1] || m[4] || '').toLowerCase().replace(/\./g, '');
     if (!Number.isFinite(h) || h > 24 || min > 59) return null;
-    if (mer === 'pm' || mer === '오후') { if (h < 12) h += 12; }
-    else if (mer === 'am' || mer === '오전') { if (h === 12) h = 0; }
+    if (mer === 'pm' || mer === '오후' || mer === '午後' || mer === '저녁' || mer === 'evening' || mer === 'afternoon') { if (h < 12) h += 12; }
+    else if (mer === 'am' || mer === '오전' || mer === '午前' || mer === '새벽' || mer === '아침' || mer === 'dawn' || mer === 'morning') { if (h === 12) h = 0; }
+    else if (mer === '밤' || mer === '한밤' || mer === 'night' || mer === 'late night') { if (h === 12) h = 0; else if (h >= 6 && h < 12) h += 12; }   // 밤 1시 = 새벽 1시 · 밤 11시 = 23시
+    else if (mer === '낮') { if (h >= 1 && h <= 6) h += 12; }   // 미트볼 parseClock 과 같게(낮 6시 = 18시)
     if (h === 24) h = 0;
     return h * 60 + min;
 }
@@ -53,8 +58,12 @@ export function orbAt(minutes) {
     return { sun, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
 }
 /** 날짜의 「일」 → 위상 0~7 (1일 신월 · 16일 보름). 글에 달 모양 말이 있으면 그쪽 */
-export function phaseOf(day, text) {
+// 버그 사냥 2: 트래커의 다른 글(장소 · 이름 · 메모 — free)은 달 이름 꼴일 때만 — 「반달곰 카페」 · 「상현관 강당」 · 「Crescent Street」 · 「Half Moon Bay」 가 날짜와 상관없이 달 모양을 바꿨어요
+const FREE_WORDS = [[/(?<![가-힣])(?:보름달|만월)/, 4], [/(?<![가-힣])(?:반달(?![곰리])|상현달)/, 2], [/(?<![가-힣])하현달/, 6], [/(?<![가-힣])그믐달/, 7], [/(?<![가-힣])초승달/, 1],
+    [/\b[Ff]ull [Mm]oon\b(?! \p{Lu})/u, 4], [/\b[Hh]alf [Mm]oon\b(?! \p{Lu})/u, 2], [/\b(?:[Ww]aning )?[Cc]rescent [Mm]oon\b(?! \p{Lu})/u, 1], [/\b[Nn]ew [Mm]oon\b(?! \p{Lu})/u, 0]];
+export function phaseOf(day, text, free = '') {
     for (const [re, idx] of WORDS) if (re.test(text || '')) return idx;
+    for (const [re, idx] of FREE_WORDS) if (re.test(free || '')) return idx;
     if (!Number.isFinite(day)) return 1;   // 날짜가 없으면 원작처럼 초승달
     return Math.round((((day - 1) % 30 + 30) % 30) / 30 * 8) % 8;
 }
@@ -70,7 +79,7 @@ function dress(el) {
     const o = orbAt(minutes);
     el.style.setProperty('--ox', `${o.x}%`); el.style.setProperty('--oy', `${o.y}%`); el.style.setProperty('--gx', `${o.x}%`);
     if (o.sun) { el.style.removeProperty('--orb-m'); el.style.removeProperty('--moon-r'); }
-    else { el.style.setProperty('--orb-m', PHASES[phaseOf(dayOf(dateText), `${dateText} ${wx} ${el.textContent}`)]); el.style.setProperty('--moon-r', '0deg'); }
+    else { el.style.setProperty('--orb-m', PHASES[phaseOf(dayOf(dateText), `${dateText} ${wx}`, el.textContent)]); el.style.setProperty('--moon-r', '0deg'); }
     el.dataset.blSky = key;
 }
 function strip(el) { for (const v of VARS) el.style.removeProperty(v); delete el.dataset.blSky; }

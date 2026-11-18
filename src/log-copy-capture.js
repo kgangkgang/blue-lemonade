@@ -3,6 +3,7 @@
 // 그래서 고른 범위의 요소마다 원래 자리의 계산된 모양(getComputedStyle)을 읽어 값으로 적어 둔다 → log-copy-render.js 가 인라인 style 로 쓴다.
 // 결과는 DOM 이 없는 순수 자료(메시지 → 노드 나무)라 단위 시험이 같은 모양을 바로 만든다.
 import { parseColor, cssColor, svgPaint, pillSpan, bandImage, textInk, compose } from './shared/ink-paint.js';
+import { chatTimeMs } from './chat-organizer-core.js';
 
 const SKIP = 'script, style, template, textarea, input, select, button, iframe, svg, canvas, video, audio, img, picture, noscript, object, embed, .mes_buttons, .mes_edit_buttons, .ss-slot, .custom-ss-slot, .ss-msgcard';   // 끝 셋: 상태창 확장이 답 글 끝에 다는 변동 칩 칸(글이 아니라 표시 — 복사물에 「체력 −12」 같은 칩 글자가 섞였어요)
 // 상속되는 글자 모양 — 문단마다 다시 적는다 (받는 편집기의 CSS 가 span · div 에 글꼴을 걸어도 이기도록)
@@ -339,7 +340,7 @@ export function captureLog(target, { context = globalThis.SillyTavern?.getContex
         const name = (nameEl?.textContent || data?.name || mes?.getAttribute('ch_name') || '').trim();
         const nameStyle = nameEl ? cs(nameEl) : null;
         const nameFont = nameStyle ? fontOf(nameStyle) : font;
-        const when = data?.send_date ? new Date(data.send_date) : null;
+        const when = data?.send_date ? new Date(chatTimeMs(data.send_date, context?.timestampToMoment) || NaN) : null;   // 버그 사냥 2: 옛 꼴 시각도(채팅 정리와 같은 읽기 — 전엔 날짜가 오늘로 · 시각 줄이 비었어요)
         const own = backdrop(root);
         const bubble = own !== chatBg ? { 'background-color': own, ...(px(cs(mes).borderTopLeftRadius) !== '0px' ? { 'border-radius': px(cs(mes).borderTopLeftRadius) } : {}) } : null;
         const nodes = [];

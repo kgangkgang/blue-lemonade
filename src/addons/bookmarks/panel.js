@@ -16,7 +16,8 @@ import { openNoteEditor, openMessageEditor, openContextViewer, confirmDeleteBook
 import { hasTranslator, hasTranslation, isShowingOriginal, translateMessage, restoreTranslation } from './translate.js';
 import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
 import { backLayer } from '../../back-close.js';   // 1.6.9 기록 뒤로 가기(CloseWatcher 가 없는 브라우저 · 브라우저 뒤로)도 한 단계씩
-import { nameAliases } from '../../name-aliases.js';   // 6.3.x 찾는 말이 이름이면 다른 표기(영 · 한 · 일)로도
+import { nameAliases } from '../../name-aliases.js';
+import { chatTimeMs } from '../../chat-organizer-core.js';   // 6.3.x 찾는 말이 이름이면 다른 표기(영 · 한 · 일)로도
 
 const view = {
     root: null,
@@ -311,10 +312,6 @@ hooks.previewEnded = () => { if (!view.open && holdingPreviewRules) { holdingPre
 
 // ── 다른 채팅 불러오기 ──────────────────────────────────────
 
-function lastMesTime(record) {
-    const time = new Date(record.lastMes).getTime();
-    return Number.isFinite(time) ? time : 0;
-}
 
 // 7.2.6 패널이 열린 채 같은 캐릭터(그룹)의 다른 채팅으로 옮기면 목록을 다시 받지 않는다 (api-audit #12: 그룹은 채팅 수만큼 파일을 통째로) —
 //   주인(owner.key)마다 5분 · 패널을 닫으면 버린다. 방금 떠난 채팅은 마지막으로 그린 북마크(currentSnap)로 목록에 올린다.
@@ -351,7 +348,7 @@ async function loadOthers() {
         });
         if (session !== view.session) return;
         if (!cached) othersCache.set(view.owner.key, { at: Date.now(), others: [...others] });
-        others.sort((a, b) => lastMesTime(b) - lastMesTime(a) || a.key.localeCompare(b.key));
+        { const toMoment = globalThis.SillyTavern?.getContext?.()?.timestampToMoment, ms = new Map(others.map(r => [r, chatTimeMs(r.lastMes, toMoment)])); others.sort((a, b) => ms.get(b) - ms.get(a) || a.key.localeCompare(b.key)); }   // 버그 사냥 2: 비교마다 문맥 · 시각 읽기를 안 하게 한 번만
         // 목록을 읽는 사이에 번역이 끝난 채팅은(그룹 채팅은 여기서 이미 읽어 둔다) 골랐을 때 다시 불러온다.
         for (const record of others) {
             if (staleKeys.delete(record.key)) record.loaded = false;

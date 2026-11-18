@@ -193,6 +193,18 @@ await ok('찾기에서 고르면: 확장 서랍 → 레몬 탭 → 그 줄 표�
     assert.ok(r.querySelector('[data-toggle="chat.mbBack"]').closest('.salty-row').hasAttribute('data-bl-lemon-hit'));
     assert.equal(r.querySelectorAll('[data-bl-lemon-hit]').length, 1);
 });
+await ok('1.7.7 미트볼이 꺼져 있거나 안 깔린 때: 어디서 켜는지 알리고 확장 탭을 열어 둬요', async () => {
+    const { r } = page();
+    r.remove();   // 그 확장 설정 칸이 없어요
+    doc.getElementById('rm_extensions_block').classList.remove('openDrawer');
+    const told = []; const was = globalThis.toastr; globalThis.toastr = { info: (text, title) => told.push([text, title]) };
+    try {
+        assert.equal(await lemon.gotoMbLemon('@mb:arrow', doc), false);
+        assert.equal(told.length, 1); assert.equal(told[0][0], lemon.MB_MISSING); assert.equal(told[0][1], lemon.LEMON_TITLE);
+        for (const w of ['꺼져 있거나', '확장 탭', '「확장 관리」에서', '「블루레몬」 탭']) assert.ok(lemon.MB_MISSING.includes(w), w);
+        assert.ok(doc.getElementById('rm_extensions_block').classList.contains('openDrawer'), '확장 탭을 열어 둬요');
+    } finally { globalThis.toastr = was; }
+});
 
 console.log(`mb-lemon-tab: ${n}개 통과${bad ? ` · ${bad}개 실패` : ''}`);
 if (bad || !compat || !lemon) process.exitCode = 1;

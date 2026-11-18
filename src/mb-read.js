@@ -12,7 +12,11 @@
 //   알아채기는 작가 노트 넣기(src/mb-note.js · mb-note.css)의 0.001초 애니메이션 신호를 같이 들어요(감시자를 새로 만들지 않아요). 창이 닫힌 것은 공용 감시 허브의 body 직속 구독 하나로 알아요.
 //   그 확장의 파일 · 자료 · 함수는 안 건드려요(고르기 한 줄을 덧붙이고, 사용자가 고칠 수 있는 문구 설정은 mb-prompt.js 가 지금까지와 같은 방식으로 다뤄요).
 //   「원작 그대로 보기」 · 테마 꺼짐이면 신호가 안 나서 줄이 없고, 이미 놓인 줄은 시트(src/ext-status.css)가 숨겨요. 시험: tools/tests/mb-read.mjs
+// 1.7.7 미트볼 2.9.0 부터는 그 확장 만들기 창에 「채팅 읽는 방식」(앞 700자씩 · 마지막 답 전체 · 길게 · 채팅 전체 — 설정 genRead)이 생겼어요 —
+//   그 판에서는 겹치는 고르기(마지막 답 · 최근 답 · 채팅 전체)를 걷고, 그 확장에 없는 「기억 요약」 하나만 「기억 요약: 안 씀 / 쓰기」 로 남겨요(고르기가 둘 떠서 같은 채팅을 두 번 싣던 겹침).
+//   「안 씀」 = 평소 그대로(테마 설정의 미트볼 문구 단계는 안 건드려요). 옛 판(2.8.0 까지)은 고르기 다섯 그대로예요.
 import { watchDom } from './dom-watch.js';
+import { upHas } from './mb-upstream.js';
 import { mbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치
 export const ANIM = 'bl-mb-note-seen';   // 작가 노트 넣기(src/mb-note.js · mb-note.css)가 지시칸에 거는 신호 이름 — 시험이 같은 이름인지 봐요
 // 문구 모듈(src/mb-prompt.js)은 만들기 창이 처음 뜰 때 받아요 — 미트볼만 깔고 이 기능을 안 쓰는 동안에는 안 받아요
@@ -29,6 +33,12 @@ export const ROW = 'bl-mb-read';
 export const PICKS = [['base', '기본(앞 700자씩)'], ['last', '마지막 답 전체'], ['recent', '최근 답 여러 개'], ['all', '채팅 전체'], ['memo', '기억 요약(매 턴 요약 + 그 뒤 원문)']];
 /** 머리줄 고르기에 보이는 짧은 글(값 차례는 PICKS 와 같아요) */
 export const SHORT = { base: '기본', last: '마지막 답', recent: '최근 답', all: '채팅 전체', memo: '기억 요약' };
+/** 1.7.7 그 확장이 채팅 읽는 방식을 가진 판(2.9.0 이상)에서 남기는 고르기 · 글 */
+export const SLIM_PICKS = ['base', 'memo'];
+export const SLIM_SHORT = { base: '안 씀', memo: '쓰기' };
+export const SLIM_TITLE = '기억 요약 — 이번 만들기에서 기억 확장의 매 턴 요약을 같이 읽혀요(미트볼의 「채팅 읽는 방식」과 따로예요)';
+/** 그 확장이 채팅 읽는 방식을 스스로 가졌나 */
+export const slim = () => upHas('read');
 /** 테마 설정 단계 → 고르기 값(적용 안 함 · 가볍게는 둘 다 「기본」) */
 export const pickOf = lv => (lv === 'last' || lv === 'recent' || lv === 'all' || lv === 'memo' ? lv : 'base');
 /** 고르기 값 → 이번 한 번에 쓸 단계(「기본」 은 평소가 기본 쪽이면 평소 그대로, 아니면 적용 안 함) */
@@ -63,13 +73,14 @@ export function sentLine(pick, chat = {}, P = null) {
     return `보냈어요 ${num(info.seen)}번${info.fill && (info.level === 'all' || info.level === 'memo') ? ` — 요청마다 ${P.fillLine(info.level, info.fill)}` : ''}`;
 }
 /** 머리줄에 놓을 고르기(이름 「읽기」 + 고르기)를 만들어요 */
-export function makeRow(doc, pick) {
+export function makeRow(doc, pick, lean = false) {
     const row = doc.createElement('label'); row.className = ROW; row.hidden = true;   // 맞춤 시트 규칙이 걸릴 때만 보여요(원작 그대로 보기 · 테마 꺼짐이면 숨김)
-    row.title = '채팅 읽기 — 이번 만들기에서 채팅을 얼마나 읽을지';
-    const name = doc.createElement('span'); name.textContent = '읽기';
-    const sel = doc.createElement('select'); sel.className = `${ROW}-sel`; sel.setAttribute('aria-label', '채팅 읽기 — 이번 만들기에서 채팅을 얼마나 읽을지');
-    for (const [v, t] of PICKS) { const o = doc.createElement('option'); o.value = v; o.textContent = SHORT[v]; o.title = t; sel.append(o); }
-    sel.value = pick;
+    const title = lean ? SLIM_TITLE : '채팅 읽기 — 이번 만들기에서 채팅을 얼마나 읽을지';
+    row.title = title; if (lean) row.dataset.blLean = '';
+    const name = doc.createElement('span'); name.textContent = lean ? '기억 요약' : '읽기';
+    const sel = doc.createElement('select'); sel.className = `${ROW}-sel`; sel.setAttribute('aria-label', title);
+    for (const [v, t] of PICKS) { if (lean && !SLIM_PICKS.includes(v)) continue; const o = doc.createElement('option'); o.value = v; o.textContent = (lean ? SLIM_SHORT : SHORT)[v]; o.title = lean && v === 'base' ? '평소 그대로 — 기억 요약을 따로 싣지 않아요' : t; sel.append(o); }
+    sel.value = lean && !SLIM_PICKS.includes(pick) ? 'base' : pick;
     row.append(name, sel);
     return row;
 }
@@ -115,7 +126,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         row = slot.root.querySelector(`.${ROW}`);
         if (!row) {
             const once = P.onceLevel();
-            row = makeRow(doc, pickOf(once || chat.mbPrompt));
+            row = makeRow(doc, pickOf(once || chat.mbPrompt), slim());
             const cost = makeCost(doc);
             if (slot.chatRow) {                                               // 맨 위 요약 칸 「채팅 N개」 줄 오른쪽 · 어림 줄은 요약 칸 바로 아래
                 row.classList.add(`${ROW}-at`); slot.chatRow.classList.add(`${ROW}-host`); slot.chatRow.append(row);
@@ -143,7 +154,8 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
         prev.set(sel, sel.value);
         refresh(row);
         if (!P) return;
-        const usual = chat.mbPrompt || 'off', want = levelFor(sel.value, usual);
+        const lean = 'blLean' in (row?.dataset || {});                         // 1.7.7 「기억 요약: 안 씀 / 쓰기」 꼴 — 「안 씀」 은 평소 그대로
+        const usual = chat.mbPrompt || 'off', want = lean && sel.value === 'base' ? usual : levelFor(sel.value, usual);
         if (want === 'all') {                                                  // 상한을 넘으면 고르는 순간 미리 알려요
             let a = null; try { a = P.allText(undefined, cap); } catch { a = null; }
             const lim = a ? (P.overModel?.(a.text) || 0) : 0;
@@ -151,7 +163,7 @@ export function startMbRead(doc = globalThis.document, { watch = watchDom, setti
             if (a && (a.summarized || a.cut || a.dropped)) warn(`미리 알려요: 채팅 전체가 요청 1회 상한(약 ${big(cap)} 토큰)을 넘어요 — ${P.fillLine('all', a)}. 원문을 다 넣으려면 블루레몬 설정 › 채팅 › 미트볼 문구의 「채팅 전체: 요청 1회 상한」을 올려요(0 = 없음).`, 15000);
         }
         (async () => {
-            if (pickOf(usual) === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요
+            if ((lean ? 'base' : pickOf(usual)) === sel.value) { if (P.onceLevel()) await P.endOnce({ force: true, quiet: true }); host = null; return; }   // 평소 값으로 다시 고름 — 거둬요
             if (await P.armOnce({ level: want, quiet: true })) { host = row.closest('dialog') || row.closest('.ss-wizard'); hostQuiet = want === 'off' || want === 'light'; armedBase = P.baseRef?.() ?? null; armedChat = P.chatKey?.(); }   // 기본 쪽은 요청을 셀 수 없어 닫을 때 조용히 돌려놔요
         })().catch(() => { /* 평소 단계 그대로 */ });
     }, true);

@@ -12,29 +12,8 @@ import { watchDom } from './dom-watch.js';
 import { backLayer } from './back-close.js';   // 1.6.9 뒤로 가기 = 이 겹만 닫기
 import { notifyRerender } from './rerender-notify.js';   // 6.5.2 다시 그린 뒤 실리태번 헬퍼에 알림 (코드 블록 → iframe) — 이벤트는 여전히 쏘지 않고 알림기가 판단한다
 
-const HEAD = '<details><summary></summary>\n\n', TAIL = '\n\n</details>';
-const OPEN = /^\s*<details\s*>\s*<summary\s*>\s*<\/summary\s*>/i;
-const CLOSE = /<\/details\s*>\s*$/i;
-
-export const wrapFold = (text) => HEAD + String(text ?? '') + TAIL;
-
-/** 통째로 감싼 빈 제목 접기 칸이면 안쪽 글, 아니면 null. 손으로 감싼 한 줄 틀도 알아본다 —
- *  첫 <details> 의 짝이 맨 끝 </details> 여야 한다 (제목 있는 카드 · 클래스 달린 번역기 칸은 아님) */
-export function unwrapFold(text) {
-    const s = String(text ?? '');
-    // 우리가 쓴 틀 그대로면 짝 세기 전에 바로 — 안쪽에 닫히지 않은 <details>(끊긴 답의 상태창 · 코드 속 태그)가 있으면
-    // 짝 세기가 실패해 접힌 글을 못 알아보고 한 겹 더 감쌌다 (검증에서 확인)
-    if (s.startsWith(HEAD) && s.endsWith(TAIL) && s.length >= HEAD.length + TAIL.length) return s.slice(HEAD.length, s.length - TAIL.length);
-    const head = s.match(OPEN), tail = s.match(CLOSE);
-    if (!head || !tail) return null;
-    let depth = 0, end = -1;
-    for (const m of s.matchAll(/<(\/?)details\b[^>]*>/gi)) {
-        depth += m[1] ? -1 : 1;
-        if (depth === 0) { end = m.index; break; }
-    }
-    if (end !== tail.index) return null;
-    return s.slice(head[0].length, tail.index).replace(/^[ \t]*\r?\n/, '').replace(/\r?\n[ \t]*$/, '');
-}
+import { FOLD_HEAD as HEAD, FOLD_TAIL as TAIL, wrapFold, unwrapFold, brokenFoldInner } from './fold-markup.js';   // 1.7.9 틀 글자 다루기는 번역기와 같이 써요
+export { wrapFold, unwrapFold };
 
 /** 화면에 보이는 글이 번역문인가 (실리태번이 그리는 것과 같게: display_text ?? mes) */
 const translated = (message) => message?.extra?.display_text != null;
@@ -50,6 +29,8 @@ export function rewriteFold(message, fold) {
     const slots = translated(message) ? [[extra, 'display_text'], [extra, 'original_translation_backup']] : [[message, 'mes']];
     for (const [owner, key] of slots) {
         if (typeof owner[key] !== 'string') continue;
+        // 1.7.9 번역기 태그 고치기가 깨뜨린 틀(맨 앞 빈 <details></details>)은 우리가 접은 답에서만 제 틀로 되살려요
+        if (extra?.bl_folded === true) { const was = brokenFoldInner(owner[key], message.mes); if (was !== null) { owner[key] = wrapFold(was); changed = true; } }
         const inner = unwrapFold(owner[key]);
         if (fold && inner === null) { owner[key] = wrapFold(owner[key]); changed = true; }
         else if (!fold && inner !== null) owner[key] = inner;

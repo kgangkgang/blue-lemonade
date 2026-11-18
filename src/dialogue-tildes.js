@@ -27,14 +27,34 @@ function displayedSource(node) {
     if(!message)return null;
     return typeof message.extra?.display_text==='string' && message.extra.display_text.trim() ? message.extra.display_text : message.mes;
 }
-export const hasDialogueTildeSource = (raw, content) => typeof raw==='string' && !/<del\b/i.test(raw) && raw.includes(`~~${content}~~`);
+// 버그 사냥 2: 대사 안인지를 <q> 조상으로만 보면, 실리태번이 q 로 안 감싸는 대사(줄을 넘는 대사 · 섞인 따옴표 — dialogue-span.js 가 나중에 감싸요)
+//   안의 늘임표 「응~~~, 그래~~~!」 가 취소선으로 남았어요. 그 문단에서 del 앞까지 닫히지 않은 여는 따옴표가 있으면 대사 안으로 봐요.
+const CLOSER = { '“': '”', '「': '」', '『': '』', '«': '»', '„': '“' };
+const STRAIGHT = new Set(['"', '＂']);
+const SCAN_MAX = 4000;   // 문단 앞쪽 이만큼까지만
+export function quoteOpenedBefore(del) {
+    const block = del.parentElement?.closest('p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6, .mes_text, .salty-sample');
+    if (!block || !block.contains(del)) return false;
+    // 통합 1.7.8: Range(createRange · setEndBefore) 없이 del 앞 글을 모아요 — 시험 · 가벼운 DOM(chat-switch-leak 의 가짜 문서)에는 Range 가 없어 설정 창 미리보기에서 멈췄어요
+    let text = ''; let done = false;
+    const walk = node => { for (const child of node.childNodes || []) { if (done) return; if (child === del) { done = true; return; } if (child.nodeType === 3) text += child.nodeValue || ''; else walk(child); } };
+    walk(block); text = text.slice(-SCAN_MAX);
+    const stack = [];
+    for (const ch of text) {
+        if (stack.length && ch === stack.at(-1)) stack.pop();
+        else if (CLOSER[ch]) stack.push(CLOSER[ch]);
+        else if (STRAIGHT.has(ch)) stack.push(ch);
+    }
+    return stack.length > 0;
+}
+export const hasDialogueTildeSource =(raw, content) => typeof raw==='string' && !/<del\b/i.test(raw) && raw.includes(`~~${content}~~`);
 export function restoreDialogueTildes(root, { sourceText = displayedSource } = {}) {
     for (const del of root.querySelectorAll('.mes_text del, .salty-sample del')) {
         if (del.attributes.length || del.closest('pre, code')) continue;
         const before = del.previousSibling;
         const after = del.nextSibling;
         if (!textLike(before) || !textLike(after)) continue;
-        if (!isDialogueElongation(before.textContent, del.textContent, after.textContent, !!del.closest('q'))) continue;
+        if (!isDialogueElongation(before.textContent, del.textContent, after.textContent, !!del.closest('q') || quoteOpenedBefore(del))) continue;
         // HTML authored as <del> can produce the exact same DOM as Showdown's
         // whitespace bug. Only the displayed message source can disambiguate it.
         // 7.5.0 글자 사이에 낀 것(양옆이 글자)도 저장된 글에 ~~…~~ 가 있을 때만 (HTML <del> 로 적은 것과 구별)

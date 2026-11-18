@@ -226,6 +226,10 @@ const commentNode = (text, parent) => ({ type: 'comment', raw: `<!-- ${text} -->
 const decode = s => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
 const textOf = node => (node.type === 'text' ? node.text : node.type === 'el' && !RAW.has(node.tag) ? node.children.map(textOf).join('') : '');
 const hasAttr = (node, name) => node.type === 'el' && attrValue(node, name) !== null;
+/** 글을 밖으로 옮겨 적으면 안 되는 요소: 깡통 골드 잠금 · 숨긴 글 */
+const sealed = node => node.type === 'el' && (hasAttr(node, 'data-gold-lock-id') || hasAttr(node, 'data-bl-spoiler') || /(^|\s)(gold-lock(-draft)?|blsp-s)(\s|$)/.test(attrValue(node, 'class') ?? ''));
+/** 잠금 · 숨긴 글을 뺀 글 */
+const openText = node => (node.type === 'text' ? node.text : node.type === 'el' && !RAW.has(node.tag) && !sealed(node) ? node.children.map(openText).join('') : '');
 function findAll(node, test, { into = () => true } = {}) {
     const out = [];
     const walk = (n) => { for (const c of n.children ?? []) { if (c.type !== 'el') continue; if (test(c)) { out.push(c); if (!into(c)) continue; } walk(c); } };
@@ -257,15 +261,16 @@ function annotate(root, label, fields = true) {
     // 꾸밈 글(1.0.1 사용자 「보이는 글씨는 다 수정 가능하다는 것도」): 메시지 · 고칠 칸 밖에서 틀이 그리는 글(겉면 글 · 표지판 · 역 이름 · 도장 · R.I.P …)도
     // 그 요소 바로 앞에 「꾸밈 글 「…」 (글자만 바꿔요)」 주석 — 이름 · 본문과 같은 눈높이로 찾아요. 글자 · 숫자가 없는 조각(이모지 · 점 · 별)은 빼요.
     const inEditable = n => { for (let q = n; q; q = q.parent) if (q.type === 'el' && (hasAttr(q, 'data-f') || hasAttr(q, 'data-bl-msg'))) return true; return false; };
+    // 버그 사냥 2: 깡통 골드 잠금(gold-lock-draft · data-gold-lock-id) · 숨긴 글(data-bl-spoiler) 안 글은 주석에 옮겨 적지 않아요 — 잠긴 글이 주석으로 그대로 보였어요
     const decoText = [];
     const walk = (n) => {
         for (const c of n.children ?? []) {
             if (c.type === 'text') { if (n.type === 'el' && !decoText.includes(n) && /[\p{L}\p{N}]/u.test(decode(c.text)) && !inEditable(n)) decoText.push(n); }
-            else if (c.type === 'el' && !RAW.has(c.tag)) walk(c);
+            else if (c.type === 'el' && !RAW.has(c.tag) && !sealed(c)) walk(c);
         }
     };
     if (messages.length) walk(root);   // 로그 HTML 일 때만(메시지가 있는 글)
-    for (const el of decoText) insertBefore(el, `꾸밈 글 「${safeComment(decode(textOf(el))).slice(0, 24)}」 (글자만 바꿔요)`);
+    for (const el of decoText) { const text = safeComment(decode(openText(el))).slice(0, 24); if (text) insertBefore(el, `꾸밈 글 「${text}」 (글자만 바꿔요)`); }
     const title = safeComment(label);
     const where = fields ? '그 주석 바로 아래 data-f="title" · "date" · "from" · "tail" 칸' : '그 주석 바로 아래 칸';
     // 메시지 표시가 없는 글(심플 · 추천 글꾸 · 마트 글꾸)에는 data-f 칸도 「▼ 메시지 N 시작」도 없어요 — 없는 것은 가리키지 않아요

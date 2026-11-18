@@ -57,6 +57,8 @@ export function readerRestsIn(element, now = Date.now()) {
     return chat ? Math.max(0, (userUntil.get(chat) ?? 0) - now) : 0;
 }
 
+// 버그 사냥 2: 그룹 채팅은 차례 동안 멤버마다 characterId 를 바꾸고 끝나면 undefined 로 돌려요 — 그룹이면 groupId 로만(같은 채팅인데 「바뀜」 으로 보고 지킴을 멈췄어요)
+const chatKeyOf = (ctx, chatId) => (ctx?.groupId != null && ctx.groupId !== '' ? `g:${ctx.groupId}` : `c:${ctx?.characterId}`) + `:${chatId}`;
 export function keepChatReadingPosition(element, draw) {
     const doc = element?.ownerDocument;
     const chat = element?.closest?.('#chat');
@@ -66,7 +68,7 @@ export function keepChatReadingPosition(element, draw) {
     const win = doc.defaultView;
     const ctx = globalThis.SillyTavern?.getContext?.();
     const chatId = ctx?.getCurrentChatId?.() ?? ctx?.chatId;
-    const key = [ctx?.characterId, ctx?.groupId, chatId].join(':');
+    const key = chatKeyOf(ctx, chatId);
     const top = chat.scrollTop;
     const bottom = chat.scrollHeight - chat.clientHeight - top < 5;
     const follow = bottom && ctx?.powerUserSettings?.auto_scroll_chat_to_bottom !== false && !ctx?.powerUserSettings?.waifuMode;
@@ -164,7 +166,7 @@ export function keepChatReadingPosition(element, draw) {
     }
     function valid() {
         const now = globalThis.SillyTavern?.getContext?.();
-        const current = [now?.characterId, now?.groupId, now?.getCurrentChatId?.() ?? now?.chatId].join(':');
+        const current = chatKeyOf(now, now?.getCurrentChatId?.() ?? now?.chatId);
         if (!chat.isConnected || chat !== doc.getElementById('chat') || current !== key || (mes && !mes.isConnected)) return false;
         if (lingering && (now?.chat?.length ?? 0) !== chatLength) return false;   // a new message: ST's own scrolling takes over
         return !(message && (now?.chat?.[mesId] !== message || message.swipe_id !== swipe));

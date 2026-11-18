@@ -137,7 +137,8 @@ function insertAfter(meta, S, entry) {
 }
 const sameOps = (a, b) => JSON.stringify(a?.ops ?? null) === JSON.stringify(b?.ops ?? null) && a?.label === b?.label;
 const hiddenLabel = ids => (ids.length ? `눈 감긴 답 ${idsText(ids)} 빼기 (블루레몬)` : '지운 답 · 감긴 답 이어 맞추기 (블루레몬)');
-const goneLabel = (ids, swipe) => `지운 ${swipe ? '스와이프' : '답'} ${idsText(ids)} 빼기 (블루레몬)`;
+// 1.7.7 번호는 지우기 전 번호예요(지운 뒤에는 뒤 답들이 한 칸씩 당겨져요) — 관리 탭 기록 줄에서 헷갈리지 않게 덧말을 붙여요
+const goneLabel = (ids, swipe) => `지운 ${swipe ? '스와이프' : '답'} ${idsText(ids)} 빼기 (지우기 전 번호 · 블루레몬)`;
 const stamp = () => Date.now();
 
 /**
@@ -270,6 +271,15 @@ async function mbMod(file, doc = globalThis.document) {
 }
 let engP = null;
 export const engine = () => (engP ??= mbMod('./src/engine.js').then(m => (typeof m?.compute === 'function' ? m : (engP = null))));
+/** 1.7.7 바로 반영을 못 하는 까닭 한마디(알림에 덧붙여요) — 할 수 있으면 '' · 스위치를 껐으면 'off' · 그 확장의 계산 부분을 못 받았으면 'module' */
+export async function whyNot(doc = globalThis.document) {
+    if (!active(doc)) return 'off';
+    try { return (await engine()) ? '' : 'module'; } catch { return 'module'; }
+}
+export const WHY_TEXT = {
+    off: '「눈 감기 · 삭제 바로 반영」을 꺼 둬서 바로 빼지 않았어요.',
+    module: '미트볼의 계산 부분을 불러오지 못해서 바로 빼지 못했어요(미트볼 판이 다르거나 주소에 꼬리표가 붙은 설치예요).',
+};
 /** 시험용: 그 확장 계산 대신 넣기(null 이면 다시 그 확장 것) */
 export const useEngine = e => { engP = e ? Promise.resolve(e) : null; };
 async function refresh() { try { const core = await mbMod('./src/core.js'); core?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ } }
@@ -316,8 +326,8 @@ export function applyHidden(c = ctx(), { kind = 'tidy', eng = undefined, save = 
 /** 지운 답: 지우기 전 기억으로 빼는 기록을 끼우고 저장 · 새로고침(알림 없이) */
 export function applyGone(c = ctx(), snap, { eng = undefined } = {}) {
     return serial(async () => {
-        const e = eng ?? await engine(); if (!e) return null;
         const meta = sheet(c); if (!meta || !liveSets(meta).length) return false;   // 숫자 칸 통째 저장이 없으면 지움은 원작이 알아서 빼요
+        const e = eng ?? await engine(); if (!e) return null;   // 1.7.7 할 일이 있는데 계산을 못 받은 때만 「못 함」(null) — 까닭을 한 번 알려요
         let r, h; try { r = syncGone(c, e, snap); h = syncHidden(c, e); } catch { return null; }   // 지운 뒤 번호가 당겨지니 감긴 답 기록도 다시 맞춰요
         lastSig = signature(c);
         if (!r.changed && !h.changed) return false;
@@ -331,7 +341,7 @@ export function applyGone(c = ctx(), snap, { eng = undefined } = {}) {
 // ── 지움 사건 걸기(미트볼 문에서 한 번) ─────────────────────
 let snap = [], started = false;
 export const _snap = () => snap;
-export function startAutoSub(doc = globalThis.document) {
+export function startAutoSub(doc = globalThis.document, { onFail = null } = {}) {   // onFail(채팅 id): 1.7.7 할 일이 있는데 계산을 못 받아 못 뺀 때(알림은 부르는 쪽 — 이 모듈은 알림을 안 띄워요)
     if (started) return false;
     const c = ctx(), on = c?.eventSource?.on?.bind(c.eventSource), T = c?.event_types ?? c?.eventTypes ?? {};
     if (!on) return false;
@@ -355,7 +365,7 @@ export function startAutoSub(doc = globalThis.document) {
             const cx = ctx();
             keep();
             if (chatId(cx) !== id || !active(doc) || !sheet(cx)) return;
-            applyGone(cx, was).catch(() => { /* 원래 동작 그대로 */ }).finally(keep);
+            applyGone(cx, was).then(r => { if (r === null) onFail?.(id); }).catch(() => { /* 원래 동작 그대로 */ }).finally(keep);
         }, ms);
     };
     if (T.MESSAGE_DELETED) on(T.MESSAGE_DELETED, () => gone(300));   // 그 확장의 지움 처리(clampAdjust)가 먼저
