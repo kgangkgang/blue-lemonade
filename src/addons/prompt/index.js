@@ -66,7 +66,7 @@ const PDOC = (function(p){ try { return p.document || document; } catch(e){ retu
 let getRequestHeaders, saveSettingsDebounced, eventSource, event_types,
     extension_settings, getContext,
     oai_settings, openai_settings, openai_setting_names,
-    getChatCompletionPreset, promptManager,
+    getChatCompletionPreset, promptManager, stSettingsToUpdate,
     characters, unshallowCharacter, world_names, world_info, getSortedEntries,
     setWIOriginalDataValue;
 
@@ -94,6 +94,8 @@ async function initImports() {
     // downloading a file the person has to re-import by hand.
     getChatCompletionPreset = om.getChatCompletionPreset;
     promptManager            = om.promptManager;
+    // 11-19 실리태번이 「연결 설정」으로 표시한 프리셋 칸 목록(넷째 값 true) — 공유용 내보내기가 빼는 칸을 넓혀요(presetConnectionKeys)
+    stSettingsToUpdate      = om.settingsToUpdate;
 
     const em = await import(base2 + 'extensions.js');
     extension_settings = em.extension_settings;
@@ -797,6 +799,19 @@ function estimateTokens(text) {
 }
 
 let isBusy=false, stopReq=false, statusResetTimer=null;
+// 11-19 번역 도중 언어 칸 잠금 (원작 Prompt Panel 1.2.0 검토 · 우리 길로): 번역 결과는 저장하는 그때의 언어 열쇠(ck → effLang)로 캐시에 들어가요.
+//   번역이 도는 동안 설정에서 언어를 바꾸면 옛 언어로 받은 글이 새 언어 칸에 저장됐어요 → 도는 동안엔 바꾼 값을 되돌리고 알려요(타자마다 쌓이지 않게 3초에 한 번).
+let langWarnAt = 0;
+function langChangeBlocked(el, keep) {
+    if (!isBusy) return false;
+    el.value = keep ?? '';
+    const now = Date.now();
+    if (now - langWarnAt > 3000) {
+        langWarnAt = now;
+        if (typeof toastr !== 'undefined') toastr.warning('번역이 진행 중이라 언어를 바꿀 수 없어요. 끝나거나 멈춘 뒤 다시 골라 주세요.');
+    }
+    return true;
+}
 let activeTranslationProgress = null;
 
 // 진행 중인 요청과 "요청 간 대기" 타이머를 모아 둔다. 중단 버튼은 예전에 플래그만
@@ -2958,6 +2973,38 @@ function exportTitleScript(kind, srcName, items, ns) {
     };
 }
 
+// Strip API connection / endpoint / credential fields from a preset meant for sharing.
+// These are machine-specific and may include secrets; they should never be
+// embedded in a translated preset file. 손으로 적은 목록은 실리태번 목록을 못 읽을 때의 바닥이에요.
+const PRESET_CONNECTION_KEYS = [
+    'custom_url', 'custom_model', 'custom_include_body', 'custom_exclude_body',
+    'custom_include_headers', 'custom_prompt_post_processing',
+    'reverse_proxy', 'proxy_password', 'azure_base_url', 'azure_deployment_name', 'workers_ai_account_id',
+    'vertexai_region', 'vertexai_auth_mode', 'vertexai_express_project_id',
+    'vertexai_template', 'vertexai_model',
+    'openrouter_model', 'openrouter_use_fallback', 'openrouter_group_models',
+    'openrouter_sort_models', 'openrouter_providers', 'openrouter_allow_fallbacks',
+    'openrouter_middleout', 'openrouter_api_key',
+    'openai_model', 'claude_model', 'google_model', 'ai21_model', 'mistralai_model',
+    'cohere_model', 'perplexity_model', 'groq_model', 'deepseek_model',
+    'zerooneai_model', 'nanogpt_model', 'blockentropy_model', 'xai_model',
+    'chat_completion_source',
+    'api_url_scale', 'bypass_status_check',
+    ];
+// 11-19 (원작 Prompt Panel 1.2.0 검토 · 우리 길로): 실리태번은 프리셋 칸 표(settingsToUpdate)에 연결 칸을 넷째 값 true 로 적어 둬요.
+//   손으로 적은 목록만 쓰면 실리태번이 새 공급자를 더할 때마다(siliconflow_endpoint · openrouter_quantizations · nanogpt_provider …) 파일에 남았어요.
+//   그 표의 프리셋 쪽 이름과 설정 쪽 이름을 둘 다 더해요(저장된 프리셋 · 지금 프리셋 꼴이 같은 이름을 쓰지만, 다른 판을 위해).
+function presetConnectionKeys() {
+    const keys = new Set(PRESET_CONNECTION_KEYS);
+    if (stSettingsToUpdate && typeof stSettingsToUpdate === 'object' && !Array.isArray(stSettingsToUpdate)) {
+        for (const [presetKey, row] of Object.entries(stSettingsToUpdate)) {
+            if (!Array.isArray(row) || row[3] !== true) continue;
+            for (const k of [presetKey, row[1]]) if (typeof k === 'string' && k) keys.add(k);
+        }
+    }
+    return keys;
+}
+
 function exportPresetJSON(presetName) {
     const targetName = presetName === '__cur__' || !presetName
         ? (oai_settings?.preset_settings_openai || '')
@@ -2983,25 +3030,8 @@ function exportPresetJSON(presetName) {
     const cloned = deepClone(presetObj);
     const ns = presetNs(presetName);
 
-    // Strip API connection / endpoint / credential fields.
-    // These are machine-specific and may include secrets; they should never be
-    // embedded in a translated preset file meant for sharing.
-    const STRIP_KEYS = [
-        'custom_url', 'custom_model', 'custom_include_body', 'custom_exclude_body',
-        'custom_include_headers', 'custom_prompt_post_processing',
-        'reverse_proxy', 'proxy_password', 'azure_base_url', 'azure_deployment_name', 'workers_ai_account_id',
-        'vertexai_region', 'vertexai_auth_mode', 'vertexai_express_project_id',
-        'vertexai_template', 'vertexai_model',
-        'openrouter_model', 'openrouter_use_fallback', 'openrouter_group_models',
-        'openrouter_sort_models', 'openrouter_providers', 'openrouter_allow_fallbacks',
-        'openrouter_middleout', 'openrouter_api_key',
-        'openai_model', 'claude_model', 'google_model', 'ai21_model', 'mistralai_model',
-        'cohere_model', 'perplexity_model', 'groq_model', 'deepseek_model',
-        'zerooneai_model', 'nanogpt_model', 'blockentropy_model', 'xai_model',
-        'chat_completion_source',
-        'api_url_scale', 'bypass_status_check',
-    ];
-    for (const k of STRIP_KEYS) delete cloned[k];
+    // Strip API connection / endpoint / credential fields (presetConnectionKeys 위).
+    for (const k of presetConnectionKeys()) delete cloned[k];
 
     // Also strip the entire connection profile if present
     if (cloned.connection_profile) delete cloned.connection_profile;
@@ -5341,22 +5371,25 @@ function mountUi(addForm) {
 
     const c=cfg();
     $('#pt-target-lang').on('change',function(){
+        if (langChangeBlocked(this, cfg().targetLang)) return;
         cfg().targetLang=this.value;
         saveSettingsDebounced();
         const isCustom = this.value === '__custom__';
         $('#pt-custom-lang-row').toggle(isCustom);
     });
-    $('#pt-custom-lang').on('input',function(){cfg().customLang=this.value;saveSettingsDebounced();});
+    $('#pt-custom-lang').on('input',function(){if (langChangeBlocked(this, cfg().customLang)) return;cfg().customLang=this.value;saveSettingsDebounced();});
     $('#pt-title-lang').on('change',function(){
+        if (langChangeBlocked(this, cfg().titleLang)) return;
         cfg().titleLang=this.value; saveSettingsDebounced();
         $('#pt-custom-title-lang-row').toggle(this.value === '__custom__');
     });
-    $('#pt-custom-title-lang').on('input',function(){cfg().titleCustomLang=this.value;saveSettingsDebounced();});
+    $('#pt-custom-title-lang').on('input',function(){if (langChangeBlocked(this, cfg().titleCustomLang)) return;cfg().titleCustomLang=this.value;saveSettingsDebounced();});
     $('#pt-note-lang').on('change',function(){
+        if (langChangeBlocked(this, cfg().noteLang)) return;
         cfg().noteLang=this.value; saveSettingsDebounced();
         $('#pt-custom-note-lang-row').toggle(this.value === '__custom__');
     });
-    $('#pt-custom-note-lang').on('input',function(){cfg().noteCustomLang=this.value;saveSettingsDebounced();});
+    $('#pt-custom-note-lang').on('input',function(){if (langChangeBlocked(this, cfg().noteCustomLang)) return;cfg().noteCustomLang=this.value;saveSettingsDebounced();});
     $('#pt-title-batch').on('change',function(){
         let v = parseInt(this.value,10);
         if (isNaN(v) || v < 1) v = 1;

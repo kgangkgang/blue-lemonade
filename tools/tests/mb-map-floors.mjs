@@ -1030,5 +1030,50 @@ await ok('1.7.9 스위치 annex: 표 · 화면만 · 기본 켬 · 붙이기가 
     const src = read('src/mb-map-floors.js');
     assert.match(src, /mbFit\('annex', doc\)/); assert.match(src, /onMbOff\(doc, \[[^\]]*'annex'/);
 });
+await ok('1.8.2 층 없이 새로 생긴 「… / <방 이름> 쪽 방」 은 땅 줄이 아니라 그 방의 층에 따로 점', () => {
+    const list = [...office(), P('Greenhouse / Archive Team plant room', '', { kind: '', area: '', links: ['Studio'] }), P('Kiosk near Bakery', '', { kind: '', area: '', links: [] }), P('Board Gate', '', { kind: '', area: '', links: [] })];
+    const L = m.floorLayout(list);
+    const g = L.pos.get('Greenhouse / Archive Team plant room');
+    assert.equal(g.zone, 'b'); assert.equal(g.row, L.pos.get('Archive').row, '그 방(3F) 줄'); assert.ok(!g.twin, '같은 곳은 아니라 겹치지 않아요');
+    assert.notEqual(g.x, L.pos.get('Archive').x);
+    assert.equal(L.pos.get('Kiosk near Bakery').zone, 'out', '건물 밖 가게 이름은 그대로 바깥');
+    assert.equal(L.pos.get('Board Gate').zone, 'out', '「X 대문」 꼴은 부속 묶기 몫(끄면 그대로 바깥)');
+    // 두 방에 걸리면 안 넣어요
+    const L2 = m.floorLayout([...office(), P('Studio and Archive storage', '', { kind: '', area: '' })]);
+    assert.equal(L2.pos.get('Studio and Archive storage').zone, 'out');
+});
+await ok('1.8.2 이름 앞뒤 표시 기호: 「@Bakery」 는 「Bakery」 점 하나로 · 이름표 · 안내 글에서 기호를 떼요(자료는 그대로)', () => {
+    assert.equal(m.stripMarks('@Bakery'), 'Bakery'); assert.equal(m.stripMarks(' #빵집 '), '빵집'); assert.equal(m.stripMarks('@'), '@'); assert.equal(m.stripMarks('Park @ noon'), 'Park @ noon');
+    assert.equal(m.labelOf('@Bakery'), 'Bakery');
+    const list = [...office(), P('@Bakery', '', { kind: '', area: '', links: [] }), P('#Lonely Pier', '', { kind: '', area: '', links: [] })];
+    const before = JSON.stringify(list);
+    const A = m.annexMap(list); assert.equal(A.get('@Bakery'), 'Bakery'); assert.ok(!A.has('#Lonely Pier'), '기호 없는 짝이 없으면 그대로(이름표만 기호를 떼요)');
+    const tr = s => ({ '@Bakery': '@빵집', Bakery: '빵집' })[s] || s; assert.equal(m.annexMap(list, tr).get('@Bakery'), 'Bakery');
+    assert.equal(JSON.stringify(list), before);
+    const doc = makeDoc(), svg = drawn(doc, list);
+    const gb = svg.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === '@Bakery'); gb.setAttribute('class', 'node here');
+    m.applyFloors(svg, { places: list, here: '@Bakery' }, { ui: null });
+    const vis = svg.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === 'Bakery');
+    assert.equal(gb.getAttribute('display'), 'none'); assert.ok(/(^| )here( |$)/.test(vis.getAttribute('class')), '지금 고리는 기호 없는 점에');
+    const svg2 = drawn(makeDoc(), list); const p2 = svg2.querySelectorAll('g.node').find(x => x.getAttribute('data-arg') === '#Lonely Pier'); p2.querySelectorAll('text')[1].text = '#Lonely Pier';
+    m.applyFloors(svg2, { places: list }, { ui: null }); assert.equal(p2.querySelectorAll('text')[1].childNodes.map(c => c.text).join(' '), 'Lonely Pier', '이름표에서 기호를 떼요');
+    // 안내 글(「지금 @빵집」)
+    const tn = { nodeType: 3, nodeValue: '@빵집' }, b = { nodeType: 1, childNodes: [tn] };
+    assert.equal(m.markText(b), true); assert.equal(tn.nodeValue, '빵집'); assert.equal(m.markText(b), false);
+});
+// 1.8.2 위치 칩 · 펼친 위치 줄의 앞 표시 기호(지어낸 장소 이름)
+const N = (tag, kids = [], cls = '') => { const e = { nodeType: 1, tagName: tag, cls, childNodes: kids, nextSibling: null }; kids.forEach((k, i) => { k.nextSibling = kids[i + 1] || null; }); return e; };
+const X = v => ({ nodeType: 3, nodeValue: v, nextSibling: null });
+const icon = () => N('i', [], 'fa-solid fa-location-dot');
+await ok('1.8.2 위치 칩 · 위치 줄: 📍 뒤 글의 앞 「@ · #」 만 떼요(사람 아이디 · 다른 글은 그대로)', () => {
+    const a = X(' @로비'), b = X('#Bakery Corner'), c = X('@'), d = X('Park @ noon');
+    const chip = N('div', [icon(), N('span', [a])]), row = N('div', [icon(), N('span', [N('b', [b])])]), lone = N('div', [icon(), N('span', [c])]), mid = N('div', [icon(), N('span', [d])]);
+    const all = [chip, row, lone, mid].flatMap(r => r.childNodes.filter(k => k.cls.includes('fa-location-dot')));
+    const host = { querySelectorAll: sel => (sel === '.fa-location-dot' ? all : []) };
+    assert.equal(m.markLocMarks(host), 2);
+    assert.equal(a.nodeValue, ' 로비'); assert.equal(b.nodeValue, 'Bakery Corner'); assert.equal(c.nodeValue, '@', '기호뿐이면 그대로'); assert.equal(d.nodeValue, 'Park @ noon', '가운데 기호는 그대로');
+    assert.equal(m.markLocMarks(host), 0, '두 번 해도 같아요');
+    const src = read('src/mb-map-floors.js'); assert.ok(src.includes("if (annexOn()) markLocMarks(n)"), '띠가 다시 그려질 때 · 스위치 annex'); assert.ok(!read('src/ext-compat.js').includes('markLocMarks'), '맞춤 모듈(ext-compat)은 글자 노드를 안 고쳐요');
+});
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

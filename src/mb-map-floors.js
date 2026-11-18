@@ -155,7 +155,14 @@ export function annexMap(places, tr = null) {
     const wide = p => REGION.test(String(p.kind ?? '')) || tx(p.name).some(n => areas.has(annexKey(n)));
     const byKey = new Map();
     for (const p of list) if (!wide(p)) for (const n of tx(p.name)) { const k = annexKey(n); if (k && !byKey.has(k)) byKey.set(k, p); }
+    // 1.8.2 이름 앞뒤 표시 기호만 다른 곳(「@Lobby」 ↔ 「Lobby」 — 모델이 변화 줄에 「loc: @Lobby」 처럼 적으면 원작이 그대로 새 장소로 만들어요)은 기호 없는 쪽으로
+    const plain = new Map(); for (const p of list) if (stripMarks(p.name) === p.name.trim()) for (const n of tx(p.name)) { const k = n.trim().toLowerCase(); if (k && !plain.has(k)) plain.set(k, p); }
     for (const p of list) {
+        if (stripMarks(p.name) !== p.name.trim()) {
+            const q = tx(p.name).map(n => plain.get(stripMarks(n).toLowerCase())).find(x => x && x !== p);
+            const a = String(p.area ?? ''), b = String(q?.area ?? '');
+            if (q && !(a && b && a !== b)) { out.set(p.name, q.name); continue; }
+        }
         let head = null;
         for (const n of tx(p.name)) { for (const x of annexBase(n)) { const q = byKey.get(annexKey(x)); if (q && q !== p) { head = q; break; } } if (head) break; }
         if (!head) continue;
@@ -166,6 +173,8 @@ export function annexMap(places, tr = null) {
     for (const [k, v] of [...out]) if (out.has(v)) out.delete(k);   // 사슬은 안 묶어요
     return out;
 }
+/** 1.8.2 이름 앞뒤의 표시 기호(@ · # · 전각 ＠ ＃)를 떼요 — 그 확장은 장소에 이 기호를 쓰지 않아요(SNS 아이디 「@이름」 만 따로). 다 떼서 빈 글이면 그대로 */
+export function stripMarks(s) { const t = String(s ?? '').trim(), u = t.replace(/^[@＠#＃]+\s*|\s*[@＠#＃]+$/gu, '').trim(); return u || t; }
 const normName = s => String(s ?? '').toLowerCase().replace(/[\s·・_\-.,'"()（）[\]]+/g, '');
 const simpleFind = (list, name) => { const k = normName(name); return list.find(p => normName(p.name) === k) || null; };
 const r1 = v => Math.round(v * 10) / 10;
@@ -242,6 +251,16 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null,
             const mine = keyOf(it.p.name); if (!mine.length) continue;
             const hits = g.filter(r => keyOf(r.p.name).some(k => mine.includes(k)));
             if (hits.length === 1) alias.set(it.p.name, hits[0].p.name);
+        }
+        // 1.8.2 이야기에서 새로 생긴 「<방 이름>」 이 든 곳(「Greenhouse / Tech Dept plant room」 · 「기술부 옆 공작방」 — 층이 안 적힘 · 구역 없음)은
+        //   땅 줄 바깥 점이 아니라 그 방의 층에 따로 점으로 놓아요(같은 곳은 아니라 겹치지 않아요). 조각(「/ · | · , · — 」)마다 그 건물 방 하나의 열쇠(6자 넘게)가 들어 있을 때만
+        for (const it of info.values()) {
+            if (inB.has(it.p.name) || alias.has(it.p.name) || headOf.has(it.p.name) || it.f !== null || it.ghost || (it.area && it.area !== area) || zoneOf(it.p, tr) !== 'out' || tx(it.p.name).some(t => annexBase(t).length)) continue;   // 「X 대문」 꼴은 부속 묶기(annex) 몫
+            const parts = tx(it.p.name).flatMap(t => String(t).split(/\s*[/／|,，·]\s*|\s+[-–—]\s+/u)).map(s => placeKey(s, drop).join('')).filter(k => [...k].length >= 2);
+            if (!parts.length) continue;
+            const hits = g.filter(r => !r.ghost && keyOf(r.p.name).some(k => [...k].length >= 6 && parts.some(s => s !== k && s.includes(k))));
+            if (hits.length !== 1) continue;
+            it.f = hits[0].f; it.area = area; it.near = hits[0].p.name; g.push(it); inB.set(it.p.name, buildings.indexOf(g));
         }
     });
     const real = n => { let k = n; for (let i = 0; i < 4 && alias.has(k); i++) k = alias.get(k); return k; };   // 1.7.9 부속 → 쌍둥이 → 대표처럼 두 번 걸린 것도
@@ -684,7 +703,7 @@ const chars = t => (graphemer ? [...graphemer.segment(String(t ?? ''))].map(x =>
 export const textW = t => chars(t).reduce((s, c) => s + (PICTO.test(c) ? 4.4 : /[ᄀ-ᇿ　-鿿가-힯＀-￯]/.test(c) ? 3.2 : c === ' ' ? 1 : 1.9), 0);
 /** 1.7.0 이름표에 쓸 이름: 「장소 — 설명」 · 「장소 | 설명」 꼴(지금 장소 줄이 그대로 장소 이름이 된 것)은 앞 조각만 */
 export function labelOf(name) {
-    const t = String(name ?? '').trim(), head = t.split(/\s+[—–|]\s+|,\s+/)[0].trim();   // 1.7.0 쉼표 뒤 묘사도 떼요
+    const t = stripMarks(name), head = t.split(/\s+[—–|]\s+|,\s+/)[0].trim();   // 1.7.0 쉼표 뒤 묘사도 떼요
     return head && [...head].length >= 2 ? head : t;
 }
 /** 칸 너비 w 에 맞게 이름을 한 줄 또는 두 줄로 — 띄어쓰기에서 가운데 가까운 곳을 먼저, 없으면 글자 가운데에서 끊어요(줄임표 없이 전체 이름) */
@@ -732,7 +751,7 @@ export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null,
         // 이름표: 그 확장이 8글자에서 줄임표로 자른 것 · 칸보다 긴 것은 전체 이름을 두 줄로 접어요(점 위로 한 줄 더)
         const lab = [...g.querySelectorAll('text')].find(t => !/(?:^|\s)(?:ico|ppl)(?:\s|$)/.test(t.getAttribute('class') || ''));
         if (lab && p && p.known !== false) {
-            const now = lab.textContent || '', full = now.endsWith('…') ? (tr?.(p.name) || p.name) : now;
+            const now = lab.textContent || '', full = stripMarks(now.endsWith('…') ? (tr?.(p.name) || p.name) : now);   // 1.8.2 「@로비」 → 「로비」(표시만)
             const lines = wrapLabel(full, (to.w || SLOT_W) - 1.5);
             if (lines.length > 1 || full !== now) {
                 const lx = lab.getAttribute('x'), ly = Number(lab.getAttribute('y'));
@@ -916,6 +935,29 @@ export function showGhostCard(panel, g) {
     return card;
 }
 
+/** 1.8.2 요소 안 첫 글 조각 앞의 표시 기호(@ · #)를 떼요(그 확장이 다시 그리면 원래대로 · 자료는 그대로) → 뗐나 */
+export function markText(el) {
+    const walk = n => { for (const c of n?.childNodes || []) { if (c.nodeType === 3) { if (String(c.nodeValue || '').trim()) return c; continue; } if (c.nodeType === 1) { const r = walk(c); if (r) return r; } } return null; };
+    const t = walk(el); if (!t) return false;
+    const v = String(t.nodeValue), u = v.replace(/^(\s*)[@＠#＃]+\s*(?=\S)/u, '$1');
+    if (u === v) return false;
+    t.nodeValue = u; return true;
+}
+/** 1.8.2 (미트볼 띠) 위치 칩 · 펼친 위치 줄(📍 아이콘 바로 뒤 글)의 앞 표시 기호(@ · #)를 떼요 — 모델이 「loc: @Lobby」 처럼 적으면 원작이 그대로 장소 이름으로 써요(표시만 · 자료는 그대로) → 뗀 수 */
+export function markLocMarks(root) {
+    let n = 0;
+    for (const ic of root?.querySelectorAll?.('.fa-location-dot') || []) {
+        let t = null;
+        for (let s = ic.nextSibling; s && !t; s = s.nextSibling) {
+            if (s.nodeType === 3) { if (String(s.nodeValue || '').trim()) t = s; }
+            else if (s.nodeType === 1) { const w = [s]; while (w.length && !t) { const x = w.shift(); for (const c of x.childNodes || []) { if (c.nodeType === 3 && String(c.nodeValue || '').trim()) { t = c; break; } if (c.nodeType === 1) w.push(c); } } }
+        }
+        if (!t) continue;
+        const v = String(t.nodeValue), u = v.replace(/^(\s*)[@＠#＃]+\s*(?=\S)/u, '$1');
+        if (u !== v) { t.nodeValue = u; n++; }
+    }
+    return n;
+}
 // ── 붙이기 ─────────────────────────────────────────────
 const rawView = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw');
 const isOn = doc => doc?.body?.getAttribute?.(FLOOR_ATTR) === 'on' && !rawView(doc);
@@ -950,6 +992,7 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
         if (dirNow.wait) return;   // 1.7.6 다른 캐릭터의 로어북을 읽는 중 — 앞 캐릭터의 층 안내 · 장소로 그리지 않고, 다 읽으면 그 자리에서 입혀요(아래 loadDir)
         try { applyFloors(svg, map, { ui, find: findFn(), tr: trFn(), dir: dirNow.list, floors: isOn(doc), lore: ghostOn() ? dirNow.lore : null, annex: annexOn() }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
         // 누른 흐린 점이 있으면(그 확장이 다시 그려도) 카드를 다시 놓아요
+        if (annexOn() && panel) for (const b of panel.querySelectorAll?.('.ss-hint > b, .ss-place-h > b') || []) markText(b);   // 1.8.2 「지금 @로비」 · 카드 이름 앞 기호(표시만)
         if (ui?.blGhost) { const g = svg._blGhosts?.find(x => x.key === ui.blGhost); if (g) showGhostCard(panel, g); else ui.blGhost = null; }
         if (svg._blRefit && panel?._ss) { svg._blRefit = false; try { core.app?.renderPanel?.(panel); } catch { /* 다음에 그릴 때 */ } }   // 버그 사냥 9b: 층별 배치가 없어져 옛 눈금 칸으로 그려진 지도 — 보던 칸을 비웠으니 그 확장이 다시 맞춰 그려요
     };
@@ -1003,6 +1046,7 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
             if (!active() || !core) return;
             for (const r of records) for (const n of r.addedNodes || []) {
                 if (n.nodeType !== 1) continue;
+                if (n.id === 'ss-hud' || n.closest?.('#ss-hud')) { if (annexOn()) markLocMarks(n); continue; }   // 1.8.2 띠 위치 칩 · 펼친 위치 줄 「@로비」(표시만 · 띠 안에 지도는 없어요)
                 if (n.matches?.('svg.ss-map')) dress(n);
                 else if (n.firstElementChild) for (const svg of n.querySelectorAll?.('svg.ss-map:not([data-bl-floors])') || []) dress(svg);
             }

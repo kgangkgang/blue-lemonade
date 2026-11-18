@@ -25,6 +25,8 @@ Blue Lemonade는 GNU Affero General Public License v3.0 조건으로 배포합�
 
 Prompt Panel은 사용자 제공 개인개조+++ 공유본을 기반으로 수정했습니다. [원작 소개글](https://kkangtong.xyz/posts/87408). 추가 수정자의 이름은 공유 게시글에 표시된 이름을 따릅니다.
 
+2026-11-19 anon4961/prompt-panel e223a373188df8d6e0ae6f5be8e49f1ce47c0800(1.2.0)까지 검토했어요. 1.2.0 의 고침 가운데 이 판에도 있던 두 가지(공유용 프리셋 JSON 에서 실리태번이 연결 설정으로 표시한 칸까지 빼기 · 번역이 도는 동안 언어 칸 바꾸기 막기)를 이 판 구조에 맞춰 따로 고쳤어요(원작 코드는 옮기지 않음). 질문하기 · 프리셋 비교 · 원본 보존 · 이름 번역 · 목록 찾기 · 동봉 정규식과 스크립트 보기 · Custom 연결 같은 새 기능은 넣지 않았어요.
+
 2026-09-24 Blue Lemonade 수정: LLM 번역·Prompt Panel·CustomThemeStyleInputs 내장, 설정 화면 연결과 사용 모드 선택, Prompt Panel 상단 탭·도움말·현재 연결 및 직접 연결, 모바일 UI 정리. 각 원작의 기존 라이선스 전문은 해당 폴더에 보존합니다.
 
 Character Assets는 원작자의 개인 수정본 공유 허락에 따라 포함합니다. 원작에 표준 라이선스가 별도 명시된 것으로 간주하지 않으며, 원작 코드의 권리·출처와 공유 허락은 [별도 고지](src/addons/assets/NOTICE.md)를 따릅니다.

@@ -267,6 +267,7 @@ jobs:
           node tools/tests/mb-map-floors.mjs .
           node tools/tests/mb-toggles.mjs .
           node tools/tests/mb-upstream.mjs .
+          node tools/tests/mb-upstream-2101.mjs .
           node tools/tests/mb-locgo.mjs .
           node tools/tests/mb-29x.mjs .
           node tools/tests/mb-diary.mjs .
@@ -966,6 +967,7 @@ jobs:
           node tools/tests/translator-edit-twice.mjs .
           node tools/tests/translator-stale-mesid.mjs .
           node tools/tests/prompt-small-guards.mjs .
+          node tools/tests/prompt-upstream-120.mjs .
           node tools/tests/style-keeps-behavior.mjs .
           node tools/tests/mes-pins-limit-hold.mjs .
           node tools/tests/menu-outside-click.mjs .

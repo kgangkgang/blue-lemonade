@@ -1,6 +1,7 @@
 /* 1.8.2 미트볼 2.10 「속마음」 번역 신호 (src/mb-mind-tr.js 가 그 판에 말풍선이 있을 때만 한 번 붙여요)
    속마음 탭 · 지난 속마음 · 관전석 · 띠 칸의 속마음 글이 그려질 때 0.001초 애니메이션 한 번(눈에 안 보여요) — 그 animationstart 로 번역본을 적어요(감시자 · 타이머 없음 · mb-note.css 와 같은 방법).
    !important: 그 확장은 「움직임 줄이기」 기기에서 제 화면 애니메이션을 꺼요 — 이 신호가 꺼지면 번역본을 못 적어요(움직이는 것이 없는 신호).
+   1.8.2(2.10 새 기능 맞춤): 관전석 이름 · HUD · 미니바 「속마음」 칸 글도 같은 신호예요.
    미트볼 맞춤 스위치 「속마음 번역해서 띄우기」(mindtr) 문 — :where 라 특이도 0 */
 @keyframes bl-mb-mind-seen { from { outline-offset: 0; } to { outline-offset: 0; } }
-:where(:root:not([data-bl-mb-off~="mindtr"])) > body.salty .ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-mind-bub > em) { animation: bl-mb-mind-seen .001s 1 !important; }
+:where(:root:not([data-bl-mb-off~="mindtr"])) > body.salty .ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-wt-feed li > div > b, .ss-mind-bub > em, .ss-t.t-mind .p > .m) { animation: bl-mb-mind-seen .001s 1 !important; }

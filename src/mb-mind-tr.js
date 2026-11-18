@@ -24,7 +24,8 @@ export const ANIM = 'bl-mb-mind-seen';
 export const STORE = 'bl-mb-mind-tr-v1';
 export const STORE_MAX = 400;
 export const SRC_ATTR = 'data-bl-mind-src';
-export const SEL = '.ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-mind-bub > em)';
+// 1.8.2(2.10 새 기능 맞춤): 관전석 이름(.ss-wt-feed … > b — 주변인 · 실시간 채팅은 AI 가 이야기 언어로 이름을 지어요) · HUD · 미니바 「속마음」 칸 글(.t-mind .m)도
+export const SEL = '.ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-wt-feed li > div > b, .ss-mind-bub > em, .ss-t.t-mind .p > .m)';
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';   // 그 확장 번역 단추(src/ext-bridge-tr.js 와 같은 것)
 const BATCH = 20;
 const OUT_MS = 450;   // 그 확장 말풍선 나가는 움직임 길이
@@ -91,7 +92,7 @@ export function allMindTexts(state) {
         add(r?.mind?.text);
         for (const x of Array.isArray(r?.mindLog) ? r.mindLog : []) add(x?.text);
     }
-    for (const w of Array.isArray(state?.watch) ? state.watch : []) add(w?.text);
+    for (const w of Array.isArray(state?.watch) ? state.watch : []) { add(w?.text); add(w?.who); }   // 관전자 이름도(내 언어면 needsTr 이 걸러요)
     return [...out];
 }
 
@@ -178,6 +179,9 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         for (const it of items) {
             if (modes.has(it.key)) continue;
             const base = { src: it.text, who: it.who };
+            // 관전자 이름(주변인 · 실시간 채팅은 AI 가 이야기 언어로 지어요) — 모음에 있으면 처음부터 그 이름, 없으면 글과 같은 묶음으로 부탁해요(이름만으로는 기다리지 않아요)
+            const nameTr = !seed && on && !it.covered && it.key.startsWith('w|') && needsTr(it.who, L);
+            if (nameTr) { const nm = store.get(L, it.who); if (nm) base.name = nm; else if (!failed.has(it.who)) ask(it.who); }
             // 채팅을 막 열었을 때 있던 것 · 가려진 것 · 내 언어 · 꺼짐: 원문 열쇠 그대로(그 확장 동작 그대로)
             if (seed || it.covered || !on || !needsTr(it.text, L)) { modes.set(it.key, { ...base, m: 'raw' }); continue; }
             const ko = store.get(L, it.text);
@@ -193,6 +197,8 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         const undo = [];
         for (const it of items) {
             const st = modes.get(it.key);
+            // 관전자 이름: 처음 띄울 때 정한 이름(st.name)만 넣어요 — 띄운 뒤에 이름이 바뀌면 그 확장이 새 한마디로 보고 한 번 더 띄우니까요
+            if (st?.name && st.m !== 'wait') { undo.push([it.obj, 'who', it.obj.who]); it.obj.who = st.name; }
             if (st?.m === 'wait') { undo.push([it.obj, 'turn', it.obj.turn]); it.obj.turn = -1; }
             else if (st?.m === 'tr' && st.ko) { undo.push([it.obj, 'text', it.obj.text]); it.obj.text = st.ko; }
         }
@@ -214,13 +220,17 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         let again = false;
         for (const [key, st] of modes) {
             if (st.src !== src) continue;
-            if (st.m === 'wait') { timers.clearTimeout(wake.get(key)); wake.delete(key); modes.set(key, { ...st, m: 'tr', ko }); again = true; note(`번역본으로 ${st.who}`); }
-            else if (st.m === 'raw' && st.late) { modes.set(key, { ...st, late: false }); if (!off()) swapBubble(st.who, ko); }
+            if (st.m === 'wait') {
+                timers.clearTimeout(wake.get(key)); wake.delete(key);
+                const name = st.name ?? (key.startsWith('w|') ? store.get(lang(), st.who) : null);   // 같은 묶음으로 온 관전자 이름(아직 안 띄웠으니 지금 정해요)
+                modes.set(key, { ...st, m: 'tr', ko, ...(name ? { name } : {}) }); again = true; note(`번역본으로 ${st.who}`);
+            }
+            else if (st.m === 'raw' && st.late) { modes.set(key, { ...st, late: false }); if (!off()) swapBubble(st.name ?? st.who, ko, key.startsWith('w|') ? store.get(lang(), st.who) : null); }
         }
         if (again) redraw();
     }
     /** 원문으로 이미 뜬 말풍선 → 같은 꼴 번역본(새 마디)으로 바꿔 끼우고 사라지는 시간을 지금부터 · 원래 마디는 문서에서 빠져 그 확장 타이머가 아무 일도 못 해요 */
-    function swapBubble(who, ko) {
+    function swapBubble(who, ko, name = null) {
         const box = doc.getElementById?.('ss-mind-pops');
         if (!box) return false;
         for (const el of box.querySelectorAll('.ss-mpop')) {
@@ -232,6 +242,8 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
             next.style.animation = 'none';   // 다시 튀어나오지 않고 글만 바뀌게
             const t = next.querySelector('.ss-mpop-t');
             if (t) t.textContent = ko;
+            const nb = next.querySelector('.ss-mpop-b small b');   // 원문으로 뜬 관전자 이름도 이때 같이(바꿔 끼운 마디라 그 확장 열쇠와 상관없어요)
+            if (nb && name && name !== who) { nb.title = `원문: ${who}`; nb.textContent = name; }
             el.replaceWith(next);
             let sec = 6; try { sec = Number(cfg?.numOf?.(set())?.sec) || 6; } catch { sec = 6; }
             timers.setTimeout(() => { next.style.animation = ''; next.classList.add('out'); timers.setTimeout(() => next.remove(), OUT_MS); }, sec * 1000 + [...ko].length * 30);
@@ -273,11 +285,14 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
             if (!out) out = await Promise.all(list.map(k => Promise.resolve().then(() => tr.trText(k)).catch(() => k)));
         } finally { for (const k of list) inflight.delete(k); }
         let n = 0;
+        const got = [];
         list.forEach((k, i) => {
             const ko = String(out?.[i] ?? '').trim();
-            if (looksDone(ko, k, L)) { store.put(L, k, ko); failed.delete(k); n++; arrive(k, ko); }
+            if (looksDone(ko, k, L)) { store.put(L, k, ko); failed.delete(k); n++; got.push([k, ko]); }
             else failed.add(k);
         });
+        // 모음에 다 넣은 뒤에 알려요 — 한마디 글이 먼저 와서 다시 그릴 때 같은 묶음의 관전자 이름도 이미 있게
+        for (const [k, ko] of got) arrive(k, ko);
         note(`번역 옴 ${n}/${list.length}`);
         if (n) paintAll();
         return n;

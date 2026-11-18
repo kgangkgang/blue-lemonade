@@ -223,12 +223,81 @@ await test('⑩ 스위치 표 · 시트 묶음 · 다리 시작', async () => {
     const SW = await import(pathToFileURL(path.join(root, 'src/mb-switch.js')).href);
     assert.equal(SW.switchOf('mindtr')?.kind, 'data'); assert.equal(SW.switchOf('mindpop')?.kind, 'screen');
     const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
-    assert.match(css, /\/\* @mb mindpop \*\/[\s\S]*#ss-mind-pops\.ss-root \{ background: transparent !important;/);
+    assert.match(css, /\/\* @mb mindpop \*\/[\s\S]*#ss-mind-pops\.ss-root \{ background: transparent;/);
     const sig = fs.readFileSync(path.join(root, 'src/mb-mind-tr.css'), 'utf8');
     assert.match(sig, new RegExp(`@keyframes ${M.ANIM} `));
     assert.match(sig, /:where\(:root:not\(\[data-bl-mb-off~="mindtr"\]\)\) > body\.salty \.ss-scope :is\(/, '스위치 문');
     for (const s of ['.ss-mindc .ss-mind.big', '.ss-mind-log li > span', '.ss-wt-feed li > div > p', '.ss-mind-bub > em']) assert.ok(sig.includes(s) && M.SEL.includes(s), s);
     assert.match(fs.readFileSync(path.join(root, 'src/ext-bridge.js'), 'utf8'), /mb-mind-tr\.js'\)\.then\(module => module\.startMindTr\(doc\)\)/);
+});
+
+// 1.8.2 미트볼 2.10 새 기능 맞춤(관전자 이름 · HUD 칸 · 관전석 이름)
+const JPN = '通りすがりの猫', KON = '지나가던 고양이';
+DICT.set(JPN, KON);
+await test('⑪ 관전자 이름(주변인 · 실시간 채팅 — AI 가 이야기 언어로 지음)도 같은 묶음으로 옮겨 처음부터 번역 이름 · 한 번만 띄움 · 자료 그대로', async () => {
+    const { mb } = make({ delay: 60 });
+    mb.state.turn++;
+    mb.state.watch.push({ who: JPN, text: JPW, turn: mb.state.turn });
+    mb.core.app.mindPop();
+    assert.equal(mb.spawned.length, 0);
+    await sleep(300);
+    assert.equal(mb.spawned.length, 1);
+    assert.equal(mb.spawned[0].who, KON, '번역 이름'); assert.equal(mb.spawned[0].text, KOW);
+    assert.equal(mb.calls.length, 1, '글과 이름 한 번에');
+    assert.equal(mb.state.watch[0].who, JPN, '자료 이름 그대로');
+    mb.core.app.mindPop(); mb.core.app.mindPop();
+    assert.equal(mb.spawned.length, 1, '다시 그려도 한 번만');
+    // 글이 이미 내 언어면 이름 때문에 기다리지 않아요 — 원문 이름으로 바로 · 다음 턴부터 모음의 이름
+    const b = make({ delay: 40 });
+    b.mb.state.turn++; b.mb.state.watch.push({ who: JPN, text: '또 저러네', turn: b.mb.state.turn }); b.mb.core.app.mindPop();
+    assert.equal(b.mb.spawned.length, 1); assert.equal(b.mb.spawned[0].who, JPN, '이름만으로는 안 기다림');
+    await sleep(320);
+    b.mb.core.app.mindPop(); assert.equal(b.mb.spawned.length, 1, '이름이 나중에 와도 다시 안 띄움');
+    b.mb.state.turn++; b.mb.state.watch.push({ who: JPN, text: '아 진짜', turn: b.mb.state.turn }); b.mb.core.app.mindPop();
+    assert.equal(b.mb.spawned.at(-1).who, KON, '다음 턴은 모음의 이름');
+    // 내 언어 이름(열성팬)은 손대지 않아요
+    const c = make({ delay: 20 }); c.mb.state.turn++; c.mb.state.watch.push({ who: '열성팬', text: JPW, turn: c.mb.state.turn }); c.mb.core.app.mindPop(); await sleep(320);
+    assert.equal(c.mb.spawned[0].who, '열성팬'); assert.deepEqual(c.mb.calls, [JPW]);
+});
+await test('⑫ 늦은 번역: 원문으로 뜬 말풍선을 바꿔 끼울 때 관전자 이름도 같이(원문은 title)', async () => {
+    const { mb, doc } = make({ delay: 500, wait: 200 });
+    mb.state.turn++; mb.state.watch.push({ who: JPN, text: JPW, turn: mb.state.turn }); mb.core.app.mindPop();
+    await sleep(320);
+    assert.equal(mb.spawned[0].who, JPN, '원문으로 뜸');
+    await sleep(450);
+    const b = doc.querySelector('#ss-mind-pops .ss-mpop[data-bl-mind-tr] .ss-mpop-b small b');
+    assert.equal(b?.textContent, KON); assert.equal(b.title, `원문: ${JPN}`);
+    assert.equal(doc.querySelector('#ss-mind-pops .ss-mpop-t').textContent, KOW);
+});
+await test('⑬ 관전석 이름 · HUD · 미니바 속마음 칸 글: 신호로 번역본 · 번역 단추가 관전자 이름도 옮김', async () => {
+    const { mb, mind, doc, toasts } = make({ set: { trAuto: 'off' }, delay: 20 });
+    for (const s of ['.ss-wt-feed li > div > b', '.ss-t.t-mind .p > .m']) assert.ok(M.SEL.includes(s), s);
+    const sig = (await import('node:fs')).readFileSync(path.join(root, 'src/mb-mind-tr.css'), 'utf8');
+    for (const s of ['.ss-wt-feed li > div > b', '.ss-t.t-mind .p > .m']) assert.ok(sig.includes(s), `신호 시트 ${s}`);
+    mb.state.watch.push({ who: JPN, text: JPW, turn: 1 });
+    doc.body.insertAdjacentHTML('beforeend', `<div class="ss-scope"><ul class="ss-wt-feed"><li><div><b>${JPN}</b><p>${JPW}</p></div></li></ul><span class="ss-t t-mind"><span class="c"><span class="ci"><span class="p"><span class="ss-tf"></span><span class="m">${JP1}</span></span></span></span></span><button data-act="trsheet">번역</button></div>`);
+    mind.onClick({ target: doc.querySelector('[data-act="trsheet"]') });
+    await sleep(200);
+    for (const el of doc.querySelectorAll(M.SEL)) mind.onAnim({ animationName: M.ANIM, target: el });
+    assert.equal(doc.querySelector('.ss-wt-feed b').textContent, KON);
+    assert.equal(doc.querySelector('.ss-wt-feed b').title, `원문: ${JPN}`);
+    assert.equal(doc.querySelector('.t-mind .m').textContent, KO1);
+    assert.match(toasts.at(-1)[1], /속마음 \d+개/);
+});
+await test('⑭ 화면 맞춤 시트: 욕구 딱지 묶음 뒤 판 · 밤 말풍선 면 · 이름 색 · 세포 그림 크기 · ✏ 누를 자리 36 · 세포 카드 위에서부터', async () => {
+    const fs = await import('node:fs');
+    const css = fs.readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    const mp = css.slice(css.indexOf('/* @mb mindpop */'), css.indexOf('/* @mb palette */', css.indexOf('/* @mb mindpop */')));
+    assert.match(mp, /#ss-mdl-pops\.ss-root \{ background: transparent;/);
+    assert.match(mp, /#ss-mind-pops :is\(\.c-fan, \.c-cell, \.c-cellsul, \.c-cellwoo\) \{ background: var\(--ss-bg\); color: var\(--ss-ink\); \}/);
+    assert.match(mp, /#ss-mind-pops \.c-chat \{ background: var\(--ss-bg\);/);
+    assert.match(mp, /\.ss-mpop:not\(\.c-writer, \.c-celljijeok\) \.ss-mpop-b small b \{ color: var\(--ss-ink\);/);
+    assert.match(mp, /\.ss-mpop-ic \.ss-cellsvg \{ width: 1\.3em; height: 1\.3em; \}/);
+    assert.match(css, /\/\* @mb touch \*\/[\s\S]*:is\(\.ss-wt-ed, \.ss-tone-ed\) \{ display: inline-grid; place-items: center; width: 36px; height: 36px;/);
+    assert.match(css, /\/\* @mb layout \*\/[\s\S]*\.ss-cells-g > \.ss-cell \{ align-content: start; \}[\s\S]*\.ss-cells-g > \.ss-cell > b \{ padding-right: 28px; \}/);
+    assert.match(css, /\/\* @mb palette \*\/[\s\S]*\.ss-wt-feed li > div > b \{ color: var\(--ss-ink\); \}/);
+    const gen = fs.readFileSync(path.join(root, 'src/ext-status.gen.css'), 'utf8');
+    assert.ok(gen.includes(':where(:root:not([data-bl-mb-off~="mindpop"])) > body.salty:not([data-bl-ext-raw]) #ss-mdl-pops.ss-root'), '생성물에 스위치 문');
 });
 
 console.log(`mb-mind-tr: ${passed} 통과`);

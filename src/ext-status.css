@@ -1632,4 +1632,33 @@ body.salty:not([data-bl-ext-raw]) #ss-hud .ss-tg > .ss-t > .c > .ci > :is(i.fa-s
 /* 1.8.2 미트볼 2.10 「속마음」 말풍선 묶음(#ss-mind-pops): 그 확장이 묶음 상자에 상태창 겹 이름(.ss-root)을 붙여, 상태창 면 규칙(바탕 --ss-bg · 둥근 모서리)이
    말풍선 사이 빈자리까지 어두운 사각 판으로 깔았어요(11-19 사용자 사진 「검은 레터박스」) — 상자는 자리만 잡고 면은 말풍선 하나하나만. 말풍선 면 · 테두리 · 그림자는 그대로예요.
    실리태번 알림(#toast-container · z 999999)은 원래 말풍선(9996)보다 위예요 — 「다시 쓰기 10곳 확인하는 중…」 알림이 겹쳐도 알림이 위(리그 384 밤 · 낮에서 잼 · 따로 규칙 없음) */
-body.salty:not([data-bl-ext-raw]) #ss-mind-pops.ss-root { background: transparent !important; background-image: none !important; border: 0 !important; border-radius: 0; box-shadow: none !important; outline: 0; padding: 0; min-height: 0; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops.ss-root { background: transparent; background-image: none; border: 0; border-radius: 0; box-shadow: none; outline: 0; padding: 0; min-height: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* 1.8.2 미트볼 2.10 새 기능 맞춤 — 관전자 · 세포 말풍선(#ss-mind-pops)
+   ① 욕구 딱지 묶음(#ss-mdl-pops · 2.9 생활 틀)도 같은 꼴이었어요 — 그 확장이 상자에 상태창 겹 이름(.ss-root)을 붙여 딱지 둘 사이 빈자리까지 바탕 판(밤 rgb 37 · 39 · 43 · 낮 rgb 252 · 253 · 255 · 모서리 12)이 깔렸어요 → 상자는 자리만.
+   ② 밤: 그 확장 말풍선 몇 컨셉(열성팬 · 세포 · 설렘 · 우울)이 「연한 색 → 상태창 바탕」 그라데이션 위에 진한 글을 써서, 밤 바탕 쪽 절반은 글이 안 보였어요(리그 384 밤 대비 1.5 ~ 1.7).
+      이름 글자도 컨셉 색을 #222 쪽으로 섞어 밤 바탕에서 대비 1.2 ~ 1.4였어요 → 면은 상태창 면 · 글 · 이름은 상태창 글 색(컨셉 색은 테두리 · 왼쪽 띠에 그대로 — 시트에 색 글자를 박지 않는 규칙이라 섞은 색 대신).
+      원고지(공동작가) · 경고 띠(지적세포)는 밤낮 같은 밝은 면이라 원작 글 · 이름 색 그대로 두고, 작은 꼬리표(「· 세포」 — 밤엔 연한 회색이라 안 보였어요)만 그 면의 진한 글 색으로 해요.
+   ③ 실시간 채팅: 낮에도 거의 검은 꽉 찬 면(#18181b)이었어요 → 상태창 면 + 왼쪽 보라 띠는 그대로.
+   ④ 세포 그림이 말풍선에서 52px(다른 컨셉 그림 29px) → 같은 크기 · ⑤ 원고지 말풍선 펜(✒)이 글 끝을 덮던 것 → 오른쪽 여백 */
+body.salty:not([data-bl-ext-raw]) #ss-mdl-pops.ss-root { background: transparent; background-image: none; border: 0; border-radius: 0; box-shadow: none; outline: 0; padding: 0; min-height: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops :is(.c-fan, .c-cell, .c-cellsul, .c-cellwoo) { background: var(--ss-bg); color: var(--ss-ink); }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops .c-chat { background: var(--ss-bg); color: var(--ss-ink); }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops .c-chat .ss-mpop-b small { color: var(--ss-dim); }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops .ss-mpop:not(.c-writer, .c-celljijeok) .ss-mpop-b small b { color: var(--ss-ink); filter: none; }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops :is(.c-writer, .c-celljijeok) .ss-mpop-b small { color: inherit; }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops .ss-mpop-ic .ss-cellsvg { width: 1.3em; height: 1.3em; }
+body.salty:not([data-bl-ext-raw]) #ss-mind-pops .c-writer { padding-right: 30px; }
+/* @mb palette */
+/* 1.8.2 미트볼 2.10 💭 속마음 탭 › 👀 관전석 이름: 컨셉 색을 #222 쪽으로 섞어 밤 바탕에서 거의 안 보였어요(우울세포 · 공동작가 · 안티 · 주변인) → 상태창 글 색(컨셉 색은 왼쪽 띠에 그대로) */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-wt-feed li > div > b { color: var(--ss-ink); }
+/* @mb layout */
+/* 1.8.2 미트볼 2.10 🧠 세포 고르기 카드(.ss-cells-g 안만 — 같은 이름 .ss-cell 이 상태 띠 편집 칸에도 있어요): 한 줄 설명 카드는 이름이 가운데로 내려와 옆 카드와 제목 높이가 달랐어요(같은 줄 10px 차) · 긴 이름이 오른쪽 위 ✏ 밑으로 들어갔어요 → 제목은 위에서부터 · 이름 줄만 ✏ 자리만큼 오른쪽 여백(설명 줄은 ✏ 아래라 그대로 — 카드 전체에 주면 한 낱말만 꺾여 내려왔어요)
+   꾸미기 › 칸 늘리기 · 칸 고르기 창 단추: 테마 단추 사이 틈(8)이 「장신구 · 귀걸이…」의 이름과 「 · 」 사이에 한 번 더 끼었어요 → 그 단추만 낱말 사이 한 칸(.3em — 원작 글의 앞 빈칸은 줄 맞춤에서 빠져요) */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-cells-g > .ss-cell { align-content: start; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-cells-g > .ss-cell > b { padding-right: 28px; }
+body.salty:not([data-bl-ext-raw]) .ss-scope.ss-gearpick .ss-stack > .ss-btn { column-gap: .3em; }
+/* @mb touch */
+/* 1.8.2 미트볼 2.10 관전자 · 세포 · 어조 ✏(고치기) 누를 자리 20×20 → 36×36(그림 크기는 그대로 · 테마 버튼 높이 36) */
+body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-wt-ed, .ss-tone-ed) { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; box-sizing: border-box; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-wt .ss-wt-ed { right: 0; bottom: 0; }
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-cells-g > .ss-cell .ss-wt-ed { right: 0; top: 0; }

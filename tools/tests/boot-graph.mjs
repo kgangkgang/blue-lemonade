@@ -130,7 +130,8 @@ await test('시작 그래프 크기 상한 (모듈 수 · 바이트)', () => {
     //   본체는 모두 켤 때 · 누를 때만 받는 동적 import 이고, 브라우저가 받는 정적 묶음은 bundle-fresh.mjs 상한 안이에요
     // 1.8.2 미트볼 속마음 스위치 두 줄(mb-switch.js 표 mindpop · mindtr · +1.4KB · 본체 mb-mind-tr.js 는 동적 import)과 1.8.1 까지 쌓인 몫으로 687,802 바이트 — 672KB.
     //   브라우저가 받는 정적 묶음은 bundle-fresh.mjs 상한 · dist 상한(출시 도구) 안 그대로예요
-    assert.ok(bytes <= 672 * 1024, `${bytes} 바이트`);
+    // 1.8.3 스위치 설명 두 줄이 길어짐(mindpop 에 욕구 딱지 · annex 에 장소 이름 앞 기호 — mb-switch.js +488B) — 688,290 바이트 · 673KB
+    assert.ok(bytes <= 673 * 1024, `${bytes} 바이트`);
 });
 
 await test('1.1.5 시작 묶음 다이어트: 설정 창에서만 쓰는 조각은 시작 그래프 밖이에요', () => {
