@@ -239,7 +239,7 @@ const watched = new WeakSet();
 
 /** 그 확장의 설정 칸에 우리 칸 둘을 넣어요(이미 있으면 안내 줄 · 목록만 다시). 기능을 안 쓰는 모드면 넣지 않고, 있던 칸은 치워요 */
 export function mountBridgeUi(doc, bridge) {
-    const content = doc.querySelector(`${Core.TARGET.root} .inline-drawer-content`);
+    const outer = doc.querySelector(`${Core.TARGET.root} .inline-drawer-content`), content = outer?.querySelector(':scope > .ss-set-body') || outer;   // 미트볼 2.9.1(d61af0b1)부터 칸들은 .ss-set-body 한 겹 아래
     if (!content || !bridge) return false;
     const blocks = () => [...content.querySelectorAll('[data-bl-bridge]')];
     if (!bridge.status().features) { for (const block of blocks()) block.remove(); return false; }

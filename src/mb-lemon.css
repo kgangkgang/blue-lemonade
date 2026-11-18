@@ -19,14 +19,14 @@ body.salty #ss-settings .bl-ext-lemon-ico { display: inline-block; flex: none; w
 body.salty #ss-settings .bl-ext-tabs > .bl-ext-lemon-tab { gap: 6px; }
 
 /* 탭 줄이 안 보일 때(탭 나누기 끔 · 원작 그대로 보기 · 탭을 못 만든 판) 칸 맨 위 한 줄 — 분류 탭과 같은 높이 · 선 · 면 */
-body.salty #ss-settings:is([data-bl-view="raw"], :not([data-bl-tabs])) .inline-drawer-content > .bl-ext-lemonbar,
-:root[data-bl-mb-off~="tabs"] body.salty #ss-settings .inline-drawer-content > .bl-ext-lemonbar { display: flex !important; margin: var(--bl-s1, 4px) 0 0; padding: var(--bl-s1, 4px) 0; }
+body.salty #ss-settings:is([data-bl-view="raw"], :not([data-bl-tabs])) :is(.inline-drawer-content, .ss-set-body) > .bl-ext-lemonbar,
+:root[data-bl-mb-off~="tabs"] body.salty #ss-settings :is(.inline-drawer-content, .ss-set-body) > .bl-ext-lemonbar { display: flex !important; margin: var(--bl-s1, 4px) 0 0; padding: var(--bl-s1, 4px) 0; }
 body.salty #ss-settings .bl-ext-lemonbar > .bl-ext-lemon-open { display: inline-flex; align-items: center; gap: var(--bl-s2, 8px); box-sizing: border-box; width: 100%; height: var(--bl-ui-ctl, 36px); margin: 0; padding: 0 var(--bl-s3, 12px); border: 1px solid var(--bl-ui-line, var(--salty-line)); border-radius: var(--bl-ui-radius, 8px); background: var(--bl-hover, var(--salty-shade)); box-shadow: none; color: var(--salty-muted); font: inherit; font-size: var(--bl-ui-tab-fs, 13px); font-weight: 400; line-height: 1.35; text-align: start; white-space: nowrap; cursor: pointer; }
 body.salty #ss-settings .bl-ext-lemonbar > .bl-ext-lemon-open[aria-expanded="true"] { background: var(--bl-ui-pick-face); color: var(--bl-ui-pick-ink); font-weight: var(--bl-ui-strong, 650); }
 body.salty #ss-settings .bl-ext-lemonbar > .bl-ext-lemon-open:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--salty-accent); }
 
 /* 레몬 칸: 열렸을 때만(레몬 탭 · 머리 단추 · 한 줄) — 탭 숨김 표식보다 세게(:not(#…) 하나) */
-body.salty #ss-settings[data-bl-lemon] .inline-drawer-content > .bl-ext-lemonpane:not(#bl-lemon-x) { display: block !important; grid-column: 1 / -1; min-width: 0; margin: var(--bl-s3, 12px) 0 0; }
+body.salty #ss-settings[data-bl-lemon] :is(.inline-drawer-content, .ss-set-body) > .bl-ext-lemonpane:not(#bl-lemon-x) { display: block !important; grid-column: 1 / -1; min-width: 0; margin: var(--bl-s3, 12px) 0 0; }
 body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-h { display: flex; align-items: center; gap: var(--bl-s2, 8px); font-size: var(--bl-ts-ui, 14px); font-weight: var(--bl-ui-strong, 650); line-height: 1.35; }
 body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-h > .bl-ext-lemon-ico { color: var(--bl-ui-pick-ink); }
 body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-note { display: block; margin: var(--bl-s1, 4px) 0 0; font-size: var(--bl-ts-meta, 13px); line-height: 1.45; color: var(--salty-muted); opacity: 1; }
@@ -45,3 +45,5 @@ body.salty #ss-settings:is([data-bl-view="raw"], :not([data-bl-tabs])) .bl-ext-l
 :root[data-bl-mb-off~="tabs"] body.salty #ss-settings .bl-ext-lemonpane > .bl-ext-lemon-h { display: none; }
 /* 테마 설정 찾기에서 데려온 줄 */
 body.salty #ss-settings .salty-panel.bl-mb-fit-embed [data-bl-lemon-hit] { border-radius: var(--bl-ui-radius, 8px); background: var(--bl-ui-pick-face); box-shadow: 0 0 0 4px var(--bl-ui-pick-face); }
+/* 미트볼 2.9.1(d61af0b1) 서랍 맨 위 원작 「설정 찾기」에 적는 동안(data-bl-finding · ext-compat markFinding): 레몬 칸 · 한 줄도 가려요 — 찾은 줄만 남게 */
+body.salty #ss-settings[data-bl-finding] .inline-drawer-content :is(.bl-ext-lemonbar, .bl-ext-lemonpane):not(#bl-lemon-x) { display: none !important; }

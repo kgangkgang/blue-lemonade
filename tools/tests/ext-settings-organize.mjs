@@ -44,7 +44,7 @@ test('② 숫자 줄(파라미터)은 2열 칸 — 이어지면 둘씩 나란히
     // 시트: 반 폭 칸은 표식이 달린 줄만 · 그 밖의 줄은 두 칸 전체 · 숫자 칸은 칸 폭을 채워요 · 그 확장의 창 안 조절 칸(슬라이더 · 숫자)도 반 폭
     const sheet = read('src/ext-status.css').replace(/\/\*[\s\S]*?\*\//g, '');
     assert.match(sheet, /#ss-settings\[data-bl-view="org"\] \.inline-drawer-content\[style\*="display: block"\] \{ display: grid !important; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
-    assert.match(sheet, /#ss-settings\[data-bl-view="org"\] \.inline-drawer-content > label\[data-bl-col\] \{ grid-column: auto;/);
+    assert.match(sheet, /#ss-settings\[data-bl-view="org"\] :is\(\.inline-drawer-content, \.ss-set-body\) > label\[data-bl-col\] \{ grid-column: auto;/);
     assert.match(sheet, /body\.salty \.ss-scope label\.ss-f:has\(> input:is\(\[type="range"\], \[type="number"\]\)\) \{ display: inline-flex; flex: 0 1 calc\(50% - 16px\); width: calc\(50% - 16px\);/, '창 안의 슬라이더 · 숫자 줄도 2열');
 });
 test('③ 탭 한 줄 설명은 그 칸이 있는 탭에 · 비용 표시는 그 줄에만', () => {
@@ -81,14 +81,14 @@ test('⑤ 그 확장의 요소를 옮기거나 지우지 않아요 · 감시자 
 });
 const css = read('src/ext-status.css').replace(/\/\*[\s\S]*?\*\//g, '');
 test('⑥ 시트: 접기 · 2열 · 설명은 「정리한 보기」일 때만 · 「원작 그대로」면 전부 펼쳐요', () => {
-    assert.match(css, /body\.salty #ss-settings\[data-bl-view="org"\] \.inline-drawer-content > \[data-bl-fold-off\] \{ display: none !important; \}/);
-    assert.ok(!/\[data-bl-fold-off\][^{]*\{/.test(css.replace(/body\.salty #ss-settings\[data-bl-view="org"\] \.inline-drawer-content > \[data-bl-fold-off\] \{[^}]*\}/, '')), '접힌 줄을 숨기는 규칙은 그것 하나(「원작 그대로」에서는 안 걸려요)');
+    assert.match(css, /body\.salty #ss-settings\[data-bl-view="org"\]:not\(\[data-bl-finding\]\) :is\(\.inline-drawer-content, \.ss-set-body\) > \[data-bl-fold-off\] \{ display: none !important; \}/);
+    assert.ok(!/\[data-bl-fold-off\][^{]*\{/.test(css.replace(/body\.salty #ss-settings\[data-bl-view="org"\]:not\(\[data-bl-finding\]\) :is\(\.inline-drawer-content, \.ss-set-body\) > \[data-bl-fold-off\] \{[^}]*\}/, '')), '접힌 줄을 숨기는 규칙은 그것 하나(「원작 그대로」에서는 안 걸려요)');
     assert.match(css, /body\.salty #ss-settings\[data-bl-view="raw"\] :is\(\.bl-ext-tabs, \.bl-ext-intro, \.bl-ext-fold, \.bl-ext-more, \.bl-ext-start\) \{ display: none !important; \}/);
-    assert.match(css, /body\.salty #ss-settings:not\(\[data-bl-view="raw"\]\) \.inline-drawer-content > \[data-bl-tab-off\] \{ display: none !important; \}/, '「원작 그대로」면 다른 탭의 묶음도 한 쪽에 다 보여요');
+    assert.match(css, /body\.salty #ss-settings:not\(\[data-bl-view="raw"\], \[data-bl-finding\]\) :is\(\.inline-drawer-content, \.ss-set-body\) > \[data-bl-tab-off\] \{ display: none !important; \}/, '「원작 그대로」면 다른 탭의 묶음도 한 쪽에 다 보여요');
     assert.match(css, /#ss-settings\[data-bl-view="org"\] \.inline-drawer-content\[style\*="display: block"\] \{ display: grid !important;/, '2열 격자는 실리태번이 서랍을 펼쳐 둔 동안에만(접힌 서랍을 억지로 보이게 하지 않아요)');
     assert.ok(!/\.inline-drawer-content(?!\[style\*="display: block"\])[^{,]*\{[^}]*display: (grid|block|flex) !important/.test(css.replace(/\.inline-drawer-content > [^{]*\{[^}]*\}/g, '')), '내용 칸 자체를 늘 보이게 하는 규칙이 없어요');
     for (const [kind, label] of [['ai', 'AI 요청 +'], ['tok', '토큰 +'], ['save', '토큰 절약'], ['free', '비용 없음']]) assert.ok(css.includes(`[data-bl-cost="${kind}"]::after { content: '${label}'; }`), `비용 표시 ${kind}`);
-    assert.match(css, /#ss-settings\[data-bl-view="org"\] \.inline-drawer-content > small\[data-bl-clamp="hide"\] \{ display: none; \}/, '탭 맨 위 긴 문단은 정리한 보기에서만 접어요(원작 그대로면 보여요)');
+    assert.match(css, /#ss-settings\[data-bl-view="org"\] :is\(\.inline-drawer-content, \.ss-set-body\) > small\[data-bl-clamp="hide"\] \{ display: none; \}/, '탭 맨 위 긴 문단은 정리한 보기에서만 접어요(원작 그대로면 보여요)');
     for (const cls of ['bl-ext-intro', 'bl-ext-fold', 'bl-ext-more', 'bl-ext-start']) assert.match(css, new RegExp(`#ss-settings\\[data-bl-view="org"\\] \\.${cls} \\{ display: [a-z-]+ !important;`), `${cls} 는 정리한 보기에서만 보여요`);
     assert.match(read('src/mb-lemon.css'), /#ss-settings \.inline-drawer-header > \.bl-ext-view \{ display: inline-flex !important;/, '레몬 단추는 두 보기 모두에서 · 맞춤을 다 꺼도 보여요(1.7.4 묶음 문 없는 제 시트)');
     assert.ok(!/\.bl-ext-(intro|fold|more|start|view|jump)[^{]*\{[^}]*display: [a-z-]+ !important/.test(read('style.css')), '늘 붙는 시트에는 없어요');

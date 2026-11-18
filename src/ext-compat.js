@@ -22,7 +22,7 @@ import { armGuard } from './cheap-guards.js';
 import { cardColorTable, tableColor } from './card-colors.js';   // 1.5.9 카드별 색 기억(인물표 공급자와 같은 표)
 import { mbOff, onMbOff } from './mb-switch.js';   // 1.7.3 미트볼 맞춤 스위치(끈 묶음은 그 일을 안 해요 · 시트는 src/ext-status.gen.css 묶음 문)
 import { buildLemon, setLemon, LEMON } from './mb-lemon.js';   // 1.7.4 레몬 탭(「블루레몬 · 미트볼 맞춤」 — 맞춤을 다 꺼도 남아요)
-import { organize, toggleFold, toggleMore, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind, recall, remember } from './ext-organize.js';
+import { organize, toggleFold, toggleMore, dismissStart, refreshSummaries, groupOfKey, renderFound, gotoHit, toggleFind, recall, remember, bodyOf } from './ext-organize.js';
 
 /** 켬 조건 · 확인한 판(한 곳) — root: 그 확장의 설정 칸(index.js 가 「화면에 있음」을 보는 선택자) · css: 맞춤 시트 · head: 묶음 머리(내용 칸의 바로 아래 자식) · version: 판 번호가 찍힌 곳
  *  mark: 원작만 가진 요소(이것이 든 설정 칸에만 맞춰요 — 있으면 분류 탭 대신 표식 · 안내 줄만) · sheet: 판 번호를 화면에 안 적는 확장의 제 시트 첫 규칙(그 시트 옆 manifest.json 에서 판을 읽어요) */
@@ -37,8 +37,9 @@ export const SETS = [
     //     새 그림 글자 0 · 시각 달력(「시간 적는 법」 시각)에서 테마 관계 바로잡기 · 날씨 다리가 시간대 낱말로만 보던 것을 고침(src/mb-prompt.js · src/weather-meatball.js · 시험 tools/tests/mb-29x.mjs).
     //   같은 날 개발 판 4c7df674(판 번호 그대로 2.9.0): 관리 › 전체 설정(이 설정 칸과 같은 칸을 상태창 안에 한 벌 더 · id 없음 · 찾기 칸) · 상태창 검색에 설정 · 찾은 말 칠하기 · 새 단추 넷 —
     //     이름 281개 가운데 사라진 것 0 · 새 그림 글자 다섯(검색 결과)은 선 아이콘 글꼴의 대체 그림 범위 안. 분류 탭 · 정리한 보기 · 레몬 탭은 서랍(#ss-settings)에만 걸려요.
+    //   2.9.1(11-18 밤 · 원작 d61af0b1): 서랍 칸들이 내용 칸 안 .ss-set-body 한 겹 아래로 · 맨 위 원작 설정 찾기 칸 · 새 칸 다섯 — 분류 탭 · 정리한 보기 · 레몬 탭을 새 겹에 다시 걸었어요(bodyOf · 시험 tools/tests/mb-291.mjs).
     //   머리줄의 그림 글자(2.7.0 · 2.7.1 고양이 · 2.6.1 그릇)는 맞춤 시트의 선 아이콘 글꼴이 그려요(표식 없음).
-    { root: '#ss-settings', css: './ext-status.gen.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0', '2.9.0'],
+    { root: '#ss-settings', css: './ext-status.gen.css', head: 'b.ss-set-h', version: '.inline-drawer-header small', name: '미트볼 상태창', verified: ['2.6.1', '2.7.0', '2.7.1', '2.7.2', '2.7.9', '2.7.11', '2.7.15', '2.7.17', '2.7.21', '2.7.22', '2.7.23', '2.8.0', '2.9.0', '2.9.1'],
         strips: ['.ss-scope .ss-tabs', '.ss-scope .ss-mg-tabs'] },   // 맞춤 시트가 「한 줄 · 스크롤바 없음」으로 바꾼 그 확장의 탭 줄 — 등록부에 넣어야 휠로 넘친 탭에 닿고, 그 확장이 판을 다시 그린 뒤에도 고른 탭이 보여요
     // 코끼리를 생각하지마 — 1.9.60 화면에서 확인(2026-11-13). 설정은 원작이 이미 탭 일곱 칸으로 나눠요.
     //   1.9.61(2026-11-14 점검 대본 대조): 바뀐 것은 백그라운드 답장의 반쪽 답을 건너뛰는 사건 처리뿐 — 화면 · CSS · 선택자 39개 · 구조 표식 8개 그대로라 맞춤도 그대로예요.
@@ -115,7 +116,7 @@ export function goLemon(root, on) {
 
 /** 한 칸에 탭 줄을 만들어요 — 이미 있으면 그대로, 머리가 모자라면 아무것도 안 해요. 만들었으면 true */
 export function buildTabs(root, set) {
-    const content = root.querySelector('.inline-drawer-content');
+    const content = bodyOf(root), outer = root.querySelector('.inline-drawer-content');   // 미트볼 2.9.1(d61af0b1)부터 칸들이 내용 칸 안 .ss-set-body 한 겹 아래에 있어요(맨 위 설정 찾기 칸은 그 밖) — 탭은 칸들 곁에
     if (!content || content.querySelector(`:scope > .${NAV}`)) return false;
     const heads = [...content.querySelectorAll(`:scope > ${set.head}`)];
     if (heads.length < 2) return false;
@@ -143,7 +144,7 @@ export function buildTabs(root, set) {
     note.className = NOTE;
     note.style.display = 'none';
     note.textContent = compatText(set, versionOf(root.querySelector(set.version)?.textContent));
-    content.append(note);
+    outer.append(note);
     const saved = labels.indexOf(recall(root, 'tab'));
     showGroup(root, saved > 0 ? saved : 0);
     return true;
@@ -658,6 +659,16 @@ export function seenBefore(set, mark) {
     return list.includes(id) || (mark === '1' && id === 'ss-settings');
 }
 
+/** 미트볼 2.9.1(d61af0b1) 서랍 맨 위 「설정 찾기」 칸(.ss-set-q): 적는 동안은 표식(data-bl-finding)을 달아 탭 · 접힌 갈래로 가린 줄도 보이게 해요 —
+ *  원작이 맞지 않는 줄을 [hidden] 으로 숨기니, 탭으로 가린 채 두면 찾은 줄이 다른 탭에 묻혀 안 보여요. 칸을 비우면 표식을 떼고 탭 꼴로 돌아와요 */
+export function markFinding(box) {
+    const root = box?.closest?.('#ss-settings');
+    if (!root) return false;
+    const on = !!String(box.value || '').trim();
+    root.toggleAttribute('data-bl-finding', on);
+    return on;
+}
+
 let started = false;
 /** 여러 번 불러도 돼요 — 누름 감시자 · 시트는 한 번, 칸 찾기(탭)와 등록부 넣기는 부를 때마다 */
 export function startExtCompat(doc = globalThis.document) {
@@ -752,7 +763,7 @@ export function startExtCompat(doc = globalThis.document) {
         }, true);
         // 1.7.3 「꾸미기 창 「블루레몬 꾸미기」 묶음」 · 「얼굴 고르개」 를 끄면 열려 있는 창에서 끼운 것을 숨기고(시트 묶음 문이 꺼져 맨 글자로 남지 않게) 켜면 다시 보여요 — 테마가 끼운 것만 · 지우지 않아요
         onMbOff(doc, ['deco', 'avapick'], (key, off) => { for (const el of doc.querySelectorAll?.(key === 'deco' ? '.bl-ext-deco' : '.bl-ext-avapick, .bl-ext-avahint') || []) el.hidden = off; });
-        doc.addEventListener('input', event => { const box = event.target; if (!box?.classList?.contains('bl-ext-find')) return; const root = SETS.map(set => box.closest(set.root)).find(Boolean); if (root) renderFound(root, box.value); }, true);
+        doc.addEventListener('input', event => { const box = event.target; if (box?.classList?.contains('ss-set-q')) { markFinding(box); return; } if (!box?.classList?.contains('bl-ext-find')) return; const root = SETS.map(set => box.closest(set.root)).find(Boolean); if (root) renderFound(root, box.value); }, true);
         doc.addEventListener('change', event => { if (event.target?.tagName === 'INPUT' && event.target.classList?.contains('bl-ext-deco-act')) { decoAct(event.target).catch(() => { }); return; } const root = SETS.map(set => event.target?.closest?.(set.root)).find(Boolean); if (root?.dataset?.blOrg) refreshSummaries(root); }, true);
     }
     buildAll(doc);

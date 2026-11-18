@@ -35,17 +35,18 @@ export const PLANS = {
             ['updateNotice', '업데이트 알림 · 세이브 · 마스코트 · 진단과 백업이에요.'],
             ['stashTags', '요약 · 번역 확장이나 다른 프리셋과 함께 쓸 때 태그를 어떻게 다룰지 정해요.'],
         ],
+        // 2.9.1(d61af0b1) 새 칸: 번역 바꾸기 묻기 · 저절로 영어 저장 · 번역 알림(trConvertAsk · trAutoConvert · trNotice) · 묶음 크기(genBatchSize) · 조용히(quiet)는 이웃 갈래에 — 갈래 사이에 끼어 접힌 갈래 밖으로 새어 보였어요(11-19 사용자 사진)
         folds: [
             ['장면에 맞춰 줄이기 · 변동 칩', ['sceneFilter:장면 필터', 'sceneTurns:최근 메시지', 'pinCap:고정 메모', 'msgCard:변동 칩', 'chipOutside:칩 밖에']],
             ['퀘스트 · 흥정 판정', ['questJudge:완료 판정', 'questExpire:기한', 'extraJudge:흥정 · 일하기', 'questJudgeAI:AI 완료']],   // 2.7.3 ~ 2.7.6
             ['번역 모델 · 언어', ['trProfile:모델', 'trLang:언어', 'trCode:코드']],
-            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trLlmFallback:못 바꾼 글은 모델로', 'trsheet', 'trprune', 'trclear', 'toenglish']],   // trclear: 2.8.0 dev 9415367b 「번역 전체 삭제」(앞 판에는 없어 조용히 건너뛰어요)
+            ['번역 지침 · 자동 번역', ['trRules:지침', 'trAuto:자동 번역', 'trLlmFallback:못 바꾼 글은 모델로', 'trConvertAsk', 'trAutoConvert', 'trNotice', 'trsheet', 'trprune', 'trclear', 'toenglish']],   // trclear: 2.8.0 dev 9415367b 「번역 전체 삭제」(앞 판에는 없어 조용히 건너뛰어요)
             ['먼저 연락 오게', ['autoPing:자동 선톡', 'autoPingEvery:간격', 'rushChance:급행 %']],
-            ['실패했을 때 · 묶어 만들기', ['aiFallbackMain:메인으로 다시', 'genBatch:묶어서 생성']],
+            ['실패했을 때 · 묶어 만들기', ['aiFallbackMain:메인으로 다시', 'genBatch:묶어서 생성', 'genBatchSize:묶음 크기']],
             ['한 번에 보내는 양', ['genParallel:동시 요청', 'aiMaxTokens:출력 토큰', 'recentForGen:최근 채팅', 'loreChars:로어북 글자', 'injectDepth:주입 깊이']],
             ['주입 · 긴 채팅 정리 · 정규식', ['injWorld:세계관 매 턴', 'injScan:로어북 켜기', 'autoBake:자동 정리', 'rewindKeep:되감기 범위', 'bakeAfter:정리 시작', 'autoRegex:정규식']],   // injWorld 는 2.7.1 부터 · rewindKeep 은 2.7.21 부터(앞 판에는 없어 조용히 건너뛰어요)
             ['변화만 보내기 · 다시 받기', ['deltaMode:변화 위주', 'deltaEvery:전체 간격', 'retryJSON:다시 받기']],
-            ['알림 시간 · 종류', ['toastSec:시간', 'daySummary:하루 정리', 'featureTips:팁', 'actionTips:칸 팁', 'tipreset']],
+            ['알림 시간 · 종류', ['toastSec:시간', 'daySummary:하루 정리', 'quiet:조용히', 'featureTips:팁', 'actionTips:칸 팁', 'tipreset']],
             ['마스코트 · 소리', ['showMascot:마스코트', 'mascotBuddy:제목 옆', 'mascotSound:소리', 'mascotVolume:크기', 'mascotsound']],
             ['진단 · 백업', ['diag', 'report', 'copydump', 'backup']],
             ['정규식 · 기본값 · 옛 태그 보관', ['stashall', 'defmods', 'regex', 'unregex']],
@@ -63,6 +64,11 @@ export const PLANS = {
 const KEYED = '[data-s], [data-s-act], [data-s-every], [data-s-preset]';
 const CLAMP_FROM = 72;   // 이 글자 수부터 긴 설명으로 봐요(폰 폭에서 두 줄을 넘는 길이)
 const own = el => /(^|\s)bl-ext-/.test(String(el.className || ''));
+/** 칸들이 바로 든 곳 — 보통은 서랍 내용 칸, 미트볼 2.9.1(d61af0b1)부터는 그 안 .ss-set-body(맨 위 「설정 찾기」 칸은 그 밖이에요) */
+export function bodyOf(root) {
+    const content = root?.querySelector?.('.inline-drawer-content');
+    return content?.querySelector?.(':scope > .ss-set-body') || content || null;
+}
 
 /** 순수 계산: 줄 정보(문서 차례) → 어느 갈래로 접을지 · 2열 숫자 줄 · 탭 설명.
  *  rows: [{ keys: [열쇠…], num: 숫자 줄, small: 설명 문단, group: 탭 번호 글자 }]
@@ -162,11 +168,11 @@ export function setView(root, raw) {
     // 처음 바꿀 때 한 번만 알려요(글이 없는 단추라 무엇이 바뀌었는지 한 줄로)
     if (was && was !== now && recall(root, 'viewtip') !== '1') { remember(root, 'viewtip', '1'); try { globalThis.toastr?.info?.(raw ? '원작 화면으로 바꿨어요. 레몬 단추 › 「원작 그대로 보기」를 끄면 블루레몬 맞춤 화면으로 돌아와요.' : '블루레몬 맞춤 화면으로 바꿨어요.', '미트볼 상태창'); } catch { /* 알림 없이 */ } }
 }
-export function dismissStart(root) { root.querySelector('.bl-ext-start')?.setAttribute('hidden', ''); remember(root, 'start', '0'); }
+export function dismissStart(root) { const box = root.querySelector('.bl-ext-start'); box?.setAttribute('hidden', ''); box?.setAttribute('data-bl-gone', ''); remember(root, 'start', '0'); }   // data-bl-gone: 미트볼 2.9.1 원작 「설정 찾기」를 비우면 칸들의 hidden 을 모두 떼서(filterSettings) 닫은 길잡이가 다시 떴어요 — 표식은 원작이 안 건드려요
 
 /** 한 칸을 정리해요 — 이미 했으면(표식) 그대로, 표가 없거나 맞는 줄이 하나도 없으면 아무것도 안 해요. 했으면 true */
 export function organize(root, set) {
-    const plan = PLANS[set.root], content = root.querySelector('.inline-drawer-content');
+    const plan = PLANS[set.root], content = bodyOf(root);
     if (!plan || !content || root.dataset.blOrg) return false;
     const rows = [...content.children].filter(e => !own(e));
     const info = rows.map(e => ({ keys: keysOf(e), num: e.localName === 'label' && !!e.querySelector(':scope > input[type="number"]'), small: e.localName === 'small', group: e.dataset.blTabG ?? '0' }));
@@ -215,7 +221,8 @@ export function organize(root, set) {
         (content.querySelector(':scope > .bl-ext-intro') || tabs).after(box);
     }
     // 설정 찾기(편의 기능): 탭 줄 바로 아래 찾기 칸 + 찾은 줄 목록 — 서랍 머리의 돋보기 단추로 열었을 때만 보이고(표식 data-bl-find), 칸에 적을 때만 일해요
-    if (tabs && !content.querySelector(':scope > .bl-ext-find')) {
+    // 미트볼 2.9.1(d61af0b1)부터 원작이 서랍 맨 위에 제 「설정 찾기」 칸(.ss-set-find)을 둬요 — 같은 일이라 테마 찾기 칸 · 머리 돋보기는 만들지 않아요(원작 칸이 탭에 가린 줄도 보이게 하는 것은 ext-compat markFinding)
+    if (tabs && !content.querySelector(':scope > .bl-ext-find') && !root.querySelector('.ss-set-find')) {
         const find = hidden(make(doc, 'input', 'bl-ext-find', ''));
         find.type = 'search'; find.placeholder = '설정 찾기 — 칸 이름을 적어요'; find.setAttribute('aria-label', `${set.name} 설정 찾기`); find.autocomplete = 'off';
         const found = hidden(make(doc, 'div', 'bl-ext-found', ''));
@@ -240,7 +247,7 @@ export function rowLabel(row) {
     return text.replace(/\s+/g, ' ').trim();
 }
 export function findRows(root, query, max = 8) {
-    const q = squash(query), content = root.querySelector('.inline-drawer-content');
+    const q = squash(query), content = bodyOf(root);
     if (q.length < 2 || !content) return [];
     const tabs = [...content.querySelectorAll(':scope > .bl-ext-tabs > .bl-ext-tab')], out = [];
     for (const row of content.children) {
@@ -258,7 +265,7 @@ export function findRows(root, query, max = 8) {
 }
 /** 찾은 줄 목록을 다시 그려요 — 단추마다 줄 번호(내용 칸에서 몇째 자식인지)를 적어 둬요 */
 export function renderFound(root, query) {
-    const list = root.querySelector('.bl-ext-found'), content = root.querySelector('.inline-drawer-content');
+    const list = root.querySelector('.bl-ext-found'), content = bodyOf(root);
     if (!list || !content) return 0;
     for (const old of content.querySelectorAll(':scope > [data-bl-hit]')) delete old.dataset.blHit;
     const hits = findRows(root, query), kids = [...content.children], doc = root.ownerDocument;
@@ -273,7 +280,7 @@ export function renderFound(root, query) {
 }
 /** 찾은 줄로 가요: 접힌 갈래면 펼치고 · 그 줄에 표식(data-bl-hit)을 달고 · 목록은 비워요. 탭 바꾸기는 부른 쪽(ext-compat showGroup)이 해요. 돌려줌: 탭 번호(-1 = 못 찾음) */
 export function gotoHit(root, button) {
-    const content = root.querySelector('.inline-drawer-content'), row = content?.children[Number(button.dataset.blHitRow)];
+    const content = bodyOf(root), row = content?.children[Number(button.dataset.blHitRow)];
     if (!row) return -1;
     if (row.dataset.blFold && 'blFoldOff' in row.dataset) { const fold = root.querySelector(`.bl-ext-fold[data-bl-fold-for="${row.dataset.blFold}"]`); if (fold) toggleFold(root, fold); }
     for (const old of content.querySelectorAll(':scope > [data-bl-hit]')) delete old.dataset.blHit;
@@ -291,6 +298,7 @@ export function toggleFind(root, button) {
 }
 /** 길잡이 단추: 그 칸이 있는 탭 번호 */
 export function groupOfKey(root, key) {
-    const row = root.querySelector(`[data-s="${key}"]`)?.closest('.inline-drawer-content > *');
+    const body = bodyOf(root); let row = root.querySelector(`[data-s="${key}"]`);
+    while (row && row.parentElement !== body) row = row.parentElement;
     return row && 'blTabG' in row.dataset ? Number(row.dataset.blTabG) : -1;
 }

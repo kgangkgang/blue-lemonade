@@ -92,7 +92,7 @@ await ok('④ 바로 반영(autosub): 손대기의 연락처 저장 · 가게 �
 await ok('⑤ 확인한 판: 2.9.0 줄에 개발 판 3af88894 · 이름 대조 · 리그', () => {
     const t = read('src/ext-compat.js');
     assert.match(t, /3af88894/, '확인한 원작 커밋'); assert.match(t, /4c7df674/, '같은 날 다음 개발 판');
-    assert.match(t, /verified: \[[^\]]*'2\.9\.0'\]/, '판 번호는 그대로 2.9.0');
+    assert.match(t, /verified: \[[^\]]*'2\.9\.0', '2\.9\.1'\]/, '개발 판들은 판 번호 그대로 2.9.0 · 다음은 2.9.1');
 });
 
 await ok('⑥ 4c7df674 「관리 › 전체 설정」(서랍과 같은 칸을 상태창 안에 · .ss-set-sheet): 서랍 줄 꼴(체크 줄 · 숫자 줄 · 고르기 줄 · 단추 줄 · 머리)이 두 자리에 같이 · 단추는 같은 폭 두 칸 · 찾기 칸 띠 걷기 · 관리 탭 한 줄', () => {
@@ -100,7 +100,7 @@ await ok('⑥ 4c7df674 「관리 › 전체 설정」(서랍과 같은 칸을 �
     const both = (re, what) => { const rs = rulesOf(re).filter(r => !/\[data-bl-(tabs|view)/.test(r));   /* 분류 탭 · 정리한 보기는 서랍에만 */ assert.ok(rs.length, what); for (const r of rs) assert.ok(r.includes('.ss-set-sheet'), `${what} — 상태창 안 전체 설정에도: ${r.slice(0, 120)}`); };
     both(/^body\.salty [^{]*#ss-settings[^{]*label\.checkbox_label \{/, '체크 줄');
     both(/^body\.salty [^{]*#ss-settings[^{]*label:has\(> input\[type="number"\]\) \{/, '숫자 줄');
-    both(/^html:not\(#bl-num-off\) body\.salty [^{]*#ss-settings \.inline-drawer-content[^{]* label > input\[type="number"\] \{/, '숫자 칸 폭');
+    both(/^html:not\(#bl-num-off\) body\.salty [^{]*#ss-settings (?::is\()?\.inline-drawer-content[^{]* label > input\[type="number"\] \{/, '숫자 칸 폭');
     both(/^body\.salty [^{]*#ss-settings[^{]*\.ss-set-h \{/, '묶음 머리');
     both(/^body\.salty [^{]*#ss-settings[^{]*\.ss-set-btns > \.menu_button \{/, '단추 줄 단추');
     assert.ok(rulesOf(/\.ss-set-btns \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/).some(r => r.includes('.ss-set-sheet')), '단추 줄 = 같은 폭 두 칸');

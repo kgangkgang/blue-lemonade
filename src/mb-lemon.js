@@ -49,7 +49,7 @@ export function paintHead(root) {
 
 /** 레몬 칸 · 한 줄 · 탭 단추 · 머리 단추를 끼워요(이미 있으면 빠진 것만). 칸이 없으면 false */
 export function buildLemon(root) {
-    const content = root?.querySelector?.('.inline-drawer-content');
+    const outer = root?.querySelector?.('.inline-drawer-content'), content = outer?.querySelector?.(':scope > .ss-set-body') || outer;   // 미트볼 2.9.1(d61af0b1)부터 칸들은 .ss-set-body 한 겹 아래 — 탭 줄 곁에 끼워요
     if (!content) return false;
     const doc = root.ownerDocument;
     attachSheet(doc);

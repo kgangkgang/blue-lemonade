@@ -147,8 +147,8 @@ await ok('원작 그대로 보기여도 레몬 단추가 칸을 열어요(탭 �
 await ok('모양은 묶음 문 없는 제 시트 — 레몬 단추 · 칸 · 한 줄, 맞춤 시트에는 없어요', () => {
     const css = read('src/mb-lemon.css'), status = read('src/ext-status.css');
     assert.match(css, /\.inline-drawer-header > \.bl-ext-view \{ display: inline-flex !important;/);
-    assert.match(css, /#ss-settings\[data-bl-lemon\] \.inline-drawer-content > \.bl-ext-lemonpane:not\(#bl-lemon-x\) \{ display: block !important;/);
-    assert.match(css, /:root\[data-bl-mb-off~="tabs"\] body\.salty #ss-settings \.inline-drawer-content > \.bl-ext-lemonbar/);
+    assert.match(css, /#ss-settings\[data-bl-lemon\] :is\(\.inline-drawer-content, \.ss-set-body\) > \.bl-ext-lemonpane:not\(#bl-lemon-x\) \{ display: block !important;/);
+    assert.match(css, /:root\[data-bl-mb-off~="tabs"\] body\.salty #ss-settings :is\(\.inline-drawer-content, \.ss-set-body\) > \.bl-ext-lemonbar/);
     assert.ok(!/data-bl-mb-off~="(?!tabs")/.test(css), '스위치 문은 「탭 나누기 끔」 때 한 줄을 보이는 데만');
     assert.ok(!/\.bl-ext-view \{ display|bl-ext-lemon(pane|bar|-tab|-open)/.test(status),'맞춤 시트(묶음 문)에는 레몬 단추 · 칸 모양이 없어요');
     assert.match(read('src/mb-lemon.js'), /new URL\('\.\/mb-lemon\.css', import\.meta\.url\)/);
