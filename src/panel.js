@@ -212,10 +212,13 @@ function historyValue(value, path) {
     if (path === 'palette') return PALETTES[value]?.label || String(value);
     if (path.startsWith('fonts.') && typeof value === 'string') return ({same:'본문과 같게',auto:'자동'})[value] || findFont(value)?.label || value;
     if (historyOptions.has(`${path}:${value}`)) return historyOptions.get(`${path}:${value}`);
+    // 1.7.5 날씨 고르기는 seg() 를 안 거쳐 「기본 off → 현재 tracker」 처럼 저장 값이 그대로 보였어요
+    if (/^chat\.weather2?$/.test(path) && typeof value === 'string') return value === 'off' ? (path === 'chat.weather2' ? '없음' : '끔') : weatherLabel(value);
     if (Array.isArray(value)) return `${value.length}개 항목`;
     if (typeof value === 'object') {
         if (path.endsWith('.decor')) return hasFrame(value) ? FRAME_PRESETS.find(([id]) => id === value.presetId)?.[1] || '내 액자' : '없음';
-        if (path.startsWith('fonts.')) return Object.entries(value).map(([lang,id]) => `${lang}: ${findFont(id)?.label || id}`).join(' · ');
+        // 1.7.5 「ko: 프리젠테이션 · en: auto」 처럼 언어 열쇠 · auto 가 영어로 보였어요 → 언어 이름으로, 한국어 글꼴을 따라가는(auto) 언어는 빼고 따로 고른 것만
+        if (path.startsWith('fonts.')) return Object.entries(value).filter(([, id]) => id !== 'auto').map(([lang,id]) => `${LANGS.find(([l]) => l === lang)?.[1] || lang}: ${findFont(id)?.label || id}`).join(' · ') || '한국어 글꼴 따라감';
         return '사용자 설정';
     }
     if (typeof value === 'string' && (/^(data:|https?:)/.test(value) || value.length > 100)) return '이미지 · 사용자 자료';

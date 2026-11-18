@@ -71,6 +71,16 @@ await test('속 값(「쓰던 테마가 있어요」에 답한 지문)은 변경
     assert.equal(D.settingDefault({}, 'compat.cssAsked').allowed, false);
 });
 
+await test('1.7.5 화면을 안 열어도 저장 값 대신 고르기 이름: 에셋 이미지 가장자리 흐림 · 캡처 파일 종류 (화면의 고르기 글과 같아요)', async () => {
+    const { SETTING_VALUES } = await import(pathToFileURL(path.join(root, 'src/settings-labels.js')).href);
+    const fades = /const FADES = (\[\[.*?\]\]);/.exec(panel); assert.ok(fades, 'panel.js 의 FADES 를 못 찾음');
+    for (const [v, label] of JSON.parse(fades[1].replace(/'/g, '"'))) assert.equal(SETTING_VALUES[`image.fade:${v}`], label, `image.fade:${v}`);
+    const capture = fs.readFileSync(path.join(root, 'src/capture-options.js'), 'utf8');
+    const picks = [...capture.matchAll(/<option value="([a-z]+)" \$\{cfg\.format===[^}]*\}>([^<]+)<\/option>/g)];
+    assert.ok(picks.length >= 5, '캡처 파일 종류 고르기를 못 읽음: ' + picks.length);
+    for (const [, v, label] of picks) assert.equal(SETTING_VALUES[`captureTools.format:${v}`], label, `captureTools.format:${v}`);
+});
+
 await test('연결: CI 목록에 이 시험', () => {
     assert.match(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8'), /node tools\/tests\/settings-changes-map\.mjs \./);
 });

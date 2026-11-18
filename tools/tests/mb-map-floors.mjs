@@ -606,5 +606,151 @@ await tryOk('1.7.5 연결선: 겹쳐 지나는 선은 한 번만 그려요(진�
         for (let i = 1; i < pts.length; i++) { const k = [pts[i - 1], pts[i]].map(String).sort().join('|'); assert.ok(!seen.has(k), '같은 토막 두 번 ' + k); seen.add(k); }
     }
 });
+// ── 1.7.5 아직 안 가 본 곳(로어북 장소 가운데 지도 자료에 없는 곳 · 그림만) ─────────────────────
+//   지어낸 로어북: 층 안내가 있는 탑 · 인물 셋(집 둘 · 집 없음 하나) · 장소 묶음 · 「[장소]」 항목 · 규칙 항목
+const LORE = () => [
+    { comment: '[설정]Tower', content: '### Building Structure\n- **5F:** Sky Lounge, Board Office\n- **2F:** Mail Room\n- **B1:** Boiler Room\n\n#### Other Facilities\n- **Sky Lounge (空ラウンジ):** A rooftop lounge for staff.\n- **Role:** Keeping the tower running.\n- **Departments & Key Personnel:** Board Office: Pip' },
+    { comment: '[🌟]미로', content: '### BASICS\n- **Name:** Miro (ミロ)\n- **Residence:** A small cottage in the Sky Realm, Ward 2\n- **Job:** Clerk' },
+    { comment: '[😈]고름', content: '#### BASICS\n* Name: Gorm\n* Residence: Penthouse in the Underworld, Ward 4\n* Job: Guard' },
+    { comment: '[🌟]핍', content: '- **Name:** Pip\n- **Job:** Baker' },
+    { comment: '[설정]지리', content: '### Major Locations\n- **Old Port :**\n    - **Role:** A fishing harbor.\n- **Pip:** listed here by mistake.\n---\n### Society\n- **Clans:** Old families.' },
+    { comment: '[장소]달빛 찻집', content: '작은 찻집이에요. 밤에만 열어요.' },
+    { comment: '[규칙]말투', content: '- Speak politely: always.\n- Residence rules: none.' },
+];
+await tryOk('1.7.5 아직 안 가 본 곳: 로어북에서 장소만 골라요(층 안내 · 인물의 집 · 장소 묶음 · [장소] 항목) — 인물 · 풀이 칸 · 규칙은 빼요', () => {
+    const lore = m.lorePlaces(LORE());
+    const by = new Map(lore.map(c => [c.label, c]));
+    assert.deepEqual([...by.keys()].sort(), ['Board Office', 'Boiler Room', 'Mail Room', 'Old Port', 'Sky Lounge', '고름의 집', '달빛 찻집', '미로의 집'].sort());
+    assert.equal(by.get('Sky Lounge').f, 5); assert.equal(by.get('Boiler Room').f, -1); assert.equal(by.get('Sky Lounge').summary, 'A rooftop lounge for staff.', '층 안내 이름의 설명 글머리');
+    assert.equal(by.get('미로의 집').zone, 'above'); assert.equal(by.get('고름의 집').zone, 'below'); assert.equal(by.get('Old Port').zone, null, '모르면 바깥(배치에서)');
+    assert.deepEqual(by.get('고름의 집').owners.sort(), ['Gorm', '고름'].sort());
+    assert.match(by.get('미로의 집').summary, /cottage in the Sky Realm/);
+    assert.equal(by.get('Old Port').summary, 'Role: A fishing harbor.', '이름 뒤 글이 없으면 첫 풀이 줄');
+    assert.equal(by.get('달빛 찻집').src, 'entry');
+    const skipped = lore.skipped.map(s => `${s.name}:${s.why}`);
+    for (const want of ['Pip:사람 이름이에요', 'Role:풀이 칸 이름이에요', 'Departments & Key Personnel:풀이 칸 이름이에요']) assert.ok(skipped.includes(want), want + ' ← ' + skipped.join(' / '));
+    assert.ok(!by.has('Clans') && !by.has('Speak politely') && !by.has('핍의 집'), '장소 머리말 밖 · 규칙 · 집 없는 인물은 안 넣어요');
+    // 영어 이름 항목(항목 이름이 비었으면 Name 줄) · 일본어 항목 이름
+    const en = m.lorePlaces([{ comment: '', content: 'Name: Tova\nResidence: Hut by the Old Port' }, { comment: 'リナ', content: 'Name: Rina\nResidence: 天界の家' }]);
+    assert.deepEqual(en.map(c => [c.label, c.zone]), [["Tova's home", 'out'], ['リナの家', 'above']]);
+});
+await tryOk('1.7.5 아직 안 가 본 곳: 이름은 정규화해서 견줘요(띄어쓰기 · 「의」 · 「\'s」 · 괄호 · 앞 「the」) · 건물 이름 앞붙음 · 집 주인 · 지도에 들어오면 사라져요', () => {
+    for (const [a, b] of [["Miro's Cottage", 'Miro Cottage'], ['미로의 집', '미로 집'], ['Sky Lounge (空ラウンジ)', 'sky lounge'], ['The Old Port', 'Old-Port'], ['달빛 찻집', '달빛찻집']]) assert.equal(m.placeNorm(a), m.placeNorm(b), `${a} ↔ ${b}`);
+    assert.notEqual(m.placeNorm('의무실'), m.placeNorm('무실'), '낱말 안의 「의」 는 그대로');
+    const lore = m.lorePlaces(LORE());
+    const Q = (name, area = 'Tower HQ', extra = {}) => ({ name, area, desc: '', kind: 'room', links: [], known: true, ...extra });
+    const map = { places: [Q('Tower Mail Room'), Q('Board Dept.'), Q("Gorm's Penthouse", 'Underworld'), Q('the old port', 'Coast'), Q('Moonlight', 'Town')] };
+    const un = m.unvisitedOf(map, lore).map(c => c.label).sort();
+    assert.deepEqual(un, ['Boiler Room', 'Sky Lounge', '달빛 찻집', '미로의 집'].sort(), '건물 이름 앞붙음(Tower Mail Room ↔ Mail Room) · 부서 꼬리(Board Office ↔ Board Dept.) · 집 주인(Gorm\'s Penthouse) · 작은 글자 · 앞 the');
+    // 번역 보기 글로도 맞춰요
+    const tr = s => ({ Moonlight: '달빛 찻집' })[s] || s;
+    assert.ok(!m.unvisitedOf({ places: [...map.places] }, lore, { tr }).some(c => c.label === '달빛 찻집'));
+    // 이야기에 나와 지도에 들어오면 흐린 점이 사라져요(같은 목록이면 앞 결과 · 새 목록이면 다시 봐요)
+    const more = { places: [...map.places, Q('Sky Lounge 5F')] };
+    assert.ok(!m.unvisitedOf(more, lore).some(c => c.label === 'Sky Lounge'));
+    assert.equal(m.unvisitedOf(map, lore), m.unvisitedOf(map, lore), '같은 장소 목록 · 같은 후보면 한 번만 견줘요');
+    // 지도 자료는 그대로
+    assert.deepEqual(map.places.map(p => p.name), ['Tower Mail Room', 'Board Dept.', "Gorm's Penthouse", 'the old port', 'Moonlight']);
+});
+const GH = (key, label, extra = {}) => ({ key: `bl-unv:${key}`, label, f: null, zone: null, summary: '', ...extra });
+await tryOk('1.7.5 아직 안 가 본 곳 배치: 층 있는 곳은 건물 그 층(진짜 방 오른쪽) · 하늘은 하늘 줄 위 · 땅 밑은 땅 밑 줄 아래 · 모르면 바깥 줄', () => {
+    const places = office(), before = m.floorLayout(places);
+    const ghosts = [GH('loft', 'Loft', { f: 2 }), GH('vault', 'Vault', { f: -1 }), GH('a1', 'Sky Hut', { zone: 'above' }), GH('a2', 'Cloud Hut', { zone: 'above' }), GH('b1', 'Ash Den', { zone: 'below' }), GH('o1', 'Old Port', { zone: null }), GH('o2', 'Mill', { zone: 'out' })];
+    const L = m.floorLayout(places, { ghosts });
+    const at = k => L.pos.get(`bl-unv:${k}`);
+    assert.equal(at('loft').zone, 'b'); assert.equal(at('loft').row, 2); assert.equal(at('loft').y, L.pos.get('Studio').y); assert.ok(at('loft').x > L.pos.get('Studio').x, '진짜 방 오른쪽');
+    assert.equal(at('vault').row, 0); assert.equal(at('vault').y, L.pos.get('Garage').y);
+    for (const k of ['a1', 'a2']) { assert.equal(at(k).zone, 'above'); assert.ok(at(k).y < L.pos.get('Heaven').y, k); }
+    assert.equal(at('b1').zone, 'below'); assert.ok(at('b1').y > L.pos.get('Underworld').y);
+    for (const k of ['o1', 'o2']) { assert.equal(at(k).zone, 'out'); assert.equal(at(k).y, L.pos.get('Bakery').y, '땅 줄'); assert.ok(at(k).x > Math.max(L.pos.get('Bakery').x, L.pos.get('Park').x), '진짜 바깥 장소 뒤'); }
+    for (const g of ghosts) assert.equal(L.pos.get(g.key).ghost, true);
+    // 겹치지 않아요 · 선 짝은 그대로(흐린 점은 선이 없어요)
+    const spots = [...L.pos.values()].map(o => `${o.x}|${o.y}`); assert.equal(new Set(spots).size, spots.length, '점 자리 겹침');
+    assert.deepEqual(L.pairs, before.pairs);
+    // 건물을 새로 만들지는 않아요(층 없는 지도 + 층 있는 흐린 점 → 그대로 null)
+    const flat = [P('Hall', 'Big hall.', { links: ['Yard'] }), P('Yard', 'Open yard.', { links: ['Hall'] })];
+    assert.equal(m.floorLayout(flat, { ghosts }), null);
+    // 줄이 넘치면 다음 줄(위로 쌓여요)
+    const many = Array.from({ length: 9 }, (_, i) => GH(`s${i}`, `Sky ${i}`, { zone: 'above' }));
+    const L2 = m.floorLayout(places, { ghosts: many }), ys = [...new Set(many.map(g => L2.pos.get(g.key).y))].sort((a, b) => b - a);
+    assert.ok(ys.length >= 2 && ys.every((y, i) => !i || ys[i - 1] - y >= 18.9), ys.join(','));
+});
+await tryOk('1.7.5 아직 안 가 본 곳 그리기: 점선 흐린 점 · 「아직 안 가 본 곳」 · 그 확장 장소 점과 따로(data-act 없음) · 구역 탭에선 안 그려요 · 층 없는 지도도', () => {
+    const places = office(), lore = [GH('loft', 'Loft', { f: 2, names: ['Loft'], summary: 'Dusty loft.' }), GH('a1', 'Sky Hut', { zone: 'above', names: ['Sky Hut'] }), GH('st', 'Studio', { f: 2, names: ['Studio'] })];
+    const doc = makeDoc(), svg = drawn(doc, places);
+    const L = m.applyFloors(svg, { places }, { ui: { mapVB: null }, lore });
+    const gs = svg.querySelectorAll('g.bl-unv');
+    assert.deepEqual(gs.map(g => g.getAttribute('data-bl-unv')).sort(), ['bl-unv:a1', 'bl-unv:loft'], '지도에 있는 Studio 는 빼요');
+    for (const g of gs) {
+        assert.equal(g.getAttribute('data-act'), null); assert.ok(g.querySelector('circle.bl-unv-dot') && g.querySelector('circle.bl-unv-hit'));
+        assert.equal(g.querySelector('text.bl-unv-tag').textContent, m.GH_TAG); assert.equal(m.GH_TAG, '아직 안 가 본 곳');
+        const o = L.pos.get(g.getAttribute('data-bl-unv')); assert.equal(Number(g.querySelector('circle.bl-unv-dot').getAttribute('cx')), o.x);
+    }
+    assert.equal(svg.querySelectorAll('g.node[data-arg]').length, places.length, '그 확장 점은 그대로');
+    // 보기 칸에 흐린 점이 들어가요
+    const [x0, y0, w, h] = svg.getAttribute('viewBox').split(' ').map(Number), sky = L.pos.get('bl-unv:a1');
+    assert.ok(sky.x > x0 && sky.x < x0 + w && sky.y - 8 > y0 && sky.y < y0 + h, svg.getAttribute('viewBox'));
+    // 구역 탭(ui.mapArea)을 고르면 안 그려요
+    const svg2 = drawn(makeDoc(), places); m.applyFloors(svg2, { places }, { ui: { mapVB: null, mapArea: 'Office' }, lore });
+    assert.equal(svg2.querySelectorAll('g.bl-unv').length, 0);
+    // 층 없는 지도(그 확장 배치) · 층별 보기 끔: 맨 아래 점들 밑(하늘 쪽은 맨 위 점들 위)에 줄로 · 보기 칸을 넓혀요
+    const flat = [P('Hall', 'Big hall.', { links: ['Yard'] }), P('Yard', 'Open yard.', { links: ['Hall'] }), P('Gate', 'Gate.', { links: ['Yard'] })];
+    for (const [pl, opt] of [[flat, {}], [places, { floors: false }]]) {
+        const s3 = drawn(makeDoc(), pl), was = s3.getAttribute('viewBox');
+        assert.equal(m.applyFloors(s3, { places: pl }, { ui: { mapVB: null }, lore, ...opt }), null);
+        assert.equal(s3.getAttribute('data-bl-floors'), 'none');
+        const g3 = s3.querySelectorAll('g.bl-unv'); assert.ok(g3.length >= 2, String(g3.length));
+        const dots = s3.querySelectorAll('g.node').map(g => Number(g.querySelector('circle.dot').getAttribute('cy')));
+        const cy = k => Number(g3.find(g => g.getAttribute('data-bl-unv') === k).querySelector('circle.bl-unv-dot').getAttribute('cy'));
+        assert.ok(cy('bl-unv:a1') < Math.min(...dots) && cy('bl-unv:loft') > Math.max(...dots));
+        assert.notEqual(s3.getAttribute('viewBox'), was);
+        // 보던 칸(끌기 · 확대)은 그대로
+        const s4 = drawn(makeDoc(), pl); s4.setAttribute('viewBox', '1 2 30 30'); m.applyFloors(s4, { places: pl }, { ui: { mapVB: [1, 2, 30, 30] }, lore, ...opt }); assert.equal(s4.getAttribute('viewBox'), '1 2 30 30');
+    }
+});
+const dump = e => `${e.tagName}${JSON.stringify(e.attrs)}${e.text ?? ''}[${e.childNodes.map(dump).join(',')}]`;
+await tryOk('1.7.5 스위치 끔(lore 없음) · 다 가 본 곳이면 지금과 같은 그림', () => {
+    for (const pl of [office(), [P('Hall', 'Big hall.', { links: ['Yard'] }), P('Yard', 'Open yard.', { links: ['Hall'] })]]) {
+        const a = drawn(makeDoc(), pl), b = drawn(makeDoc(), pl), c = drawn(makeDoc(), pl);
+        m.applyFloors(a, { places: pl }, { ui: { mapVB: null } });
+        m.applyFloors(b, { places: pl }, { ui: { mapVB: null }, lore: null });
+        m.applyFloors(c, { places: pl }, { ui: { mapVB: null }, lore: [GH('h', pl[0].name, { names: [pl[0].name] })] });
+        assert.equal(dump(b), dump(a)); assert.equal(dump(c), dump(a));
+    }
+    // 스위치 표: 화면만 바꾸는 것 · 기본 켬 · 끄면 표식에
+    return import(pathToFileURL(path.join(root, 'src/mb-switch.js')).href).then(SW => {
+        const sw = SW.switchOf('unvisited'); assert.ok(sw); assert.equal(sw.kind, 'screen'); assert.equal(sw.file, 'src/mb-map-floors.js');
+        assert.equal(SW.switchOn({ chat: {} }, 'unvisited'), true);
+        const chat = {}; SW.setSwitch(chat, 'unvisited', false); assert.ok(SW.offAttrValue({ chat }).split(' ').includes('unvisited'));
+        assert.match(read('src/ext-status.css'), /\/\* @mb unvisited \*\/\n[^@]*g\.bl-unv \.bl-unv-dot \{[^}]*stroke-dasharray/);
+    });
+});
+await tryOk('1.7.5 붙이기: 로어북은 채팅 · 로어북이 바뀔 때만 한 번 읽어요(지도를 몇 번 다시 그려도) · 스위치를 끄면 흐린 점을 안 그려요', async () => {
+    const places = office(), map = { places };
+    let wiReads = 0, off = '', cb = null; const listeners = {};
+    const doc = {
+        body: { getAttribute: k => (k === m.FLOOR_ATTR ? 'on' : null), hasAttribute: () => false, classList: { contains: c => c === 'salty' } },
+        documentElement: { getAttribute: k => (k === 'data-bl-mb-off' ? off : null) },
+        querySelectorAll: () => [], addEventListener: (t, fn) => { (listeners[t] ||= []).push(fn); },
+    };
+    const ctx = { characterId: 0, getCurrentChatId: () => 'chat-1', chatMetadata: {},
+        characters: [{ data: { extensions: { world: 'book' }, character_book: { entries: [{ comment: '[🌟]미로', content: '- **Name:** Miro\n- **Residence:** A cottage in the Sky Realm' }] } } }],
+        loadWorldInfo: async () => { wiReads++; return { entries: { 0: { comment: '[장소]달빛 찻집', content: '작은 찻집이에요.' } } }; } };
+    const core = { app: { current: { state: { data: { map } } }, renderPanel() {} } };
+    assert.equal(m.startMbFloors(doc, { watch: (_t, o, fn) => { if (o.childList) cb = fn; }, load: () => core, stCtx: () => ctx }), true);
+    const tick = () => new Promise(res => setTimeout(res, 5));
+    await tick();
+    const draw = () => { const svg = drawn(makeDoc(), places); cb([{ addedNodes: [svg] }]); return svg; };
+    draw(); await tick();
+    const shown = [];
+    for (let i = 0; i < 12; i++) { const s = draw(); shown.push(s.querySelectorAll('g.bl-unv').length); }   // 메시지마다 상태창이 다시 그려지는 것처럼
+    assert.equal(wiReads, 1, '로어북 파일은 한 번만');
+    assert.ok(shown.every(k => k === 2), shown.join(','));
+    off = 'unvisited';
+    const s2 = draw(); assert.equal(s2.querySelectorAll('g.bl-unv').length, 0, '끄면 흐린 점 없음');
+    assert.equal(s2.getAttribute('data-bl-floors'), 'on', '층별 보기는 그대로');
+    off = '';
+    ctx.getCurrentChatId = () => 'chat-2'; draw(); await tick(); assert.equal(wiReads, 2, '채팅이 바뀌면 다시 읽어요');
+});
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

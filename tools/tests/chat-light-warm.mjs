@@ -502,6 +502,25 @@ test('(묶음 최소) 고정 몫이 조각 시간을 넘겨도 묶음 크기가 
     assert.ok(st.slices - s0 <= Math.ceil(done / M.WARM_BATCH_MIN) + 6, '묶음 ' + (st.slices - s0) + '번 · 메시지 ' + done + '개(묶음 크기가 1 로 내려앉으면 메시지 수만큼 돌아요)');
     M._warm.stop();
 });
+test('(1.7.1 제자리 scroll) 보이는 메시지가 그대로인 scroll(풀린 메시지의 크기가 잡혀 스크롤 고정이 scrollTop 을 옮김 · 글 칸이 커지고 작아짐)은 미리 그리기를 멈추거나 처음부터 다시 잡지 않는다', () => {
+    // 관문 차례(스트리밍 → 타이핑 → 굴리기)를 쉼 없이 밟으면 1.6.3 ~ 1.7.0 은 이런 scroll 마다 kickWarm(200) 으로 묶음을 버리고 다시 시작해
+    //   굴리기 전에 155개 중 52 ~ 120개만 풀려 있었어요(폰 4배 관문 스크롤 p95 233 ~ 483ms · 1.6.2 는 145개 다 · 16.7ms)
+    begin(500, 489); M.kickWarm(0); advance(M.WARM_QUIET_MS + 400);
+    const s0 = M._warm.state().slices, w0 = warmed().length, dir0 = M._warm.state().dir;
+    scrollEvent();   // 지금 자리를 먼저 한 번 알아 둬요(첫 scroll 은 움직임으로 봐요)
+    for (let k = 0; k < 40; k++) { fakeTop += k % 2 ? 7 : -3; scrollEvent(); advance(60); }   // 2.4초 동안 60ms 마다 — 보이는 메시지는 그대로
+    const st = M._warm.state();
+    assert.ok(st.slices - s0 >= 10, '묶음이 이어지지 않았어요: ' + (st.slices - s0) + '번');
+    assert.ok(warmed().length > w0 + 40, '푼 수 ' + w0 + ' → ' + warmed().length);
+    assert.equal(st.dir, dir0, '제자리 scroll 로 굴리던 방향을 바꾸지 않는다');
+    // 보이는 메시지가 바뀌면(사람이 굴림) 예전처럼 쉬었다가 새 자리 둘레로
+    const s1 = M._warm.state().slices;
+    for (let v = 480; v >= 400; v -= 4) { moveTo(v); scrollEvent(); advance(50); }
+    assert.equal(M._warm.state().slices, s1, '굴리는 동안 묶음이 돌았어요');
+    settle(120000);
+    assert.ok(warmed().filter(i => i < 400).length >= M.WARM_AHEAD - 12, '새 자리 위쪽이 풀린다');
+    M._warm.stop();
+});
 test('(짧은 채팅 · 다른 칸) 긴 채팅 표식이 없거나 #chat 이 아닌 칸의 scroll 은 아무것도 읽지 않는다', () => {
     const r0 = rectReads; docListeners.get('scroll').f({ target: { id: 'other' } });
     const had = htmlClasses.has('bl-chat-light'), hadC = chat.classes.has('bl-chat-light');
@@ -514,7 +533,7 @@ test('(배선) scroll 은 문서에서 capture · passive 로 한 번 · 글 고
     const l = docListeners.get('scroll'); assert.ok(l && l.opts && l.opts.capture === true && l.opts.passive === true);
     const js = read('src/chat-light.js');
     assert.equal((js.match(/addEventListener\('scroll', onChatScroll/g) || []).length, 1);
-    assert.match(js, /if \(!warm\.cool && document\.body\?\.dataset\?\.generating !== 'true'\) viewGuard\(el\);/);
+    assert.match(js, /if \(!warm\.cool && document\.body\?\.dataset\?\.generating !== 'true'\) \{[^\n]*\n\s+viewGuard\(el\);\n\s+if \(!warm\.moved\) \{ warm\.held\+\+; return; \}/);
     assert.match(read('css/05-chat.css'), /^:where\(html\.bl-chat-light\[data-bl-chat-sel\]\) body\.salty \[id="chat"\]:not\(#salty-none\) > \.mes/m, '고르는 동안 크기 기억 규칙(1.5.9)');
 });
 console.log(`chat-light-warm: ${n}/${n + failed} 통과`);

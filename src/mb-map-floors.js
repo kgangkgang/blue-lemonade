@@ -6,6 +6,7 @@
 //   끌기 · 확대 · 구역 탭 · 지금 위치 강조는 그 확장 것을 그대로 써요(그 확장은 viewBox 만 바꿔요). 「현재 위치로」 단추만 이 배치의 자리로 가게 받아 줘요.
 //   켜고 끄기: 테마 설정 chat.mbMapFloors(기본 켬) → body[data-bl-mb-floors] · 「원작 그대로 보기」 를 켜면 안 해요. 시험: tools/tests/mb-map-floors.mjs
 import { watchDom } from './dom-watch.js';
+import { mbFit, onMbOff } from './mb-switch.js';
 
 export const FLOOR_ATTR = 'data-bl-mb-floors';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -20,6 +21,11 @@ const LANE = 1.3;            // 같은 길로 가는 선끼리 벌리는 폭
 const CORRIDOR = 4.2;        // 점 아래 복도 선
 export const RESERVE = 0.22; // 처음 보기 칸 오른쪽에 비워 두는 몫 — 칸 너비에 대한 비율(그 확장의 확대 단추 줄 ≈ 폰 칸의 17%)
 const ROOM_MAX = 2.4;        // 칸 너비를 채우려고 방 칸을 넓힐 때 상한(기본 칸의 배수)
+const GH_STEP = 19;          // 1.7.5 아직 안 가 본 곳 줄 사이(이름표 두 줄 + 점 밑 「아직 안 가 본 곳」 글이 윗줄과 안 겹치게)
+const GH_SLOT = 24;          // 아직 안 가 본 곳 줄의 한 칸(「<이름>의 집」 이 한 줄에 들도록 방 칸보다 조금 넓게)
+const GH_CAP0 = 4;           // 아직 안 가 본 곳 한 줄에 적어도 몇 곳
+const GH_TAG_W = 18;         // 「아직 안 가 본 곳」 글 폭(글자 2.5)
+export const GH_TAG = '아직 안 가 본 곳';
 
 // ── 층 읽기 ─────────────────────────────────────────────
 const B = '(?<![\\p{L}\\p{N}])';   // 앞이 글자 · 숫자가 아님
@@ -125,7 +131,7 @@ const tagOf = r => (r >= 1 ? `${r}F` : `B${1 - r}`);
  * 층별 배치를 계산해요. places = 그 확장 지도 장소 목록(name · desc · kind · area · links · x · y).
  * 돌려주는 것: null(층 건물이 없음 → 그 확장 그림 그대로) 또는 { pos: Map(이름 → {x, y, zone, row, b}), rows, buildings, ground, routes(pairs) }
  */
-export function floorLayout(places, { find = simpleFind, tr = null, tall = null, dir = null } = {}) {
+export function floorLayout(places, { find = simpleFind, tr = null, tall = null, dir = null, ghosts = null } = {}) {
     // 버그 사냥 10b: 이름이 완전히 같은 장소는 첫째만(그 확장 findBy · layoutPlaces 도 첫째를 써요) — 둘째가 층 · 바깥 칸을 덮어 점 자리와 카드가 어긋났어요
     const names = new Set(), list = (Array.isArray(places) ? places : []).filter(p => p && p.name && !names.has(p.name) && names.add(p.name));
     if (list.length < 2) return null;
@@ -190,6 +196,19 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null,
         }
     });
     const real = n => alias.get(n) ?? n;
+    // 1.7.5 아직 안 가 본 곳(ghosts — unvisitedOf): 층이 있는 곳은 가장 큰 건물의 그 층 방으로(방 칸에 같이 들어가요 · 진짜 방 오른쪽),
+    //   층이 없는 곳은 하늘 · 땅 밑 · 바깥(zone · 모르면 바깥)으로. 건물을 새로 만들지는 않아요(건물은 진짜 장소로만 정해요)
+    const gh = new Map(), ghZone = new Map();
+    (Array.isArray(ghosts) ? ghosts : []).forEach((g, k) => {
+        if (!g?.key || gh.has(g.key) || info.has(g.key)) return;
+        gh.set(g.key, g);
+        if (Number.isFinite(g.f) && g.f !== 0) {
+            const bi = buildings.reduce((b, x, i) => (x.length > buildings[b].length ? i : b), 0);
+            const it = { p: { name: g.key, known: true }, i: 1e6 + k, f: g.f, area: buildings[bi][0]?.area ?? '', ghost: true };
+            info.set(g.key, it); buildings[bi].push(it); inB.set(g.key, bi);
+        } else ghZone.set(g.key, g.zone === 'above' || g.zone === 'below' ? g.zone : 'out');
+    });
+    const shownName = n => gh.get(n)?.label ?? (tr?.(n) || n);
     // 줄: 건물마다 맨 위 ~ 맨 아래 층을 빈 층까지 다 넣어요(15층 넘게 벌어지면 장소가 있는 층만)
     // 1.7.4 땅 위 건물은 1층(땅)까지 내려와요 — 맨 아래 방이 3층이면 땅 줄(바깥 장소 줄)이 3층 높이가 돼 바깥 장소가 「3층」 에 선 것처럼 보였어요
     const rowSet = new Set();
@@ -237,8 +256,10 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null,
     const shaftN = shaftOn.map(on => (on ? 1 : 0));
     // 칸 너비 채우기: 세로(층 수 · 위 · 아래)로 정해지는 보기 칸 너비만큼 방 칸을 넓혀요(건물이 한쪽에 붙고 반이 비지 않게)
     const hasZ = z => [...zone.values()].includes(z);
-    const contentH = bottom + (hasZ('above') ? 23 : 3) + (hasZ('below') ? 23 : 3);
-    const outN = [...zone.values()].filter(z => z === 'out').length;
+    const ghN = z => [...ghZone.values()].filter(v => v === z).length;
+    const ghRowsGuess = z => Math.ceil(ghN(z) / GH_CAP0);   // 칸 너비를 정하기 전 어림(줄 수만큼 높이를 더해요)
+    const contentH = bottom + (hasZ('above') ? 23 : ghN('above') ? 9 : 3) + (hasZ('below') ? 23 : ghN('below') ? 9 : 3) + (ghRowsGuess('above') + ghRowsGuess('below')) * GH_STEP;
+    const outN = [...zone.values()].filter(z => z === 'out').length + ghN('out');
     // 바깥 장소: 땅 위 1층 가게 · 집이라 모두 1층 줄(땅 선 바로 위) 한 줄에 둬요 — 다른 층 높이에 두면 「3층 가게」 처럼 읽혀요
     const fixedW = 4 + buildings.length * TAG_W + shaftN.reduce((s2, n2) => s2 + (n2 ? 3 + n2 * LANE : 0), 0) + (buildings.length - 1) * 10 + (outN ? 4 + outN * OUT_W + 10 - OUT_W / 2 : 2);
     const wantW = contentH / TALL * (1 - RESERVE);
@@ -273,11 +294,13 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null,
     const outL = bRight + 4;
     // 1.7.0 바깥 칸 너비는 이름표 폭 기준(두 줄로 접은 뒤 가장 긴 줄 + 2) — 이름표끼리 겹치지 않게 · 좁으면 그만큼 옆으로 밀어요
     let ox = outL;
-    outs.forEach(p => {
-        const lines = wrapLabel(tr?.(p.name) || p.name, OUT_W - 1.5), w = Math.max(OUT_W, Math.min(40, Math.max(...lines.map(textW)) + 2));
-        pos.set(p.name, { x: r1(ox + w / 2), y: r1(dotY(groundRow)), zone: 'out', row: groundRow, b: null, w }); ox += w;
+    // 1.7.5 아직 안 가 본 바깥 곳은 진짜 바깥 장소 뒤에(같은 땅 줄)
+    const ghOut = [...ghZone].filter(([, z]) => z === 'out').map(([k]) => ({ name: k }));
+    [...outs, ...ghOut].forEach(p => {
+        const lines = wrapLabel(shownName(p.name), OUT_W - 1.5), w = Math.max(OUT_W, Math.min(40, Math.max(...lines.map(textW), GH_TAG_W * (gh.has(p.name) ? 1 : 0)) + 2));
+        pos.set(p.name, { x: r1(ox + w / 2), y: r1(dotY(groundRow)), zone: 'out', row: groundRow, b: null, w, ...(gh.has(p.name) ? { ghost: true } : {}) }); ox += w;
     });
-    const outR = outs.length ? ox : bRight;
+    const outR = outs.length || ghOut.length ? ox : bRight;
     // 하늘 장소는 지붕 위 한 줄, 땅 밑 장소는 바닥 아래 한 줄 — 건물 방 칸 가운데에 그 확장 차례로 늘어서요
     //   1.7.5 땅 밑 줄은 통로가 바닥 아래 복도까지 내려와 지나가므로 이름표 · 점이 통로 x 에 걸리지 않게 줄 전체를 왼쪽으로 반 칸씩 비켜요
     const mid = (bInfo[0].roomL + bInfo[bInfo.length - 1].roomR) / 2;
@@ -289,14 +312,24 @@ export function floorLayout(places, { find = simpleFind, tr = null, tall = null,
         const clash = () => z === 'below' && a.some((p, k) => shaftXs.some(sx => Math.abs(x0 + k * SLOT_W - sx) < half[k]));
         for (let i = 0; i < 40 && clash(); i++) x0 -= SLOT_W / 2;
         a.forEach((p, k) => pos.set(p.name, { x: r1(x0 + k * SLOT_W), y, zone: z, row: null, b: null, w: SLOT_W }));
+        // 1.7.5 아직 안 가 본 하늘 · 땅 밑 곳: 진짜 줄 바깥쪽(하늘은 더 위 · 땅 밑은 더 아래)에 따로 줄 — 건물 폭만큼 채우고 넘치면 다음 줄
+        const g = [...ghZone].filter(([, v]) => v === z).map(([k]) => k);
+        if (g.length) {
+            const cap = Math.max(GH_CAP0, Math.floor((bRight - bLeft) / GH_SLOT)), sign = z === 'above' ? -1 : 1, first = a.length ? 1 : 0;
+            g.forEach((k, i) => {
+                const row = Math.floor(i / cap), inRow = Math.min(cap, g.length - row * cap), col = i % cap;
+                pos.set(k, { x: r1(mid + (col - (inRow - 1) / 2) * GH_SLOT), y: r1(y + sign * (row + first) * GH_STEP), zone: z, row: null, b: null, w: GH_SLOT, ghost: true });
+            });
+        }
     }
     for (const [a, b] of alias) if (pos.has(b)) pos.set(a, { ...pos.get(b), twin: b });   // 겹친 장소는 대표 점 자리
-    const out = { pos, alias, rows, rowTop, rowH, dotY, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, hub, tall: tall || new Set() };
+    for (const [k] of gh) if (pos.has(k)) pos.get(k).ghost = true;
+    const out = { pos, alias, rows, rowTop, rowH, dotY, groundRow, groundY, top, bottom, buildings: bInfo, bLeft, bRight, outL, outR, pairs, inB, hub, tall: tall || new Set(), ghosts: gh };
     if (tall) return out;
     // 이름표가 두 줄로 접힐 층(입히기와 같은 규칙: 보이는 이름 = 번역 보기 글 · 칸 너비 - 1.5)을 모아 한 번 더 놓아요
     const need = new Set();
-    for (const [n, o] of pos) if (o.row !== null && o.row !== undefined && (o.zone === 'b' || o.zone === 'out') && info.get(n)?.p.known !== false && wrapLabel(tr?.(n) || n, (o.w || SLOT_W) - 1.5).length > 1) need.add(o.row);
-    return need.size ? floorLayout(places, { find, tr, tall: need, dir }) : out;
+    for (const [n, o] of pos) if (o.row !== null && o.row !== undefined && (o.zone === 'b' || o.zone === 'out') && info.get(n)?.p.known !== false && wrapLabel(shownName(n), (o.w || SLOT_W) - 1.5).length > 1) need.add(o.row);
+    return need.size ? floorLayout(places, { find, tr, tall: need, dir, ghosts }) : out;
 }
 
 // ── 로어북 층 안내(1.7.4) ─────────────────────────────────────
@@ -323,6 +356,154 @@ function dirFloor(dir, p, tr) {
     const names = [p.name, tr?.(p.name)].filter(Boolean);
     const fs = new Set(dir.filter(d => names.some(n => normName(n) === normName(d.name) || sameName(n, d.name))).map(d => d.f));
     return fs.size === 1 ? [...fs][0] : null;
+}
+
+// ── 아직 안 가 본 곳(1.7.5 · 그림만) ─────────────────────────────────
+// 그 확장 지도에는 이야기에 나온 곳만 들어가요. 이 채팅에 걸린 로어북에 적힌 장소(집 · 저택 · 부서 · 가게 …) 가운데 지도에 없는 곳을 흐린 점으로 더해요.
+//   장소로 보는 것(보수적으로 — 인물 · 설정 · 규칙 글은 안 넣어요):
+//   ① 층 안내 줄(floorDirectory)의 이름 — 건물 안 그 층에
+//   ② 인물 항목의 「Residence: …」 · 「거주지: …」 줄 — 「<인물>의 집」(인물 이름은 항목 이름 · Name 줄) · 천국 · 지옥 낱말로 위 · 아래
+//   ③ 머리말이 장소 · 지리 · 시설(Locations · Geography · Facilities …)인 묶음 바로 밑 글머리 「- **이름:** …」
+//   ④ 항목 이름이 「[장소]」 · 「[Location]」 꼴로 시작하는 항목 하나 통째
+const MD = s => String(s ?? '').replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim();
+const LINE_KV = /^\s*(?:[-*•·]\s*)?(?:\*\*|__)?\s*([^:：*_]{1,40}?)\s*(?:\*\*|__)?\s*[:：]\s*(?:\*\*|__)?\s*(.*?)\s*$/u;
+const RES_KEY = /^(?:residence|home|address|lives?\s+in|dwelling|거주지|거처|사는\s*곳|주거|자택|住居|住まい|住所|自宅)$/iu;
+const NAME_KEY = /^(?:name|full\s+name|이름|성명|名前|氏名)$/iu;
+const LOC_HEAD = /\b(?:locations?|places?|geography|landmarks?|facilit(?:y|ies)|districts?)\b|장소|지리|지명|명소|시설|場所|地理|地名|施設/iu;
+const LOC_TAG = /^\s*[[【(（]\s*(?:장소|지역|건물|가게|상점|시설|location|place|building|shop|場所|施設|店)\s*[\]】)）]\s*/iu;
+// ③ 글머리 가운데 풀이 칸 이름(「Role:」 · 「Departments & Key Personnel:」 · 「Concept:」 …)은 장소가 아니에요
+//   (이름 전체가 풀이 낱말일 때만 · 「&」 가 든 머리는 묶음 이름이라 빼요 — 「Staff Canteen」 같은 장소는 그대로)
+const FIELD = /^(?:(?:key\s+)?(?:roles?|concepts?|society|food|problems?|characteristics?|staff|personnel|members?|departments?|history|overview|descriptions?|notes?|rules?|titles?|features?|population|economy|culture|atmosphere|summary)|역할|개요|특징|설명|인원|구성원|부서|역사|규칙|분위기|役割|概要|特徴|説明|人員)$/iu;
+const TAGS = /^(?:\s*[[【(（][^\]】)）]{0,12}[\]】)）]\s*)+/u;
+const HANGUL = /[가-힯]/u, KANA = /[ぁ-ヿ一-鿿]/u;
+const clip = (s, n = 180) => { const t = MD(s); return [...t].length > n ? [...t].slice(0, n - 1).join('').trimEnd() + '…' : t; };
+/** 이름 비교 열쇠: 괄호 · 소유(「's」 · 「의」 · 「の」) · 앞 「the」 · 띄어쓰기 · 문장부호를 떼요 */
+export function placeNorm(s) {
+    let t = String(s ?? '').replace(/\([^)]*\)|（[^）]*）|\[[^\]]*\]|【[^】]*】/g, ' ').toLowerCase();
+    t = t.replace(/(\p{L})['’]s(?![\p{L}])/gu, '$1').replace(/(\p{L}{2,})의(?=\s|$)/gu, '$1').replace(/(\p{L})の(?=\p{L})/gu, '$1');
+    t = t.replace(/^\s*(?:the|a|an)\s+/u, '');
+    return t.replace(/[^\p{L}\p{N}]+/gu, '');
+}
+// 건물 · 본부 이름 꼬리(구역 이름 「Tower Headquarters」 ↔ 로어북 「Tower」)
+const GENERIC = /\s+(?:headquarters|hq|building|main\s+office|본부|본청|청사|본사|빌딩|本部|本庁|庁舎)$/iu;
+const noGeneric = s => { const t = String(s ?? '').replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(); const u = t.replace(GENERIC, '').trim(); return u && u !== t ? u : t; };
+/** 사람 이름: 「Miro Vale (ミロ・ヴェイル)」 · 「ゴルム - Gorm」 · 「Tova / トヴァ」 → 조각들 */
+const nameParts = v => MD(v).split(/\s*(?:[/／(（)）,，]|\s[-–—]\s)\s*/u).map(s => s.trim()).filter(s => s && [...s].length >= 2 && [...s].length <= 30);
+/**
+ * 로어북 항목(entries = [{ content, comment }])에서 장소 후보를 골라요 → [{ key, label, f, zone, summary, from, src, names, owners }]
+ *   label = 지도에 쓸 이름 · names = 지도 장소와 견줄 이름들 · owners = 집 주인 이름들(지도에 「<주인>'s Estate」 가 있으면 가 본 곳)
+ *   zone = above | below | out | null(층 안 · 모름) · src = floor | home | section | entry(보고 · 시험용) · skipped 에 뺀 것과 까닭
+ */
+export function lorePlaces(entries, { tr = null } = {}) {
+    const out = [], skipped = [], byKey = new Map();
+    const list = (Array.isArray(entries) ? entries : []).map(e => (typeof e === 'string' ? { content: e, comment: '' } : { content: String(e?.content ?? ''), comment: String(e?.comment ?? '') }));
+    // 사람 이름 모음(③ 글머리가 사람이면 빼요)
+    const people = new Set();
+    for (const e of list) for (const line of e.content.split(/\r?\n/)) { const m = LINE_KV.exec(line); if (m && NAME_KEY.test(m[1].trim())) for (const n of nameParts(m[2])) people.add(placeNorm(n)); }
+    const zoneText = s => (BELOW.test(s) ? 'below' : ABOVE.test(s) ? 'above' : null);
+    const add = c => {
+        const k = placeNorm(c.label); if (!k || [...k].length < 2) { skipped.push({ name: c.label, why: '이름이 짧아요', from: c.from }); return; }
+        const had = byKey.get(k);
+        if (had) { if (had.f === null && c.f !== null) had.f = c.f; if (!had.summary && c.summary) had.summary = c.summary; for (const n of c.names) if (!had.names.includes(n)) had.names.push(n); return; }
+        const it = { key: `bl-unv:${k}`, f: null, zone: null, summary: '', owners: [], ...c }; byKey.set(k, it); out.push(it);
+    };
+    for (const e of list) {
+        const lines = e.content.split(/\r?\n/), from = MD(e.comment).replace(TAGS, '').trim() || MD(e.comment);
+        // 「이름: 설명」 글머리 찾기(① · ③ 설명 요약)
+        const descOf = name => {
+            const k = placeNorm(noGeneric(name));
+            for (let i = 0; i < lines.length; i++) {
+                const m = /^\s*[-*•·]\s*(.+)$/u.exec(lines[i]); if (!m) continue;
+                const t = MD(m[1]), at = t.search(/[:：]/u); if (at < 1) continue;
+                const head = t.slice(0, at).trim();
+                if (placeNorm(noGeneric(head)) !== k && !sameName(head.replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(), name)) continue;
+                const rest = t.slice(at + 1).trim(); if (rest) return clip(rest);
+                for (let j = i + 1; j < lines.length && /^\s{2,}[-*•·]/.test(lines[j]); j++) { const s = MD(lines[j].replace(/^\s*[-*•·]\s*/, '')); if (s) return clip(s); }
+            }
+            return '';
+        };
+        // ④ 항목 통째가 장소
+        if (LOC_TAG.test(e.comment)) {
+            const label = MD(e.comment.replace(LOC_TAG, '')).replace(TAGS, '').trim();
+            if (label) add({ label, names: [label], zone: zoneText(label + ' ' + e.content.slice(0, 300)), summary: clip(e.content.replace(/^#.*$/gm, '')), from, src: 'entry' });
+            continue;
+        }
+        // ① 층 안내
+        const dir = floorDirectory([e.content]);
+        for (const d of dir) add({ label: d.name.replace(/\s*[(（][^)）]*[)）]\s*/g, ' ').trim() || d.name, names: [d.name], f: d.f, summary: descOf(d.name), from, src: 'floor' });
+        // ② 거주지 줄(인물 항목 — Name 줄이나 항목 이름이 있어야)
+        let owner = [], res = null;
+        for (const line of lines) {
+            const m = LINE_KV.exec(line); if (!m) continue;
+            const k = m[1].trim();
+            if (!owner.length && NAME_KEY.test(k)) owner = nameParts(m[2]);
+            else if (!res && RES_KEY.test(k) && MD(m[2])) res = MD(m[2]);
+        }
+        if (res) {
+            const tagName = from && [...from].length <= 16 && !/[:：]/.test(from) ? from : '';
+            const who = [tagName, ...owner].filter(Boolean);
+            if (!who.length) skipped.push({ name: res, why: '집 주인 이름을 못 찾았어요', from });
+            else {
+                // 보이는 이름: 항목 이름(대개 사용자 언어) → 번역 보기 글 → Name 줄 첫 조각
+                const disp = (HANGUL.test(tagName) || KANA.test(tagName)) ? tagName : (owner.map(o => tr?.(o)).find(t => t && !owner.includes(t)) || tagName || owner[0]);
+                const label = HANGUL.test(disp) ? `${disp}의 집` : KANA.test(disp) ? `${disp}の家` : `${disp}'s home`;
+                const head = res.split(/[,，、]/u)[0].replace(/^(?:a|an|the)\s+/iu, '').trim();
+                add({ label, names: [label, head], owners: who, zone: zoneText(res) ?? 'out', summary: clip(res), from, src: 'home' });
+            }
+        }
+        // ③ 장소 · 지리 머리말 밑 글머리(맨 앞 칸 글머리만 · 사람 이름은 빼요)
+        let inLoc = 0;
+        for (const line of lines) {
+            const h = /^\s*(#{1,6})\s*(.*)$/.exec(line);
+            if (h) { inLoc = LOC_HEAD.test(h[2]) ? h[1].length : (inLoc && h[1].length > inLoc ? inLoc : 0); continue; }
+            if (/^\s*---+\s*$/.test(line)) { inLoc = 0; continue; }
+            if (!inLoc) continue;
+            const b = /^[-*•·]\s*(.+)$/u.exec(line); if (!b) continue;   // 들여 쓴 글머리(Role · Food 같은 풀이)는 안 봐요
+            const t = MD(b[1]), at = t.search(/[:：]/u); if (at < 1) continue;
+            const head = t.slice(0, at).trim(), name = head.replace(/\s*[(（][^)）]*[)）]\s*/g, ' ').trim();
+            if (!name || [...name].length > 40) continue;
+            if (FIELD.test(name) || /[&＆]/.test(name)) { skipped.push({ name, why: '풀이 칸 이름이에요', from }); continue; }
+            if (people.has(placeNorm(name))) { skipped.push({ name, why: '사람 이름이에요', from }); continue; }
+            add({ label: name, names: [head, name], zone: zoneText(name), summary: descOf(head), from, src: 'section' });
+        }
+    }
+    out.skipped = skipped;
+    return out;
+}
+/** 지도 장소 이름 모음(한 번 만들어 후보마다 써요) */
+function mapIndex(places, tr) {
+    const names = new Set(), areas = new Set(), rests = [];
+    for (const p of Array.isArray(places) ? places : []) {
+        if (!p?.name) continue; names.add(p.name); names.add(labelOf(p.name)); if (tr) names.add(tr(p.name));
+        if (p.area) {
+            areas.add(p.area); if (tr) areas.add(tr(p.area));
+            // 건물 이름을 앞에 붙인 장소(「Tower Lobby」 — 구역 「Tower HQ」) ↔ 로어북 「Lobby」
+            const a = placeNorm(noGeneric(p.area)), n = placeNorm(p.name);
+            if (a && n.length > a.length + 1 && n.startsWith(a)) rests.push(n.slice(a.length));
+        }
+    }
+    const list = [...names].filter(Boolean);
+    return { list, keys: new Set([...[...list, ...[...areas].filter(Boolean).map(noGeneric)].map(placeNorm), ...rests]), low: list.map(s => String(s).toLowerCase().replace(/\s+/g, ' ')) };
+}
+/** 지도 자료에 이미 있는 곳인가(이름 · 번역 이름 · 구역 이름 · 집 주인) */
+export function visitedPlace(c, places, { tr = null, index = null } = {}) {
+    const ix = index || mapIndex(places, tr);
+    for (const n of c.names || [c.label]) {
+        if (ix.keys.has(placeNorm(n)) || ix.keys.has(placeNorm(noGeneric(n)))) return true;
+        if (ix.list.some(m => sameName(m, n))) return true;
+    }
+    for (const o of c.owners || []) { const w = String(o).toLowerCase(); if (ix.low.some(m => [`${w}'s `, `${w}’s `, `${w}의 `, `${w}の`, `${w}家`].some(p => m.includes(p) || m.endsWith(p.trim())))) return true; }
+    return false;
+}
+/** 지도에 없는 후보만(지도 자료는 그대로) — 같은 장소 목록 · 같은 후보면 앞 결과를 써요(그 확장이 창을 다시 그릴 때마다 불려요) */
+const unvMemo = new WeakMap();
+export function unvisitedOf(map, lore, opt = {}) {
+    const places = map?.places, list = Array.isArray(lore) ? lore : [];
+    const hit = places && typeof places === 'object' ? unvMemo.get(places) : null;
+    if (hit && hit.lore === lore && hit.tr === !!opt.tr) return hit.out;
+    const index = mapIndex(places, opt.tr), out = list.filter(c => !visitedPlace(c, places, { ...opt, index }));
+    if (places && typeof places === 'object') unvMemo.set(places, { lore, tr: !!opt.tr, out });
+    return out;
 }
 
 /** 두 장소 사이 꺾인 선(점 목록). L = floorLayout 결과 · shown = 지금 보이는 장소 이름 모음(같은 줄 사이에 낀 점 판정) */
@@ -374,6 +555,9 @@ export function fitFloors(L, shown) {
     const xs = [], ys = [];
     for (const [n, o] of L.pos) if (!shown || shown.has(n)) { xs.push(o.x - 10, o.x + 10); ys.push(o.y - 12, o.y + 10); }
     for (const b of L.buildings) if (bShown(L, b, shown) || ghostOf(L, shown)) { xs.push(b.left - 4, b.right + 2); ys.push(b.top - 3, b.bottom + 3); }
+    return fitXY(xs, ys);
+}
+function fitXY(xs, ys) {
     if (!xs.length) return [-6, -8, 112, 114];
     // 오른쪽은 그 확장의 확대 단추 줄(지도 오른쪽 아래에 떠 있어요)이 덮어서 조금 비워 둬요 — 건물 옆 바깥 장소(대개 지금 위치)가 단추 밑에 숨지 않게
     //   1.7.0: 비움 몫을 「장소 폭의 몇 %」 가 아니라 「칸 너비의 몫」 으로 — 장소가 가로로 넓게 퍼진 배치(바깥 장소가 많거나 건물이 둘)에서도 확대 단추 줄 밑이 늘 비어요
@@ -415,18 +599,21 @@ export function wrapLabel(text, w) {
 const el = (doc, tag, attrs = {}, text = null) => { const e = doc.createElementNS(SVG_NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v)); if (text !== null) e.textContent = text; return e; };
 const VB_MODE = 'blFloorsVB';   // ui 에 적는 「보던 칸을 어느 배치 눈금으로 그렸나」(floors · plain)
 /** 그 확장이 그린 지도 SVG 하나에 층별 배치를 입혀요 → 입혔으면 배치, 아니면 null(그대로) */
-export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null, dir = null } = {}) {
+export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null, dir = null, floors = true, lore = null } = {}) {
     if (!svg || svg.getAttribute('data-bl-floors')) return null;
-    const L = floorLayout(map?.places, { find, tr, dir });
+    // 1.7.5 아직 안 가 본 곳: 로어북 장소(lore — lorePlaces) 가운데 지도 자료에 없는 곳 · 구역 탭(ui.mapArea)을 고른 때는 안 그려요(「전체」 에서만)
+    const ghosts = lore?.length && !ui?.mapArea ? unvisitedOf(map, lore, { tr }).map(g => ({ ...g, label: (tr?.(g.label) || g.label) })) : [];
+    const L = floors ? floorLayout(map?.places, { find, tr, dir, ghosts }) : null;
     // 버그 사냥 9b: 그 확장이 기억한 보던 칸(ui.mapVB — 끌기 · 확대)은 그때 그린 배치의 눈금이에요. 장소가 바뀌어 층별 배치가 새로 생기거나 없어지면
     //   다른 눈금의 칸이 남아 엉뚱한 곳(빈 곳)을 보여 줬어요 → 어느 배치로 그렸는지 ui 에 적어 두고, 바뀌면 보던 칸을 버려요.
     //   (층별 배치 → 그 확장 배치: 그 확장이 이미 옛 칸으로 그렸으니 다시 그리게 _blRefit 로 알려요 — startMbFloors 가 그려요)
     const mode = L ? 'floors' : 'plain', was = ui?.[VB_MODE];
     if (ui && typeof ui === 'object') { if (was && was !== mode && ui.mapVB) { ui.mapVB = null; if (!L) svg._blRefit = true; } ui[VB_MODE] = mode; }
-    if (!L) { svg.setAttribute('data-bl-floors', 'none'); return null; }
+    if (!L) { svg.setAttribute('data-bl-floors', 'none'); if (ghosts.length) plainGhosts(svg, ghosts, ui); return null; }
     const doc = svg.ownerDocument;
     const nodes = [...svg.querySelectorAll('g.node[data-arg]')];
     const shown = new Set(nodes.map(g => { const p = find(map.places, g.getAttribute('data-arg')); return p ? p.name : g.getAttribute('data-arg'); }));
+    for (const [k] of L.ghosts || []) if (L.pos.has(k)) shown.add(k);   // 흐린 점도 자리를 차지해요(같은 줄 선은 그 밑 복도로 · 보기 칸에 넣어요)
     // 점 묶음 옮기기: 원래 점 자리 → 새 자리만큼 translate
     for (const g of nodes) {
         const p = find(map.places, g.getAttribute('data-arg')), to = p && L.pos.get(p.name), dot = g.querySelector('circle.dot');
@@ -502,10 +689,74 @@ export function applyFloors(svg, map, { ui = null, find = simpleFind, tr = null,
     const bl = Math.min(...L.buildings.map(b => b.left)), br = Math.max(...L.buildings.map(b => b.right)), gy = r1(L.groundY);
     if (Number.isFinite(gx0)) for (const [a, b] of [[gx0 - 3, bl], [br, gx1 + 3]]) if (b - a > 1) deco.appendChild(el(doc, 'line', { class: 'bl-ground', x1: r1(a), y1: gy, x2: r1(b), y2: gy }));
     svg.insertBefore(deco, svg.firstChild);
+    if (L.ghosts?.size) drawGhosts(svg, [...L.ghosts.values()].filter(g => L.pos.has(g.key)).map(g => ({ g, o: L.pos.get(g.key) })), ui);
     svg.setAttribute('data-bl-floors', 'on');
     svg._blFloors = L;
     if (!ui?.mapVB) svg.setAttribute('viewBox', fitFloors(L, shown).join(' '));
     return L;
+}
+
+// ── 아직 안 가 본 곳 그리기(1.7.5) ─────────────────────────────────────
+const GH_ATTR = 'data-bl-unv';
+/** 흐린 점 묶음: 점선 동그라미 · 흐린 이름표(두 줄 접기) · 점 밑 「아직 안 가 본 곳」 · 누를 자리(그 확장 장소 점과 따로 — data-act 없음) */
+function drawGhosts(svg, items, ui = null) {
+    if (!items.length) return null;
+    const doc = svg.ownerDocument, layer = el(doc, 'g', { class: 'bl-unvs' });
+    for (const { g, o } of items) {
+        const sel = ui?.blGhost === g.key;
+        const n = el(doc, 'g', { class: `bl-unv${sel ? ' sel' : ''}`, [GH_ATTR]: g.key, role: 'button', tabindex: '0', 'aria-label': `${g.label} · ${GH_TAG}` });
+        n.appendChild(el(doc, 'circle', { class: 'bl-unv-hit', cx: o.x, cy: o.y, r: 5.5 }));
+        n.appendChild(el(doc, 'circle', { class: 'bl-unv-dot', cx: o.x, cy: o.y, r: 2.6 }));
+        const lines = wrapLabel(g.label, (o.w || SLOT_W) - 1.5);
+        const lab = el(doc, 'text', { class: 'bl-unv-name', x: o.x, y: r1(o.y - 4.4 - (lines.length - 1) * LINE_H) });
+        lines.forEach((ln, i) => lab.appendChild(el(doc, 'tspan', { x: o.x, ...(i ? { dy: LINE_H } : {}) }, ln)));
+        n.appendChild(lab);
+        n.appendChild(el(doc, 'text', { class: 'bl-unv-tag', x: o.x, y: r1(o.y + 5.6) }, GH_TAG));
+        n._blGhost = g;
+        layer.appendChild(n);
+    }
+    const edges = svg.querySelector('g.edges');
+    svg.insertBefore(layer, edges ? edges.nextSibling : svg.firstChild);
+    svg._blGhosts = items.map(({ g }) => g);
+    return layer;
+}
+/** 층별 보기가 아닌 지도(그 확장 배치): 하늘 쪽은 맨 위 점들 위에, 나머지(땅 밑 · 바깥 · 모름)는 맨 아래 점들 밑에 줄로 */
+export function plainSpots(dots, ghosts) {
+    if (!dots.length || !ghosts.length) return [];
+    const xs = dots.map(d => d.x), ys = dots.map(d => d.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), mid = (x0 + x1) / 2;
+    const cap = Math.max(GH_CAP0, Math.floor((x1 - x0) / GH_SLOT) + 1), out = [];
+    for (const [side, list] of [[-1, ghosts.filter(g => g.zone === 'above')], [1, ghosts.filter(g => g.zone !== 'above')]]) {
+        list.forEach((g, i) => {
+            const row = Math.floor(i / cap), inRow = Math.min(cap, list.length - row * cap), col = i % cap;
+            out.push({ g, o: { x: r1(mid + (col - (inRow - 1) / 2) * GH_SLOT), y: r1(side < 0 ? y0 - GH_STEP * (row + 1) : y1 + GH_STEP * (row + 1)), w: GH_SLOT, zone: g.zone || 'out' } });
+        });
+    }
+    return out;
+}
+function plainGhosts(svg, ghosts, ui) {
+    const dots = [...svg.querySelectorAll('g.node')].map(g => g.querySelector('circle.dot')).filter(Boolean).map(c => ({ x: Number(c.getAttribute('cx')), y: Number(c.getAttribute('cy')) })).filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
+    const items = plainSpots(dots, ghosts); if (!items.length) return;
+    drawGhosts(svg, items, ui);
+    if (!ui?.mapVB) { const xs = [], ys = []; for (const o of [...dots, ...items.map(i => i.o)]) { xs.push(o.x - 10, o.x + 10); ys.push(o.y - 12, o.y + 10); } svg.setAttribute('viewBox', fitXY(xs, ys).join(' ')); }
+}
+const FLOOR_TAG = f => (f >= 1 ? `${f}F` : `B${-f}`);
+/** 누른 흐린 점의 카드: 그 확장 장소 카드 자리에(그 확장 카드는 잠깐 숨겨요 — 다른 장소를 누르면 그 확장이 다시 그려요) */
+export function showGhostCard(panel, g) {
+    const doc = panel?.ownerDocument; if (!doc || !g) return null;
+    panel.querySelector?.('.bl-unv-card')?.remove();
+    for (const c of panel.querySelectorAll?.('.ss-place[data-bl-unv-hid]') || []) { c.style.display = ''; c.removeAttribute('data-bl-unv-hid'); }
+    const mk = (tag, cls, text) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+    const card = mk('div', 'ss-card ss-place bl-unv-card'), head = mk('div', 'ss-place-h');
+    head.append(mk('b', '', g.label), mk('span', 'ss-chip bl-unv-chip', GH_TAG));
+    if (Number.isFinite(g.f) && g.f) head.append(mk('span', 'ss-chip', FLOOR_TAG(g.f)));
+    card.append(head);
+    if (g.summary) card.append(mk('p', 'ss-pre ss-dim ss-notr', g.summary));   // 로어북 원문 그대로(그 확장 화면 번역이 낱말만 바꿔 섞이지 않게 · .ss-notr = 그 확장이 건너뛰는 표식)
+    card.append(mk('p', 'ss-hint', `로어북${g.from ? ` 「${g.from}」` : ''}에 적힌 곳이에요 · 이야기에 나와 지도에 들어오면 흐린 표시가 사라지고 원래 점으로 그려져요.`));
+    const theirs = [...(panel.querySelectorAll?.('.ss-place') || [])].find(c => c !== card && !c.classList.contains('bl-unv-card'));
+    if (theirs) { theirs.style.display = 'none'; theirs.setAttribute('data-bl-unv-hid', ''); theirs.parentNode.insertBefore(card, theirs); }
+    else { const wrap = panel.querySelector?.('.ss-mapwrap'), after = wrap?.nextElementSibling?.matches?.('.ss-hint') ? wrap.nextElementSibling : wrap; if (!after) return null; after.parentNode.insertBefore(card, after.nextSibling); }
+    return card;
 }
 
 // ── 붙이기 ─────────────────────────────────────────────
@@ -527,12 +778,17 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
     const mapNow = () => { try { return core?.app?.current?.state?.data?.map || null; } catch { return null; } };
     const trFn = () => { try { return core?.viewTr?.() ? (s => core.trLook?.(s) ?? s) : null; } catch { return null; } };
     const findFn = () => (core?.findBy ? (list, name) => core.findBy(list, name) || null : simpleFind);
+    // 1.7.5 「아직 안 가 본 곳」(미트볼 맞춤 스위치 unvisited · 기본 켬)은 층별 보기를 꺼도 그 확장 그림 위에 따로 그려요
+    const ghostOn = () => mbFit('unvisited', doc);
+    const active = () => isOn(doc) || ghostOn();
     const dress = svg => {
-        if (!isOn(doc) || !core || svg.getAttribute('data-bl-floors')) return;
+        if (!active() || !core || svg.getAttribute('data-bl-floors')) return;
         const map = mapNow(); if (!map) return;
-        const panel = svg.closest?.('.ss-panel');
+        const panel = svg.closest?.('.ss-panel'), ui = panel?._ss?.ui ?? null;
         loadDir();
-        try { applyFloors(svg, map, { ui: panel?._ss?.ui ?? null, find: findFn(), tr: trFn(), dir: dirNow.list }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
+        try { applyFloors(svg, map, { ui, find: findFn(), tr: trFn(), dir: dirNow.list, floors: isOn(doc), lore: ghostOn() ? dirNow.lore : null }); } catch (error) { svg.setAttribute('data-bl-floors', 'none'); console.warn('[Blue Lemonade] 미트볼 층별 지도', error); }
+        // 누른 흐린 점이 있으면(그 확장이 다시 그려도) 카드를 다시 놓아요
+        if (ui?.blGhost) { const g = svg._blGhosts?.find(x => x.key === ui.blGhost); if (g) showGhostCard(panel, g); else ui.blGhost = null; }
         if (svg._blRefit && panel?._ss) { svg._blRefit = false; try { core.app?.renderPanel?.(panel); } catch { /* 다음에 그릴 때 */ } }   // 버그 사냥 9b: 층별 배치가 없어져 옛 눈금 칸으로 그려진 지도 — 보던 칸을 비웠으니 그 확장이 다시 맞춰 그려요
     };
     const sweep = () => { for (const svg of doc.querySelectorAll('svg.ss-map:not([data-bl-floors])')) dress(svg); };
@@ -545,29 +801,30 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
         }
     };
     // 1.7.4 로어북 층 안내: 이 채팅에 걸린 로어북(카드 · 카드 안 책 · 채팅 로어북)을 한 번 읽어 두고, 안내가 바뀌면 떠 있는 지도를 다시 그려요
-    const dirNow = { key: null, list: [], gen: 0 };
+    // 1.7.5 같은 로어북에서 장소 후보(lorePlaces)도 같이 — 채팅 · 로어북이 바뀔 때만 읽어요(메시지마다 안 돌아요)
+    const dirNow = { key: null, list: [], lore: [], gen: 0, reads: 0 };
     const loadDir = () => {
         let c, key; try { c = stCtx(); if (!c) return; key = `${c.groupId ?? ''}|${c.characterId ?? ''}|${c.getCurrentChatId?.() ?? ''}|${c.chatMetadata?.world_info ?? ''}`; } catch { return; }
         if (key === dirNow.key) return;
         dirNow.key = key; const gen = ++dirNow.gen;
         (async () => {
-            const texts = [], names = new Set();
+            const texts = [], entries = [], names = new Set(); dirNow.reads++;
             const cards = c.groupId ? (c.groups?.find?.(g => g.id === c.groupId)?.members || []).map(a => c.characters?.find?.(x => x.avatar === a)) : [c.characters?.[c.characterId]];
-            for (const ch of cards) { const w = ch?.data?.extensions?.world; if (w) names.add(String(w)); for (const e of ch?.data?.character_book?.entries || []) if (e?.enabled !== false) texts.push(e?.content); }
+            for (const ch of cards) { const w = ch?.data?.extensions?.world; if (w) names.add(String(w)); for (const e of ch?.data?.character_book?.entries || []) if (e?.enabled !== false) { texts.push(e?.content); entries.push({ content: e?.content, comment: e?.comment ?? e?.name }); } }
             if (c.chatMetadata?.world_info) names.add(String(c.chatMetadata.world_info));
-            for (const n of names) { try { const b = await c.loadWorldInfo?.(n); for (const e of Object.values(b?.entries || {})) if (!e?.disable) texts.push(e?.content); } catch { /* 그 책은 빼요 */ } }
-            return floorDirectory(texts);
-        })().then(list => {
+            for (const n of names) { try { const b = await c.loadWorldInfo?.(n); for (const e of Object.values(b?.entries || {})) if (!e?.disable) { texts.push(e?.content); entries.push({ content: e?.content, comment: e?.comment }); } } catch { /* 그 책은 빼요 */ } }
+            return { list: floorDirectory(texts), lore: lorePlaces(entries, { tr: trFn() }) };
+        })().then(({ list, lore }) => {
             if (gen !== dirNow.gen) return;
-            const was = JSON.stringify(dirNow.list); dirNow.list = list;
-            if (JSON.stringify(list) !== was && isOn(doc)) redraw();
+            const was = JSON.stringify([dirNow.list, dirNow.lore]); dirNow.list = list; dirNow.lore = lore;
+            if (JSON.stringify([list, lore]) !== was && active()) redraw();
         }).catch(() => { /* 안내 없이 */ });
     };
     try { const c = stCtx(), ev = c?.eventTypes ?? c?.event_types; for (const k of ['WORLDINFO_UPDATED', 'CHARACTER_EDITED']) if (ev?.[k]) c.eventSource?.on?.(ev[k], () => { dirNow.key = null; loadDir(); }); } catch { /* 채팅이 바뀔 때만 새로 읽어요 */ }
     (load ? Promise.resolve(load()) : mbCore(doc)).then(m => { core = m; sweep(); }).catch(() => { /* 그 확장 그림 그대로 */ });
     try {
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 층별 지도' }, records => {
-            if (!isOn(doc) || !core) return;
+            if (!active() || !core) return;
             for (const r of records) for (const n of r.addedNodes || []) {
                 if (n.nodeType !== 1) continue;
                 if (n.matches?.('svg.ss-map')) dress(n);
@@ -576,6 +833,19 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
         });
     } catch { /* 처음 훑은 것만 */ }
     try { watch(doc.body, { attributes: [FLOOR_ATTR, 'data-bl-ext-raw'], name: '미트볼 층별 지도 (켜고 끄기)' }, () => redraw()); } catch { /* 다음 그릴 때부터 */ }
+    onMbOff(doc, ['unvisited'], () => redraw());
+    // 1.7.5 흐린 점 누르기 → 그 곳 카드(로어북 설명 요약). 그 확장의 장소 · 구역 · 「현재 위치로」를 누르면 흐린 점 고름을 풀어요(그 확장이 제 카드를 다시 그려요)
+    doc.addEventListener('click', e => {
+        const t = e.target; if (!t?.closest) return;
+        if (t.closest('[data-act="selplace"], [data-act="maparea"], [data-act="mapzoom"][data-arg="here"]')) { const p = t.closest('.ss-panel'); if (p?._ss?.ui) p._ss.ui.blGhost = null; return; }
+        const n = t.closest('g.bl-unv'), svg = n?.closest?.('svg.ss-map'); if (!n || !svg || svg._dragged) return;
+        const panel = svg.closest('.ss-panel'), g = n._blGhost; if (!g) return;
+        if (panel?._ss?.ui) panel._ss.ui.blGhost = g.key;
+        for (const x of svg.querySelectorAll('g.bl-unv.sel, g.node.sel')) x.classList.remove('sel');
+        n.classList.add('sel');
+        showGhostCard(panel, g);
+    }, true);
+    doc.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target?.matches?.('g.bl-unv')) { e.preventDefault(); e.target.dispatchEvent(new (doc.defaultView?.MouseEvent || globalThis.MouseEvent)('click', { bubbles: true })); } });
     // 「현재 위치로」: 그 확장은 자기 배치의 자리로 가요 → 층별 배치가 입혀진 지도면 이 배치의 자리로
     doc.addEventListener('click', e => {
         const btn = e.target?.closest?.('[data-act="mapzoom"][data-arg="here"]'); if (!btn || !core) return;

@@ -199,7 +199,7 @@ export const SELF_ROWS = [
 ["global","Salty","index.js",152,"","=",0],
 ["global","SaveDedupe","src/addons/perf/savededupe.js",894,"perf","=",0],
 ["global","StreamWatchdog","src/addons/perf/watchdog-main.js",149,"perf","=",0],
-["global","Symbol.for(blue-lemonade.diag.v1)","src/chat-light.js",605,"","??=",0],
+["global","Symbol.for(blue-lemonade.diag.v1)","src/chat-light.js",617,"","??=",0],
 ["global","Symbol.for(blue-lemonade.diag.v1)","src/message-decor.js",207,"","??=",0],
 ["global","Symbol.for(blue-lemonade.translator)","src/addons/translator/index.js",7260,"translator","=",0],
 ["global","Symbol.for(st.llm-translator.archive.v1)","src/addons/translator/index.js",10481,"translator","=",0],
@@ -242,8 +242,8 @@ export const SELF_ROWS = [
 ["id","bl-deus-popover","src/scripts/plain/deus-qr.js",619,"","",0],
 ["id","bl-deus-quick","src/scripts/plain/deus-qr.js",318,"","",0],
 ["id","bl-eb-css","src/geulkku-mart/edit-blocks.js",71,"","guarded",0],
-["id","bl-enabled-drawer","src/panel.js",2371,"","",0],
-["id","bl-enabled-popup","src/panel.js",2369,"","",0],
+["id","bl-enabled-drawer","src/panel.js",2374,"","",0],
+["id","bl-enabled-popup","src/panel.js",2372,"","",0],
 ["id","bl-flow","src/capture-resources.js",15,"","svg",0],
 ["id","bl-fr-title","src/first-run.js",174,"","",0],
 ["id","bl-frame-motion","src/frame-motion.js",128,"","",0],
@@ -738,5 +738,5 @@ export const SELF_ROWS = [
 ["settingsKey","regex_link","src/addons/regexlink/index.js",36,"regexlink","??=",0],
 ["settingsKey","regex_perf_kit","src/addons/regexlink/regexperf.js",62,"regexlink","||=",0],
 ["settingsKey","request_log","src/addons/perf/state.js",125,"perf","=",0],
-["settingsKey","salty","src/panel.js",3212,"","=",0]
+["settingsKey","salty","src/panel.js",3215,"","=",0]
 ];
