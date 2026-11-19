@@ -80,6 +80,7 @@ import { createKeepAlive } from './keep-alive.js';   // 1.9.9 (7.0.2) 숨었을 
 import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance } from './highlight-colors.js';
 import { widenToQuotes } from './highlight-colors.js';   // 1.9.1 읽는 대사 강조를 따옴표부터 따옴표까지 (findRange)
 import { msg, chatCtx, sourcesOf, nameKey, sameOwner, lenOf, alignSeq, alignLists, analysisCfg, analysisReady, cachedAnalysis, normText, looseText, analysisLookup, dialogueSpeakers, safeResolve, bindAnalysis } from './message-segments.js';   // 1.0.0 극한 최적화: 채팅 맥락 · 조각 짝 · 저장된 분석 조회 · 화자(paint.js 가 재생기 없이도 씀)
+import { isSpace } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 export { alignSeq, sameOwner, dialogueSpeakers };
 bindAnalysis(analysis);   // 저장된 분석 · 바깥 메시지 · 기울임은 analysis.js 가 있을 때만(화자 색만 쓰는 가벼운 길은 없이)
 
@@ -3188,7 +3189,7 @@ function collapse(s) {
     const map = [];
     for (let i = 0; i < s.length; i++) {
         const c = s[i];
-        if (/\s/.test(c)) { if (!ws && flat.length) { flat += ' '; map.push(i); } ws = true; }
+        if (isSpace(c)) { if (!ws && flat.length) { flat += ' '; map.push(i); } ws = true; }   // 버그 사냥 7 점자 빈칸도 빈칸
         else { flat += c; map.push(i); ws = false; }
     }
     return { flat, map };

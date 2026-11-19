@@ -2,12 +2,14 @@
 // 2.2.9 새 것: 가타카나 표기 흔들림. 모델이 같은 이름을 クラインスタイン · クラインシュタイン 처럼 그때그때 다르게 적는데 용어집에는 한 표기만 있어서,
 // 다른 표기가 나오면 그 줄이 빠지고 그 안에 든 짧은 말(クライン → 클라인)만 들어가 「클라인슈타인」으로 옮겨졌다.
 
+import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 /**
  * [1.8.1] 찾기용 정규화: 소문자로, 하이픈·밑줄·가운뎃점·연속 공백은 한 칸으로.
  * "Sky Tower And River-side Office" 와 "Sky Tower And River side Office" 를 같은 말로 본다. 프롬프트에는 사용자가 적은 형태가 들어간다.
  */
 export function glossaryFold(text) {
-    return String(text ?? '').toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ').trim();
+    // 버그 사냥 7 점자 빈칸(U+2800)도 빈칸 — 「공백마다 점자 빈칸」 프리셋 원문 `Central⠀Records⠀Bureau` 에 여러 낱말 항목이 안 걸렸다
+    return foldBlank(text).toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ').trim();
 }
 
 /** 6.4.0 찾기 전에 태그를 뺀다 — 속성 글자(style="…" 의 따옴표 · alt 의 이름)가 용어집에 걸리지 않게. 프롬프트에 들어가는 원문은 그대로 */

@@ -18,6 +18,7 @@ import { renderSettingsPage, disposeSettingsPage } from './settings-view.js';
 import { backLayer } from '../../back-close.js';   // 1.6.9 기록 뒤로 가기(CloseWatcher 가 없는 브라우저 · 브라우저 뒤로)도 한 단계씩
 import { nameAliases } from '../../name-aliases.js';
 import { chatTimeMs } from '../../chat-organizer-core.js';   // 6.3.x 찾는 말이 이름이면 다른 표기(영 · 한 · 일)로도
+import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 const view = {
     root: null,
@@ -471,7 +472,8 @@ function visibleBookmarks(record) {
     // 아래 식은 구멍 0자이면서 건너뛰는 글자 수는 /[a-z]/i 와 똑같다(1,109,027자) — 이득은 그대로다.
     const cased = view.query !== view.query.toLowerCase() || view.query !== view.query.toUpperCase();
     const alts = nameAliases(view.query).map(a => a.toLowerCase()).filter(a => a && a !== query);   // 6.3.x 이름이면 다른 표기로도
-    const fold = cased || alts.some(a => a !== a.toUpperCase()) ? (text => text.toLowerCase()) : (text => text);
+    // 버그 사냥 7 점자 빈칸 원문(`pocket⠀watch`)에서도 여러 낱말 검색어가 걸리게(사용자는 보통 빈칸으로 쳐요)
+    const fold = cased || alts.some(a => a !== a.toUpperCase()) ? (text => foldBlank(text).toLowerCase()) : foldBlank;
     const has = text => text.includes(query) || alts.some(a => text.includes(a));
     return items.filter(({ fav, index }) => {
         // 발췌(채팅에서 골라 북마크한 글)는 메모처럼 읽는다 — '메모만'에서도 찾는다
@@ -514,7 +516,7 @@ function searchAllMessages(record, direction) {
         const display = messageText(message), original = message.mes ?? '', name = message.name ?? '';
         let match = allMessageMatches.get(message);
         if (!match || match.query !== key || match.cased !== cased || match.display !== display || match.original !== original || match.name !== name) {
-            const text = `${display}\n${original}\n${name}`, folded = cased ? text.toLowerCase() : text;
+            const text = foldBlank(`${display}\n${original}\n${name}`), folded = cased ? text.toLowerCase() : text;   // 버그 사냥 7 점자 빈칸도 빈칸
             match = { query: key, cased, display, original, name, found: folded.includes(query) || alts.some(a => folded.includes(a)) };
             allMessageMatches.set(message, match);
         }

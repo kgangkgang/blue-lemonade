@@ -153,29 +153,29 @@ test('④ 용어집 꼴: 한국어로 바로 만들면 어느 요청이든 · �
 });
 
 const ENTRIES = [
-    { id: 'g1', scope: 'global', src: 'Leon Hart, Leon', dst: '리온 하트' },
+    { id: 'g1', scope: 'global', src: 'Loren Hart, Loren', dst: '로렌 하트' },
     { id: 'c1', scope: 'a.png', src: 'Aveno', dst: '아베노, 아벤' },
     { id: 'g2', scope: 'global', src: 'Klein', dst: '클라인' },
     { id: 'o1', scope: 'b.png', src: 'Mira', dst: '미라' },
 ];
-const CTX = { characterId: 0, characters: [{ avatar: 'a.png' }], chatMetadata: { llmt_chat_glossary_v1: [{ id: 'x', src: 'Leon', dst: '레오' }] } };
+const CTX = { characterId: 0, characters: [{ avatar: 'a.png' }], chatMetadata: { llmt_chat_glossary_v1: [{ id: 'x', src: 'Loren', dst: '로런' }] } };
 test('⑤ 걸린 항목: 이 채팅 → 캐릭터 → 전체 차례 · 다른 캐릭터 것은 빠져요 · 「사용」을 끄면 없음', () => {
     const picked = C.activeEntries({ glossary_entries: ENTRIES }, CTX);
-    assert.deepEqual(picked.map(e => e.dst), ['레오', '아베노, 아벤', '클라인'], '같은 원문(Leon)은 이 채팅 것이 이겨요');
+    assert.deepEqual(picked.map(e => e.dst), ['로런', '아베노, 아벤', '클라인'], '같은 원문(Loren)은 이 채팅 것이 이겨요');
     assert.deepEqual(C.activeEntries({ glossary_enabled: false, glossary_entries: ENTRIES }, CTX), []);
     assert.deepEqual(C.activeEntries(null, CTX), []);
     assert.equal(C.activeEntries({ glossary_entries: ENTRIES }, {}).length, 2, '채팅이 안 열려 있으면 전체 것만');
 });
 test('⑤ 요청 글에 실제로 나온 표기만 줄이 돼요 · 긴 낱말 속 짧은 말은 안 걸려요', () => {
     const picked = C.activeEntries({ glossary_entries: ENTRIES }, { characterId: 0, characters: [{ avatar: 'a.png' }] });
-    const { block, lines } = C.extBlock(picked, 'Leon went to Aveno. Kleinstein was there.', { kind: 'gen' });
-    assert.deepEqual(lines, ['Aveno → 아베노 / 아벤', 'Leon → 리온 하트']);
+    const { block, lines } = C.extBlock(picked, 'Loren went to Aveno. Kleinstein was there.', { kind: 'gen' });
+    assert.deepEqual(lines, ['Aveno → 아베노 / 아벤', 'Loren → 로렌 하트']);
     assert.ok(block.startsWith('[Glossary]\n'));
     assert.match(block, /keeps that existing spelling/);
     assert.match(block, /Where several options/);
     assert.deepEqual(C.extBlock(picked, 'Nothing here.', { kind: 'gen' }), { block: '', lines: [] });
-    assert.deepEqual(C.extBlock(picked, 'Leon', { kind: '' }), { block: '', lines: [] });
-    assert.deepEqual(C.extBlock([], 'Leon', { kind: 'gen' }), { block: '', lines: [] });
+    assert.deepEqual(C.extBlock(picked, 'Loren', { kind: '' }), { block: '', lines: [] });
+    assert.deepEqual(C.extBlock([], 'Loren', { kind: 'gen' }), { block: '', lines: [] });
 });
 test('⑤ 줄 수 상한이 없어요(번역기의 60줄 상한을 물려받지 않음)', () => {
     const many = Array.from({ length: 150 }, (_, i) => ({ id: `n${i}`, scope: 'global', src: `Name${i}x`, dst: `이름${i}` }));
@@ -185,11 +185,11 @@ test('⑤ 줄 수 상한이 없어요(번역기의 60줄 상한을 물려받지 
 });
 test('⑤ 번역 요청은 번역기 채팅 번역과 글자 그대로 같은 지시 · 그 확장 지침에 같은 원문이 있으면 그 줄은 빼요', () => {
     const picked = C.activeEntries({ glossary_entries: ENTRIES }, { characterId: 0, characters: [{ avatar: 'a.png' }] });
-    const { block, lines } = C.extBlock(picked, 'Leon and Klein', { kind: 'tr' });
+    const { block, lines } = C.extBlock(picked, 'Loren and Klein', { kind: 'tr' });
     assert.equal(block, G.glossaryBlockText(lines, false, 'ko'));
-    const skip = C.ruleSources('Leon Hart = 레오 하트\nKLEIN -> 클라인\n편지는 반말로 옮길 것\nAveno → 아베노');
-    assert.deepEqual([...skip].sort(), ['aveno', 'klein', 'leon hart']);
-    assert.deepEqual(C.extBlock(picked, 'Leon and Klein in Aveno', { kind: 'tr', skip }).lines, [], 'Leon 항목은 원문 표기에 Leon Hart 가 있어 통째로 빠져요');
+    const skip = C.ruleSources('Loren Hart = 로런 하트\nKLEIN -> 클라인\n편지는 반말로 옮길 것\nAveno → 아베노');
+    assert.deepEqual([...skip].sort(), ['aveno', 'klein', 'loren hart']);
+    assert.deepEqual(C.extBlock(picked, 'Loren and Klein in Aveno', { kind: 'tr', skip }).lines, [], 'Loren 항목은 원문 표기에 Loren Hart 가 있어 통째로 빠져요');
     assert.deepEqual([...C.ruleSources('')], []);
 });
 test('⑤ {{ 는 끊어요 — 용어집 글이 실리태번 매크로로 다시 풀리지 않게', () => {
@@ -201,13 +201,13 @@ test('⑤ {{ 는 끊어요 — 용어집 글이 실리태번 매크로로 다시
 
 test('⑥ 본편 블록: 최근 글에 나온 이름만 · 상태 글에 번역 표기가 이미 있으면 줄을 만들지 않아요', () => {
     const picked = C.activeEntries({ glossary_entries: ENTRIES }, { characterId: 0, characters: [{ avatar: 'a.png' }] });
-    const { block, lines } = C.mainBlock(picked, 'Leon met Klein in Aveno', 'aff: 리온 하트 +3');
+    const { block, lines } = C.mainBlock(picked, 'Loren met Klein in Aveno', 'aff: 로렌 하트 +3');
     assert.deepEqual(lines, ['Aveno → 아베노 / 아벤', 'Klein → 클라인']);
     assert.ok(block.startsWith('[Glossary for the <meatball> block]\n'));
     assert.match(block, /does not change the language or wording of the story text/);
-    assert.deepEqual(C.mainBlock(picked, 'Leon', '리온 하트'), { block: '', lines: [] });
+    assert.deepEqual(C.mainBlock(picked, 'Loren', '로렌 하트'), { block: '', lines: [] });
     assert.deepEqual(C.mainBlock(picked, '', ''), { block: '', lines: [] });
-    assert.deepEqual(C.mainBlock(picked, 'Leon met Klein', '아벤 클라인 리온 하트'), { block: '', lines: [] }, '번역 후보 가운데 하나만 있어도 이미 있는 것으로 봐요');
+    assert.deepEqual(C.mainBlock(picked, 'Loren met Klein', '아벤 클라인 로렌 하트'), { block: '', lines: [] }, '번역 후보 가운데 하나만 있어도 이미 있는 것으로 봐요');
 });
 
 test('⑦ 시스템 글 끝에 붙이기 · 빈 글이면 블록만 · 블록이 없으면 받은 글 그대로', () => {

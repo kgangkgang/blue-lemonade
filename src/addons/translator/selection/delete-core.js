@@ -17,6 +17,7 @@
 //  · 끝 검사(formatKept): 실리태번 그리기로 지우기 전 · 뒤를 그린 HTML 을 견준다 — 보이는 글은 고른 글(+ 비게 된 괄호 · 따옴표 · 공백)만 빠지고,
 //    블록 차례(p · 제목 · 목록 · pre · 인용 · 표 · div …)는 빈 블록이 빠진 것 말고 같고, 꾸밈(em · strong · del · code · a …)은 고른 글 안에 있던 것만 빠지고,
 //    그림 · 가로줄은 그대로여야 한다. 하나라도 어긋나면 그 쪽을 끈다
+import { isSpace } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 const PAIR = /(\*{1,3}|_{1,3}|~~)(?=\S)((?:(?!\n[^\S\n]*\r?\n)[\s\S])*?\S)\1/g;
 const TAG = /<\/?[A-Za-z][^<>]*>/g;
 const BR = /^<br\s*\/?>$/i;
@@ -47,7 +48,7 @@ const emptiable = name => { const n = name.toLowerCase(); return INLINE_TAGS.has
 const LEAD_BR = /^(?:[^\S\n]*<br\s*\/?>)+[^\S\n]*/i, TAIL_BR = /(?:[^\S\n]*<br\s*\/?>)+[^\S\n]*$/i;
 const CONTEXT = 10;   // 같은 쪽 앞뒤 대조 글자 수
 
-export const norm = value => String(value ?? '').replace(/\s+/gu, ' ').trim();
+export const norm = value => String(value ?? '').replace(/[\s⠀]+/gu, ' ').trim();   // 버그 사냥 7 점자 빈칸도 빈칸
 
 /** 짝 찾기에서 빼는 자리: 코드 울타리 · 인라인 코드 · 구분선 줄 → 같은 길이의 다른 글자로 (자리는 그대로) */
 function literalMask(text) {
@@ -107,7 +108,7 @@ export function visibleText(raw) {
     const offsets = [];
     for (let i = 0; i < raw.length; i++) {
         if (hidden[i] && !breaks.has(i)) continue;
-        if (breaks.has(i) || /\s/u.test(raw[i])) {
+        if (breaks.has(i) || isSpace(raw[i])) {   // 버그 사냥 7 점자 빈칸 원문도 화면 글(보통 빈칸)과 맞게 — 자리는 원래 글 그대로
             if (text.endsWith(' ')) continue;
             text += ' ';
         } else text += raw[i];
@@ -122,7 +123,7 @@ function collapsed(raw) {
     let text = '';
     const offsets = [];
     for (let i = 0; i < raw.length; i++) {
-        if (/\s/u.test(raw[i])) {
+        if (isSpace(raw[i])) {
             if (text.endsWith(' ')) continue;
             text += ' ';
         } else text += raw[i];

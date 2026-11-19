@@ -22,6 +22,7 @@
 //
 // parseRegexLines(text) → RegExp[]: 설정의 "지울 글(정규식)" 줄들. index.js · player.js · speakers.js 가 같은 규칙을 쓴다.
 
+import { foldBlank } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 import { thinkingHeadEnd } from '../../../message-work.js';   // 1.8.8 답 머리의 생각 블록 범위 (순수 함수)
 
 export const EXPRESSIVE_TAGS = new Set(['shout', 'quiet', 'angry', 'excited', 'dizzy', 'crying', 'anxious', 'hurt', 'intoxicated', 'whispering', 'whisper', 'trembling', 'deadpan']);
@@ -460,7 +461,7 @@ export function segmentMessage(rawText, opts = {}) {
     //   화면은 그 프리셋 정규식이 보통 빈칸으로 되돌려 보여 줘요 — 같은 글자 수로 바꿔 자리는 그대로예요
     //   opts.keepBraille = 1.5.4 까지의 나누기 (점자 빈칸 그대로) — analysis.js 가 그때 저장한 분석의 줄을 지금 줄에 맞출 때만 써요
     let work = String(rawText ?? '').replace(/\r\n?/g, '\n');
-    if (!opts.keepBraille) work = work.replace(/⠀/g, ' ');
+    if (!opts.keepBraille) work = foldBlank(work);
     if (!work.trim()) return [];
     work = applyStrip(work, opts.stripRegex);
     work = blankThinkingHead(work, final);   // 1.8.8 과일 ECoT 생각 블록 (잘리기 전 · 스트리밍)

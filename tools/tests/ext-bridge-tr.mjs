@@ -607,11 +607,11 @@ await test('㉕ 1.6.8 플레이 기록 「지난 하루들」 줄(state.days 의
 });
 
 await test('㉖ 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는 글: 제목이 그 확장 이름일 때만 · 화면만 번역일 때만 사전으로 · 태그 · 엔티티 그대로', () => {
-    const dict = { Leon: '레오', Bread: '빵', "Ann's Ledger": '앤의 장부' };
+    const dict = { Loren: '로런', Bread: '빵', "Ann's Ledger": '앤의 장부' };
     const trs = t => { let out = t; for (const [en, ko] of Object.entries(dict)) out = out.split(en).join(ko); return out; };
-    assert.equal(T.trToastMessage('Leon와(과) 연인이 되었어요 💞', trs), '레오와(과) 연인이 되었어요 💞');
-    assert.equal(T.trToastMessage('💬 <b>Leon</b>: hi<br><small>Ann&#39;s Ledger</small>', trs), '💬 <b>레오</b>: hi<br><small>앤의 장부</small>');
-    assert.equal(T.trToastMessage('<a href="Leon">x</a>', trs), '<a href="Leon">x</a>', '태그 속성은 안 건드려요');
+    assert.equal(T.trToastMessage('Loren와(과) 연인이 되었어요 💞', trs), '로런와(과) 연인이 되었어요 💞');
+    assert.equal(T.trToastMessage('💬 <b>Loren</b>: hi<br><small>Ann&#39;s Ledger</small>', trs), '💬 <b>로런</b>: hi<br><small>앤의 장부</small>');
+    assert.equal(T.trToastMessage('<a href="Loren">x</a>', trs), '<a href="Loren">x</a>', '태그 속성은 안 건드려요');
     assert.equal(T.trToastMessage('상태창을 만들었어요!', trs), '상태창을 만들었어요!');
     const seen = [];
     const fake = { options: { escapeHtml: true } };
@@ -620,9 +620,9 @@ await test('㉖ 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는
     assert.equal(T.wrapMbToasts(fake, { title: '미트볼 상태창', trs, on: () => view }), true);
     assert.equal(T.wrapMbToasts(fake, { title: '미트볼 상태창', trs }), false, '한 번만 감싸요');
     assert.equal(fake.success('Bread 구매!', '미트볼 상태창'), 'success', '돌려준 값 그대로');
-    fake.info('Leon joined', 'Other');
-    view = false; fake.info('Leon와(과) 연인이 되었어요', '미트볼 상태창');
-    assert.deepEqual(seen, [['success', '빵 구매!', '미트볼 상태창'], ['info', 'Leon joined', 'Other'], ['info', 'Leon와(과) 연인이 되었어요', '미트볼 상태창']]);
+    fake.info('Loren joined', 'Other');
+    view = false; fake.info('Loren와(과) 연인이 되었어요', '미트볼 상태창');
+    assert.deepEqual(seen, [['success', '빵 구매!', '미트볼 상태창'], ['info', 'Loren joined', 'Other'], ['info', 'Loren와(과) 연인이 되었어요', '미트볼 상태창']]);
 });
 
 await test('1.7.6 지도 「아직 안 가 본 곳」 이름 · 설명도 같은 번역 길 · 같은 사전으로(누를 때만 · 이미 있으면 안 보냄 · 스위치를 끄면 안 실어요)', async () => {
@@ -767,6 +767,11 @@ await test('1.7.8 띠 날짜 칸을 누르면 펼쳐지는 줄 「4/7(월) · �
     assert.equal(pairs.get('· Spring'), '· 봄');
     // 날씨 칸이 아닌 값(사람 이름 Clear · 자유 글)은 안 만들어요
     assert.equal(new Map(T.slotPairs([{ text: 'Clear', key: 'name' }], ko)).get('· Clear'), undefined);
+    // 버그 사냥 7 그림 글자가 앞에 붙은 날씨: 아이콘 요소 뒤 덩이 「Clear ·」(그날 일정이 뒤에 붙는 날)
+    const emo = new Map(T.slotPairs([{ text: '☀️ Clear', key: 'weather' }], ko));
+    assert.equal(emo.get('Clear ·'), '맑음 ·');
+    assert.equal(new Map(T.slotPairs([{ text: 'Clear', key: 'weather' }], ko)).get('Clear ·'), undefined, '그림 글자 없는 날씨는 예전 덩이 꼴만');
+    assert.equal(new Map(T.slotPairs([{ text: '☀️ A soft drizzle over the harbor', key: 'weather' }], ko)).size, 0);
     assert.equal(new Map(T.slotPairs([{ text: 'A soft drizzle over the harbor', key: 'weather' }], ko)).size, 0, '자유 글 날씨는 번역 길로');
 });
 await test('1.7.8 위치 칸 펼침 머리 줄 「1층 후정 — Quiet walled garden behind the 1F S…」: 사전에 통째 번역이 있어도 「— 」 가 붙고 60자로 잘린 덩이라 못 찾았어요 → 그 덩이 통째 짝(AI 0)', () => {

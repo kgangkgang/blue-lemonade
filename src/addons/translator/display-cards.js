@@ -1,6 +1,6 @@
 // Known prompt-card display values only. Raw markup, keys, code and hidden data stay local.
 // No DOM parsing/rendering and no preset contents or renderer code are included.
-import { MODULE_CARDS, MODULE_SEPARATORS, isModuleCard, MODULE_KEY, moduleKeepsLocal, moduleLocalValue } from './v3-modules.js';
+import { MODULE_CARDS, MODULE_SEPARATORS, isModuleCard, MODULE_KEY, moduleKeepsLocal, moduleLocalValue, moduleSafeValue } from './v3-modules.js';
 // 8.0.8 데우스 V3 바닥 모듈(<relationships> · <status> · <companions> …)도 카드 — 영어 열쇠 · 줄 · 기호는 두고 값만 보낸다 (v3-modules.js)
 const CARD_NAMES = new Set(['status_bar','tracker','novel_header','prologue','meow_fm','profile','branches','ccd','snow','角色状态面板',...MODULE_CARDS]);
 // 모듈 칸 앞의 꾸밈(쌍점 · 줄표 · 이모지)은 칸 글자가 아니다 — 여는 따옴표 · 괄호는 값과 함께 보낸다
@@ -368,7 +368,8 @@ export function prepareDisplayCards(text,{reserve,isRetranslation=false,protecti
                 let n = 0;
                 const values = record.fields.map((field,i)=> {
                     if (record.local[i] !== null) return escapeDisplay(record.local[i],field.context);
-                    const clean = read.values.get(++n);
+                    // 11-19 데우스 V4 일기 「언제:」 · 단역 「 · 」 칸: 번역 값에 든 나눔 기호는 쉼표로 (v3-modules.js moduleSafeValue)
+                    const got = read.values.get(++n), clean = got !== undefined && isModuleCard(record.name) ? moduleSafeValue(got,record.name,record.raw.slice(field.end)) : got;
                     if (clean === undefined) { fallback++; return field.text; }   // 이 칸만 원문
                     if (read.exact) heard.push([field.text,clean]);   // 값 기억은 자리표가 다 맞은 카드에서만 (줄 차례로 짐작한 값은 이 답에만)
                     return clean === field.text ? field.text : escapeDisplay(clean,field.context);

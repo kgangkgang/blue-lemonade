@@ -8,6 +8,10 @@
 const SPACE = /[\t\n\f\r ]/;
 const UNTIDY = /^ | $| {2}|[\t\n\f\r]/;
 let proto = null, nativeAdd = null, nativeRemove = null;
+// 1.8.9 끌 때 다른 확장이 우리 위에 또 감싸 둔 상태면 우리 겹(quietAdd · quietRemove)이 그 사슬 안에 남아요. 그때 원래 함수 기억까지 비우면, 다시 켤 때
+//   「남의 겹(안에 우리 겹)」을 원래 함수로 잡고 또 감싸 quietAdd → 남의 겹 → quietAdd … 로 스택이 넘칠 때까지 서로를 불러요(코드 색 끄기 8.2.4 · 미트볼 getContext 1.8.1 과 같은 꼴).
+//   그래서 깨끗이 되돌린 자리만 비우고, 남은 겹은 쉬게(resting) 둔 채 다시 켤 때 그대로 써요.
+let resting = false;
 
 /** 바꿀 것이 없고, 원래 함수가 써도 지금과 같은 글자일 때만 참 */
 export function nothingToWrite(list, tokens, present) {
@@ -16,21 +20,23 @@ export function nothingToWrite(list, tokens, present) {
     const value = list.value;
     return value !== '' && !UNTIDY.test(value) && value.split(' ').length === list.length;
 }
-function quietAdd(...tokens) { if (this.contains('mes') && nothingToWrite(this, tokens, true)) return; return nativeAdd.apply(this, tokens); }
-function quietRemove(...tokens) { if (this.contains('mes') && nothingToWrite(this, tokens, false)) return; return nativeRemove.apply(this, tokens); }
+function quietAdd(...tokens) { if (!resting && this.contains('mes') && nothingToWrite(this, tokens, true)) return; return nativeAdd.apply(this, tokens); }
+function quietRemove(...tokens) { if (!resting && this.contains('mes') && nothingToWrite(this, tokens, false)) return; return nativeRemove.apply(this, tokens); }
 
 /** TokenList: 시험용 가짜(기본은 브라우저 DOMTokenList) */
 export function startMesClassQuiet(TokenList = globalThis.DOMTokenList) {
     const p = TokenList?.prototype;
+    if (proto && resting && p === proto) { resting = false; return true; }   // 남의 겹 아래에 남아 쉬던 우리 겹을 다시 깨워요(또 감싸지 않아요)
     if (proto || !p || typeof p.add !== 'function' || typeof p.remove !== 'function') return false;
-    proto = p; nativeAdd = p.add; nativeRemove = p.remove;
+    if (p.add === quietAdd || p.remove === quietRemove) return false;   // 이미 우리 겹이 걸린 자리는 원래 함수로 잡지 않아요
+    proto = p; nativeAdd = p.add; nativeRemove = p.remove; resting = false;
     p.add = quietAdd; p.remove = quietRemove;
     return true;
 }
 
 export function stopMesClassQuiet() {
     if (!proto) return;
-    if (proto.add === quietAdd) proto.add = nativeAdd;
-    if (proto.remove === quietRemove) proto.remove = nativeRemove;
-    proto = null;
+    // 둘 다 우리 겹이 맨 바깥일 때만 깨끗이 되돌려요. 하나라도 남이 그 위에 감쌌으면 둘 다 그대로 두고 통과만 시켜요(원래 함수 기억도 그대로)
+    if (proto.add === quietAdd && proto.remove === quietRemove) { proto.add = nativeAdd; proto.remove = nativeRemove; proto = null; nativeAdd = nativeRemove = null; resting = false; return; }
+    resting = true;
 }

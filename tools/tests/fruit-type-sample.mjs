@@ -145,7 +145,8 @@ const v3=[
 check('데우스는 고른 판의 정규식 목록만 보고, 판을 모양으로 알아봐요',()=>{
     assert.equal(sample.listVersion(v25),'2.5');assert.equal(sample.listVersion(v3),'v3');assert.equal(sample.listVersion([script('x','/a/','b')]),null);
     assert.equal(sample.tidyDemVersion('2.5'),'2.5');assert.equal(sample.tidyDemVersion('이상한 값'),'v3');assert.equal(sample.tidyDemVersion(undefined),'v3','기본은 V3');
-    assert.deepEqual(sample.DEUS_VERSIONS.map(([v])=>v),['v3','2.5']);
+    assert.equal(sample.tidyDemVersion('v4'),'v4');assert.deepEqual(sample.DEUS_VERSIONS.map(([v])=>v),['auto','v4','v3','2.5'],'11-19 기본 「지금 프리셋 따라」 + V4');
+    assert.equal(sample.tidyDemChoice(undefined),'auto');assert.equal(sample.tidyDemChoice('v3'),'v3');assert.equal(sample.tidyDemChoice('이상한 값'),'auto');
     const tracker=FRUIT_TYPES.find(t=>t.id==='deus-tracker'),lists=[{where:'a',list:v25},{where:'b',list:v3}];
     assert.equal(sample.pickSampleChain(tracker,lists,'v3').where,'b');assert.equal(sample.pickSampleChain(tracker,lists,'2.5').where,'a');
     assert.equal(sample.pickSampleChain(tracker,[{where:'b',list:v3}],'2.5'),null,'2.5 를 골랐는데 V3 목록만 있으면 기본 표본으로');
@@ -194,16 +195,58 @@ check('내장 표본도 판마다 원작 구조 그대로(2.5 칸 · V3 격자 �
     const own=read('src/fruit-type-preview.js').split('export const DEUS_PREVIEW_CSS=')[1].split('`;')[0];
     assert.ok(!/#[0-9a-f]{3,8}\b|rgb\(|hsl\(/i.test(own),'최소 배치에는 새 색을 쓰지 않아요(기존 표본 회색 변수만)');
 });
-check('미리보기 판 고르기: 테마 고르기 부품 그대로, 설정 하나(chat.demPreviewVersion · 기본 V3), 배지에 판 표시, 대화의 판이 다르면 고른 판 표본',()=>{
+check('미리보기 판 고르기: 테마 고르기 부품 그대로, 설정 하나(chat.demPreviewPick · 기본 지금 프리셋 따라), 배지에 판 표시, 대화의 판이 다른 갈래면 고른 판 표본',()=>{
     const ui=read('src/fruit-type-ui.js'),settings=read('src/settings.js'),labels=read('src/settings-labels.js');
-    assert.ok(ui.includes("${owner==='deus'?choice('data-ft-demver','미리보기 판',DEUS_VERSIONS,demVersion()):''}"),'데우스만, 상태창 종류와 같은 고르기');
+    assert.ok(ui.includes("${owner==='deus'?choice('data-ft-demver','미리보기 판',demChoices(),demChoice()):''}"),'데우스만, 상태창 종류와 같은 고르기');
+    assert.ok(ui.includes("versionLabel(resolveDemVersion('auto'))")&&!ui.includes('(${versionLabel(demVersion())})'),'「지금 프리셋 따라」 괄호는 고른 판이 아니라 지금 프리셋의 판');
+    assert.ok(ui.includes('const demVersion=()=>resolveDemVersion(demChoice());'),'auto 면 지금 프리셋의 판');
     assert.ok(ui.indexOf("choice('data-ft-demver'")<ui.indexOf('<div class="salty-prevbox'),'미리보기 위');
-    assert.ok(ui.includes('settings.chat.demPreviewVersion=tidyDemVersion(el.value);saveSettings()'));
+    assert.ok(ui.includes('settings.chat.demPreviewPick=tidyDemChoice(el.value);saveSettings()'));
     assert.ok(ui.includes('buildFruitSample(type,{width,vars,localize,version})'));
     assert.ok(ui.includes('badge.textContent=deus?`표본이에요 · ${versionLabel(version)}`'));
-    assert.ok(ui.includes('sourceVersion(source)!==demVersion()'),'대화의 상태창 판이 다르면 고른 판 표본');
-    assert.match(settings,/s\.chat\.demPreviewVersion = s\.chat\.demPreviewVersion === '2\.5' \? '2\.5' : 'v3';/);
-    assert.ok(labels.includes('"chat.demPreviewVersion":"데우스 미리보기 판"'));
+    assert.ok(ui.includes('seen=sourceVersion(source);if(!demSameFamily(seen,demVersion()))'),'대화의 상태창 판이 다른 갈래(2.5 ↔ V3 · V4)면 고른 판 표본');
+    assert.ok(settings.includes("if (!['auto', 'v4', 'v3', '2.5'].includes(s.chat.demPreviewPick)) s.chat.demPreviewPick = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'auto';"),'옛 2.5 만 옮기고 나머지는 지금 프리셋 따라');
+    assert.ok(labels.includes('"chat.demPreviewPick":"데우스 미리보기 판"')&&labels.includes('"chat.demPreviewPick:v4":"V4"'));
+});
+// 11-19 V4 표본: 판 알아보기 · 「지금 프리셋 따라」 · 표본 글 · 내장 표본
+const v4=[...v3,script('fate','/<fate odds="(\\d+)" roll="(\\d+)">[\\s\\S]*?<\\/fate>/','<div class="dem-fate">rolled $2 · need under $1</div>'),
+    script('diary','/<diary>[\\s\\S]*?<\\/diary>/','<details class="dem-card dem-diaries"><div class="dem-diaries__body"></div></details>'),
+    script('face','/<face>[\\s\\S]*?Seen as: ([^\\n]+)[\\s\\S]*?<\\/face>/','<details class="dem-card dem-new-face"><summary><span class="dem-card__title">$1</span></summary><div class="dem-new-face__body">\n\n```yaml\n$1\n```\n</div></details>')];
+check('V4: 정규식 목록 · 지금 프리셋의 프롬프트 표지로 판을 알고, 「지금 프리셋 따라」 면 그 판 표본',()=>{
+    assert.equal(sample.listVersion(v4),'v4');assert.equal(sample.listVersion(v3),'v3');
+    const sign=id=>({identifier:id}),V4_IDS=['ecfff91e-43e0-4a5d-8cfe-4d15e56dd55d','de251b02-fb80-4a4a-b312-d83a349826aa'],V3_IDS=['cb1fa811-516f-4a61-aa93-092bb94d5ba3','279618e4-d961-489f-9d2b-56503e0d6067'];
+    const ctx=prompts=>({chatCompletionSettings:{prompts}});
+    assert.equal(sample.presetDemVersion([],ctx([...V3_IDS,...V4_IDS].map(sign))),'v4','V4 프롬프트 표지');
+    assert.equal(sample.presetDemVersion([],ctx(V3_IDS.map(sign))),'v3','V3 프롬프트 표지');
+    assert.equal(sample.presetDemVersion([{where:'preset',list:v4}],ctx([])),'v4','표지가 없으면 지금 프리셋 정규식 꼴');
+    assert.equal(sample.presetDemVersion([{where:'preset',list:v25}],null),'2.5');
+    assert.equal(sample.presetDemVersion([],null),'v3','아무것도 없으면 V3');
+    assert.equal(sample.resolveDemVersion('auto',[],ctx([...V3_IDS,...V4_IDS].map(sign))),'v4');assert.equal(sample.resolveDemVersion('v3',[],ctx([...V3_IDS,...V4_IDS].map(sign))),'v3','직접 고르면 그 판');
+    assert.ok(sample.demSameFamily('v3','v4')&&!sample.demSameFamily('2.5','v4'),'V4 는 V3 와 같은 갈래');
+    const status=FRUIT_TYPES.find(t=>t.id==='deus-status'),tracker=FRUIT_TYPES.find(t=>t.id==='deus-tracker');
+    assert.equal(sample.pickSampleChain(status,[{where:'b',list:v3}],'v4'),null,'V4 를 골랐는데 V3 목록만 있으면 기본 V4 표본으로');
+    assert.equal(sample.pickSampleChain(status,[{where:'c',list:v4}],'v3').where,'c','V3 표본은 V4 정규식으로도');
+    assert.equal(sample.pickSampleChain(status,[{where:'c',list:v4},{where:'b',list:v3}],'v3').where,'b','같은 판 목록이 먼저');
+    const out=sample.sampleOutput(status,[{where:'c',list:v4}],'v4').document;
+    for(const cls of ['dem-modules','dem-status','dem-fate','dem-diaries','dem-new-face'])assert.ok(out.includes(cls),cls);
+    assert.ok(out.includes('<pre><code>정원의 사서</code></pre>')&&!out.includes('```'),'새 얼굴 카드의 코드 칸은 채팅처럼 <pre><code>');
+    assert.ok(!/<(?:diary|face|extra)>/.test(out),'규칙이 없어 남은 V4 태그는 빼요');
+    assert.deepEqual(sample.sampleInputs(tracker,'v4'),sample.sampleInputs(tracker,'v3'),'트래커는 V3 와 같은 글');
+});
+check('V4 표본 글 · 내장 표본: 주사위(봉인된 꼴) · 일기장(빈 일기 None) · 새 얼굴 주요 · 단역(비밀 표지 · Seen as) · V3 묶음 그대로 + 원작 CSS · 그림 없음',()=>{
+    const m=sample.DEUS_V4_MODULES,f=sample.DEUS_V4_FATE;
+    assert.ok(m.startsWith(sample.DEUS_V3_MODULES),'V3 묶음 글 그대로에 더해요');
+    for(const word of ['<diary>','<summary>Diaries</summary>','- None','<face>','Name: 인물 C','Seen as: 정원의 사서','(secret)','<extra>인물 D',' · Seen as: 밀짚모자를 쓴 노인</extra>'])assert.ok(m.includes(word),word);
+    assert.ok(/<fate odds="\d\d" roll="\d\d">\n<pass>[^<]+<\/pass>\n<fail>[^<]+<\/fail>\n<\/fate>\n<\/prose>$/.test(f),'봉인된 주사위는 본문 끝');
+    assert.equal(sample.sampleInputs(FRUIT_TYPES.find(t=>t.id==='deus-status'),'v4')[0],`${f}\n\n${m}`,'묶음 종류는 주사위 본문 + V4 묶음');
+    const built=sample.builtinSample(FRUIT_TYPES.find(t=>t.id==='deus-conflict'),'v4').html;
+    for(const cls of ['class="dem-fate"','dem-modules','dem-status','dem-conflict','dem-diaries','dem-diary-keeper','dem-diary-none','dem-new-face"','dem-new-face--minor','dem-new-face__keep','<pre><code>'])assert.ok(built.includes(cls),cls);
+    assert.ok(built.indexOf('dem-fate')<built.indexOf('dem-modules'),'주사위 막대가 묶음 앞');
+    assert.ok(!/<style|<svg|<script|<input|<button|url\(|style="/i.test(JSON.stringify(DEUS_SAMPLES.v4)),'원작 CSS · 그림 · 단추 · 인라인 색은 넣지 않아요');
+    assert.ok(!/copy this card|outgrows your context/i.test(JSON.stringify(DEUS_SAMPLES.v4)),'새 얼굴 카드의 긴 원작 안내 문장은 옮기지 않아요');
+    assert.equal(sample.builtinSample(FRUIT_TYPES.find(t=>t.id==='deus-tracker'),'v4').html,sample.builtinSample(FRUIT_TYPES.find(t=>t.id==='deus-tracker'),'v3').html,'트래커는 V3 와 같아요');
+    assert.equal(sample.builtinSample(FRUIT_TYPES.find(t=>t.id==='deus-cyoa'),'v4').html,sample.builtinSample(FRUIT_TYPES.find(t=>t.id==='deus-cyoa'),'v3').html,'묶음 밖 카드도 같아요');
+    assert.ok(read('src/deus-preview-samples.js').split('\n').slice(0,8).join('\n').includes('2.5 · V3 · V4 프리셋의 표시 정규식'),'출처 머리말에 V4');
 });
 check('테두리 빛 · 카드 스킨 · 이모티콘 · 색 통일을 바꾸면 표본이 바로 바뀌어요(body class · 테마 변수 감시, 닫으면 뗌)',()=>{
     const ui=read('src/fruit-type-ui.js');

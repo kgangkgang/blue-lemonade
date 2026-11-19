@@ -5,7 +5,7 @@ import {allFonts,findFont,fontStack,loadFont} from './fonts.js';
 import './catalog-full.js';   // 1.0.0 글꼴 고르기 목록 전체
 import {FRUIT_TYPES,FRUIT_UNSUPPORTED,REGION_DEFAULT,tidyFruitType,fruitTypeCss,typeOwner,ownerEnabled,layoutChoices,typeMatch,stSelector,splitList,inRoot,DECOR_CHOICES,decorFilterMarkup} from './fruit-type-schema.js';
 import {findFruitPreviewSource,copyFruitPreview,fruitPreviewBackground,FRUIT_SNAPSHOT_DOCUMENT} from './fruit-type-snapshot.js';
-import {buildFruitSample,sampleVars,mountFragmentHost,DEUS_VERSIONS,tidyDemVersion} from './fruit-type-sample.js';
+import {buildFruitSample,sampleVars,mountFragmentHost,DEUS_VERSIONS,tidyDemChoice,resolveDemVersion,demSameFamily} from './fruit-type-sample.js';
 import {dressDemSky} from './dem-sky.js';
 import {syncFruitTypography} from './fruit-type-runtime.js';
 import {bindTouchSliders} from './touch-sliders.js';
@@ -36,14 +36,19 @@ export function bindFruitTypography(root){
         detailsOff=bindSnapshotDetails(d,{state:previewFolds,scope:`${owner}/${current().kind}/${demVersion()}`,demSkin:owner==='deus'&&skinOn(),onToggle:fitDetails});
         fitDetails();
     }
-    // 8.1.0 데우스 미리보기 판(2.5 · V3) — 데우스 전체에 하나(chat.demPreviewVersion, 기본 V3). 과일 계열은 쓰지 않아요.
-    const demVersion=()=>tidyDemVersion(getSettings().chat?.demPreviewVersion);
-    const versionLabel=v=>DEUS_VERSIONS.find(([k])=>k===v)?.[1]||v;
+    // 8.1.0 데우스 미리보기 판 — 데우스 전체에 하나. 과일 계열은 쓰지 않아요.
+    //   11-19 고르는 값은 chat.demPreviewPick(기본 「지금 프리셋 따라」 auto · V4 · V3 · 2.5). auto 면 지금 프리셋의 판(V4 → V3 → 2.5)을 따라요.
+    const demChoice=()=>tidyDemChoice(getSettings().chat?.demPreviewPick);
+    const demVersion=()=>resolveDemVersion(demChoice());
+    const versionLabel=v=>DEUS_VERSIONS.find(([k])=>k===v&&k!=='auto')?.[1]||v;
+    const demChoices=()=>DEUS_VERSIONS.map(([k,t])=>[k,k==='auto'?`${t} (${versionLabel(resolveDemVersion('auto'))})`:t]);   // 괄호 안은 늘 지금 프리셋의 판(다른 판을 골라 둔 채 열어도)
     // 실제 채팅과 같은 조건(body.salty-dem-skin = 데우스 · 카드 스킨 켬)일 때만 표본에도 하늘(해 · 달 자리 · 달 모양)을 입혀요 — dem-sky.js
     const skinOn=()=>document.body.classList.contains('salty-dem-skin');
     // 대화에서 찾은 데우스 상태창의 판 — V3 는 묶음(.dem-modules) 안이거나 트래커 격자(.dem-track__grid)를 품어요
     const VERSIONED=new Set(['deus-tracker','deus-status','deus-threads','deus-psych','deus-plot','deus-momentum','deus-conflict']);
-    const sourceVersion=el=>el.closest('.custom-dem-modules,.dem-modules')||el.querySelector('.custom-dem-track__grid,.dem-track__grid')?'v3':'2.5';
+    //   11-19 V4 는 묶음 안의 일기장 · 새 얼굴 카드 · 일기 탭으로(켜 두지 않았으면 V3 와 같은 꼴 — 같은 갈래라 대화 것을 그대로 보여요)
+    const V4_PARTS='.custom-dem-diaries,.custom-dem-new-face,.custom-dem-tab--diary,.dem-diaries,.dem-new-face,.dem-tab--diary';
+    const sourceVersion=el=>{const pack=el.closest('.custom-dem-modules,.dem-modules');if(pack?.querySelector(V4_PARTS))return 'v4';return pack||el.querySelector('.custom-dem-track__grid,.dem-track__grid')?'v3':'2.5';};
     // Folding follows this editor only; the theme previews keep their own fold state.
     const folded=()=>{try{return localStorage.getItem('bl_ft_pvfold')==='1';}catch{return false;}};
     // 파라미터 칸은 윗줄 이름(슬라이더는 오른쪽에 현재 값), 아랫줄 조절칸 가로 꽉. 8.1.0 영역 본문의 짧은 칸은 2열 격자(.bl-ft-params, css/79) —
@@ -76,7 +81,7 @@ ${field(key,'wrap','줄바꿈',`<select>${[['original','원작 그대로'],['wor
         box.innerHTML=`${choice('data-ft-kind','상태창 종류',types.map(t=>[t.id,t.name]),s.kind)}
 ${owner==='sola'?choice('data-ft-skin','카드 스타일',[['original','원작'],['lemon','블루레몬']],getSettings().chat?.solaStyle||'original'):''}
 ${switchRow(`${ownerName} 글자 설정 사용`,owner==='sola'?'끄면 고른 카드 스타일의 기본 글자로 돌아가요':'끄면 원작 표시로 돌아가요','data-ft-all-reset','이 상태창 글자 설정 · 기본값으로',toggle('data-ft-on',`${ownerName} 글자 설정 사용`,ownerEnabled(s,owner)),typeChanged(s,s.kind))}
-${owner==='deus'?choice('data-ft-demver','미리보기 판',DEUS_VERSIONS,demVersion()):''}
+${owner==='deus'?choice('data-ft-demver','미리보기 판',demChoices(),demChoice()):''}
 <div class="salty-prevbox bl-ft-prevbox${folded()?' folded':''}" data-pv-max="160"><button type="button" class="salty-pvfold" data-ft-pvfold aria-expanded="${!folded()}" aria-label="${folded()?'미리보기 펼치기':'미리보기 접기'}"><i aria-hidden="true"></i></button><iframe class="bl-ft-preview" title="상태창 미리보기" sandbox="allow-same-origin"></iframe></div>
 <p class="salty-note bl-ft-font-note" data-ft-font-status role="status"><span class="bl-ft-sample-badge" data-ft-sample-badge hidden>표본이에요</span><span data-ft-note-text></span></p>
 
@@ -166,7 +171,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
     function shareFonts(d,css){if(!d?.fonts||!css)return;for(const face of document.fonts||[]){if(face.status!=='loaded')continue;const name=face.family.replace(/^["']|["']$/g,'');if(css.includes(name)&&!d.fonts.has(face))try{d.fonts.add(face);}catch{/* 공유 못 하는 글꼴은 대체 글꼴 */}}}
     // 대화에 이 종류의 상태창이 없을 때: 원작 정규식으로 만든 표본(없으면 기본 표본)에 지금 글자 설정을 바로 입혀요.
     //   데우스는 고른 판(2.5 · V3)의 표본 — 대화의 상태창이 다른 판이면(mismatch) 그것 대신 고른 판 표본을 보여요.
-    async function showSample(type,frame,note,mismatch=false){
+    async function showSample(type,frame,note,mismatch=false,seen=''){
         // 표본 폭 = 채팅 메시지 본문 폭, 단 미리보기 칸보다 넓지 않게(넓으면 칸이 가로로 넘쳐요 · 배율을 줄여도 바깥 폭은 그대로)
         if((box.querySelector('.bl-view-port')?.clientWidth||0)<=120)return;// 칸이 아직 안 보이면(접힌 묶음) 그리지 않고, 보이면 ResizeObserver 가 다시 불러요
         const message=lastMessage(),messageWidth=message?.getBoundingClientRect().width||0,portWidth=box.querySelector('.bl-view-port')?.clientWidth||0,base=messageWidth>120?messageWidth:Math.min(innerWidth-32,640),width=Math.round(portWidth>120?Math.min(base,portWidth-2):base);
@@ -184,7 +189,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
         const say=()=>{
             const badge=box.querySelector('[data-ft-sample-badge]');badge.hidden=false;badge.textContent=deus?`표본이에요 · ${versionLabel(version)}`:'표본이에요';
             const name=deus?`${versionLabel(version)} `:'',regex=sample.origin==='regex';
-            const text=mismatch?`대화의 상태창은 ${versionLabel(version==='v3'?'2.5':'v3')} 모양이라 고른 ${versionLabel(version)} 판의 표본을 보여요(${regex?'원작 정규식으로 만든 것':'원작 정규식이 없어 기본 표본 · 원작 그림 · 색은 빠져요'}).`
+            const text=mismatch?`대화의 상태창은 ${versionLabel(seen||(version==='2.5'?'v3':'2.5'))} 모양이라 고른 ${versionLabel(version)} 판의 표본을 보여요(${regex?'원작 정규식으로 만든 것':'원작 정규식이 없어 기본 표본 · 원작 그림 · 색은 빠져요'}).`
                 :regex?`대화에 이 종류의 상태창이 없어 원작 ${name}정규식으로 만든 표본을 보여요.`:`대화에 이 종류의 상태창이 없고 원작 ${name}정규식도 찾지 못해 기본 표본을 보여요${deus?'(원작 그림 · 색은 빠져요)':''}.`;
             note.textContent=`${text} 글자 설정은 표본에 바로 반영되고 저장돼요.`;
         };
@@ -218,8 +223,8 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
         const s=current(),type=FRUIT_TYPES.find(t=>t.id===s.kind),frame=box.querySelector('iframe'),d=frame?.contentDocument;
         if(!d?.querySelector('[data-bl-fruit-preview]'))return;
         let source=findFruitPreviewSource(document,typeMatch(type)),mismatch=false;const note=box.querySelector('[data-ft-note-text]');
-        if(source&&owner==='deus'&&VERSIONED.has(s.kind)&&sourceVersion(source)!==demVersion()){source=null;mismatch=true;}
-        if(!source){if(!switchMode(frame,'sample'))void showSample(type,frame,note,mismatch);return;}
+        let seen='';if(source&&owner==='deus'&&VERSIONED.has(s.kind)){seen=sourceVersion(source);if(!demSameFamily(seen,demVersion())){source=null;mismatch=true;}}
+        if(!source){if(!switchMode(frame,'sample'))void showSample(type,frame,note,mismatch,seen);return;}
         if(switchMode(frame,'real'))return;
         sampleToken++;box.querySelector('[data-ft-sample-badge]').hidden=true;
         const sourceStyle=getComputedStyle(source),rect=source.getBoundingClientRect(),backdrop=fruitPreviewBackground(source);
@@ -274,7 +279,7 @@ ${type.layout||footer||type.decor?`<div class="bl-ft-top">${type.layout?choice('
         if(el.hasAttribute('data-ft-skin')){if(owner!=='sola')return;getSettings().chat.solaStyle=el.value==='lemon'?'lemon':'original';saveSettings();void syncSolaStyle(getSettings()).then(()=>{if(alive){sampleKey='';previewSignature='';schedulePreview(true);}});return;}
         if(el.hasAttribute('data-ft-kind')){if(!types.some(t=>t.id===el.value))return;s.kind=el.value;commit(s);paint();return;}
         // 미리보기 판은 글자 설정이 아니라 미리보기만 바꿔요 — 표본을 그 판으로 다시 만들어요
-        if(el.hasAttribute('data-ft-demver')){const settings=getSettings();settings.chat.demPreviewVersion=tidyDemVersion(el.value);saveSettings();sampleKey='';previewSignature='';schedulePreview(true);return;}
+        if(el.hasAttribute('data-ft-demver')){const settings=getSettings();settings.chat.demPreviewPick=tidyDemChoice(el.value);saveSettings();sampleKey='';previewSignature='';schedulePreview(true);return;}
         clearTimeout(idleTimer);idleTimer=0;idleState=null;
         const a=assign(el,s);if(!a)return;
         commit(s);if(a.seeded)paint();// 슬라이더가 읽어 온 값을 보이게

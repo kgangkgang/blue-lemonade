@@ -108,7 +108,7 @@ check('표본 글을 지어낸 정규식으로 바꾸면 그 블록이 나와요
 });
 check('V3 묶음 표본에 한편 · 숨은 진실 · 물밑 흐름 · 퇴고 메모가 들어 있고, 규칙 없어 남은 태그는 빼요',()=>{
     for(const tag of ['<meanwhile>','<truths>','<undercurrents>','<scratchpad>'])assert.ok(sample.DEUS_V3_MODULES.includes(tag),tag);
-    const text=read('src/fruit-type-sample.js');assert.ok(/LEFT_TAGS=\/<\(status\|relationships\|threads\|psych\|plotlines\|momentum\|conflict\|meanwhile\|truths\|undercurrents\|scratchpad\)>/.test(text));
+    const text=read('src/fruit-type-sample.js');assert.ok(/LEFT_TAGS=\/<\(status\|relationships\|threads\|psych\|plotlines\|momentum\|conflict\|meanwhile\|truths\|undercurrents\|scratchpad\|diary\|face\|extra\)>/.test(text),'V4 일기 · 새 얼굴 · 단역 태그도 규칙이 없으면 남기지 않아요');
 });
 const search=await load('src/settings-search.js');
 check('설정 검색 낱말',()=>{for(const q of ['장면 계획','씬 플랜','scene plan','숨은 진실','물밑 흐름'])assert.ok(search.searchSettings(q).some(e=>e.title==='데우스 상태창 글자'&&e.anchor==='상태창 글자'),q);});
@@ -182,7 +182,7 @@ check('미리보기: 장식 색 필터를 미리보기 문서에도 지금 팔�
     const ui=read('src/fruit-type-ui.js');
     assert.ok(ui.includes('if(!copyFruitPreview(root,d))return;shareDecorFilters(d);')&&ui.includes("return;}shareDecorFilters(d);previewKind=s.kind"),'표본 · 실제 상태창 둘 다');
     assert.ok(ui.includes('function shareDecorFilters(d){')&&ui.includes('decorFilterMarkup(k=>st.getPropertyValue('),'지금 팔레트 값');
-    assert.ok(ui.includes("VERSIONED.has(s.kind)&&sourceVersion(source)!==demVersion()"),'장면 계획 같은 묶음 밖 카드를 2.5 로 잘못 보지 않아요');
+    assert.ok(ui.includes("VERSIONED.has(s.kind)){seen=sourceVersion(source);if(!demSameFamily(seen,demVersion())){source=null;mismatch=true;}}"),'장면 계획 같은 묶음 밖 카드를 2.5 로 잘못 보지 않아요(11-19 V3 · V4 는 같은 갈래)');
     assert.ok(schema.decorFilterMarkup(k=>k==='accent'?'rgb(9, 8, 7)':'red;x').includes('flood-color:rgb(9, 8, 7)')&&schema.decorFilterMarkup(()=>'red;x').includes('flood-color:var(--salty-text)'),'값 검사 · 못 쓰면 변수');
 });
 console.log(`status-type-blocks: ${passed} passed`);

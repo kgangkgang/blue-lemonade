@@ -65,6 +65,7 @@ import { createRewriteUndo } from './undo.js';   // 7.0.1 ↶ 되돌리기 (채�
 import { attachUndo } from '../../ask.js';
 import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
+import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 const VERSION = '2.2.0';
 const MODULE = 'ban_word_rewrite';
@@ -2015,7 +2016,8 @@ function start() {
             const message = getContext().chat[id];
             if (!message) return false;
             // Mixed original/translation layouts may have no source wrapper (masked content).
-            return visibleText(message).replace(/\s+/g, ' ').toLocaleLowerCase().includes(text.toLocaleLowerCase());
+            // 버그 사냥 7 점자 빈칸 원문(`pocket⠀watch`)에서 두 낱말을 골라도 금지 칩이 뜨게
+            return foldBlank(visibleText(message)).replace(/\s+/g, ' ').toLocaleLowerCase().includes(foldBlank(text).replace(/\s+/g, ' ').toLocaleLowerCase());
         }); },
     });
     if (!EMBEDDED) ensureUi();

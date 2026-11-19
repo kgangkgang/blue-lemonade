@@ -23,6 +23,7 @@
 //     둘 다 있으면 턴마다 쪼갠 쪽(memoria)만 — 같은 이야기를 두 번 싣지 않게. 짧은 전체 요약(줄거리 한 덩이 · 실리태번 기본 요약)은 안 써요.
 //   · 본문의 U+2800(점자 빈칸 — 일부 프리셋이 띄어쓰기 대신 씀)은 보통 띄어쓰기로 바꿔 실어요(읽기 쉽고 토큰이 덜 들어요).
 import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치(줄 꼴 규칙 · 변화 장부 · 만든 뒤 바로잡기 · 프로필 채우기 · 직함 이름 · 합치기 · 중복 정리 — 끈 것은 더는 고치지 않아요)
+import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 const swOn = (key, doc = globalThis.document) => !mbOff(key, doc);
 /** 줄 꼴 규칙을 붙일 때인가 — 단계가 「적용 안 함」 이 아니고 스위치 「줄 꼴 규칙 덧붙이기」 가 켜져 있을 때 */
 export const rulesOn = (lv, doc = globalThis.document) => lv !== 'off' && swOn('rules', doc);
@@ -180,12 +181,11 @@ export async function syncPrompt(want, { c = ctx(), def = undefined, doc = globa
 // ── 「최근 답 여러 개」 매크로 ─────────────────────────────
 /** 재료로 보낼 본문: 꾸밈 태그 · HTML · 상태 블록을 걷어내고 빈 줄을 줄여요 */
 export function plain(text) {
-    return String(text ?? '')
+    return foldBlank(text)   // U+2800(점자 빈칸) → 보통 빈칸 · 태그 속 점자 빈칸도 태그로 보게 먼저
         .replace(/<(meatball|status)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
         .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
         .replace(/<!--[\s\S]*?-->/g, ' ')
         .replace(/<\/?[a-zA-Z][^<>]*>/g, '')
-        .replace(/⠀/g, ' ')
         .replace(/[ \t]+/g, ' ').replace(/ ?\n ?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 const cut = (s, n) => (s.length > n ? `${s.slice(0, n)}…` : s);
@@ -423,7 +423,7 @@ export function opsLedger(c = ctx()) {
         const ops = m.extra?.statussim?.bySwipe?.[m.swipe_id ?? 0];
         if (!Array.isArray(ops) || !ops.length) return; msgs++;
         for (const op of ops) {
-            if (!Array.isArray(op)) continue; const [k, v] = op, s = String(v ?? '').trim(); if (!s) continue;
+            if (!Array.isArray(op)) continue; const [k, v] = op, s = trimBlank(v); if (!s) continue;   // 버그 사냥 7 점자 빈칸 변화 줄(`Mira⠀Lee⠀+3`)도 이름 · 시각을 바로
             if (k === 'aff' || k === 'trust') { for (const part of s.split(/[,|]/)) { const x = /^\s*(.*?)\s*([+-]\d+)\s*$/.exec(part); if (x) add(x[1].trim(), k, Number(x[2])); } }
             else if (k === 'event') events.push(`#${i} ${s}`);
             else if (k === 'loc' || k === 'place') last.place = `${s} (#${i})`;

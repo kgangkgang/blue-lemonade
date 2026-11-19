@@ -12,6 +12,17 @@ export const MODULE_CARDS = Object.freeze(['status', 'threads', 'psych', 'psycho
     'conflict', 'undercurrents', 'companions', 'scratchpad', 'diary', 'diaries', 'face', 'extra']);
 /** 카드마다 더 나눌 기호 (FRAMING 에 덧붙임): 단역 한 줄은 「 · 」 로 칸을 나누고(「Seen as:」 열쇠를 칸 첫머리에), 일기 한 줄은 「언제: 글」 의 쌍점에서 나눠요 */
 export const MODULE_SEPARATORS = Object.freeze({ extra: '[ \t]+·[ \t]+', diary: '[:：](?=[ \t])', diaries: '[:：](?=[ \t])' });
+// 11-19 번역된 값이 그 칸 뒤 나눔 기호를 품으면(일기 「언제」 를 「둘째 날: 부두」 로 · 단역 칸을 「그물 수선공 · 회색 숄」 로) V4 정규식이 그 자리에서 잘라
+//   언제 · 글이 밀리거나 단역 칸이 늘어요 — 바로 뒤가 나눔 기호인 칸의 값에서만 그 기호를 쉼표로 (원문 칸에는 그 기호가 없었어요 · 그 기호로 나눈 조각이니까)
+const SEPARATOR_AFTER = Object.freeze({ extra: /^[ \t]+·[ \t]+/, diary: /^[:：](?=[ \t])/, diaries: /^[:：](?=[ \t])/ });
+const SEPARATOR_IN = Object.freeze({ extra: [/[ \t]+·[ \t]+/g, ', '], diary: [/[ \t]*[:：](?=[ \t])/g, ','], diaries: [/[ \t]*[:：](?=[ \t])/g, ','] });
+/** 모듈 카드 칸에 넣을 번역 값 — after = 원문 카드에서 그 칸 바로 뒤 글 */
+export function moduleSafeValue(value, card, after = '') {
+    const name = String(card ?? '').toLowerCase(), next = SEPARATOR_AFTER[name];
+    if (!next || !next.test(String(after))) return value;
+    const [re, sub] = SEPARATOR_IN[name];
+    return String(value).replace(re, sub);
+}
 const MODULES = new Set(MODULE_CARDS);
 export const isModuleCard = name => MODULES.has(String(name ?? '').toLowerCase());
 

@@ -1,6 +1,7 @@
 // 1.0.0 극한 최적화: 대사 클릭(clickplay.js)에서 떼어 낸 순수 글 도구 — 글자 노드 잇기(textIndex) · 대화문 짝 찾기(scanDialogue) · 데우스 맨 색 표기 ·
 //   북마크 미리보기 판정(previewing). 화자 색(paint.js)이 부팅 때 재생기 · 분석 묶음 없이 쓰게. 동작은 clickplay.js 에 있던 그대로이고 clickplay.js 가 다시 내보내요
 // 7.0.2 북마크 「채팅에서 미리보기」: 화면에는 다른 채팅이 그려져 있지만 chat[] 은 지금 채팅이라 mesid → chat[mesid] 가 엉뚱한 메시지 — 그동안은 손대지 않는다
+import { foldBlank } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 export const previewing = () => !!globalThis.document?.body?.classList?.contains('cg-previewing');
 // 대화문 여닫이 글자 (text.js 와 같은 짝 + „“). ASCII ' 는 안 씀
 export const CLOSER = { '“': '”', '"': '"', '「': '」', '『': '』', '«': '»', '＂': '＂', '‘': '’', '„': '“' };
@@ -33,7 +34,7 @@ export function textIndex(root, { computed = true } = {}) {
         }
         if (n.nodeType !== 3) continue;
         nodes.push({ node: n, start: flat.length });
-        flat += String(n.nodeValue || '');
+        flat += foldBlank(n.nodeValue);   // 버그 사냥 7 표시 정규식이 꺼져 점자 빈칸이 화면에 남아도 조각 글(보통 빈칸)과 맞게 — 같은 길이라 자리 그대로
     }
     return { nodes, flat };
 }

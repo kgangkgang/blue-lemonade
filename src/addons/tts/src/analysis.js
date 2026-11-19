@@ -64,6 +64,7 @@ import { withPromptCache } from '../../../prompt-cache.js';   // 7.7.2 프롬프
 import { isContentBlock, maybeBlocked, notBlock, bareBadRequest, blockedReasonOf, refusalReply, fallbackTarget, sameTarget, fallbackCfg, runWithBlockFallback } from './block-fallback.js';   // 6.1.8 검열되면 다른 모델로
 import { listSfx, getSfx, matchSfx, resolveSfxId, SFX_LIB } from './sfx-library.js';
 import { rewriteLinked } from '../../../edit-origin.js';
+import { foldBlank, hasBlank } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 export const EMOTIONS = Object.freeze(['neutral', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'whisper', 'shout']);
 export const LANGS = Object.freeze(['ko', 'ja', 'en', 'zh']);
@@ -131,7 +132,7 @@ export function hash(str) {
 }
 /** 대사 비교용 정규화: 소문자 · 공백 하나 · 바깥 대화문 기호 제거. 1.5.8 점자 빈칸(U+2800)도 빈칸 — 저장할 때와 찾을 때 둘 다 이 함수 */
 export function normText(text) {
-    return String(text ?? '').replace(/⠀/g, ' ').replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    return foldBlank(text).replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 /** 1.5.7 까지의 정규화 (점자 빈칸을 그대로 둠) — 그때 저장한 분석의 줄 해시를 알아볼 때만 */
 const legacyNorm = (text) => String(text ?? '').replace(/[“”"「」『』«»‘’＂]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -1452,7 +1453,7 @@ export function pairLines(olds, nows) {
  */
 function alignOld(mes, a) {
     const lines = dialogueTexts(splitOf(mes)).map(t => hash(normText(t)));
-    const braille = /⠀/.test(String(mes?.mes ?? ''));
+    const braille = hasBlank(String(mes?.mes ?? ''));
     const same = lines.length === a.segs.length && a.segs.every((g, k) => isObj(g) && g.i === k && g.h === lines[k]);
     if (same && !braille) return null;
     const legacy = braille ? dialogueTexts(splitOf(mes, { keepBraille: true })) : [];

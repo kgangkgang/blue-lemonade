@@ -19,6 +19,7 @@ import { addMessageDecorator } from './message-decor.js';
 import { ruleValue } from './addons/translator/card-values.js';
 import { pinText, pinNodes, blankText } from './mb-place-mark.js';   // 버그 사냥 6 답 아래 변동 칩 「📍 @Lobby」 의 장소 앞 기호(표시만)
 import { mbOff, mbFit } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 — 칩 번역 다시 적기(trchip) · 알림 번역(trtoast) · 사전에 고정 낱말(trtidy) · 남은 영어 메우기(trfill)   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
+import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 const FOLDER = /meatball|statussim|미트볼/i;
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';
@@ -117,7 +118,7 @@ export function pairsFor(part, ko, owners) {
  * 이런 글을 번역기가 같은 글로 돌려주면 그 확장 사전에 「그대로」 짝(글 → 같은 글)으로 적어 그 확장 번역 단추 배지(남은 글 수)에서 빠지게 해요(사용자 11-19 「1」 이 계속 떠요).
  */
 export function keepAsIs(part) {
-    const s = String(part ?? '').replace(/⠀/g, ' ').trim();
+    const s = trimBlank(part);
     if (!s) return false;
     const letters = (s.match(/\p{Script=Latin}/gu) ?? []).length;
     if (letters < 3) return true;
@@ -226,7 +227,7 @@ export function stateTexts(state, isOn = () => true) {
  * 「레아 is a archive staff member caught up …」 → 반쯤. 「중앙 기록국(Central Records Bureau)」 → 아님.
  */
 export function halfValue(en, ko) {
-    const v = bare(ko), src = bare(en).toLowerCase();
+    const v = foldBlank(bare(ko)), src = foldBlank(bare(en)).toLowerCase();   // 버그 사냥 7 점자 빈칸도 낱말 사이
     for (const run of v.match(/[A-Za-z][A-Za-z'’-]*(?:[\s,]+[A-Za-z][A-Za-z'’-]*){2,}/g) ?? []) {
         const words = run.split(/[\s,]+/).filter(Boolean);
         if (words.every(w => /^[A-Z]/.test(w))) continue;
@@ -505,7 +506,14 @@ export function slotPairs(items, ko) {
     for (const m of months) { const km = ko(m, 'month'); if (km) out.set(`년 ${m}`, `년 ${km}`); }
     // 1.7.8 띠 날짜 칸 펼침 줄(그 확장 「4/7(월) · <b>정오</b> · Clear」): 날씨는 「 · Clear」 한 글 덩이로 그려져요 — 짧아서(12자 아래) 그 확장이 덩이를 나누지 않고,
     //   낱말 바꾸기에서는 고정 낱말 열쇠를 뺐으니(hideFixedKeys) 영어로 남았어요 → 덩이 통째 짝. 칸 종류(날씨 · 계절)로만 · 낱말 하나 · 묶음일 때만(자유 글 날씨는 번역 길로)
-    for (const [w, key] of tails) { const kw = ko(w, key); if (kw) { out.set(`· ${w}`, `· ${kw}`); out.set(`· ${w} ·`, `· ${kw} ·`); } }   // 그날 일정이 <em> 으로 뒤에 붙으면 덩이가 「 · Clear · 」
+    // 버그 사냥 7 그림 글자가 앞에 붙은 날씨(「☀️ Clear」 — 사용자 채팅): 그 확장이 그림 글자를 아이콘 요소로 바꿔 그려서 덩이가 「Clear · 」(뒤에 그날 일정)로 갈려요.
+    //   낱말만(「Clear」)은 fixedPairs 가 이미 넣지만 뒤에 「 ·」 가 붙은 덩이는 짝이 없어 홈 날짜 줄에 영어로 남았어요(사용자 환경 리그) → 그 덩이도 통째 짝
+    for (const [w0, key] of tails) {
+        const w = /^[^A-Za-z0-9]/.test(w0) ? englishPart(w0) : w0; if (!w) continue;
+        const kw = ko(w, key); if (!kw) continue;
+        out.set(`· ${w}`, `· ${kw}`); out.set(`· ${w} ·`, `· ${kw} ·`);   // 그날 일정이 <em> 으로 뒤에 붙으면 덩이가 「 · Clear · 」
+        if (w !== w0) out.set(`${w} ·`, `${kw} ·`);
+    }   // 그날 일정이 <em> 으로 뒤에 붙으면 덩이가 「 · Clear · 」
     return [...out];
 }
 /**
@@ -541,7 +549,7 @@ export function chipText(shown, dict = {}, label = shown) {
         const ko = part && (Object.hasOwn(dict, part) && isFixedKey(part) ? dict[part] : fixedValue(part, slot));
         if (ko) s = s.replace(part, () => ko);
     }
-    return s.replace(/([가-힣])['’]s(?=\s|$)/g, '$1의');
+    return s.replace(/([가-힣])['’]s(?=[\s⠀]|$)/g, '$1의');   // 버그 사냥 7 점자 빈칸 앞도
 }
 /**
  * 1.6.8 시간대 · 날씨 칩 글 통째 짝(AI 0): 「날씨: Sunny」 → 「날씨: 맑음」 · 「🕐 Afternoon」 → 「🕐 오후」.
@@ -635,7 +643,7 @@ export function bakedChips(m, opts = {}) {
 }
 
 /**
- * 1.6.8 그 확장이 실리 기본 알림(toastr)으로 바로 띄우는 글: 「Leon와(과) 연인이 되었어요」 · 「🔕 Leon은(는) 지금 연락이 안 돼요」 ·
+ * 1.6.8 그 확장이 실리 기본 알림(toastr)으로 바로 띄우는 글: 「Loren와(과) 연인이 되었어요」 · 「🔕 Loren은(는) 지금 연락이 안 돼요」 ·
  *   「Bread 구매!」 · 알림 방식 「실리태번 기본 알림」의 모든 알림. 그 확장 화면 번역은 자기 화면(.ss-scope · #ss-toasts …)만 훑어서
  *   #toast-container 의 알림은 사전에 번역이 있어도 영어로 남았어요.
  *   → 제목이 그 확장 이름(TITLE)인 알림만, 태그 밖 글 조각마다 그 확장 trString(사전) 그대로 바꿔요. 태그 · 속성은 그대로 · 바뀐 것이 없으면 글 그대로.

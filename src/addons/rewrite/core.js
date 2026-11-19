@@ -1,4 +1,5 @@
 // Pure logic with no SillyTavern imports, so it can be tested in Node.
+import { foldBlank, matchBlankStyle as blankStyle } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화(1.8.7 에 여기 따로 두던 것)
 
 const FORMAT_MARKS = ['*', '"', '“', '”', '<', '>'];
 const LETTER = '[\\p{L}\\p{N}_]';
@@ -262,15 +263,13 @@ function ownedByNear(sentence, index, length, nearNames, otherNames = [], memo =
 //   6.1.9 캐릭터 에셋의 빈 자리(<span class="bl-asset-slot" data-asset-slot="…"></span>, 답장 뒤 다른 모델이 고르기)도 같은 그림 자리다.
 //   2.1.7 「이 채팅의 에셋 그림 떼기」가 남기는 위치 표시(<span class="bl-asset-gone" data-asset-was="…"></span>)도 — 고쳐 쓴 뒤에도 그 자리에 남게.
 export const SLOT_RE = /<span\b[^>]*\b(?:data-(?:autopic|asset)-slot="[^"]*"|data-asset-was="[^"]*"|class="[^"]*\b(?:autopic-image-slot|bl-asset-slot|bl-asset-gone)\b[^"]*")[^>]*>[^<]*<\/span>/g;
-const BRAILLE_BLANK_ALL = /⠀/g;
 /**
  * 1.8.7 원문이 낱말 사이에 점자 빈칸만 쓰면(보통 빈칸 없음) 고친 문장의 보통 빈칸도 점자 빈칸으로 — 같은 답 안에서 빈칸 꼴이 섞이지 않게.
  * 보통 빈칸이 섞인 원문이나 점자 빈칸이 없는 원문은 그대로 둔다.
  */
 export function matchBlankStyle(original, rewrite) {
     if (typeof rewrite !== 'string' || typeof original !== 'string') return rewrite;
-    if (!original.includes('⠀') || original.includes(' ')) return rewrite;
-    return rewrite.replace(/ /g, '⠀');
+    return blankStyle(original, rewrite);
 }
 const blankAll = part => part.replace(/[^\n]/g, ' ');
 const blankAsBreak = part => '\n' + blankAll(part.slice(1));
@@ -287,7 +286,7 @@ export function maskProtected(text) {
     // 1.8.7 점자 빈칸(U+2800)은 보통 빈칸으로 본다 — 「공백마다 점자 빈칸」 우회 프리셋(솔라 등)의 원문은 `pocket⠀watch` 꼴이라
     //   낱말 사이 빈칸(SPACE · \s)이 안 맞아 금지 묘사를 하나도 못 찾았다(11-19 사용자 제보 · 원문 mes 확인).
     //   한 글자를 한 글자로 바꾸므로 찾은 자리는 원문 그대로 가리킨다.
-    let masked = String(text ?? '').replace(BRAILLE_BLANK_ALL, ' ');
+    let masked = foldBlank(text);
     for (const [regex, mask] of PROTECTED) masked = masked.replace(regex, mask);
     return masked;
 }
@@ -843,7 +842,7 @@ function tagPair(name) {
 }
 
 function testAny(text, regexes) {
-    const plain = String(text ?? '').replace(BRAILLE_BLANK_ALL, ' ');   // 1.8.7 점자 빈칸도 빈칸 (maskProtected 와 같이)
+    const plain = foldBlank(text);   // 1.8.7 점자 빈칸도 빈칸 (maskProtected 와 같이)
     return regexes.some(regex => {
         regex.lastIndex = 0;
         return regex.test(plain);
@@ -860,7 +859,7 @@ function testAny(text, regexes) {
  */
 export function checkReplyStart(text, compiled) {
     // 1.8.7 점자 빈칸(U+2800)은 보통 빈칸으로 — 앞머리 점자 빈칸 때문에 시작 태그를 못 보고 「없음」으로 다시 생성하지 않게
-    const body = String(text ?? '').replace(BRAILLE_BLANK_ALL, ' ').replace(INVISIBLE_START, '');
+    const body = foldBlank(text).replace(INVISIBLE_START, '');
     if (!testAny(body, compiled.regexes)) return 'missing';
     let end = -1;
     for (const tag of compiled.tags ?? []) {

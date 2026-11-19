@@ -17,7 +17,7 @@ export const ARROW_TAG = 'bl-arw', ARROW_WRAP = 'bl-arwt';
 export const MB_SCOPE = '#ss-hud, #ss-side, #ss-float, .ss-msgcard, .ss-scope, .ss-root, .ss-panel, .ss-toasts';   // 그 확장이 그리는 화면(그 확장 화면 번역기의 범위와 같아요 · 설정 서랍 칸은 빼요)
 const ARROW_SKIP = new Set(['TEXTAREA', 'INPUT', 'SELECT', 'OPTION', 'SCRIPT', 'STYLE', 'CODE', 'PRE', 'BL-ARW', 'BL-ARWT']);
 const ARROW_OFF = 'textarea, select, script, style, code, pre, [contenteditable], bl-arw, bl-arwt';
-const ARROW = /\s(-{1,2}>|=>)(?=\s)/g;
+const ARROW = /[\s\u2800](-{1,2}>|=>)(?=[\s\u2800])/g;   // 버그 사냥 7 점자 빈칸(`저녁⠀->⠀밤`)도 양옆 빈칸
 /** 글을 [글, 화살표, 글, 화살표, …] 로 나눠요(홀수 칸이 화살표 원문) — 양옆 공백을 낀 것만 · 없으면 null. 이어 붙이면 원문과 같아요. */
 export function arrowParts(text) {
     const s = String(text ?? ''); if (!s.includes('>')) return null;

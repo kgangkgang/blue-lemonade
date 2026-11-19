@@ -6,6 +6,7 @@
 // 이전 확장 · 예전 판은 모르는 칸이라 그대로 두고 지나간다 (anchor 와 같다).
 // 실리태번 · DOM 을 import 하지 않는 순수 함수라 node 로 시험한다 (blue-lemonade-audit/bookmark-excerpts-20261008/excerpts.test.mjs).
 
+import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 export const EXCERPT_LIMITS = Object.freeze({ text: 6000, html: 24000, count: 30 });
 
 // 색 값: #hex 또는 rgb() · color(srgb …) 같은 함수 하나. 괄호 안에 괄호 · 따옴표 · 쌍점 · 쌍반점 · 별표 · 역빗금이 들어갈 수 없어 url() · 주석 · 다른 선언이 끼지 못한다
@@ -191,7 +192,7 @@ export function toneOf(ink) {
     return luminance === null ? '' : luminance > 0.45 ? 'dark' : 'light';
 }
 
-const norm = text => String(text ?? '').replace(/\s+/g, ' ').trim();
+const norm = text => foldBlank(text).replace(/\s+/g, ' ').trim();   // 버그 사냥 7 점자 빈칸으로 고른 발췌와 보통 빈칸 발췌를 같은 글로
 const posOf = item => (Number.isFinite(item?.pos) ? item.pos : Number.MAX_SAFE_INTEGER);
 
 /** 읽을 수 있는 발췌인가 (손으로 고친 jsonl 의 빈 칸 · 글 없는 것은 아님) */

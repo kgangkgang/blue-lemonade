@@ -1,13 +1,10 @@
 import {installFruitOptionHelp} from './fruit-option-help.js';
 import {localPromptHash} from './prompt-fingerprint.js';
 import {DEUS_EFFECTS,DEUS_EFFECT_GROUPS} from './deus-option-effects.js';
-// V3 표지(빠른 설정 deus-qr 와 같은 id): 관계 택1 · 상태창 범위 택1 · 대사 소리 · 친구들 택1 중 둘 이상.
-const DEUS_V3_SIGNS=['cb1fa811-516f-4a61-aa93-092bb94d5ba3','0f47d870-2bb8-4c25-b6fe-c3d4c9b4e626','279618e4-d961-489f-9d2b-56503e0d6067','8b648af7-db80-4402-9536-58a5d82a6fe2'];
-// 11-19 V4 표지(deus-qr 와 같은 id): 운명의 주사위 · 주사위 결과 · 폭력 묘사 택1 · 새 얼굴 · 일기장 중 둘 이상. V4 에는 V3 표지도 다 있어요.
-const DEUS_V4_SIGNS=['ecfff91e-43e0-4a5d-8cfe-4d15e56dd55d','a19b9951-7214-4f4e-a1b8-42047882c71c','fa2248a0-d567-4a0a-884d-1cfa390e8716','4f5509db-7cd8-4b7d-bff1-bd4063a8559f','de251b02-fb80-4a4a-b312-d83a349826aa'];
-const hasSigns=(preset,signs)=>signs.filter(id=>preset?.prompts?.some?.(p=>(p.identifier||p.id)===id)).length>=2;
+import {deusPromptsVersion} from '../deus-version.js';
+// 판 표지(V3 · V4 프롬프트 id)는 src/deus-version.js 한 곳 — 상태창 글자 미리보기도 같은 표지로 판을 골라요
 /** 'v4' · 'v3' · '2.5' — 빠른 설정의 판 판별과 같은 규칙(구조로) */
-export const deusPresetVersion=preset=>hasSigns(preset,DEUS_V4_SIGNS)?'v4':hasSigns(preset,DEUS_V3_SIGNS)?'v3':'2.5';
+export const deusPresetVersion=preset=>deusPromptsVersion(Array.isArray(preset?.prompts)?preset.prompts:null)||'2.5';
 /** V3 이상(V4 포함) */
 export const isDeusV3Preset=preset=>deusPresetVersion(preset)!=='2.5';
 export function describeDeusOption(key, preset) {

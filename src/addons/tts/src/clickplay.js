@@ -42,6 +42,7 @@ import { speakSegments } from './player.js';
 import { applyMessageItalics } from './analysis.js';   // 1.9.1 대사 분석이 가른 기울임 (재생기 sourcesOf 와 같은 판단)
 import { shownDisplay } from './translation.js';   // 6.9.6 번역 중 미리 보기 글로도 원문 짝
 import { log } from './log.js';
+import { foldBlank } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 import { previewing, textIndex, scanDialogue, colorFromBareHex, CLOSER, LETTER, BLOCK_TAGS } from './text-index.js';   // 1.0.0 극한 최적화: 글자 노드 잇기 · 대화문 짝 · 색 표기는 화자 색(paint.js)이 재생기 없이 쓰게 따로
 export { previewing, textIndex, scanDialogue, colorFromBareHex };
 
@@ -58,7 +59,8 @@ const LABEL_HEAD = /^.*?\btrue\s+thoughts?\s*[:：]\s*/i;                  // "C
 // ---------- 작은 도구
 function sub(text) { try { return substituteParams(String(text || '')); } catch { return String(text || ''); } }
 // 6.3.8 화면은 실리태번 마크다운(showdown ellipsis)이 '...' 를 '…' 로 그린다 — 누른 글(화면)과 저장된 글의 조각을 같게 (줄임표 여럿도 하나로)
-const fold = (s) => String(s || '').normalize('NFC').replace(/\.\.\./g, '…').replace(/[…⋯]+/g, '…').replace(/[*_~〜～`\u200b-\u200f\ufeff]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+// 버그 사냥 7 점자 빈칸(U+2800)도 빈칸 — 화면 정규식이 꺼져 화면 글에 점자 빈칸이 남으면 누른 줄(화면)과 나눈 줄(보통 빈칸)이 달라 그 줄을 못 찾았어요
+const fold = (s) => foldBlank(s || '').normalize('NFC').replace(/\.\.\./g, '…').replace(/[…⋯]+/g, '…').replace(/[*_~〜～`\u200b-\u200f\ufeff]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 /** 1.9.1 느슨한 비교 (문장부호 · 기호 · 빈칸을 모두 뺌) — 누른 화면 글이 저장된 글과 문장부호만 다를 때도 그 줄을 찾게 (못 찾으면 번역문을 「원문」으로 다시 옮겨 읽었다) */
 const loose = (s) => fold(s).replace(/[\p{P}\p{S}\s]/gu, '');
 const letters = (s) => (String(s || '').match(/[\p{L}\p{N}]/gu) || []).length;

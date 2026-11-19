@@ -64,6 +64,30 @@ records.length = 0; other.classList.remove('nope'); other.classList.add('mes_blo
 // ⑤ 끄면 원래대로
 const quiet = TokenList.prototype.remove; stopMesClassQuiet(); assert.notEqual(TokenList.prototype.remove, quiet, '끄면 원래 함수로');
 records.length = 0; m.classList.remove('nope'); assert.equal(records.length, 1);
+// ⑦ 1.8.9 되풀이 막기: 끄기 전에 남이 우리 위에 또 감쌌으면(우리 겹이 사슬 안에 남음) 다시 켜도 또 감싸지 않아요 — 예전에는 quietAdd → 남의 겹 → quietAdd … 로 스택이 넘쳤어요
+{
+    assert.equal(startMesClassQuiet(TokenList), true, '다시 켜져요');
+    const mineAdd = TokenList.prototype.add, mineRemove = TokenList.prototype.remove;
+    let otherCalls = 0;
+    TokenList.prototype.add = function otherAdd(...ts) { otherCalls++; return mineAdd.apply(this, ts); };       // 다른 확장의 감싸개(우리 겹 위)
+    TokenList.prototype.remove = function otherRemove(...ts) { otherCalls++; return mineRemove.apply(this, ts); };
+    const otherAdd = TokenList.prototype.add;
+    stopMesClassQuiet();
+    assert.equal(TokenList.prototype.add, otherAdd, '남의 겹은 건드리지 않아요');
+    records.length = 0; m.classList.remove('nope'); assert.equal(records.length, 1, '쉬는 동안은 원래 함수 그대로(같은 값 기록이 생겨요)');
+    assert.equal(startMesClassQuiet(TokenList), true, '쉬던 겹을 다시 깨워요');
+    assert.equal(TokenList.prototype.add, otherAdd, '다시 켜도 그 위에 또 감싸지 않아요');
+    records.length = 0; otherCalls = 0;
+    assert.doesNotThrow(() => { m.classList.add('bl-y'); m.classList.remove('bl-y'); m.classList.remove('nope'); m.classList.add('mes'); }, '되풀이(스택 넘침) 없이 돌아요');
+    assert.equal(otherCalls, 4, '남의 겹은 부른 만큼만 한 번씩'); assert.equal(records.length, 2, '바뀐 것 둘만 기록 · 같은 값 쓰기는 다시 조용히');
+    assert.equal(m.attrs.class, 'mes fade');
+    // 한쪽(add)만 남이 감싼 채 꺼도 둘 다 그대로 두고 쉬어요 — 다시 켜면 그대로 이어요
+    stopMesClassQuiet(); assert.equal(startMesClassQuiet(TokenList), true); assert.equal(startMesClassQuiet(TokenList), false, '켜진 채 또 켜지 않아요');
+    // 남의 겹이 걷히면(우리 겹이 다시 맨 바깥) 깨끗이 되돌아가요
+    TokenList.prototype.add = mineAdd; TokenList.prototype.remove = mineRemove; stopMesClassQuiet();
+    assert.notEqual(TokenList.prototype.add, mineAdd, '맨 바깥이면 원래 함수로'); assert.notEqual(TokenList.prototype.remove, mineRemove);
+    records.length = 0; m.classList.remove('nope'); assert.equal(records.length, 1);
+}
 // ⑥ index.js 에서 테마 런타임이 시작될 때 동적 import(시작 그래프 밖)
 const index = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
 const rt = index.slice(index.indexOf('const FRAME_LAYER'), index.indexOf('const IDLE_LAYER'));   // 9.0.2 테마 런타임 2층 표

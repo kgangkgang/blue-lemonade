@@ -4,6 +4,7 @@
 //   · 달력이 꺼진 채팅(chatMetadata.statussim.mods.calendar === false) · 이 채팅에서 끈 상태창 · 확장이 없거나 꺼짐 → null(예전 소스 그대로).
 //   · 언제 읽나: weather.js 가 사건(답 · 스와이프 · 채팅 바꾸기 · 그 확장 화면에서 누름 · 머리 띠 바뀜) 뒤 한 번 — 프레임마다 읽지 않아요.
 //   화면 없이 도는 순수 부분이에요(tools/tests/weather-meatball.mjs 가 그대로 불러요).
+import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 export const MEATBALL_MODULE = 'statussim';
 
 /** 그 확장 날씨 표(engine.js WEATHER · skeleton_en.js)의 모든 값 + 자주 쓰는 자유 글 → 테마 날씨 종류. 빈 배열 = 아는 말인데 그릴 것 없음(흐림 · 구름 → 끔) */
@@ -36,7 +37,7 @@ const DAY_TIME = /낮|아침|정오|점심|\bday(?:time)?\b(?!\s*\d)|morning|noo
 const CLOCK = /(?:(오전|오후|午前|午後)\s*)?(\d{1,2})\s*(?::|時|시)\s*(?:(\d{1,2})\s*(?:分|분)?)?\s*(?:([ap])\.?\s?m\b\.?)?/i;   // a · p 는 뒤에 m 이 올 때만(「9:00 pizza」 의 p 는 오후가 아니에요)
 /** 시각 글 → 0 ~ 23 시(못 읽으면 null) */
 export function clockHour(time) {
-    const m = CLOCK.exec(String(time ?? ''));
+    const m = CLOCK.exec(foldBlank(time));   // 버그 사냥 7 `11:30⠀PM` 도
     if (!m) return null;
     let h = Number(m[2]);
     const mark = (m[1] || m[4] || '').toLowerCase();
@@ -47,7 +48,7 @@ export function clockHour(time) {
 }
 /** 시간대 글 → { night, dusk } — 낱말이 먼저, 낱말이 없으면 시각(21 ~ 5시 밤 · 18 ~ 21시 · 5 ~ 7시 저녁 · 새벽빛) */
 function timeOfDay(time) {
-    const text = String(time ?? '');
+    const text = foldBlank(time);
     const night = NIGHT_TIME.test(text), dusk = DUSK_TIME.test(text);
     if (night || dusk || DAY_TIME.test(text)) return { night, dusk };
     const h = clockHour(text);
@@ -65,7 +66,7 @@ export function clockWord(time) {
 
 /** 비교용 꼴: 그림 글자 · 변형 선택자 · 앞뒤 기호를 떼고 소문자 · 빈칸 하나로 */
 export function weatherKey(text) {
-    return String(text ?? '')
+    return foldBlank(text)   // 버그 사냥 7 `heavy⠀rain` 도 표 열쇠와 같게
         .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/gu, ' ')
         .replace(/[()[\]{}「」『』<>!?.,·~*_|:;"'`]+/g, ' ')
         .replace(/\s+/g, ' ').trim().toLowerCase();

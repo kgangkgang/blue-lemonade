@@ -9,7 +9,7 @@ function lowerWithMap(text) {
     for (let index = 0; index < text.length;) {
         const code = text.codePointAt(index);
         const width = code > 0xffff ? 2 : 1;
-        const piece = String.fromCodePoint(code).toLowerCase();
+        const piece = code === 0x2800 ? ' ' : String.fromCodePoint(code).toLowerCase();   // 버그 사냥 7 점자 빈칸(U+2800)도 빈칸 — 여러 낱말 검색어 칠하기(같은 길이 · src/blank-fold.js 규칙)
         for (let k = 0; k < piece.length; k++) {
             starts.push(index);
             ends.push(index + width);

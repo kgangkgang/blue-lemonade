@@ -13,14 +13,15 @@
 //   시험: tools/tests/mb-namekey.mjs
 import { mbOff } from './mb-switch-core.js';
 import * as Sub from './mb-autosub.js';
+import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 export const KEY = 'namekey';
 export const STATE = 'bl_mbnamekey';   // 메시지 extra 칸: { [스와이프]: [[원래 키, 원래 값], …] }
 const META = 'statussim';
 const PERSON = new Set(['aff', 'trust']);
-const nm = s => String(s ?? '').normalize('NFC').replace(/⠀/g, ' ').replace(/\*\*|__|`/g, '').trim().toLowerCase();
+const nm = s => foldBlank(String(s ?? '').normalize('NFC')).replace(/\*\*|__|`/g, '').trim().toLowerCase();
 /** 버그 사냥 6 줄 하나의 점자 빈칸(U+2800) → 띄어쓰기 · 이어진 띄어쓰기 하나로 · 앞뒤 다듬기(나눔표 둘레는 그 확장이 조각마다 다듬어요) */
-export const blankLine = s => String(s ?? '').replace(/⠀/g, ' ').replace(/ {2,}/g, ' ').trim();
+export const blankLine = s => foldBlank(s).replace(/ {2,}/g, ' ').trim();
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 export const active = (doc = globalThis.document) => !mbOff(KEY, doc);
 

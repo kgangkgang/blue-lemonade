@@ -318,6 +318,7 @@ border: 0; border-radius: var(--bl-ui-radius, 8px); background: var(--bl-fill-ca
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup.ss-xclose > .ss-popx:hover { box-shadow: inset 0 0 0 99px var(--bl-hover); }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup:not(.ss-xclose) > .popup-button-close:hover { box-shadow: inset 0 0 0 99px var(--bl-hover) !important; }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.large_dialogue_popup :is(.ss-head, .ss-wz-head) { padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s1, 4px)); }
+:where(:root:not([data-bl-mb-off~="dialog"])) > body.salty dialog.popup.ss-dlg.ss-xclose:not(.large_dialogue_popup) .ss-head-t { padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s2, 8px)); }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty .ss-scope .ss-head { gap: var(--bl-s2, 8px); padding: 0 0 var(--bl-s3, 12px); }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty .ss-scope .ss-head-t small { font-size: var(--bl-ts-cap, 12.5px); color: var(--salty-muted); }
 :where(:root:not([data-bl-mb-off~="dialog"])) > body.salty .ss-scope .ss-head-a { gap: 2px; }
@@ -616,6 +617,7 @@ html:not(#bl-num-off):where(:not([data-bl-mb-off~="tabs"])) body.salty #rm_exten
 :where(:root:not([data-bl-mb-off~="touch"])) > body.salty #ss-settings :is(.bl-ext-view, .bl-ext-findbtn, .bl-ext-jump, .bl-ext-fold, .bl-ext-more) { position: relative; }
 :where(:root:not([data-bl-mb-off~="touch"])) > body.salty #ss-settings :is(.bl-ext-view, .bl-ext-findbtn, .bl-ext-jump, .bl-ext-start-x, .bl-ext-fold, .bl-ext-more)::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }
 :where(:root:not([data-bl-mb-off~="touch"])) > body.salty .ss-scope .ss-tabs { padding-bottom: var(--bl-s1, 4px); }
+:where(:root:not([data-bl-mb-off~="touch"])) > body.salty dialog.popup.ss-dlg .ss-root { overflow-x: clip; overflow-y: visible; }
 :where(:root:not([data-bl-mb-off~="touch"])) > body.salty .ss-scope .ss-colorf { min-height: var(--bl-ui-touch, 44px); }
 :where(:root:not([data-bl-mb-off~="touch"])) > body.salty dialog.popup.ss-dlg::backdrop { background: var(--salty-bg, Canvas) !important; }
 :where(:root:not([data-bl-mb-off~="touch"])) > body.salty .ss-side-handle::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }

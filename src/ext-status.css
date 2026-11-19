@@ -484,6 +484,9 @@ body.salty dialog.popup.ss-dlg.large_dialogue_popup.ss-xclose > .ss-popx:hover {
 body.salty dialog.popup.ss-dlg.large_dialogue_popup:not(.ss-xclose) > .popup-button-close:hover { box-shadow: inset 0 0 0 99px var(--bl-hover) !important; }
 /* ✕ 자리만큼 첫 줄 오른쪽을 비워요 */
 body.salty dialog.popup.ss-dlg.large_dialogue_popup :is(.ss-head, .ss-wz-head) { padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s1, 4px)); }
+/* 버그 사냥 7(사용자 환경 리그 · 폰 384 · 412): 띠 아이콘(주사위 등)으로 바로 여는 탭 창은 큰 창 표식(large_dialogue_popup)이 없어 위 규칙이 안 걸려요 —
+   원작 ✕(.ss-popx · 오른쪽 위 34px)가 머리 제목 끝 글자 위에 얹혔어요(제목 오른쪽 끝 369 · ✕ 왼쪽 끝 334 · 세로 13px 겹침). 제목 칸만 ✕ 자리만큼 비워요(✕ 꼴 · 자리는 원작 그대로) */
+body.salty dialog.popup.ss-dlg.ss-xclose:not(.large_dialogue_popup) .ss-head-t { padding-inline-end: calc(var(--bl-ui-icon, 34px) + var(--bl-s2, 8px)); }
 
 /* ---------- 창 머리 ---------- */
 body.salty .ss-scope .ss-head { gap: var(--bl-s2, 8px); padding: 0 0 var(--bl-s3, 12px); }
@@ -934,6 +937,10 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-pills > small { align-self: cent
   body.salty #ss-settings :is(.bl-ext-view, .bl-ext-findbtn, .bl-ext-jump, .bl-ext-start-x, .bl-ext-fold, .bl-ext-more)::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--bl-ui-touch, 44px)); height: max(100%, var(--bl-ui-touch, 44px)); transform: translate(-50%, -50%); }
   /* 안쪽 탭 줄: 아래 여백 4 — 누르는 상자가 안 잘리게(손가락 화면만) */
   body.salty .ss-scope .ss-tabs { padding-bottom: var(--bl-s1, 4px); }
+  /* 버그 사냥 7(사용자 환경 리그 · 폰 384 · 412): 오른쪽 끝에 닿은 단추들(머리 줄 「…」 30px 등)의 누르는 상자(44px)가 판 밖으로 7px 나가서 창 본문(.popup-content · 가로 넘침 숨김)에
+     숨은 가로 굴림 5px 가 생겼어요(scrollWidth 363 > 358). 탭 · 입력 칸이 보이는 자리로 굴러갈 때 본문이 그만큼 왼쪽으로 밀려 카드 왼쪽 테두리와 첫 글자가 잘렸어요(「관리」 · 「세계」 사진).
+     창 안 판(.ss-root)에서 가로만 잘라요(세로 누르는 넓이 44 는 그대로 · 잘리는 것은 판 끝 밖 7px 뿐 · 탭 줄 같은 제 굴림 칸은 그대로) */
+  body.salty dialog.popup.ss-dlg .ss-root { overflow-x: clip; overflow-y: visible; }
   /* 꾸미기 색 줄은 줄 전체가 누르는 칸(44) · 큰 창 위아래 빈틈으로 뒤 설정 글이 비치지 않게 뒷막을 테마 바탕색으로 */
   body.salty .ss-scope .ss-colorf { min-height: var(--bl-ui-touch, 44px); }
   body.salty dialog.popup.ss-dlg::backdrop { background: var(--salty-bg, Canvas) !important; }

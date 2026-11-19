@@ -12,6 +12,7 @@
 // 순수 함수 (시험: tools/tests/translator-leftover.mjs). 예: 원문 「室長」 → 번역 「실장 室長님」 의 室長 를 한 번 더 보낸다.
 // 3.1.4 이야기 속 알림 줄(【 DRAW — DOUBLE KNOCKOUT 】 — rp-lines.js)이 원문 그대로 온 것도 (notices 옵션). 한글이 하나도 없는 줄이라 위 규칙들은 못 잡았다.
 import { noticeKeys, untranslatedNotice, noticeStillLeft, NOTICE_FIX_NOTE } from './rp-lines.js';
+import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 const KANA = /[ぁ-ゖァ-ヺ]/;
 const HAN = /\p{Script=Han}/u;
 const HAN_RUN = /\p{Script=Han}{2,}/gu;
@@ -110,7 +111,7 @@ const englishLine = b => count(b, LATIN) > count(b, KANA) + count(b, HAN) + coun
 //   긴 답에서 줄 수 × 원문 크기로 늘었다 (300줄 × 300줄 181 ms). 마지막 원문 하나만 들고 있는다 (지난 답의 원문을 쌓아 두지 않게)
 let feSource = null, feLines = [], feMemo = new Map();
 const fromEnglish = (phrase, source) => {
-    const src = String(source ?? '');
+    const src = foldBlank(source);   // 버그 사냥 7 점자 빈칸 원문(`Of⠀course,`)에서도 여러 낱말을 찾게(같은 길이)
     if (src !== feSource) { feSource = src; feLines = src.split('\n').map(bare).map(b => [b, englishLine(b)]); feMemo = new Map(); }
     if (feMemo.has(phrase)) return feMemo.get(phrase);
     const re = wordRe(phrase);

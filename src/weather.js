@@ -14,6 +14,7 @@ import { parseColor } from './palettes.js';
 import { getSettings, saveSettings } from './settings.js';
 import { loadWeatherModule } from './weather-load.js';
 import { readMeatballWeather, meatballWeatherModes } from './weather-meatball.js';
+import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 // 코드 정리(버그 사냥 2): syncWeather · previewWeather 가 따로 적던 효과 이름 목록 하나로(weather-profiles.js WEATHER_MODES 와 같은 값)
 const MODES = ['rain', 'snow', 'fog', 'sun', 'star', 'firefly', 'rainbow', 'shadow', 'breeze', 'glass', 'water', 'lemon', 'petal', 'feather', 'butterfly', 'meteor', 'custom', 'tracker'];
@@ -54,7 +55,7 @@ const GLOOM = /흐[림린]|구름\s*많|overcast|gloomy|阴|多云|曇/i;
 
 /** 트래커 날씨 글 → 겹칠 효과들 (앞이 주 효과). 예: "안개비" → 비 + 안개, "여우비" → 비 + 햇살, "눈안개" → 눈 + 안개 */
 export function detectWeatherAll(text) {
-    const value = String(text || '');
+    const value = foldBlank(text);   // 버그 사냥 7 점자 빈칸(`흐린⠀뒤⠀비` · `snow⠀showers` · `no⠀wind`)도 빈칸 — 낱말 앞 · 지우는 말 판정이 빗나갔어요
     const found = [];
     if (SNOW.test(value)) found.push('snow');
     if (RAIN.test(value.replace(NOT_RAIN, ' ').replace(NOT_RAIN_KO, ' ')) && !INDOOR.test(value)) found.push('rain'); // Retired glass effect: indoor rain stays clear.
@@ -280,7 +281,7 @@ const THINK_BLOCK = /<(think|thinking|ECoT|reasoning)\b[^>]*>[\s\S]*?<\/\1\s*>/g
 const NO_WEATHER = { modes: [], all: [], warm: false };
 /** 글 속 상태창의 날씨 항목 글 (없으면 '') */
 export function statusWeatherText(text) {
-    const value = String(text || '').replace(THINK_BLOCK, '');
+    const value = foldBlank(text).replace(THINK_BLOCK, '');   // 버그 사냥 7 점자 빈칸도(`Rain⠀Time:⠀Night` 의 다음 칸 자르기)
     const found = STATUS_WEATHER.exec(value) || COMPACT_WEATHER.exec(value);
     if (!found) return '';
     const cut = NEXT_FIELD.exec(found[1]);

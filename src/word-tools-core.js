@@ -1,4 +1,5 @@
 // Single-pass matching. Replacement text is never searched again or stored as sentinel text.
+import { BLANK, matchBlankStyle } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 const wordChar = c => !!c && /[\p{L}\p{N}\p{M}_]/u.test(c);
 const pairs = [['으로','로'], ['이랑','랑'], ['은','는'], ['이','가'], ['을','를'], ['과','와'], ['아','야']];
 const particles = pairs.flat().sort((a,b)=>b.length-a.length);
@@ -19,7 +20,9 @@ function particleAt(chars, start) {
     return '';
 }
 export function replaceText(source, rules, options = {}) {
-    const fold = c => options.caseSensitive ? c : c.toLowerCase();
+    // 버그 사냥 7 점자 빈칸(U+2800)과 보통 빈칸을 같은 글자로 봐요 — 「pocket watch → 회중시계」 규칙이 점자 빈칸 원문(`pocket⠀watch`)에 안 걸렸어요
+    const fold = c => { const d = c === BLANK ? ' ' : c; return options.caseSensitive ? d : d.toLowerCase(); };
+    const styled = new Map(), styleTo = to => { if (!styled.has(to)) styled.set(to, matchBlankStyle(source, to)); return styled.get(to); };   // 원문이 점자 빈칸만 쓰면 바꿀 말의 빈칸도 그 꼴로
     const root = new Map();
     for (const [rank,rule] of rules.entries()) {
         if (!rule || rule.enabled === false) continue;
@@ -47,6 +50,7 @@ export function replaceText(source, rules, options = {}) {
                 if(!hit || rule.rank<hit.rank)hit={...rule,end:j+1,p};
             }
             if(!hit){out.push(chars[i++]);outLen++;continue;}
+            if(hit.to.includes(' '))hit.to=styleTo(hit.to);
             let tail=hit.p;
             if(tail && hit.to) {
                 const pair=pairs.find(a=>a.includes(tail)), jong=ending(hit.to);

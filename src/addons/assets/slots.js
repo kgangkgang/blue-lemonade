@@ -6,6 +6,7 @@
 // 연결한 (싼) 모델이 자리마다 그림 이름을 골라 extra 에만 적는다. 번역기 · TTS · 다시 쓰기는 자리를 글로 보지 않는다.
 import { splitName } from './names.js';
 import { thinkingHeadEnd } from '../../message-work.js';   // 1.6.8 순수 함수 (실리태번 없음)
+import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 export const SLOT_CLASS = 'bl-asset-slot';
 /** 저장되는 자리 모양 — 이 모양 그대로만 자리로 본다 (번역기 보호 규칙 · 다시 쓰기 · TTS 도 같은 모양) */
@@ -119,7 +120,7 @@ const NAME_BRACKET = /^[^\s「『<]{1,20}[「『]/;
 const HEX_QUOTE = /^#[0-9a-fA-F]{6}[ \t]*[「『“"]/;
 /** 이 문단이 대사로 시작하나 (「」 · “” · "…" · 대사 색 span · 이름: 「…」) */
 export function isDialogueStart(paragraph) {
-    let rest = String(paragraph ?? '');
+    let rest = foldBlank(paragraph);   // 버그 사냥 7 점자 빈칸(`이름:⠀"…"`)도 빈칸 — 판정만(자리는 문단 단위)
     let colored = false;
     for (let guard = 0; guard < 20; guard++) {
         const m = LEAD.exec(rest);

@@ -469,7 +469,10 @@ function tidyFlags(s) {
         s.chat.homeIcon = s.chat.homeIcon === 'lemon' || s.chat.homeIcon === 'square' || s.chat.homeIcon === 'tile' ? s.chat.homeIcon : 'auto';   // 1.1.2 홈 화면 아이콘 모양(splash.js) · 1.1.4 흰 타일
         s.chat.demFold = flag(s.chat.demFold, true);
         s.chat.demGlow = Number.isFinite(Number(s.chat.demGlow)) ? Math.min(100, Math.max(0, Math.round(Number(s.chat.demGlow)))) : 35; // 8.0.9 데우스 V3 테두리 빛 (css/30-dem-skin.css --bl-dem-glow)
-        s.chat.demPreviewVersion = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'v3'; // 8.1.0 상태창 글자 미리보기의 데우스 표본 판 (fruit-type-ui.js, 데우스 전체에 하나)
+        // 8.1.0 상태창 글자 미리보기의 데우스 표본 판 (fruit-type-ui.js, 데우스 전체에 하나)
+        //   11-19 V4 와 「지금 프리셋 따라」(auto · 기본)를 더하며 열쇠를 demPreviewPick 으로 — 옛 demPreviewVersion 은 기본 V3 가 늘 저장돼 있어 고른 것과 가릴 수 없어서, 2.5 만 옮기고 나머지는 auto
+        if (!['auto', 'v4', 'v3', '2.5'].includes(s.chat.demPreviewPick)) s.chat.demPreviewPick = s.chat.demPreviewVersion === '2.5' ? '2.5' : 'auto';
+        delete s.chat.demPreviewVersion;
         s.chat.numComma = flag(s.chat.numComma, DEFAULTS.chat.numComma);
         s.chat.chatLight = flag(s.chat.chatLight, true); // (10-29) 긴 채팅의 화면 밖 메시지 가볍게 (chat-light.js) — 예전 설정에는 없으니 켬
         s.chat.personaDefer = flag(s.chat.personaDefer, true); // (10-29 perf-persona) 입력 중 목록 갱신 미루기 (persona-defer.js) — 예전 설정에는 없으니 켬

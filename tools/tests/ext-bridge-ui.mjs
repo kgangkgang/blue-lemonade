@@ -179,9 +179,9 @@ await test('④ 지난 요청에 실은 줄: 없으면 그렇다고, 있으면 �
     mountBridgeUi(p.doc, bridge);
     const lines = p.content.querySelector('[data-bl-bridge-lines]');
     assert.match(lines.textContent, /아직 실은 요청이 없어요/);
-    bridge.state.last = { ext: { at: 0, slot: 'gen', kind: 'gen', lines: ['Leon → 리온', 'Aveno → 아베노'] }, main: { at: 0, lines: ['Klein → 클라인'] }, model: null };
+    bridge.state.last = { ext: { at: 0, slot: 'gen', kind: 'gen', lines: ['Loren → 로렌', 'Aveno → 아베노'] }, main: { at: 0, lines: ['Klein → 클라인'] }, model: null };
     mountBridgeUi(p.doc, bridge);
-    assert.match(lines.textContent, /확장 AI 요청 · 만들기 · .* · 2줄\nLeon → 리온\nAveno → 아베노\n\n본편 요청 · .* · 1줄\nKlein → 클라인/);
+    assert.match(lines.textContent, /확장 AI 요청 · 만들기 · .* · 2줄\nLoren → 로렌\nAveno → 아베노\n\n본편 요청 · .* · 1줄\nKlein → 클라인/);
 });
 
 await test('⑤ 모델 칸: 「확장 AI 전체」 + 여섯 갈래 · 회사 목록은 번역기와 같은 여덟 곳', async () => {

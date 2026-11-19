@@ -8,6 +8,7 @@
 import { watchDom } from './dom-watch.js';
 import { mbFit, onMbOff } from './mb-switch-core.js';
 import { dropLead, pinNodes } from './mb-place-mark.js';   // 버그 사냥 6 장소 이름 앞 기호 — 띠 · 지도 밖(상태 칸 · 갈 곳 · 검색 · 알림 · 기록)도
+import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 export const FLOOR_ATTR = 'data-bl-mb-floors';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -63,7 +64,7 @@ function tempAt(s, m) {
 }
 /** 글 한 줄에서 층 하나(1 이상 = 지상 · −1 이하 = 지하 · 없으면 null). 여럿이면 글에서 가장 먼저 나온 것 */
 export function floorIn(text) {
-    const s = String(text ?? ''); if (!s) return null;
+    const s = foldBlank(text); if (!s) return null;   // 버그 사냥 7 점자 빈칸(`3rd⠀floor` · `지하⠀1층`)도 빈칸 — 층을 못 읽거나 지하 1층이 1층이 됐어요
     let best = null;
     for (const [re, to, keep] of FLOOR_RULES) {
         re.lastIndex = 0; let m;
@@ -139,7 +140,7 @@ const ANNEX_EN_PRE = /^(?:(?:the\s+)?(?:(?:front|main|back)\s+)?(?:gates?|entran
 const ANNEX_JA = /^(.+?)(?:の)?(?:正門|裏門|門前|玄関|入口|入り口|裏口|門|前|庭)$/u;
 /** 이름 하나에서 「X + 부속 말」 의 X 후보들(없으면 빈 목록) */
 export function annexBase(name) {
-    const t = labelOf(name).replace(/\s+/g, ' ').trim(), out = [];
+    const t = foldBlank(labelOf(name)).replace(/\s+/g, ' ').trim(), out = [];   // 버그 사냥 7 점자 빈칸 이름(`Grand⠀Hotel⠀Gate`)도
     for (const re of [ANNEX_KO, ANNEX_EN, ANNEX_EN_PRE, ANNEX_JA]) { const m = re.exec(t); if (m) { const x = m[1].replace(/\s*(?:의|の|'s)$/u, '').trim(); if ([...placeNorm(x)].length >= 2) out.push(m[1].trim()); } }
     return out;
 }
@@ -176,7 +177,7 @@ export function annexMap(places, tr = null) {
 }
 /** 1.8.2 이름 앞뒤의 표시 기호(@ · # · 전각 ＠ ＃)를 떼요 — 그 확장은 장소에 이 기호를 쓰지 않아요(SNS 아이디 「@이름」 만 따로). 다 떼서 빈 글이면 그대로 */
 export function stripMarks(s) { const t = String(s ?? '').trim(), u = t.replace(/^[@＠#＃]+\s*|\s*[@＠#＃]+$/gu, '').trim(); return u || t; }
-const normName = s => String(s ?? '').toLowerCase().replace(/[\s·・_\-.,'"()（）[\]]+/g, '');
+const normName = s => foldBlank(s).toLowerCase().replace(/[\s·・_\-.,'"()（）[\]]+/g, '');   // 버그 사냥 7 점자 빈칸도
 const simpleFind = (list, name) => { const k = normName(name); return list.find(p => normName(p.name) === k) || null; };
 const r1 = v => Math.round(v * 10) / 10;
 /** 층 → 줄 번호(1F = 1 · B1 = 0 · B2 = −1 …): 1층과 지하 1층 사이가 땅이에요 */

@@ -11,6 +11,7 @@
 import { onMbAdded } from './mb-arrow.js';   // 1.7.8 화살표 모듈의 채팅 밖 구독을 나눠 써요(감시 허브 구독 자리를 늘리지 않게)
 import { addMessageDecorator } from './message-decor.js';
 import { mbOff } from './mb-switch-core.js';
+import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 export const ATTR = 'data-bl-mb-diary';
 const WARN = String.fromCodePoint(0x26A0);   // 그 확장 ⚠ 칩의 첫 글자(화면에 그리는 글이 아니라 견주기만 해요)
@@ -20,7 +21,7 @@ const off = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw') || mbOff(KEY, 
 const DATEISH = /^(\d|D\s*-|내일|모레|글피|오늘|다음|이번|tomorrow|today|tonight|next\b|in\s+\d|on\s+\d|(mon|tues|wednes|thurs|fri|satur|sun)day\b)/i;
 /** 일지 꼴 event 줄: 키가 event · 일정이고 값에 「|」(날짜 | 제목) 칸이 없고 지우기(「-이름」)도 날짜로 시작하지도 않는 문장(열다섯 자 이상) */
 export function diaryLine(line) {
-    const m = /^\s*(event|일정)\s*[:：]\s*(.*)$/i.exec(String(line ?? '')); if (!m) return false;
+    const m = /^\s*(event|일정)\s*[:：]\s*(.*)$/i.exec(foldBlank(line)); if (!m) return false;   // 버그 사냥 7 `event:⠀tomorrow…` 도 값 머리 빈칸을 떼고 봐요
     const v = m[2].trim();
     // 날짜처럼 시작하는 짧은 값(「3월 14일」 · 「내일」)은 약속을 적다 만 진짜 못 읽은 줄일 수 있어 그대로 둬요 — 일지는 문장(열다섯 자 이상)이에요
     return v.length >= 15 && !v.includes('|') && !/^[-−]/.test(v) && !DATEISH.test(v);

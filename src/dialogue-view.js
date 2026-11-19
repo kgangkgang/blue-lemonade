@@ -71,7 +71,7 @@ function names(c, tts) {
     return knownWithRoster([...out].filter(Boolean), roster);
 }
 
-const fold = t => String(t || '').replace(/[\s*_~`.…⋯]/g, '').toLowerCase();
+const fold = t => String(t || '').replace(/[\s⠀*_~`.…⋯]/g, '').toLowerCase();   // 버그 사냥 7 점자 빈칸도 공백(dialogue-lines.js SKIP 과 같이)
 /**
  * 줄마다 화자 이름 · 점 색. TTS 가 켜져 있으면 재생기와 같은 화자 — player.dialogueSpeakers (색 → 배운 이름 · 이름표 · 저장된 대사 분석, 글을 한 번만 나눔).
  * 「보낸 사람」으로 떨어진 줄(색 · 이름표 · 분석으로 못 정함)은 이름을 비운다 — 세계관 카드면 카드 이름이 대사 주인이 아니다.

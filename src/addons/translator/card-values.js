@@ -4,6 +4,7 @@
 //   번역 대상이 한국어일 때만 쓴다(index.js 가 판단). 재번역은 기억을 쓰지 않고 새 결과로 덮어써서 틀린 값을 고칠 수 있다.
 // 카드 키 · 마크업 · 숨긴 값은 display-cards.js 가 그대로 둔다. 여기서는 값 글자만 본다.
 
+import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 const WEEK_ZH = { 一: '월', 二: '화', 三: '수', 四: '목', 五: '금', 六: '토', 日: '일', 天: '일' };
 const CALENDAR_ZH = { 公历: '양력', 阳历: '양력', 农历: '음력', 阴历: '음력', 新历: '신력', 旧历: '구력', 行政历: '행정력', 帝国历: '제국력', 王国历: '왕국력', 联邦历: '연방력', 星历: '성력', 纪元: '기원', 历: '력' };
 const PERIOD_ZH = { 上午: '오전', 下午: '오후', 凌晨: '새벽', 清晨: '이른 아침', 早晨: '아침', 早上: '아침', 中午: '정오', 正午: '정오', 午后: '오후', 傍晚: '해 질 녘', 黄昏: '황혼', 晚上: '저녁', 夜晚: '밤', 夜间: '밤', 夜里: '밤', 深夜: '심야', 午夜: '자정' };
@@ -97,7 +98,7 @@ function hanWords(run) {
 }
 const wordOf = (word, slot) => keyOf(WORDS_EN, word) || (slot ? keyOf(SLOT_WORDS, word) : null);
 function piece(text, slot = false) {
-    const value = text.trim(); if (!value) return '';
+    const value = foldBlank(text).trim(); if (!value) return '';   // 버그 사냥 7 점자 빈칸(`Light⠀rain`)도 낱말 사이 — 고정 사전에 안 맞아 AI 번역으로 가던 것
     const english = wordOf(value.toLowerCase().replace(/\s+/g, ' '), slot);
     if (english) return english;
     const out = [];

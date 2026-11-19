@@ -21,6 +21,7 @@ import { keepKorean } from './korean-keep.js';   // 2.7.9 이미 한국어인 �
 import { HIDDEN_BLOCKS, isHiddenBlock } from './hidden-blocks.js';   // 8.0.6 프리셋이 화면에서 숨기는 블록 · 태그 없는 생각 줄은 보내지 않기
 import { compactTags } from './tag-compact.js';   // 8.0.6 보이는 본문 태그 속성은 짧은 이름으로 보내고 받자마자 되돌리기
 import { skyAttrs } from './sky-attrs.js';   // 8.0.6 번역한 시간 상태창에서도 하늘 장면 (data-t · data-w)
+import { demLabelsKo } from './dem-labels.js';   // 11-19 데우스 카드 위 영어 표지를 화면에서만 한국어로 (스위치 dem_labels_ko)
 import { stageAttrs } from './v3-modules.js';   // 8.0.8 번역한 V3 관계 단계에서도 단계 막대 (data-stage)
 import { cacheWhyLine, segmentBlocker, shortHash } from './translation-segments.js';   // 1.5.3 문단 캐시가 빗나간 까닭 한 줄 · 통째로 가는 까닭 · 열쇠 조각 해시
 import { streamWatch, hasFailMark } from './translation-segments.js';   // 2.6.2 묶음 흘려받기 — 문단이 닫힐 때마다 진행 숫자 · 바로 보기 (흘려받기 자체는 translation-stream.js, 처음 쓸 때 불러옴)
@@ -231,6 +232,7 @@ const defaultSettings = {
     translation_check: true,     // 2.6.0 번역 점검 표시 (의심 문단 · 번역 단추의 메시지 상태)
     translation_autofix: false,  // 7.2.6 점검이 의심 문단을 자동으로 다시 번역(유료 요청 ≤3/메시지)할지 — 전에는 점검과 한 스위치였다 (api-audit #5). 끄면 표시 · 단추만
     reasoning_translate: true,   // 2.6.0 생각 블록 카드의 「번역해서 보기」
+    dem_labels_ko: true,         // 11-19 데우스 카드 위 영어 표지(Recurring · 주사위 막대 · 탭 이름 …)를 화면에서만 한국어로 (dem-labels.js · 원작 정규식 · 저장 글은 그대로)
     keep_korean_source: true,    // 2.7.9 한국어로 옮길 때 이미 한국어인 문단 · 대사는 보내지 않고 그대로 (korean-keep.js)
     prompt_cache: true,          // 7.7.2 채팅 번역은 지시문을 앞에 두고 Claude 직접 연결이면 그 앞부분을 캐시 (끄면 예전 요청 그대로)
     hide_delete_button: true,
@@ -608,6 +610,7 @@ function loadSettings() {
     $('#llm_translation_autofix').prop('checked', extensionSettings.translation_autofix === true);   // 7.2.6
     $('#llm_reasoning_translate').prop('checked', extensionSettings.reasoning_translate !== false);   // 2.6.0
     $('#llm_keep_korean').prop('checked', extensionSettings.keep_korean_source !== false);   // 2.7.9
+    $('#llm_dem_labels_ko').prop('checked', extensionSettings.dem_labels_ko !== false);   // 11-19
     $('#llm_prompt_cache').prop('checked', extensionSettings.prompt_cache !== false);   // 7.7.2
     $('#llm_db_tool_qr').prop('checked', extensionSettings.db_tool_qr !== false);   // 3.1.6
 
@@ -3344,7 +3347,9 @@ function installSkyAttrsHook() {
     if (skyHookAdded || typeof formatter?.addHook !== 'function' || !formatter.stage?.AFTER_REGEX) return;
     skyHookAdded = true;
     // 8.0.8 같은 훅에서 V3 관계 줄의 data-stage 도 영어로 (번역한 단계 「모르는 사이」에서도 단계 막대가 켜지게, v3-modules.js)
-    formatter.addHook((mes, info) => (info?.isReasoning || typeof mes !== 'string' ? mes : stageAttrs(mes.includes('data-t="') ? skyAttrs(mes) : mes)), { stage: formatter.stage.AFTER_REGEX, order: formatter.order?.LATEST });
+    // 11-19 같은 훅에서 데우스 카드 표지도 한국어로 (dem-labels.js · 스위치를 끄면 원작 영어 그대로)
+    const labels = mes => (extensionSettings.dem_labels_ko !== false && mes.includes('dem-') ? demLabelsKo(mes) : mes);
+    formatter.addHook((mes, info) => (info?.isReasoning || typeof mes !== 'string' ? mes : labels(stageAttrs(mes.includes('data-t="') ? skyAttrs(mes) : mes))), { stage: formatter.stage.AFTER_REGEX, order: formatter.order?.LATEST });
 }
 function hideBrokenCommentsOnRender() {
     const formatter = getContext()?.messageFormatter;
@@ -6704,6 +6709,18 @@ function initializeEventHandlers() {
             const id = Number(element.getAttribute('mesid'));
             if (this.id === 'llm_reasoning_translate') { if (chat[id]?.extra?.reasoning) { try { updateReasoningUI(id); } catch { /* 생각 칸이 없는 메시지 */ } } reasoningView.decorate(id); }
             else if (chat[id]?.extra?.display_text) refreshMessageBlock(id, chat[id]);
+        }
+    });
+    // 11-19 데우스 카드 표지 한국어 — 바꾸면 데우스 카드가 있는 그려진 메시지만 다시 그린다 (글은 그대로 · 화면 서식만)
+    $('#llm_dem_labels_ko').on('change', function () {
+        extensionSettings.dem_labels_ko = $(this).is(':checked');
+        saveSettingsDebounced();
+        const chat = getContext().chat || [];
+        for (const element of document.querySelectorAll('#chat .mes[mesid]')) {
+            if (!element.querySelector('.mes_text [class*="dem-"]')) continue;
+            const id = Number(element.getAttribute('mesid'));
+            if (!chat[id]) continue;
+            refreshMessageBlock(id, chat[id]);   // 번역 안 한 메시지도 같은 길로 — 편집 중이면 건너뛰고, 다시 그린 뒤 알림(rerender-notify)까지
         }
     });
     // 2.7.9 이미 한국어인 부분은 보내지 않기 — 다음 번역부터 (그려진 번역문은 그대로)

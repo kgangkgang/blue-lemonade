@@ -1,8 +1,9 @@
 // Pure helpers shared by translation and diagnostic tools.
+import { isSpace } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 export const IDS = ['retranslate'];
 export const LABELS = { retranslate: '선택 부분 재번역' };
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export const norm = value => String(value ?? '').replace(/\s+/gu, ' ').trim();
+export const norm = value => String(value ?? '').replace(/[\s⠀]+/gu, ' ').trim();   // 버그 사냥 7 점자 빈칸도 빈칸(화면 글은 보통 빈칸 · 원문은 점자 빈칸)
 export function jsonAnswer(raw) {
     const text = String(raw ?? '').replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
     try { return JSON.parse(text); } catch { throw Error('AI 답변 형식을 읽지 못했어요. 기존 내용은 유지돼요.'); }
@@ -14,7 +15,7 @@ export function uniqueSpan(text, excerpt, markers = new Set()) {
     let normalized = '', offsets = [];
     for (let i = 0; i < text.length; i++) {
         if (markers.has(i)) continue;
-        if (/\s/u.test(text[i])) { if (normalized.endsWith(' ')) continue; normalized += ' '; }
+        if (isSpace(text[i])) { if (normalized.endsWith(' ')) continue; normalized += ' '; }
         else normalized += text[i];
         offsets.push(i);
     }

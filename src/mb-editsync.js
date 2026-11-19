@@ -14,12 +14,13 @@
 //   시험: tools/tests/mb-editsync.mjs
 import { mbOff } from './mb-switch-core.js';
 import * as Sub from './mb-autosub.js';
+import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 export const KEY = 'editsync';
 export const STATE = 'bl_mbedit';     // 메시지 extra 칸: { [스와이프]: { off: { 이름열쇠: { name, t } }, keep: { 이름열쇠: true } } }
 export const CUT_ATTR = 'data-bl-cut';
 const META = 'statussim';
-const norm = x => String(x ?? '').replace(/\s+/g, '').toLowerCase();
+const norm = x => foldBlank(x).replace(/\s+/g, '').toLowerCase();   // 버그 사냥 7 점자 빈칸도 빈칸
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 export const active = (doc = globalThis.document) => !mbOff(KEY, doc) && (!doc?.body?.classList?.contains || doc.body.classList.contains('salty'));
 
@@ -30,7 +31,8 @@ const sheet = c => { const meta = c?.chatMetadata?.[META]; return meta && typeof
 /** 변화 줄 값 「A +3, B -2」 → [{ name, raw }] (이름을 못 읽은 조각은 name = '') */
 export function partsOf(value) {
     return String(value ?? '').split(/\s*[,，]\s*(?=[^\d\s,，])/u).map(raw => {
-        const m = /^(.+?)\s*[=+\-−]\s*\d[\d.]*\s*%?$/u.exec(raw.trim());
+        // 버그 사냥 7 점자 빈칸 줄(`Mira⠀+2`)은 이름을 「Mira⠀」 로 잡아 본문 · 인물 표와 안 맞았어요 — 이름은 접은 글에서, 조각 글(raw)은 원래 그대로
+        const m = /^(.+?)\s*[=+\-−]\s*\d[\d.]*\s*%?$/u.exec(trimBlank(raw));
         return { name: m ? m[1].replace(/^[^:：]{1,12}[:：]\s*/u, '').trim() : '', raw: raw.trim() };   // 「A +2, trust: A +1」 처럼 한 줄에 다른 키를 섞은 조각은 키를 떼고 이름만
     }).filter(p => p.raw);
 }
@@ -58,11 +60,11 @@ export function withoutPeople(ops, eng, offKeys, state = null) {
 }
 
 // ── 본문에 그 인물이 나오나 ─────────────────────────────
-const plain = text => String(text ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').toLowerCase();
+const plain = text => foldBlank(text).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').toLowerCase();
 const CJK = /[぀-ヿ㐀-鿿]/u;   // 띄어 쓰지 않는 글(가나 · 한자)은 낱말 머리를 못 가려요
 /** 글에 이름 꼴 하나가 낱말 머리에서(앞이 글자 · 숫자가 아님) 나오나 — 「수아」 가 「지수아」 에 걸리지 않게. 가나 · 한자 이름은 어디든 */
 export function mentions(text, form) {
-    const t = plain(text), f = String(form ?? '').trim().toLowerCase();
+    const t = plain(text), f = trimBlank(form).toLowerCase();
     if ([...f].length < 2) return false;
     for (let i = t.indexOf(f); i >= 0; i = t.indexOf(f, i + 1)) if (i === 0 || CJK.test(f) || !/[\p{L}\p{N}]/u.test(t[i - 1])) return true;
     return false;

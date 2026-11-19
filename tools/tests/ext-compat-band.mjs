@@ -125,10 +125,10 @@ ok('⑥ 얼굴 표시 설정: 기본 = 아이콘(표식 없음) · 「이름 첫
     assert.deepEqual(els.map(e => e.a['data-bl-ini']), ['도', '도', '릴'], '1.5.4 늘 한 글자');
 });
 ok('⑥-1 (1.5.5) 얼굴 바탕 = 인물표의 그 사람 색 그대로(섞지 않아요 — 1.5.4 는 밤에 적갈색이 됐어요) · 글자는 흰색 / 짙은 색 중 또렷한 쪽 4.5 : 1 · 모르면 표식 없음', () => {
-    const people = { version: 1, get: n => ({ Leon: { color: '#E0567F' }, '미라': { color: '#ffe23c' } }[n] ?? null), onChange: () => () => {} };
-    assert.equal(m.personColor(people, 'Leon'), '#e0567f');
+    const people = { version: 1, get: n => ({ Loren: { color: '#E0567F' }, '미라': { color: '#ffe23c' } }[n] ?? null), onChange: () => () => {} };
+    assert.equal(m.personColor(people, 'Loren'), '#e0567f');
     assert.equal(m.personColor(people, 'Mira', '미라'), '#ffe23c', '화면 이름으로도');
-    assert.equal(m.personColor(people, 'Nobody'), null); assert.equal(m.personColor(null, 'Leon'), null);
+    assert.equal(m.personColor(people, 'Nobody'), null); assert.equal(m.personColor(null, 'Loren'), null);
     const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
     const dist = (a, b) => Math.hypot(...rgb(a).map((v, i) => v - rgb(b)[i]));
     for (const c of ['#ffe23c', '#e0567f', '#1f2a6b', '#e63946', '#ff5a3c', '#b799e8', '#424c59', '#118ab2', '#777777']) {
@@ -139,7 +139,7 @@ ok('⑥-1 (1.5.5) 얼굴 바탕 = 인물표의 그 사람 색 그대로(섞지 �
     assert.equal(m.faceColors('#ff5a3c').bg, '#ff5a3c', '또렷한 색은 손대지 않아요'); assert.equal(m.faceColors('#b799e8').bg, '#b799e8');
     assert.ok(dist(m.faceColors('#e63946').bg, m.faceColors('#ff5a3c').bg) > 20, '빨강 · 주황이 구분돼요');
     const face = name => { const a = { title: name }; const vars = {}; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, hasAttribute: k => k in a, removeAttribute: k => { delete a[k]; }, style: { setProperty: (k, v) => { vars[k] = v; }, removeProperty: k => { delete vars[k]; } }, a, vars }; };
-    const els = ['Leon', 'Nobody'].map(face);
+    const els = ['Loren', 'Nobody'].map(face);
     const win = { [Symbol.for('blue-lemonade.names')]: { people }, getComputedStyle: () => ({ color: 'rgb(225, 225, 229)' }) };
     m.paintFaces({ body: { hasAttribute: () => true }, querySelectorAll: () => els, defaultView: win });
     assert.equal(els[0].a['data-bl-pc'], '#e0567f'); assert.equal(els[0].vars['--bl-face'], '#e0567f'); assert.match(els[0].vars['--bl-face-ink'], /^#[0-9a-f]{6}$/);
@@ -148,10 +148,10 @@ ok('⑥-1 (1.5.5) 얼굴 바탕 = 인물표의 그 사람 색 그대로(섞지 �
     assert.match(css, /\.ss-ava\.emo\[data-bl-pc\][^{]*\{ background: var\(--bl-face\); color: var\(--bl-face-ink, var\(--salty-text\)\); \}/);
 });
 ok('⑥-2 (1.5.4) 대사가 없어도 TTS 카드별 색 기억(lemon_voice.card_colors)에서 — 지금 카드 · 그룹 구성원 · 전체 이름 · 첫 낱말', () => {
-    const ctx = { characterId: 0, characters: [{ avatar: 'a.png' }], extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#E0567F': 'Mina Park', '#3a8ee6': '레오', 'bad': '누구' }, 'b.png': { '#ffe23c': '다른 카드' } } } } };
+    const ctx = { characterId: 0, characters: [{ avatar: 'a.png' }], extensionSettings: { lemon_voice: { card_colors: { 'a.png': { '#E0567F': 'Mina Park', '#3a8ee6': '로런', 'bad': '누구' }, 'b.png': { '#ffe23c': '다른 카드' } } } } };
     const t = m.cardColorTable(ctx);
     assert.equal(m.tableColor(t, 'mina park'), '#e0567f'); assert.equal(m.tableColor(t, 'Mina'), '#e0567f', '첫 낱말');
-    assert.equal(m.tableColor(t, '레오'), '#3a8ee6'); assert.equal(m.tableColor(t, '다른 카드'), null, '다른 카드의 기억은 안 봐요');
+    assert.equal(m.tableColor(t, '로런'), '#3a8ee6'); assert.equal(m.tableColor(t, '다른 카드'), null, '다른 카드의 기억은 안 봐요');
     const g = m.cardColorTable({ groupId: 'g', groups: [{ id: 'g', members: ['a.png', 'b.png'] }], extensionSettings: ctx.extensionSettings });
     assert.equal(m.tableColor(g, '다른 카드'), '#ffe23c', '그룹이면 구성원 카드 전부');
     assert.equal(m.cardColorTable({}).size, 0);
@@ -241,15 +241,15 @@ await (async () => {
 ok('⑬ 얼굴 첫 글자는 보이는 이름으로(1.5.2): 화면만 번역이면 번역 메우기가 건 사전 바꾸기로 첫 글자 · 톤은 원문 이름 · 바꾸개가 틀리면 원문', () => {
     const face = name => { const a = { title: name }; return { getAttribute: k => a[k] ?? null, setAttribute: (k, v) => { a[k] = v; }, a }; };
     const doc = els => ({ body: { hasAttribute: () => true }, querySelectorAll: () => els });
-    const raw = ['Leon', 'Lily'].map(face); m.paintFaces(doc(raw));
+    const raw = ['Loren', 'Lily'].map(face); m.paintFaces(doc(raw));
     assert.deepEqual(raw.map(e => e.a['data-bl-ini']), ['L', 'L'], '1.5.4 늘 한 글자');
-    const dict = { Leon: '레오', Lily: '릴리' };
+    const dict = { Loren: '로런', Lily: '릴리' };
     m.setFaceName(name => dict[name] ?? name);
-    const shown = ['Leon', 'Lily', 'Mara'].map(face); m.paintFaces(doc(shown));
-    assert.deepEqual(shown.map(e => e.a['data-bl-ini']), ['레', '릴', 'M']);
+    const shown = ['Loren', 'Lily', 'Mara'].map(face); m.paintFaces(doc(shown));
+    assert.deepEqual(shown.map(e => e.a['data-bl-ini']), ['로', '릴', 'M']);
     assert.equal(shown[0].a['data-bl-tone'], raw[0].a['data-bl-tone'], '톤은 원문 이름으로');
     m.setFaceName(() => { throw Error('사전 오류'); });
-    const bad = [face('Leon')]; m.paintFaces(doc(bad)); assert.equal(bad[0].a['data-bl-ini'], 'L');
+    const bad = [face('Loren')]; m.paintFaces(doc(bad)); assert.equal(bad[0].a['data-bl-ini'], 'L');
     m.setFaceName(null);
     const tr = fs.readFileSync(path.join(root, 'src/ext-bridge-tr.js'), 'utf8');
     assert.match(tr, /m\.setFaceName\(name => \(fill\.view\(\) \? mb\.tr\.trString\(name\) : name\)\)/);
