@@ -5,3 +5,5 @@
    미트볼 맞춤 스위치 「속마음 번역해서 띄우기」(mindtr) 문 — :where 라 특이도 0 */
 @keyframes bl-mb-mind-seen { from { outline-offset: 0; } to { outline-offset: 0; } }
 :where(:root:not([data-bl-mb-off~="mindtr"])) > body.salty .ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-wt-feed li > div > b, .ss-mind-bub > em, .ss-t.t-mind .p > .m) { animation: bl-mb-mind-seen .001s 1 !important; }
+/* 버그 사냥 6 「처음부터 한국어로」: 신호를 받기 전 첫 장면엔 글을 투명하게(원문이 한 장면도 안 보이게) — 신호를 받으면 표식(data-bl-mind-seen)이 붙고, 번역을 기다리는 동안은 대기 표시(⋯)예요 */
+:where(:root:not([data-bl-mb-off~="mindtr"])) > body.salty .ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-wt-feed li > div > b, .ss-mind-bub > em, .ss-t.t-mind .p > .m):not([data-bl-mind-seen]) { color: transparent; }

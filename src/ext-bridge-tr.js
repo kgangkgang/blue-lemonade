@@ -17,7 +17,8 @@
 
 import { addMessageDecorator } from './message-decor.js';
 import { ruleValue } from './addons/translator/card-values.js';
-import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 — 칩 번역 다시 적기(trchip) · 알림 번역(trtoast) · 사전에 고정 낱말(trtidy) · 남은 영어 메우기(trfill)   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
+import { pinText, pinNodes, blankText } from './mb-place-mark.js';   // 버그 사냥 6 답 아래 변동 칩 「📍 @Lobby」 의 장소 앞 기호(표시만)
+import { mbOff, mbFit } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 — 칩 번역 다시 적기(trchip) · 알림 번역(trtoast) · 사전에 고정 낱말(trtidy) · 남은 영어 메우기(trfill)   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
 
 const FOLDER = /meatball|statussim|미트볼/i;
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';
@@ -58,7 +59,7 @@ export function skipPart(part) {
  * 화면에 보일 글 목록 → { list: 보낼 덩이(겹침 없음), owners: 덩이 → 원래 글들 }
  * shown(text): 그 확장 사전으로 바꾼 화면 글(trString) · has(part): 사전에 이미 있나 · tried: 이번 접속에 못 바꾼 덩이
  */
-export function collectGaps(texts, { shown = t => t, has = () => false, tried = new Set(), full = () => null } = {}) {
+export function collectGaps(texts, { shown = t => t, has = () => false, tried = new Set(), full = () => null, pin = false } = {}) {
     const owners = new Map();
     for (const raw of texts) {
         let text = String(raw ?? '').trim();
@@ -68,7 +69,8 @@ export function collectGaps(texts, { shown = t => t, has = () => false, tried = 
         if (!/[A-Za-z]/.test(String(shown(text) ?? text))) continue;   // 그 확장 사전으로 이미 다 바뀌어 보여요
         // 덩이는 원래 글에서 — 화면 글에서 자르면 이름만 바뀐 「카이's Blue …」처럼 반쪽이 돼요. 아는 이름이 든 덩이도 통째로 보내요(번역 지시에 그 이름이 실려요)
         // 1.5.2: 「💞 이름 = 관계 이름」 · 「🗺️ 새 장소: 장소」처럼 나눔표가 있으면 덩이를 나눠요 — 이름은 이미 사전에 있고, 뒤 글만 보내요(상태창 본체와 같은 열쇠)
-        for (const piece of text.split(/\s+=\s+|:\s+|↔/)) {
+        // 버그 사냥 6 「📍 #Lobby」 · 「🗺️ 새 장소: #Lobby」 의 덩이는 「Lobby」 — 기호가 붙은 열쇠(「#Lobby」)로 따로 번역 · 저장하지 않아요(스위치 annex · 「@」 는 원래도 덩이 밖) · 원래 글(owners)은 그대로
+        for (const piece of (pin ? pinText(text) : text).split(/\s+=\s+|:\s+|↔/)) {
             const part = englishPart(piece);
             if (!part || skipPart(part) || has(part) || tried.has(part) || fixedValue(part, chipSlot(text))) continue;   // 1.5.3: 시간대 · 날씨 칩만 사전으로   // 1.5.1 고정 낱말은 사전으로(번역 요청에 안 실어요)
             (owners.get(part) ?? owners.set(part, []).get(part)).push(text);
@@ -108,6 +110,20 @@ export function pairsFor(part, ko, owners) {
     const out = [[part, k]];
     if (part.length > 40) for (const text of owners.get(part) ?? []) if (text !== part) out.push([text, text.replace(part, () => k)]);
     return out;
+}
+/**
+ * 버그 사냥 6 번역기가 그대로 돌려줘도 되는 글 — 문장이 아니라 기호 · 약어예요: 라틴 글자 셋 미만(얼굴 문자 · 기호 · 숫자) · 점 찍은 약어(「A.B.C.D」) ·
+ * 대문자만인 낱말 넷 이하(「ABCD」 · 「NPC LOG」). 「Honey Lemon Drop」 처럼 번역할 수 있는 이름 · 문장은 여기 넣지 않고, 다른 누름에서 두 번 그대로 올 때만 「확인함」 이에요.
+ * 이런 글을 번역기가 같은 글로 돌려주면 그 확장 사전에 「그대로」 짝(글 → 같은 글)으로 적어 그 확장 번역 단추 배지(남은 글 수)에서 빠지게 해요(사용자 11-19 「1」 이 계속 떠요).
+ */
+export function keepAsIs(part) {
+    const s = String(part ?? '').replace(/⠀/g, ' ').trim();
+    if (!s) return false;
+    const letters = (s.match(/\p{Script=Latin}/gu) ?? []).length;
+    if (letters < 3) return true;
+    if (/^(?:\p{Lu}\.){2,}\p{Lu}?\.?$/u.test(s.replace(/\s+/g, ''))) return true;   // A.B.C.D · U.S.A.
+    const words = s.match(/\p{Script=Latin}[\p{Script=Latin}'’.-]*/gu) ?? [];
+    return words.length > 0 && words.length <= 4 && words.every(w => w.length >= 2 && w === w.toUpperCase());
 }
 /** 화면에 보일 칩 · 기록 · 알림 글: 답마다 칩(snaps) + 최근 기록(state.recent) + 알림함(meta.notes 제목 · 글 · 힌트) */
 export function visibleTexts(current, meta) {
@@ -594,7 +610,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
      *    칩 차례는 그 메시지 칩 글(snaps · 🎲 뺀 앞 14개)과 같아요 — 수가 다르면 그 확장 화면 번역만 불러요. 메시지 꾸미기가 다음 프레임 · 그리기 전에 불러요.
      */
     function paint(list) {
-        if (mbOff('trchip', doc)) return;   // 1.7.3 끄면 칩 글을 다시 적지 않아요(그 확장이 그린 그대로)
+        const opt = { pin: mbFit('annex', doc), blank: mbFit('blank', doc) }, pin = opt.pin || opt.blank;   // 버그 사냥 6 「📍 @Lobby」 칩의 장소 앞 기호(스위치 annex) · 점자 빈칸(스위치 blank) — 표시만 · src/mb-place-mark.js
+        if (mbOff('trchip', doc)) { if (pin) for (const mes of list) for (const slot of mes?.querySelectorAll?.(SLOTS) || []) pinNodes(slot, opt); return; }   // 1.7.3 끄면 칩 글을 다시 적지 않아요(그 확장이 그린 그대로)
         const on = view();
         const snaps = core.app.current?.snaps;
         for (const mes of list) {
@@ -607,13 +624,13 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
             if (!snap) { try { baked = bakedChips(chat()?.[id], { currency: core.app.current?.state?.data?.wallet?.currency }); } catch { baked = null; } }
             // 한국어 저장이어도 시간대 · 날씨 칩(「🕐 Evening」 · 「날씨: Light rain」)은 고정 낱말 사전으로(AI 0 · chipText 는 그 두 칩만 바꿔요)
             const labels = baked ?? (snap?.labels ?? []).filter(l => typeof l === 'string' && !l.startsWith('🎲')).slice(0, 14);
-            if (!on && !baked && !labels.some(l => chipSlot(l))) continue;
+            if (!on && !baked && !labels.some(l => chipSlot(l))) { if (pin) for (const slot of slots) pinNodes(slot, opt); continue; }
             for (const slot of slots) {
                 const chips = slot.querySelectorAll('span.ss-mchip');
                 if (!chips.length) continue;
-                if (chips.length !== labels.length) { if (on) { try { tr.translateView(slot); } catch { /* 다음 그리기 때 */ } } continue; }
+                if (chips.length !== labels.length) { if (on) { try { tr.translateView(slot); } catch { /* 다음 그리기 때 */ } } if (pin) pinNodes(slot, opt); continue; }
                 const dict = (() => { try { const d = core.getMeta()?.tr; return isObj(d) ? d : {}; } catch { return {}; } })();
-                chips.forEach((chip, k) => { let want; try { want = on ? chipShown(labels[k], dict, t => tr.trString(t)) : chipText(labels[k]); } catch { return; } if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
+                chips.forEach((chip, k) => { let want; try { want = on ? chipShown(labels[k], dict, t => tr.trString(t)) : chipText(labels[k]); } catch { return; } if (typeof want === 'string' && opt.blank) want = blankText(want); if (typeof want === 'string' && opt.pin) want = pinText(want); if (typeof want === 'string' && chip.textContent !== want) chip.textContent = want; });
             }
         }
     }
@@ -753,13 +770,28 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
     const lanes = new Set(), inflight = new Set();
     const draw = () => { repaint(); painted = dictSize(); };
     const confirmOpen = () => !!doc.querySelector?.('dialog[open]:not(.ss-dlg) .popup-button-ok');
+    /** 버그 사냥 6 번역기가 그대로 돌려준 이름 · 기호(keepAsIs)를 그 확장 사전에 「그대로」 짝으로 — 그 확장은 사전에 있는 글을 남은 글(번역 단추 배지)에서 빼요 · 📌 고정한 짝 · 이미 있는 짝은 그대로 */
+    let keptRound = 0;
+    const sameSeen = new Map();   // 이번 접속에 번역기가 같은 글로 돌려준 수(글 → 수)
+    function markKept(list) {
+        let meta = null; try { meta = core.getMeta(true) ?? core.getMeta(); } catch { meta = null; }
+        if (!isObj(meta)) return 0;
+        const d = isObj(meta.tr) ? meta.tr : (meta.tr = {});
+        let n = 0;
+        for (const k0 of list) { const k = String(k0 ?? '').trim(); if (!k || Object.hasOwn(d, k) || meta.trLock?.[k]) continue; d[k] = k; n++; }
+        if (n) { bumpDict(); try { core.saveMeta?.(); } catch { /* 다음 저장 때 */ } }
+        keptRound += n;
+        return n;
+    }
     function endRound(sent, done, failed = 0) {
         const r = round; round = null;
+        const kept = keptRound; keptRound = 0;
         if (!sent && !r?.sent) return;
         const n = done + (r?.done ?? 0), bad = failed + (r?.failed ?? 0);
         try {
             if (n) toast?.success?.(`화면에 영어로 남던 글 ${n}개도 번역했어요.`, 'Blue Lemonade', { timeOut: 3000 });
             else if (bad) toast?.warning?.('이어 번역 요청이 안 됐어요(번역기 오류 · 답 꼴이 달라요). 번역 단추를 다시 누르면 한 번 더 보내요.', 'Blue Lemonade', { timeOut: 5000 });
+            else if (kept) toast?.info?.(`번역할 영어 문장이 없어요 — 이름 · 기호 ${kept}개는 그대로 두었어요.`, 'Blue Lemonade', { timeOut: 4000 });
             else toast?.info?.('이번에는 번역기가 영어 그대로 돌려줬어요. 번역 단추를 다시 누르면 한 번 더 보내요.', 'Blue Lemonade', { timeOut: 5000 });
         } catch { /* 알림 없이 */ }
     }
@@ -786,7 +818,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const dict = isObj(meta?.tr) ? meta.tr : {};
         const longs = stateTexts(current.state, isOn).map(x => x.text.replace(/\s+/g, ' ').trim()).filter(t => t.length >= 12);
         const full = pre => longs.find(t => t.length > pre.length && t.startsWith(pre)) ?? null;   // 잘린 알림 글 → 상태의 원문(화면 밖 기록 rel.life 등)
-        const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => Object.hasOwn(dict, part), tried, full });
+        const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => Object.hasOwn(dict, part), tried, full, pin: mbFit('annex', doc) });
         // early 는 상태 칸(그 확장이 지금 번역하는 글)을 건드리지 않아요 — 반쯤 번역 짝 되돌리기도 그 확장 번역이 끝난 뒤에만
         const { miss, half } = early ? { miss: [], half: [] } : stateGaps(current.state, dict);
         // 1.7.6 지도 「아직 안 가 본 곳」(src/mb-map-floors.js 가 로어북에서 고른 곳)의 이름 · 설명은 그 확장 상태에 없어 번역 요청에 안 실렸어요 → 같은 길 · 같은 사전으로.
@@ -809,7 +841,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
             if (round) round.told = true;
             try { toast?.info?.(early ? `${mapped ? '지도 이름 · ' : ''}남은 글 ${list.length}개도 같이 번역하고 있어요. 보이는 것부터 바로 바뀌어요.` : `아직 영어로 남은 글 ${list.length}개를 이어서 번역하고 있어요.${mapped ? ' 지도 이름도 같이 바뀌어요.' : ''}`, 'Blue Lemonade', { timeOut: 4000 }); } catch { /* 알림 없이 */ }
         }
-        let done = 0, failed = 0, moved = false;   // 버그 사냥 4: 실패한 묶음 · 기다리는 사이 채팅이 바뀜은 「영어 그대로 돌려줬어요」 가 아니에요
+        let done = 0, failed = 0, moved = false, kept = 0;   // 버그 사냥 4: 실패한 묶음 · 기다리는 사이 채팅이 바뀜은 「영어 그대로 돌려줬어요」 가 아니에요
         const chat = chatId();
         // 실리 기본 번역 길은 사전에 있는 글을 안 보내요 — 반쯤 번역 짝은 잠깐 빼 두었다가, 새 번역이 안 오면 되돌려요
         const back = new Map();
@@ -821,8 +853,14 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
                 // 1.5.0: 번역을 기다리는 사이 채팅을 바꾸면 addPairs 가 새 채팅 사전(getMeta)에 넣어요 — 그 채팅 것이 아니니 멈춰요(앞 묶음은 그 채팅 사전에 이미 들어갔어요)
                 if (chatId() !== chat) { moved = true; break; }
                 if (out === src || !Array.isArray(out?.list) || out.list.length !== src.list.length) { failed++; continue; }   // 실패 · 개수 어긋남 → 다음에 다시
-                const pairs = [];
-                src.list.forEach((p, k) => { const got = pairsFor(p, out.list[k], owners); if (got.length) { pairs.push(...got); done++; } else tried.add(p); });
+                const pairs = [], same = [];
+                src.list.forEach((p, k) => {
+                    const got = pairsFor(p, out.list[k], owners);
+                    if (got.length) { pairs.push(...got); done++; return; }
+                    tried.add(p);
+                    if (String(out.list[k] ?? '').trim() === String(p).trim()) { const c = (sameSeen.get(p) ?? 0) + 1; sameSeen.set(p, c); if (keepAsIs(p) || c >= 2) same.push(p); }   // 버그 사냥 6 기호 · 약어는 바로, 이름 · 문장은 두 번(다른 누름) 그대로 오면 「확인함」
+                });
+                if (same.length) kept += markKept(same);
                 // 1.7.9 묶음마다 바로 사전에 넣고 열린 지도 · 상태창 · 칩을 다시 그려요(예전엔 묶음을 다 받은 뒤 한 번 — 긴 설명 묶음이 이름까지 붙잡았어요)
                 if (pairs.length) { if (watch) watch.own += tr.addPairs(pairs) || 0; else tr.addPairs(pairs); draw(); }
             }

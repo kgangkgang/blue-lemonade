@@ -722,6 +722,28 @@ await test('버그 사냥 4: 이어 번역 끝 알림 — 요청 실패는 「�
         assert.deepEqual(msgs.map(x => x[0]), ['info'], '시작 알림만(새 채팅에 「영어 그대로」 를 안 띄워요)');
     } finally { globalThis[REG] = old; }
 });
+await test('버그 사냥 6 번역 단추 배지가 남던 것: 번역기가 그대로 돌려준 기호 · 약어는 「그대로」 짝으로(배지에서 빠짐) · 알림은 「번역할 영어 문장이 없어요」 · 이름 · 문장은 예전처럼', async () => {
+    for (const s of ['A.B.C', '(¬‿¬) ok', 'ABCD', 'NPC LOG', 'x2', '⠀A.B.C⠀']) assert.equal(T.keepAsIs(s), true, s);
+    for (const s of ['Honey Lemon Drop', 'Golden Honey Butter Rolls', 'He is lying again', 'Oskar', 'OK then']) assert.equal(T.keepAsIs(s), false, s);
+    const REG = Symbol.for('blue-lemonade.mb-unvisited.v1'), old = globalThis[REG];
+    globalThis[REG] = () => [];
+    try {
+        const g = fakeTarget({ ko: {} }); g.mb.core.app.current.snaps = new Map([[1, { labels: ['💬 (¬‿¬) ok', '+Honey Lemon Drop'] }]]);
+        let saved = 0; g.mb.core.saveMeta = () => { saved++; };
+        const msgs = [];
+        const fill = T.createTrFill(g.mb, { doc: window.document, toast: { success: m => msgs.push(['success', m]), info: m => msgs.push(['info', m]), warning: m => msgs.push(['warning', m]) }, chatId: () => 'A' });
+        await fill.fill('click');
+        assert.equal(g.meta.tr.ok, 'ok', '기호 · 짧은 글은 「그대로」 짝');
+        assert.equal(Object.hasOwn(g.meta.tr, 'Honey Lemon Drop'), false, '번역할 이름은 한 번으로는 짝을 안 만들어요');
+        assert.ok(saved >= 1, '채팅 메타 저장');
+        assert.match(msgs.at(-1)[1], /번역할 영어 문장이 없어요/);
+        await fill.fill('click');
+        assert.deepEqual(g.calls.json.at(-1), ['Honey Lemon Drop'], '다음 누름엔 기호를 다시 안 보내고 이름만 다시 보내요');
+        assert.equal(g.meta.tr['Honey Lemon Drop'], 'Honey Lemon Drop', '다른 누름에서 두 번 그대로 오면 「확인함」');
+        await fill.fill('click');
+        assert.equal(g.calls.json.length, 2, '그 뒤로는 안 보내요(배지에서도 빠짐)');
+    } finally { globalThis[REG] = old; }
+});
 await test('1.7.8 받침 길: 미트볼 창(상태창 · 지도)이 열려 있어도 사전이 잠잠해지면 이어요 — 확인 창만 기다려요', async () => {
     // 리그(사용자 채팅 사본 · 1.7.7): 미트볼 상태창도 「확인」 단추가 있는 창이라 그 창을 닫을 때까지 이어 번역이 안 돌았어요(40초 넘게 · 닫자 그제야)
     const f = fakeTarget({ ko: { 'Honey Lemon Drop': '꿀레몬 사탕' } });

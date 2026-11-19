@@ -131,6 +131,27 @@ await ok('켬 + 관계 칸 날짜뿐: 창 없이 「아니오」 + 건너뛴 알
     assert.equal(h.asked.length, 1); assert.equal(notes.length, 1);
 });
 
+// 1.8.6 흰 깜빡임 · 렉: 감싸개가 SillyTavern 전역 getContext 자리에 걸리면, 감싸개 안의 on() → upHas('autoen') 의 기본 문맥(ctx())이
+//   다시 감싸개를 불러 스택이 넘칠 때까지 되풀이했어요(층마다 실리 getContext 를 진짜로 한 번씩 · 1.8.1 ~ 1.8.5 채팅 열기 수십 초).
+await ok('1.8.6 전역 자리에 걸어도 getContext 한 번 = 안쪽 한 번(되돌아 들어오지 않아요)', async () => {
+    const was = globalThis.SillyTavern;
+    try {
+        for (const withKey of [false, true]) {
+            const h = makeHost(); let calls = 0; const settings = withKey ? { statussim: { enabled: true, trConvertAsk: true } } : { statussim: { enabled: true } };
+            const st = { getContext() { calls++; return { ...h.getContext(), extensionSettings: settings }; } };
+            globalThis.SillyTavern = st;
+            assert.equal(M.startMbAutoEn({ host: () => globalThis.SillyTavern, doc: makeDoc('on'), notify: () => {}, force: true }), true);
+            const c = st.getContext();
+            assert.equal(calls, 1, `안쪽 getContext 를 ${calls}번 불렀어요`);
+            // 원작 2.9.1+ 가 「바꾸기 전에 묻기」(trConvertAsk)를 가진 판이면 원작에 맡겨 창을 안 가로채요 · 없으면 예전처럼 얹어요
+            if (withKey) assert.equal(c.Popup, h.Popup, '원작에 맡겼으면 Popup 그대로');
+            else assert.notEqual(c.Popup, h.Popup, '원작 설정이 없으면 얹어요');
+            for (let i = 0; i < 50; i++) st.getContext();
+            assert.equal(calls, 51);
+        }
+    } finally { globalThis.SillyTavern = was; }
+});
+
 const src = fs.readFileSync(path.join(root, 'src/mb-auto-en.js'), 'utf8');
 await ok('그 확장 파일 · 공용 객체에 쓰지 않아요(정적)', () => {
     assert.doesNotMatch(src, /Popup\.show\s*=|\.show\.confirm\s*=/);

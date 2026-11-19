@@ -6,17 +6,22 @@
 //   실리태번 모듈을 import 하지 않아요 (node 시험: tools/tests/translator-v3-modules.mjs).
 
 /** 데우스 V3(2.5 도 같은 이름) 바닥 모듈 태그. 모멘텀 엔진(<momentum>)은 길 고르기(<momentum_route>)까지 얽힌 꼴이라 예전 길 그대로 (translation-cards 시험) */
+// 11-19 데우스 V4: 일기장(<diary> · <diaries>) · 새 얼굴(<face> · 한 줄 단역 <extra>)도 같은 꼴 — 「Name:」 · 「Seen as:」 · 「(secret)」 · 「None」 을 V4 정규식이 영어로 읽어
+//   카드 제목(보이는 이름) · 비밀 이름 가리기 · 빈 일기를 고른다. 운명의 주사위(<fate odds roll><pass><fail>)는 본문 안 태그라 지금 길로 태그가 남아요.
 export const MODULE_CARDS = Object.freeze(['status', 'threads', 'psych', 'psychological_states', 'bond', 'relationships', 'plotlines', 'meanwhile', 'truths', 'hidden_truths',
-    'conflict', 'undercurrents', 'companions', 'scratchpad']);
+    'conflict', 'undercurrents', 'companions', 'scratchpad', 'diary', 'diaries', 'face', 'extra']);
+/** 카드마다 더 나눌 기호 (FRAMING 에 덧붙임): 단역 한 줄은 「 · 」 로 칸을 나누고(「Seen as:」 열쇠를 칸 첫머리에), 일기 한 줄은 「언제: 글」 의 쌍점에서 나눠요 */
+export const MODULE_SEPARATORS = Object.freeze({ extra: '[ \t]+·[ \t]+', diary: '[:：](?=[ \t])', diaries: '[:：](?=[ \t])' });
 const MODULES = new Set(MODULE_CARDS);
 export const isModuleCard = name => MODULES.has(String(name ?? '').toLowerCase());
 
 // 모듈 제목(<summary>Relationships</summary> · <summary>Status⏎- …) — 정규식이 영어 그대로 찾거나 버리는 글자
 const TITLES = new Set(['relationships', 'relationship', 'bond', 'bonds', 'status', 'story threads', 'threads', 'psychological states', 'plotlines', 'meanwhile', 'hidden truths', 'truths',
-    'conflict', 'undercurrents', "phi's scratchpad", 'phi’s scratchpad', 'scratchpad', 'companions']);
+    'conflict', 'undercurrents', "phi's scratchpad", 'phi’s scratchpad', 'scratchpad', 'companions', 'diaries', 'diary', 'new faces', 'new face']);
 // 칸 값 전체가 정규식의 스위치인 낱말 (빈 모듈 None · 자리 밖 (Off-scene) · (Departed) · 점수 unknown · N/A)
 // 1.0.0 데우스 3 숨은 진실(Hidden Truths) 칸 Knows · Suspects · Misled 의 빈 값 낱말 nobody · no one 도 (정규식이 영어 그대로 읽는다)
-const SWITCHES = new Set(['none', 'n/a', 'na', 'unknown', 'off-scene', 'offscene', 'departed', 'nobody', 'no one']);
+// V4: 새 얼굴의 비밀 표지 (secret) · 빈 일기 No entries (yet)
+const SWITCHES = new Set(['none', 'n/a', 'na', 'unknown', 'off-scene', 'offscene', 'departed', 'nobody', 'no one', 'secret', 'no entries', 'no entries yet']);
 /** 칸 첫머리 열쇠: 「Closeness:」 · 「Inner state:」 · 「Current scene:」 (영어 낱말 1~4개 + 쌍점, 굵게 표시 허용) */
 export const MODULE_KEY = /^(?:\*\*|__)?([A-Za-z][A-Za-z'’]*(?:[ -][A-Za-z][A-Za-z'’]*){0,3})(?:\*\*|__)?[ \t]*[:：](?!\/\/)/;
 

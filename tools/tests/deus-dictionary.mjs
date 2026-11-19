@@ -18,6 +18,7 @@ const code = await scriptCode(root, 'deus');
 let dict; new Function('BlueLemonade', code)({ translate: v => { dict = v; } });
 const plain = fs.readFileSync(path.join(root, 'src/scripts/plain/deus.js'), 'utf8');
 const v3 = JSON.parse(fs.readFileSync(path.join(root, 'tools/tests/deus-v3-names.json'), 'utf8'));
+const v4 = JSON.parse(fs.readFileSync(path.join(root, 'tools/tests/deus-v4-names.json'), 'utf8'));
 const engine = createPromptEngine(doc); engine.register('deus', dict);
 const hangul = /[가-힣]/;
 const decorative = name => !/[\p{L}\p{N}]/u.test(name);
@@ -44,6 +45,22 @@ await t('V3 프롬프트 168개 중 장식 구분선을 뺀 모두가 한글 제
 await t('V3 정규식 153개가 모두 한글 제목으로 보여요', () => {
     assert.equal(v3.regex.length, 153);
     assert.deepEqual(v3.regex.filter(([id, name]) => !hangul.test(engine.title('regex', id, name) || '')), []);
+});
+await t('V4 프롬프트 179개 중 장식 구분선을 뺀 모두가 한글 제목으로 보여요 · 이름이 바뀐 시작 표시 · 제미나이 안내도', () => {
+    assert.equal(v4.prompts.length, 179);
+    assert.deepEqual(v4.prompts.filter(([id, name]) => !decorative(name) && !hangul.test(engine.title('prompts', id, name) || '')), []);
+    assert.equal(engine.title('prompts', 'fb7942e3-d99b-48a6-a195-bf2a1811ae50', '🔹DEUS EX MACHINA V4🔹'), '🔹데우스 엑스 마키나 V4🔹');
+    assert.equal(engine.title('prompts', '049872d9-89c7-4b62-9f02-c3c842f4d8d9', '「 Gemini Instructions 」'), '「 제미나이 안내 」');
+    assert.equal(engine.title('prompts', '049872d9-89c7-4b62-9f02-c3c842f4d8d9', '「 Gemini 」'), '「 제미나이 」', 'V3 이름도 그대로');
+    assert.equal(engine.title('prompts', 'ecfff91e-43e0-4a5d-8cfe-4d15e56dd55d', '「 Fate 」'), '「 운명의 주사위 」');
+});
+await t('V4 정규식 191개가 모두 한글 제목으로 보여요(새 38개: 점자 빈칸 · 블록 닫기 · 운명의 주사위 · 일기장 · 새 얼굴)', () => {
+    assert.equal(v4.regex.length, 191);
+    assert.deepEqual(v4.regex.filter(([id, name]) => !hangul.test(engine.title('regex', id, name) || '')), []);
+});
+await t('V4 새 설명은 원작 문장을 옮기지 않은 한국어예요(영어 문장 없음)', () => {
+    const ids = new Set(v4.prompts.map(([id]) => id).filter(id => !v3.prompts.some(([x]) => x === id)));
+    for (const e of dict.prompts.filter(e => ids.has(e.id))) assert.ok(!/[A-Za-z]{4,}(?:\s+[A-Za-z]{2,}){3,}/.test(e.desc.replace(/Gemini 4 Argon|Gemini Instructions/g, '')), e.name);
 });
 await t('같은 이름이 V3 와 2.5 에서 뜻이 달라진 항목은 id 로 나눠 보여요', () => {
     const extra = id => dict.prompts.find(e => e.id === id && e.name === '「 Extra Long 」');

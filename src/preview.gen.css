@@ -1,4 +1,4 @@
-/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 717개(덩어리 51개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build e10baf0b685f) */
+/* src/preview.gen.css — tools/build-css.cjs 가 설정 창 미리보기 전용 규칙 718개(덩어리 51개)를 style.css 에서 떼어 적은 것(고치지 말 것). src/lite.js 가 설정 창을 처음 열 때 <link> 로 받는다 (build c9ffefcef38a) */
 .salty-sample q::before,
 .salty-sample q::after {
   content: none;
@@ -1139,6 +1139,15 @@ body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-delta__span,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-dialogue-note,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-dialogue-note__title,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diaries,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diaries__body,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diary-book,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diary-entries,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diary-entry,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diary-entry__text,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diary-entry__when,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diary-keeper,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-diary-none,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-expressive,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-expressive--allcaps,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-expressive--angry,
@@ -1200,6 +1209,9 @@ body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-expressive-shout,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-expressive-tremble,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-expressive-whisper,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-fate,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-fate-die,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-fate-rolling,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-format-note,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-format-note__aside,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-format-note__item,
@@ -1232,6 +1244,10 @@ body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-momentum-engine__label,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-momentum-engine__notice,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-momentum-engine__tension,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-new-face,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-new-face--minor,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-new-face__body,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-new-face__keep,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-none,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-phi-note,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-phi-note__face,
@@ -1316,6 +1332,7 @@ body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-tab--all,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-tab--chars,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-tab--conflict,
+body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-tab--diary,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-tab--meanwhile,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-tab--momentum,
 body.salty.salty-unify-regex :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-tab--phi,
@@ -2218,7 +2235,9 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > .custom-dem-scratchpad__body,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > .custom-dem-card__body,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > .custom-dem-meanwhile__body,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > .custom-dem-hidden-truths__body {
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > .custom-dem-hidden-truths__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > .custom-dem-diaries__body,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > .custom-dem-new-face__body {
   margin: 0 !important;
   padding: 4px 16px 12px !important;
   border: 0 !important;
@@ -2228,7 +2247,8 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-bond-row,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-psychological-state-row,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-thread-row,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-undercurrent {
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-undercurrent,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-diary-entry {
   margin: 0 !important;
   padding: 12px 0 !important;
   text-indent: 0 !important;
@@ -2237,11 +2257,12 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
   background: transparent !important;
   box-shadow: none !important;
 }
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) ~ .custom-dem-status-row,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) ~ .custom-dem-bond-row,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) ~ .custom-dem-psychological-state-row,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) ~ .custom-dem-thread-row,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) ~ .custom-dem-undercurrent {
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) ~ .custom-dem-status-row,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) ~ .custom-dem-bond-row,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) ~ .custom-dem-psychological-state-row,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) ~ .custom-dem-thread-row,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) ~ .custom-dem-undercurrent,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) ~ .custom-dem-diary-entry {
   border-top: 1px solid var(--salty-line) !important;
 }
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-status-row__name,
@@ -2249,7 +2270,8 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-psychological-state-row__name,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-undercurrents__name,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-meanwhile-row__title,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-truth-row__title {
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-truth-row__title,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-diary-keeper {
   color: var(--salty-text) !important;
   background: none !important;
   box-shadow: none !important;
@@ -2262,7 +2284,8 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-psychological-state-row__label,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-plotlines__label,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-undercurrents__label,
-body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-momentum-engine__label {
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-momentum-engine__label,
+body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-diary-entry__when {
   padding: 0 !important;
   border: 0 !important;
   background: none !important;
@@ -2272,6 +2295,10 @@ body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .cus
   font-weight: 400 !important;
   letter-spacing: inherit !important;
   text-transform: none !important;
+}
+body.salty :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-new-face pre > code {
+  background: transparent !important;
+  border-radius: 0 !important;
 }
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-psychological-state-f--step > .custom-dem-psychological-state-row__label::before,
 body.salty.salty-dem-skin :is(:is(#salty-nochat, .salty-preview)) .mes_text .custom-dem-modules .custom-dem-psychological-state-f--step > .custom-dem-psychological-state-row__label::after {

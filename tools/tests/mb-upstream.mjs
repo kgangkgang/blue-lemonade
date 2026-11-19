@@ -119,7 +119,7 @@ await ok('⑦ 2.9.1(원작 766314d · 0112545): 앨범 단추 · 영어 저장 �
     // 끔 표식: 맡긴 묶음이 테마 스위치 끔과 같이 적혀요
     const SW = await import(pathToFileURL(path.join(root, 'src/mb-switch.js')).href);
     assert.equal(SW.offAttrValue({ chat: {} }, () => ['album', 'helpers', 'grid']), 'album helpers grid');
-    assert.match(read('src/mb-auto-en.js'), /!upHas\('autoen'\)/);
+    assert.match(read('src/mb-auto-en.js'), /!upHas\('autoen', c \?\? undefined, doc\)/);   // 1.8.6 받은 문맥을 넘겨요(기본 문맥 = 감싼 getContext 라 되풀이됐어요)
     assert.match(read('src/ext-compat.js'), /!mbOff\('helpers', doc\)\) armTop\(dlg\)/);
 });
 console.log(`mb-upstream: ${n}개 통과`);

@@ -51,7 +51,8 @@ export const SETS = [
     //   1.9.66(2026-11-15 점검 대본 대조 · 1.9.65 를 덮는 판): 요약 언어를 요청 끝에 다시 알림 · 기억을 요약 언어로 맞추기(더보기 메뉴 한 줄) · 되감은 요약은 회상에서 뺌(보관함 칩 하나) — 원작 CSS 안 바뀜 · 선택자 39 · 구조 표식 8/8 그대로예요.
     //   「색 두기」 안: 그 확장의 제 색 · 글꼴은 그대로 — 설정 내용 칸(native)에 「원래 색 유지」 표식을 붙여 테마 색 규칙이 비켜 가게 하고, 낮밤 표식(mode)을 테마 밝기에 다시 맞춰요.
     //   1.9.67(2026-11-16 점검 대본 대조 + 리그 사진 — 폰 384 낮 · 밤 · PC 1280): 새 묶음 「작업마다 다른 모델 쓰기」(줄 여섯 · 고르기 칸) — 제 색 변수만 써서 맞춤 그대로예요 · 선택자 39 · 구조 표식 8/8.
-    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60', '1.9.61', '1.9.64', '1.9.66', '1.9.67'] },
+    //   1.9.68(2026-11-19 점검 대조 — 원작 91d732a9): 분기한 채팅의 기억 정리 · 「이 지점 이후 기억 지우기」(더보기 메뉴 한 줄 · 원작 단추 꼴 그대로) · 입력 중엔 자동 압축 미룸 — 원작 CSS 안 바뀜 · 맞춤 시트 선택자 24개 모두 그대로예요.
+    { root: '#lm_settings', mark: '.lm-switch-track', css: './ext-elephant.css', sheet: '.lm-root', native: '.inline-drawer-content', mode: true, name: '코끼리를 생각하지마', verified: ['1.9.60', '1.9.61', '1.9.64', '1.9.66', '1.9.67', '1.9.68'] },
     // Memoria — 2.0.4 화면에서 확인(2026-11-13). 원작이 실리태번 색 변수를 따라가서 선 · 머리줄만 맞춰요.
     //   2.1.0(2026-11-14 점검 대본 대조): 설정 「기본」에 같은 꼴의 숫자 칸 하나(묶어 기록 · .memoria__field) — 선택자 9개 · 구조 표식 3개 · CSS 그대로라 맞춤도 그대로예요. 리그 사진은 아직.
     { root: '#memoria_settings', mark: '.memoria__version', css: './ext-memoria.css', version: '.memoria__version', name: 'Memoria', verified: ['2.0.4', '2.1.0'] },

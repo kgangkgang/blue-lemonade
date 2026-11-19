@@ -23,6 +23,7 @@ const ALLOW = [
     [/^src\/fruit-type-(schema|sample)\.js$/, null, '프리셋 원작 항목 이름 · 원작 출력 표본'],
     [/^src\/fruit-family\.js$/, null, '프리셋 원작 항목 이름'],
     [/^src\/(prompt-choice-core|prompt-folders-core|prompt-folders|preview-details|role-icons-tidy|weather|weather-meatball|ext-bridge-tr|swipe-picker-translation)\.js$/, null, '본문 · 이름에서 찾아내는 글자(정규식 · 대조)'],
+    [/^src\/(mb-place-mark|mb-map-floors)\.js$/, '📍🗺', '그 확장이 그린 장소 글(「📍 @…」 · 「🗺️ 새 장소: @…」)을 찾는 글자 — 버그 사냥 6 장소 이름 앞 기호'],
     [/^src\/addons\/regexlink\/(engine|index|regexperf)\.js$/, '⚠❗😀', '이름에서 걷어 내는 글자 · 시험 입력'],
     [/^src\/addons\/translator\/(index|rp-lines|translation-check)\.js$/, '♡♥⚠❗🔔', '본문에서 찾아내는 글자(문장 끝 · 경고 줄)'],
     [/^src\/addons\/translator\/selection\/delete-core\.js$/, null, 'HTML 개체 표'],

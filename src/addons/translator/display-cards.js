@@ -1,6 +1,6 @@
 // Known prompt-card display values only. Raw markup, keys, code and hidden data stay local.
 // No DOM parsing/rendering and no preset contents or renderer code are included.
-import { MODULE_CARDS, isModuleCard, MODULE_KEY, moduleKeepsLocal, moduleLocalValue } from './v3-modules.js';
+import { MODULE_CARDS, MODULE_SEPARATORS, isModuleCard, MODULE_KEY, moduleKeepsLocal, moduleLocalValue } from './v3-modules.js';
 // 8.0.8 데우스 V3 바닥 모듈(<relationships> · <status> · <companions> …)도 카드 — 영어 열쇠 · 줄 · 기호는 두고 값만 보낸다 (v3-modules.js)
 const CARD_NAMES = new Set(['status_bar','tracker','novel_header','prologue','meow_fm','profile','branches','ccd','snow','角色状态面板',...MODULE_CARDS]);
 // 모듈 칸 앞의 꾸밈(쌍점 · 줄표 · 이모지)은 칸 글자가 아니다 — 여는 따옴표 · 괄호는 값과 함께 보낸다
@@ -159,7 +159,7 @@ function visibleSpans(block, card) {
             // Older status cards use Info/Quote/Outfit as parser keys.
             const old = value.match(/^(?:Info|Quote|Outfit)\s*[|｜]/i); if (card.name === 'status_bar' && old) { at += old[0].length; value = value.slice(old[0].length); }
             if (/^\s*[:|\- ]+\s*$/.test(value)) continue;
-            const pieces = new RegExp(FRAMING.source,'gi'); let stop, from = 0;
+            const pieces = new RegExp(FRAMING.source + (MODULE_SEPARATORS[card.name] ? '|' + MODULE_SEPARATORS[card.name] : ''),'gi'); let stop, from = 0;
             const part = (a,b) => {
                 const raw = value.slice(a,b), before = raw.match(/^\s*/)[0].length, after = raw.match(/\s*$/)[0].length;
                 let text = raw.slice(before,raw.length-after), glyphs = 0; if (!text || !hasWords(text)) return;

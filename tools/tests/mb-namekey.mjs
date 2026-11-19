@@ -88,5 +88,24 @@ ok('스위치 · 시작 자리 · CI', () => {
     assert.ok(fs.readFileSync(path.join(root, 'src/mb-hidden.js'), 'utf8').includes("import('./mb-namekey.js').then(m => m.startNameKey(doc))"));
     assert.ok(fs.readFileSync(path.join(root, '.github/workflows/release-check.yml'), 'utf8').includes('node tools/tests/mb-namekey.mjs .'));
 });
+ok('버그 사냥 6 점자 빈칸(U+2800) 변화 줄: 「⠀Mira⠀」 를 「Mira」 로 — 같은 사람 한 칸 · 원래 줄은 남김 · 인물 표가 비어도 · 다른 줄은 그대로', () => {
+    const B = '⠀';
+    const ops = [['mind', `${B}Mira${B}|${B}내일${B}아침에${B}보자고`], [`${B}aff${B}`, `${B}Mira${B}+2`], ['loc', 'Lobby>Desk']];
+    const r = N.rewriteOps(ops, keyOf, names);
+    assert.ok(r);
+    assert.deepEqual(r.ops[0], ['mind', 'Mira | 내일 아침에 보자고']);
+    assert.deepEqual(r.ops[1], ['aff', 'Mira +2']);
+    assert.deepEqual(r.ops[2], ['loc', 'Lobby>Desk'], '점자 빈칸 없는 줄은 그대로');
+    assert.deepEqual(r.was.map(x => x[0]), ['mind', `${B}aff${B}`]);
+    assert.ok(N.rewriteOps([['mind', `${B}Mira${B}| 글`]], keyOf, new Set()), '인물 표가 아직 비어도');
+    assert.equal(N.rewriteOps([['mind', 'Mira | 글']], keyOf, names), null, '바꿀 것 없으면 null');
+    // 이미 갈라진 기록: 서랍 줄을 다시 셈하면 한 이름 — 메시지 둘(앞은 「Mira」 · 뒤는 「⠀Mira⠀」)
+    const m1 = { extra: { statussim: { bySwipe: { 0: [['mind', 'Mira | 첫 속마음']] } } } }, m2 = { extra: { statussim: { bySwipe: { 0: [['mind', `${B}Mira${B}|${B}둘째`]] } } } };
+    assert.equal(N.fixMessage(m1, keyOf, names), 0); assert.equal(N.fixMessage(m2, keyOf, names), 1);
+    const who = [m1, m2].map(m => m.extra.statussim.bySwipe[0][0][1].split('|')[0].trim());
+    assert.deepEqual(who, ['Mira', 'Mira'], '두 메시지의 이름이 같아요');
+    assert.deepEqual(m2.extra[N.STATE][0][0], ['mind', `${B}Mira${B}|${B}둘째`], '원래 줄 남김');
+    assert.equal(N.blankLine(`${B}${B}a${B}${B}b${B}`), 'a b');
+});
 if (failed) { console.log(`${failed} failed`); process.exit(1); }
 console.log(`mb-namekey: ${n}개 통과`);

@@ -19,6 +19,7 @@ export const MB_CORE = [
     { key: 'touch', kind: 'screen' },
     { key: 'blur', kind: 'screen' },
     { key: 'next', kind: 'screen' },
+    { key: 'blank', kind: 'screen' },
     // ── 화면만: 자리별 ──
     { key: 'band', kind: 'screen' },
     { key: 'bandrow', kind: 'screen' },

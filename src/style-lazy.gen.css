@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build e10baf0b685f) */
-:root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"b28fbbf5e0cf7922"}
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build c9ffefcef38a) */
+:root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"e9231a23d5141227"}
 /* css/00-base.css */
-:root{--bl-release:"1.8.5";}
+:root{--bl-release:"1.8.6";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -3401,7 +3401,7 @@ body.salty:not(.salty-unify-inline) :is(#chat,.bl-chat-like) .mes .mes_text font
   color: inherit;
 }
 /* css/08-regex-unify.css */
-@media not all {#bl-dem-slot-full-0-fd4dcf5bb9283f01{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-0-96146c5416630246{--bl-dem-slot:0}}
 body.salty.salty-unify-inline:not(.salty-dem-ink) :is(:is(#chat,.bl-chat-like) .mes, .cg-root) .mes_text font[color],
 body.salty.salty-unify-inline:not(.salty-dem-ink) :is(:is(#chat,.bl-chat-like) .mes, .cg-root) .mes_text [style*="color"]:is(bl-s, *) {
   color: inherit !important;
@@ -15224,12 +15224,17 @@ body.salty.salty-light {
 @media (hover: hover) {
   @media not all {#bl-dem-slot-full-4-5b167195661ac340{--bl-dem-slot:0}}
 }
-@media not all {#bl-dem-slot-full-5-60705009248688be{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-5-4afd0d3ff6288b30{--bl-dem-slot:0}}
+body.salty :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .mes_text .custom-dem-new-face pre > code {
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+@media not all {#bl-dem-slot-full-6-db75852e133c4eca{--bl-dem-slot:0}}
 @container (max-width: 420px) {
-  @media not all {#bl-dem-slot-full-6-562cadfe1640702f{--bl-dem-slot:0}}
+  @media not all {#bl-dem-slot-full-7-562cadfe1640702f{--bl-dem-slot:0}}
 }
 @media (max-width: 1000px) {
-  @media not all {#bl-dem-slot-full-7-3b436849fd4c82fa{--bl-dem-slot:0}}
+  @media not all {#bl-dem-slot-full-8-3b436849fd4c82fa{--bl-dem-slot:0}}
 }
 /* css/31-styles-panel.css */
 .salty-presets {
@@ -16391,12 +16396,12 @@ body.salty.salty-qr-top #send_form > #qr--bar {
   font-size: 12px;
 }
 /* css/37-prompt-ink.css */
-@media not all {#bl-dem-slot-full-8-afb1843dc8673e2a{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-9-afb1843dc8673e2a{--bl-dem-slot:0}}
 @supports (-webkit-mask-clip: text) {
-@media not all {#bl-dem-slot-full-9-1983615fa160bf7f{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-10-1983615fa160bf7f{--bl-dem-slot:0}}
 }
 
-@media not all {#bl-dem-slot-full-10-5acefa5a122ef22f{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-11-5acefa5a122ef22f{--bl-dem-slot:0}}
 
 .salty-panel .bl-ink-line {
   margin-top: 6px;
@@ -17394,7 +17399,7 @@ body.salty .bl-eye-pick .salty-pick-rows > button {
   inherits: true;
   initial-value: 0;
 }
-@media not all {#bl-dem-slot-full-11-a54d9631daafa4ad{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-12-a54d9631daafa4ad{--bl-dem-slot:0}}
 body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none),
 body.salty :where(.cg-root) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none):is(#bl-s, *),
 body.salty :where(.salty-preview) .custom-dem-expressive:is(.custom-dem-expressive--whispering, .custom-dem-expressive--quiet):not(#salty-none):is(#bl-s, *) {
@@ -17414,13 +17419,13 @@ body.salty :where(.salty-preview) .custom-dem-expressive:is(#bl-s, *) {
 body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive:where(body.salty:not(.salty-demfx-flow) :is(:is(#chat,.bl-chat-like), .cg-root, .salty-preview) .custom-dem-expressive):has(> .custom-dem-expressive) {
   background-image: none !important;
 }
-@media not all {#bl-dem-slot-full-12-35da8a7e674345d3{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-13-35da8a7e674345d3{--bl-dem-slot:0}}
 body.salty :is(#chat,.bl-chat-like) .custom-dem-expressive.bl-fx-long,
 body.salty :where(.cg-root) .custom-dem-expressive.bl-fx-long:is(#bl-s, *),
 body.salty :is(:is(#chat,.bl-chat-like), .cg-root) .bl-fx-long .custom-dem-expressive {
   display: inline !important;
 }
-@media not all {#bl-dem-slot-full-13-89431f2832ad5424{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-14-89431f2832ad5424{--bl-dem-slot:0}}
 body.salty:not(.salty-demfx-go) :is(#chat,.bl-chat-like) .custom-dem-expressive,
 body.salty:not(.salty-demfx-go) :where(.cg-root) .custom-dem-expressive:is(#bl-s, *) {
   display: inline !important;
@@ -17438,7 +17443,7 @@ body.salty .cg-root .custom-dem-expressive {
   box-decoration-break: clone;
 }
 
-@media not all {#bl-dem-slot-full-14-b603b41fe6aebfbe{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-15-b603b41fe6aebfbe{--bl-dem-slot:0}}
 body.salty:not(.salty-demfx-flow) :is(#chat,.bl-chat-like) font[color] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none),
 body.salty:not(.salty-demfx-flow) :is(#chat,.bl-chat-like) span[style*="color" i] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none),
 body.salty:not(.salty-demfx-flow) :where(.cg-root) font[color] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none):is(#bl-s, *),
@@ -17447,11 +17452,11 @@ body.salty:not(.salty-demfx-flow) :where(.salty-preview) font[color] .custom-dem
 body.salty:not(.salty-demfx-flow) :where(.salty-preview) span[style*="color" i] .custom-dem-expressive:not(.custom-dem-expressive--):not(#salty-none):not(#salty-none):is(#bl-s, *) {
   color: inherit !important;
 }
-@media not all {#bl-dem-slot-full-15-e7142ab3d8d49a02{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-16-e7142ab3d8d49a02{--bl-dem-slot:0}}
 @supports (-webkit-mask-clip: text) {
-  @media not all {#bl-dem-slot-full-16-860d32d1b77b1d59{--bl-dem-slot:0}}
+  @media not all {#bl-dem-slot-full-17-860d32d1b77b1d59{--bl-dem-slot:0}}
 }
-@media not all {#bl-dem-slot-full-17-95f8dfc9a3a5e18f{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-full-18-95f8dfc9a3a5e18f{--bl-dem-slot:0}}
 @keyframes bl-fx-gradient {
   from { background-position: 0 50%; }
   to { background-position: 100% 50%; }

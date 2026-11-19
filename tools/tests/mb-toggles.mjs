@@ -288,7 +288,7 @@ await ok('화면만 번역 빈틈: 칩 다시 적기 · 사전 고정 낱말 · 
     const { createTrFill } = await load('src/ext-bridge-tr.js');
     let meta = 0, slots = 0;
     const mb = { tr: { trString: t => t, addPairs: () => 0, translateView() {}, trJSON: async x => x, missingTr: () => [] }, core: { viewTr: () => true, getMeta: () => { meta++; return { tr: {} }; }, app: { current: { state: { data: {} }, snaps: new Map() } }, settings: () => ({}) }, busy: () => false };
-    const doc = fakeDoc({ off: 'trchip trtidy trfill' });
+    const doc = fakeDoc({ off: 'trchip trtidy trfill annex blank' });   // 버그 사냥 6: 칩의 장소 앞 기호 떼기(annex) · 점자 빈칸(blank)은 칩 번역을 꺼도 칩 자리를 봐요 — 둘 다 끄면 안 봐요
     const fill = createTrFill(mb, { doc, toast: null, timers: { setTimeout() { return 0; }, clearTimeout() {} }, chatId: () => 'c', chat: () => [] });
     const mes = { getAttribute: () => '0', querySelectorAll: () => { slots++; return []; } };
     fill.paint([mes]); assert.equal(slots, 0);

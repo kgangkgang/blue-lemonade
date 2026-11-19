@@ -118,7 +118,7 @@ check('데우스 2.5 · V3 스킨 = 같은 테마 카드(1.0.0 시안 A), V3 배
     const CARD=':where(:not(.custom-dem-modules *))',TRACK=':where(:not(:has(> .custom-dem-track__grid)))',ITEM=':where(:not(.custom-dem-track__grid *))';
     assert(skin.includes(`.mes_text details.custom-dem-card${CARD},`)&&skin.includes(`:is(.custom-dem-track, .custom-dem-track-recovery)${TRACK}`)&&skin.includes(ITEM),'2.5 규칙은 무게 0 의 덧붙임으로만 V3 를 빼요');
     const bare=skin.replace(/\/\*[\s\S]*?\*\//g,'');
-    for(const rule of bare.split('}')){const head=rule.slice(0,rule.lastIndexOf('{'));if(!/custom-dem-/.test(head)||/8\.0\.6|\.custom-dem-modules|custom-dem-track > \.custom-dem-track__(?:grid|rule)|custom-dem-track:has/.test(rule))continue;
+    for(const rule of bare.split('}')){const head=rule.slice(0,rule.lastIndexOf('{'));if(!/custom-dem-/.test(head)||/8\.0\.6|\.custom-dem-modules|custom-dem-track > \.custom-dem-track__(?:grid|rule)|custom-dem-track:has|\.custom-dem-new-face /.test(rule))continue;   // 1.8.6 V4 새 얼굴 카드(.custom-dem-new-face)는 V4 에만 있는 class — V3 에 안 닿아요
         for(const sel of head.split(/,(?![^(]*\))/))if(/custom-dem-/.test(sel)&&!/:where\(:not\(/.test(sel))assert.fail('V3 에 닿을 수 있는 2.5 규칙: '+sel.trim().slice(-80));}
     const v3=skin.slice(skin.indexOf('/* ---------- 8.0.6 데우스 V3'),skin.indexOf('/* ---------- 폰 접기'));
     assert(v3.includes('.custom-dem-track > .custom-dem-track__grid .custom-dem-track__scene {')&&/custom-dem-track__scene::before \{[^}]*background: var\(--salty-accent\)/.test(v3),'해 궤도 · 해 점은 남겨요(시간 흐름)');

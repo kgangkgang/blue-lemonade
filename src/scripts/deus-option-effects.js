@@ -1,5 +1,6 @@
-// Reviewed DEUS 2.5 and V3 quick-setting effects. No original prompt body.
+// Reviewed DEUS 2.5, V3 and V4 quick-setting effects. No original prompt body.
 // v3 = the same id in DEUS V3: its body hash, plus a label/text only where the meaning changed.
+// v4 = the same id in DEUS V4 (v4.0, 2026-11-18): its body hash where V4 rewrote the body; meaning unchanged unless a label/text is given. New V4 ids carry their V4 hash as hash.
 // standing = 같은 원문에 블루레몬에이드 상시 손질(프리셋 자동 갱신)만 얹은 본문 지문 — 뜻이 같아 확인된 설명으로 봐요(10-29 상태창 영어 줄).
 export const DEUS_EFFECTS = {
   "a3c64aa2-de6f-4ace-987d-1eca5c4ffdb7": {
@@ -8,6 +9,9 @@ export const DEUS_EFFECTS = {
     "hash": "34609e615cd2cd9c8575e54bbd0fe137408f11df23edeb2e415202a885313db6",
     "v3": {
       "hash": "3bb6095cff80f61baa2871ebc566a29a5a221c9eafcb0f475bc2388bb7112ef3"
+    },
+    "v4": {
+      "hash": "d196816e4af7e70fe893308910e3fd1203ddff6ac5002905498570902ab7a0f2"
     }
   },
   "1c352c54-a636-454f-a058-712ddc3983cf": {
@@ -65,6 +69,9 @@ export const DEUS_EFFECTS = {
     "hash": "3fc45784b693ff4ff61e8a452b7117b05109caa1e0f8d674a41c2376e0fc028d",
     "v3": {
       "hash": "fd8b2883c462b1aa3382996546da4f57d38a2dd5f6e7e6ff1d80f697f3202ea1"
+    },
+    "v4": {
+      "hash": "042966c1c9b20e2d2513a7507979f0be6c17001a92adeb40f9336848361f54ae"
     }
   },
   "c8150e42-0cc3-4728-a95d-024f608895e3": {
@@ -73,6 +80,9 @@ export const DEUS_EFFECTS = {
     "hash": "2acb8f7eac73832ab81b5151371c6375bb1154a96a25034252fff55ff23cf679",
     "v3": {
       "hash": "6f607d9d955bb8b2a551b19e6f0372fbb20df1df8182449a57641d0e86416334"
+    },
+    "v4": {
+      "hash": "a0f9afdaf82184c55cf05665553beee3a75b356a88d5dc249bbc5385847e95d9"
     }
   },
   "52a66809-c36a-4893-87ee-228b93f24e77": {
@@ -123,6 +133,9 @@ export const DEUS_EFFECTS = {
     "hash": "16ad3782391afca7006791061af08f0bb1946123756ac18e09b4ae9cd178d230",
     "v3": {
       "hash": "3fcc136fae7e91e5ce6137124cb7ff4efade872ecf5f2f2bdaa27aa8f36d66af"
+    },
+    "v4": {
+      "hash": "42aa23aca493b84a1523270f590d0287b6f77e33cab263e18a868d9982e42494"
     }
   },
   "e2c6d0a3-9f41-4d8e-b052-7a3f4b0e9d86": {
@@ -131,6 +144,9 @@ export const DEUS_EFFECTS = {
     "hash": "00ada1d1c8c86110bc31db7e119e80e49d50fe3c1b3282e805183c8a59693677",
     "v3": {
       "hash": "629014989a713bf04ed99107d62f681488afc20e13a5c4dc67d08693ef37e069"
+    },
+    "v4": {
+      "hash": "fe6493abb767a8f780d96a14b9065a71e68315ec584d7df200b77fed7f54efdf"
     }
   },
   "f3d7e1b4-a052-4e9f-8c63-8b4c5a1f0e97": {
@@ -139,6 +155,9 @@ export const DEUS_EFFECTS = {
     "hash": "2b350f03a9b1b7e69f991083c8f689c69940b97dd1ecbb600b7eb8944bb1a566",
     "v3": {
       "hash": "1f925faff6a4d5898b836d8e5bc3d820bf344c04542d849889616cf3137438e6"
+    },
+    "v4": {
+      "hash": "1f50a37b27345e6c7b28f29ec5720133ef105beb6363d2c5e6526acc05b7edbd"
     }
   },
   "d6e649df-213d-49bc-81fe-cc17c8e73491": {
@@ -148,6 +167,9 @@ export const DEUS_EFFECTS = {
     "v3": {
       "hash": "807ab43912e276d1d1314fd1bdf2728da9011e8a034e211ecb1d31c863776f59",
       "text": "카메라처럼 밖에서 볼 수 있는 것만, 지금 순간의 장면을 끊어 이으며 보여 주는 서술이에요."
+    },
+    "v4": {
+      "hash": "7425f9f6f094bf3cef82a96c1c51c7aa5b98946a096aff971927e5faa7a8e83b"
     }
   },
   "d72af435-6568-454e-9ed5-aeeb079a55bb": {
@@ -165,6 +187,9 @@ export const DEUS_EFFECTS = {
     "hash": "ee585ea9ef77db6006c50bf7e398bb19fc47d9fe56727c28de34d33d7ca4cd9c",
     "v3": {
       "hash": "a1884eea66dee50018c118d48f35b5b365007a3c29ef1ab5b97e8742f78c00f7"
+    },
+    "v4": {
+      "hash": "26afd061748c04160573a619e397ac6a9064c2ccd72c005c865dc79ca03b7b59"
     }
   },
   "7c8ce8f6-46c2-4035-89b0-6beac7ac5c6c": {
@@ -242,6 +267,9 @@ export const DEUS_EFFECTS = {
     "hash": "2a20ca46d233df37879026e81937a741fc2572a6dfbd89613df5cb253b1e2acf",
     "v3": {
       "hash": "a3b2466371e03af8e95efde959a2d1840812ab7471ae6196769693eb66dcd90a"
+    },
+    "v4": {
+      "hash": "dcc2a6fdad4739bb9378ad46396dc6df661be5d8025bbc58e091529df94eb9c2"
     }
   },
   "b3b14ca1-4c8c-4539-a9c3-a2fcb2771c40": {
@@ -250,6 +278,9 @@ export const DEUS_EFFECTS = {
     "hash": "837ec091c7735dbd494b73ad516a53d1bca3897af5cadb6e70067e1191a54858",
     "v3": {
       "hash": "9845e98724adc53e775b0c22889344eadb09c2fd599e39493ae535ce8a37aebb"
+    },
+    "v4": {
+      "hash": "27772485c1cab787df18679d25212053004f280d0cdfa17e872477aa1b088e71"
     }
   },
   "16879fbb-850b-4c0a-b25a-30c6911e3f9f": {
@@ -268,6 +299,9 @@ export const DEUS_EFFECTS = {
     "hash": "14979dd087b3933d1abb6841852efb48199af50647a4eec6ad2a3d2ec0376a39",
     "v3": {
       "hash": "dd1cbad9701325f2589c5039921c88d09f0659cbf64d0e4808b051f41a4e2a4a"
+    },
+    "v4": {
+      "hash": "01bf436110320762b3aab8907b5597b9f27e16d9d6df34b6992e8322b380cd85"
     }
   },
   "1d816ec2-2c8f-4e92-81d1-18021dbfedd0": {
@@ -276,6 +310,9 @@ export const DEUS_EFFECTS = {
     "hash": "0af4e17e0ea2268535864470642db568caaae9eb986494b0995a99ca0f87f7c7",
     "v3": {
       "hash": "df567b923b106d5ac79520bced836c93f855c92e4fb5c6f26cc096b70f28bd0d"
+    },
+    "v4": {
+      "hash": "5659a56db6d7484f14b75c2ae6851fc87bd0114a5457d83cf59094bd8774a232"
     }
   },
   "668ed810-9070-44cd-830b-3f295fb58c03": {
@@ -284,6 +321,9 @@ export const DEUS_EFFECTS = {
     "hash": "21641226a67ed1862b62818e121da6e9a59bd0ea18d06fae25f664aef79d9ca6",
     "v3": {
       "hash": "3cc0502934f30552ee1bcd305432a8d0a12a42a3cac598a504efc2b71979fe81"
+    },
+    "v4": {
+      "hash": "69340bb33c065f89bd42149764c79ac7df8f2f6478523e8b8cee69a0d7c9b148"
     }
   },
   "4e6b48fe-f9f6-41e7-b910-dc6f13d15cfd": {
@@ -325,6 +365,9 @@ export const DEUS_EFFECTS = {
     "hash": "74efb71f01e1b4c931f9e4c8c648fff6789530b425515a1d9056438b6f60169b",
     "v3": {
       "hash": "a8bab6b220d5023ce4285346da632a05fa7c891dae1a52ece46092a550414cf4"
+    },
+    "v4": {
+      "hash": "d6350b9667f5e0697458a5eeda3b8f7cb9c00b95cbd6708b9771d260d0599f32"
     }
   },
   "86373739-207c-44d9-8af4-147312c4724a": {
@@ -333,6 +376,9 @@ export const DEUS_EFFECTS = {
     "hash": "c5fd636fbc2fa59888f85aeb831175aa5c9b0686f29fe6c945a2773c7ba71a54",
     "v3": {
       "hash": "58ca81bf4d4ec4f4ed262ac16a99ea7008093bbffc28c66a69aa00d8115e8814"
+    },
+    "v4": {
+      "hash": "4d0dc0d1ff37bf394a9f7d21ebe49e3ba6f256c0bd2222b4bb2f29e8930690da"
     }
   },
   "7f5495fd-d06b-41be-ab28-5962a64456b1": {
@@ -341,6 +387,9 @@ export const DEUS_EFFECTS = {
     "hash": "98f3b1e9fa5650b22e9c397b9d33b92e93781787735583b19271b495bd8f1b4d",
     "v3": {
       "hash": "7888f986c0dc6ff47b1fe3b3ae4f937c9b1dde03c68bb1f22d8241db97f1e6c4"
+    },
+    "v4": {
+      "hash": "9d7b6d61f3e3c99af5173ee1fbdaa3ba9bbf90f0e39a16a9c7de90b9f628aeb2"
     }
   },
   "0c01676d-4a2e-439c-a5ac-27c128d5a533": {
@@ -396,6 +445,9 @@ export const DEUS_EFFECTS = {
     "hash": "5dee76cde4cd529ea995fc998bff4df12077d182d4cbd63a150919178e7dcda9",
     "v3": {
       "hash": "0721b5f6af782adb601720dbe338e7e8c46d8dbfeecf0f789aeccaf47aedd12e"
+    },
+    "v4": {
+      "hash": "cabd7e7b439b59a10a92ee06d7ad011ada3ce7918dfe62131966d44ad91efe52"
     }
   },
   "a1d5e9c2-7f34-4b86-9280-4361cb9e5d70": {
@@ -404,6 +456,9 @@ export const DEUS_EFFECTS = {
     "hash": "0a2024b7bb261d5d9592ea6502fe590a686010f7491b1c57905e200b11204f3b",
     "v3": {
       "hash": "626ebd03b327996ac63ec7caf73c28c2623957934fa05cccf45822ab951bd9bc"
+    },
+    "v4": {
+      "hash": "6477bb9cec94edfb541ad173910c30d685b1fc429544f0c2c8253b34cb7287ba"
     }
   },
   "b3e6f0d4-8a25-4c97-0391-5472dc0f6e81": {
@@ -412,6 +467,9 @@ export const DEUS_EFFECTS = {
     "hash": "7b6c1d3e4abe8760cefa864645872cea8e898a63b795fcf40fa17c4f9cf33d2b",
     "v3": {
       "hash": "5e2850d5bd0a19ec309f2fb4dec86e56942dd3d0e25d760f0397a69cf50c2b14"
+    },
+    "v4": {
+      "hash": "a35dfd857f80b93fe6f75bcd3b4b26aad0244ec2c18eab63b19ecada09dfd932"
     }
   },
   "c5f7a1e6-9b36-4d08-1402-6583ed1a7f92": {
@@ -420,6 +478,9 @@ export const DEUS_EFFECTS = {
     "hash": "3db4a9d9e03f9f32b77c7c593825787641eebbcd35ee6ade26d9443e7a94d747",
     "v3": {
       "hash": "3b8c5604306dff6f2574c0e642b04f7c51a7d55ddeb15a3d439a95440a62cf0e"
+    },
+    "v4": {
+      "hash": "167e7b738628b571d8bdbfda95af360beec701373432600f2129e93d13183540"
     }
   },
   "5415c972-4ec8-46de-8d29-1e3bce1881d7": {
@@ -452,6 +513,9 @@ export const DEUS_EFFECTS = {
     "hash": "2a9028fd10ae1f1d3f16578b925a8564e16ed1ba082c897cfd682c7d1a7ccfa6",
     "v3": {
       "hash": "290f2a7d5c39e8f6fc248eabad197dca5e9a022233be24d4b497cf2899a61042"
+    },
+    "v4": {
+      "hash": "b9ee276a4a10d6a8fbc99e768aa057c7373092df17e7878ca95e1f33eaa8f7e0"
     }
   },
   "e7b4c2d1-9f86-4a53-b7c0-2d1e8f9a6b41": {
@@ -493,6 +557,9 @@ export const DEUS_EFFECTS = {
     "hash": "6b6fb94b89422455e1c6ecae467ed3ff737c4d7ea30766d36ea67985f8f167c2",
     "v3": {
       "hash": "a7103d8295cc15c40f98f06ce9d162aafd606a67f85141ff589aba29e9dd2eb8"
+    },
+    "v4": {
+      "hash": "444f1ad3cd56826fdce6aa92d374640b3b7236bb97d1db226e95a5639787c15f"
     }
   },
   "3f6ef275-2ecb-45ca-8ceb-f77ad11e012a": {
@@ -501,6 +568,9 @@ export const DEUS_EFFECTS = {
     "hash": "15450371b1f985ecc548c31a59055aee7886c3fae9bfbb9fdba27f08d62d17e6",
     "v3": {
       "hash": "c7eaf6ad287b8d08234534f6a6a611dbae516a2629493e025f5b0c64bfc7c0b4"
+    },
+    "v4": {
+      "hash": "3cbaef9afb3c3f4dcfe3cfea33c3741e2c9ac2625513ec8ce383904463b34d0a"
     }
   },
   "8ffe0557-5f8a-45bd-ab43-ebc580510827": {
@@ -509,6 +579,9 @@ export const DEUS_EFFECTS = {
     "hash": "c97ccfb9e614e66fcf02016e1d90d3bde3546d5c26a0163fb8b8e51fbdeefdbc",
     "v3": {
       "hash": "f81b0dd940d47560b393472a77d3404041118149c194cb64d67425effa64821f"
+    },
+    "v4": {
+      "hash": "a965a83bab39af8fa7f354b9cc21eb53d2bb89a5225fdb219b1d7ca59de0675c"
     }
   },
   "403539e4-e530-43a1-be30-5d5bd33d4d5e": {
@@ -520,6 +593,9 @@ export const DEUS_EFFECTS = {
       "standing": [
         "f6b347b791cd2bdc59e50af59abfa97a35a6b369a150f5d139bace9ca1c1fb11"
       ]
+    },
+    "v4": {
+      "hash": "4f27ce7c743bc15bb808565c078996443df13f342093deb211a235d32249a690"
     }
   },
   "ab70a374-f6f5-4e5c-a1c6-1596a4397806": {
@@ -528,6 +604,9 @@ export const DEUS_EFFECTS = {
     "hash": "66525c8ff52ead61e3132b6a9d93df018dbac550b55d1a1c87a07a8c0400e67a",
     "v3": {
       "hash": "3f09f8d4e678f5334967291705b41e4a96d03c91878374b650ac3a66b46bd3e6"
+    },
+    "v4": {
+      "hash": "c7dfb53d4bd8328d931bb9bfc7d69fa9847f785b821fbf4ee437b321eed6dce3"
     }
   },
   "7eb033d6-2036-4c5a-9b3a-d22d1d6da7b8": {
@@ -544,6 +623,9 @@ export const DEUS_EFFECTS = {
     "hash": "eb78d4d8a348f165db78b6db933318fe6481ba588dc25fd83d8e6c0a096e36c6",
     "v3": {
       "hash": "bced541ce5948b24ba408136a04b38ca179f15febcc3258b5ecf04fb43ffe500"
+    },
+    "v4": {
+      "hash": "508831d5dba50a6df05058a2abc3546a47386cf4df763dc1cd3891edb4b1df8d"
     }
   },
   "a3210be7-945f-4ebc-b3fe-3433d51e7479": {
@@ -572,7 +654,10 @@ export const DEUS_EFFECTS = {
   "ef8c52ca-4c07-423d-8bc7-7600ca364cd0": {
     "label": "우정",
     "text": "로맨스 없는 우정을 그리고, 꼬리말로 신뢰·단계·함께 나누는 것·지금의 마찰을 기록해요.",
-    "hash": "a73b391ad12ba8274a77afb99e25c764abde1ada1449e30ea12bfc3bf698492d"
+    "hash": "a73b391ad12ba8274a77afb99e25c764abde1ada1449e30ea12bfc3bf698492d",
+    "v4": {
+      "hash": "429d010f3d4a62812d0bb2121a55446245182aa78c92952779996859b811586d"
+    }
   },
   "ce6efb5d-fe0f-4dbf-9a9c-4402c4132170": {
     "label": "현실 로맨스",
@@ -592,7 +677,10 @@ export const DEUS_EFFECTS = {
   "c858bd65-2e20-4b39-b481-9c8d54fe1dc9": {
     "label": "물밑 흐름",
     "text": "꼬리말에 인물마다 원하는 것·받는 압박과 다음 경로 다섯 개를 적고 매 턴 갱신해요. 경로는 제안일 뿐이고 내 입력이 방향을 정해요.",
-    "hash": "71cdf9a5ca683345753f836ea13fddf209b9fee70c964b6ea9c1dfc754d9ea32"
+    "hash": "71cdf9a5ca683345753f836ea13fddf209b9fee70c964b6ea9c1dfc754d9ea32",
+    "v4": {
+      "hash": "14d57939a174a27088b91bd2aaa9ea7e4e11fbb1fd2660370fb392bf65275e5f"
+    }
   },
   "bf1386b1-1257-41c6-96b6-efb46e2db8ad": {
     "label": "모든 캐릭터",
@@ -607,7 +695,10 @@ export const DEUS_EFFECTS = {
   "ee9417ca-55ce-42c8-a582-63f1ce5b46c6": {
     "label": "감상 메모",
     "text": "친구들이 본문 아래에 각자 짧은 감상을 남겨요. OOC로 @이름을 쓰면 그 친구에게 말을 걸어요.",
-    "hash": "d8ba17a115ba35a764305730fae42eacb75d7ad1b0926450ef216e537bb3b96a"
+    "hash": "d8ba17a115ba35a764305730fae42eacb75d7ad1b0926450ef216e537bb3b96a",
+    "v4": {
+      "hash": "ce2526661966534186e451ad0db395c0c1e909e6ce92410389cdef628e570b3a"
+    }
   },
   "35e32cf4-0331-4146-8ffb-fe3b1b1347a5": {
     "label": "단체 대화",
@@ -642,7 +733,10 @@ export const DEUS_EFFECTS = {
   "bf50a051-c194-4964-9ff8-dd6f299c0c17": {
     "label": "쓸쓸한",
     "text": "상실·기억·오래가지 않는 것들의 조용한 슬픔을 더해요.",
-    "hash": "5158ab5d0dd98c927e1fe2eb47a83c09558e7b8dda64a61e065816ca5f4808db"
+    "hash": "5158ab5d0dd98c927e1fe2eb47a83c09558e7b8dda64a61e065816ca5f4808db",
+    "v4": {
+      "hash": "4ed5a723f8092cfbc80d9685049dd3709afbe398e511776f38240c0977847711"
+    }
   },
   "81f1ca27-ae2a-4812-8312-46ff1c70ad9d": {
     "label": "친밀한",
@@ -652,12 +746,18 @@ export const DEUS_EFFECTS = {
   "88859954-b3a5-4eb1-b2d3-f56daa08cb6c": {
     "label": "파이의 퇴고 메모",
     "text": "이야기 뒤에 파이가 방금 쓴 글의 약한 문장과 어긴 규칙, 고칠 방법을 짧게 적어요. 장면 계획·생각하기가 다음 답에 이어 받아요.",
-    "hash": "c9287c66eba6883761a838d82b46872d1c720c0c9d67a52f1e4e095189c9f65c"
+    "hash": "c9287c66eba6883761a838d82b46872d1c720c0c9d67a52f1e4e095189c9f65c",
+    "v4": {
+      "hash": "546fdf9d9cd2d21ac93c400a1fc9bae515a352f1787baf2dfc415d8cf6e3704b"
+    }
   },
   "d152123a-0eb9-4231-81a6-148d33c95d49": {
     "label": "한편",
     "text": "이야기가 다른 곳에서 진행되는 동안 화면 밖 인물과 사건을 기록해요. 화면에서는 스포일러 아래에 숨겨요.",
-    "hash": "ad9ba6b4fc42a7f33e8f06cfff1555d86330d332af120f1b38b8a2df4a24f810"
+    "hash": "ad9ba6b4fc42a7f33e8f06cfff1555d86330d332af120f1b38b8a2df4a24f810",
+    "v4": {
+      "hash": "78d591d17156d418b2bae93fac7c4a144b322c9b6f4e34a524c81e7fd3ab7479"
+    }
   },
   "7e22cd21-5634-4bd7-b967-ff298c17c096": {
     "label": "숨은 진실",
@@ -721,6 +821,51 @@ export const DEUS_EFFECTS = {
     "label": "대장편",
     "text": "본문을 약 2,800~4,000단어, 24~40문단으로 요청해요. 반복으로 늘리지 않아요.",
     "hash": "52a92349e37449b68cfaabd424425994cc70242dea66c454f9f5a3bee7ebffd3"
+  },
+  "ecfff91e-43e0-4a5d-8cfe-4d15e56dd55d": {
+    "label": "운명의 주사위",
+    "text": "내 캐릭터는 내가 조종하고, 실패할 수 있는 시도는 AI가 성공 확률과 성공 · 실패 두 결말을 써 두면 숨은 주사위가 하나를 골라요. 「주사위 결과」가 켜져 있어야 해요.",
+    "hash": "4bdd261571593626bdfb3e045f887c6bbb94dc167daddad1d0d940c46905c879"
+  },
+  "c5757d8a-8539-4f3e-933b-30b86757c4f1": {
+    "label": "현실적인 상처",
+    "text": "상처 · 피 · 통증을 현실적인 무게로 그리고, 다친 몸은 느려지거나 흉이 남아요. 폭력이 얼마나 자주 나오는지는 이야기가 정해요.",
+    "hash": "aa416367e74377d9cf229212401e902d4731847b5f773d5f6d13b56f350db5e2"
+  },
+  "1779e467-dc4e-4256-a278-4e4f4007eff3": {
+    "label": "과장된 유혈",
+    "text": "스플래터 영화처럼 피와 잔해를 과장해 보여 줘요. 상처 자체는 공격만큼이고 보이는 모습만 과장돼요. 모델에 따라 수위 차이가 커요.",
+    "hash": "e177218fb02c18ad3dbd3ba050256ddc869b02bbcb8675c4fc289c9a55eaeaaa"
+  },
+  "018fcd1e-128d-419e-bb52-a2689ea245d9": {
+    "label": "잔혹 묘사 없음",
+    "text": "싸움 · 부상 · 죽음은 그대로 일어나되 상처와 피는 짧게, 15세 관람가 영화 정도로 그려요.",
+    "hash": "c1bf8c626477f8a44069a5467df8ce9aa59d5be476b12703858e52a6db07008d"
+  },
+  "01c9991c-b6d1-440d-b8ab-9fcef9accf9c": {
+    "label": "어두운 결말 쪽으로",
+    "text": "이야기가 여러 결과를 허락하면 더 어두운 쪽을 골라 위협 · 상처 · 슬픔이 남게 해요. 근거 없는 비극은 만들지 않고 밝은 장면도 남아요.",
+    "hash": "91c63524b8429bde66267104e04cf8ec1138a23b8b942748814a7180c84c970d"
+  },
+  "4f5509db-7cd8-4b7d-bff1-bd4063a8559f": {
+    "label": "새 얼굴 카드",
+    "text": "새 인물이 처음 나온 턴에 카드(주요 인물은 여러 칸, 단역은 한 줄)를 남겨요. 비밀까지 적혀 접힌 채 보이고, 카드 설정에 이미 있는 인물은 만들지 않아요.",
+    "hash": "bb9c93a93e10f5b0864053f461f2e6b4d664477a222c224addc5550a69858c7b"
+  },
+  "de251b02-fb80-4a4a-b312-d83a349826aa": {
+    "label": "일기장",
+    "text": "나와 가장 가까운 두 인물이 나와의 중요한 순간을 자기 말투로 일기에 적고 나중에 떠올려요. 상태창 서랍에 일기 탭이 생겨요.",
+    "hash": "37832d809f4e8891a531d32fb4a926835f95585c7e22e98373da575d10b3e28d"
+  },
+  "5442b71d-b233-44eb-b5cd-911430bfa414": {
+    "label": "고정 카드",
+    "text": "새 얼굴 카드를 이 항목 본문에 붙여 두면 요약 · 긴 대화 뒤에도 그 인물을 기억해요. 비어 있으면 아무것도 보내지 않아요.",
+    "hash": "0d79c36c10694468c76b4f17b5e6c5d805e7a976b15488d7c8f1c98ca3836b47"
+  },
+  "a19b9951-7214-4f4e-a1b8-42047882c71c": {
+    "label": "주사위 결과 (운명의 주사위용)",
+    "text": "운명의 주사위의 확률 · 두 결말 틀을 모델에 알려 줘요. 주도권에서 주사위를 고르지 않으면 아무 일도 하지 않으니 켜 둬요.",
+    "hash": "5512fe7153e3e55738afb208177d12d7087318728cec9b1ab25ac213e18387f1"
   }
 };
 export const DEUS_EFFECT_GROUPS = {
@@ -728,6 +873,7 @@ export const DEUS_EFFECT_GROUPS = {
     "label": "주도권",
     "ids": [
       "a3c64aa2-de6f-4ace-987d-1eca5c4ffdb7",
+      "ecfff91e-43e0-4a5d-8cfe-4d15e56dd55d",
       "1c352c54-a636-454f-a058-712ddc3983cf",
       "16b32808-e943-45ad-b65e-1de52f2efc3c",
       "30d2dd79-5144-4b66-9d49-3b8a0fe61a3a"
@@ -840,6 +986,14 @@ export const DEUS_EFFECT_GROUPS = {
       "6537edf0-8331-4e7e-841a-86655f5a5a9c",
       "1d816ec2-2c8f-4e92-81d1-18021dbfedd0",
       "668ed810-9070-44cd-830b-3f295fb58c03"
+    ]
+  },
+  "violence": {
+    "label": "폭력 묘사",
+    "ids": [
+      "c5757d8a-8539-4f3e-933b-30b86757c4f1",
+      "1779e467-dc4e-4256-a278-4e4f4007eff3",
+      "018fcd1e-128d-419e-bb52-a2689ea245d9"
     ]
   },
   "tracker": {

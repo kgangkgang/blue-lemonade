@@ -7,6 +7,7 @@
 //   켜고 끄기: 테마 설정 chat.mbMapFloors(기본 켬) → body[data-bl-mb-floors] · 「원작 그대로 보기」 를 켜면 안 해요. 시험: tools/tests/mb-map-floors.mjs
 import { watchDom } from './dom-watch.js';
 import { mbFit, onMbOff } from './mb-switch-core.js';
+import { dropLead, pinNodes } from './mb-place-mark.js';   // 버그 사냥 6 장소 이름 앞 기호 — 띠 · 지도 밖(상태 칸 · 갈 곳 · 검색 · 알림 · 기록)도
 
 export const FLOOR_ATTR = 'data-bl-mb-floors';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -939,7 +940,7 @@ export function showGhostCard(panel, g) {
 export function markText(el) {
     const walk = n => { for (const c of n?.childNodes || []) { if (c.nodeType === 3) { if (String(c.nodeValue || '').trim()) return c; continue; } if (c.nodeType === 1) { const r = walk(c); if (r) return r; } } return null; };
     const t = walk(el); if (!t) return false;
-    const v = String(t.nodeValue), u = v.replace(/^(\s*)[@＠#＃]+\s*(?=\S)/u, '$1');
+    const v = String(t.nodeValue), u = v.replace(/^([\s\u2800]*)[@＠#＃]+[\s\u2800]*(?=[^\s\u2800])/u, '$1');   // 버그 사냥 6 점자 빈칸(U+2800)도 빈칸
     if (u === v) return false;
     t.nodeValue = u; return true;
 }
@@ -950,14 +951,32 @@ export function markLocMarks(root) {
         let t = null;
         for (let s = ic.nextSibling; s && !t; s = s.nextSibling) {
             if (s.nodeType === 3) { if (String(s.nodeValue || '').trim()) t = s; }
-            else if (s.nodeType === 1) { const w = [s]; while (w.length && !t) { const x = w.shift(); for (const c of x.childNodes || []) { if (c.nodeType === 3 && String(c.nodeValue || '').trim()) { t = c; break; } if (c.nodeType === 1) w.push(c); } } }
+            else if (s.nodeType === 1) { const dfs = x => { for (const c of x.childNodes || []) { if (c.nodeType === 3) { if (String(c.nodeValue || '').trim()) return c; } else if (c.nodeType === 1) { const r = dfs(c); if (r) return r; } } return null; }; t = dfs(s); }   // 버그 사냥 6 글 차례대로(예전엔 얕은 것부터 — 「<b>@로비</b> — 설명」 이면 설명 글을 집어 이름 앞 기호가 남았어요)
         }
         if (!t) continue;
-        const v = String(t.nodeValue), u = v.replace(/^(\s*)[@＠#＃]+\s*(?=\S)/u, '$1');
+        const v = String(t.nodeValue), u = v.replace(/^([\s\u2800]*)[@＠#＃]+[\s\u2800]*(?=[^\s\u2800])/u, '$1');   // 버그 사냥 6 점자 빈칸(U+2800)도 빈칸
         if (u !== v) { t.nodeValue = u; n++; }
     }
     return n;
 }
+/** 버그 사냥 6 그 확장 창 · 띠 · 알림 안의 장소 이름 앞 기호(표시만 · src/mb-place-mark.js): 위치 아이콘 뒤 글(상태 칸 위치 타일 · 펼친 위치 줄 · 의뢰 장소) ·
+ *  「갈 곳」 칩 이름 · 검색 결과의 📍 줄 이름 · 「📍 @…」 · 「🗺️ 새 장소: @…」 꼴 글(알림 · 하루 정리 · 기록 · 검색 글 · 띠) → 뗀 수 */
+export const PLACE_SCOPE = '#ss-hud, .ss-scope, .ss-root, .ss-panel, #ss-side, #ss-float, #ss-toasts, .ss-toasts, #toast-container';
+export function markPlaces(root, { pin = true, blank = false } = {}) {
+    if (!root || root.nodeType !== 1 || root.closest?.('#ss-settings')) return 0;
+    let n = blank ? pinNodes(root, { pin: false, blank: true }) : 0;   // 점자 빈칸을 먼저(그 뒤 기호 떼기가 보통 빈칸으로 봐요)
+    if (!pin) return n;
+    n += markLocMarks(root);
+    const all = sel => [...(root.matches?.(sel) ? [root] : []), ...(root.querySelectorAll?.(sel) || [])];
+    for (const b of all('.ss-loc-go > b')) if (dropLead(b)) n++;
+    for (const row of all('.ss-note')) {
+        if (String(row.querySelector(':scope > .ss-t-ico')?.textContent ?? '').trim() !== '📍') continue;   // 검색 결과 · 알림함의 장소 줄만(SNS · 메신저 줄은 그대로)
+        const b = row.querySelector(':scope > .ss-t-b > b'); if (b && dropLead(b)) n++;
+    }
+    return n + pinNodes(root);
+}
+/** 버그 사냥 6 지금 켜진 표시 다듬기(장소 앞 기호 annex · 점자 빈칸 blank) — 감시자 · 칩 칠하기가 같이 봐요 */
+export const tidyOpts = doc => ({ pin: mbFit('annex', doc), blank: mbFit('blank', doc) });
 // ── 붙이기 ─────────────────────────────────────────────
 const rawView = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw');
 const isOn = doc => doc?.body?.getAttribute?.(FLOOR_ATTR) === 'on' && !rawView(doc);
@@ -1043,10 +1062,15 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
     (load ? Promise.resolve(load()) : mbCore(doc)).then(m => { core = m; sweep(); }).catch(() => { /* 그 확장 그림 그대로 */ });
     try {
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 층별 지도' }, records => {
-            if (!active() || !core) return;
+            if (!core) return;
+            const opt = tidyOpts(doc), pin = opt.pin || opt.blank;   // 버그 사냥 6 지도 기능을 다 꺼도 점자 빈칸 다듬기는 돌아요
+            const map = active();
             for (const r of records) for (const n of r.addedNodes || []) {
+                if (n.nodeType === 3) { const p = n.parentElement; if (pin && p?.closest?.(PLACE_SCOPE)) markPlaces(p, opt); continue; }   // 버그 사냥 6 글만 갈아 끼운 칸(textContent)
                 if (n.nodeType !== 1) continue;
-                if (n.id === 'ss-hud' || n.closest?.('#ss-hud')) { if (annexOn()) markLocMarks(n); continue; }   // 1.8.2 띠 위치 칩 · 펼친 위치 줄 「@로비」(표시만 · 띠 안에 지도는 없어요)
+                if (n.id === 'ss-hud' || n.closest?.('#ss-hud')) { if (pin) markPlaces(n, opt); continue; }   // 1.8.2 띠 위치 칩 · 펼친 위치 줄 「@로비」(표시만 · 띠 안에 지도는 없어요)
+                if (pin && n.closest?.(PLACE_SCOPE)) markPlaces(n, opt);   // 버그 사냥 6 상태 칸 위치 타일 · 갈 곳 · 검색 결과 · 알림 · 기록 줄
+                if (!map) continue;
                 if (n.matches?.('svg.ss-map')) dress(n);
                 else if (n.firstElementChild) for (const svg of n.querySelectorAll?.('svg.ss-map:not([data-bl-floors])') || []) dress(svg);
             }
@@ -1054,6 +1078,8 @@ export function startMbFloors(doc = globalThis.document, { watch = watchDom, loa
     } catch { /* 처음 훑은 것만 */ }
     try { watch(doc.body, { attributes: [FLOOR_ATTR, 'data-bl-ext-raw'], name: '미트볼 층별 지도 (켜고 끄기)' }, () => redraw()); } catch { /* 다음 그릴 때부터 */ }
     onMbOff(doc, ['unvisited', 'annex'], () => redraw());
+    // 버그 사냥 6 기호 떼기를 켜고 끌 때 지도 밖 창 · 띠도 그 확장이 다시 그리게(끄면 원래 글 · 켜면 새로 뗌)
+    onMbOff(doc, ['annex', 'blank'], () => { try { core?.app?.rerenderPanels?.(true); } catch { /* 다음 그릴 때 */ } try { const hud = doc.getElementById?.('ss-hud'); if (hud && '_ssHtml' in hud) { hud._ssHtml = ''; core?.app?.renderHud?.(); } } catch { /* 다음 갱신 때 */ } });
     // 1.7.5 흐린 점 누르기 → 그 곳 카드(로어북 설명 요약). 그 확장의 장소 · 구역 · 「현재 위치로」를 누르면 흐린 점 고름을 풀어요(그 확장이 제 카드를 다시 그려요)
     doc.addEventListener('click', e => {
         const t = e.target; if (!t?.closest) return;

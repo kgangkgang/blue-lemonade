@@ -14,13 +14,17 @@
 //         번역 단추를 누르면 늘 · 글이 이미 내 언어(번역 언어)면 아무것도 안 해요 · 스위치 「속마음 번역해서 띄우기」(mindtr)를 끄면 원작 그대로(바꿔 적은 글도 원문으로 되돌려요).
 //   원작 파일 · 함수는 고치지 않아요 — 그 확장이 내보낸 함수(app.mindPop · trText · numOf)를 같은 주소로 불러요. 원작 코드 · 글은 옮기지 않았어요.
 //   시험: tools/tests/mb-mind-tr.mjs
-import { mbOff, onMbOff } from './mb-switch-core.js';
+import { mbOff, onMbOff, mbFit } from './mb-switch-core.js';
 import { holdSheet } from './boot-gate.js';
 
 export const KEY = 'mindtr';
 export const SHEET_ID = 'bl-mb-mind-tr-css';
-export const WAIT_MS = 6000;
+export const WAIT_MS = 15000;   // 버그 사냥 6: 6초 → 15초(번역 모델이 늦으면 원문이 먼저 떴어요 · 사용자 「처음부터 한국어로」) — 그 사이엔 대기 표시(WAIT_TEXT)
+export const WAIT_TEXT = '⋯';
+export const WAIT_ATTR = 'data-bl-mind-wait';
+export const SEEN_ATTR = 'data-bl-mind-seen';
 export const ANIM = 'bl-mb-mind-seen';
+export const POP_ANIM = 'ss-mpop-in';   // 그 확장 말풍선 들어오는 움직임 이름(css/mind.css)
 export const STORE = 'bl-mb-mind-tr-v1';
 export const STORE_MAX = 400;
 export const SRC_ATTR = 'data-bl-mind-src';
@@ -131,7 +135,7 @@ export function createStore(storage = globalThis.localStorage) {
 /**
  * mb = { core(app · settings · getMeta · modOn · mindCovered), tr(trText), cfg(numOf) } — 그 확장이 내보낸 것
  */
-export function createMindTr(mb, { doc = globalThis.document, timers = globalThis, storage = globalThis.localStorage, toast = globalThis.toastr, chatId = stChatId, wait = WAIT_MS } = {}) {
+export function createMindTr(mb, { doc = globalThis.document, timers = globalThis, storage = globalThis.localStorage, toast = globalThis.toastr, chatId = stChatId, wait = WAIT_MS, afterPop = () => {} } = {}) {
     const { core, tr, cfg } = mb;
     const store = createStore(storage);
     const set = () => { try { return core.settings?.() ?? {}; } catch { return {}; } };
@@ -152,6 +156,7 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
     const modes = new Map();   // 열쇠 → { m: 'wait' | 'tr' | 'raw', src, who, ko, late }
     const wake = new Map();    // 열쇠 → 원문으로 띄울 타이머
     const pending = new Set(), inflight = new Set(), failed = new Set();
+    const late = new Set(), waitT = new Map();   // 버그 사냥 6 탭 글: 시간이 넘어 원문으로 둔 글 · 글마다 시간 재기 하나
     let flushTimer = 0;
     const log = [];   // 시험 · 진단: [시각, 일]
     const note = what => { log.push([Date.now(), what]); if (log.length > 200) log.shift(); };
@@ -199,11 +204,12 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
             const st = modes.get(it.key);
             // 관전자 이름: 처음 띄울 때 정한 이름(st.name)만 넣어요 — 띄운 뒤에 이름이 바뀌면 그 확장이 새 한마디로 보고 한 번 더 띄우니까요
             if (st?.name && st.m !== 'wait') { undo.push([it.obj, 'who', it.obj.who]); it.obj.who = st.name; }
-            if (st?.m === 'wait') { undo.push([it.obj, 'turn', it.obj.turn]); it.obj.turn = -1; }
+            // 버그 사냥 6 기다리는 동안은 원문 대신 대기 표시(WAIT_TEXT)로 띄워요 — 예전엔 아무것도 안 띄웠다가 6초 뒤 원문(일본어 등)이 먼저 떴어요
+            if (st?.m === 'wait') { undo.push([it.obj, 'text', it.obj.text]); it.obj.text = WAIT_TEXT; }
             else if (st?.m === 'tr' && st.ko) { undo.push([it.obj, 'text', it.obj.text]); it.obj.text = st.ko; }
         }
         try { return orig.apply(self, args); }
-        finally { for (let i = undo.length - 1; i >= 0; i--) { const [o, k, v] = undo[i]; o[k] = v; } }
+        finally { for (let i = undo.length - 1; i >= 0; i--) { const [o, k, v] = undo[i]; o[k] = v; } try { afterPop(); } catch { /* 자리 맞춤만 못 해요 */ } }
     }
     const redraw = () => { try { core.app?.mindPop?.(); } catch (e) { console.warn('[Blue Lemonade] 속마음 번역', e); } };
     /** 기다린 시간이 지나면 원문으로 띄워요(번역이 나중에 오면 그 말풍선을 바꿔 끼워요) */
@@ -213,29 +219,57 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         if (st?.m !== 'wait') return;
         modes.set(key, { ...st, m: 'raw', late: true });
         note(`원문으로 ${st.who}`);
+        dropWaitBubble(st.who);
         redraw();
     }
     /** 번역이 왔어요 — 기다리던 말풍선은 번역본으로 띄우고, 원문으로 뜬 것은 바꿔 끼우고, 탭 글도 */
     function arrive(src, ko) {
-        let again = false;
+        let again = false; const waitWho = new Set();
         for (const [key, st] of modes) {
             if (st.src !== src) continue;
             if (st.m === 'wait') {
                 timers.clearTimeout(wake.get(key)); wake.delete(key);
                 const name = st.name ?? (key.startsWith('w|') ? store.get(lang(), st.who) : null);   // 같은 묶음으로 온 관전자 이름(아직 안 띄웠으니 지금 정해요)
-                modes.set(key, { ...st, m: 'tr', ko, ...(name ? { name } : {}) }); again = true; note(`번역본으로 ${st.who}`);
+                modes.set(key, { ...st, m: 'tr', ko, ...(name ? { name } : {}) }); again = true; waitWho.add(st.who); note(`번역본으로 ${st.who}`);
             }
-            else if (st.m === 'raw' && st.late) { modes.set(key, { ...st, late: false }); if (!off()) swapBubble(st.name ?? st.who, ko, key.startsWith('w|') ? store.get(lang(), st.who) : null); }
+            else if (st.m === 'raw' && st.late) { modes.set(key, { ...st, late: false }); if (!off()) swapBubble(st.name ?? st.who, ko, key.startsWith('w|') ? store.get(lang(), st.who) : null, src); }
         }
-        if (again) redraw();
+        if (again) { for (const w of waitWho) dropWaitBubble(w); redraw(); }
     }
-    /** 원문으로 이미 뜬 말풍선 → 같은 꼴 번역본(새 마디)으로 바꿔 끼우고 사라지는 시간을 지금부터 · 원래 마디는 문서에서 빠져 그 확장 타이머가 아무 일도 못 해요 */
-    function swapBubble(who, ko, name = null) {
+    /** 버그 사냥 6 말풍선 머리 이름이 그 사람인가 — 그 확장은 화면만 번역이면 이름도 사전으로 바꿔 그려요(「Mira」 → 「미라」 · 리그에서 이름만 견주면 못 찾았어요) */
+    function sameWho(el, who) {
+        const shown = String(el.querySelector('.ss-mpop-b small b')?.textContent ?? '').trim(), w = String(who ?? '').trim();
+        if (shown === w) return true;
+        try { const t = String(tr.trString?.(w) ?? '').trim(); if (t && shown === t) return true; } catch { /* 이름 그대로만 */ }
+        try { const t = String(core.trLook?.(w) ?? '').trim(); if (t && shown === t) return true; } catch { /* 이름 그대로만 */ }
+        return false;
+    }
+    /** 버그 사냥 6 그 사람의 대기 표시 말풍선을 걷어요(번역본 · 원문 말풍선을 그 확장이 새로 띄우기 전에) */
+    function dropWaitBubble(who) {
+        const box = doc.getElementById?.('ss-mind-pops'); if (!box) return 0;
+        let n = 0;
+        for (const el of box.querySelectorAll('.ss-mpop')) {
+            if (el.hasAttribute('data-bl-mind-tr') || !sameWho(el, who)) continue;
+            const now = String(el.querySelector('.ss-mpop-t')?.textContent ?? '').trim();
+            if (now === WAIT_TEXT || (!now && el.querySelector('.ss-mpop-dots'))) { el.remove(); n++; }
+        }
+        return n;
+    }
+    /** 원문으로 이미 뜬 말풍선 → 같은 꼴 번역본(새 마디)으로 바꿔 끼우고 사라지는 시간을 지금부터 · 원래 마디는 문서에서 빠져 그 확장 타이머가 아무 일도 못 해요
+     *  버그 사냥 6: 이름만 보면 원문 말풍선이 이미 사라진 뒤(번역이 그 말풍선 시간보다 늦음) 같은 사람의 새 말풍선(스와이프 · 다음 턴)을 옛 글의 번역으로 덮었어요 —
+     *  그 말풍선 글이 원문(src · 글자를 하나씩 치는 중이면 원문의 앞부분)일 때만 바꿔요. 점 세 개(치기 전)면 잠깐 뒤 한 번 더 봐요. */
+    function swapBubble(who, ko, name = null, src = null, retry = true) {
         const box = doc.getElementById?.('ss-mind-pops');
         if (!box) return false;
+        const want = src == null ? null : String(src).trim();
         for (const el of box.querySelectorAll('.ss-mpop')) {
             if (el.classList.contains('out') || el.hasAttribute('data-bl-mind-tr')) continue;
-            if ((el.querySelector('.ss-mpop-b small b')?.textContent ?? '') !== who) continue;
+            if (!sameWho(el, who)) continue;
+            if (want != null) {
+                const now = String(el.querySelector('.ss-mpop-t')?.textContent ?? '').trim();
+                if (!now) { if (retry && el.querySelector('.ss-mpop-dots')) { timers.setTimeout(() => swapBubble(who, ko, name, src, false), 800); return false; } continue; }
+                if (!want.startsWith(now)) continue;
+            }
             const next = el.cloneNode(true);
             next.setAttribute('data-bl-mind-tr', '');
             next.classList.add('done');
@@ -294,13 +328,14 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         // 모음에 다 넣은 뒤에 알려요 — 한마디 글이 먼저 와서 다시 그릴 때 같은 묶음의 관전자 이름도 이미 있게
         for (const [k, ko] of got) arrive(k, ko);
         note(`번역 옴 ${n}/${list.length}`);
-        if (n) paintAll();
+        paintAll();   // 버그 사냥 6 실패한 글도(대기 표시 → 원문)
         return n;
     }
 
     /** 탭 · 띠 칸 글 하나 — 번역이 있으면 적고(원문은 표식 · title), 없으면 자동일 때 부탁 */
     function paintEl(el) {
         if (!el?.isConnected) return;
+        el.setAttribute?.(SEEN_ATTR, '');   // 버그 사냥 6 신호 시트는 이 표식이 붙기 전(그려진 첫 장면)엔 글을 투명하게 둬요 — 원문이 한 장면도 안 보이게
         const L = lang();
         let src = el.getAttribute(SRC_ATTR);
         if (src == null) { src = String(el.textContent ?? '').trim(); if (!needsTr(src, L)) return; }
@@ -308,14 +343,22 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         const ko = store.get(L, src);
         if (ko) {
             if (el.textContent !== ko) { el.setAttribute(SRC_ATTR, src); el.textContent = ko; el.title = `원문: ${src}`; }
+            el.removeAttribute(WAIT_ATTR);
             return;
         }
-        if (active() && !failed.has(src)) ask(src);
+        // 버그 사냥 6 자동 번역이면 번역이 올 때까지 원문 대신 대기 표시 — 실패하거나 시간(wait)이 넘으면 그때 원문
+        if (active() && !failed.has(src) && !late.has(src)) {
+            if (!el.hasAttribute(WAIT_ATTR)) { el.setAttribute(SRC_ATTR, src); el.setAttribute(WAIT_ATTR, ''); el.textContent = WAIT_TEXT; el.title = '번역하는 중이에요'; }
+            ask(src);
+            if (!waitT.has(src)) waitT.set(src, timers.setTimeout(() => { waitT.delete(src); if (!store.has(lang(), src)) { late.add(src); paintAll(); } }, wait));
+            return;
+        }
+        if (el.hasAttribute(WAIT_ATTR)) restoreEl(el);
     }
     function restoreEl(el) {
         const src = el.getAttribute(SRC_ATTR);
         if (src == null) return;
-        el.textContent = src; el.removeAttribute(SRC_ATTR); el.removeAttribute('title');
+        el.textContent = src; el.removeAttribute(SRC_ATTR); el.removeAttribute(WAIT_ATTR); el.removeAttribute('title');
     }
     function paintAll() { for (const el of doc.querySelectorAll?.(SEL) ?? []) paintEl(el); }
     function restoreAll() { for (const el of doc.querySelectorAll?.(`[${SRC_ATTR}]`) ?? []) restoreEl(el); }
@@ -349,6 +392,45 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
     function onSwitch(key, isOff) { if (isOff) restoreAll(); else paintAll(); }
     return { wrap, pop, expire, arrive, paintEl, paintAll, restoreAll, clickFill, onClick, onAnim, onSwitch, active, autoOn, store, log, _modes: modes, _failed: failed, flush, get wrapped() { return !!orig; } };
 }
+/**
+ * 버그 사냥 6 속마음 말풍선이 위 상태창 띠(#ss-hud)와 겹치지 않게(11-19 사용자 제보 · 리그 폰 375 · 412: 위치 칸을 펼쳐 띠가 커지면 이미 뜬 말풍선이 띠를 52px 덮음).
+ *   그 확장은 말풍선을 띄울 때 한 번만 띠 아래(띠 bottom + 8)에 자리를 잡고(z-index 9996 > 띠 3), 그 뒤 띠가 커지면 그대로 띠 위에 남아요.
+ *   위 모서리(「tl · tr」 위치)는 화면 위 64px 고정이라 띠가 있으면 처음부터 겹쳐요.
+ *   → 띠 크기가 바뀔 때(ResizeObserver) · 말풍선이 새로 뜰 때(그 확장 말풍선 움직임 ss-mpop-in 의 animationstart — 첫 장면은 투명) 묶음 top 을 띠 아래로만 옮겨요. 아래 모서리 · 옆 서랍 자리는 그대로.
+ *   그 확장이 잡은 값(base)을 기억해 띠가 작아지면 그 값까지만 되돌려요. 스위치 mindpop(그 확장 말풍선 모양 맞춤)을 끄면 손대지 않아요.
+ */
+export function createPopPlacer(doc = globalThis.document, { gap = 8, on = () => true } = {}) {
+    const win = doc?.defaultView || globalThis;
+    let box = null, hud = null, ro = null, mine = null, base = null;
+    function place() {
+        if (!on() || !box?.isConnected) return false;
+        const st = box.style;
+        if (!st.top || st.bottom) return false;   // 아래 모서리 · 위치를 모름
+        const cur = parseFloat(st.top);
+        if (!Number.isFinite(cur)) return false;
+        if (st.top !== mine) base = cur;            // 그 확장이 새로 잡은 자리
+        const h = hud?.isConnected ? hud.getBoundingClientRect() : null;
+        const ih = Number(win?.innerHeight) || 0;
+        let want = base;
+        if (h && h.height > 10 && h.bottom > 0 && (!ih || h.top < ih)) {
+            const b = box.getBoundingClientRect(), wide = !(b.width > 0) || (b.right > h.left && b.left < h.right);
+            if (wide && base < h.bottom + gap) want = h.bottom + gap;
+        }
+        if (ih) want = Math.max(gap, Math.min(ih - 160, want));
+        if (Math.abs(want - cur) < 0.5) return false;
+        mine = `${Math.round(want * 100) / 100}px`; st.top = mine;
+        return true;
+    }
+    /** 묶음 · 띠를 (다시) 찾아 감시를 걸어요 — 처음이거나 그 확장이 새로 만들었을 때만 */
+    function watch() {
+        const nb = doc.getElementById?.('ss-mind-pops'), nh = doc.getElementById?.('ss-hud');
+        if (nb !== box) { box = nb; mine = null; base = null; }   // 새 말풍선 · 새 자리는 말풍선 움직임 시작(animationstart · 아래 startMindTr)에서 알아요 — 따로 DOM 감시자를 두지 않아요(관찰자 상한)
+        if (nh !== hud) { if (hud) ro?.unobserve(hud); hud = nh; if (hud && typeof win.ResizeObserver === 'function') { ro ||= new win.ResizeObserver(() => place()); ro.observe(hud); } }
+        return place();
+    }
+    function stop() { ro?.disconnect(); ro = null; box = hud = null; }
+    return { place, watch, stop, get box() { return box; } };
+}
 /** 신호 시트(src/mb-mind-tr.css) 한 번 */
 export function attachSheet(doc, base = import.meta.url) {
     if (doc.getElementById(SHEET_ID)) return false;
@@ -372,7 +454,12 @@ export function startMindTr(doc = globalThis.document) {
         if (typeof core.app?.mindPop !== 'function') return null;   // 2.9.x: 속마음 말풍선 없음 — 번역 · 신호 받기 모두 안 걸어요
         const [tr, cfg] = await Promise.all([import(new URL('src/translate.js', base).href), import(new URL('src/mindcfg.js', base).href).catch(() => ({}))]);
         if (typeof tr.trText !== 'function') return null;
-        const mind = createMindTr({ core, tr, cfg }, { doc });
+        // 버그 사냥 6 말풍선 묶음을 띠 아래로(createPopPlacer) — 그 확장은 말풍선을 0 · 0.7 · 1.4초 … 뒤에 띄워요(그때마다 움직임 시작 사건으로 다시 봐요)
+        const placer = createPopPlacer(doc, { on: () => mbFit('mindpop', doc) });
+        const mind = createMindTr({ core, tr, cfg }, { doc, afterPop: () => placer.watch() });
+        doc.addEventListener('animationstart', e => { if (e?.animationName === POP_ANIM) placer.watch(); }, true);   // 그 확장이 말풍선을 띄운 순간(묶음 자리를 막 잡은 뒤)
+        onMbOff(doc, ['mindpop'], () => placer.watch());
+        try { globalThis.__blMbMindPlacer = placer; } catch { /* 진단만 */ }
         if (!mind.wrap()) return null;
         attachSheet(doc);
         doc.addEventListener('animationstart', mind.onAnim, true);

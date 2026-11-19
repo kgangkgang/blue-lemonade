@@ -117,12 +117,18 @@ export function startMbAutoEn({ host = () => globalThis.SillyTavern, doc = globa
     const holder = host();
     if (!holder || typeof holder.getContext !== 'function') return false;
     if (holder.getContext[MARK]) return false;
-    const on = () => doc?.body?.getAttribute?.('data-bl-mb-auto-en') === 'on' && !upHas('autoen');   // 미트볼 2.9.1 은 「바꾸기 전에 묻기」(trConvertAsk)를 스스로 가져요 — 그 판에서는 원작 설정에 맡기고 창을 가로채지 않아요(테마 값은 한 번 옮겨요 · src/mb-upstream.js)
+    // 1.8.6 흰 깜빡임 · 렉 급한 고침: upHas 의 기본 문맥은 SillyTavern.getContext() — 바로 이 감싸개예요. 감싸개 안에서 문맥 없이 부르면
+    //   getContext → on → upHas → getContext → … 가 스택이 넘칠 때까지 되풀이돼(층마다 실리 getContext 를 한 번씩 진짜로 불러요) 채팅 열기 한 번에 수십 초가 걸렸어요(1.8.1 ~ 1.8.5).
+    //   그래서 감싸개는 방금 받은 문맥(c)을 넘기고, 혹시 안쪽에서 또 불려도(다른 감싸개 · 문맥 없는 on()) 되돌아 들어오지 않게 막아요.
+    const on = c => doc?.body?.getAttribute?.('data-bl-mb-auto-en') === 'on' && !upHas('autoen', c ?? undefined, doc);   // 미트볼 2.9.1 은 「바꾸기 전에 묻기」(trConvertAsk)를 스스로 가져요 — 그 판에서는 원작 설정에 맡기고 창을 가로채지 않아요(테마 값은 한 번 옮겨요 · src/mb-upstream.js)
     const dress = makeDresser({ on, notify, skipNote, panels, chatKey });
     const inner = holder.getContext;
+    let busy = false;
     const outer = function (...args) {
         const c = inner.apply(this, args);
-        if (c && on()) { try { dress(c); } catch { /* 받은 그대로 */ } }
+        if (!c || busy) return c;
+        busy = true;
+        try { if (on(c)) dress(c); } catch { /* 받은 그대로 */ } finally { busy = false; }
         return c;
     };
     // 이름은 안쪽 함수 것 그대로 — 성능 보조 애드온 · 기능 다리(src/ext-bridge.js)의 감싸개와 겹쳐도 되게(그쪽이 이름으로 「이미 감쌌나」를 봐요)

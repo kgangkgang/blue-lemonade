@@ -28,7 +28,7 @@ function fakeMb({ doc, delay = 50, set = {}, hasPop = true, fail = new Set() } =
     const state = { turn: 3, data: { rel: { user: [{ name: '아린', mind: { text: JP1, turn: 3 }, mindLog: [{ text: JP2, turn: 1 }] }, { name: '도윤', mind: { text: '이미 한국어야', turn: 3 } }] }, profile: { list: [] } }, watch: [] };
     const chat = { id: 'c1' };
     const settings = { ssGenLang: 'enview', trAuto: 'st', trEngine: 'st', trCode: 'ko', mindNum: { sec: 1 }, ...set };
-    const spawned = [], calls = [];
+    const spawned = [], calls = [], waits = [];
     let popChat = null; const seen = new Set();
     const app = { current: { state } };
     if (hasPop) app.mindPop = () => {
@@ -43,9 +43,9 @@ function fakeMb({ doc, delay = 50, set = {}, hasPop = true, fail = new Set() } =
             if (!box) { box = doc.createElement('div'); box.id = 'ss-mind-pops'; box.className = 'ss-root ss-scope'; doc.body.append(box); }
             const el = doc.createElement('div');
             el.className = 'ss-mpop c-cast';
-            el.innerHTML = `<div class="ss-mpop-b"><small><b>${x.who}</b> · 속마음</small><p class="ss-mpop-t">${x.text}</p></div>`;
+            el.innerHTML = `<div class="ss-mpop-b"><small><b>${tr.trString ? tr.trString(x.who) : x.who}</b> · 속마음</small><p class="ss-mpop-t">${x.text}</p></div>`;   // 화면만 번역이면 이름도 사전으로
             box.append(el);
-            spawned.push({ who: x.who, text: x.text, at: Date.now() });
+            (x.text === M.WAIT_TEXT ? waits : spawned).push({ who: x.who, text: x.text, at: Date.now() });   // 버그 사냥 6 대기 표시 말풍선은 따로 세요
         }
     };
     const tr = {
@@ -56,7 +56,7 @@ function fakeMb({ doc, delay = 50, set = {}, hasPop = true, fail = new Set() } =
         },
     };
     const core = { app, settings: () => settings, modOn: () => true, mindCovered: r => !!r.covered };
-    return { core, tr, cfg: { numOf: s => ({ sec: Number(s.mindNum?.sec) || 6 }) }, state, chat, spawned, calls, settings };
+    return { core, tr, cfg: { numOf: s => ({ sec: Number(s.mindNum?.sec) || 6 }) }, state, chat, spawned, calls, settings, waits };
 }
 function env({ off = '' } = {}) {
     const dom = new JSDOM('<!doctype html><html><body></body></html>');
@@ -298,6 +298,81 @@ await test('⑭ 화면 맞춤 시트: 욕구 딱지 묶음 뒤 판 · 밤 말풍
     assert.match(css, /\/\* @mb palette \*\/[\s\S]*\.ss-wt-feed li > div > b \{ color: var\(--ss-ink\); \}/);
     const gen = fs.readFileSync(path.join(root, 'src/ext-status.gen.css'), 'utf8');
     assert.ok(gen.includes(':where(:root:not([data-bl-mb-off~="mindpop"])) > body.salty:not([data-bl-ext-raw]) #ss-mdl-pops.ss-root'), '생성물에 스위치 문');
+});
+await test('⑮ (버그 사냥 6) 늦은 번역은 그 글의 말풍선에만 — 원문 말풍선이 사라진 뒤 같은 사람의 새 말풍선(스와이프 · 다음 턴)을 옛 번역으로 덮지 않음', async () => {
+    const { mb, doc } = make({ delay: 600, wait: 150 });
+    newTurn(mb);                         // JP2 — 번역기가 늦어 원문으로 뜸
+    await sleep(250);
+    assert.equal(mb.spawned[0].text, JP2, '원문으로 뜸');
+    doc.querySelector('#ss-mind-pops .ss-mpop').remove();   // 사라짐(시간 지남 · 눌러 닫음)
+    const r = mb.state.data.rel.user[0]; r.mind = { text: '다시 굴린 답의 속마음', turn: mb.state.turn }; mb.core.app.mindPop();   // 스와이프: 같은 턴 · 같은 사람 · 새 글(내 언어)
+    assert.equal(mb.spawned.at(-1).text, '다시 굴린 답의 속마음');
+    await sleep(600);                    // JP2 번역이 이제 옴
+    const ts = [...doc.querySelectorAll('#ss-mind-pops .ss-mpop-t')].map(x => x.textContent);
+    assert.deepEqual(ts, ['다시 굴린 답의 속마음'], '새 말풍선 글 그대로: ' + ts.join(' / '));
+    // 원문 말풍선이 아직 떠 있으면 그것은 바꿔 끼워요(예전 그대로)
+    const b = make({ delay: 500, wait: 150 });
+    newTurn(b.mb); await sleep(250);
+    b.mb.state.data.rel.user[0].mind = { text: '또 다른 글', turn: b.mb.state.turn }; b.mb.core.app.mindPop();
+    await sleep(500);
+    const tb = [...b.doc.querySelectorAll('#ss-mind-pops .ss-mpop-t')].map(x => x.textContent);
+    assert.deepEqual(tb, [KO2, '또 다른 글'], tb.join(' / '));
+});
+await test('⑯ (버그 사냥 6) 말풍선 묶음은 위 띠(#ss-hud) 아래 — 띠가 커지면 내려가고 작아지면 그 확장 자리로 · 위 모서리도 띠 아래 · 아래 모서리 · 스위치 끔은 그대로', async () => {
+    const { dom, doc } = env();
+    const win = dom.window;
+    let hb = 140;
+    const hud = doc.createElement('div'); hud.id = 'ss-hud'; doc.body.append(hud);
+    hud.getBoundingClientRect = () => ({ top: 46, bottom: hb, left: 10, right: 400, width: 390, height: hb - 46 });
+    const box = doc.createElement('div'); box.id = 'ss-mind-pops'; doc.body.append(box);
+    box.getBoundingClientRect = () => ({ top: parseFloat(box.style.top) || 0, bottom: (parseFloat(box.style.top) || 0) + 60, left: 240, right: 394, width: 154, height: 60 });
+    Object.defineProperty(win, 'innerHeight', { value: 900, configurable: true });
+    let on = true;
+    const P = M.createPopPlacer(doc, { on: () => on });
+    box.setAttribute('style', 'top: 148px; right: 18px;'); box.dataset.at = 'hud';   // 그 확장이 띠 아래에 잡은 자리
+    assert.equal(P.watch(), false, '띠 아래면 그대로');
+    hb = 200; assert.equal(P.place(), true); assert.equal(box.style.top, '208px', '띠가 커지면 내려가요');
+    hb = 140; P.place(); assert.equal(box.style.top, '148px', '작아지면 그 확장이 잡은 자리로');
+    box.setAttribute('style', 'top: 64px; right: 12px;'); box.dataset.at = 'free';   // 위 오른쪽 모서리(고정 64px)
+    P.watch(); assert.equal(box.style.top, '148px', '위 모서리도 띠 아래(말풍선 움직임 시작에 다시 봐요)');
+    box.setAttribute('style', 'bottom: 90px; right: 12px;'); P.watch(); assert.equal(box.style.top, '', '아래 모서리는 그대로');
+    on = false; box.setAttribute('style', 'top: 64px; right: 12px;'); P.watch(); assert.equal(box.style.top, '64px', '스위치 끔은 그대로');
+    on = true; hud.remove(); P.watch(); assert.equal(box.style.top, '64px', '띠가 없으면 그대로');
+    P.stop();
+    const src = (await import('node:fs')).readFileSync(path.join(root, 'src/mb-mind-tr.js'), 'utf8');
+    assert.match(src, /createPopPlacer\(doc, \{ on: \(\) => mbFit\('mindpop', doc\) \}\)/);
+    assert.match(src, /afterPop: \(\) => placer\.watch\(\) \}/);
+    assert.match(src, /addEventListener\('animationstart', e => \{ if \(e\?\.animationName === POP_ANIM\) placer\.watch\(\); \}, true\)/);
+    assert.ok(!/new win\.MutationObserver/.test(src), '따로 DOM 감시자 없음(관찰자 상한)');
+});
+await test('⑰ (버그 사냥 6) 원문을 한 번도 안 그려요 — 말풍선은 대기 표시 → 번역본 · 탭 글도 대기 표시 → 번역본 · 실패 · 시간 넘음일 때만 원문', async () => {
+    const { mb, doc, mind } = make({ delay: 300, wait: 2000 });
+    mb.tr.trString = s => (s === '아린' ? 'Arin' : s);   // 말풍선 머리 이름이 번역 이름이어도 대기 표시를 걷어요
+    const seen = new Set(); let stop = false;
+    (async () => { while (!stop) { for (const el of doc.querySelectorAll('#ss-mind-pops .ss-mpop-t, [data-bl-mind-src]')) seen.add(el.textContent); await sleep(10); } })();
+    newTurn(mb);
+    assert.equal(mb.waits.length, 1, '대기 표시 말풍선'); assert.equal(mb.spawned.length, 0);
+    doc.body.insertAdjacentHTML('beforeend', `<div class="ss-scope"><div class="ss-mindc"><p class="ss-mind big">${JP2}</p></div></div>`);
+    const tab = doc.querySelector('.ss-mind.big');
+    mind.onAnim({ animationName: M.ANIM, target: tab });
+    assert.equal(tab.textContent, M.WAIT_TEXT, '탭 글도 대기 표시'); assert.equal(tab.getAttribute(M.SRC_ATTR), JP2);
+    await sleep(500);
+    assert.equal(mb.spawned.at(-1).text, KO2); assert.equal(tab.textContent, KO2);
+    assert.equal(doc.querySelectorAll('#ss-mind-pops .ss-mpop').length, 1, '대기 표시 말풍선은 걷힘');
+    stop = true; await sleep(20);
+    assert.ok(![...seen].some(t => t.includes(JP2)), '원문이 화면에 한 번도 없어요: ' + [...seen].join(' / '));
+    // 번역 실패 → 원문
+    const f = make({ delay: 50, wait: 2000, fail: new Set([JP1]) });
+    f.doc.body.insertAdjacentHTML('beforeend', `<div class="ss-scope"><div class="ss-mindc"><p class="ss-mind big">${JP1}</p></div></div>`);
+    const t1 = f.doc.querySelector('.ss-mind.big'); f.mind.onAnim({ animationName: M.ANIM, target: t1 });
+    assert.equal(t1.textContent, M.WAIT_TEXT); await sleep(300);
+    assert.equal(t1.textContent, JP1, '실패하면 원문'); assert.equal(t1.hasAttribute(M.WAIT_ATTR), false);
+    // 시간 넘음 → 원문
+    const s = make({ delay: 900, wait: 200 });
+    s.doc.body.insertAdjacentHTML('beforeend', `<div class="ss-scope"><div class="ss-mindc"><p class="ss-mind big">${JPW}</p></div></div>`);
+    const t2 = s.doc.querySelector('.ss-mind.big'); s.mind.onAnim({ animationName: M.ANIM, target: t2 });
+    await sleep(350); assert.equal(t2.textContent, JPW, '시간이 넘으면 원문');
+    await sleep(800); assert.equal(t2.textContent, KOW, '늦게 오면 번역본으로');
 });
 
 console.log(`mb-mind-tr: ${passed} 통과`);

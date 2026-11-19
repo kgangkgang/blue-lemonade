@@ -1074,7 +1074,7 @@ await ok('1.8.2 위치 칩 · 위치 줄: 📍 뒤 글의 앞 「@ · #」 만 �
     assert.equal(m.markLocMarks(host), 2);
     assert.equal(a.nodeValue, ' 로비'); assert.equal(b.nodeValue, 'Bakery Corner'); assert.equal(c.nodeValue, '@', '기호뿐이면 그대로'); assert.equal(d.nodeValue, 'Park @ noon', '가운데 기호는 그대로');
     assert.equal(m.markLocMarks(host), 0, '두 번 해도 같아요');
-    const src = read('src/mb-map-floors.js'); assert.ok(src.includes("if (annexOn()) markLocMarks(n)"), '띠가 다시 그려질 때 · 스위치 annex'); assert.ok(!read('src/ext-compat.js').includes('markLocMarks'), '맞춤 모듈(ext-compat)은 글자 노드를 안 고쳐요');
+    const src = read('src/mb-map-floors.js'); assert.ok(src.includes("if (pin) markPlaces(n, opt)") && src.includes('n += markLocMarks(root);'), '띠가 다시 그려질 때 · 스위치 annex(버그 사냥 6 부터 markPlaces 가 이 일을 같이 해요)'); assert.ok(!read('src/ext-compat.js').includes('markLocMarks'), '맞춤 모듈(ext-compat)은 글자 노드를 안 고쳐요');
 });
 if (bad) { console.log(`mb-map-floors: ${n}개 통과 · ${bad}개 실패`); process.exit(1); }
 console.log(`mb-map-floors: ${n}개 통과`);

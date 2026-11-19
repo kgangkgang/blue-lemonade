@@ -9,7 +9,7 @@ const bundled = await scriptCode(root,'deus-qr');
 const plain = fs.readFileSync(path.join(root,'src/scripts/plain/deus-qr.js'),'utf8');
 assert.equal(plain.split('/*BL-SCRIPT-START*/\n')[1].split('\n/*BL-SCRIPT-END*/')[0],bundled);
 new Function('BlueLemonade','window',bundled);
-const { groups, toggles, groupsV3, togglesV3, variant, marker, create, matches, quickName } = new Function(bundled.split('// INSTALL')[0]+'\nreturn { groups:DEUS_QUICK_GROUPS,toggles:DEUS_QUICK_TOGGLES,groupsV3:DEUS_QUICK_GROUPS_V3,togglesV3:DEUS_QUICK_TOGGLES_V3,variant:deusVariant,marker:DEUS_QUICK_MARKER,create:createDeusQuickController,matches:deusMatches,quickName:deusQuickName };')();
+const { groups, toggles, groupsV3, togglesV3, groupsV4, togglesV4, variant, marker, create, matches, quickName } = new Function(bundled.split('// INSTALL')[0]+'\nreturn { groups:DEUS_QUICK_GROUPS,toggles:DEUS_QUICK_TOGGLES,groupsV3:DEUS_QUICK_GROUPS_V3,togglesV3:DEUS_QUICK_TOGGLES_V3,groupsV4:DEUS_QUICK_GROUPS_V4,togglesV4:DEUS_QUICK_TOGGLES_V4,variant:deusVariant,marker:DEUS_QUICK_MARKER,create:createDeusQuickController,matches:deusMatches,quickName:deusQuickName };')();
 let passed=0;
 async function test(name, fn) { await fn(); console.log('PASS',name); passed++; }
 function fixture() {
@@ -127,10 +127,10 @@ await test('V3 · 실제 V3 사용자 저장본 구조는 V3, 2.5 저장본 구�
  assert.equal(realFixture('v3').controller.read().variant.label,'V3');assert.equal(realFixture('2.5').controller.read().variant.label,'2.5');
  assert.equal(realFixture('v3').controller.isAvailable(),true);assert.equal(realFixture('2.5').controller.isAvailable(),true);
 });
-await test('V3 · 시작 표시 이름을 바꾸거나 판 번호를 지워도 구조로 판별하고, 모르는 판 번호(V2.3 · V2.50 · V4)는 받지 않아요',()=>{
+await test('V3 · 시작 표시 이름을 바꾸거나 판 번호를 지워도 구조로 판별하고, 모르는 판 번호(V2.3 · V2.50 · V5)는 받지 않아요',()=>{
  for(const name of ['🔹나의 데우스🔹','DEUS','','데우스 3','🔹DEUS EX MACHINA V3.1🔹'])assert.equal(variant(realFixture('v3',{marker:name}).saved)?.key,'v3',name);
  for(const name of ['🔹나의 데우스🔹','DEUS EX MACHINA V2.5 (내 설정)'])assert.equal(variant(realFixture('2.5',{marker:name}).saved)?.key,'2.5',name);
- for(const name of ['DEUS V2.3','DEUS V2.50','DEUS EX MACHINA V4'])assert.equal(variant(realFixture('v3',{marker:name}).saved),null,name);
+ for(const name of ['DEUS V2.3','DEUS V2.50','DEUS EX MACHINA V5'])assert.equal(variant(realFixture('v3',{marker:name}).saved),null,name);
  assert.equal(variant(realFixture('v3',{marker:'🔹DEUS EX MACHINA V2.5🔹'}).saved).key,'v3','이름보다 구조가 우선이에요');
 });
 await test('V3 · 저장본과 현재 설정의 판이 다르면 열지도 저장하지도 않아요',async()=>{
@@ -199,6 +199,67 @@ await test('V3 · 옵션 설명은 같은 id 라도 V3 원문이면 V3 설명, 2
  for(const t of togglesV3)assert.ok(DEUS_EFFECTS[t.id],`설명 없음 ${t.label}`);
  for(const g of groupsV3)for(const o of g.options)assert.ok(DEUS_EFFECTS[o.id],`설명 없음 ${g.key} ${o.label}`);
  assert.ok(DEUS_EFFECTS[id].v3?.hash&&DEUS_EFFECTS[id].hash!==DEUS_EFFECTS[id].v3.hash);
+});
+// ── V4(11-19 · 원작 v4.0 구조 — tools/tests/deus-qr-presets.json 의 v4, id · 켜짐만): V3 표와 둘 다 지원해요.
+await test('V4 · 원작 V4 구조는 V4, V3 · 2.5 저장본은 그대로 V3 · 2.5 로 알아봐요(시작 표시 이름을 바꿔도 구조로)',()=>{
+ assert.equal(variant(realFixture('v4').saved).key,'v4');assert.equal(realFixture('v4').controller.read().variant.label,'V4');assert.equal(realFixture('v4').controller.isAvailable(),true);
+ for(const name of ['🔹나의 데우스🔹','','🔹DEUS EX MACHINA V4.1🔹','🔹DEUS EX MACHINA V3🔹'])assert.equal(variant(realFixture('v4',{marker:name}).saved)?.key,'v4',name);
+ assert.equal(variant(realFixture('v4',{marker:'DEUS EX MACHINA V5'}).saved),null);
+ assert.equal(variant(realFixture('v3').saved).key,'v3');assert.equal(variant(realFixture('2.5').saved).key,'2.5');
+});
+await test('V4 · 표의 모든 id 가 V4 에 있고, 모든 택1 묶음이 막힘 없이 열리며 원작 기본값을 보여요',()=>{
+ const ids=new Set(presets.v4.order.map(([id])=>id)),user=new Set(['bl-deus-length-ultra-long','bl-deus-length-epic']);
+ for(const g of groupsV4)for(const id of [g.header,g.end,...g.options.map(o=>o.id).filter(id=>!user.has(id))])assert.ok(ids.has(id),`${g.key} ${id}`);
+ for(const t of togglesV4)assert.ok(ids.has(t.id)||t.id==='6f3c2a91-4d7e-4b58-9a1c-e2f05b8d7c34',t.label);
+ assert.equal(groupsV4.length,20);assert.deepEqual(groupsV4.map(g=>g.key).slice(13,15),['explicit','violence']);
+ const f=realFixture('v4'),r=f.controller.read();for(const g of groupsV4)assert.equal(r.groupIssues.get(g.key),'',g.key);
+ const by=k=>lit(f,groupsV4.find(g=>g.key===k));
+ assert.deepEqual(by('agency'),['내 캐릭터 직접 조종']);assert.deepEqual(by('violence'),[]);assert.deepEqual(by('explicit'),[]);assert.deepEqual(by('length'),['유동적']);assert.deepEqual(by('tension'),['물밑 흐름']);
+ // 원작 V4 에 새로 들어온 켜고 끄는 항목은 모두 표에 있어요(점자 · 제미나이 안내 같은 필터 통과용은 V3 처럼 프롬프트 관리자에서만)
+ for(const id of ['01c9991c-b6d1-440d-b8ab-9fcef9accf9c','4f5509db-7cd8-4b7d-bff1-bd4063a8559f','de251b02-fb80-4a4a-b312-d83a349826aa','5442b71d-b233-44eb-b5cd-911430bfa414','a19b9951-7214-4f4e-a1b8-42047882c71c'])assert.ok(togglesV4.some(t=>t.id===id),id);
+});
+await test('V4 · 운명의 주사위 · 폭력 묘사는 묶음 안에서 하나만 켜고, 성인 표현을 골라도 폭력 묘사는 그대로예요',async()=>{
+ const f=realFixture('v4'),agency=groupsV4.find(g=>g.key==='agency'),violence=groupsV4.find(g=>g.key==='violence'),explicit=groupsV4.find(g=>g.key==='explicit');
+ const fate='ecfff91e-43e0-4a5d-8cfe-4d15e56dd55d',before=structuredClone(f.saved);
+ assert.equal((await f.controller.change('agency',fate)).state,'saved');assert.deepEqual(lit(f,agency),['운명의 주사위']);
+ assert.deepEqual(changed(before,f.saved).sort(),[fate,'a3c64aa2-de6f-4ace-987d-1eca5c4ffdb7'].sort());
+ await f.controller.change('violence','1779e467-dc4e-4256-a278-4e4f4007eff3');assert.deepEqual(lit(f,violence),['과장된 유혈']);
+ await f.controller.change('explicit','668ed810-9070-44cd-830b-3f295fb58c03');assert.deepEqual(lit(f,explicit),['노골적 묘사 없음']);assert.deepEqual(lit(f,violence),['과장된 유혈']);
+ await f.controller.change('violence','');assert.deepEqual(lit(f,violence),[]);
+ assert.equal(order(f.saved).find(x=>x.identifier===violence.header).enabled,true,'머리 표시는 그대로');
+});
+await test('V4 · 새 개별 항목(어두운 결말 · 새 얼굴 · 일기장 · 고정 카드 · 주사위 결과)은 하나씩만 켜고 꺼요 · V3 표는 그대로예요',async()=>{
+ const f=realFixture('v4');
+ for(const label of ['어두운 결말 쪽으로','새 얼굴 카드','일기장','고정 카드','주사위 결과 (운명의 주사위용)','한편','레일라 (애니 덕후)']){
+  const t=togglesV4.find(x=>x.label===label),before=structuredClone(f.saved),was=f.controller.read().states.get(t.id);
+  assert.equal((await f.controller.change(t.id,!was)).state,'saved',label);assert.deepEqual(changed(before,f.saved),[t.id],label);
+ }
+ assert.equal(togglesV4.length,togglesV3.length+5);assert.equal(groupsV3.length,19);assert.ok(!groupsV3.some(g=>g.key==='violence'));
+ assert.ok(!groupsV3.find(g=>g.key==='agency').options.some(o=>o.id==='ecfff91e-43e0-4a5d-8cfe-4d15e56dd55d'));
+});
+await test('V4 · 옵션 설명: 새 항목 · 바뀐 원문은 V4 설명(확인된 설명)으로, V3 원문은 V3 설명으로 보여요',async()=>{
+ const {describeDeusOption,deusPresetVersion}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-help.js')));
+ const {DEUS_EFFECTS}=await import(pathToFileURL(path.join(root,'src/scripts/deus-option-effects.js')));
+ assert.equal(deusPresetVersion(realFixture('v4').saved),'v4');assert.equal(deusPresetVersion(realFixture('v3').saved),'v3');assert.equal(deusPresetVersion(realFixture('2.5').saved),'2.5');
+ for(const t of togglesV4)assert.ok(DEUS_EFFECTS[t.id],`설명 없음 ${t.label}`);
+ for(const g of groupsV4)for(const o of g.options)assert.ok(DEUS_EFFECTS[o.id],`설명 없음 ${g.key} ${o.label}`);
+ const v4=realFixture('v4').saved;for(const g of groupsV4)assert.ok(!describeDeusOption(g.key,v4).text.includes('찾지 못했어요'),g.key);
+ assert.match(describeDeusOption('violence',v4).text,/과장된 유혈/);assert.match(describeDeusOption('agency',v4).text,/운명의 주사위/);
+ const v3agency=describeDeusOption('agency',realFixture('v3').saved);assert.ok(!/운명의 주사위/.test(v3agency.text),'V3 에는 주사위가 없어요');
+});
+await test('V4 · V3 · 끝 표시(다음 묶음 머리)를 지운 저장본: 그 뒤 다른 묶음 경계까지로 보고 폭력 묘사 · 성인 표현 · 전개 긴장감을 그대로 골라요',async()=>{
+ for(const [kind,list] of [['v4',groupsV4],['v3',groupsV3]]){
+  const f=realFixture(kind),drop=new Set(['relationships','status'].flatMap(k=>{const g=list.find(x=>x.key===k);return [g.header,...g.options.map(o=>o.id)];}));
+  for(const p of [f.saved,f.live]){p.prompts=p.prompts.filter(x=>!drop.has(x.identifier));for(const o of p.prompt_order)o.order=o.order.filter(x=>!drop.has(x.identifier));}
+  const r=f.controller.read();
+  for(const k of [kind==='v4'?'violence':'explicit','tension'])assert.equal(r.groupIssues.get(k),'',`${kind} ${k}`);
+  const k=kind==='v4'?'violence':'explicit',g=list.find(x=>x.key===k);
+  const pick=g.options.find(o=>f.controller.read().states.get(o.id)!==true);
+  assert.equal((await f.controller.change(k,pick.id)).state,'saved',kind);assert.deepEqual(lit(f,g),[pick.label]);
+  // 경계 안에 모르는 켜진 항목이 있으면 예전처럼 막아요
+  const h=realFixture(kind);for(const p of [h.saved,h.live]){p.prompts=p.prompts.filter(x=>!drop.has(x.identifier));for(const o of p.prompt_order){o.order=o.order.filter(x=>!drop.has(x.identifier));const at=o.order.findIndex(x=>x.identifier===g.options.at(-1).id);o.order.splice(at+1,0,{identifier:'user-extra',enabled:true});}p.prompts.push({identifier:'user-extra',name:'x',content:'x'});}
+  assert.match(h.controller.read().groupIssues.get(k),/추가한 선택 항목/,kind);
+ }
 });
 await test('V3 · 화면: 판 표시는 판별 결과를 따르고 「친구들」 탭은 그 판에 항목이 있을 때만 생겨요',()=>{
  assert.ok(bundled.includes("const tabsOf = current =>"));assert.ok(bundled.includes("current?.variant?.label"));assert.ok(!bundled.includes("node('span','2.5','dq-version')"));

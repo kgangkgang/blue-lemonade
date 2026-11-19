@@ -725,14 +725,14 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   border-top: 0 !important;
 }
 /* 원작 묶음 규칙(summary ~ *)이 카드 본문의 좌우 여백을 0 으로 덮어요 — 본문 칸은 16 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > :is(.custom-dem-status__body, .custom-dem-relationships__body, .custom-dem-psychological-states__body, .custom-dem-undercurrents__body, .custom-dem-threads__body, .custom-dem-momentum-engine__body, .custom-dem-plotlines__body, .custom-dem-scratchpad__body, .custom-dem-card__body, .custom-dem-meanwhile__body, .custom-dem-hidden-truths__body) {
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules__body > details.custom-dem-card:not(.custom-dem-charpage > :is(.custom-dem-status, .custom-dem-relationships, .custom-dem-psychological-states, .custom-dem-undercurrents)) > :is(.custom-dem-status__body, .custom-dem-relationships__body, .custom-dem-psychological-states__body, .custom-dem-undercurrents__body, .custom-dem-threads__body, .custom-dem-momentum-engine__body, .custom-dem-plotlines__body, .custom-dem-scratchpad__body, .custom-dem-card__body, .custom-dem-meanwhile__body, .custom-dem-hidden-truths__body, .custom-dem-diaries__body, .custom-dem-new-face__body) {
   margin: 0 !important;
   padding: 4px 16px 12px !important;
   border: 0 !important;
   background: transparent !important;
 }
-/* 행: 칸 속 칸 없이 1px 나눔 선 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) {
+/* 행: 칸 속 칸 없이 1px 나눔 선 (V4 일기 한 줄도) */
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) {
   margin: 0 !important;
   padding: 12px 0 !important;
   text-indent: 0 !important;
@@ -741,18 +741,18 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   background: transparent !important;
   box-shadow: none !important;
 }
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) ~ :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent) {
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) ~ :is(.custom-dem-status-row, .custom-dem-bond-row, .custom-dem-psychological-state-row, .custom-dem-thread-row, .custom-dem-undercurrent, .custom-dem-diary-entry) {
   border-top: 1px solid var(--salty-line) !important;
 }
 /* 이름 = 본문 650 글자색(원작 <strong> 에 본문 강조 형광 띠를 깔지 않음) */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__name, .custom-dem-bond-row__name, .custom-dem-psychological-state-row__name, .custom-dem-undercurrents__name, .custom-dem-meanwhile-row__title, .custom-dem-truth-row__title) {
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__name, .custom-dem-bond-row__name, .custom-dem-psychological-state-row__name, .custom-dem-undercurrents__name, .custom-dem-meanwhile-row__title, .custom-dem-truth-row__title, .custom-dem-diary-keeper) {
   color: var(--salty-text) !important;
   background: none !important;
   box-shadow: none !important;
   font-weight: 650 !important;
 }
 /* 항목 이름표(Physical · Unspoken · Trigger …) = 13 보조색 · 대문자 · 벌린 자간 없음 */
-body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__label, .custom-dem-bond-row__label, .custom-dem-bond-field__label, .custom-dem-bond-meter__label, .custom-dem-psychological-state-row__label, .custom-dem-plotlines__label, .custom-dem-undercurrents__label, .custom-dem-momentum-engine__label) {
+body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules :is(.custom-dem-status-row__label, .custom-dem-bond-row__label, .custom-dem-bond-field__label, .custom-dem-bond-meter__label, .custom-dem-psychological-state-row__label, .custom-dem-plotlines__label, .custom-dem-undercurrents__label, .custom-dem-momentum-engine__label, .custom-dem-diary-entry__when) {
   padding: 0 !important;
   border: 0 !important;
   background: none !important;
@@ -762,6 +762,11 @@ body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom
   font-weight: 400 !important;
   letter-spacing: inherit !important;
   text-transform: none !important;
+}
+/* 11-19 V4 새 얼굴 카드: 원작이 pre 에 옅은 판을 깔고 코드 칸(code)에도 같은 옅은 판이 한 겹 더 얹혀 안쪽 상자가 겹쳐 보였어요 — 코드 칸 판만 걷어요 */
+body.salty :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-new-face pre > code {
+  background: transparent !important;
+  border-radius: 0 !important;
 }
 /* 심리 고리 표식(이름표 왼쪽 점 · 세로선) — 이름표 여백을 걷었으니 같이 걷어요(단계는 줄 순서) */
 body.salty.salty-dem-skin :is(#chat, .cg-root, .salty-preview) .mes_text .custom-dem-modules .custom-dem-psychological-state-f--step > .custom-dem-psychological-state-row__label::before,

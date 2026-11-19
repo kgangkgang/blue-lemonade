@@ -18,7 +18,9 @@ export const KEY = 'namekey';
 export const STATE = 'bl_mbnamekey';   // 메시지 extra 칸: { [스와이프]: [[원래 키, 원래 값], …] }
 const META = 'statussim';
 const PERSON = new Set(['aff', 'trust']);
-const nm = s => String(s ?? '').normalize('NFC').replace(/\*\*|__|`/g, '').trim().toLowerCase();
+const nm = s => String(s ?? '').normalize('NFC').replace(/⠀/g, ' ').replace(/\*\*|__|`/g, '').trim().toLowerCase();
+/** 버그 사냥 6 줄 하나의 점자 빈칸(U+2800) → 띄어쓰기 · 이어진 띄어쓰기 하나로 · 앞뒤 다듬기(나눔표 둘레는 그 확장이 조각마다 다듬어요) */
+export const blankLine = s => String(s ?? '').replace(/⠀/g, ' ').replace(/ {2,}/g, ' ').trim();
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 export const active = (doc = globalThis.document) => !mbOff(KEY, doc);
 
@@ -81,12 +83,20 @@ export function aliasPairs(value, names) {
  *   → { ops: 새 목록, was: [[원래 키, 원래 값], …] }
  */
 export function rewriteOps(ops, keyOf, names) {
-    if (!Array.isArray(ops) || !ops.length || !names?.size) return null;
+    if (!Array.isArray(ops) || !ops.length) return null;
+    names ??= new Set();
     let touched = false; const out = [], was = [];
-    for (const op of ops) {
+    for (let op of ops) {
+        // 버그 사냥 6 점자 빈칸(U+2800): 띄어쓰기 대신 점자 빈칸을 쓰는 프리셋이면 변화 줄에도 그대로 들어와(「mind: ⠀Mira⠀ | …」) 그 확장이 이름을
+        //   「⠀Mira⠀」 로 따로 세어 같은 인물이 속마음 · 관계 칸에 두 칸으로 나왔어요(11-19 사용자 사진 · 실제 채팅 서랍 줄에서 확인). 보통 띄어쓰기로 바꾸고 앞뒤를 다듬어요 —
+        //   그 확장은 서랍 줄로 상태를 다시 셈해서, 이미 갈라진 기록도 다시 읽으면 한 사람으로 합쳐져요(지난 속마음도 같은 칸에 차례대로).
+        if (Array.isArray(op) && typeof op[0] === 'string' && typeof op[1] === 'string' && (op[0].includes('⠀') || op[1].includes('⠀'))) {
+            const k1 = blankLine(op[0]), v1 = blankLine(op[1]);
+            was.push([op[0], op[1]]); op = [k1, v1, ...op.slice(2)]; touched = true;
+        }
         const [k, v] = Array.isArray(op) ? op : [];
         const name = String(k ?? '').replace(/\*\*|__|`/g, '').trim();
-        if (typeof k === 'string' && typeof v === 'string' && !keyOf(name) && names.has(nm(name))) {
+        if (typeof k === 'string' && typeof v === 'string' && names.size && !keyOf(name) && names.has(nm(name))) {
             const pairs = deltaPairs(v, keyOf);
             if (pairs) { for (const [key, d] of pairs) out.push([key, `${name} ${d}`]); was.push([k, v]); touched = true; continue; }
         }
@@ -144,7 +154,7 @@ export function sweep(c = ctx(), { from = 0, eng = undefined, doc = globalThis.d
         const k = await core();
         let state = null; try { state = k?.app?.current?.state ?? null; } catch { state = null; }   // 지금 상태(인물 표 · 수치 칸) — 없으면 처음 상태
         state ??= sheet(c).base;
-        const names = personNames(state, c.name1); if (!names.size) return 0;
+        const names = personNames(state, c.name1);   // 버그 사냥 6 인물 표가 비어도 점자 빈칸 줄은 고쳐요
         const keyOf = word => { try { return e.opInfo(state, word)?.key ?? null; } catch { return null; } };
         let n = 0;
         for (let i = Math.max(0, from); i < c.chat.length; i++) n += fixMessage(c.chat[i], keyOf, names, { hasStatus: e.hasStatus });
