@@ -95,7 +95,7 @@ function restore(el) {
 // (padding 위아래 합은 그대로라 다른 단추 자리는 안 바뀐다).
 function readControl(el) {
     // Picture choices, switches and mixed icon labels have their own layout contracts.
-    if (el.closest('.salty-preview, .salty-sample, .salty-shapes, [data-bl-native-ext-colors]') || el.matches('.bl-md-choice, .bl-editor-group-toggle, .bl-editor-choose')) return null;
+    if (el.closest('.salty-preview, .salty-sample, .salty-shapes, [data-bl-native-ext-colors]') || el.matches('.bl-md-choice, .bl-editor-choose')) return null;
     // 7.9.9: 글자 없는 절대 위치 꺾쇠(과일 고르기 단추의 <i>: 글자 크기 0 · 배경 그림)는 글자 줄에 끼지 않으니 섞인 아이콘으로 보지 않는다
     for (const extra of el.querySelectorAll('i, svg, img, canvas, input, button, [class*="fa-"]')) {
         if (extra.tagName !== 'I' || extra.children.length) return null;

@@ -1,8 +1,8 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1781 · 뺀 규칙 3857 (style.css 14f741b313bf) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build c9ffefcef38a) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1781 · 뺀 규칙 3857 (style.css 46625ce6278b) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 9f94065137f9) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"e9231a23d5141227"}
 /* css/00-base.css */
-:root{--bl-release:"1.8.6";}
+:root{--bl-release:"1.8.7";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)) {
 :root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}
@@ -356,7 +356,6 @@ body:not(.salty) #rm_extensions_block #salty-drawer > .inline-drawer-header > b 
   --ring: inset 0 0 0 1px var(--salty-accent);
   --sp: max(0.86px, calc(0.5px + var(--salty-ui-size, var(--mainFontSize, 15px)) / 30));
   --fs: calc(13.5 * var(--sp));
-  --fs-tab: calc(13 * var(--sp));
   --fs-chip: calc(12.5 * var(--sp));
   --fs-cap: calc(12 * var(--sp));
   --fs-small: calc(11.5 * var(--sp));
@@ -1479,7 +1478,6 @@ body.salty-dark .salty-shapes button.on {
 @media screen and (max-width: 1000px) {
 .salty-panel {
     --fs: calc(13 * var(--sp));
-    --fs-tab: calc(12.5 * var(--sp));
     --fs-chip: calc(12 * var(--sp));
     --fs-cap: calc(11.5 * var(--sp));
     --fs-small: calc(11 * var(--sp));
@@ -2449,7 +2447,7 @@ html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:
 html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px var(--bl-editor-gutter) 16px; text-align:left; }
 .bl-editor-group { margin:0; }
 .bl-editor-group-body { padding:0 0 8px; }
-.bl-editor-group-body[hidden],.bl-editor-group-toggle[hidden],.bl-editor-catalog[hidden] { display:none !important; }
+.bl-editor-group-body[hidden],.bl-editor-catalog[hidden] { display:none !important; }
 .bl-editor .salty-fonthead { position:static; }
 .bl-editor .bl-view-tools { justify-content:center; padding:6px 0; gap:8px; }
 .bl-editor .bl-view-tools small { display:none; }
@@ -4269,7 +4267,6 @@ html body :where(.bl-rule-swap):is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(b
 html body :where([data-rule-delete]):is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
 html body :where(button):is(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(bl-s, *),
 html body :where(.bl-tool-heading):is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
-html body :where(.bl-editor-group-toggle):is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
 html body :where(button):is(.salty-panel .bl-settings-toprow button):is(#bl-s, *):is(bl-s, *),
 html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *),
 html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *),
@@ -4296,7 +4293,6 @@ html body :where(.bl-rule-swap):is(.salty-panel .bl-rule-swap):is(#bl-s, *):is(b
 html body :where([data-rule-delete]):is(.salty-panel [data-rule-delete]):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 html body :where(button):is(.salty-panel .salty-mode-switch button):is(#bl-s, *):is(bl-s, *)::before,
 html body :where(.bl-tool-heading):is(.salty-panel .bl-tool-heading):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
-html body :where(.bl-editor-group-toggle):is(.salty-panel .bl-editor-group-toggle):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 html body :where([data-bl-row-check]):where(.salty-panel label[data-bl-row-check]:is(bl-s, *):not(.salty-switch)):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 html body :where(.bl-ss-btn):is(.salty-panel .bl-ss-btn):is(#bl-s, *):is(bl-s, *):is(bl-s, *)::before,
 html body :where(.checkbox_label):is(:is(dialog, #rm_extensions_block, #pt-panel) label.checkbox_label):is(.bl-s, *):is(bl-s, *)::before,

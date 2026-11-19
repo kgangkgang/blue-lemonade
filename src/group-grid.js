@@ -46,7 +46,7 @@ export function startGroupGrid() {
     for (const d of document.querySelectorAll('dialog[open]')) watchDialog(d);
     // 확장 서랍 · 창 안 탭을 누르면 그려진 뒤 한 번
     document.addEventListener('click', e => {
-        const head = e.target instanceof Element ? e.target.closest('.inline-drawer-toggle, .inline-drawer-header, .pa-hub-tab, .lv-tab, .llmt-tab, .rl-tab, .drawer-toggle, [data-act=editor-route], .bl-editor-group-toggle') : null;
+        const head = e.target instanceof Element ? e.target.closest('.inline-drawer-toggle, .inline-drawer-header, .pa-hub-tab, .lv-tab, .llmt-tab, .rl-tab, .drawer-toggle, [data-act=editor-route]') : null;
         if (!head) return;
         // 1.0.0: 위 막대의 다른 서랍(실리태번 설정 · 캐릭터 · 월드인포 …)은 확장 칸을 훑지 않아요 — 그 서랍에는 단추 묶음이 없고, 열 때마다 닫힌 확장 칸 전부를 쟀어요
         if (head.matches('.drawer-toggle') && !head.closest('#extensions-settings-button')) return;

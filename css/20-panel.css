@@ -17,7 +17,6 @@
      메뉴 크기를 따라가되 절반만, 그리고 0.86 아래로는 안 내려감 → 메뉴를 아주 작게 해도 이 창은 읽을 수 있음 */
   --sp: max(0.86px, calc(0.5px + var(--salty-ui-size, var(--mainFontSize, 15px)) / 30));
   --fs: calc(13.5 * var(--sp));
-  --fs-tab: calc(13 * var(--sp));
   --fs-chip: calc(12.5 * var(--sp));
   --fs-cap: calc(12 * var(--sp));
   --fs-small: calc(11.5 * var(--sp));
@@ -1325,7 +1324,6 @@ body.salty-dark .salty-shapes button.on {
 @media screen and (max-width: 1000px) {
   .salty-panel {
     --fs: calc(13 * var(--sp));
-    --fs-tab: calc(12.5 * var(--sp));
     --fs-chip: calc(12 * var(--sp));
     --fs-cap: calc(11.5 * var(--sp));
     --fs-small: calc(11 * var(--sp));

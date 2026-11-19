@@ -342,8 +342,44 @@ await test('⑯ (버그 사냥 6) 말풍선 묶음은 위 띠(#ss-hud) 아래 �
     const src = (await import('node:fs')).readFileSync(path.join(root, 'src/mb-mind-tr.js'), 'utf8');
     assert.match(src, /createPopPlacer\(doc, \{ on: \(\) => mbFit\('mindpop', doc\) \}\)/);
     assert.match(src, /afterPop: \(\) => placer\.watch\(\) \}/);
-    assert.match(src, /addEventListener\('animationstart', e => \{ if \(e\?\.animationName === POP_ANIM\) placer\.watch\(\); \}, true\)/);
+    assert.match(src, /addEventListener\('animationstart', e => \{ if \(isPopStart\(e\)\) placer\.watch\(\); \}, true\)/);
     assert.ok(!/new win\.MutationObserver/.test(src), '따로 DOM 감시자 없음(관찰자 상한)');
+});
+await test('⑱ (1.8.7) 생각 꼬리까지 띠 아래 · 띠를 새로 만들어도 따라감 · 움직임 줄이기 신호', async () => {
+    const { dom, doc } = env();
+    const win = dom.window;
+    Object.defineProperty(win, 'innerHeight', { value: 832, configurable: true });
+    const mkHud = (bottom) => { const h = doc.createElement('div'); h.id = 'ss-hud'; doc.body.prepend(h); h.getBoundingClientRect = () => ({ top: 46, bottom, left: 10, right: 374, width: 364, height: bottom - 46 }); return h; };
+    let hud = mkHud(82);
+    const box = doc.createElement('div'); box.id = 'ss-mind-pops'; doc.body.append(box);
+    box.getBoundingClientRect = () => ({ top: parseFloat(box.style.top) || 0, bottom: (parseFloat(box.style.top) || 0) + 60, left: 232, right: 366, width: 134, height: 60 });
+    const p = doc.createElement('div'); p.className = 'ss-mpop c-cast'; box.append(p);
+    const b = doc.createElement('div'); b.className = 'ss-mpop-b'; p.append(b);
+    // 꼬리: ::after top −24px(그 확장 css/mind.css) · 맞춤 시트 여백이 없으면 offsetTop 0
+    let padTop = 0;
+    Object.defineProperty(p, 'offsetParent', { get: () => box, configurable: true });
+    Object.defineProperty(p, 'offsetTop', { get: () => padTop, configurable: true });
+    const realGCS = win.getComputedStyle.bind(win);
+    win.getComputedStyle = (el, ps) => (el === p && ps === '::after') ? { position: 'absolute', content: '""', display: 'block', top: '-24px' } : (el === p && ps === '::before') ? { position: 'absolute', content: '""', display: 'block', top: '-14px' } : realGCS(el, ps);
+    const P = M.createPopPlacer(doc, { on: () => true });
+    box.setAttribute('style', 'top: 90px; right: 18px;');   // 그 확장 자리(띠 아래 끝 82 + 8)
+    assert.equal(P.watch(), true, '시트 여백이 없으면 꼬리 길이만큼 내려요');
+    assert.equal(box.style.top, '110px', '82 + 24 + 4');
+    padTop = 20; box.setAttribute('style', 'top: 90px; right: 18px;');
+    assert.equal(P.watch(), false, '맞춤 시트 여백(20)이 있으면 그 확장 자리 그대로(첫 장면부터 튀지 않음)');
+    // 띠를 지웠다 새로 만든 뒤 더 커지면 — 새 띠를 기준으로(1.8.6 은 지운 띠를 계속 봤어요)
+    hud.remove(); hud = mkHud(142);
+    assert.equal(P.place(), true); assert.equal(box.style.top, '150px', '새 띠 아래');
+    // 새 말풍선 알림: 맞춤 시트 신호(말풍선 글 칸 · 움직임 줄이기에서도) · 그 확장 움직임 · 다른 곳 신호는 아님
+    assert.equal(M.isPopStart({ animationName: M.POP_SIGNAL, target: b }), true);
+    assert.equal(M.isPopStart({ animationName: M.POP_ANIM, target: p }), true);
+    const other = doc.createElement('div'); other.className = 'ss-mpop-b'; doc.body.append(other);
+    assert.equal(M.isPopStart({ animationName: M.POP_SIGNAL, target: other }), false, '띠 신호(ss-pulse)와 가려요');
+    assert.equal(M.isPopStart({ animationName: 'ss-boing', target: p }), false);
+    P.stop();
+    const css = (await import('node:fs')).readFileSync(path.join(root, 'src/ext-status.css'), 'utf8');
+    assert.ok(css.includes('#ss-mind-pops.ss-root:has(> .ss-mpop.c-cast:first-child) { padding-top: 20px; }'), '꼬리 여백');
+    assert.ok(css.includes('#ss-mind-pops > .ss-mpop > .ss-mpop-b { animation: ss-pulse .001s 1 !important; }'), '움직임 줄이기에서도 도는 신호');
 });
 await test('⑰ (버그 사냥 6) 원문을 한 번도 안 그려요 — 말풍선은 대기 표시 → 번역본 · 탭 글도 대기 표시 → 번역본 · 실패 · 시간 넘음일 때만 원문', async () => {
     const { mb, doc, mind } = make({ delay: 300, wait: 2000 });

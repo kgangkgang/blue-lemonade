@@ -55,7 +55,7 @@
   .bls-panel { width: calc(100vw - 12px); max-width: calc(100vw - 12px); max-height: calc(100dvh - 16px); border-radius: 12px; }
   .bls-panel .bls-panel-body { padding: 10px; }
 }
-.bls-panel, .toast.bls-toast { --bls-deep: var(--lp-bg); --bls-lemon: var(--lp-lemon); --bls-lemon-ink: var(--lp-on-lemon); --bls-lemon-line: var(--lp-lemon-ink); --bls-lemon-deep: color-mix(in oklab, var(--lp-lemon-ink) 60%, var(--bls-deep)); --bls-c-info: var(--lp-blue); --bls-c-info-ink: var(--lp-on-blue); --bls-c-lemon: var(--lp-lemon); --bls-c-lemon-ink: var(--lp-on-lemon); --bls-c-danger: var(--lp-red); --bls-c-danger-ink: var(--lp-on-red); --bls-c-ok: var(--lp-blue); --bls-c-ok-ink: var(--lp-on-blue); }
+.bls-panel, .toast.bls-toast { --bls-deep: var(--lp-bg); --bls-c-info: var(--lp-blue); --bls-c-info-ink: var(--lp-on-blue); --bls-c-lemon: var(--lp-lemon); --bls-c-danger: var(--lp-red); --bls-c-danger-ink: var(--lp-on-red); --bls-c-ok: var(--lp-blue); }
 .bls-panel[data-bls-tone="light"], .toast.bls-toast[data-bls-tone="light"] { --bls-deep: var(--lp-text); }
 .bls-panel[data-bls-font]:not([data-bls-font="st"]), .bls-panel[data-bls-font]:not([data-bls-font="st"]) :is(button, h2, h3), .toast.bls-toast[data-bls-font]:not([data-bls-font="st"]) { font-family: var(--bls-font-pick); }
 .bls-panel[data-bls-tone] { --bls-accent: var(--bls-c-info); --bls-on-accent: var(--bls-c-info-ink); --bls-danger: var(--bls-c-danger); }
@@ -96,7 +96,7 @@
 .bls-panel[data-bls-tone] .bls-btn::before { inset: calc((44px - var(--bl-h-lg, 40px)) / -2 - 1px) 0; }
 .bls-panel[data-bls-tone] .bls-icon::before { inset: -5px; }
 .bls-panel[data-bls-tone] .bls-btn::before { inset: -3.5px 0; }
-.bls-panel { --bls-h-ctl: var(--bl-size-btn, 36px); --bls-h-pop: var(--bl-size-btn, 36px); --bls-hit: var(--bl-size-tap, 44px); }
+.bls-panel { --bls-h-pop: var(--bl-size-btn, 36px); --bls-hit: var(--bl-size-tap, 44px); }
 .bls-panel.bls-confirm { --bls-h-pop: var(--bl-size-btn-pop, 40px); }
 .bls-panel[data-bls-tone] :is(.bls-btn, .bls-btn.bls-primary, .bls-btn.bls-danger) { min-height: var(--bls-h-pop); height: var(--bls-h-pop); }
 .bls-panel[data-bls-tone] .bls-btn::before { inset: calc((var(--bls-hit) - var(--bls-h-pop)) / -2 - 1px) 0; }

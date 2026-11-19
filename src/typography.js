@@ -43,6 +43,43 @@ function wrapCjkRuns(root){
         }
     }
 }
+// 버그 사냥 7(1.8.7) 가운뎃점으로 이은 영문 덩어리(「《A·B·C·D·E》」 · 「S·O·S··」)는 줄바꿈 자리가 없는 한 낱말이라, 줄 끝에 안 들어가면 통째로 다음 줄로 넘어가
+//       양쪽 정렬에서 앞 줄 낱말 사이가 크게 벌어졌어요(11-19 사용자 폰 사진 · 그 줄만). 점 뒤마다 <wbr>(보이지 않는 줄바꿈 자리)을 둬요 — 글(textContent)은 그대로 · 양쪽 정렬 설정도 그대로.
+//       라틴 글자 · 숫자 조각 넷 이상을 가운뎃점(· ・ • ‧)으로 이은 것만(「1·2」 · 「A·B」 같은 짧은 것은 그대로)
+export const DOT_WRAP='bl-dotrun';
+const DOT_RUN=/[A-Za-z0-9]+(?:[·・•‧][A-Za-z0-9]+){3,}[·・•‧]?/g;
+const DOT_SKIP=`pre,code,script,style,textarea,.${DOT_WRAP}`;
+/** 글 → 조각 [{text, dot}] (순수 함수 · 시험 tools/tests/dot-run-wrap.mjs) */
+export function dotPieces(text){
+    const s=String(text??''),out=[];let last=0;
+    if(!/[·・•‧]/.test(s))return [{text:s,dot:false}];
+    for(const m of s.matchAll(DOT_RUN)){
+        if(m.index>last)out.push({text:s.slice(last,m.index),dot:false});
+        out.push({text:m[0],dot:true});last=m.index+m[0].length;
+    }
+    if(!out.length)return [{text:s,dot:false}];
+    if(last<s.length)out.push({text:s.slice(last),dot:false});
+    return out;
+}
+export function wrapDotRuns(root){
+    const hosts=root.matches?.('.mes_text, .salty-sample')?[root]:[...(root.querySelectorAll?.('.mes_text, .salty-sample')||[])];
+    for(const host of hosts){
+        if(!/[·・•‧]/.test(host.textContent))continue;
+        const walker=document.createTreeWalker(host,NodeFilter.SHOW_TEXT),nodes=[];
+        for(let n=walker.nextNode();n;n=walker.nextNode())if(/[·・•‧]/.test(n.data)&&!n.parentElement?.closest(DOT_SKIP))nodes.push(n);
+        for(const node of nodes){
+            const pieces=dotPieces(node.data);
+            if(!pieces.some(p=>p.dot))continue;
+            node.replaceWith(...pieces.map(p=>{
+                if(!p.dot)return document.createTextNode(p.text);
+                const span=document.createElement('span');span.className=DOT_WRAP;
+                for(const part of p.text.split(/(?<=[·・•‧])/u)){span.append(document.createTextNode(part));if(/[·・•‧]$/u.test(part))span.append(document.createElement('wbr'));}
+                if(span.lastChild?.nodeName==='WBR')span.lastChild.remove();
+                return span;
+            }));
+        }
+    }
+}
 const mounting=new WeakSet();
 // 5.3.4: 에셋 그림에 곧장 붙은 <br> (사이에 빈칸 · 주석만) — 뒤로 셋, 앞으로 둘까지 .bl-img-br (css/07-images 가 숨김).
 // 예전 CSS 형제 선택자(img + br + br)는 사이의 글자를 건너뛰어 "줄A<br>줄B" 의 줄바꿈까지 숨겼다
@@ -187,6 +224,7 @@ export function typesetRoots(list){
     const jobs=roots.map(readRoot); // 읽기는 한 번에 — 첫 읽기에서만 스타일 계산이 돈다
     jobs.forEach(writeRoot);
     roots.forEach(wrapCjkRuns);   // 6.9.2 대사 머리(bl-quote-lead)를 정한 뒤에
+    roots.forEach(wrapDotRuns);   // 버그 사냥 7 가운뎃점으로 이은 영문 덩어리에 줄바꿈 자리
     typesetHook?.(roots);
 }
 // 메모 카드/팝업은 먼저 조판하고 같은 호출 스택에서 붙인다. 분리된 DOM에서는 계산 스타일이 비어 있으므로
@@ -285,7 +323,8 @@ export function syncTypography(on) {
         document.querySelectorAll(`br.${IMG_BR}`).forEach(node=>node.classList.remove(IMG_BR));
         document.querySelectorAll(`br.${STYLE_BR}`).forEach(node=>node.classList.remove(STYLE_BR));
         document.querySelectorAll(`.${IMG_INDENT}`).forEach(node=>node.remove());
-        document.querySelectorAll(`.${CJK_WRAP}`).forEach(node=>node.replaceWith(...node.childNodes));return;   // 6.9.2
+        document.querySelectorAll(`.${CJK_WRAP}`).forEach(node=>node.replaceWith(...node.childNodes));   // 6.9.2
+        document.querySelectorAll(`.${DOT_WRAP}`).forEach(node=>{node.querySelectorAll('wbr').forEach(w=>w.remove());const t=node.textContent;node.replaceWith(document.createTextNode(t));});return;   // 버그 사냥 7
     }
     typesetRoot(document); // 그림 옆 표시(markAssetBreaks)도 이 안에서 먼저
 

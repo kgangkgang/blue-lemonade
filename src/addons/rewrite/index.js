@@ -618,8 +618,8 @@ function friendlyError(error) {
     return text;
 }
 
-function report(result, total, manual, undo = null) {
-    afterPaint().then(() => showReport(result, total, manual, undo));
+function report(result, total, manual, undo = null, retry = null) {
+    afterPaint().then(() => showReport(result, total, manual, undo, retry));
 }
 
 /** 7.0.2 금지 묘사 · 예외를 고친 시각을 적고 저장 (기기 간 합치기가 늦은 쪽을 받게) */
@@ -657,14 +657,18 @@ async function undoRewrite(rec) {
     return true;
 }
 
-function showReport({ fixed, failed, error }, total, manual, undo = null) {
+function showReport({ fixed, failed, error, left = [] }, total, manual, undo = null, retry = null) {
     const kept = total - fixed - failed;
     if (failed > 0) {
         const done = fixed > 0 ? ` (${fixed}곳은 고침)` : '';
         if (error) console.warn(`[${TITLE}] 고쳐 쓰기 실패:`, error);
         const friendly = friendlyError(error);
         const reason = friendly ? ` ${friendly}` : '';
-        const toast = toastr.warning(`${failed}곳은 못 고쳐서 원문 그대로 뒀어요${done}.${reason}`, TITLE, undo && fixed > 0 ? { timeOut: 9000, extendedTimeOut: 4000 } : undefined);
+        // 1.8.7 끝까지 남은 금지 묘사가 무엇인지 알린다(규칙 이름) · 그 문장만 다시 고치는 단추 — 알림은 사용자가 닫을 때까지 둔다
+        const names = [...new Set(left.flatMap(span => span.rules ?? []).filter(rule => !rule.repeat).map(rule => rule.name).filter(Boolean))].slice(0, 3);
+        const which = names.length > 0 ? ` 남은 것: ${names.join(' · ')}.` : '';
+        const toast = toastr.warning(`${failed}곳은 못 고쳐서 원문 그대로 뒀어요${done}.${which}${reason}`, TITLE, retry ? { timeOut: 0, extendedTimeOut: 0, closeButton: true } : undo && fixed > 0 ? { timeOut: 9000, extendedTimeOut: 4000 } : undefined);
+        if (retry) attachUndo(toast, retry, { label: '남은 문장만 다시 고치기', icon: 'fa-rotate-right' });
         if (undo && fixed > 0) attachUndo(toast, () => undoRewrite(undo));
         return;
     }
@@ -855,7 +859,18 @@ async function cleanMessage(messageId, manual, signal) {
                 await saveChatConditional();
             }
         }
-        report(result, spans.length, manual, undo);
+        // 1.8.7 남은 곳이 있으면 그 답의 금지 묘사 문장만 다시 고치는 단추 (같은 채팅 · 같은 답일 때만 — 고친 글을 기준으로 남은 문장만 다시 찾는다)
+        const chatAtReport = getContext().getCurrentChatId?.() ?? '';
+        const retry = result.failed > 0 && !result.error?.name?.includes('Abort')
+            ? () => {
+                if ((getContext().getCurrentChatId?.() ?? '') !== chatAtReport || getContext().chat[messageId] !== message) {
+                    toastr.info('채팅이나 답이 바뀌어서 다시 고치지 않았어요. 그 답의 고치기 단추로 다시 해 주세요.', TITLE);
+                    return;
+                }
+                return cleanMessage(messageId, true);
+            }
+            : null;
+        report(result, spans.length, manual, undo, retry);
     } catch (error) {
         console.error(`[${TITLE}]`, error);
         toastr.error(`고쳐 쓰다가 오류가 났어요: ${friendlyError(error)}`, TITLE);

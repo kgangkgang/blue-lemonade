@@ -210,6 +210,7 @@ await test('못 고치면 원문 그대로: 금지어가 남은 답은 시도를
     assert.equal(message.extra.bl_rewrite, undefined);
     assert.deepEqual(updates(), []); assert.deepEqual(T.saves, []);
     assert.ok(toast('warning', '2곳은 못 고쳐서 원문 그대로 뒀어요'));
+    assert.ok(toast('warning', '남은 것: '), '1.8.7 끝까지 남은 규칙 이름을 알린다');
 });
 
 await test('두 곳 중 한 곳만 고쳐지면 그 곳만 — 다시 보낼 때는 못 고친 문장만', async () => {

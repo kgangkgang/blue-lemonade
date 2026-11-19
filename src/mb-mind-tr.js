@@ -25,6 +25,14 @@ export const WAIT_ATTR = 'data-bl-mind-wait';
 export const SEEN_ATTR = 'data-bl-mind-seen';
 export const ANIM = 'bl-mb-mind-seen';
 export const POP_ANIM = 'ss-mpop-in';   // 그 확장 말풍선 들어오는 움직임 이름(css/mind.css)
+export const POP_SIGNAL = 'ss-pulse';   // 1.8.7 맞춤 시트(ext-status.css)가 새 말풍선 글 칸(.ss-mpop-b)에 0.001초로 거는 그 확장 키프레임 — 움직임 줄이기에서도 돌아요
+/** 새 말풍선이 뜬 순간인가 — 맞춤 시트 신호(말풍선 글 칸) 또는 그 확장 속마음 들어오는 움직임 */
+export function isPopStart(e) {
+    if (e?.animationName === POP_ANIM) return true;
+    if (e?.animationName !== POP_SIGNAL) return false;
+    const t = e.target;
+    return !!t?.classList?.contains('ss-mpop-b') && t.parentElement?.parentElement?.id === 'ss-mind-pops';
+}
 export const STORE = 'bl-mb-mind-tr-v1';
 export const STORE_MAX = 400;
 export const SRC_ATTR = 'data-bl-mind-src';
@@ -399,10 +407,36 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
  *   → 띠 크기가 바뀔 때(ResizeObserver) · 말풍선이 새로 뜰 때(그 확장 말풍선 움직임 ss-mpop-in 의 animationstart — 첫 장면은 투명) 묶음 top 을 띠 아래로만 옮겨요. 아래 모서리 · 옆 서랍 자리는 그대로.
  *   그 확장이 잡은 값(base)을 기억해 띠가 작아지면 그 값까지만 되돌려요. 스위치 mindpop(그 확장 말풍선 모양 맞춤)을 끄면 손대지 않아요.
  */
-export function createPopPlacer(doc = globalThis.document, { gap = 8, on = () => true } = {}) {
+export function createPopPlacer(doc = globalThis.document, { gap = 8, clear = 4, on = () => true } = {}) {
     const win = doc?.defaultView || globalThis;
     let box = null, hud = null, ro = null, mine = null, base = null;
+    /** 맨 위 말풍선이 묶음 상자 위 끝보다 더 위로 내미는 길이(px) — 속마음 말풍선의 생각 꼬리(::before · ::after, 그 확장 css/mind.css 에서 top −14 · −24px) 등.
+     *  1.8.6 은 상자만 띠 아래에 두어 꼬리가 띠 아래 끝을 16px 덮었어요(11-19 사용자 「속마음 위에 상태창이랑 겹치는 건 아직도」).
+     *  맞춤 시트가 꼬리 있는 말풍선이 맨 위일 때 상자 위 여백을 주므로(ext-status.css · 그 확장이 띄우는 첫 장면부터 자리) 보통은 0 — 꼬리 길이가 바뀐 판을 위한 잼이에요 */
+    function lift() {
+        const p = box?.firstElementChild;
+        if (!p || typeof win.getComputedStyle !== 'function') return 0;
+        let up = 0;
+        for (const ps of ['::before', '::after']) {
+            try {
+                const cs = win.getComputedStyle(p, ps);
+                if (!cs || cs.position !== 'absolute' || !cs.content || cs.content === 'none' || cs.display === 'none') continue;
+                const t = parseFloat(cs.top);
+                if (Number.isFinite(t) && t < 0) up = Math.max(up, -t);
+            } catch { /* 꼬리를 모르면 상자만 */ }
+        }
+        if (!up) return 0;
+        const off = p.offsetParent === box ? Number(p.offsetTop) : 0;   // 상자 위 여백(맞춤 시트) — 배치 값이라 들어오는 움직임(옮김 · 줄임)에 안 흔들려요
+        return Math.min(48, Math.max(0, up - (Number.isFinite(off) ? Math.max(0, off) : 0)));
+    }
+    /** 묶음 · 띠를 (다시) 찾아요 — 그 확장이 띠를 지웠다 새로 만들면(채팅 바꿈 · 띠 끔/켬) 크기 감시도 새 띠로 옮겨요. getElementById 두 번뿐이에요 */
+    function sync() {
+        const nb = doc.getElementById?.('ss-mind-pops') || null, nh = doc.getElementById?.('ss-hud') || null;
+        if (nb !== box) { box = nb; mine = null; base = null; }
+        if (nh !== hud) { if (hud) ro?.unobserve(hud); hud = nh; if (hud && typeof win.ResizeObserver === 'function') { ro ||= new win.ResizeObserver(() => place()); ro.observe(hud); } }
+    }
     function place() {
+        sync();
         if (!on() || !box?.isConnected) return false;
         const st = box.style;
         if (!st.top || st.bottom) return false;   // 아래 모서리 · 위치를 모름
@@ -414,20 +448,17 @@ export function createPopPlacer(doc = globalThis.document, { gap = 8, on = () =>
         let want = base;
         if (h && h.height > 10 && h.bottom > 0 && (!ih || h.top < ih)) {
             const b = box.getBoundingClientRect(), wide = !(b.width > 0) || (b.right > h.left && b.left < h.right);
-            if (wide && base < h.bottom + gap) want = h.bottom + gap;
+            const need = h.bottom + Math.max(gap, lift() + clear);   // 띠 아래 끝 + (꼬리가 있으면 꼬리 길이 + 틈)
+            if (wide && base < need) want = need;
         }
         if (ih) want = Math.max(gap, Math.min(ih - 160, want));
         if (Math.abs(want - cur) < 0.5) return false;
         mine = `${Math.round(want * 100) / 100}px`; st.top = mine;
         return true;
     }
-    /** 묶음 · 띠를 (다시) 찾아 감시를 걸어요 — 처음이거나 그 확장이 새로 만들었을 때만 */
-    function watch() {
-        const nb = doc.getElementById?.('ss-mind-pops'), nh = doc.getElementById?.('ss-hud');
-        if (nb !== box) { box = nb; mine = null; base = null; }   // 새 말풍선 · 새 자리는 말풍선 움직임 시작(animationstart · 아래 startMindTr)에서 알아요 — 따로 DOM 감시자를 두지 않아요(관찰자 상한)
-        if (nh !== hud) { if (hud) ro?.unobserve(hud); hud = nh; if (hud && typeof win.ResizeObserver === 'function') { ro ||= new win.ResizeObserver(() => place()); ro.observe(hud); } }
-        return place();
-    }
+    /** 새 말풍선이 뜰 때 · 스위치가 바뀔 때 — 새 말풍선은 맞춤 시트의 0.001초 신호(.ss-mpop-b · 아래 startMindTr)와 그 확장 움직임 시작에서 알아요.
+     *  따로 DOM 감시자를 두지 않아요(관찰자 상한) */
+    function watch() { return place(); }
     function stop() { ro?.disconnect(); ro = null; box = hud = null; }
     return { place, watch, stop, get box() { return box; } };
 }
@@ -455,9 +486,11 @@ export function startMindTr(doc = globalThis.document) {
         const [tr, cfg] = await Promise.all([import(new URL('src/translate.js', base).href), import(new URL('src/mindcfg.js', base).href).catch(() => ({}))]);
         if (typeof tr.trText !== 'function') return null;
         // 버그 사냥 6 말풍선 묶음을 띠 아래로(createPopPlacer) — 그 확장은 말풍선을 0 · 0.7 · 1.4초 … 뒤에 띄워요(그때마다 움직임 시작 사건으로 다시 봐요)
+        // 1.8.7 새 말풍선 알림은 맞춤 시트의 0.001초 신호(POP_SIGNAL · .ss-mpop-b — !important 라 「움직임 줄이기」 기기에서도 돌아요)가 주 길이에요.
+        //   1.8.6 은 속마음 말풍선 움직임(ss-mpop-in)만 들어서, 움직임을 끈 기기 · 다른 움직임 이름의 말풍선(세포 ss-boing · 원고지 ss-paper 등)엔 자리를 다시 안 봤어요
         const placer = createPopPlacer(doc, { on: () => mbFit('mindpop', doc) });
         const mind = createMindTr({ core, tr, cfg }, { doc, afterPop: () => placer.watch() });
-        doc.addEventListener('animationstart', e => { if (e?.animationName === POP_ANIM) placer.watch(); }, true);   // 그 확장이 말풍선을 띄운 순간(묶음 자리를 막 잡은 뒤)
+        doc.addEventListener('animationstart', e => { if (isPopStart(e)) placer.watch(); }, true);   // 그 확장이 말풍선을 띄운 순간(묶음 자리를 막 잡은 뒤)
         onMbOff(doc, ['mindpop'], () => placer.watch());
         try { globalThis.__blMbMindPlacer = placer; } catch { /* 진단만 */ }
         if (!mind.wrap()) return null;

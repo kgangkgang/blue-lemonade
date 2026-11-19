@@ -27,7 +27,7 @@ html body .bl-editor .bl-editor-stage .salty-prevbox { position:relative; inset:
 html body .bl-editor .salty-sec { flex:1; min-width:0; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable both-edges; margin:0; padding:10px var(--bl-editor-gutter) 16px; text-align:left; }
 .bl-editor-group { margin:0; } /* 1.0.0 묶음 접기 없앰 — 묶음은 늘 펼침, 이름은 제목 줄(.bl-editor-group-head, css/50) */
 .bl-editor-group-body { padding:0 0 8px; }
-.bl-editor-group-body[hidden],.bl-editor-group-toggle[hidden],.bl-editor-catalog[hidden] { display:none !important; }
+.bl-editor-group-body[hidden],.bl-editor-catalog[hidden] { display:none !important; }
 .bl-editor .salty-fonthead { position:static; }
 .bl-editor .bl-view-tools { justify-content:center; padding:6px 0; gap:8px; }
 .bl-editor .bl-view-tools small { display:none; }

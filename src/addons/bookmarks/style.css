@@ -2264,8 +2264,6 @@ body.salty .cg-root .cg-segmented button { min-height: 32px; padding-block: calc
 /* ── 6.2.0 (ui-density-620c): 「사용법」은 기본 접힘(details) · 「표시」 묶음에도 제목 띠 ── */
 .cg-root details.cg-section > summary.cg-section-title { cursor: pointer; list-style: none; }
 .cg-root details.cg-section > summary.cg-section-title::-webkit-details-marker { display: none; }
-.cg-root details.cg-section > summary .cg-fold-caret { margin-left: auto; color: var(--salty-muted, var(--cg-muted)); font-size: .85em; transition: transform .18s ease; }
-.cg-root details.cg-section[open] > summary .cg-fold-caret { transform: rotate(180deg); }
 .cg-root .cg-page-scroll > details.cg-section:not([open]) { padding-bottom: 0; }
 .cg-root .cg-page-scroll > details.cg-section:not([open]) > .cg-section-title { margin-bottom: -2px; border-bottom: 0; }
 

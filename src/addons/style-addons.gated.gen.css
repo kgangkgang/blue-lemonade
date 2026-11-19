@@ -4592,8 +4592,6 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-7) .cg-root .cg-version { margin-top: 4px !important; margin-bottom: 12px !important; }
 :where(html.bl-asc-7) .cg-root details.cg-section > summary.cg-section-title { cursor: pointer; list-style: none; }
 :where(html.bl-asc-7) .cg-root details.cg-section > summary.cg-section-title::-webkit-details-marker { display: none; }
-:where(html.bl-asc-7) .cg-root details.cg-section > summary .cg-fold-caret { margin-left: auto; color: var(--salty-muted, var(--cg-muted)); font-size: .85em; transition: transform .18s ease; }
-:where(html.bl-asc-7) .cg-root details.cg-section[open] > summary .cg-fold-caret { transform: rotate(180deg); }
 :where(html.bl-asc-7) .cg-root .cg-page-scroll > details.cg-section:not([open]) { padding-bottom: 0; }
 :where(html.bl-asc-7) .cg-root .cg-page-scroll > details.cg-section:not([open]) > .cg-section-title { margin-bottom: -2px; border-bottom: 0; }
 :where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 2px; }

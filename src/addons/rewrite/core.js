@@ -262,6 +262,16 @@ function ownedByNear(sentence, index, length, nearNames, otherNames = [], memo =
 //   6.1.9 캐릭터 에셋의 빈 자리(<span class="bl-asset-slot" data-asset-slot="…"></span>, 답장 뒤 다른 모델이 고르기)도 같은 그림 자리다.
 //   2.1.7 「이 채팅의 에셋 그림 떼기」가 남기는 위치 표시(<span class="bl-asset-gone" data-asset-was="…"></span>)도 — 고쳐 쓴 뒤에도 그 자리에 남게.
 export const SLOT_RE = /<span\b[^>]*\b(?:data-(?:autopic|asset)-slot="[^"]*"|data-asset-was="[^"]*"|class="[^"]*\b(?:autopic-image-slot|bl-asset-slot|bl-asset-gone)\b[^"]*")[^>]*>[^<]*<\/span>/g;
+const BRAILLE_BLANK_ALL = /⠀/g;
+/**
+ * 1.8.7 원문이 낱말 사이에 점자 빈칸만 쓰면(보통 빈칸 없음) 고친 문장의 보통 빈칸도 점자 빈칸으로 — 같은 답 안에서 빈칸 꼴이 섞이지 않게.
+ * 보통 빈칸이 섞인 원문이나 점자 빈칸이 없는 원문은 그대로 둔다.
+ */
+export function matchBlankStyle(original, rewrite) {
+    if (typeof rewrite !== 'string' || typeof original !== 'string') return rewrite;
+    if (!original.includes('⠀') || original.includes(' ')) return rewrite;
+    return rewrite.replace(/ /g, '⠀');
+}
 const blankAll = part => part.replace(/[^\n]/g, ' ');
 const blankAsBreak = part => '\n' + blankAll(part.slice(1));
 const PROTECTED = [
@@ -274,7 +284,10 @@ const PROTECTED = [
 
 /** Blanks code, tags and URLs with same-length spaces (newlines kept) so match indices still point into the original text. A picture slot becomes a line break. */
 export function maskProtected(text) {
-    let masked = text;
+    // 1.8.7 점자 빈칸(U+2800)은 보통 빈칸으로 본다 — 「공백마다 점자 빈칸」 우회 프리셋(솔라 등)의 원문은 `pocket⠀watch` 꼴이라
+    //   낱말 사이 빈칸(SPACE · \s)이 안 맞아 금지 묘사를 하나도 못 찾았다(11-19 사용자 제보 · 원문 mes 확인).
+    //   한 글자를 한 글자로 바꾸므로 찾은 자리는 원문 그대로 가리킨다.
+    let masked = String(text ?? '').replace(BRAILLE_BLANK_ALL, ' ');
     for (const [regex, mask] of PROTECTED) masked = masked.replace(regex, mask);
     return masked;
 }
@@ -702,6 +715,10 @@ export function checkRewrite(span, rewrite, compiled) {
     if (span.rules.some(rule => !rule.repeat && !exempt.includes(rule))) {
         const counted = compiled.filter(entry => !exempt.includes(entry.rule));
         if (countMatches(text, counted) >= countMatches(span.text, counted)) return 'banned';
+        // 1.8.7 누구 것인지 가리지 않는 규칙(이름 · 예외 범위 없음)은 줄기만 해선 안 되고 0 이어야 한다 —
+        //   전엔 한 문장에 두 번 나온 금지어를 한 번만 지워도 'ok' 로 통과해 남은 하나가 그대로 저장됐다.
+        const strict = span.rules.filter(rule => !rule.repeat && !exempt.includes(rule) && !(rule.nearNames?.length) && !(rule.scopeNames?.length));
+        if (strict.length > 0 && countMatches(text, compiled.filter(entry => strict.includes(entry.rule))) > 0) return 'banned';
     } else if (span.repeatOf) {
         // A repeat-only rewrite must not introduce a new banned detail.
         const counted = compiled.filter(entry => !entry.rule.repeat && !exempt.includes(entry.rule));
@@ -738,7 +755,7 @@ export async function rewriteText({ text, spans, exceptions, compiled, generate,
             break;
         }
 
-        const rewrites = parseRewrites(raw, batch.length);
+        const rewrites = parseRewrites(raw, batch.length).map((rewrite, j) => matchBlankStyle(batch[j].text, rewrite));
         // 7.7.4 빈 답 · 거절문 · 출력 한도에 잘린 답처럼 고친 문장이 하나도 없는 답이 두 번 이어지면 그만 보낸다 — 같은 요청은 같은 답이라
         //       전엔 maxAttempts(기본 5)번을 다 보냈고, 알림엔 까닭이 없었다
         if (rewrites.every(rewrite => rewrite === undefined)) {
@@ -770,6 +787,7 @@ export async function rewriteText({ text, spans, exceptions, compiled, generate,
         text: output,
         fixed: results.filter(result => result !== null).length,
         failed: pending.length,
+        left: pending.map(i => spans[i]),   // 1.8.7 끝까지 못 고친 문장 (알림에 규칙 이름)
         error,
     };
 }
@@ -825,9 +843,10 @@ function tagPair(name) {
 }
 
 function testAny(text, regexes) {
+    const plain = String(text ?? '').replace(BRAILLE_BLANK_ALL, ' ');   // 1.8.7 점자 빈칸도 빈칸 (maskProtected 와 같이)
     return regexes.some(regex => {
         regex.lastIndex = 0;
-        return regex.test(text);
+        return regex.test(plain);
     });
 }
 
@@ -840,7 +859,8 @@ function testAny(text, regexes) {
  * @returns {'ok' | 'missing' | 'cut'}
  */
 export function checkReplyStart(text, compiled) {
-    const body = String(text ?? '').replace(INVISIBLE_START, '');
+    // 1.8.7 점자 빈칸(U+2800)은 보통 빈칸으로 — 앞머리 점자 빈칸 때문에 시작 태그를 못 보고 「없음」으로 다시 생성하지 않게
+    const body = String(text ?? '').replace(BRAILLE_BLANK_ALL, ' ').replace(INVISIBLE_START, '');
     if (!testAny(body, compiled.regexes)) return 'missing';
     let end = -1;
     for (const tag of compiled.tags ?? []) {

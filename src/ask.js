@@ -22,7 +22,7 @@ export async function ask(message, { ok = '확인', cancel = '취소', danger = 
 
 /** 7.0.1 알림 끝에 ↶ 단추 하나 (아이콘 · aria-label, 툴팁 없음). toastr 가 돌려준 알림(jQuery)에 붙인다 — 누르면 onUndo 를 한 번만 부르고 알림을 닫는다.
  *  toastr 는 글을 HTML 로 읽지 않으니(escapeHtml) 단추는 요소로 붙인다 */
-export function attachUndo(toast, onUndo, { label = '되돌리기' } = {}) {
+export function attachUndo(toast, onUndo, { label = '되돌리기', icon = 'fa-rotate-left' } = {}) {
     const el = toast?.[0] ?? toast;
     const host = el?.querySelector?.('.toast-message') || el;
     const doc = globalThis.document;
@@ -33,7 +33,7 @@ export function attachUndo(toast, onUndo, { label = '되돌리기' } = {}) {
     button.setAttribute('aria-label', label);
     // 7.0.2 되돌리기 단추가 너무 크고 눈에 띄던 것 → 테두리 없는 작은 아이콘 (누르는 자리는 28px 유지)
     button.style.cssText = 'margin-left:4px;min-width:28px;min-height:28px;padding:2px 6px;border:0;border-radius:8px;background:none;color:inherit;opacity:.7;cursor:pointer;font-size:.9em;line-height:1;vertical-align:middle';
-    button.innerHTML = '<i class="fa-solid fa-rotate-left" aria-hidden="true"></i>';
+    button.innerHTML = `<i class="fa-solid ${/^fa-[a-z0-9-]+$/.test(icon) ? icon : 'fa-rotate-left'}" aria-hidden="true"></i>`;   // 1.8.7 다시 고치기 단추는 다른 아이콘
     let used = false;
     button.addEventListener('click', event => {
         event.preventDefault(); event.stopPropagation();
