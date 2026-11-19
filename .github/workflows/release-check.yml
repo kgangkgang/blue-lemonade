@@ -1034,6 +1034,8 @@ jobs:
           node tools/tests/selection-bar-esc.mjs . tools
           # 1.4.x 미트볼 「화면만 번역」 빈틈 메우기: 같은 jsdom 으로 칩 자리 감시 · 누른 뒤 메우기
           node tools/tests/ext-bridge-tr.mjs . tools
+          # 1.8.8 원어 대사 뒤 영어 풀이 줄 접기(번역본이 보일 때만 · 꼴로만)
+          node tools/tests/gloss-fold.mjs . tools
           # 1.5.0 버그 사냥: 장식 액자 — 감시가 걸린 뒤 새 메시지 사진에도 액자
           node tools/tests/decor-view-dom.mjs . tools
           # 1.5.3 업데이트 창 바뀐 내역: 게시 직후(Pages 배포 전) 준비 중 → 스스로 다시 · raw 공지 표로 대체 · 실패면 다시 시도 단추 · 닫으면 타이머 0

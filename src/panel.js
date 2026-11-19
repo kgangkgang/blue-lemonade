@@ -1875,6 +1875,7 @@ function tabChat(s, sub) {
             ${row('입력 중 목록 갱신 미루기', toggle('chat.personaDefer', s.chat.personaDefer !== false), '페르소나 설명을 치는 동안은 목록 카드의 설명 글 · 토큰 수 갱신을 잠깐 미루고, 손을 멈추거나 칸을 떠날 때(다른 곳 누르기 · 서랍 닫기 · 페르소나 바꾸기) 한 번에 적어요. 저장되는 글은 같아요')}
             ${row('새 답 첫 줄로 가는 단추', toggle('chat.replyTop', !!s.chat.replyTop), '긴 답이 끝나 첫 줄이 위로 지나가 있으면 ↑ 아이콘이 떠요 · 첫 줄이 보이면 사라져요')}
             ${row('토큰 수 누르면 내역', toggle('chat.sentTokens', s.chat.sentTokens !== false), '메시지 머리 토큰 수를 누르면 생각 · 본문 · 다음 프롬에 들어가는 양을 한 줄씩 보여 줘요')}
+            ${row('원어 대사 뒤 영어 풀이 접기', toggle('chat.glossFold', s.chat.glossFold !== false), '번역본을 볼 때 일본어 대사 바로 다음 줄의 영어 풀이(따옴표 기울임 한 줄)를 접어요 · 같은 말이 두 번 보이지 않게 · 원문은 그대로')}
             ${row('웹 검색 · 출처 표시', toggle('chat.webSearchMarks', s.chat.webSearchMarks !== false), '웹 검색을 쓴 답에 지구 표시를 붙여요 · 답의 낱말을 꾹 누르면 진동과 함께 어디서 왔는지 한 줄로 보여요')}
             ${row('페르소나 입력창 높이 2배', toggle('chat.personaTall', !!s.chat.personaTall), '페르소나 본문 칸을 세로로 늘려요 · 끄면 원래 높이로 돌아와요')}
             ${row('채팅 입력창 숨기기', toggle('chat.hideSendTextarea', !!s.chat.hideSendTextarea), '입력창만 숨기고 보내기 · 퀵 리플라이 단추는 그대로예요. 단추만 쓰는 배치에 맞아요')}

@@ -45,7 +45,7 @@ const COVERAGE = [
     ['chat.namePeople', NONE, '인물표(이 채팅의 TTS · 프리셋 색)에 색이 있는 사람의 이름표만 바뀌어요 — 미리보기 무대의 견본 이름은 인물표에 없어요'],
     ['chat.inkContrast', NONE, '색 글자 표본(colorStage)이 어디에도 붙어 있지 않아요 — 붙일지 지울지 결정 대기(1.1.5 미리보기 점검 보고)'],
     ['chat.hidden*', NONE, '숨긴 메시지 표본이 없어요 — 표본 메시지를 더하면 미리보기 모양이 바뀌어 결정 대기'],
-    ['chat.webSearchMarks', NONE, '웹 검색 표시 표본 없음(작음)'], ['chat.reasoningFollow', NONE, '추론 칸 표본 없음(작음)'], ['chat.codePlain', NONE, '코드블록 표본 없음 · 성능 옵션'],
+    ['chat.webSearchMarks', NONE, '웹 검색 표시 표본 없음(작음)'], ['chat.glossFold', NONE, '번역본 메시지 표본 없음 · 표시 동작'], ['chat.reasoningFollow', NONE, '추론 칸 표본 없음(작음)'], ['chat.codePlain', NONE, '코드블록 표본 없음 · 성능 옵션'],
     // 날씨
     ['chat.weather*', '날씨 미리보기'], ['chat.weather2*', '날씨 미리보기'],
     ['chat.weatherAutoRest', NONE, '생성 · 편집 중 쉬기는 움직임 시점만 바꿔요'],

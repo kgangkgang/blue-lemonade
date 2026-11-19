@@ -892,4 +892,61 @@ await test('1.7.9 묶음 고르기: 보이는 글부터(흐린 점 이름 → �
     assert.deepEqual(T.quickBatches([]), []);
 });
 
+await test('1.8.8 이름만 한국어인 섞인 값(「이름\'s Birthday」): 알아보기 · 사슬 · 같은 틀에서 이름만 끼우기 · 조사 받침 · 거꾸로 든 짝 · 📌 · 두 번째는 그대로 · 번역 호출 0', async () => {
+    // 알아보기
+    assert.deepEqual(T.nameOnlyValue("Robin's Birthday", "로빈's Birthday"), { pre: '', post: "'s Birthday", name: 'Robin', ko: '로빈' });
+    assert.ok(T.nameOnlyValue('Dinner with Robin', 'Dinner with 로빈'), '뒤에 이름');
+    assert.equal(T.nameOnlyValue('Morning:Front Desk', '아침:Front Desk'), null, '일과 조각(고정 낱말)은 테마가 일부러 넣은 짝');
+    assert.equal(T.nameOnlyValue('item: +Plum Tea', 'item: +매실차'), null, '코드 머리만 남으면 아님');
+    assert.equal(T.nameOnlyValue("Robin's Birthday", '로빈의 생일'), null, '다 번역된 값');
+    assert.equal(T.nameOnlyValue('Gale vs. the Pier', '게일 vs. 부두'), null);
+    // 조사 받침
+    assert.equal(T.fillFrame('\u0000의 생일', '로빈'), '로빈의 생일');
+    assert.equal(T.fillFrame('\u0000는 휴가', '마렌'), '마렌은 휴가');
+    assert.equal(T.fillFrame('\u0000은 휴가', '로아'), '로아는 휴가');
+    assert.equal(T.fillFrame('\u0000과 산책', '로아'), '로아와 산책');
+    assert.equal(T.fillFrame('\u0000로 가는 길', '마렌'), '마렌으로 가는 길');
+    assert.equal(T.fillFrame('\u0000으로 가는 길', '로아'), '로아로 가는 길');
+    assert.equal(T.fillFrame('\u0000으로 가는 길', '하늘'), '하늘로 가는 길', '받침 ㄹ 은 「로」');
+    // 사전 짝 고르기
+    const dict = {
+        Robin: '로빈', Gale: '게일', Maren: '마렌',
+        "Robin's Birthday": "로빈's Birthday",          // 사슬(섞인 글 자체의 번역)이 있음
+        "로빈's Birthday": '로빈의 생일',
+        "Gale's Birthday": '게일의 생일', "Maren's Birthday": '마렌의 생일',
+        "Toma's Birthday": "토마's Birthday",            // 사슬 없음 → 같은 틀(「X's Birthday → X의 생일」)
+        "Toma's Room": "토마's Room",                    // 틀을 읽을 짝 없음 → 번역 길로
+        "로아's Day Off": "Roa's Day Off",               // 거꾸로 든 짝
+        "Roa's Day Off": "로아's Day Off", "Gale's Day Off": '게일의 휴무일',
+        "Pinned's Birthday": "핀's Birthday",
+    };
+    const memo = new Map();
+    const got = Object.fromEntries(T.mixedNamePairs(dict, { "Pinned's Birthday": true }, new Set(['Robin']), memo));
+    assert.equal(got["Robin's Birthday"], '로빈의 생일', '사슬');
+    assert.equal(got["Toma's Birthday"], '토마의 생일', '같은 틀');
+    assert.equal(got["Roa's Day Off"], '로아의 휴무일');
+    assert.equal(got["로아's Day Off"], '로아의 휴무일', '거꾸로 든 짝도 한국어로');
+    assert.equal("Toma's Room" in got, false, '틀이 없으면 AI 없이 고치지 않음');
+    assert.equal("Pinned's Birthday" in got, false, '📌 한 짝');
+    assert.equal(Object.keys(got).some(k => !/[가-힣]/.test(got[k])), false);
+    // tidy: 사전만 고치고(데이터 그대로) · 두 번째는 같은 결과 · 번역 호출 0
+    const f = fakeTarget();
+    f.app.current.snaps = new Map();
+    const events = [{ m: 3, d: 14, title: "Toma's Birthday" }, { m: 3, d: 20, title: "Gale's Birthday" }];
+    f.app.current.state = { core: {}, data: { calendar: { events }, quest: { list: [{ title: "Toma's Room" }] } }, recent: [] };
+    reset(f.meta, { tr: { ...dict }, trLock: {}, notes: [] });
+    const before = JSON.stringify(f.app.current.state);
+    const fill = T.createTrFill(f.mb, { doc: window.document, toast: null, chatId: () => 'A' });
+    fill.tidy({ draw: false });
+    assert.equal(f.meta.tr["Toma's Birthday"], '토마의 생일');
+    assert.equal(f.meta.tr["Robin's Birthday"], '로빈의 생일');
+    assert.equal(JSON.stringify(f.app.current.state), before, '달력 · 퀘스트 데이터는 그대로');
+    assert.equal(f.calls.json.length, 0, 'AI 0');
+    const snap = JSON.stringify(f.meta);
+    fill.tidy({ draw: false });
+    assert.equal(JSON.stringify(f.meta), snap, '두 번째도 같은 결과');
+    // 남은 섞인 값(틀 없음)만 번역 길의 반쯤 번역 짝으로 · 고친 것은 안 보냄
+    const gaps = fill.stateGaps(f.app.current.state, f.meta.tr);
+    assert.deepEqual(gaps.half, ["Toma's Room"]);
+});
 console.log(`ext-bridge-tr: ${passed} 통과`);

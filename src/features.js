@@ -208,6 +208,9 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     // 6.6.9 대사만 보기: ··· 메뉴에 단추 하나 — 화면은 처음 누를 때 불러온다 (dialogue-only.js · 끄기는 chat.dialogueOnly=false)
     const dialogueOnly = (on || addonsOn) && s.chat?.dialogueOnly !== false;
     if (dialogueOnly || modules.dialogueonly) load('dialogueonly', './dialogue-only.js').then(m => m?.syncDialogueOnly(dialogueOnly));
+    // 1.8.8 원어 대사 뒤 영어 풀이 줄 접기: 번역본이 보일 때 같은 말이 두 번 보이던 것(gloss-fold.js · 끄기는 chat.glossFold=false — 접은 줄을 모두 폄)
+    const glossFold = (on || addonsOn) && s.chat?.glossFold !== false;
+    if (glossFold || modules.glossfold) load('glossfold', './gloss-fold.js').then(m => m?.syncGlossFold(glossFold));
     // 데우스 감정 대사: 프리셋 정규식이 못 받는 「…」 대사를 화면에서 감싼다 (dem-expressive.js)
     const demfx = on && !!s.deus?.on && !!s.deus?.fx?.on;
     if (demfx || modules.demfx) load('demfx', './dem-expressive.js').then(m => m?.syncDemExpressive(demfx));

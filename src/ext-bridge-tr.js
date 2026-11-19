@@ -234,6 +234,114 @@ export function halfValue(en, ko) {
     }
     return false;
 }
+// ───── 1.8.8 이름만 한국어로 바뀐 섞인 값(달력 「<이름>'s Birthday」 꼴 · 11-19 사용자 사진) ─────
+//   이름 칸(사용자 · 캐릭터 이름 매크로)이 한국어로 치환된 채 영어 틀로 저장된 글(「<이름>'s Birthday」)을 그 확장이 「영어 저장으로 바꾸기」 하면
+//   상태는 「Name's Birthday」 가 되고 사전에는 「Name's Birthday → <이름>'s Birthday」(원래 섞인 글)가 들어가요. 한글이 들어 있어 그 확장 자동 번역 · 남은 글 세기도
+//   건너뛰어서, 다른 일정(「로빈의 생일」)은 한국어인데 이 줄만 영어 틀로 남았어요. 영어 낱말이 하나뿐이라 반쯤 번역(halfValue · 셋 이상)에도 안 걸렸어요.
+//   → 값이 「원문에서 이름 한 덩이만 한글로 바꾼 꼴」 이면(nameOnlyValue) AI 없이 고쳐요: ① 사전에 그 섞인 글 자체의 번역이 있으면 그것
+//     ② 같은 틀의 다른 짝(「Robin's Birthday → 로빈의 생일」 · 이름 짝 「Robin → 로빈」)에서 틀을 읽어 이름만 바꿔 끼움(조사 받침 맞춤).
+//     둘 다 없으면 번역 길(누른 번역 · 자동)의 반쯤 번역 짝으로 한 번 보내요(stateGaps). 거꾸로 든 짝(열쇠가 한글 · 값이 영어)도 같은 길로 한국어 값을 찾아요.
+//   데이터(달력 일정 · 「글만 바꾸는」 기록)는 그대로 — 화면 사전(채팅 메타 tr)만, 📌 고정한 짝 · 사람 이름 짝은 안 건드려요.
+const NAME_RUN = /^\p{Script=Latin}[\p{Script=Latin}\s.'’-]*$/u;
+const LATIN_CH = /\p{Script=Latin}/u;
+const KO_RUN = /^[가-힣][가-힣\s·.-]*$/;
+/** 틀의 남은 영어 낱말 — 「item: +」 같은 코드 머리(소문자 열쇠와 쌍점)는 빼요 */
+const frameWords = text => latinWords(String(text ?? '').replace(/\b[a-z]+:\s*/g, ' '));
+/**
+ * 값이 원문에서 라틴 이름 한 덩이만 한글로 바꾼 꼴인가 → { pre, post, name, ko } 또는 null.
+ *   「Toma's Birthday」 · 「토마's Birthday」 → { pre: '', post: "'s Birthday", name: 'Toma', ko: '토마' }.
+ *   남은 틀에 영어 낱말이 있어야 하고 · 바꾼 덩이는 이름꼴(라틴 낱말 넷까지) · 고정 낱말(Morning · Day …)이 아니어야 해요(일과 조각 「아침:Front Desk」 는 테마가 일부러 넣은 짝).
+ */
+export function nameOnlyValue(en, ko) {
+    const a = String(en ?? '').trim(), b = String(ko ?? '').trim();
+    if (!a || !b || a === b || a.length > 200 || /[가-힣]/.test(a) || !/[가-힣]/.test(b)) return null;
+    let p = 0;
+    while (p < a.length && p < b.length && a[p] === b[p]) p++;
+    let s = 0;
+    while (s < a.length - p && s < b.length - p && a[a.length - 1 - s] === b[b.length - 1 - s]) s++;
+    if ((p > 0 && LATIN_CH.test(a[p - 1])) || (s > 0 && LATIN_CH.test(a[a.length - s]))) return null;   // 이름이 낱말 가운데서 잘림
+    const name = a.slice(p, a.length - s), kn = b.slice(p, b.length - s);
+    if (!name.trim() || !kn.trim() || name.length > 40 || !NAME_RUN.test(name.trim()) || name.trim().split(/\s+/).length > 4 || !KO_RUN.test(kn.trim())) return null;
+    if (isFixedKey(name.trim())) return null;
+    if (!name.trim().split(/\s+/).every(w => /^\p{Lu}/u.test(w))) return null;   // 이름꼴만(낱말마다 대문자 · 「Iced americano and」 같은 글 조각은 아님)
+    const pre = a.slice(0, p), post = a.slice(a.length - s);
+    if (/^\s*:/.test(post) || /:\s*[+\-−]?$/.test(pre)) return null;   // 이름표 「Affection:…」 · 코드 줄 「cond: …」 의 칸 이름 · 값은 아님(그 확장 조건 · 칩 기록)
+    if (frameWords(`${pre} ${post}`) < 1) return null;
+    return { pre, post, name, ko: kn };
+}
+const lastBatchim = word => { const c = String(word ?? '').trim().slice(-1).charCodeAt(0) - 0xAC00; return c >= 0 && c < 11172 ? c % 28 : -1; };
+const JOSA = [['은', '는'], ['이', '가'], ['을', '를'], ['과', '와']];
+/** 틀에 이름을 끼우고 바로 뒤 조사를 받침에 맞춰요(받침 있음 · 없음 짝 넷 + 「으로/로」) */
+export function fillFrame(frame, name) {
+    const at = frame.indexOf('\u0000');
+    if (at < 0) return null;
+    let tail = frame.slice(at + 1);
+    const b = lastBatchim(name);
+    if (b >= 0) {
+        const ro = /^(으로|로)(?=[서써]|[^가-힣]|$)/.exec(tail);
+        if (ro) tail = (b && b !== 8 ? '으로' : '로') + tail.slice(ro[1].length);   // 받침 ㄹ(8)은 「로」
+        else {
+            const pair = JOSA.find(([hard, soft]) => tail[0] === hard || tail[0] === soft);
+            if (pair && !/[가-힣]/.test(tail[1] ?? '')) tail = (b ? pair[0] : pair[1]) + tail.slice(1);
+        }
+    }
+    return frame.slice(0, at) + name.trim() + tail;
+}
+/**
+ * 섞인 값 하나의 한국어(AI 0) — 없으면 null. dict: 사전 · mixed: 섞인 값(사전 값 또는 거꾸로 든 짝의 열쇠).
+ */
+export function nameOnlyFix(en, mixed, dict) {
+    const hit = nameOnlyValue(en, mixed);
+    if (!hit || !isObj(dict)) return null;
+    // ① 사전에 그 섞인 글 자체의 번역(「토마's Birthday → 토마의 생일」)
+    const chain = Object.hasOwn(dict, mixed) && typeof dict[mixed] === 'string' ? dict[mixed].trim() : '';
+    if (chain && chain !== mixed && /[가-힣]/.test(chain) && frameWords(chain) < frameWords(mixed)) return chain;
+    // ② 같은 틀의 다른 짝에서 틀 읽기 — 다 번역된 짝 · 이름 짝이 사전에 있고 그 이름이 번역에 한 번만 나올 때
+    const votes = new Map();
+    for (const [e2, k2] of Object.entries(dict)) {
+        if (e2 === en || typeof k2 !== 'string' || e2.length <= hit.pre.length + hit.post.length || !e2.startsWith(hit.pre) || !e2.endsWith(hit.post)) continue;
+        const n2 = e2.slice(hit.pre.length, e2.length - hit.post.length).trim();
+        if (!n2 || n2.length > 40 || !NAME_RUN.test(n2) || isFixedKey(n2) || frameWords(k2) > 0 || !/[가-힣]/.test(k2)) continue;
+        const kn = Object.hasOwn(dict, n2) && typeof dict[n2] === 'string' ? dict[n2].trim() : '';
+        if (!kn || !KO_RUN.test(kn)) continue;
+        const at = k2.indexOf(kn);
+        if (at < 0 || k2.indexOf(kn, at + 1) >= 0) continue;
+        const frame = `${k2.slice(0, at)}\u0000${k2.slice(at + kn.length)}`;
+        votes.set(frame, (votes.get(frame) ?? 0) + 1);
+    }
+    if (!votes.size) return null;
+    const best = [...votes].sort((x, y) => y[1] - x[1])[0][0];
+    const out = fillFrame(best, hit.ko);
+    return out && out !== mixed ? out : null;
+}
+/** 거꾸로 든 짝: 열쇠는 한글이 든 글인데 값은 한글 없는 영어(화면이 한국어 글을 영어로 덮어요) */
+export const reversedValue = (en, ko) => /[가-힣]/.test(String(en ?? '')) && typeof ko === 'string' && !/[가-힣]/.test(ko) && frameWords(ko) >= 1;
+/**
+ * 사전에서 섞인 값 · 거꾸로 든 짝 → 고친 짝들(AI 0 · 📌 · keep(사람 이름 등)은 빼요).
+ *   memo: 같은 (열쇠, 값)은 다시 셈하지 않아요(채팅 열기 · 답 끝마다 같은 사전) — 결과가 없던 것도 기억해요.
+ */
+export function mixedNamePairs(dict, lock = {}, keep = new Set(), memo = null) {
+    const out = [];
+    if (!isObj(dict)) return out;
+    for (const [en, v] of Object.entries(dict)) {
+        if (typeof v !== 'string' || lock?.[en] || keep.has(en)) continue;
+        const enHan = /[가-힣]/.test(en), vHan = /[가-힣]/.test(v);
+        if (enHan === vHan) continue;
+        const key = `${en}\u0001${v}`;
+        let fix = memo?.get(key);
+        if (fix === undefined) {
+            fix = null;
+            if (!enHan && vHan) fix = nameOnlyFix(en, v, dict);   // 「Toma's Birthday → 토마's Birthday」
+            else if (reversedValue(en, v)) {        // 거꾸로 든 짝 「토마's Birthday → Toma's Birthday」: 화면이 한국어 글을 영어로 덮어요
+                const back = Object.hasOwn(dict, v) && typeof dict[v] === 'string' ? dict[v].trim() : '';
+                fix = back && back !== en && /[가-힣]/.test(back) && frameWords(back) < frameWords(en) ? back : nameOnlyFix(v, en, dict);
+            }
+            if (memo) { if (memo.size > 4000) memo.clear(); memo.set(key, fix); }
+        }
+        if (fix && fix !== v && fix !== en) out.push([en, fix]);
+    }
+    return out;
+}
 /**
  * 이어진 글의 조각 짝(AI 0회): 사전의 「A:B, C:D」 ↔ 「가:나, 다:라」처럼 나눔표가 같은 차례로 같으면 조각끼리 짝지어요.
  * only: 이 글들(지금 상태 칸)에서 나온 짝만 · 조각이 여러 번역으로 갈리면 많이 나온 쪽 · 이미 사전에 있는 조각은 건드리지 않아요.
@@ -648,6 +756,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         try { const hud = doc.getElementById?.('ss-hud'); if (hud && '_ssHtml' in hud) { hud._ssHtml = ''; core.app.renderHud?.(); } } catch { /* 다음 갱신 때 */ }
     };
 
+    const mixMemo = new Map();    // 1.8.8 섞인 값 고침: (열쇠, 값) → 고친 값 · 없음(이 세션)
     const descSeen = new Map();   // 1.8.1 잘린 장소 설명 짝: 열쇠 → 테마가 마지막으로 셈한 값(이 세션)
     /** ⑤ AI 없이: 이어진 글의 조각 짝 + 고정 낱말 → 같은 사전(addPairs 한 번 = 채팅 메타 저장 한 번) */
     function tidy({ draw = true } = {}) {
@@ -684,6 +793,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         }
         const pairs = [...base].filter(([en]) => !keep.has(en) && !lock[en] && !Object.hasOwn(dict, en));
         pairs.push(...redo);
+        // 1.8.8 이름만 한국어인 섞인 값(「<이름>'s Birthday」) · 거꾸로 든 짝 → 같은 사전의 한국어(AI 0 · 같은 짝은 한 번만 셈)
+        pairs.push(...mixedNamePairs(dict, lock, keep, mixMemo));
         // 1.6.6 나눔표를 괄호로 싼 번역 짝(sepQuoteValue)은 그 확장 addPairs 로 덮어요 — 사전 판이 올라 화면 번역이 다시 읽고 · 채팅 메타에 저장돼요
         pairs.push(...sepQuotePairs(dict, lock));
         const n = pairs.length ? (tr.addPairs(pairs) || 0) : 0;
@@ -737,7 +848,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         for (const { text, key } of stateTexts(state, isOn)) {
             const k = text.trim();
             if (!k || k.length > 4000 || tried.has(k) || fixedValue(k, key)) continue;   // 고정 낱말은 사전으로 — 번역 요청에 싣지 않아요
-            if (Object.hasOwn(dict, k)) { if (!lock[k] && halfValue(k, dict[k])) half.add(k); continue; }
+            // 1.8.8 이름만 한국어인 섞인 값도 반쯤 번역 — AI 없이 못 고친 것만 여기 남아요(tidy 가 먼저 고쳐요) · 이번 접속에 한 번(tried)
+            if (Object.hasOwn(dict, k)) { if (!lock[k] && (halfValue(k, dict[k]) || nameOnlyValue(k, dict[k]) || reversedValue(k, dict[k]))) half.add(k); continue; }
             let shown = text;
             try { shown = tr.trString(text); } catch { shown = text; }
             if (stillEnglish(shown, { soft: SOFT_TEXT_KEYS.has(key) })) miss.add(k);

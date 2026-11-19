@@ -95,7 +95,9 @@ ok('끔: 「원작 그대로 보기」면 한 줄도 안 걸리고, 사본은 �
 });
 await ok('아이콘 줄(1.7.6 · 디자인 관문): 그림만 옮겨요(면 · 누를 자리 그대로) · 원작 그대로 보기에서는 안 걸려요 · 꺼진 단추 같은 테마 공통 꼴은 안 건드려요', () => {
     const at = src.indexOf('1.7.6 아이콘 줄 세로 가운데'); assert.ok(at > 0, '아이콘 줄 묶음');
-    const part = src.slice(at);
+    // 아이콘 줄 묶음은 다음 「속마음 말풍선」 묶음(@mb mindpop) 앞까지예요 — 1.8.7 이 그 뒤에 붙인 :has · !important(꼬리 여백 · 알림 신호)는 이 묶음 규칙이 아니에요(1.8.7 공개 CI 가 파일 끝까지 봐서 실패)
+    const end = src.indexOf('/* @mb mindpop */', at);
+    const part = src.slice(at, end > at ? end : undefined);
     const lines = part.split('\n').filter(l => l.startsWith('body.salty'));
     assert.ok(lines.length >= 8, '규칙 수');
     for (const l of lines) assert.ok(l.startsWith('body.salty:not([data-bl-ext-raw]) '), '원작 그대로 보기 문: ' + l.slice(0, 80));
