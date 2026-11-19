@@ -166,9 +166,22 @@ function installQingguoKorean(BlueLemonade, data) {
   //   그때마다 다음 그리기 박자(rAF)에 창 전체를 훑던 것을, 그 자리(홈 카드 한 줄 · 아래 메뉴 단추)만 그 작업 끝(microtask)에서 바로 바꿔요 —
   //   원문이 한 번도 칠해지지 않고(깜빡임 없음 · 그리기 박자가 느린 화면에서 단추 이름이 몇 초 원문이던 것), 창 전체 훑기도 안 돌아요. 그 밖의 변화는 예전 길 그대로예요.
   const QUICK='[data-action="open-serve-panel"] .fh-qr-copy small,.fh-bottom-nav [data-nav="serve"]';
-  const quickSpot=node=>{const el=node?.nodeType===3?node.parentElement:node;const hit=el?.closest?.(QUICK);return hit&&hit.closest('#fruit-heart-v6')?hit:null;};
+  const quickSpotSlow=node=>{const el=node?.nodeType===3?node.parentElement:node;const hit=el?.closest?.(QUICK);return hit&&hit.closest('#fruit-heart-v6')?hit:null;};
+  // 1.8.6 MO 비용: 1.7.8 부터 이 감시는 문서 전체의 기록마다 quickSpot(조상 훑기 closest 두 번 · 거르기에서 한 번 더)을 돌았어요 — 채팅 300 열기 · 더 보기처럼
+  //   기록이 수천 개인 콜백에서 콜백마다 시간이 늘었어요(콜백 수는 그대로). 답은 같게 두고 일만 줄여요:
+  //   · 과일의 마음 창(#fruit-heart-v6)이 문서에 없으면, 문서에 붙은 노드는 그 창 안일 수 없어요 → 훑지 않고 null(창이 없는 채팅 화면이 거의 전부예요)
+  //     (문서에 안 붙은 노드 · 그림자 트리는 예전 길 그대로 — closest 는 그 나무 안에서만 찾으니까요)
+  //   · 한 콜백 안에서 같은 대상은 한 번만 봐요(거르기에서 다시 묻던 것 · 같은 부모에 몰린 기록)
   const observer=new host.MutationObserver(records=>{
     if(stopped)return;
+    const noWindow=!(doc.getElementById?doc.getElementById('fruit-heart-v6'):doc.querySelectorAll('#fruit-heart-v6')[0]),seenSpot=new Map();
+    const quickSpot=node=>{
+      const el=node?.nodeType===3?node.parentElement:node;
+      if(!el)return null;
+      if(noWindow&&el.isConnected&&el.getRootNode?.()===doc)return null;
+      let hit=seenSpot.get(el);if(hit===undefined){hit=quickSpotSlow(el);seenSpot.set(el,hit);}
+      return hit;
+    };
     const spots=new Set();let rest=false;
     for(const record of records){
       const spot=quickSpot(record.target);
@@ -180,7 +193,7 @@ function installQingguoKorean(BlueLemonade, data) {
     for(const spot of spots)if(spot.isConnected!==false)paintRoot(spot);
     if(spots.size){for(const node of texts.keys())if(!node.isConnected)texts.delete(node);for(const node of attrs.keys())if(!node.isConnected)attrs.delete(node);}   // 창 전체 훑기가 안 도는 동안에도 떨어진 노드 기억은 치워요
     if(!rest)return;
-    records=records.filter(record=>!quickSpot(record.target));
+    if(spots.size)records=records.filter(record=>!quickSpot(record.target));   // 1.8.6 잡힌 자리가 없으면 거를 것도 없어요(spot 이 null 인 기록만 남으니 그대로)
     const present=[];for(const id of rootIds)for(const el of doc.querySelectorAll('#'+id))present.push(el);
     // 8.2.7 기록 수만 개가 같은 부모에 몰려요(스트리밍 글자 · 메시지마다 단추 줄) — 부모마다 판정은 한 번만(이 판정은 읽기만 해서 답이 같아요) · 기록마다 새 배열 없이
     const relevant=relevantTo(present),seen=new Map(),targetRelevant=node=>{let hit=seen.get(node);if(hit===undefined){hit=relevant(node);seen.set(node,hit);}return hit;};

@@ -8,6 +8,7 @@ import { translatorNoteRanges } from './translation-notes.js';
 // 순수 함수 (시험: tools/tests/translator-check.mjs). check-view.js 가 그릴 때 표시를 달고(markParagraphs), index.js 가 문단을 갈아 끼운다(replaceParagraph).
 import { HTML_COMMENT, openCommentAt, looksCutShort, stripDraftLeaks, stripPlanningNotes, removeSourceEcho, echoesSource, restoreDialogueBrackets } from './translation-segments.js';
 import { withoutDisplayCards } from './display-cards.js';
+import { foldBlank } from '../../blank-fold.js';   // 줄 앞뒤 빈칸에 점자 빈칸(U+2800)도 — `\s` 는 이 글자를 빈칸으로 안 본다
 
 const BLANK = /\n[\t ]*\n(?:[\t ]*\n)*/g;
 const FENCES = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
@@ -56,9 +57,10 @@ const weightOf = text => {
     return all - latin + latin * 0.4;
 };
 /** 대사 수: 줄 전체(태그 · 꾸밈표 * _ 를 빼고)가 「…」 · 『…』 이거나, 색 span 안이 통째 「…」 · 『…』 인 곳 (숨김 주석은 빼고).
- *  서술 · 속마음 속의 인용 「…」 이나 대사 속 『』 를 '' 로 옮긴 것은 세지 않는다 (번역 관례 — 실제 채팅에서 오탐이었다) */
+ *  서술 · 속마음 속의 인용 「…」 이나 대사 속 『』 를 '' 로 옮긴 것은 세지 않는다 (번역 관례 — 실제 채팅에서 오탐이었다).
+ *  줄 앞뒤 빈칸은 점자 빈칸(U+2800)도 빈칸으로 본다 (공용 접기 foldBlank) — `\u2800「…」` 줄이 한쪽에만 있으면 그쪽만 안 세어 수가 어긋난다 */
 const SPAN_DIALOGUE = /<span\b[^<>]*>\s*[「『][^<>]*[」』]\s*<\/span>/gi;
-const dialogueUnits = text => String(text ?? '').replace(HTML_COMMENT, '').split('\n').reduce((n, line) =>
+const dialogueUnits = text => foldBlank(text).replace(HTML_COMMENT, '').split('\n').reduce((n, line) =>
     n + (/^[\s*_]*[「『][\s\S]*[」』][\s*_]*$/.test(line.replace(/<[^>]*>/g, '')) ? 1 : (line.match(SPAN_DIALOGUE) || []).length), 0);
 /** 코드 표기(코드 블록 · `인라인 코드`)를 걷은 글 — 모델이 코드를 원문 그대로 두는 건 번역 관례라 「원문 그대로」 무게에서 뺀다 (8.1.3, 게임 킬 로그를 `…` 로 쓴 문단이 ⚠ 였다) */
 const withoutCode = text => String(text ?? '').replace(FENCES, '').replace(/`[^`\n]+`/g, '');

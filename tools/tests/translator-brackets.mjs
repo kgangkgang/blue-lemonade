@@ -92,12 +92,38 @@ await check('narration with an inline quote, two quotes on one line, and English
         ['"Come here."', '이리 와.'],
     ]) assert.equal(fix(src, out), out, src);
 });
-await check('dialogue spanning lines, other quote marks in the answer, and brackets already present inside are left alone', () => {
+await check('dialogue spanning lines, a quote mark on one side only, and brackets already present inside are left alone', () => {
     const multi = '「行こう、\nもう時間だ」';
     assert.equal(fix(multi, '가자,\n벌써 시간이야'), '가자,\n벌써 시간이야');
-    assert.equal(fix(A('「行こう」'), A('“가자”')), A('“가자”'));
-    assert.equal(fix(A('「行こう」'), A('"가자"')), A('"가자"'));
+    assert.equal(fix(A('「行こう」'), A('“가자')), A('“가자'));
+    assert.equal(fix(A('「行こう」'), A('가자"')), A('가자"'));
+    assert.equal(fix(A('「行こう」'), A('(가자)')), A('(가자)'));
     assert.equal(fix(A('「行こう」'), A('그래, 「가자」')), A('그래, 「가자」'));
+});
+// ── 2-1. 겉 괄호를 따옴표 한 쌍으로 바꿔 쓴 번역 (실제 사례 꼴: *『통고문 … 「직함（자격）」 …』* → *“… ‘직함(자격)’ …”*) ──
+await check('a whole-line 『…』 / 「…」 that the model rewrote as one pair of quotes gets the source brackets back (inner quotes stay)', () => {
+    const src = join('He copied the code onto the sheet:', '*『告知：温室の利用資格は「園芸部 部長補佐（鍵・備品）」として確定しました』*', 'He folded the note.');
+    const out = join('그는 코드를 종이에 옮겨 적었다:', '*“알림: 온실 이용 자격은 ‘원예부 부장 보좌(열쇠·비품)’로 확정되었습니다”*', '그는 쪽지를 접었다.');
+    assert.equal(fix(src, out), out.replace('*“', '*『').replace('”*', '』*'));
+    assert.equal(fix(A('「行こう」'), A('“가자”')), A('「가자」'));
+    assert.equal(fix(A('「行こう」'), A('"가자"')), A('「가자」'));
+    assert.equal(fix(A('「行こう」'), A('‘가자’')), A('「가자」'));
+    assert.equal(fix(A('「行こう」'), A("'가자'")), A('「가자」'));
+    assert.equal(fix('『星の手紙』', '“별의 편지”'), '『별의 편지』');
+    // 안쪽에 남은 원문 괄호는 그대로 — 겉 한 쌍만
+    assert.equal(fix(A('「彼は『星は遠い』と言った」'), A('“그는 『별은 멀다』고 말했다”')), A('「그는 『별은 멀다』고 말했다」'));
+});
+await check('quote pairs that do not wrap the whole line are left alone (two quotes on a line · apostrophe closes early · empty)', () => {
+    for (const out of ['“가자” 그리고 “어서”', '"가자" 그리고 "어서"', '‘가자’ 그리고 ‘어서’', '“가자”라고 했다', '“”', '"가"자"']) assert.equal(fix(A('「行こう」'), A(out)), A(out), out);
+    // 원문에 그 괄호가 없으면 따옴표를 괄호로 바꾸지 않는다
+    assert.equal(fix('"Come here."', '“이리 와.”'), '“이리 와.”');
+    assert.equal(fix(join(A('ふぅ、間に合った'), '「あ」'), join(A('“후우, 늦지 않았다”'), '「아」')), join(A('“후우, 늦지 않았다”'), '「아」'));
+});
+await check('braille blanks (U+2800) around a line are shell, like spaces: the bracket is still restored and the blanks stay', () => {
+    const BL = '⠀';
+    assert.equal(fix(`${BL}「行こう」${BL}`, `${BL}가자${BL}`), `${BL}「가자」${BL}`);
+    assert.equal(fix(`${BL}*「行こう」*`, '*“가자”*'), '*「가자」*');
+    assert.equal(fix(`${BL}${A('「行こう」')}`, A('가자')), A('「가자」'));
 });
 await check('misaligned lines (different leading tags) and code blocks are never touched', () => {
     const src = join(A('「行こう」'), 'He waved.');

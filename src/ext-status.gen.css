@@ -108,6 +108,7 @@ border-radius: var(--bl-r-md, 12px);
 :where(:root:not([data-bl-mb-off~="blur"])) > body.salty .ss-side-full { box-shadow: var(--bl-e4); }
 :where(:root:not([data-bl-mb-off~="album"])) > body.salty:not([data-bl-mb-album]) .mes_buttons .mes_button.ss-star { display: none; }
 :where(:root:not([data-bl-mb-off~="chips"])) > body.salty .ss-msgcard { font-family: var(--bl-mb-ico, bl-mb-none), var(--salty-font-mb, var(--salty-font-ui)); }
+:where(:root:not([data-bl-mb-off~="chips"])) > body.salty.bl-mb-welcome .mes .ss-slot { display: none !important; }
 :where(:root:not([data-bl-mb-off~="chips"])) > body.salty .ss-mchip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: start; border-radius: var(--bl-r-md, 12px); }
 :where(:root:not([data-bl-mb-off~="chips"])) > body.salty .ss-mchip { background: var(--bl-hover); border-color: var(--salty-line); font-size: var(--bl-ts-micro, 11.5px); font-weight: 500; }
 :where(:root:not([data-bl-mb-off~="chips"])) > body.salty .ss-msgcard :is(button.ss-mchip.roll, .ss-mchip.roll) { background: var(--bl-ui-pick-face); border-color: transparent; color: var(--bl-ui-pick-ink); }
@@ -366,6 +367,7 @@ border: 0; border-radius: var(--bl-ui-radius, 8px); background: var(--bl-fill-ca
 :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty:where(:not([data-bl-ext-raw])) :where(.ss-scope :is(.ss-body, .ss-sec, .ss-card, .ss-root, details)) > .ss-hint + :is(.ss-seg, .ss-pills, .ss-chips, .ss-sets, .ss-row-btns, .ss-grid-btns, .ss-inline, .ss-stack, .ss-f, .ss-card, .ss-callout, details, [class*="wrap"], [class*="head"]) { margin-top: var(--bl-mb-g-block); }
 :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-head-a, :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-tools, :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty:not([data-bl-ext-raw]) .ss-scope [class*="-acts"]:not(.ss-tb-acts), :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty:not([data-bl-ext-raw]) .ss-scope [class*="-adj"] { gap: var(--bl-mb-g-chip); }
 :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-notes, .ss-achs, .ss-goods, .ss-life-sets, .ss-sm-mods) { gap: var(--bl-mb-g-block); }
+:where(:root:not([data-bl-mb-off~="spacing"])) > body.salty:where(:not([data-bl-ext-raw])) .ss-scope .ss-hint > :is(.ss-btn, .ss-chip, button) { margin-top: var(--bl-mb-g-block, 8px); }
 :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty .ss-scope .ss-card { padding: var(--bl-s3, 12px); }
 :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty .ss-scope .ss-stack { gap: var(--bl-s2, 8px); }
 :where(:root:not([data-bl-mb-off~="spacing"])) > body.salty .ss-scope .ss-sec-h { gap: var(--bl-s2, 8px); margin-bottom: var(--bl-s2, 8px); min-height: 24px; }
@@ -856,6 +858,11 @@ text-align: start; white-space: normal; overflow-wrap: anywhere; line-height: 1.
 :where(:root:not([data-bl-mb-off~="next"])) > body.salty:not([data-bl-ext-raw]) :is(.ss-hompy, .ss-rt) .ss-body .ss-btn.pri { background: var(--salty-accent); border-color: var(--salty-accent); color: var(--salty-on-accent); }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-trend-legend > span { min-width: 0; }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty .ss-scope .ss-trend-legend > span > :is(i, small) { flex: none; white-space: nowrap; }
+:where(:root:not([data-bl-mb-off~="layout"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-trend-legend > span > i:is([style*="repeating-linear-gradient"], [data-bl-dash]) {
+--bl-tr-ring: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5.5' fill='none' stroke='%23000' stroke-width='2' stroke-dasharray='4.15 2.76'/%3E%3C/svg%3E");
+width: 14px; height: 14px; margin: -2px; background-image: none !important;
+-webkit-mask: var(--bl-tr-ring) center / 100% 100% no-repeat; mask: var(--bl-tr-ring) center / 100% 100% no-repeat;
+}
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h:has(> .ss-ib[data-l]) { flex-wrap: wrap; row-gap: var(--bl-s2, 8px); }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h:has(> .ss-ib[data-l]) > .ss-ct-b { flex: 1 1 calc(100% - 64px); }
 :where(:root:not([data-bl-mb-off~="layout"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-relc-h:has(> .ss-ib[data-l]) > .ss-ct-b b { overflow-wrap: break-word; }

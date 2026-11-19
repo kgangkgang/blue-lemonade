@@ -1,6 +1,7 @@
 import { maskTranslatorNotes } from './translation-notes.js';
 export { maskTranslatorNotes } from './translation-notes.js';
 import { checkpointKey } from './resume-loader.js';
+import { BLANK } from '../../blank-fold.js';   // 줄 머리 · 끝 껍데기의 점자 빈칸(U+2800) — 공백 대신 점자 빈칸을 쓰는 프리셋의 원문 줄
 
 // 7.3.1 문단 캐시 크기: 400문단은 70~90문단 답 4~5개뿐이라 조금 전 채팅도 밀려나 처음부터 다시 번역했다.
 //   저장소는 4000문단 · 글자 200만 자(어느 쪽이든 먼저 닿는 쪽) 안에서 최근에 쓴 것부터 남긴다(LRU — 꺼내 쓴 문단도 시각을 새로).
@@ -1314,7 +1315,7 @@ export function dropStrayWords(text, source) {
 //        · 원문 줄의 껍데기를 뺀 글 머리 · 끝에 따옴표(「『"“'‘ 와 닫는 짝)가 없다 — "…" 가 용어집으로 「」 가 된 대사는 그대로
 //        · 번역문 줄의 따옴표 짝이 원문 줄보다 딱 하나 많다 — 원문 속 「」 · "…" 를 옮긴 것은 남는다
 const WRAP_QUOTE_EDGE = /[「」『』"“”'‘’«»]/;
-const WRAP_SHELL_HEAD = /^(?:[\t \r *_]|<[A-Za-z][^<>]*>|\[\[__VAR_\d+__\]\])*/;
+const WRAP_SHELL_HEAD = /^(?:[\t \r \u2800*_]|<[A-Za-z][^<>]*>|\[\[__VAR_\d+__\]\])*/;   // \u2800 = 점자 빈칸 (blank-fold.js BLANK) — 점자 빈칸으로 여는 「…」 줄 머리도 껍데기로
 const WRAP_CLOSE_TAG = /^<\/[A-Za-z][\w:-]*\s*>$/;
 const WRAP_CLOSE_VAR = /\[\[\/__VAR_\d+__\]\]$/;
 /** 줄 → [껍데기 뒤 시작, 껍데기 앞 끝] (뒤쪽은 정규식 $ 대신 끝에서부터 걷는다 — 긴 줄에서 되짚기가 없게) */
@@ -1323,7 +1324,7 @@ function wrapCoreRange(line) {
     let end = line.length;
     while (end > start) {
         const ch = line[end - 1];
-        if (/[\t \r *_]/.test(ch)) { end--; continue; }
+        if (ch === BLANK || /[\t \r *_]/.test(ch)) { end--; continue; }
         if (ch === '>') {
             const open = line.lastIndexOf('<', end - 1);
             if (open >= start && WRAP_CLOSE_TAG.test(line.slice(open, end))) { end = open; continue; }
@@ -1402,8 +1403,25 @@ export function dropWrapQuotes(text, source) {
 //   dropWrapQuotes(원문에 없는 감싼 괄호를 벗김)의 거울 — 원문에 없는 괄호는 만들지 않는다. 맞추는 법(둘 중 되는 것):
 //    ① 줄: 빈 줄로 나눈 문단 수가 같고 문단마다 줄 수가 같고, 줄 머리 태그(<span style=…> 같은 껍데기)가 같은 줄끼리
 //    ② 색 span: 문단이 어긋나도 글 안의 <span …>…</span> 여는 태그 차례가 원문과 똑같으면 span 끼리
-//   붙이지 않는 때: 원문 괄호가 줄 안에서 닫힘(「가」 … 「나」) · 줄을 넘는 대사 · 번역문이 다른 따옴표(" “ 『 …)로 바꿔 씀 · 그 괄호가 번역문에 이미 원문만큼 있음 · 코드 블록이 있는 글.
+//   붙이지 않는 때: 원문 괄호가 줄 안에서 닫힘(「가」 … 「나」) · 줄을 넘는 대사 · 번역문이 한쪽만 다른 따옴표 · 괄호로 씀 · 그 괄호가 번역문에 이미 원문만큼 있음 · 코드 블록이 있는 글.
+//   따옴표로 바꿔 쓴 겉 괄호 되돌리기: 원문 줄이 *『…』* 인데 번역문 줄이 *“…”* 처럼 따옴표 한 쌍(“ ” · " " · ‘ ’ · ' ')으로 통째 감싸였으면
+//     겉 한 쌍만 원문 괄호로 되돌린다 (안쪽 인용 ‘…’ · (…) 는 그대로). 통고문 한 문단을 모델이 『』 → “ ” 로 옮겨 점검이 「대사 괄호가 원문보다 적어요」 를
+//     띄웠고 테마의 대사 꾸밈도 빠졌다. 곧은 따옴표는 안쪽에 같은 따옴표가 없을 때만 · 둥근 따옴표는 첫 짝이 끝 전에 닫히지 않을 때만 (“가” … “나” 는 그대로).
 const BRACKET_CLOSE = { '「': '」', '『': '』' };
+const QUOTE_CLOSE = { '“': '”', '"': '"', '‘': '’', '\'': '\'' };
+/** 글이 따옴표 한 쌍으로 통째 감싸였나 → 안쪽 글 (아니면 null) */
+function quoteWrappedInner(core) {
+    const open = core[0], close = QUOTE_CLOSE[open];
+    if (!close || core.length < 3 || core[core.length - 1] !== close) return null;
+    const inner = core.slice(1, -1);
+    if (open === close) return inner.includes(open) ? null : inner;
+    let depth = 1;
+    for (const ch of inner) {
+        if (ch === open) depth++;
+        else if (ch === close && --depth === 0) return null;
+    }
+    return depth === 1 ? inner : null;
+}
 /** 글이 한 괄호로 통째 감싸였나 → 여는 괄호 (아니면 '') — 「가」 … 「나」 처럼 처음 짝이 끝 전에 닫히면 아님 */
 function wrappingBracket(core) {
     const open = core[0], close = BRACKET_CLOSE[open];
@@ -1422,13 +1440,16 @@ function fillBracketEdges(srcCore, outCore) {
     const close = BRACKET_CLOSE[open], count = (text, mark) => text.split(mark).length - 1;
     const needOpen = outCore[0] !== open, needClose = outCore[outCore.length - 1] !== close;
     if (!needOpen && !needClose) return null;
+    // 겉을 따옴표 한 쌍으로만 바꿔 쓴 대사 · 인용 글은 원문 괄호로 되돌린다 (그 괄호가 원문보다 많아지지 않을 때만)
+    const inner = needOpen && needClose ? quoteWrappedInner(outCore) : null;
+    if (inner !== null && inner.trim() && count(inner, open) < count(srcCore, open) && count(inner, close) < count(srcCore, close)) return open + inner + close;
     // 모델이 다른 따옴표 · 괄호로 바꿔 쓴 대사는 두 번 감싸지 않는다
     if ((needOpen && /^["“”'‘’«»「」『』(（\[]/.test(outCore)) || (needClose && /["“”'‘’«»「」『』)）\]]$/.test(outCore))) return null;
     // 원문보다 그 괄호가 많아지지 않게 (번역문이 괄호를 안쪽으로 옮겨 쓴 것은 그대로)
     if ((needOpen && count(outCore, open) >= count(srcCore, open)) || (needClose && count(outCore, close) >= count(srcCore, close))) return null;
     return (needOpen ? open : '') + outCore + (needClose ? close : '');
 }
-const SHELL_TAGS = line => (/^(?:[\t \r]|<[A-Za-z][^<>]*>)*/.exec(line)[0].match(/<[A-Za-z][^<>]*>/g) || []).join('').toLowerCase().replace(/\s+/g, ' ');
+const SHELL_TAGS = line => (/^(?:[\t \r\u2800]|<[A-Za-z][^<>]*>)*/.exec(line)[0].match(/<[A-Za-z][^<>]*>/g) || []).join('').toLowerCase().replace(/\s+/g, ' ');
 const COLOR_SPAN = /<span\b[^<>]*>([^<>]*)<\/span>/gi;
 export function restoreDialogueBrackets(source, output) {
     const src = String(source ?? '').replace(/\r\n?/g, '\n'), value = String(output ?? '');

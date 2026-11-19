@@ -107,5 +107,47 @@ ok('버그 사냥 6 점자 빈칸(U+2800) 변화 줄: 「⠀Mira⠀」 를 「Mi
     assert.deepEqual(m2.extra[N.STATE][0][0], ['mind', `${B}Mira${B}|${B}둘째`], '원래 줄 남김');
     assert.equal(N.blankLine(`${B}${B}a${B}${B}b${B}`), 'a b');
 });
+await okA('1.9.1 속마음 두 칸: 스트리밍 차례(생성 끝 → 답 받음[느린 맨 앞 듣는 곳 → 서랍 넣기] → 답 그림)에서도 방금 받은 답의 점자 빈칸 줄을 고쳐요', async () => {
+    const B = '⠀';
+    const block = `<meatball>\nmind:${B}Mira${B}|${B}둘째${B}속마음\naff:${B}Mira${B}+2\n</meatball>`;
+    const chat = [{ is_user: true, mes: 'hi' },
+        { is_user: false, mes: 'a', swipe_id: 0, extra: { statussim: { bySwipe: { 0: [['mind', 'Mira | 첫 속마음']] } } } },
+        { is_user: true, mes: 'again' },
+        { is_user: false, mes: `story\n${block}`, swipe_id: 0, extra: {} }];
+    // 가짜 사건 통로(실리태번처럼 듣는 곳을 차례로 기다려요) · 가짜 시계(시각 순으로 손으로 돌려요)
+    const ls = {}, T = { CHAT_CHANGED: 'cc', GENERATION_ENDED: 'ge', MESSAGE_SWIPED: 'sw', MESSAGE_RECEIVED: 'mr', CHARACTER_MESSAGE_RENDERED: 'cr' };
+    const eventSource = { on: (e, fn) => { (ls[e] ??= []).push(fn); }, emit: async (e, ...a) => { for (const fn of ls[e] ?? []) await fn(...a); } };
+    let saved = 0, refreshed = 0, now = 0; const timers = [];
+    const wait = (fn, ms) => { timers.push({ at: now + ms, fn }); };
+    const tick = async ms => { now += ms; for (const t of timers.filter(x => x.at <= now).sort((a, b) => a.at - b.at)) { timers.splice(timers.indexOf(t), 1); t.fn(); } await N.sweep({}, {}); };   // 줄 선 훑기가 끝나기를 기다려요
+    const c = { chat, name1: 'Sua', chatMetadata: { statussim: { base: state } }, extensionSettings: {}, saveChat: async () => { saved++; }, eventSource, event_types: T };
+    globalThis.SillyTavern = { getContext: () => c };
+    const hasStatus = t => String(t).includes('<meatball>');
+    N.useCore({ app: { current: { state }, refreshNow: () => { refreshed++; } } });
+    const A = await import(pathToFileURL(path.join(root, 'src/mb-autosub.js')).href);
+    assert.equal(typeof A.useEngine, 'function', '시험용 계산 모듈 넣기');
+    A.useEngine({ opInfo, hasStatus });
+    try {
+        // 답 받음: 맨 앞은 다시 쓰기 애드온(AI 답을 기다림 — 여기서는 5초) · 그 뒤가 그 확장의 서랍 넣기
+        eventSource.on(T.MESSAGE_RECEIVED, async () => { await tick(5000); });
+        eventSource.on(T.MESSAGE_RECEIVED, id => { const m = chat[id]; m.extra.statussim = { bySwipe: { 0: [['mind', `${B}Mira${B}|${B}둘째${B}속마음`], ['aff', `${B}Mira${B}+2`]] } }; m.mes = 'story'; });
+        assert.equal(N.startNameKey(globalThis.document, { c, wait, force: true }), true);
+        await tick(1500);   // 처음 훑기 — 아직 고칠 것 없음(본문에 블록이 있는 답은 안 건드려요)
+        assert.equal(saved, 0);
+        await eventSource.emit(T.GENERATION_ENDED, chat.length);   // 스트리밍: 멈춤 단추를 숨길 때 먼저 나와요
+        await eventSource.emit(T.MESSAGE_RECEIVED, 3, 'normal');   // 이 안에서 5초가 흘러 「생성 끝 뒤 0.6초」 훑기는 서랍이 없을 때 지나가요
+        assert.equal(saved, 0, '생성 끝 뒤 훑기는 서랍이 생기기 전이라 못 고쳐요(옛 동작)');
+        assert.ok(chat[3].extra.statussim.bySwipe[0][0][1].includes(B), '서랍에 점자 빈칸 줄이 들어온 상태');
+        await eventSource.emit(T.CHARACTER_MESSAGE_RENDERED, 3, 'normal');
+        await eventSource.emit(T.CHARACTER_MESSAGE_RENDERED, 3, 'normal');   // 잇달아 와도 훑기는 한 번
+        assert.equal(timers.length, 1, '답 그림 훑기는 하나로 모아요');
+        await tick(N.RENDER_WAIT);
+        assert.deepEqual(chat[3].extra.statussim.bySwipe[0], [['mind', 'Mira | 둘째 속마음'], ['aff', 'Mira +2']]);
+        const who = [chat[1], chat[3]].map(m => m.extra.statussim.bySwipe[0][0][1].split('|')[0].trim());
+        assert.deepEqual(who, ['Mira', 'Mira'], '앞 답과 방금 받은 답의 인물 열쇠가 같아요 — 한 칸');
+        assert.equal(saved, 1); assert.equal(refreshed, 1, '그 확장 새로고침 한 번');
+        assert.deepEqual(chat[3].extra[N.STATE][0].map(x => x[0]), ['mind', 'aff'], '원래 줄 남김');
+    } finally { N.useCore(undefined); A.useEngine(undefined); delete globalThis.SillyTavern; }
+});
 if (failed) { console.log(`${failed} failed`); process.exit(1); }
 console.log(`mb-namekey: ${n}개 통과`);

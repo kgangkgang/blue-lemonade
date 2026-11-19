@@ -411,4 +411,43 @@ await test('⑰ (버그 사냥 6) 원문을 한 번도 안 그려요 — 말풍�
     await sleep(800); assert.equal(t2.textContent, KOW, '늦게 오면 번역본으로');
 });
 
+await test('⑲ (1.9.1) 지난 속마음 줄: 점자 빈칸으로 받은 번역을 보통 빈칸 글에서도 다시 씀(요청 0) · 접힌 목록은 부탁 안 함 · 펼치면 없는 줄만 한 묶음 · 올 때까지 대기 표시 · 실패한 줄은 펼칠 때 한 번 더', async () => {
+    const B = '⠀';
+    const JPB = `猫なのに仕事はできる${B}(´ε｀${B})`, JPS = '猫なのに仕事はできる (´ε｀ )', KOB = '고양이인데 일은 잘해 (´ε｀ )';
+    const JP3 = '明日は早く帰りたい', KO3 = '내일은 일찍 가고 싶어', JP4 = '傘を忘れた', KO4 = '우산을 두고 왔어';
+    DICT.set(JPB, KOB); DICT.set(JP3, KO3); DICT.set(JP4, KO4);
+    assert.equal(M.storeKey(JPB), M.storeKey(JPS), '열쇠는 점자 빈칸 · 보통 빈칸을 같게');
+    // 옛 판이 글자 그대로 적어 둔 모음(점자 빈칸 글)도 읽어요
+    const storage = memStorage(); storage.setItem(M.STORE, JSON.stringify({ v: 1, ko: [[JPB, KOB]] }));
+    const { mb, mind, doc } = make({ delay: 30, storage });
+    assert.equal(mind.store.get('ko', JPS), KOB);
+    const logHtml = lines => `<div class="ss-root ss-scope"><div class="ss-card ss-mindc"><details class="ss-more"><summary>지난 속마음</summary><ul class="ss-mind-log">${lines.map(t => `<li><span>${t}</span><small>1턴 전</small></li>`).join('')}</ul></details></div></div>`;
+    doc.body.insertAdjacentHTML('beforeend', logHtml([JPS, JP3, JP4]));
+    const det = doc.querySelector('details.ss-more'), [s1, s2, s3] = det.querySelectorAll('span');
+    // 접힌 채 신호가 와도: 모음에 있는 줄만 번역본 · 나머지는 부탁하지 않고 「본 표식」 없이(시트가 투명하게 둬요)
+    for (const el of [s1, s2, s3]) mind.onAnim({ animationName: M.ANIM, target: el });
+    await sleep(200);
+    assert.equal(s1.textContent, KOB, '받아 둔 번역을 다시 씀'); assert.equal(s1.title, `원문: ${JPS}`);
+    assert.equal(mb.calls.length, 0, '접힌 동안 요청 0');
+    assert.equal(s2.textContent, JP3); assert.equal(s2.hasAttribute(M.SEEN_ATTR), false, '접힌 줄은 투명 그대로');
+    // 펼침: 없는 두 줄을 한 번에 · 올 때까지 대기 표시
+    det.open = true; mind.onToggle({ target: det });
+    assert.equal(s2.textContent, M.WAIT_TEXT); assert.equal(s3.textContent, M.WAIT_TEXT); assert.ok(s2.hasAttribute(M.SEEN_ATTR));
+    await sleep(300);
+    assert.equal(s2.textContent, KO3); assert.equal(s3.textContent, KO4);
+    assert.deepEqual(mb.calls, [`${JP3}\n${JP4}`], '한 묶음 한 번');
+    det.open = false; det.open = true; mind.onToggle({ target: det });
+    await sleep(200); assert.equal(mb.calls.length, 1, '다시 펼쳐도 요청 0');
+    // 실패한 줄: 그 접속 내내 원문이던 것을 펼칠 때 한 번 더 부탁
+    const fail = new Set([JP3]);
+    const f = make({ delay: 20, fail });
+    f.doc.body.insertAdjacentHTML('beforeend', logHtml([JP3]));
+    const fd = f.doc.querySelector('details.ss-more'), fs1 = fd.querySelector('span');
+    fd.open = true; f.mind.onToggle({ target: fd });
+    await sleep(250); assert.equal(fs1.textContent, JP3, '실패하면 원문');
+    fail.delete(JP3); fd.open = false; fd.open = true; f.mind.onToggle({ target: fd });
+    assert.equal(fs1.textContent, M.WAIT_TEXT);
+    await sleep(250); assert.equal(fs1.textContent, KO3, '펼칠 때 다시 부탁해 번역본');
+});
+
 console.log(`mb-mind-tr: ${passed} 통과`);

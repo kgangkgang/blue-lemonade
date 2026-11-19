@@ -22,6 +22,9 @@ import { mbOff, mbFit } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 
 import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 const FOLDER = /meatball|statussim|미트볼/i;
+// 1.9.0 같은 작가의 가벼운 판(이름에 lite · 라이트)은 다른 확장이에요 — 구조(src/translate.js · core.js)가 달라 본판 자리에 잡히면 번역 메우기 · 속마음 번역이 통째로 멈춰요(둘을 같이 깔면 폴더 이름 차례로 가벼운 판이 먼저 잡혔어요)
+const NOT_TARGET = /lite|라이트/i;
+const isTargetName = name => FOLDER.test(name) && !NOT_TARGET.test(name);
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';
 const SLOT = 'custom-ss-slot';
 const UNVISITED = Symbol.for('blue-lemonade.mb-unvisited.v1');   // 지도 「아직 안 가 본 곳」 글 등록부(src/mb-map-floors.js 가 걸어요)
@@ -691,10 +694,10 @@ export async function findBase(doc) {
         const m = /^(.*\/scripts\/extensions\/third-party\/([^/?#]+)\/)/.exec(el.src || '');
         if (m && !bases.some(b => b.url === m[1])) bases.push({ url: m[1], name: decodeURIComponent(m[2]) });
     }
-    const named = bases.find(b => FOLDER.test(b.name));
+    const named = bases.find(b => isTargetName(b.name));
     if (named) return named.url;
     for (const b of bases.slice(0, 40)) {
-        try { const manifest = new URL('manifest.json', b.url).href; const res = await fetch(manifest, { cache: 'force-cache' }); if (res.ok && FOLDER.test(String((await res.json())?.display_name ?? ''))) return b.url; } catch { /* 다음 폴더 */ }
+        try { const manifest = new URL('manifest.json', b.url).href; const res = await fetch(manifest, { cache: 'force-cache' }); if (res.ok && isTargetName(String((await res.json())?.display_name ?? ''))) return b.url; } catch { /* 다음 폴더 */ }
     }
     return '';
 }
@@ -1126,6 +1129,9 @@ export function startTrFill(doc = globalThis.document) {
         const fill = createTrFill(mb, { doc, faces });
         import('./ext-compat.js').then(m => { compat = m; m.setFaceName(name => (fill.view() ? mb.tr.trString(name) : name)); faces(); }).catch(() => { /* 얼굴은 원문 이름 첫 글자 그대로 */ });
         fill.guardTrFix();   // 1.5.3 「번역 고치기」 동안 숨긴 열쇠를 되돌려 고친 값이 저장되게(검토 1)
+        // 1.9.x 닫힌 고르개의 고른 값 글(option)도 화면만 번역일 때 사전으로 — 그 확장 화면 번역이 option 을 건너뛰어요(src/mb-select-tr.js)
+        let selectTr = null, welcome = () => {};   // welcome: 환영 화면 표식(열린 채팅이 없을 때 · 채팅이 바뀔 때만)
+        import('./mb-select-tr.js').then(m => { selectTr = m.watchSelectTr(doc, { trs: t => mb.tr.trString(t), on: () => fill.view() }); selectTr.soon(); welcome = () => { try { m.markWelcome(doc, globalThis.SillyTavern.getContext().getCurrentChatId?.()); } catch { /* 표식 없이 */ } }; welcome(); }).catch(() => { /* 고르개는 원문 그대로 */ });
         doc.addEventListener('click', fill.onClick, true);
         doc.addEventListener('keydown', fill.onKey, true);
         // 1.6.8 그 확장이 실리 기본 알림(toastr)으로 띄우는 글도 화면만 번역일 때 사전으로(그 확장 화면 번역 범위 밖이에요)
@@ -1140,6 +1146,8 @@ export function startTrFill(doc = globalThis.document) {
             eventSource.on('EXTENSION_LLM_TRANSLATE_DONE', data => fill.afterTranslate(data));   // 1.5.8 테마 번역기가 답을 번역해 끝내면 그 답의 칩 · 새 상태 글도
             // 1.5.2: 고정 낱말 열쇠는 채팅 파일에 안 적혀서 열 때마다 다시 넣어요 — 상태가 늦게 계산돼도 되게 0.8초 · 3초 두 번(바뀐 게 없으면 아무것도 안 해요)
             if (types?.CHAT_CHANGED) eventSource.on(types.CHAT_CHANGED, () => { fill.tidySoon(800); globalThis.setTimeout(() => fill.tidySoon(0), 3000); });
+            for (const type of [types?.GENERATION_ENDED, types?.CHAT_CHANGED, 'EXTENSION_LLM_TRANSLATE_DONE']) if (type) eventSource.on(type, () => selectTr?.soon());
+            if (types?.CHAT_CHANGED) eventSource.on(types.CHAT_CHANGED, () => welcome());
             fill.tidySoon();
         } catch { /* 누를 때만 */ }
         return fill;

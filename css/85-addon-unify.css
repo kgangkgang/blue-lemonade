@@ -314,6 +314,8 @@ html body.salty :is(dialog.popup:not(.bl-settings-dialog) #model_register_settin
 /* 머리줄 한 줄: [제목 「데우스 엑스 마키나」] 8 [판 알약] 8 [?] … [×]. ? 는 오른쪽 끝으로 밀지 않고 제목 바로 뒤 */
 html body.salty #bl-deus-popover .dq-head { grid-template-columns: minmax(0, max-content) auto minmax(0, 1fr) auto; column-gap: 8px; }
 html body.salty #bl-deus-popover .dq-head > strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 1.9.1 제목 칸은 가운데 맞춤 flex(표지 · 글자 · 판 알약 한 가운데 줄 — 스크립트 쪽 규칙)라 말줄임은 글자 칸이 받아요 */
+html body.salty #bl-deus-popover .dq-head > strong > .dq-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 html body.salty #bl-deus-popover .dq-close { grid-column: 4; justify-self: end; width: 34px; height: 34px; min-width: 34px; min-height: 34px; padding: 0; border: 0; background: transparent; box-shadow: none; }
 html body.salty #bl-deus-popover .dq-version { border-radius: 999px !important; padding: 0 8px !important; min-height: 18px; line-height: 18px; font-size: .75em !important; }
 

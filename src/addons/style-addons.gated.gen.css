@@ -1161,6 +1161,7 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :where(.ms-ro
 :where(html.bl-asc-3) dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }
 :where(html.bl-asc-3) dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .inline-drawer-header { min-height:var(--bl-h-ctl,36px); }
 :where(html.bl-asc-3) dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:42px; z-index:1; }
+@media (pointer: coarse) { :where(html.bl-asc-3) dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { right:52px; } }
 :where(html.bl-asc-3) .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }
 :where(html.bl-asc-3) .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .bl-inline-title { display:flex; align-items:center; min-height:var(--bl-h-ctl,36px); }
 :where(html.bl-asc-3) .bl-addon-inline > .bl-addon-inline-content > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:4px; z-index:1; }

@@ -169,17 +169,32 @@ export function sweep(c = ctx(), { from = 0, eng = undefined, doc = globalThis.d
 }
 
 let started = false;
-/** 사건 걸기(미트볼 문에서 한 번) */
-export function startNameKey(doc = globalThis.document) {
-    if (started) return false;
-    const c = ctx(), on = c?.eventSource?.on?.bind(c.eventSource), T = c?.event_types ?? c?.eventTypes ?? {};
+/**
+ * 사건 걸기(미트볼 문에서 한 번) — 시험은 { c, wait, force } 로 가짜 맥락 · 가짜 시계를 넣어요
+ *   1.9.1 속마음 두 칸(사용자 사진 11-19 밤): 스트리밍이면 실리태번은 「생성 끝」 을 「답 받음」 **앞에** 내요(멈춤 단추를 숨길 때). 그 확장은 「답 받음」 에서 변화 블록을 서랍에 넣는데,
+ *   그 사건의 맨 앞 듣는 곳(다시 쓰기 애드온 — 고쳐 쓸 곳이 있으면 AI 답을 기다려요)이 끝나야 차례가 와요. 그래서 다시 쓰기가 돈 답은 「생성 끝 뒤 0.6초」 훑기 때
+ *   서랍이 아직 없어(본문에 블록이 그대로) 지나쳤고, 그 뒤 들어온 점자 빈칸 줄(「mind: ⠀Mira⠀ | …」)이 다음 답까지 안 고쳐져 방금 받은 속마음이 새 인물 칸으로 갔어요.
+ *   「답 그림」 사건은 「답 받음」 의 듣는 곳이 모두 끝난 뒤에 나와요(스트리밍 · 아님 둘 다) — 그때 그 답부터 한 번 더 훑어요.
+ */
+export function startNameKey(doc = globalThis.document, { c = ctx(), wait = (fn, ms) => setTimeout(fn, ms), force = false } = {}) {
+    if (started && !force) return false;
+    const on = c?.eventSource?.on?.bind(c.eventSource), T = c?.event_types ?? c?.eventTypes ?? {};
     if (!on) return false;
     started = true;
-    const later = (ms, from) => setTimeout(() => { sweep(ctx(), { from: typeof from === 'function' ? from() : from, doc }).catch(() => { /* 원래 동작 그대로 */ }); }, ms);
+    const later = (ms, from) => wait(() => { sweep(ctx(), { from: typeof from === 'function' ? from() : from, doc }).catch(() => { /* 원래 동작 그대로 */ }); }, ms);
     const tail = () => Math.max(0, (ctx()?.chat?.length ?? 1) - 2);
     if (T.CHAT_CHANGED) on(T.CHAT_CHANGED, () => later(1500, 0));   // 그 확장이 제 메타를 읽은 뒤에
-    if (T.GENERATION_ENDED) on(T.GENERATION_ENDED, () => later(600, tail));   // 그 확장이 새 답을 서랍에 넣은 뒤에
+    if (T.GENERATION_ENDED) on(T.GENERATION_ENDED, () => later(600, tail));   // 그 확장이 새 답을 서랍에 넣은 뒤에(스트리밍 아님 · 다시 쓰기가 안 돈 답)
     if (T.MESSAGE_SWIPED) on(T.MESSAGE_SWIPED, () => later(600, tail));
+    // 답 그림: 잇달아 와도 훑기는 한 번(가장 앞 번호부터)
+    let due = false, low = Infinity;
+    if (T.CHARACTER_MESSAGE_RENDERED) on(T.CHARACTER_MESSAGE_RENDERED, id => {
+        const i = Number(id); low = Math.min(low, Number.isInteger(i) && i >= 0 ? i : tail());
+        if (due) return; due = true;
+        later(RENDER_WAIT, () => { const from = low; due = false; low = Infinity; return from; });
+    });
     later(1500, 0);
     return true;
 }
+/** 「답 그림」 뒤 훑기까지 기다림(ms) — 그 확장의 같은 사건 처리(다시 계산)가 먼저 끝나게 */
+export const RENDER_WAIT = 150;

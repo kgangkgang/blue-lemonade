@@ -12,7 +12,7 @@ import { panelLangCode } from './addons/prompt/glossary.js';
 export { GLOSSARY_SETTINGS_KEY };
 export const BRIDGE_KEY = 'blue_lemonade_bridge';
 /** 이어 주는 확장 — module: 그 확장의 설정 자리(읽기만) · root · head: 설정 칸과 그 안의 묶음 머리(src/ext-compat.js SETS 와 같은 값) · match: 설치 정보(manifest)에서 그 확장을 알아보는 말 · stateKey: 본편 주입 칸 · tag: 본편 답 끝 상태 줄 태그 */
-export const TARGET = Object.freeze({ id: 'meatball', name: '미트볼 상태창', module: 'statussim', root: '#ss-settings', head: 'b.ss-set-h', match: /meatball|미트볼/i, stateKey: 'statussim_state', sideKeys: Object.freeze(['statussim_people', 'statussim_romance']), tag: '<meatball>' });
+export const TARGET = Object.freeze({ id: 'meatball', name: '미트볼 상태창', module: 'statussim', root: '#ss-settings', head: 'b.ss-set-h', match: /meatball|미트볼/i, skip: /meatball[-_ ]?lite|미트볼\s*라이트/i, stateKey: 'statussim_state', sideKeys: Object.freeze(['statussim_people', 'statussim_romance']), tag: '<meatball>' });
 /** 본편 요청에 싣는 용어집 칸의 이름(실리태번 확장 주입) */
 export const MAIN_PROMPT_KEY = 'bl_status_glossary';
 /** 본편 용어집을 찾을 때 보는 최근 메시지 수 */

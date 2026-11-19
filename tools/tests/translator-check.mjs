@@ -106,6 +106,33 @@ await test('dialogue brackets (2.5.2): restorable losses are not flagged (the re
     const quote = ['She muttered 「not again」 under her breath and kept walking down the rainy street.'];
     assert.equal(check.checkTranslation(join(...quote), "그녀는 '또야'라고 중얼거리며 비 오는 거리를 계속 걸었다.", { protect: PROTECT }).flagged, 0);
 });
+await test('dialogue brackets: an outer 『』 rewritten as one pair of quotes is not flagged (restored when drawn); really missing dialogue still is', () => {
+    // 실제 사례 꼴(가짜 글): 기울임 통고문 한 문단 *『…「…（…）」…』* → *“…‘…(…)’…”*
+    const src = ['He copied the registration code onto the sheet, in a steady administrative hand:', '*『告知：温室の利用資格は「園芸部 部長補佐（鍵・備品）」として確定しましたので、重複登録は無効となります』*', A('「わかった」')];
+    const good = ['그는 흔들림 없는 행정 서체로 등록 코드를 종이에 옮겨 적었다:', '*『알림: 온실 이용 자격은 「원예부 부장 보좌(열쇠·비품)」로 확정되었으므로 중복 등록은 무효 처리됩니다』*', A('「알았어」')];
+    assert.equal(run(src, good).flagged, 0);
+    for (const [open, close] of [['“', '”'], ['"', '"'], ['‘', '’']]) {
+        const quoted = [good[0], `*${open}알림: 온실 이용 자격은 ‘원예부 부장 보좌(열쇠·비품)’로 확정되었으므로 중복 등록은 무효 처리됩니다${close}*`, good[2]];
+        assert.equal(run(src, quoted).flagged, 0, open);
+    }
+    // 진짜로 대사가 빠진 번역은 계속 잡는다: 따옴표 두 쌍(줄 전체를 감싸지 않음) · 한쪽 따옴표만 · 겉이 다른 괄호 · 대사를 서술 줄에 녹임
+    for (const lost of ['*“알림”: 온실 이용 자격은 확정되었으므로 “중복 등록”*', '*“알림: 온실 이용 자격은 확정되었으므로 중복 등록은 무효 처리됩니다*', '*(알림: 온실 이용 자격은 확정되었으므로 중복 등록은 무효 처리됩니다)*']) {
+        assert.deepEqual(reasonsAt(run(src, [good[0], lost, good[2]]), 1), ['brackets'], lost);
+    }
+    assert.deepEqual(reasonsAt(run(src, [good[0], good[1], A('소라가 말했다. 「알았어」')]), 2), ['brackets']);
+    const twoLines = ['Sora nodded at the door.\n「今日は早いね、ハナ。雨なのに来てくれたんだ」'], merged = ['소라는 문 쪽을 보며 고개를 끄덕이고는 오늘은 일찍 왔다고, 비 오는데 와 줬다고 말했다.'];
+    assert.deepEqual(reasonsAt(run(twoLines, merged), 0), ['brackets']);
+});
+await test('dialogue brackets: braille blanks (U+2800) around a line count as blanks on both sides', () => {
+    const BL = '⠀';
+    const src = [`The${BL}rain${BL}tapped${BL}against${BL}the${BL}greenhouse${BL}glass.`, `${BL}「今日は早いね、ハナ。雨なのに来てくれたんだ」${BL}`];
+    const out = ['빗방울이 온실 유리를 두드렸다.', '「오늘은 일찍 왔네, 하나. 비 오는데 와 줬구나」'];
+    assert.equal(run(src, out).flagged, 0);
+    // 번역 줄에만 점자 빈칸이 붙어도 대사로 센다 (전에는 번역 쪽만 안 세어 경고)
+    assert.equal(run([src[0], '「今日は早いね、ハナ。雨なのに来てくれたんだ」'], [out[0], `${BL}${out[1]}${BL}`]).flagged, 0);
+    // 원문 줄에 점자 빈칸이 붙어도 대사로 세어, 빠진 대사를 놓치지 않는다 (전에는 원문 쪽이 안 세어 경고가 안 났다)
+    assert.deepEqual(reasonsAt(run(src, [out[0], '소라가 말했다. 「오늘은 일찍 왔네, 하나. 비 오는데 와 줬구나」']), 1), ['brackets']);
+});
 await test('untranslated paragraph, blocked marker and echoed source are flagged', () => {
     assert.deepEqual(reasonsAt(run(SRC, [SRC[0], ...KO.slice(1)]), 0), ['same']);
     assert.deepEqual(reasonsAt(run(SRC, [`[차단된 문단 — 원문 그대로]\n${SRC[0]}`, ...KO.slice(1)]), 0), ['blocked']);

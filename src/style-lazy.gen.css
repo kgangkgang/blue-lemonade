@@ -1,7 +1,7 @@
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 1af801112567) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build babc988ae7a6) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"e9231a23d5141227"}
 /* css/00-base.css */
-:root{--bl-release:"1.8.9";}
+:root{--bl-release:"1.9.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -20006,7 +20006,6 @@ html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-p
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > :where(span):is(.bl-s, *),
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > .ext-version,
 html body.salty :is(.pa-hub .pa-hub-title, .po-dialog .po-title, #pt-panel #pt-panel-header h3) > [class*="-version"] { margin: 0 !important; }
-html body.salty #lv_settings .lv-card-head > i:first-child { transform: translateY(-0.75px); }
 html body.salty .bwr_settings .bwr_card_title > i:first-child { position: relative; top: -.058em; }
 html body.salty #lv_settings .lv-card-head > .lv-card-note { translate: 0 -.1em; }
 html body.salty #lv_settings .lv-card-head,
@@ -20791,6 +20790,7 @@ html body.salty :where(.po-item):is(dialog.popup:not(.bl-settings-dialog) .po-di
 :where(#fruit-heart-v6):is(html > body.salty #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6, html > body.salty ~ #fruit-heart-v6#fruit-heart-v6#fruit-heart-v6) .fh-nav-item.on { border-color: var(--acc); font-weight: 650; }
 html body.salty #bl-deus-popover .dq-head { grid-template-columns: minmax(0, max-content) auto minmax(0, 1fr) auto; column-gap: 8px; }
 html body.salty #bl-deus-popover .dq-head > strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body.salty #bl-deus-popover .dq-head > strong > .dq-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 html body.salty #bl-deus-popover .dq-close { grid-column: 4; justify-self: end; width: 34px; height: 34px; min-width: 34px; min-height: 34px; padding: 0; border: 0; background: transparent; box-shadow: none; }
 html body.salty #bl-deus-popover .dq-version { border-radius: 999px !important; padding: 0 8px !important; min-height: 18px; line-height: 18px; font-size: .75em !important; }
 html body.salty #bl-deus-popover .dq-tabs { gap: 4px; }

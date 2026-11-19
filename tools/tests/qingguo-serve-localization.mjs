@@ -452,6 +452,48 @@ await test('1.7.7 감시는 문서 뿌리부터 — 과일의 마음 창은 body
     assert.ok(source.includes('if(spots.size){for(const node of texts.keys())if(!node.isConnected)texts.delete(node);'));
 });
 
+// 1.8.6 MO 비용: 1.7.8 에서 콜백 기록마다 조상 훑기(closest)가 두세 번 더 돌았어요(채팅 300 열기 · 더 보기에서 콜백 시간만 늘어남)
+await test('1.8.6 과일의 마음 창이 없으면 채팅 변화 기록마다 조상 훑기를 안 하고, 창 전체 훑기 예약은 예전 그대로예요', () => {
+    const body = boot();
+    const chat = body.append(new El('div', { id: 'chat' }));
+    const mes = []; for (let i = 0; i < 40; i++) mes.push(chat.append(new El('div', { class: 'mes' })).append(new El('div', { class: 'mes_text' })).append(new El('p', {}, '글 ' + i)));
+    const panel = panelIn(body);   // 도구 호출 옛 창(#serve-anti-host) — 이 안 변화는 예전처럼 다음 박자에 훑어요
+    install(); frames.length = 0;
+    let calls = 0; const spy = El.prototype.closest; El.prototype.closest = function (s) { if (s.includes('fh-qr-copy')) calls++; return spy.call(this, s); };
+    try {
+        const tick = recs => { for (const o of observers) if (o.on) o.fn(recs); };
+        // 채팅만 바뀜(글 노드 · 요소 · 끼운 노드) → 훑기 0 · 예약 0
+        tick([...mes.map(p => ({ target: p.childNodes[0], addedNodes: [] })), ...mes.map(p => ({ target: p, addedNodes: [p.childNodes[0]] }))]);
+        assert.equal(calls, 0, '창이 없으면 closest(QUICK) 를 부르지 않아요');
+        assert.equal(frames.length, 0, '채팅 변화로는 예약하지 않아요(예전과 같음)');
+        // 옛 창 안 변화가 섞이면 예전처럼 예약
+        tick([{ target: mes[0], addedNodes: [] }, { target: panel, addedNodes: [] }]);
+        assert.equal(frames.length, 1, '옛 창 변화는 다음 박자에 훑어요');
+        settle();
+        // 문서에 안 붙은 노드는 예전 길(그 나무 안 closest)
+        const loose = new El('div', { 'data-action': 'open-serve-panel' }).append(new El('span', { class: 'fh-qr-copy' })).append(new El('small', {}, 'x'));
+        calls = 0; tick([{ target: loose, addedNodes: [] }]);
+        assert.ok(calls >= 1, '떨어진 노드는 예전처럼 조상을 훑어요');
+    } finally { El.prototype.closest = spy; }
+});
+
+await test('1.8.6 창이 열려 있으면 빠른 길은 그대로 · 한 콜백에서 같은 대상은 한 번만 훑어요', () => {
+    const { main } = heartIn(boot(), { serve: false });
+    const card = main.append(new El('button', { 'data-action': 'open-serve-panel' })).append(new El('span', { class: 'fh-qr-copy' }));
+    const sub = card.append(new El('small', {}, '当前：普通模式（流式直连） · 点击进入出杯控制台'));
+    const row = main.append(new El('div', { class: 'fh-row' }, '普通模式'));
+    install(); frames.length = 0;
+    let calls = 0; const spy = El.prototype.closest; El.prototype.closest = function (s) { if (s.includes('fh-qr-copy')) calls++; return spy.call(this, s); };
+    try {
+        sub.text('当前：工具模式 · 抗外审+抗截断 · 最近：已还原出酒口正文');
+        const recs = [{ target: sub, addedNodes: [] }, { target: sub, addedNodes: [] }, { target: row, addedNodes: [] }, { target: row, addedNodes: [] }];
+        for (const o of observers) if (o.on) o.fn(recs);
+        assert.equal(sub.shown, '지금: 도구 모드 · 외부 검열 대응 + 끊김 방지 · 최근: 본문 도구 내용을 되살렸어요', '홈 카드 한 줄은 바로');
+        assert.equal(frames.length, 1, '다른 변화(.fh-row)는 예전처럼 예약');
+        assert.equal(calls, 2, '대상 둘 × 한 번씩(예전엔 기록 넷 + 거르기 넷 = 여덟 번)');
+    } finally { El.prototype.closest = spy; }
+});
+
 await test('1.5 알림 · 헬퍼 목록 이름 · 옛 1.4 창은 그대로', () => {
     const body = boot();
     const zh = ['已开启抗外审（本轮输入转工具回执）', '已关闭抗外审', '已开启抗截断（非流式）', '已关闭抗截断', '已开启「语义伪装」', '已关闭「随机噪音」', '已一键校对酒馆设置', '已清空请求记录', '复制失败，请手动复制', '未检测到果实之心面板，请先启用果实之心脚本'];

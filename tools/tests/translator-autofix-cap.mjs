@@ -18,7 +18,7 @@ function bench(N, ROUND_CAP = 8) {
     const stateOf = id => {
         if (!(id >= 0 && id < N)) return null;
         const source = `「こんにちは、今日はいい天気ですね。${id}番目の挨拶です」`;
-        const translation = `"안녕하세요, 오늘은 날씨가 좋네요. ${id}번째 인사예요 (판 ${version[id]})"`;   // 다른 따옴표라 「대사 괄호가 원문보다 적어요」가 남아요
+        const translation = `안녕하세요, 오늘은 날씨가 좋네요. ${id}번째 인사예요 (판 ${version[id]})`;   // 대사 괄호가 통째 빠져 「대사 괄호가 원문보다 적어요」가 남아요 (1.9.0: 겉 따옴표 한 쌍으로 바꿔 쓴 번역은 원문 괄호로 되돌려 의심이 아니게 됐어요 — 표본을 괄호가 아예 없는 꼴로)
         return { source, translation, protect: [], key: `${id}:${version[id]}` };
     };
     let view;

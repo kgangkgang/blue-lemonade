@@ -398,7 +398,26 @@ function learnUnits(st, units) {
     for (const u of units) if ((u.t === 'T' || u.t === 'V') && u.name) rec.n.push([u.name, 1]);
     applyNames(st, rec.n, +1);
     const { namesIn, canon: cn } = nameMatcher(st);
-    const vote = (c, name, w, thought) => { if (c && name) rec.v.push([c, name, w, thought ? 1 : 0]); };
+    // 1.9.0 정해 둔(잠긴) 색과 어긋나는 표는 내지 않는다 — 속마음 표시가 두 사람의 대사 사이에 놓이면 앞 · 뒤 묶음 둘 다에 3점씩 냈고(앞 사람 색에 뒷사람 이름),
+    //   「앞 서술의 마지막 이름」(1점)도 남의 색에 쌓여 잠긴 색 표에 다른 인물이 섞였다. 이름을 정할 때는 어차피 안 쓰는 표다(resolveAll 의 taken · 잠금).
+    //   ① 그 색이 다른 사람으로 잠겨 있다 ② 그 이름이 다른 색에 잠겨 있다(이 색에는 아니다) → 건너뛴다. 잠금이 없는 색 · 이름은 예전 그대로
+    const me = fold(cn(personaName()));
+    const lockKey = (n) => (isUserMacro(n) ? me : fold(cn(n)));
+    const lockedName = new Map(), lockedAt = new Map();   // 색 → 접은 임자 · 접은 임자 → 색들
+    for (const [c, e] of Object.entries(st.colors)) {
+        if (!e?.locked || !e.name) continue;
+        const k = lockKey(e.name);
+        if (!k) continue;
+        lockedName.set(c, k);
+        if (!lockedAt.has(k)) lockedAt.set(k, new Set());
+        lockedAt.get(k).add(c);
+    }
+    const vote = (c, name, w, thought) => {
+        if (!c || !name) return;
+        const k = lockKey(name), own = lockedName.get(c);
+        if (own ? own !== k : lockedAt.has(k)) return;
+        rec.v.push([c, name, w, thought ? 1 : 0]);
+    };
     for (let i = 0; i < units.length; i++) {
         const u = units[i];
         if (u.t === 'V') { vote(u.color, cn(u.name), W.label, true); continue; }

@@ -1063,6 +1063,14 @@ jobs:
           node tools/tests/blank-fold.mjs . tools
           # 버그 사냥 7 사용자 환경 리그에서 찾은 화면 고침: 탭 창 머리 제목의 ✕ 자리 · 창 안 판 가로 넘침 자르기(소스 · 생성 CSS 계약)
           node tools/tests/hunt7-user-env.mjs .
+          # 버그 사냥 8: 음성 색 표에 다른 인물 표가 섞이던 것(잠긴 색과 어긋나는 표)
+          node tools/tests/tts-vote-locked.mjs .
+          # 버그 사냥 8: 같은 작가의 가벼운 판(Lite)을 본판 옆에 깔아도 테마가 본판을 찾고, 가벼운 판 요청은 건드리지 않아요
+          node tools/tests/mb-lite-coexist.mjs .
+          # 버그 사냥 8: TTS 카드 머리 아이콘 보정 걷기 · 모델 전환 「+」 손가락 화면 자리(소스 · 생성 CSS 계약)
+          node tools/tests/hunt8-user-env.mjs .
+          # 버그 사냥 8: 미트볼 닫힌 고르개의 고른 값 글(화면만 번역) · 설명 글 안 단추 위 간격(jsdom)
+          node tools/tests/mb-select-tr.mjs . tools
           # 버그 사냥 7(1.8.7) 가운뎃점으로 이은 영문 덩어리(《L·E·M·O·N》)에 줄바꿈 자리 — 양쪽 정렬에서 앞 줄 낱말 사이가 크게 벌어지던 것(jsdom)
           node tools/tests/dot-run-wrap.mjs . tools
           # 1.7.6 미트볼 「간격 체계」(2.9.0 개편): 구조로 거는 넓은 규칙이 붙던 꼴에 걸리고 나란한 단추 · 띠는 안 건드림(jsdom 선택자 맞음)
@@ -1092,6 +1100,10 @@ jobs:
           node tools/tests/select-pick-esc.mjs . tools
           # 1.6.9 미트볼 변화 그래프: 프로필 얼굴 색 · 바탕 대비 · 비슷한 색 점선 · 범례 누르기 (같은 jsdom)
           node tools/tests/mb-trend.mjs . tools
+          # 1.9.0 미트볼 변화 그래프 범례: 점선인 사람의 색 점은 점선 테두리 동그라미 (CSS 글만 읽어요)
+          node tools/tests/mb-trend-legend-dash.mjs .
+          # 1.9.0 미트볼 변화 그래프 인물 색: 원작 그래프에 인물 색만 입히기 · 점선 다시 가리기 · 밝기 보정 · 스위치 (같은 jsdom)
+          node tools/tests/mb-trend-tint.mjs . tools
           # 버그 사냥 2: 깡통 골드 잠금 꼴이 로그 복사(소독 · HTML 복사 주석 · 자동 로그 자리 · 숨기기)를 거쳐도 그대로 (같은 jsdom)
           node tools/tests/log-copy-gold-lock.mjs . tools
           # 버그 사냥 2: 줄을 넘는 대사 안 늘임표(「응~~~, 그래~~~!」)가 취소선으로 남지 않아요 (같은 jsdom)

@@ -192,6 +192,10 @@ body.salty:not([data-bl-mb-album]) .mes_buttons .mes_button.ss-star { display: n
 /* @mb chips */
 /* ---------- 메시지 변동 칩: 딱지 단 · 칸 면 ---------- */
 body.salty .ss-msgcard { font-family: var(--bl-mb-ico, bl-mb-none), var(--salty-font-mb, var(--salty-font-ui)); }
+/* 1.9.x 채팅을 닫고 나온 환영 화면(최근 채팅 목록 + 환영 메시지)에 앞 채팅의 변동 칩이 남아 보였어요 — 그 확장이 메시지 번호(mesid)로 칩을 그리는데, 채팅을 닫은 뒤에도
+   앞 채팅 상태가 남아 환영 메시지 #0 · #1 에 그 번호의 칩을 달아요(그 확장 쪽 일 · 테마는 칩 자리를 만들지 않아요). 지우면 그 확장이 다시 달아서, 환영 화면에 한해 칩 자리를 가려요.
+   환영 화면 = 열린 채팅이 없을 때 — 테마가 채팅이 바뀔 때(열림 · 닫힘)만 body 에 표식(bl-mb-welcome)을 달아요(src/mb-select-tr.js markWelcome · 감시자 없음 · :has 없음) */
+body.salty.bl-mb-welcome .mes .ss-slot { display: none !important; }
 /* 긴 이름이 든 칩이 화면 밖으로 나가 잘렸어요 — 화면 폭 안에서 줄을 바꿔요(모서리는 카드 값 — 한 줄일 때는 알약으로 보여요) */
 body.salty .ss-mchip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: start; border-radius: var(--bl-r-md, 12px); }
 body.salty .ss-mchip { background: var(--bl-hover); border-color: var(--salty-line); font-size: var(--bl-ts-micro, 11.5px); font-weight: 500; }
@@ -559,6 +563,9 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-head-a, body.salty:not([data-bl-
 body.salty:not([data-bl-ext-raw]) .ss-scope :is(.ss-notes, .ss-achs, .ss-goods, .ss-life-sets, .ss-sm-mods) { gap: var(--bl-mb-g-block); }
 /* ========== 간격 체계 끝 ========== */
 /* @mb spacing */
+/* 1.9.x 설명 글 「안」에 든 단추 · 칩(「관계에만 있고 프로필이 없는 사람 N명: … [프로필 더하기]」): 글 끝에 이어 붙는 꼴이라 줄이 꺾이면 단추가 글 바로 밑에 붙었어요(위 간격 0).
+   설명 뒤 형제 단추와 같은 값(설명 다음 덩이 8)을 설명 안 단추에도 — 자리마다 값을 주지 않고 이 한 줄로 묶어요(「간격 체계」 묶음 밖 — 그 묶음은 구조로 거는 규칙 · 눈금 변수만이라는 약속이 있어요). 같은 줄에 놓이면 그 줄이 그만큼 높아질 뿐이에요 */
+body.salty:where(:not([data-bl-ext-raw])) .ss-scope .ss-hint > :is(.ss-btn, .ss-chip, button) { margin-top: var(--bl-mb-g-block, 8px); }
 /* ---------- 면 · 줄: 간격 사다리 ---------- */
 body.salty .ss-scope .ss-card { padding: var(--bl-s3, 12px); }
 body.salty .ss-scope .ss-stack { gap: var(--bl-s2, 8px); }
@@ -1393,6 +1400,16 @@ body.salty:not([data-bl-ext-raw]) :is(.ss-hompy, .ss-rt) .ss-body .ss-btn.pri { 
 /* 2.7.23 변화 그래프 창: 범례의 이름이 길면 끝의 값이 한 글자씩 꺾였어요(「-1 / 5」) — 색 점 · 값은 줄지 않고 이름만 줄바꿈 */
 body.salty .ss-scope .ss-trend-legend > span { min-width: 0; }
 body.salty .ss-scope .ss-trend-legend > span > :is(i, small) { flex: none; white-space: nowrap; }
+/* 1.9.0 변화 그래프 범례: 점선으로 그린 사람(색이 가까워 선이 점선인 사람)의 색 점을 세로 줄무늬 대신 점선 테두리 동그라미로 — 사용자 11-19 「걍 점선 프로필이 낫지 않냐」.
+   그 확장이 그린 꼴은 그대로 두고 꾸밈만 바꿔요: 점선인 사람의 점에만 붙는 줄무늬 그림(인라인 style 의 repeating-linear-gradient)을 걷고, 그 사람 색(인라인 background)을 고리 모양으로만 비쳐요.
+   14px 고리에 점선 다섯 마디(둘레 34.6 = (4.15 + 2.76) × 5 · 선의 6 : 4 와 같은 비) · 굵기 2 — PC 1배 화면에서도 점선으로 읽혀요(리그). 자리는 10px 그대로(바깥 여백 -2). 실선인 사람은 꽉 찬 동그라미 그대로예요.
+   인물 색을 입힌 판(src/mb-trend.js tintTrend)은 점선을 다시 가려 표식(data-bl-dash)으로 알려요 — 같은 고리로 그려요.
+   시험: tools/tests/mb-trend-legend-dash.mjs · tools/tests/mb-trend-tint.mjs */
+body.salty:not([data-bl-ext-raw]) .ss-scope .ss-trend-legend > span > i:is([style*="repeating-linear-gradient"], [data-bl-dash]) {
+  --bl-tr-ring: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5.5' fill='none' stroke='%23000' stroke-width='2' stroke-dasharray='4.15 2.76'/%3E%3C/svg%3E");
+  width: 14px; height: 14px; margin: -2px; background-image: none !important;
+  -webkit-mask: var(--bl-tr-ring) center / 100% 100% no-repeat; mask: var(--bl-tr-ring) center / 100% 100% no-repeat;
+}
 /* @mb layout */
 /* ====================== 그 확장 2.8.0(2026-11-16 · 사용자 폰 사진 셋 「글자 깨지고 블럭에 글자 붙어 있고」) ======================
    ① 관계 카드 머리줄: 2.8 은 이름 옆 아이콘 단추에 이름 글자를 붙여요(속마음 · 퇴장 · 애정 끄기 · 합치기 — data-l). 한 줄에 다 넣으면 폰 폭에서 이름 칸이 한두 글자로 눌려

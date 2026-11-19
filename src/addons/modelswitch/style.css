@@ -95,6 +95,8 @@ dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inli
 dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .inline-drawer-header { min-height:var(--bl-h-ctl,36px); }
 /* 7.7.6 팝업의 닫기(×, 오른쪽 위 34px)와 같은 자리에 겹쳐 「+」 위에 「×」가 그려졌다(리그 375 · 1440) → 닫기 폭 34 + 칸 사이 8 만큼 왼쪽으로 */
 dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:42px; z-index:1; }
+/* 1.9.0 손가락 화면에서는 닫기의 누르는 상자가 44px 라 「+」 오른쪽 8px 가 그 상자와 겹쳤어요(사용자 환경 리그 384 · 가로 8 × 세로 34) → 닫기 44 + 칸 사이 8 */
+@media (pointer: coarse) { dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { right:52px; } }
 .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }
 .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .bl-inline-title { display:flex; align-items:center; min-height:var(--bl-h-ctl,36px); }
 .bl-addon-inline > .bl-addon-inline-content > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:4px; z-index:1; }

@@ -1150,6 +1150,7 @@ html body.salty #model-switch-settings .ms-form > :is(label, .ms-row) { grid-tem
 dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }
 dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings:has(> .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .inline-drawer-header { min-height:var(--bl-h-ctl,36px); }
 dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:42px; z-index:1; }
+@media (pointer: coarse) { dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { right:52px; } }
 .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) { position:relative; }
 .bl-addon-inline:has(> .bl-addon-inline-content > #model-switch-settings > .inline-drawer-content > .ms-presets > .ms-chip-add:only-child) > .bl-inline-title { display:flex; align-items:center; min-height:var(--bl-h-ctl,36px); }
 .bl-addon-inline > .bl-addon-inline-content > #model-switch-settings .ms-presets:has(> .ms-chip-add:only-child) { position:absolute; top:0; right:4px; z-index:1; }

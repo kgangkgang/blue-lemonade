@@ -114,6 +114,17 @@ await test('② 다른 확장 · 본체가 부른 generateRaw 는 받은 인자 
     assert.equal(await t.holder.getContext().generateRaw('글만 넘기는 옛 꼴'), 'MAIN');
     assert.equal(t.calls.raw[1], '글만 넘기는 옛 꼴');
 });
+await test('② 1.9.0 같은 작가의 가벼운 판(Lite)이 부른 요청은 대상이 아니에요 — 받은 인자 그대로', async () => {
+    const LITE = 'meatball-lite';
+    const t = setup({ saved: { meatball: { models: { base: { provider: 'vertexai', model: 'm' } } } },
+        manifests: { [MB]: { display_name: '미트볼 상태창 (Meatball Stats)' }, [LITE]: { display_name: '미트볼 라이트 (Meatball Lite)', homePage: 'https://example.invalid/x/meatball-lite', author: 'Meatball' } } });
+    t.bridge.sync();
+    t.env.stack = ['Error', `    at wrapper (${BASE}/${OWN}/dist/c-1.js:1:1)`, `    at aiGenerateOnce (${BASE}/${LITE}/src/rules/ai.js:1:1)`, `    at aiGenerate (${BASE}/${LITE}/src/rules/ai.js:2:1)`].join('\n');
+    const req = REQ();
+    assert.equal(await t.holder.getContext().generateRaw(req), 'MAIN');
+    assert.equal(t.calls.raw[0], req);
+    assert.equal(t.calls.direct.length, 0);
+});
 await test('② 설치 정보가 그 확장이 아닌 폴더는 대상이 아니에요(폴더마다 한 번만 물어요)', async () => {
     let asked = 0;
     const t = setup({ manifests: new Proxy({}, { get: (_, name) => { asked += 1; return name === MB ? { display_name: 'Some Other Stats' } : null; } }) });

@@ -299,6 +299,89 @@ export function dressTrend(root, opts = {}) {
     return true;
 }
 
+// ── 1.9.0 원작 그래프에 인물 색 입히기 ─────────────────────
+//   미트볼 2.9.1 부터 그래프는 원작이 그려요(src/mb-upstream.js 의 trend — 위 「다시 그리기」는 쉬어요). 원작은 사람 색을 이름 글자로 정한 색상환 각도로 칠해서
+//   테마가 아는 인물 색(대사 색 → TTS 카드 색 → 프리셋 색 · 관계 카드 얼굴과 같은 faceColorOf)과 달라요 — 사용자 11-19 「애들 프로필 색깔 따라가는 거 맞지?」
+//   → 원작이 그린 꼴(선 · 눈금 · 범례 · 누르면 강조)은 그대로 두고 사람 판(애정 · 우정)의 색만 갈아입혀요. 원작 파일 · 자료는 안 건드려요.
+//   · 인물 색이 있는 사람: 선 · 범례 점 = 그 색(판 바탕과 3 : 1 이 안 되면 같은 색 계열에서 밝기만 보정 — lineColor). 없는 사람: 원작 색 그대로.
+//   · 점선: 색이 바뀌었으니 다시 가려요 — 앞 순위 실선과 색이 가까우면(NEAR) 점선. 둘 다 원작 색이면 원작 규칙(색상환 22도 안) 그대로.
+//   · 이 창에 인물 색이 있는 사람이 하나도 없으면 아무것도 안 해요. 돈 · 수치 판(사람이 아님)은 안 건드려요.
+//   켜고 끄기: 스위치 「변화 그래프 인물 색」(tcolor) · 끄면 다음에 여는 그래프부터 원작 색이에요. 시험: tools/tests/mb-trend-tint.mjs
+const UP_DASH = '6 4';      // 원작 점선 무늬(그 확장이 polyline 에 적는 값)
+const UP_HUE_NEAR = 22;     // 원작이 「가까운 색」으로 보는 색상환 각도 차
+/** hsl(각도 채도% 밝기%) → { hex, hue } (원작 사람 색 꼴 · 아니면 null) */
+export function hslHex(css) {
+    const m = /hsla?\(\s*(-?[\d.]+)(?:deg)?[\s,]+([\d.]+)%[\s,]+([\d.]+)%/i.exec(String(css || '')); if (!m) return null;
+    const h = ((Number(m[1]) % 360) + 360) % 360, sat = Number(m[2]) / 100, l = Number(m[3]) / 100;
+    const a = sat * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))); };
+    return { hex: toHex([f(0), f(8), f(4)]), hue: h };
+}
+const hueGap = (a, b) => { const d = Math.abs(a - b); return Math.min(d, 360 - d); };
+/** 한 판의 사람들(순위 차례 · { line, own, hue }) → 점선인가. 앞 순위 실선과 가까우면 점선 — 둘 다 원작 색이면 원작 규칙 그대로 */
+export function tintDashes(series) {
+    const out = [];
+    series.forEach((s, i) => {
+        out.push(series.slice(0, i).some((y, j) => !out[j] && (!s.own && !y.own && Number.isFinite(s.hue) && Number.isFinite(y.hue) ? hueGap(s.hue, y.hue) < UP_HUE_NEAR : colorGap(s.line, y.line) < NEAR)));
+    });
+    return out;
+}
+/** 원작이 그린 판 하나 읽기 — 사람 판(범례 점이 hsl 색)만. [{ name, key(범례 칸), dot(범례 점), g(선 묶음), css0(원작 색 글), c0(16진), hue }] */
+export function readPeopleBox(box) {
+    const out = [];
+    const groups = [...box.querySelectorAll(':scope > svg g[data-k]')];
+    for (const key of box.querySelectorAll(':scope > .ss-trend-legend > [data-k]')) {
+        const dot = key.querySelector(':scope > i'); if (!dot) return [];
+        const name = key.getAttribute('data-k');
+        const g = groups.find(x => x.getAttribute('data-k') === name) || null;
+        // 원작 색 글은 선(없으면 점)의 속성에서 — 범례 점의 인라인 색은 브라우저가 rgb 로 바꿔 돌려줘서 색상환 각도를 못 읽어요
+        const mark = g?.querySelector('polyline, circle');
+        const css0 = String(dot.getAttribute('data-bl-c0') || mark?.getAttribute(mark.tagName.toLowerCase() === 'circle' ? 'fill' : 'stroke') || '').trim();
+        const c = hslHex(css0);
+        if (!c) return [];   // hsl 색이 아니면 사람 판이 아니에요(수치 판은 팔레트 16진)
+        out.push({ name, key, dot, g, css0, c0: c.hex, hue: c.hue });
+    }
+    return out;
+}
+/** 창 하나(.ss-trend · 원작 2.9.1 부터의 꼴)에 인물 색 입히기 — 한 번만. opts.pick · opts.bg · opts.watch 는 시험용 */
+export function tintTrend(root, opts = {}) {
+    if (!root || root.hasAttribute('data-bl-tr') || root.hasAttribute('data-bl-tc')) return false;
+    const doc = root.ownerDocument, win = doc.defaultView;
+    const models = [...root.querySelectorAll(':scope > .ss-trend-box')].map(box => ({ box, series: readPeopleBox(box), bg: null })).filter(m => m.series.length);
+    if (!models.length) return false;
+    const pick = opts.pick || faceColorPicker(doc);
+    const own = new Map();
+    for (const m of models) for (const s of m.series) { if (!own.has(s.name)) { let fc = null; try { fc = s.name ? pick(s.name) : null; } catch { fc = null; } own.set(s.name, fc?.bg || null); } s.own = own.get(s.name); }
+    if (![...own.values()].some(Boolean)) return false;   // 인물 색을 아는 사람이 없어요 — 원작 그대로
+    root.setAttribute('data-bl-tc', '1');
+    const paint = m => {
+        const bg = opts.bg || bgOf(win, m.box); if (bg === m.bg) return false;
+        m.bg = bg;
+        for (const s of m.series) s.line = s.own ? lineColor(s.own, bg) : s.c0;
+        const dashes = tintDashes(m.series);
+        m.series.forEach((s, i) => {
+            const color = s.own ? s.line : s.css0;
+            for (const el of s.g?.querySelectorAll('polyline, circle') || []) {
+                if (el.tagName.toLowerCase() === 'circle') { el.setAttribute('fill', color); continue; }
+                el.setAttribute('stroke', color);
+                if (dashes[i]) el.setAttribute('stroke-dasharray', UP_DASH); else el.removeAttribute('stroke-dasharray');
+            }
+            if (!s.dot.hasAttribute('data-bl-c0')) s.dot.setAttribute('data-bl-c0', s.css0);
+            if (s.own) s.dot.style.backgroundColor = color;
+            s.dot.style.backgroundImage = 'none';   // 원작이 점선인 사람에게 붙인 줄무늬 그림은 걷고 점선 표식은 아래 속성으로(시트가 점선 고리로 그려요)
+            if (dashes[i]) s.dot.setAttribute('data-bl-dash', ''); else s.dot.removeAttribute('data-bl-dash');
+            if (s.own) s.key.setAttribute('data-bl-own', ''); else s.key.removeAttribute('data-bl-own');
+        });
+        return true;
+    };
+    for (const m of models) paint(m);
+    // 창을 연 채 밤낮이 바뀌면 바탕 대비가 달라져요 — 다시 맞춰요(위 다시 그리기와 같은 구독 · 창이 떨어지면 sweepGone 이 끊어요)
+    let stop = null;
+    try { stop = (opts.watch || watchDom)(doc.body, { attributes: ['class'], name: '미트볼 그래프 인물 색 (밤낮)' }, () => { if (!root.isConnected) { sweepGone(); return; } for (const m of models) paint(m); }); } catch { stop = null; }
+    live.add({ root, off: () => { try { stop?.(); } catch { /* 이미 끊김 */ } } });
+    return true;
+}
+const tintable = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw') && mbOff('trend', doc) && !mbOff('tcolor', doc);   // 다시 그리기가 쉬는 때(원작에 맡김 · 끔)에만
+
 const fitted = doc => !!doc?.body?.classList?.contains?.('salty') && !doc.body.hasAttribute?.('data-bl-ext-raw') && !mbOff('trend', doc);   // 1.7.3 스위치 「변화 그래프 다시 그리기」
 /** 이 기록들에 새로 붙은 그래프 창 */
 export function trendRoots(records) {
@@ -310,14 +393,14 @@ export function trendRoots(records) {
     return out;
 }
 let on = false;
-export function startMbTrend(doc = globalThis.document, { watch = watchDom } = {}) {
+export function startMbTrend(doc = globalThis.document, { watch = watchDom, pick = null } = {}) {
     if (on || !doc?.body) return false;
     on = true;
     try {
         watch(doc.body, { childList: true, subtree: true, exclude: '#chat', name: '미트볼 그래프' }, records => {
             if (live.size) sweepGone();   // 버그 사냥 10b: 닫힌 창의 감시자 · 구독 끊기
-            if (!fitted(doc)) return;
-            for (const r of trendRoots(records)) try { dressTrend(r); } catch (e) { console.warn('[Blue Lemonade] 미트볼 그래프', e); }
+            if (fitted(doc)) { for (const r of trendRoots(records)) try { dressTrend(r); } catch (e) { console.warn('[Blue Lemonade] 미트볼 그래프', e); } return; }
+            if (tintable(doc)) for (const r of trendRoots(records)) try { tintTrend(r, pick ? { pick } : {}); } catch (e) { console.warn('[Blue Lemonade] 미트볼 그래프 인물 색', e); }   // 1.9.0 원작 그래프에는 인물 색만
         });
     } catch { on = false; return false; }
     return true;

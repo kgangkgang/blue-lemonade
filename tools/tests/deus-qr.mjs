@@ -265,4 +265,18 @@ await test('V3 · 화면: 판 표시는 판별 결과를 따르고 「친구들�
  assert.ok(bundled.includes("const tabsOf = current =>"));assert.ok(bundled.includes("current?.variant?.label"));assert.ok(!bundled.includes("node('span','2.5','dq-version')"));
  assert.ok(bundled.includes("'친구들':'user-group'"));assert.ok(bundled.includes('.dq-version[hidden]{display:none}'));
 });
+await test('머리줄: 표지 · 제목 글자 · 판 알약 · ? 가 한 가운데 줄 — 제목 칸은 가운데 맞춤 flex 이고 바닥선 보정을 얹지 않아요',()=>{
+ const rule=sel=>{const at=bundled.indexOf(sel+'{');assert.ok(at>=0,sel);return bundled.slice(at+sel.length+1,bundled.indexOf('}',at));};
+ const head=rule('#bl-deus-popover .dq-head'),strong=rule('#bl-deus-popover .dq-head strong'),mark=rule('#bl-deus-popover .dq-mark'),pill=rule('#bl-deus-popover .dq-version');
+ assert.match(head,/display:grid;[^}]*align-items:center/,'머리줄 칸(제목 · ? · ×)은 가운데 맞춤');
+ assert.match(strong,/display:flex;align-items:center;min-width:0/,'제목 칸 안(표지 · 글자 · 알약)도 가운데 맞춤');
+ for(const [name,body] of [['표지',mark],['알약',pill],['제목 칸',strong]]) assert.ok(!/vertical-align|margin-top|translate|(^|;)top:|position:relative/.test(body),`${name}에 세로 보정이 없어요: ${body}`);
+ assert.match(mark,/flex:none;width:1\.3em;height:1\.3em/,'표지는 1.3em 정사각 · 줄어들지 않음');
+ assert.match(strong,/line-height:1\.35/,'제목 줄 높이 1.35em 그대로(표지 1.3em 이 그 안)');
+ // 테마 쪽: ? 는 머리줄 칸 가운데 그대로(글 줄 보정 걷음) · 말줄임은 글자 칸이 받아요
+ const css=name=>fs.readFileSync(path.join(root,'css',name),'utf8');
+ assert.match(css('56-control-consistency.css'),/#bl-deus-popover \.dq-head > \.dq-help-button \{ margin-left:0!important; transform:none!important; \}/);
+ assert.match(css('85-addon-unify.css'),/#bl-deus-popover \.dq-head > strong > \.dq-title \{ min-width: 0; overflow: hidden; text-overflow: ellipsis; \}/);
+ assert.ok(!/#bl-deus-popover[^{]*\.dq-(mark|title)[^{]*\{[^}]*(vertical-align|margin-top|translate|(\s|;|\{)top:)/.test(css('85-addon-unify.css')+css('56-control-consistency.css')),'테마가 표지 · 제목 글자에 세로 보정을 얹지 않아요');
+});
 console.log(`Deus quick settings: ${passed} passed`);

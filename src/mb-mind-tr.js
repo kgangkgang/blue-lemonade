@@ -16,6 +16,7 @@
 //   시험: tools/tests/mb-mind-tr.mjs
 import { mbOff, onMbOff, mbFit } from './mb-switch-core.js';
 import { holdSheet } from './boot-gate.js';
+import { squashBlank } from './blank-fold.js';
 
 export const KEY = 'mindtr';
 export const SHEET_ID = 'bl-mb-mind-tr-css';
@@ -40,6 +41,7 @@ export const SRC_ATTR = 'data-bl-mind-src';
 export const SEL = '.ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-wt-feed li > div > b, .ss-mind-bub > em, .ss-t.t-mind .p > .m)';
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';   // 그 확장 번역 단추(src/ext-bridge-tr.js 와 같은 것)
 const BATCH = 20;
+const LOG_SEL = '.ss-mind-log li > span';   // 지난 속마음 줄(접힌 목록 details.ss-more 안)
 const OUT_MS = 450;   // 그 확장 말풍선 나가는 움직임 길이
 
 const HANGUL = /[가-힣]/, KANA = /[぀-ヿ]/, HAN = /[一-鿿]/, LATIN = /[A-Za-z]/;
@@ -108,13 +110,19 @@ export function allMindTexts(state) {
     return [...out];
 }
 
+/**
+ * 번역 모음 열쇠 — 점자 빈칸(U+2800)을 보통 빈칸으로 접고 이어진 빈칸은 하나로.
+ *   1.9.1: 점자 빈칸 프리셋의 속마음은 받을 때 「글⠀(카모지)」 꼴인데, 변화 줄 고침(src/mb-namekey.js)이 서랍 줄을 보통 빈칸으로 다시 적으면 같은 글이 「글 (카모지)」 가 돼요.
+ *   열쇠가 글자 그대로라 그 턴에 받아 둔 번역을 지난 속마음 줄에서 못 찾았어요(사용자 사진 11-20 — 지금 속마음은 한국어 · 지난 줄은 원문). 접은 열쇠로 같은 번역을 다시 써요(요청 0).
+ */
+export const storeKey = src => squashBlank(src);
 /** 이 기기 번역 모음 — { v:1, <언어>: [[원문, 번역], …] } · 오래된 것부터 빠져요 */
 export function createStore(storage = globalThis.localStorage) {
     const maps = new Map();
     let data = {};
     try { const o = JSON.parse(storage?.getItem?.(STORE) || '{}'); if (isObj(o)) data = o; } catch { data = {}; }
     const mapOf = lang => {
-        if (!maps.has(lang)) maps.set(lang, new Map(Array.isArray(data[lang]) ? data[lang].filter(p => Array.isArray(p) && typeof p[0] === 'string' && typeof p[1] === 'string') : []));
+        if (!maps.has(lang)) maps.set(lang, new Map(Array.isArray(data[lang]) ? data[lang].filter(p => Array.isArray(p) && typeof p[0] === 'string' && typeof p[1] === 'string').map(p => [storeKey(p[0]), p[1]]) : []));   // 옛 열쇠(글자 그대로)도 접어 읽어요
         return maps.get(lang);
     };
     let timer = 0;
@@ -127,10 +135,10 @@ export function createStore(storage = globalThis.localStorage) {
         } catch { /* 이 기기에 못 적으면 이번 접속 동안만 */ }
     };
     return {
-        get: (lang, src) => mapOf(lang).get(String(src).trim()) ?? null,
-        has: (lang, src) => mapOf(lang).has(String(src).trim()),
+        get: (lang, src) => mapOf(lang).get(storeKey(src)) ?? null,
+        has: (lang, src) => mapOf(lang).has(storeKey(src)),
         put(lang, src, out) {
-            const m = mapOf(lang), k = String(src).trim();
+            const m = mapOf(lang), k = storeKey(src);
             m.delete(k); m.set(k, String(out).trim());
             while (m.size > STORE_MAX) m.delete(m.keys().next().value);
             clearTimeout(timer); timer = setTimeout(save, 300);
@@ -340,8 +348,12 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         return n;
     }
 
-    /** 탭 · 띠 칸 글 하나 — 번역이 있으면 적고(원문은 표식 · title), 없으면 자동일 때 부탁 */
-    function paintEl(el) {
+    /**
+     * 탭 · 띠 칸 글 하나 — 번역이 있으면 적고(원문은 표식 · title), 없으면 자동일 때 부탁
+     *   1.9.1 지난 속마음 줄: 목록이 접혀 있으면 모음에 있는 번역만 적고 부탁하지 않아요(펼칠 때만 · onToggle). retry = 펼친 때 — 앞서 실패했거나 시간이 넘어 원문으로 둔 줄도 한 번 더 부탁해요
+     *   (예전엔 한 번 실패 · 시간 넘음이면 그 접속 내내 원문이었고, 다시 부탁하는 길은 번역 단추뿐이었어요)
+     */
+    function paintEl(el, { retry = false } = {}) {
         if (!el?.isConnected) return;
         el.setAttribute?.(SEEN_ATTR, '');   // 버그 사냥 6 신호 시트는 이 표식이 붙기 전(그려진 첫 장면)엔 글을 투명하게 둬요 — 원문이 한 장면도 안 보이게
         const L = lang();
@@ -354,6 +366,8 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
             el.removeAttribute(WAIT_ATTR);
             return;
         }
+        if (active() && !el.hasAttribute(WAIT_ATTR) && el.matches?.(LOG_SEL) && el.closest?.('details:not([open])')) { el.removeAttribute(SEEN_ATTR); return; }   // 접힌 지난 줄: 펼칠 때 부탁(그때까지 글은 투명 — 원문이 한 장면도 안 보이게)
+        if (retry && active()) { failed.delete(src); late.delete(src); }
         // 버그 사냥 6 자동 번역이면 번역이 올 때까지 원문 대신 대기 표시 — 실패하거나 시간(wait)이 넘으면 그때 원문
         if (active() && !failed.has(src) && !late.has(src)) {
             if (!el.hasAttribute(WAIT_ATTR)) { el.setAttribute(SRC_ATTR, src); el.setAttribute(WAIT_ATTR, ''); el.textContent = WAIT_TEXT; el.title = '번역하는 중이에요'; }
@@ -397,8 +411,14 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         if (event?.animationName !== ANIM || off()) return;
         try { paintEl(event.target); } catch { /* 원문 그대로 */ }
     }
+    /** 1.9.1 「지난 속마음 N개」 를 펼친 때: 그 목록의 줄을 한 번에(모음에 있으면 바로 · 없는 줄만 한 묶음으로 부탁 · 올 때까지 대기 표시). toggle 은 번지지 않아 잡는 단계로 들어요 */
+    function onToggle(event) {
+        const d = event?.target;
+        if (off() || !d?.open || !d.matches?.('details') || !d.closest?.('.ss-scope')) return;
+        for (const el of d.querySelectorAll?.(LOG_SEL) ?? []) { try { paintEl(el, { retry: true }); } catch { /* 원문 그대로 */ } }
+    }
     function onSwitch(key, isOff) { if (isOff) restoreAll(); else paintAll(); }
-    return { wrap, pop, expire, arrive, paintEl, paintAll, restoreAll, clickFill, onClick, onAnim, onSwitch, active, autoOn, store, log, _modes: modes, _failed: failed, flush, get wrapped() { return !!orig; } };
+    return { wrap, pop, expire, arrive, paintEl, paintAll, restoreAll, clickFill, onClick, onAnim, onToggle, onSwitch, active, autoOn, store, log, _modes: modes, _failed: failed, flush, get wrapped() { return !!orig; } };
 }
 /**
  * 버그 사냥 6 속마음 말풍선이 위 상태창 띠(#ss-hud)와 겹치지 않게(11-19 사용자 제보 · 리그 폰 375 · 412: 위치 칸을 펼쳐 띠가 커지면 이미 뜬 말풍선이 띠를 52px 덮음).
@@ -497,6 +517,7 @@ export function startMindTr(doc = globalThis.document) {
         attachSheet(doc);
         doc.addEventListener('animationstart', mind.onAnim, true);
         doc.addEventListener('click', mind.onClick, true);
+        doc.addEventListener('toggle', mind.onToggle, true);   // 1.9.1 지난 속마음 목록을 펼친 때
         onMbOff(doc, [KEY], mind.onSwitch);
         try {
             const { eventSource, event_types: types } = globalThis.SillyTavern.getContext();

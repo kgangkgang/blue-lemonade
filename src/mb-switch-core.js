@@ -42,6 +42,7 @@ export const MB_CORE = [
     { key: 'annex', kind: 'screen' },
     { key: 'unvisited', kind: 'screen' },
     { key: 'trend', kind: 'screen' },
+    { key: 'tcolor', kind: 'screen' },
     { key: 'addon', kind: 'screen' },
     { key: 'album', kind: 'screen', setting: 'chat.mbAlbumBtn', invert: true },
     { key: 'ask', kind: 'screen' },

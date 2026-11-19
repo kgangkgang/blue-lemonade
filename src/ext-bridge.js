@@ -105,7 +105,9 @@ export function createBridge({ host = () => globalThis.SillyTavern, stack = capt
         try {
             const read = ctx()?.getExtensionManifest;
             const manifest = typeof read === 'function' ? read(folder) : null;
-            hit = manifest ? Core.TARGET.match.test([manifest.display_name, manifest.homePage, manifest.author].join(' ')) : typeof read !== 'function' && Core.TARGET.match.test(folder);
+            // 1.9.0 같은 작가의 가벼운 판(Lite)은 다른 확장 — 기능 이름표(FN_SLOT)가 본판 것이라 그쪽 요청은 건드리지 않아요
+            const text = manifest ? [manifest.display_name, manifest.homePage, manifest.author].join(' ') : typeof read !== 'function' ? folder : '';
+            hit = !!text && Core.TARGET.match.test(text) && !Core.TARGET.skip.test(text) && !Core.TARGET.skip.test(folder);
         } catch { hit = false; }
         state.folders.set(folder, hit);
         return hit;
