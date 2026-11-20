@@ -9,6 +9,7 @@ import { watchDom } from './dom-watch.js';
 import { mbFit, onMbOff } from './mb-switch-core.js';
 import { dropLead, pinNodes } from './mb-place-mark.js';   // 버그 사냥 6 장소 이름 앞 기호 — 띠 · 지도 밖(상태 칸 · 갈 곳 · 검색 · 알림 · 기록)도
 import { foldBlank, squashBlank, trimEdge, SP } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { mbImport } from './mb-util.js';   // 1.9.2 미트볼 폴더 찾기 공용
 
 export const FLOOR_ATTR = 'data-bl-mb-floors';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -983,14 +984,7 @@ export const tidyOpts = doc => ({ pin: mbFit('annex', doc), blank: mbFit('blank'
 // ── 붙이기 ─────────────────────────────────────────────
 const rawView = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw');
 const isOn = doc => doc?.body?.getAttribute?.(FLOOR_ATTR) === 'on' && !rawView(doc);
-async function mbCore(doc, load = url => import(url)) {
-    try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;
-        return await load(new URL('./src/core.js', src).href);
-    } catch { return null; }
-}
+async function mbCore(doc, load = url => import(url)) { return mbImport('./src/core.js', doc, load); }   // 1.9.2 공용 찾기(src/mb-util.js)
 let started = false;
 export function startMbFloors(doc = globalThis.document, { watch = watchDom, load = undefined, stCtx = () => globalThis.SillyTavern?.getContext?.() } = {}) {
     if (started || !doc?.body) return false;

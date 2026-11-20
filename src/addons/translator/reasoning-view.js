@@ -104,7 +104,8 @@ export function createReasoningView({ getContext, hashOf, translate, progressTex
             redraw(at); decorate(at);
             await save(at);
         } catch (error) {
-            if (error?.cancelled) toastr.info(error.message, '생각 번역');
+            if (job.controller.signal.aborted && job.left) toastr.info('채팅이 바뀌어 생각 번역을 멈췄어요.', '생각 번역');
+            else if (error?.cancelled) toastr.info(error.message, '생각 번역');
             else toastr.error(String(error?.message || error).slice(0, 200), '생각 번역 실패', { timeOut: 8000 });
         } finally {
             clearInterval(tick);
@@ -127,5 +128,9 @@ export function createReasoningView({ getContext, hashOf, translate, progressTex
     function decorateAll() {
         for (const element of document.querySelectorAll('#chat .mes[mesid]')) decorate(Number(element.getAttribute('mesid')));
     }
-    return { render, decorate, decorateAll, toggle, languageOf };
+    /** 채팅이 바뀌면 돌던 생각 번역 요청을 끊어요 — 끝까지 가도 결과는 버려지니 요청(돈)만 나가요 */
+    function cancelAll() {
+        for (const job of running.values()) { job.left = true; try { job.controller.abort(); } catch { /* 이미 끝남 */ } }
+    }
+    return { render, decorate, decorateAll, toggle, languageOf, cancelAll };
 }

@@ -17,6 +17,7 @@
 //   시험: tools/tests/mb-autosub.mjs
 import { mbOff } from './mb-switch-core.js';
 import { foldBlank } from './blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
+import { ctx, chatName as chatId, chatMark, serialQueue, mbImport } from './mb-util.js';   // 1.9.2 공용 도우미
 
 export const KEY = 'autosub';
 export const TAG = 'bl_sub';
@@ -25,7 +26,6 @@ const META = 'statussim';
 const MARK = 'bl-hidden';   // src/mb-hidden.js 의 표식(서로 부르지 않게 같은 글을 둬요)
 const SUB_MODS = new Set(['rel', 'wallet', 'stats']);
 const norm = x => foldBlank(x).replace(/\s+/g, '').toLowerCase();   // 1.9.1 점자 빈칸 전수 2 — `⠀Tobin⠀` 과 `Tobin` 이 같은 열쇠
-const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 
 export const isOurs = a => !!a && typeof a === 'object' && !!a[TAG] && typeof a[TAG] === 'object';
 export const active = (doc = globalThis.document) => !mbOff(KEY, doc) && (!doc?.body?.classList?.contains || doc.body.classList.contains('salty'));
@@ -262,14 +262,7 @@ export function remember(chat, meta = null) {
 }
 
 // ── 실리태번 · 그 확장과 잇기 ─────────────────────────
-async function mbMod(file, doc = globalThis.document) {
-    try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;
-        return await import(new URL(file, src).href);
-    } catch { return null; }
-}
+async function mbMod(file, doc = globalThis.document) { return mbImport(file, doc); }   // 1.9.2 공용 찾기(src/mb-util.js)
 let engP = null;
 export const engine = () => (engP ??= mbMod('./src/engine.js').then(m => (typeof m?.compute === 'function' ? m : (engP = null))));
 /** 1.7.7 바로 반영을 못 하는 까닭 한마디(알림에 덧붙여요) — 할 수 있으면 '' · 스위치를 껐으면 'off' · 그 확장의 계산 부분을 못 받았으면 'module' */
@@ -286,10 +279,7 @@ export const useEngine = e => { engP = e ? Promise.resolve(e) : null; };
 async function refresh() { try { const core = await mbMod('./src/core.js'); core?.app?.refreshNow?.(); } catch { /* 다음 새로고침 때 */ } }
 async function fit(meta, eng) { if (meta?.adjust?.length > 80 && typeof eng?.squash === 'function') { try { eng.squash(meta); } catch { /* 그 확장 다음 기록 때 */ } } }
 
-let queue = Promise.resolve();
-const serial = fn => (queue = queue.then(fn, fn));
-
-const chatId = c => { try { return String(c?.getCurrentChatId?.() ?? c?.chatId ?? ''); } catch { return ''; } };
+const serial = serialQueue();
 
 /** 할 일이 있나(감긴 표식 뒤 숫자 칸 통째 저장 · 테마 기록 · 테마 메타 칸) — 없으면 계산을 한 번도 안 돌려요 · 같은 꼴이면 다시 안 돌려요(sig) */
 let lastSig = '';
@@ -310,8 +300,10 @@ export function signature(c) {
  *   kind = 'hid'(감김) · 'open'(뜸) · 'tidy'(채팅 열기 · 정리)
  */
 export function applyHidden(c = ctx(), { kind = 'tidy', eng = undefined, save = true } = {}) {
+    const still = chatMark(c);   // 1.9.2 계산 모듈을 처음 받는 사이 채팅이 바뀌면 옛 채팅 메타로 새 채팅을 맞추고 저장하지 않게(다음에 열 때 맞춰요)
     return serial(async () => {
         const e = eng ?? await engine(); if (!e) return null;
+        if (!still()) return false;
         const meta = sheet(c); if (!meta) return false;
         const sig = signature(c);
         if (!sig || (kind === 'tidy' && sig === lastSig)) return false;   // 할 일 없음 · 지난번과 같은 꼴
@@ -326,9 +318,12 @@ export function applyHidden(c = ctx(), { kind = 'tidy', eng = undefined, save = 
 }
 /** 지운 답: 지우기 전 기억으로 빼는 기록을 끼우고 저장 · 새로고침(알림 없이) */
 export function applyGone(c = ctx(), snap, { eng = undefined } = {}) {
+    const still = chatMark(c);   // 1.9.2 위와 같게
     return serial(async () => {
+        if (!still()) return false;
         const meta = sheet(c); if (!meta || !liveSets(meta).length) return false;   // 숫자 칸 통째 저장이 없으면 지움은 원작이 알아서 빼요
-        const e = eng ?? await engine(); if (!e) return null;   // 1.7.7 할 일이 있는데 계산을 못 받은 때만 「못 함」(null) — 까닭을 한 번 알려요
+        const e = eng ?? await engine(); if (!e) return null;
+        if (!still()) return false;   // 1.7.7 할 일이 있는데 계산을 못 받은 때만 「못 함」(null) — 까닭을 한 번 알려요
         let r, h; try { r = syncGone(c, e, snap); h = syncHidden(c, e); } catch { return null; }   // 지운 뒤 번호가 당겨지니 감긴 답 기록도 다시 맞춰요
         lastSig = signature(c);
         if (!r.changed && !h.changed) return false;

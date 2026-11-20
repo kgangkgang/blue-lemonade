@@ -15,13 +15,13 @@
 import { mbOff } from './mb-switch-core.js';
 import * as Sub from './mb-autosub.js';
 import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { ctx, mbImport } from './mb-util.js';   // 1.9.2 미트볼 폴더 찾기 공용
 
 export const KEY = 'editsync';
 export const STATE = 'bl_mbedit';     // 메시지 extra 칸: { [스와이프]: { off: { 이름열쇠: { name, t } }, keep: { 이름열쇠: true } } }
 export const CUT_ATTR = 'data-bl-cut';
 const META = 'statussim';
 const norm = x => foldBlank(x).replace(/\s+/g, '').toLowerCase();   // 버그 사냥 7 점자 빈칸도 빈칸
-const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 export const active = (doc = globalThis.document) => !mbOff(KEY, doc) && (!doc?.body?.classList?.contains || doc.body.classList.contains('salty'));
 
 const sidOf = m => m?.swipe_id ?? 0;
@@ -261,14 +261,7 @@ export function markChips(mesEl, forms) {
 }
 
 // ── 실리태번 · 그 확장과 잇기 ─────────────────────────
-async function mbCore(doc = globalThis.document) {
-    try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;
-        return await import(new URL('./src/core.js', src).href);
-    } catch { return null; }
-}
+async function mbCore(doc = globalThis.document) { return mbImport('./src/core.js', doc); }   // 1.9.2 공용 찾기(src/mb-util.js)
 let coreP = null;
 const core = () => (coreP ??= mbCore().then(m => m || (coreP = null)));
 // 1.7.8 이 채팅에 걸린 로어북(카드 안 책 · 카드에 건 책 · 채팅 로어북 · 모임 멤버) 항목 — 채팅 · 캐릭터 · 로어북이 바뀔 때만 다시 읽어요

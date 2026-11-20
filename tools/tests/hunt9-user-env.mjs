@@ -20,7 +20,7 @@ test('① 번역 창 이름표에 영어 파라미터 이름이 없어요', () =
 test('② 번역 저장소 오류 글에 영어 문장이 없어요(내부 표식 하나만 남음)', () => {
     const js = read('src/addons/translator/index.js');
     const msgs = [...js.matchAll(/reject\(new Error\((['"])(.*?)\1\)\)/g)].map(m => m[2]);
-    assert.ok(msgs.length >= 10);
+    assert.ok(msgs.length >= 8);   // 1.9.2 안 쓰는 updateTranslationByOriginalText(오류 글 둘)를 걷어 9곳
     const en = msgs.filter(m => !/[가-힣]/.test(m) && m !== 'no matching data');
     assert.deepEqual(en, []);
 });

@@ -24,7 +24,6 @@ let loading = 0;
 const buffers = new Map();       // url → Promise<{ buffer, bounds }>
 let speaking = false, ducked = false, releaseTimer = 0, evalTimer = 0;
 let bound = false, mediaBound = false;
-const marks = new Set();
 
 const ctx = () => env?.ctx?.() || null;
 const host = () => env?.host?.() || {};
@@ -209,7 +208,6 @@ function paintMarks() {
     const text = now ? `${now.label}${now.fixed ? ' · 고정' : ''}` : enabled ? '…' : '';
     const doc = host().doc?.();
     try { for (const el of doc?.querySelectorAll?.('[data-bl-music-now]') || []) { if (el.textContent !== text) el.textContent = text; el.dataset.mood = now?.mood || ''; } } catch { /* 화면 없음 */ }
-    for (const fn of marks) { try { fn(now); } catch { /* 무시 */ } }
 }
 
 // ───────── scene-sound.js 와 잇기 ─────────
@@ -261,6 +259,5 @@ export const _forTest = {
         cfg = tidyMusic(null); enabled = resting = speaking = ducked = false; bound = mediaBound = false;
         state = { mood: null, since: 0, pending: null }; lastDetect = null; chatKey = null; loading = 0;
         for (const k of Object.keys(turns)) delete turns[k];
-        marks.clear();
     },
 };

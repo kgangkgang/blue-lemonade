@@ -98,11 +98,14 @@ export function createKeepAlive({ audio, hidden = defaultHidden, url = defaultUr
             const a = el();
             if (!a || !holding || !api.hidden()) return false;
             const mine = ++token;
-            const onEnd = () => { a.removeEventListener('ended', onEnd); if (token === mine) api.release(); };
+            let timer = 0;
+            const onEnd = () => { a.removeEventListener('ended', onEnd); clearTimeout(timer); if (token === mine) api.release(); };
             a.addEventListener('ended', onEnd);
             a.loop = false;
             a.src = urlFor(ms);
-            play(a);
+            // 무음 재생이 거절되면 ended 가 안 와요 — 타이머로 끝내 잡기(holding)와 듣개가 남지 않게(wait 와 같은 대비)
+            const byTimer = () => { timer = setTimeout(onEnd, Math.max(0, Number(ms) || 0)); };
+            try { const p = a.play(); if (p && typeof p.catch === 'function') p.catch(byTimer); } catch { byTimer(); }
             return true;
         },
         begin() {

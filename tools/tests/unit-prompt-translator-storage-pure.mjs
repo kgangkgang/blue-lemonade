@@ -60,8 +60,8 @@ await test('validateTranslationMemory: 모양이 틀린 파일은 가져오기 �
 });
 
 await test('validateTranslationMemory: 종류가 다르면 어느 쪽 메모리인지 알려 줘요', () => {
-    assert.throws(() => validateTranslationMemory({ type: 'prompt-panel-tm', kind: 'wi', entries: [] }, 'preset'), /월드인포 번역 메모리입니다 \(지금 탭은 프리셋\)/);
-    assert.throws(() => validateTranslationMemory({ type: 'prompt-panel-tm', kind: 'zzz', entries: [] }, 'char'), /다른 자료 번역 메모리입니다 \(지금 탭은 봇카드\)/);
+    assert.throws(() => validateTranslationMemory({ type: 'prompt-panel-tm', kind: 'wi', entries: [] }, 'preset'), /월드인포 번역 메모리예요 \(지금 탭은 프리셋\)/);
+    assert.throws(() => validateTranslationMemory({ type: 'prompt-panel-tm', kind: 'zzz', entries: [] }, 'char'), /다른 자료 번역 메모리예요 \(지금 탭은 봇카드\)/);
     assert.throws(() => validateTranslationMemory({ type: 'prompt-panel-tm', kind: 'toString', entries: [] }, 'persona'), /다른 자료/, '__proto__ 류 이름이 표를 뚫지 않아요');
 });
 

@@ -85,5 +85,5 @@ export function startChatGraph() {
         refreshTimer = setTimeout(() => { if (mode === 'map' && visible()) controller?.refresh(); }, 250);
     }).observe(list, { childList: true });
     const ctx = SillyTavern.getContext();
-    ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => { clearTimeout(refreshTimer); select('list'); });
+    ctx.eventSource.on((ctx.eventTypes ?? ctx.event_types).CHAT_CHANGED, () => { clearTimeout(refreshTimer); select('list'); });
 }

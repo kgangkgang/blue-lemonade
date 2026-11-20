@@ -42,7 +42,7 @@ async function openEditor(mesId, { soundId } = {}) {
     let busy = false, closed = false, ownPlayback = false, preparingPlayback = false, ownExport = false, tab = identity ? 'script' : 'library';
     let preview = null, previewUrl = '', previewTimer = 0, previewRequest = 0;
     const initialSound = soundId ? library.getSfx(soundId) : null;
-    let selectedSoundId = initialSound?.id || '', libraryQuery = initialSound?.name || '', libraryCategory = '', helpPinned = false, asking = null;
+    let selectedSoundId = initialSound?.id || '', libraryQuery = initialSound?.name || '', libraryCategory = '', asking = null;
     const opener = document.activeElement;
     loadStyle();
     const dialog = element('dialog', 'lvs-dialog lv-editor');
@@ -70,8 +70,6 @@ async function openEditor(mesId, { soundId } = {}) {
     const source = element('details', 'lvs-source'), sourceSummary = element('summary', '', '저작권·출처 · TTS와 효과음');
     const credits = element('div'); credits.innerHTML = ttsCreditsHtml(); // trusted static attribution; no user content
     source.append(sourceSummary, credits); footer.append(source); shell.append(footer);
-    const tooltip = element('div', 'lvs-tooltip'); tooltip.id = 'lvs-help'; tooltip.setAttribute('role', 'tooltip'); tooltip.hidden = true; dialog.append(tooltip);
-    let helpButton = null;
 
     function notice(text, error = false) { if (closed) return; status.textContent = text; status.classList.toggle('lvs-error', error); }
     function dirty() { return JSON.stringify(rows) !== JSON.stringify(saved); }
@@ -98,14 +96,13 @@ async function openEditor(mesId, { soundId } = {}) {
     }
     function snapshot(before) { if (JSON.stringify(before) === JSON.stringify(rows)) return; undo.push(before); if (undo.length > 80) undo.shift(); redo = []; updateControls(); notice('편집 중 · 아직 저장하지 않았어요.'); }
     function mutate(fn, focusId) { if (busy) return; const before = copy(rows); fn(); snapshot(before); renderScript(); if (focusId) scriptPanel.querySelector(`[data-row-id="${focusId}"] textarea`)?.focus(); }
-    function setTab(next) { tab = next; scriptPanel.hidden = next !== 'script'; libraryPanel.hidden = next !== 'library'; hideHelp(); if (next === 'library') renderLibrary(); updateControls(); }
+    function setTab(next) { tab = next; scriptPanel.hidden = next !== 'script'; libraryPanel.hidden = next !== 'library'; if (next === 'library') renderLibrary(); updateControls(); }
     function history(back) { const from = back ? undo : redo, to = back ? redo : undo; if (!from.length || busy) return; to.push(copy(rows)); rows = from.pop(); renderScript(); notice('대본 편집을 ' + (back ? '되돌렸어요.' : '다시 적용했어요.')); }
     function help(text, title = '사용 방법') {
         // 1.0.0 도움말 하나로: 말풍선 대신 테마 공용 도움말 창(help-sheet.js) · 모양은 H3(css/76 .bl-help-btn)
         const b = button('', null, 'lvs-help-button bl-help-btn'); b.innerHTML = '<i class="fa-solid fa-question" aria-hidden="true"></i>'; b.setAttribute('aria-label', `${title} 사용 방법`);
         b.addEventListener('click', () => { import('../../../help-sheet.js').then(m => m.openHelpSheet({ title, body: [text] })); }); return b;
     }
-    function hideHelp() { helpPinned = false; tooltip.hidden = true; helpButton?.removeAttribute('aria-describedby'); helpButton?.setAttribute('aria-expanded', 'false'); helpButton = null; }
     function field(labelText, control, explanation = '') {
         const wrap = element('div', 'lvs-field'), label = element('label', '', labelText), caption = element('div', 'lvs-label');
         control.id = `lvs-field-${++serial}`; label.htmlFor = control.id; caption.append(label); if (explanation) caption.append(help(explanation, labelText)); wrap.append(caption, control); return wrap;
@@ -255,9 +252,8 @@ async function openEditor(mesId, { soundId } = {}) {
     }
     async function requestClose() { if (asking) return; if (dirty() && !await ask('아직 저장하지 않은 대본 편집이 있어요. 저장하지 않고 닫을까요?', '저장하지 않고 닫기')) return; if (!closed) dialog.close(); }
     for (const [b, panel] of [[scriptTab, scriptPanel], [libraryTab, libraryPanel]]) { b.id = panel.id + '-tab'; b.setAttribute('role', 'tab'); b.setAttribute('aria-controls', panel.id); panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', b.id); b.addEventListener('keydown', event => { if (identity && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); setTab(event.key === 'Home' ? 'script' : event.key === 'End' ? 'library' : tab === 'script' ? 'library' : 'script'); (tab === 'script' ? scriptTab : libraryTab).focus(); } }); }
-    dialog.addEventListener('cancel', event => { event.preventDefault(); if (!tooltip.hidden) { hideHelp(); return; } requestClose(); });
+    dialog.addEventListener('cancel', event => { event.preventDefault(); requestClose(); });
     dialog.addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.target.closest('input,textarea')) { event.preventDefault(); history(!event.shiftKey); } });
-    content.addEventListener('scroll', hideHelp, { passive: true });
     dialog.addEventListener('close', () => { closed = true; stopPreview(); stopOwnedAudio(); if (active?.dialog === dialog) active = null; dialog.remove(); if (opener?.isConnected) opener.focus(); }, { once: true });
     document.body.append(dialog); active = { dialog, library: soundId => { if (soundId) { const sound = library.getSfx(soundId); selectedSoundId = sound?.id || ''; libraryQuery = sound?.name || ''; libraryCategory = ''; } setTab('library'); } }; renderScript(); setTab(tab);
     try { showThemeModal(dialog); } catch (error) { active = null; dialog.remove(); throw error; }

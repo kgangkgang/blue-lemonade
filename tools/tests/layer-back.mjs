@@ -116,4 +116,16 @@ await ok('⑨ 1.7.6 테마가 스스로 물린 이동(겹을 ✕ · 고르기로
     const src = (await import('node:fs')).readFileSync(path.join(root, 'src/layer-back.js'), 'utf8');
     assert.ok(src.includes("addEventListener('popstate', onPop, true)"));                              // 잡는 단계 — 나중에 걸려도 먼저 불려요
 });
+await ok('⑩ 1.9.2 모듈이 두 번 읽혀도(src 와 dist · 묶음 조각) 겹 관리자는 문서에 하나 — 뒤 것이 앞 것의 기록 칸을 물려 방금 연 창을 닫지 않아요', async () => {
+    const again = await import(pathToFileURL(path.join(root, 'src/layer-back.js')).href + '?twice=' + Math.random());
+    assert.notEqual(again, M);                       // 다른 모듈 인스턴스
+    assert.equal(again.layers(), M.layers());        // 같은 관리자
+    const bc1 = await import(pathToFileURL(path.join(root, 'src/back-close.js')).href + '?a=' + Math.random());
+    const bc2 = await import(pathToFileURL(path.join(root, 'src/back-close.js')).href + '?b=' + Math.random());
+    bc1.resetBackCloseForTest();
+    const body = { getAttribute: () => null }, doc = { body, querySelectorAll: () => [], addEventListener() {} };
+    assert.equal(bc1.startBackClose(doc, { watch() {}, stack: M.createLayers(fakeWin()) }), true);
+    assert.equal(bc2.startBackClose(doc, { watch() {}, stack: M.createLayers(fakeWin()) }), false);   // 둘째 인스턴스는 이미 시작한 것으로 봐요(같은 창을 두 겹으로 올리지 않게)
+    bc1.resetBackCloseForTest();
+});
 console.log(`layer-back: ${n}개 통과`);

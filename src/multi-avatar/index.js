@@ -103,7 +103,9 @@ function onError(event) {
     const img = event.target;
     if (!(img instanceof HTMLImageElement) || !(SWAP in img.dataset)) return;
     event.stopPropagation();
-    const path = decodeURIComponent(new URL(img.src, location.href).pathname.replace(/^\//, ''));
+    // 깨진 % 가 든 주소여도 원본으로 돌아가게(예전엔 여기서 던져 restore 까지 못 갔어요)
+    let path = new URL(img.src, location.href).pathname.replace(/^\//, '');
+    try { path = decodeURIComponent(path); } catch { /* 풀지 못하면 그대로 */ }
     if (/^user\/images\//.test(path)) broken.add(path);
     restore(img);
 }

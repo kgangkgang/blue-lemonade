@@ -71,5 +71,9 @@ export function createLayers(win = globalThis) {
     };
 }
 let shared = null;
+// 1.9.2 화면 빚: 「하나」 는 문서에 하나예요 — 이 모듈이 두 번 읽히면(묶음 조각 · src 와 dist 를 같이 부름) 겹 관리자가 둘이 되어,
+//   나중 것이 처음 이어질 때(wire 의 settle) 앞 것이 쌓은 기록 칸을 「겹 없는데 깊이만 남은 칸」 으로 읽고 물렸고, 그 신호에서 앞 것이 방금 연 창을 닫았어요
+//   (화면 검사 「여는 함수 · 메모 그래프 — 새로 뜬 창이 없어요」 · 1.6.9 부터). 문서 전역 열쇠 하나에 두고 같이 써요.
+const SHARED_KEY = Symbol.for('blue-lemonade.layer-back');
 /** 테마가 같이 쓰는 겹 관리자 하나 */
-export const layers = () => (shared ||= createLayers(globalThis));
+export const layers = () => (shared ||= (globalThis[SHARED_KEY] ||= createLayers(globalThis)));

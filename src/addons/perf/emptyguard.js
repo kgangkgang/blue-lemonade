@@ -392,7 +392,8 @@ export function createSaveFailMute({ now = () => Date.now(), windowMs = 6000 } =
             if (wrapped || !target || typeof target.error !== 'function') return false;
             const original = target.error;
             target.error = function (message, title, ...rest) {
-                if (shouldMute(message, title)) return undefined;
+                // 숨긴 알림도 toastr 처럼 jQuery 객체를 돌려줘요(부른 쪽이 .remove() 등을 이어 써도 안 깨지게)
+                if (shouldMute(message, title)) return globalThis.jQuery ? globalThis.jQuery() : undefined;
                 return original.call(this, message, title, ...rest);
             };
             wrapped = true;

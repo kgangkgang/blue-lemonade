@@ -35,18 +35,19 @@ export function closeDialog(dlg) {
     return gone(dlg);
 }
 
-let state = null, started = false;
-const ensure = (doc = globalThis.document, stack = layers()) => (state ||= { doc, stack, open: new Map() });
+// 1.9.2 화면 빚: 창 하나에 겹 하나는 문서 전체에서 하나예요 — 이 모듈이 두 번 읽혀도(src 와 dist) 같은 창을 두 겹으로 올리지 않게 문서 전역 열쇠에 둬요(src/layer-back.js 와 같은 까닭)
+const G = (globalThis[Symbol.for('blue-lemonade.back-close')] ||= { state: null, started: false });
+const ensure = (doc = globalThis.document, stack = layers()) => (G.state ||= { doc, stack, open: new Map() });
 /** 창 하나에 겹 하나 → 그 겹 내리기(이미 올렸거나 안 올리면 null). 창에 리스너를 달지 않아요 — 닫힘은 toggle · 문서에서 빠짐 · showThemeModal 의 close 처리가 알려요 */
 function add(dlg) {
-    const s = state;
+    const s = G.state;
     if (!s || !isDialog(dlg) || s.open.has(dlg) || !wants(s.doc) || dlg.matches?.(SKIP) || !isModal(dlg)) return null;
     // 버그 사냥 9b: body 직속이 아닌 창이 닫히지 않고 떼어지면(바깥 상자째) toggle · body 감시 모두 몰라 겹이 남았어요 — 뒤로 가기 때 그 겹은 세지 않게(alive)
     s.open.set(dlg, s.stack.open(() => closeDialog(dlg), () => { const live = dlg.isConnected !== false; if (!live) s.open.delete(dlg); return live; }));
     return () => drop(dlg);
 }
 function drop(dlg) {
-    const s = state; const done = s?.open.get(dlg);
+    const s = G.state; const done = s?.open.get(dlg);
     if (!done) return;
     s.open.delete(dlg);
     try { done(); } catch { /* 다음 맞추기에 */ }
@@ -61,8 +62,8 @@ export function backLayer(close, doc = globalThis.document, stack = layers()) {
 }
 
 export function startBackClose(doc = globalThis.document, { watch = watchDom, stack = layers() } = {}) {
-    if (started || !doc?.body) return false;
-    started = true;
+    if (G.started || !doc?.body) return false;
+    G.started = true;
     ensure(doc, stack);
     try { stack.start?.(); } catch { /* 겹이 생길 때 */ }
     try { for (const dlg of doc.querySelectorAll?.('dialog[open]') || []) add(dlg); } catch { /* 다음에 뜨는 창부터 */ }
@@ -75,7 +76,7 @@ export function startBackClose(doc = globalThis.document, { watch = watchDom, st
     } catch { /* 감시로 */ }
     try {
         watch(doc.body, { childList: true, name: '뒤로 가기로 창 닫기' }, records => {
-            const s = state;
+            const s = G.state;
             for (const r of records) {
                 for (const n of r.removedNodes || []) if (s.open.has(n)) drop(n);
                 for (const n of r.addedNodes || []) if (isDialog(n)) add(n);
@@ -86,4 +87,4 @@ export function startBackClose(doc = globalThis.document, { watch = watchDom, st
     return true;
 }
 /** 시험용: 모듈 상태 비우기 */
-export function resetBackCloseForTest() { state = null; started = false; }
+export function resetBackCloseForTest() { G.state = null; G.started = false; }

@@ -37,6 +37,7 @@ export function isPopStart(e) {
 export const STORE = 'bl-mb-mind-tr-v1';
 export const STORE_MAX = 400;
 export const SRC_ATTR = 'data-bl-mind-src';
+export const MIND_BUSY = Symbol.for('blue-lemonade.mb-mind-tr.busy.v1');   // 1.9.2 src/ext-bridge-tr.js 가 읽어요
 // 1.8.2(2.10 새 기능 맞춤): 관전석 이름(.ss-wt-feed … > b — 주변인 · 실시간 채팅은 AI 가 이야기 언어로 이름을 지어요) · HUD · 미니바 「속마음」 칸 글(.t-mind .m)도
 export const SEL = '.ss-scope :is(.ss-mindc .ss-mind.big, .ss-mind-log li > span, .ss-wt-feed li > div > p, .ss-wt-feed li > div > b, .ss-mind-bub > em, .ss-t.t-mind .p > .m)';
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';   // 그 확장 번역 단추(src/ext-bridge-tr.js 와 같은 것)
@@ -100,8 +101,8 @@ export function mindItems(state, { modOn = () => true, covered = () => false } =
 }
 /** 번역 단추를 눌렀을 때 옮길 글 전부: 지금 · 지난 속마음 · 관전석 */
 export function allMindTexts(state) {
-    const out = new Set();
-    const add = t => { if (typeof t === 'string' && t.trim()) out.add(t.trim()); };
+    const seen = new Set(), out = new Set();
+    const add = t => { if (typeof t !== 'string' || !t.trim()) return; const k = storeKey(t); if (seen.has(k)) return; seen.add(k); out.add(t.trim()); };   // 1.9.2 접은 열쇠로 하나만 · blank-ok: 열쇠는 storeKey(점자 빈칸 접음) · 보낼 글은 예전 그대로
     for (const list of [state?.data?.rel?.user, state?.data?.profile?.list]) for (const r of Array.isArray(list) ? list : []) {
         add(r?.mind?.text);
         for (const x of Array.isArray(r?.mindLog) ? r.mindLog : []) add(x?.text);
@@ -116,6 +117,11 @@ export function allMindTexts(state) {
  *   열쇠가 글자 그대로라 그 턴에 받아 둔 번역을 지난 속마음 줄에서 못 찾았어요(사용자 사진 11-20 — 지금 속마음은 한국어 · 지난 줄은 원문). 접은 열쇠로 같은 번역을 다시 써요(요청 0).
  */
 export const storeKey = src => squashBlank(src);
+/** 1.9.2 접은 열쇠(storeKey)로 보는 집합 — 넣은 첫 글을 값으로 남겨요(보낼 때는 그 글 그대로) */
+export function foldSet() {
+    const m = new Map();
+    return { add: t => { const k = storeKey(t); if (!m.has(k)) m.set(k, t); }, has: t => m.has(storeKey(t)), delete: t => m.delete(storeKey(t)), clear: () => m.clear(), values: () => [...m.values()], get size() { return m.size; } };
+}
 /** 이 기기 번역 모음 — { v:1, <언어>: [[원문, 번역], …] } · 오래된 것부터 빠져요 */
 export function createStore(storage = globalThis.localStorage) {
     const maps = new Map();
@@ -171,9 +177,13 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
     let orig = null, chat;
     const modes = new Map();   // 열쇠 → { m: 'wait' | 'tr' | 'raw', src, who, ko, late }
     const wake = new Map();    // 열쇠 → 원문으로 띄울 타이머
-    const pending = new Set(), inflight = new Set(), failed = new Set();
-    const late = new Set(), waitT = new Map();   // 버그 사냥 6 탭 글: 시간이 넘어 원문으로 둔 글 · 글마다 시간 재기 하나
+    // 1.9.2 번역 비용: 대기 · 보내는 중 · 실패 · 시간 넘김도 모음과 같은 접은 열쇠(storeKey)로 — 「글⠀(카모지)」 와 「글 (카모지)」(지난 줄)가
+    //   둘 다 모음에 없을 때 한 묶음에 두 번 실려 같은 글을 두 번 샀어요(번역 단추 목록 allMindTexts 도 같은 열쇠로 하나만)
+    const pending = foldSet(), inflight = foldSet(), failed = foldSet();
+    const late = foldSet(), waitT = new Map();   // 버그 사냥 6 탭 글: 시간이 넘어 원문으로 둔 글 · 글마다 시간 재기 하나
     let flushTimer = 0;
+    // 1.9.2 이 글을 지금 번역하고 있나(대기 · 보내는 중) — 미트볼 메우기가 같은 글을 같이 보내지 않게 알려 줘요(마지막에 만든 것이 걸려요)
+    try { globalThis[MIND_BUSY] = t => !off() && (pending.has(String(t ?? '').trim()) || inflight.has(String(t ?? '').trim())); } catch { /* 알림 없이 */ }   // blank-ok: 열쇠는 foldSet(storeKey)
     const log = [];   // 시험 · 진단: [시각, 일]
     const note = what => { log.push([Date.now(), what]); if (log.length > 200) log.shift(); };
 
@@ -242,7 +252,7 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
     function arrive(src, ko) {
         let again = false; const waitWho = new Set();
         for (const [key, st] of modes) {
-            if (st.src !== src) continue;
+            if (st.src !== src && storeKey(st.src) !== storeKey(src)) continue;   // 1.9.2 빈칸 꼴만 다른 같은 글도(한 번 받은 번역을 같이 써요)
             if (st.m === 'wait') {
                 timers.clearTimeout(wake.get(key)); wake.delete(key);
                 const name = st.name ?? (key.startsWith('w|') ? store.get(lang(), st.who) : null);   // 같은 묶음으로 온 관전자 이름(아직 안 띄웠으니 지금 정해요)
@@ -311,7 +321,7 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
         flushTimer = timers.setTimeout(() => { flush().catch(e => console.warn('[Blue Lemonade] 속마음 번역', e)); }, 120);
     }
     async function flush() {
-        const list = [...pending].filter(k => !inflight.has(k));
+        const list = pending.values().filter(k => !inflight.has(k));
         pending.clear();
         if (!list.length) return 0;
         let done = 0;
@@ -341,6 +351,9 @@ export function createMindTr(mb, { doc = globalThis.document, timers = globalThi
             if (looksDone(ko, k, L)) { store.put(L, k, ko); failed.delete(k); n++; got.push([k, ko]); }
             else failed.add(k);
         });
+        // 1.9.2 번역 비용: 화면만 번역이면 그 확장 사전(채팅 메타 tr)에도 같은 짝을 넣어요 — 미트볼 메우기(src/ext-bridge-tr.js stateGaps)가
+        //   상태 칸의 같은 속마음 글을 또 번역 요청하지 않게(사용자 꼴 리그: 영어 속마음 하나가 답마다 두 번 · 그 확장 탭 글도 같은 번역으로 보여요)
+        if (got.length && set().ssGenLang === 'enview') { try { tr.addPairs?.(got.filter(([k]) => LATIN.test(k))); } catch { /* 모음에는 들어갔어요 */ } }
         // 모음에 다 넣은 뒤에 알려요 — 한마디 글이 먼저 와서 다시 그릴 때 같은 묶음의 관전자 이름도 이미 있게
         for (const [k, ko] of got) arrive(k, ko);
         note(`번역 옴 ${n}/${list.length}`);

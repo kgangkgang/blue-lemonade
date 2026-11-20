@@ -15,6 +15,7 @@
 import { holdSheet } from './boot-gate.js';
 import { upHas } from './mb-upstream.js';
 import { mbOff, onMbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 「「작가 노트 넣기」 단추」 — 끄면 단추 · 알림을 안 둬요(신호는 만들기 화면 「채팅 읽기」 와 같이 써서 시트에 남아요)
+import { ctx } from './mb-util.js';   // 1.9.2 공용 맥락 읽기
 
 export const SHEET_ID = 'bl-mb-note-css';
 export const ANIM = 'bl-mb-note-seen';
@@ -24,7 +25,6 @@ const META = 'statussim';   // 그 확장의 채팅 메타 칸 이름(원작 cor
 const SHORT_PERSONA = 200;   // 이보다 짧은 페르소나 설명은 이름 정도라고 봐요(알림 판정)
 const TOLD_MAX = 60;
 
-const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 const flat = s => s.replace(/\s+/g, ' ').trim();
 
 /** 이 채팅의 작가 노트 글(앞뒤 빈칸 뗌) — 없으면 '' */

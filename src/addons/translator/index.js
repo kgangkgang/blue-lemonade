@@ -660,7 +660,6 @@ function loadSettings() {
             const selectedPrompt = promptManager.getSelectedPrompt();
             if (selectedPrompt) {
                 extensionSettings.selected_translation_prompt = selectedPrompt.content;
-                logDebug('Restored translation prompt:', selectedPrompt.title);
             }
         } else if (promptSelect && promptManager.customPrompts.some(p => p.id === promptSelect.value)) {
             // 2026-10-06: 저장된 선택이 기본(채팅 번역)인데 드롭다운에 커스텀이 남아 있으면 (프리셋 적용 뒤) 기본으로 맞춘다
@@ -1692,7 +1691,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     // [추가] Custom은 API 키 없이 동작하는 서버(로컬 등)가 많으므로 키 대신 주소를 검증한다.
     if (provider === 'custom') {
         if (!getCustomEndpointConfig().url) {
-            throw new Error('커스텀 엔드포인트 주소가 설정되어 있지 않습니다. (예: http://127.0.0.1:5001/v1)');
+            throw new Error('커스텀 엔드포인트 주소가 설정되어 있지 않아요. (예: http://127.0.0.1:5001/v1)');
         }
     } else if (!apiKey && (via || !extensionSettings.use_reverse_proxy)) {
         throw new Error(`${provider.toUpperCase()} API 키가 설정되어 있지 않아요.`);
@@ -2089,8 +2088,6 @@ async function translate(text, options = {}) {
             compareText = displayCards.compare(compareText);
         }
 
-        // [디버그: 마스킹 추적] 원문에서 기대하는 마스킹 개수 저장
-        const expectedMaskCount = protectedBlocks.length;
 
         // ==================================================================================
         // [기존 로직 복구] 2. 옵션 및 프롬프트 선택 로직 (UI 실시간 반영)
@@ -2598,40 +2595,8 @@ async function translate(text, options = {}) {
         if (kanaLines.length && !isInputTranslation) translatedText = tidyGlossaryOutput(isRetranslation ? compareText : text, translatedText);
         if (options.collectNames === true && !isInputTranslation) noteGlossarySuggestions(isRetranslation ? compareText : text, translatedText, suggestPairs, options.checkSource ?? text);   // 6.4.5 새 이름 용어집 제안 (메시지 번역 · 다시 번역만 · 유료 호출 없음)
 
-        // [디버그: 마스킹 추적] 1. 순수 번역문(Raw) 상태에서의 마스킹 개수 확인
-        let rawMaskCount = 0;
-        if (DEBUG_MODE && expectedMaskCount > 0) {
-            try {
-                // [[__VAR_숫자__]] 패턴 카운트
-                const rawMatches = translatedText.match(/\[\[__VAR_\d+__\]\]/g);
-                rawMaskCount = rawMatches ? rawMatches.length : 0;
-            } catch (e) { console.error('[Debug] Raw mask counting error', e); }
-        }
-
         // [신규 기능 유지] 1차 수리: LLM이 망가뜨린 패턴 복구 (Smart Fix)
         translatedText = fixMalformedPlaceholders(translatedText);
-
-        // [디버그: 마스킹 추적] 2. 보정 후(Fixed) 상태에서의 마스킹 개수 확인 및 로그 출력
-        if (DEBUG_MODE && expectedMaskCount > 0) {
-            try {
-                const fixedMatches = translatedText.match(/\[\[__VAR_\d+__\]\]/g);
-                const fixedMaskCount = fixedMatches ? fixedMatches.length : 0;
-                
-                const statusIcon = expectedMaskCount === fixedMaskCount ? 'OK' : 'CHECK';
-                const recoverIcon = rawMaskCount !== fixedMaskCount ? 'Fixed' : '-';
-
-                console.groupCollapsed(`[LLM Translator Mask Debug] ${statusIcon} Match: ${fixedMaskCount}/${expectedMaskCount}`);
-                console.log(`Original(Expected): ${expectedMaskCount}`);
-                console.log(`LLM Raw Output  : ${rawMaskCount}`);
-                console.log(`After SmartFix  : ${fixedMaskCount} (${recoverIcon})`);
-                
-                if (expectedMaskCount !== fixedMaskCount) {
-                    console.warn('Mask count mismatch! Some protected blocks might be lost or duplicated.');
-                    console.log('Raw Text:', translatedText);
-                }
-                console.groupEnd();
-            } catch (e) { console.error('[Debug] Fixed mask counting error', e); }
-        }
 
         // 6.1.8 보호 블록(그림 자리 같은 것)은 모델이 자리표시자를 빠뜨려도 잃지 않는다 — 원문 문단 자리(못 찾으면 끝)에 되돌리고, 그런 답은 캐시하지 않는다 (report.restoredBlocks).
         //       값으로 센다: 교정 재번역은 원문 · 기존 번역을 묶어 보내 같은 블록이 두 번(번호 둘) 나가는데, 답에는 그중 하나만 있으면 된다.
@@ -2717,16 +2682,19 @@ async function translate(text, options = {}) {
     } catch (error) {
         if (error?.cancelled || error?.resumable) throw error;
         // [1.9.0] 모델의 거절 · 차단은 코드 오류가 아니라 경고로 남긴다
-        (error.refused ? console.warn : console.error)('Translation error:', error);
+        (error?.refused ? console.warn : console.error)('Translation error:', error);
+        // Error 가 아닌 값이 던져져도 영어 TypeError 가 알림에 뜨지 않게 글로 읽어요
+        const text = String(error?.message ?? error ?? '');
         // API 키 관련 오류인 경우 더 명확한 메시지 제공
-        if (error.message.includes('API 키') || error.message.includes('설정되어 있지 않습니다')) {
-            throw new Error(`API 키 설정 오류: ${error.message}`);
+        if (text.includes('API 키') || text.includes('설정되어 있지 않')) {
+            throw new Error(`API 키 설정 오류: ${text}`);
         }
         // 네트워크 오류
-        if (/Failed to fetch|Load failed|NetworkError/.test(error.message)) {
+        if (/Failed to fetch|Load failed|NetworkError/.test(text)) {
             throw new Error('네트워크 연결 오류: 인터넷 연결을 확인해주세요.');
         }
         // 일반적인 에러
+        if (!error || typeof error !== 'object') throw new Error(text || '번역에 실패했어요.');
         throw error; // 알림 제목이 이미 실패를 설명한다. 중복 접두어와 오류 속성 손실을 피한다.
     } finally { watcher.close(); }
 }
@@ -3735,7 +3703,9 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             syncMesToSwipe(targetId);
             await context.saveChat();
         } else startToast?.();
-        if (message.extra?.original_text_hash === originalHashOf(shownOriginal)) publishArchiveReady(message, shownSource, chatId, 'translation');
+        // 같은 채팅이 제자리에서 다시 불렸으면 원래 객체는 배열에 없어요 — 옮겨 탄 대상으로 알려요(재번역과 같게)
+        const published = runToken.guard.target?.() || message;
+        if (published.extra?.original_text_hash === originalHashOf(shownOriginal)) publishArchiveReady(published, shownSource, chatId, 'translation');
     } catch (error) {
         runToken.error = error;
         runToken.preview?.revert();   // 2.5.1 멈춤 · 실패: 미리 보기를 지우고 지금 데이터대로 (원문 · 예전 번역)
@@ -3812,10 +3782,15 @@ async function toggleOriginalText(messageId) {
     emitTranslationUIUpdate(messageId, 'toggle');
 	
     // updateMessageBlock 후 DOM이 완전히 업데이트된 후 플래그 설정
+    markShowingLater(messageId, message, !isCurrentlyShowingOriginal);
+}
+
+// 0.1초 뒤 그 메시지 칸에 「원문 보는 중」 표시 — 그 사이 채팅이 바뀌거나 메시지가 지워져 같은 번호에 다른 메시지가 오면 붙이지 않아요
+//   (예전엔 번호로만 붙여 새 채팅의 같은 번호 메시지가 ⇄ 를 누르면 다시 번역(유료)으로 갈 수 있었어요)
+function markShowingLater(messageId, message, showing) {
     setTimeout(() => {
-        const messageBlock = $(`#chat .mes[mesid="${messageId}"]`);
-        const textBlock = messageBlock.find('.mes_text');
-        textBlock.data('showing-original', !isCurrentlyShowingOriginal);
+        if (!message || getContext().chat?.[messageId] !== message) return;
+        $(`#chat .mes[mesid="${messageId}"]`).find('.mes_text').data('showing-original', showing);
     }, 100);
 }
 
@@ -3911,11 +3886,7 @@ async function showOriginalText(messageId) {
     emitTranslationUIUpdate(messageId, 'show_original');
 	
     // updateMessageBlock 후 DOM이 완전히 업데이트된 후 플래그 설정
-    setTimeout(() => {
-        const messageBlock = $(`#chat .mes[mesid="${messageId}"]`);
-        const textBlock = messageBlock.find('.mes_text');
-        textBlock.data('showing-original', true);
-    }, 100);
+    markShowingLater(messageId, message, true);
 }
 
 // 번역 버튼 클릭 시 상태에 따른 동작 처리
@@ -3953,11 +3924,7 @@ async function handleTranslateButtonClick(messageId) {
             await refreshMessageBlock(messageId, message);
 
             // 번역문 표시 플래그 설정
-            setTimeout(() => {
-                const messageBlock = $(`#chat .mes[mesid="${messageId}"]`);
-                const textBlock = messageBlock.find('.mes_text');
-                textBlock.data('showing-original', false);
-            }, 100);
+            markShowingLater(messageId, message, false);
 
             toastr.info(`번역문으로 전환했어요 #${messageId}`);
         } else {
@@ -4351,13 +4318,7 @@ async function editTranslation(messageId) {
 
                 // [요청하신 핵심 수정 사항] 
                 // updateMessageBlock으로 DOM이 재생성되었으므로, 다시 요소를 찾아 플래그 설정
-                setTimeout(() => {
-                    const newMessageBlock = $(`#chat .mes[mesid="${messageId}"]`);
-                    const newTextBlock = newMessageBlock.find('.mes_text');
-                    if (newTextBlock.length) {
-                        newTextBlock.data('showing-original', false);
-                    }
-                }, 100);
+                markShowingLater(messageId, message, false);
 
             } catch (e) {
                 toastr.error('번역문 수정 중 오류가 발생했어요.');
@@ -4976,7 +4937,6 @@ jQuery(async () => {
             presetManager.updatePresetDropdown();
         }
 
-        logDebug('LLM Translator extension initialized successfully');
         publishTranslatorAPI();
         resolve();
     } catch (error) {
@@ -6318,7 +6278,6 @@ async function rescueFromBuiltinTranslate(messageId, message) {
     const plan = rescuePlan({ state, message, currentHash, known });
     if (!plan) return false;
     message.extra.display_text = plan.display;
-    logDebug(`[7.9.9] builtin translate ${plan.why} the translation of #${messageId}; restored`);
     refreshMessageBlock(messageId, message);
     noticeBuiltinTranslate({ rescued: true });
     await context.saveChat();
@@ -6357,7 +6316,6 @@ async function handleMessageEdit(messageId) {
             if (typeof previousOriginalText === 'string') {
                 try {
                     await deleteTranslationByOriginalText(previousOriginalText);
-                    logDebug(`Message ${messageId} was actually edited. Deleted translation for previous original text: "${previousOriginalText.substring(0, 50)}..."`);
                 } catch (error) {
                     // DB에 해당 번역이 없을 수도 있음
                     if (error.message !== 'no matching data') {
@@ -6397,7 +6355,6 @@ async function handleMessageEdit(messageId) {
             }
         } else if (previousHash) {
             // 수정 버튼을 눌렀지만 실제로는 수정하지 않은 경우 유지 (해시가 같음)
-            logDebug(`Message ${messageId} edit button was clicked but no actual changes were made. Keeping translation data.`);
             // [1.9.2] 실리태번은 편집을 끝내거나 취소하면 원문(mes)을 그려 놓는다. 번역문을 남겨 두기만 하면 화면엔 원문이 보이고
             //         돋보기 상태와도 어긋났다 — 남긴 번역문으로 다시 그린다
             refreshMessageBlock(messageId, message);
@@ -6425,7 +6382,7 @@ async function handleMessageEdit(messageId) {
 
 // 이벤트 핸들러 등록 함수
 function initializeEventHandlers() {
-    eventSource.makeFirst(event_types.CHAT_CHANGED, () => guards.chatChanged());
+    eventSource.makeFirst(event_types.CHAT_CHANGED, () => { if (guards.chatChanged()) reasoningView.cancelAll(); });
     for (const type of [event_types.MESSAGE_SWIPED, event_types.MESSAGE_EDITED].filter(Boolean)) {
         eventSource.makeFirst(type, id => guards.messageChanged(id, type === event_types.MESSAGE_SWIPED ? 'swiped' : 'edited'));
     }
@@ -7164,7 +7121,7 @@ async function downloadDB() {
         a.download = `${browserName}_SillyLLMtranslations_${formattedDate}.json`;
 
         a.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);   // 바로 풀면 일부 브라우저(사파리 등)에서 받기가 시작되기 전에 주소가 사라져요
     } else {
         toastr.error('저장된 데이터가 없어요.');
     }
@@ -7196,7 +7153,7 @@ async function restoreDB(file) {
     let db;
     try {
         const rows = JSON.parse(await file.text());
-        if (!Array.isArray(rows)) throw new TypeError('올바르지 않은 파일형식입니다.');
+        if (!Array.isArray(rows)) throw new TypeError('올바르지 않은 파일형식이에요.');
         db = await openDB();
         await restoreTranslationRows(db, STORE_NAME, rows);
         toastr.success('데이터를 복원했어요.');
@@ -7205,53 +7162,6 @@ async function restoreDB(file) {
     } finally { db?.close(); }
 }
 
-
-// 데이터 업데이트 함수 수정
-async function updateTranslationByOriginalText(originalText, newTranslation) {
-    const db = await openDB();
-    const provider = extensionSettings.llm_provider;
-    const model = extensionSettings.llm_model;
-
-    // UTC 시간을 ISO 문자열로 가져오기
-    const utcDate = new Date();
-
-    // 한국 시간으로 변환 (UTC+9)
-    const koreanDate = new Date(utcDate.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 시간
-
-    // ISO 문자열로 저장
-    const date = koreanDate.toISOString();
-
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const index = store.index('originalText');
-        const request = index.getAll(originalText); // [1.9.2] 같은 원문 줄이 여럿이면 하나로 (addTranslationToDB 참고)
-
-        request.onsuccess = async (event) => {
-            const [record, ...rest] = event.target.result || [];
-
-            if (record) {
-                rest.forEach(extra => store.delete(extra.id));
-                const updateRequest = store.put({ ...record, translation: newTranslation, provider: provider, model: model, date: date });
-                updateRequest.onsuccess = () => {
-                    publishTranslatorAPI();
-        resolve();
-                };
-                updateRequest.onerror = (e) => {
-                    reject(new Error("번역 저장소를 고치지 못했어요"));
-                };
-            } else {
-                reject(new Error('no matching data'));
-            }
-        };
-        request.onerror = (e) => {
-            reject(new Error("번역 저장소를 읽지 못했어요"));
-        };
-        transaction.oncomplete = function () {
-            db.close();
-        };
-    });
-}
 
 // IndexedDB에서 번역 데이터 가져오는 함수
 // 메시지 번역 경로용: 사생활 모드 · 용량 초과 · 깨진 DB 로 IndexedDB 가 실패해도 번역은 새로 하고, 받은 번역문은 붙인다 (예전엔 저장 실패가 유료 번역을 버렸다)
@@ -7503,11 +7413,13 @@ async function deleteDB() {
         return;
     }
 
-    guards.chatChanged();
+    guards.invalidate('cleared');   // 같은 채팅이라도 돌던 번역이 지운 저장소에 줄을 다시 넣지 않게(chatChanged 는 채팅 열쇠가 같으면 세대를 안 올려요)
     await clearCheckpoints();
     await clearSegmentCache();
     return new Promise((resolve, reject) => {
         const request = indexedDB.deleteDatabase(DB_NAME);
+        // 다른 탭이 연결을 쥐고 있으면 onsuccess 도 onerror 도 없이 기다려요 — 알려 줘요
+        request.onblocked = () => { toastr.warning('다른 탭이 번역 저장소를 쓰고 있어 삭제를 기다리고 있어요. 다른 실리태번 탭을 닫아 주세요.'); };
         request.onsuccess = () => {
             toastr.success('모든 번역 데이터를 삭제했어요.');
             publishTranslatorAPI();
@@ -7578,7 +7490,6 @@ async function backupTranslationsToMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Backup]`;
     if (dbMetadataTaskRunning) {
         toastr.warning('이미 백업 작업이 진행 중이에요.');
-        logDebug('Backup already in progress. Exiting.');
         return;
     }
 
@@ -7593,51 +7504,41 @@ async function backupTranslationsToMetadata() {
     try {
         dbMetadataTaskRunning = true;
         toastr.info('번역 캐시 백업 시작... (데이터 양에 따라 시간이 걸릴 수 있어요)');
-        logDebug('Starting backup to metadata...');
 
         const context = getContext(); // 이미 import 되어 있음
         if (!context || !context.chatMetadata) {
             throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없어요.');
         }
 
-        logDebug('Context and metadata found.');
 
         // 1. IndexedDB에서 모든 데이터 가져오기
         const allTranslations = await getAllTranslationsFromDB();
 
         if (!allTranslations || allTranslations.length === 0) {
             toastr.info('백업할 번역 데이터가 없어요.');
-            logDebug('No translation data found in IndexedDB to back up.');
             return; // 작업 종료
         }
-        logDebug(`Retrieved ${allTranslations.length} translation items from IndexedDB.`);
 
         // 2. 데이터 직렬화 (JSON 문자열로 변환)
         // **대용량 처리:** 필요 시 여기서 pako.js 압축 로직 추가
         const backupDataString = JSON.stringify(allTranslations);
-        logDebug(`Data stringified. Length: ${backupDataString.length} bytes.`);
 
         // 3. 메타데이터에 저장
         if (typeof context.chatMetadata !== 'object' || context.chatMetadata === null) {
-            logDebug('chatMetadata is not an object, initializing.');
             context.chatMetadata = {};
         }
         context.chatMetadata[METADATA_BACKUP_KEY] = backupDataString;
-        logDebug(`Stored backup string in chatMetadata under key: ${METADATA_BACKUP_KEY}`);
 
         // 4. 서버에 메타데이터 저장 요청
         saveMetadataDebounced();
-        logDebug('saveMetadataDebounced() called to trigger server save.');
 
         toastr.success(`번역 캐시 백업 완료! (${allTranslations.length}개 항목)`);
-        logDebug('Backup completed successfully.');
 
     } catch (error) {
         console.error(`${DEBUG_PREFIX} Error during backup:`, error);
         toastr.error(`백업 중 오류 발생: ${error.message || '알 수 없는 오류'}`);
     } finally {
         dbMetadataTaskRunning = false;
-        logDebug('Backup process finished.');
     }
 }
 
@@ -7651,7 +7552,6 @@ async function restoreTranslationsFromMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Restore AddOnly Progress]`;
     if (dbMetadataTaskRunning) {
         toastr.warning('이미 복원 작업이 진행 중이에요.');
-        logDebug('Restore already in progress. Exiting.');
         return;
     }
 
@@ -7665,23 +7565,19 @@ async function restoreTranslationsFromMetadata() {
 
     try {
         dbMetadataTaskRunning = true;
-        logDebug('Starting restore from metadata (Add-Only mode)...');
         // Toastr 시작 메시지 제거 (프로그레스 바가 대신함)
 
         const context = getContext();
         if (!context || !context.chatMetadata) {
             throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없어요.');
         }
-        logDebug('Context and metadata found.');
 
         // 1. 메타데이터에서 백업 데이터 가져오기
         const backupDataString = context.chatMetadata[METADATA_BACKUP_KEY];
         if (!backupDataString || typeof backupDataString !== 'string') {
             toastr.warning('현재 채팅에 저장된 번역 백업 데이터가 없어요.');
-            logDebug(`No backup data found in metadata for key: ${METADATA_BACKUP_KEY}`);
             return; // 복원할 데이터 없으면 종료
         }
-        logDebug(`Retrieved backup string from metadata. Length: ${backupDataString.length} bytes.`);
 
         // 2. 데이터 역직렬화 (JSON 파싱)
         // **대용량 처리:** 필요 시 여기서 pako.js 압축 해제 로직 추가
@@ -7689,7 +7585,6 @@ async function restoreTranslationsFromMetadata() {
         try {
             backupData = JSON.parse(backupDataString);
             if (!Array.isArray(backupData)) throw new Error('백업 데이터 형식이 올바르지 않아요 (배열이 아님).');
-            logDebug(`Backup data parsed successfully. Items: ${backupData.length}`);
         } catch (parseError) {
             console.error(`${DEBUG_PREFIX} Error parsing backup data:`, parseError);
             throw new Error('백업 데이터를 파싱하는 중 오류가 발생했어요.');
@@ -7698,13 +7593,10 @@ async function restoreTranslationsFromMetadata() {
         const totalItems = backupData.length;
         if (totalItems === 0) {
             toastr.info('백업 데이터에 복원할 항목이 없어요.');
-            logDebug('Backup data array is empty. Nothing to restore.');
             return; // 복원할 항목 없으면 종료
         }
-        logDebug(`Starting restore process for ${totalItems} items.`);
 
         // --- 프로그레스 바 UI 동적 생성 ---
-        logDebug('Creating progress bar UI...');
         progressContainer = document.createElement('div');
         progressContainer.id = 'llm-translator-progress-blocker';
         progressContainer.style.position = 'fixed';
@@ -7762,7 +7654,6 @@ async function restoreTranslationsFromMetadata() {
         progressContent.appendChild(progressLabel);
         progressContainer.appendChild(progressContent);
         document.body.appendChild(progressContainer);
-        logDebug('Progress bar UI created and appended to body.');
         // --- 프로그레스 바 UI 생성 끝 ---
 
 
@@ -7783,13 +7674,11 @@ async function restoreTranslationsFromMetadata() {
 
             // UI 멈춤 방지 및 진행률 로그 (예: 100개 마다)
             if (i > 0 && i % 100 === 0) {
-                logDebug(`Restore progress: ${currentProgress}/${totalItems} (${Math.round(progressPercentage)}%)`);
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
 
             // 필수 필드 확인
             if (!item || typeof item.originalText !== 'string' || typeof item.translation !== 'string') {
-                logDebug(`Skipping invalid item at index ${i}:`, item);
                 errorCount++; // 유효하지 않은 항목은 오류로 간주
                 continue;
             }
@@ -7815,7 +7704,6 @@ async function restoreTranslationsFromMetadata() {
         }
 
         // 최종 결과 로그 및 알림 (기존과 동일)
-        logDebug(`Restore (Add-Only) completed. Added: ${addedCount}, Skipped (Existing): ${skippedCount}, Errors: ${errorCount}`);
         if (errorCount > 0) {
             toastr.warning(`복원 완료. ${addedCount}개 추가, ${skippedCount}개 건너뜀. ${errorCount}개 오류 발생.`);
         } else {
@@ -7824,7 +7712,6 @@ async function restoreTranslationsFromMetadata() {
 
         // 복원 후 메타데이터 자동 삭제 안 함
         // 필요 시 /llmClearBackup 커맨드를 사용
-        logDebug('Metadata backup was NOT automatically cleared after restore (as requested).');
 
         // UI 갱신 필요 시 추가
 
@@ -7834,14 +7721,11 @@ async function restoreTranslationsFromMetadata() {
     } finally {
         // --- 프로그레스 바 UI 제거 ---
         if (progressContainer && document.body.contains(progressContainer)) {
-            logDebug('Removing progress bar UI.');
             document.body.removeChild(progressContainer);
         } else {
-            logDebug('Progress bar UI was not found or already removed.');
         }
         // ---
         dbMetadataTaskRunning = false;
-        logDebug('Restore process finished.');
     }
 }
 
@@ -7853,54 +7737,43 @@ async function clearBackupFromMetadata() {
     const DEBUG_PREFIX = `[${extensionName} - Cleanup]`;
     if (dbMetadataTaskRunning) {
         toastr.warning('이미 정리 작업이 진행 중이에요.');
-        logDebug('Cleanup already in progress. Exiting.');
         return;
     }
 
     // 정리용 챗봇 확인 로직 (선택적)
 
-    logDebug('Requesting metadata backup cleanup...');
     const confirm = await callGenericPopup(
         '현재 채팅에 저장된 번역 캐시 백업을 삭제할까요?\n(주의: 복구할 수 없어요!)',
         POPUP_TYPE.CONFIRM
     );
 
     if (!confirm) {
-        logDebug('Metadata cleanup cancelled by user.');
         toastr.info('백업 데이터 삭제를 취소했어요.');
         return;
     }
-    logDebug('User confirmed metadata cleanup.');
 
     try {
         dbMetadataTaskRunning = true;
         toastr.info('백업 데이터 삭제 시작...');
-        logDebug('Starting cleanup of metadata backup...');
 
         const context = getContext();
         if (!context || !context.chatMetadata) {
             throw new Error('컨텍스트 또는 메타데이터를 찾을 수 없어요.');
         }
-        logDebug('Context and metadata found.');
 
         if (context.chatMetadata.hasOwnProperty(METADATA_BACKUP_KEY)) {
-            logDebug(`Found backup data under key: ${METADATA_BACKUP_KEY}. Deleting...`);
             delete context.chatMetadata[METADATA_BACKUP_KEY]; // 메타데이터에서 키 삭제
             saveMetadataDebounced(); // 변경사항 저장 요청
-            logDebug('saveMetadataDebounced() called to trigger server save.');
             toastr.success('채팅에 저장된 번역 캐시 백업을 삭제했어요.');
         } else {
-            logDebug(`No backup data found under key: ${METADATA_BACKUP_KEY}. Nothing to delete.`);
             toastr.info('현재 채팅에 삭제할 번역 캐시 백업이 없어요.');
         }
-        logDebug('Cleanup completed successfully.');
 
     } catch (error) {
         console.error(`${DEBUG_PREFIX} Error during cleanup:`, error);
         toastr.error(`백업 데이터 삭제 중 오류 발생: ${error.message || '알 수 없는 오류'}`);
     } finally {
         dbMetadataTaskRunning = false;
-        logDebug('Cleanup process finished.');
     }
 }
 
@@ -7911,13 +7784,11 @@ async function clearBackupFromMetadata() {
  */
 async function getTranslationById(messageIdStr) {
     const DEBUG_PREFIX = `[${extensionName} - GetByID]`;
-    logDebug(`Attempting to get translation for message ID: ${messageIdStr}`);
 
     // 1. 메시지 ID 파싱 및 유효성 검사
     const messageId = parseInt(messageIdStr, 10);
     if (isNaN(messageId) || messageId < 0) {
         const errorMsg = `유효하지 않은 메시지 ID: "${messageIdStr}". 숫자를 입력하세요.`;
-        logDebug(errorMsg);
         return errorMsg;
     }
 
@@ -7925,18 +7796,15 @@ async function getTranslationById(messageIdStr) {
     const context = getContext();
     if (!context || !context.chat) {
         const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
-        logDebug(errorMsg);
         return `오류: ${errorMsg}`;
     }
     if (messageId >= context.chat.length) {
         const errorMsg = `메시지 ID ${messageId}를 찾을 수 없어요. (채팅 길이: ${context.chat.length})`;
-        logDebug(errorMsg);
         return errorMsg;
     }
     const message = context.chat[messageId];
     if (!message) {
         const errorMsg = `메시지 ID ${messageId}에 대한 데이터를 가져올 수 없어요.`;
-        logDebug(errorMsg);
         return `오류: ${errorMsg}`;
     }
 
@@ -7944,21 +7812,17 @@ async function getTranslationById(messageIdStr) {
     const originalText = substituteParams(message.mes, context.name1, message.name);
     if (!originalText) {
         const errorMsg = `메시지 ID ${messageId}의 원본 텍스트를 가져올 수 없어요.`;
-        logDebug(errorMsg);
         return errorMsg;
     }
-    logDebug(`Original text for message ID ${messageId} (used as DB key): "${originalText.substring(0, 50)}..."`);
 
     // 4. DB에서 해당 번역문 조회
     try {
         const translation = await localOrDisplayedTranslation(message, originalText);
 
         if (translation) {
-            logDebug(`Translation found for message ID ${messageId}`);
             return translation; // 번역문 반환
         } else {
             const noTranslationMsg = `메시지 ID ${messageId}에 대한 번역문이 DB에 없어요.`;
-            logDebug(noTranslationMsg);
             return noTranslationMsg;
         }
 
@@ -7993,7 +7857,6 @@ function isMessageHidden(message) {
  */
 async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = false, includeMessageId = false, excludeHidden = true) {
     const DEBUG_PREFIX = `[${extensionName} - GetTranslationsInRange]`;
-    logDebug(`${DEBUG_PREFIX} Getting translations from ${startIdStr} to ${endIdStr}`);
 
     // 1. 메시지 ID 파싱 및 유효성 검사
     let startId = parseInt(startIdStr, 10);
@@ -8001,35 +7864,30 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
 
     if (isNaN(startId) || isNaN(endId) || startId < 0 || endId < 0) {
         const errorMsg = `유효하지 않은 메시지 ID 범위: "${startIdStr}" ~ "${endIdStr}". 숫자를 입력하세요.`;
-        logDebug(errorMsg);
         return errorMsg;
     }
 
     // 범위 순서 확인 및 수정
     if (startId > endId) {
         [startId, endId] = [endId, startId];
-        logDebug(`${DEBUG_PREFIX} Swapped range order: ${startId} to ${endId}`);
     }
 
     // 2. 컨텍스트 및 채팅 데이터 확인
     const context = getContext();
     if (!context || !context.chat) {
         const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
-        logDebug(errorMsg);
         return `오류: ${errorMsg}`;
     }
 
     const chatLength = context.chat.length;
     if (startId >= chatLength) {
         const errorMsg = `시작 메시지 ID ${startId}를 찾을 수 없어요. (채팅 길이: ${chatLength})`;
-        logDebug(errorMsg);
         return errorMsg;
     }
 
     // 종료 ID가 범위를 벗어나면 마지막 메시지로 조정
     if (endId >= chatLength) {
         endId = chatLength - 1;
-        logDebug(`${DEBUG_PREFIX} Adjusted end ID to ${endId} (chat length: ${chatLength})`);
     }
 
     // 3. 범위 내 메시지들의 번역문 수집
@@ -8041,13 +7899,11 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
     for (let messageId = startId; messageId <= endId; messageId++) {
         const message = context.chat[messageId];
         if (!message) {
-            logDebug(`${DEBUG_PREFIX} Message ${messageId} not found, skipping`);
             continue;
         }
 
         // 숨겨진 메시지 체크 (SillyTavern 방식)
         if (excludeHidden && isMessageHidden(message)) {
-            logDebug(`${DEBUG_PREFIX} Message ${messageId} is hidden, skipping`);
             hiddenCount++;
             continue;
         }
@@ -8055,7 +7911,6 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
         // 원본 텍스트 가져오기
         const originalText = substituteParams(message.mes, context.name1, message.name);
         if (!originalText || originalText.trim() === '') {
-            logDebug(`${DEBUG_PREFIX} Message ${messageId} has empty content, skipping`);
             continue;
         }
 
@@ -8071,7 +7926,6 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
                 results.push(translation);
                 results.push(''); // 번역문 간 구분을 위해 빈 줄 추가
                 translationCount++;
-                logDebug(`${DEBUG_PREFIX} Found translation for message ${messageId}`);
             } else if (includeOriginal) {
                 // 번역문이 없고 원문 포함 옵션이 켜진 경우
                 if (includeMessageId) {
@@ -8080,11 +7934,9 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
                 results.push(originalText);
                 results.push(''); // 텍스트 간 구분을 위해 빈 줄 추가
                 originalCount++;
-                logDebug(`${DEBUG_PREFIX} Using original text for message ${messageId}`);
             }
             // includeOriginal이 false이고 번역문이 없으면 해당 메시지는 건너뜀
         } catch (error) {
-            logDebug(`${DEBUG_PREFIX} Error getting translation for message ${messageId}:`, error);
             if (includeOriginal) {
                 if (includeMessageId) {
                     results.push(`[메시지 ${messageId} - 원문 (오류로 인한 대체)]`);
@@ -8099,7 +7951,6 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
     // 4. 결과 반환
     if (results.length === 0) {
         const noResultMsg = `메시지 ID ${startId}~${endId} 범위에서 ${includeOriginal ? '텍스트' : '번역문'}를 찾을 수 없어요.`;
-        logDebug(`${DEBUG_PREFIX} ${noResultMsg}`);
         return noResultMsg;
     }
 
@@ -8109,7 +7960,6 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
         summaryMsg += `, 숨김 메시지 ${hiddenCount}개 제외`;
     }
     summaryMsg += ' 추출 완료';
-    logDebug(`${DEBUG_PREFIX} ${summaryMsg}`);
 
     return resultText;
 }
@@ -8122,7 +7972,6 @@ async function getTranslationsInRange(startIdStr, endIdStr, includeOriginal = fa
  */
 async function deleteTranslationById(messageIdStr, swipeNumberStr) {
     const DEBUG_PREFIX = `[${extensionName} - DeleteByID]`;
-    logDebug(`Attempting to delete translation for message ID: ${messageIdStr}`);
 
     // 0. 'last' 처리
     let actualMessageIdStr = messageIdStr;
@@ -8130,19 +7979,16 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
         const context = getContext();
         if (!context || !context.chat || context.chat.length === 0) {
             const errorMsg = '채팅 메시지가 없어요.';
-            logDebug(errorMsg);
             toastr.error(errorMsg);
             return errorMsg;
         }
         actualMessageIdStr = String(context.chat.length - 1);
-        logDebug(`'last' converted to messageId: ${actualMessageIdStr}`);
     }
 
     // 1. 메시지 ID 파싱 및 유효성 검사
     const messageId = parseInt(actualMessageIdStr, 10);
     if (isNaN(messageId) || messageId < 0) {
         const errorMsg = `유효하지 않은 메시지 ID: "${actualMessageIdStr}". 숫자를 입력하세요.`;
-        logDebug(errorMsg);
         toastr.error(errorMsg);
         return errorMsg;
     }
@@ -8151,20 +7997,17 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
     const context = getContext();
     if (!context || !context.chat) {
         const errorMsg = '컨텍스트 또는 채팅 데이터를 찾을 수 없어요.';
-        logDebug(errorMsg);
         toastr.error(errorMsg);
         return `오류: ${errorMsg}`;
     }
     if (messageId >= context.chat.length) {
         const errorMsg = `메시지 ID ${messageId}를 찾을 수 없어요. (채팅 길이: ${context.chat.length})`;
-        logDebug(errorMsg);
         toastr.error(errorMsg);
         return errorMsg;
     }
     const message = context.chat[messageId];
     if (!message) {
         const errorMsg = `메시지 ID ${messageId}에 대한 데이터를 가져올 수 없어요.`;
-        logDebug(errorMsg);
         toastr.error(errorMsg);
         return `오류: ${errorMsg}`;
     }
@@ -8174,20 +8017,16 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
     const originalText = substituteParams(message.mes, context.name1, message.name);
     if (!originalText) {
         const errorMsg = `메시지 ID ${messageId}의 원본 텍스트를 가져올 수 없어요.`;
-        logDebug(errorMsg);
         toastr.warning(errorMsg); // 원본이 비어있을 수도 있으니 경고로 처리
         return errorMsg;
     }
-    logDebug(`Original text for message ID ${messageId} (used as DB key): "${originalText.substring(0, 50)}..."`);
 
     // 3.5. 스와이프 번호 처리 (현재는 경고만 표시)
     if (swipeNumberStr && swipeNumberStr.trim() !== '') {
         const swipeNumber = parseInt(swipeNumberStr, 10);
         if (!isNaN(swipeNumber) && swipeNumber > 0) {
-            logDebug(`Swipe number ${swipeNumber} was provided, but swipe-specific deletion is not implemented yet.`);
             toastr.warning(`스와이프 번호 ${swipeNumber}가 지정되었지만, 현재는 해당 메시지의 모든 번역 데이터를 삭제해요.`);
         } else {
-            logDebug(`Invalid swipe number: "${swipeNumberStr}". Ignoring and proceeding with full message deletion.`);
         }
     }
 
@@ -8206,19 +8045,15 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
         // [2.1.3] 치워 둔 번역문(원문 보기 백업)도 함께 지운다 — 남으면 기억 요약 확장 브리지가 지운 번역을 다시 읽었다 (편집 창 삭제와 같게)
         const hadDisplay = !!message.extra?.display_text;
         if (hadDisplay || message.extra?.original_translation_backup) {
-            logDebug(`Removing display_text from message ${messageId} extra data.`);
             delete message.extra.display_text; // 또는 null로 설정: message.extra.display_text = null;
             delete message.extra.original_translation_backup;
             forgetSource(message.extra); // 6.9.5
             if (hadDisplay) await refreshMessageBlock(messageId, message); // UI 업데이트
             await context.saveChat(); // 변경된 메시지 저장
-            logDebug('UI display_text removed and chat saved.');
         } else {
-            logDebug(`No display_text found in message ${messageId} extra data to remove from UI.`);
         }
 
         const successMsg = `메시지 ID ${messageId}의 번역 데이터를 삭제했어요.`;
-        logDebug(successMsg);
         toastr.success(successMsg);
         return successMsg; // 슬래시 커맨드 결과
 
@@ -8227,7 +8062,6 @@ async function deleteTranslationById(messageIdStr, swipeNumberStr) {
         let userErrorMessage = `메시지 ID ${messageId}의 번역 데이터 삭제 중 오류가 발생했어요.`;
         if (error && error.message && error.message.includes('no matching data')) {
             userErrorMessage = `메시지 ID ${messageId}에 해당하는 번역 데이터가 DB에 없어요.`;
-            logDebug(userErrorMessage);
             toastr.info(userErrorMessage); // 정보성으로 변경
         } else {
             console.error(`${DEBUG_PREFIX} Error deleting translation for message ID ${messageId}:`, error);
@@ -9350,7 +9184,6 @@ registerCommand(SlashCommand.fromProps({
      */
     callback: async (parsedArgs) => {
         const DEBUG_PREFIX_CMD = `[${extensionName} - Cmd /llmGetTranslation]`;
-        logDebug(`${DEBUG_PREFIX_CMD} Executing with args:`, parsedArgs);
 
         let messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
         if (messageIdStr === null) return badMessageIdNotice(parsedArgs.messageId);   // 1.1.2 감사 T2
@@ -9362,7 +9195,6 @@ registerCommand(SlashCommand.fromProps({
                 return '오류: 채팅 메시지가 없어요.';
             }
             messageIdStr = String(context.chat.length - 1); // 마지막 메시지 ID로 변환
-            logDebug(`${DEBUG_PREFIX_CMD} 'last' converted to messageId: ${messageIdStr}`);
         }
 
         // getTranslationById 함수 호출
@@ -9403,7 +9235,6 @@ registerCommand(SlashCommand.fromProps({
      */
     callback: async (parsedArgs) => {
         const DEBUG_PREFIX_CMD = `[${extensionName} - Cmd /llmDBDeleteTranslation]`;
-        logDebug(`${DEBUG_PREFIX_CMD} Executing with args:`, parsedArgs);
 
         // 객체에서 messageId와 swipeNumber 추출 (값이 문자열일 수 있음에 유의)
         const messageIdStr = validateAndNormalizeMessageId(parsedArgs.messageId);
@@ -9523,7 +9354,6 @@ registerCommand(SlashCommand.fromProps({
     name: 'llmGetTranslations',
     callback: async (parsedArgs) => {
         const DEBUG_PREFIX_CMD = `[${extensionName} - Cmd /llmGetTranslations]`;
-        logDebug(`${DEBUG_PREFIX_CMD} Executing with args:`, parsedArgs);
 
         let startIdStr = parsedArgs.startId || '0';
         let endIdStr = parsedArgs.endId || '{{lastMessageId}}';
@@ -9538,7 +9368,6 @@ registerCommand(SlashCommand.fromProps({
                 return '오류: 채팅 메시지가 없어요.';
             }
             endIdStr = String(context.chat.length - 1);
-            logDebug(`${DEBUG_PREFIX_CMD} 'last' converted to endId: ${endIdStr}`);
         }
 
         if (startIdStr === 'last') {
@@ -9547,7 +9376,6 @@ registerCommand(SlashCommand.fromProps({
                 return '오류: 채팅 메시지가 없어요.';
             }
             startIdStr = String(context.chat.length - 1);
-            logDebug(`${DEBUG_PREFIX_CMD} 'last' converted to startId: ${startIdStr}`);
         }
 
         // getTranslationsInRange 함수 호출
@@ -9595,7 +9423,6 @@ registerCommand(SlashCommand.fromProps({
 }));
 
 
-logDebug('Slash Commands registered successfully.');
 
 // 프롬프트 관리를 위한 클래스 정의
 class PromptManager {
@@ -9616,7 +9443,6 @@ class PromptManager {
             const selectedPrompt = this.customPrompts.find(p => p.id === savedPromptId);
             if (selectedPrompt) {
                 extensionSettings.selected_translation_prompt = selectedPrompt.content;
-                logDebug('Loaded saved prompt:', selectedPrompt.title);
             } else {
                 // 골라 둔 프롬프트가 목록에 없어요(그 프롬프트가 없는 설정 파일을 가져옴 · 다른 기기에서 지움) — 지우기 단추처럼 선택을 비워요.
                 //   남겨 두면 다음에 열 때 고르기 칸과 편집 칸이 비어 보였어요(번역은 기본 프롬프트로 가는데 화면은 아무것도 안 고른 꼴).
@@ -9658,12 +9484,10 @@ class PromptManager {
             if (customPrompt) {
                 extensionSettings.selected_translation_prompt_id = selectedId;
                 extensionSettings.selected_translation_prompt = customPrompt.content;
-                logDebug('Selected translation prompt:', customPrompt.title, customPrompt.content);
             } else if (selectedId === 'llm_prompt_chat') {
                 // 기본 프롬프트 선택 시 초기화
                 extensionSettings.selected_translation_prompt_id = null;
                 extensionSettings.selected_translation_prompt = null;
-                logDebug('Using default translation prompt:', selectedId);
             }
             // [2.1.3] ⚙️ 보조 프롬프트(재번역 · 입력 · 보내기 · 프리필)는 보기 · 고치기용 — 골라 둔 채팅 번역 프롬프트를 지우지 않는다
             //         (예전엔 한 번 열어 보기만 해도 다음 부팅부터 기본 프롬프트로 번역했다)
@@ -10431,7 +10255,7 @@ class PresetManager {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);   // 바로 풀면 일부 브라우저에서 받기가 시작되기 전에 주소가 사라져요
 
         toastr.success('프롬프트 및 프리셋을 JSON으로 내보냈어요.');
     }

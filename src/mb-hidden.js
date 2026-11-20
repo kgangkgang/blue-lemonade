@@ -15,13 +15,13 @@
 // 1.7.4 감긴 답보다 뒤에 칸 통째 저장이 있으면 그 저장 바로 뒤에 빼는 기록을 끼워 바로 반영해요(src/mb-autosub.js · 스위치 autosub · 기본 켬). 못 하면 1.7.3 알림이에요.
 import * as Sub from './mb-autosub.js';
 import { startEditSync } from './mb-editsync.js';   // 1.7.6 본문을 고치면 수치도 따라 바꾸기
+import { ctx } from './mb-util.js';   // 1.9.2 공용 맥락 읽기
 const META = 'statussim';   // 그 확장의 채팅 메타 칸 이름(읽기만)
 export const MARK = 'bl-hidden';
 export const ATTR = 'data-bl-mb-hidden-sync';
 export const EVENT = 'bl-mb-hidden-sync';
 export const FOLD_EVENT = 'bl-mes-fold';   // src/mes-fold.js 가 접기 · 펼치기를 끝낸 뒤 내는 사건(detail.id)
 
-const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 // 표식 값: on · off — 없으면 테마가 아직 설정을 안 입힌 것(모름)이라 아무것도 안 해요(켜 둔 사람의 표식을 시작 틈에 지우지 않게)
 export const enabled = (doc = globalThis.document) => doc?.body?.getAttribute?.(ATTR) === 'on';
 export const known = (doc = globalThis.document) => !!doc?.body?.hasAttribute?.(ATTR);

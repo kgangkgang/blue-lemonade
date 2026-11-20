@@ -112,9 +112,15 @@ export function createGuards(getContext) {
     return { capture, cancelled,
         chatChanged() {
             const now = key();
-            if (lastKey !== null && now === lastKey) return;   // 6.5.2 같은 채팅을 제자리에서 다시 불러온 것 — 번역 대상은 그대로
+            if (lastKey !== null && now === lastKey) return false;   // 6.5.2 같은 채팅을 제자리에서 다시 불러온 것 — 번역 대상은 그대로
             if (lastKey !== null) lastSwitch = keyDiff(lastKey, now);
             lastKey = now; epoch++;
+            return true;   // 정말 다른 채팅
+        },
+        /** 채팅은 그대로지만 돌던 번역을 모두 무르게 할 때(번역 저장소 통째 삭제 등) — 세대만 올려요 */
+        invalidate(reason = 'reset') {
+            lastSwitch = [String(reason)];
+            epoch++;
         },
         messageChanged(id, type = 'edited') {
             const message = getContext().chat?.[Number(id)];

@@ -11,8 +11,8 @@ assert.match(src, /id="\$\{idPfx\}-unhide"/);
 // the list function itself, run with fake world names and settings
 const fn = src.slice(src.indexOf('const hiddenWorlds'), src.indexOf('// Marker used to carry world-info keywords'));
 const settings = { hiddenWorlds: ['Secret notes'] };
-const run = new Function('cfg', 'world_names', 'document', fn + '; return listAllWorldInfos();');
-assert.deepEqual(run(() => settings, ['Atlas', 'Secret notes', 'Harbor'], null).map(x => x.id), ['Atlas', 'Harbor']);
+const run = new Function('cfg', 'wiMod', 'document', fn + '; return listAllWorldInfos();');   // 월드 이름은 모듈 이름공간(wiMod)으로 읽어요
+assert.deepEqual(run(() => settings, { world_names: ['Atlas', 'Secret notes', 'Harbor'] }, null).map(x => x.id), ['Atlas', 'Harbor']);
 settings.hiddenWorlds = [];
-assert.equal(run(() => settings, ['Atlas', 'Secret notes'], null).length, 2);
+assert.equal(run(() => settings, { world_names: ['Atlas', 'Secret notes'] }, null).length, 2);
 console.log('prompt-hide-worlds: 2 passed, 0 failed');

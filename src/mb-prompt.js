@@ -24,6 +24,7 @@
 //   · 본문의 U+2800(점자 빈칸 — 일부 프리셋이 띄어쓰기 대신 씀)은 보통 띄어쓰기로 바꿔 실어요(읽기 쉽고 토큰이 덜 들어요).
 import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치(줄 꼴 규칙 · 변화 장부 · 만든 뒤 바로잡기 · 프로필 채우기 · 직함 이름 · 합치기 · 중복 정리 — 끈 것은 더는 고치지 않아요)
 import { foldBlank, trimBlank, squashBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { ctx, mbImport } from './mb-util.js';   // 1.9.2 미트볼 폴더 찾기 공용
 const swOn = (key, doc = globalThis.document) => !mbOff(key, doc);
 /** 줄 꼴 규칙을 붙일 때인가 — 단계가 「적용 안 함」 이 아니고 스위치 「줄 꼴 규칙 덧붙이기」 가 켜져 있을 때 */
 export const rulesOn = (lv, doc = globalThis.document) => lv !== 'off' && swOn('rules', doc);
@@ -74,7 +75,6 @@ export const ruleBlock = (d = '') => `${R_BEGIN} ${RULES} [/BL LINE RULES${d ? `
 export const stripRules = text => String(text ?? '').replace(R_BLOCK_RE, '');
 export const hasRules = text => String(text ?? '').includes(R_BEGIN);
 
-const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 const level = v => (LEVELS.includes(v) ? v : 'off');
 /** 짧은 지문(글이 같은지 가리는 데만 써요) */
 export function mark8(text) {
@@ -99,10 +99,7 @@ export function levelOf(text) {
 /** 그 확장의 기본 문구를 그 확장에게서 읽어요(같은 모듈 주소 — 새로 띄우지 않아요). 못 찾으면 null */
 export async function readDefault(doc = globalThis.document, load = url => import(url)) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;   // 주소가 다르면 모듈이 한 벌 더 떠요 — 그럴 바엔 안 읽어요
-        const mod = await load(new URL('./src/prompts.js', src).href);
+        const mod = await mbImport('./src/prompts.js', doc, load);   // 주소가 다르면 모듈이 한 벌 더 떠요 — 그럴 바엔 안 읽어요(공용 찾기가 null)
         const text = mod?.PROMPT_MAP?.[KEY]?.text;
         return typeof text === 'string' && text ? text : null;
     } catch { return null; }
@@ -111,10 +108,7 @@ export async function readDefault(doc = globalThis.document, load = url => impor
 /** 그 확장의 기본 문구 여러 칸을 한 번에 읽어요 → { 칸: 글 } (없는 칸은 빠져요) · 못 읽으면 null */
 export async function readDefaults(keys, doc = globalThis.document, load = url => import(url)) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;
-        const map = (await load(new URL('./src/prompts.js', src).href))?.PROMPT_MAP;
+        const map = (await mbImport('./src/prompts.js', doc, load))?.PROMPT_MAP;
         if (!map || typeof map !== 'object') return null;
         const out = {};
         for (const k of keys) { const t = map[k]?.text; if (typeof t === 'string' && t) out[k] = t; }
@@ -933,14 +927,7 @@ export function renameTitles(c = ctx(), { before = null, books = booksFor(c) } =
     }
     return out;
 }
-async function mbCore(doc = globalThis.document, load = url => import(url), file = './src/core.js') {
-    try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;
-        return await load(new URL(file, src).href);
-    } catch { return null; }
-}
+async function mbCore(doc = globalThis.document, load = url => import(url), file = './src/core.js') { return mbImport(file, doc, load); }   // 1.9.2 공용 찾기(src/mb-util.js)
 /** 테마를 꺼 뒀나(body.salty 없음) — 문서를 모르면(시험 · 옛 판) 켜진 것으로 */
 const themeOff = doc => !!doc?.body?.classList?.contains && !doc.body.classList.contains('salty');
 /**
@@ -988,6 +975,5 @@ export async function afterWizard({ before = null, level = '', chat = undefined,
     } catch { /* 알림 없이 */ }
     return res;
 }
-export const lastResult = () => state.last;
 /** 지금 걸려 있는 「이번 한 번만」 단계(없으면 '') */
 export const onceLevel = () => (onceActive() ? (state.once.level || 'all') : '');

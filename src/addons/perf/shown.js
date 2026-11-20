@@ -20,3 +20,25 @@ export function listShown(el) {
     }
     return true;
 }
+
+/** 목록이 보이기 시작할 수 있는 때를 알린다: 조상(서랍 · 설정 블록)의 class · style · hidden 이 바뀔 때, 그리고 화면에 들어올 때 — 떼는 함수(볼 길이 없으면 null)
+ *  (perfassist.js · savededupe.js 가 같이 써요 · 미뤄 둔 것이 있는 동안만 불러요) */
+export function watchShown(el, onChange) {
+    const stops = [];
+    if (typeof MutationObserver === 'function') {
+        const mo = new MutationObserver(onChange);
+        for (let node = el.parentElement; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+            mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+        }
+        stops.push(() => mo.disconnect());
+    }
+    if (typeof IntersectionObserver === 'function') {
+        const io = new IntersectionObserver((entries) => {
+            if (entries.some(entry => entry.isIntersecting)) onChange();
+        });
+        io.observe(el);
+        stops.push(() => io.disconnect());
+    }
+    if (!stops.length) return null;
+    return () => stops.forEach(stop => stop());
+}

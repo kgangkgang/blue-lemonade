@@ -3,7 +3,7 @@ export function validateTranslationMemory(data, kind) {
     if (!data || data.type !== 'prompt-panel-tm' || !Array.isArray(data.entries)) throw new Error('번역 메모리 파일 형식이 아닙니다');
     const names = { preset: '프리셋', wi: '월드인포', char: '봇카드', persona: '페르소나' };
     const kindName = value => Object.hasOwn(names, value) ? names[value] : '다른 자료';
-    if (data.kind && data.kind !== kind) throw new Error(`${kindName(data.kind)} 번역 메모리입니다 (지금 탭은 ${kindName(kind)})`);
+    if (data.kind && data.kind !== kind) throw new Error(`${kindName(data.kind)} 번역 메모리예요 (지금 탭은 ${kindName(kind)})`);
     const fields = [['name', '제목'], ['content', '원문'], ['nameTranslated', '번역 제목'], ['contentTranslated', '번역문']];
     for (const [index, entry] of data.entries.entries()) {
         if (entry == null) continue; // Older hand-edited files may contain empty rows.

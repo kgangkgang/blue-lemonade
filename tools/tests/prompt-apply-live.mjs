@@ -91,7 +91,7 @@ function boot({ presetManager = true, saveFails = false, fetchStatus = 200, baib
         extension_settings: { 'prompt-panel': {} }, getRequestHeaders: () => ({ 'Content-Type': 'application/json' }),
         oai_settings: T.oai, openai_settings: T.stored, openai_setting_names: T.names,
         getChatCompletionPreset: obj => { calls.push(['getChatCompletionPreset']); return { temperature: obj.temp_openai, prompts: obj.prompts, prompt_order: obj.prompt_order, extensions: obj.extensions }; },
-        promptManager: { render: arg => calls.push(['render', arg]) },
+        omMod: { promptManager: { render: arg => calls.push(['render', arg]) } },   // 프롬프트 관리자는 모듈 이름공간으로 읽어요
         saveSettingsDebounced: () => calls.push(['saveSettings']),
         eventSource: { emit: async (type, data) => { calls.push(['emit', type, plain(data ?? null)]); } },
         event_types: { OAI_PRESET_IMPORT_READY: 'oai_preset_import_ready', CHARACTER_EDITED: 'character_edited' },
@@ -202,8 +202,8 @@ await test('옛 실리태번(PresetManager 없음): /api/presets/save 로 저장
     await assert.rejects(bad.api.applyPresetLive('Archive', false), /저장 실패 \(HTTP 500\)/);
     assert.equal(bad.stored[0], before);
     const empty = boot();
-    await assert.rejects(empty.api.applyPresetLive('Archive', false), /적용할 번역이 없습니다/);
-    await assert.rejects(empty.api.applyPresetLive('Sample', true), /적용할 제목 번역이 없습니다/);
+    await assert.rejects(empty.api.applyPresetLive('Archive', false), /적용할 번역이 없어요/);
+    await assert.rejects(empty.api.applyPresetLive('Sample', true), /적용할 제목 번역이 없어요/);
     assert.equal(empty.called('savePreset').length, 0);
 });
 
@@ -250,7 +250,7 @@ await test('월드인포: 고른 항목만 바꾸고 나머지는 그대로 (지
     assert.deepEqual([...new Set(titles.called('mirror').map(c => c[2]))], ['comment']);
     const none = boot();
     translateAtlas(none);
-    await assert.rejects(none.api.applyWorldInfoLive('Atlas', none.api.picked(['Atlas::9']), false), /적용할 번역이 없습니다/);
+    await assert.rejects(none.api.applyWorldInfoLive('Atlas', none.api.picked(['Atlas::9']), false), /적용할 번역이 없어요/);
     assert.equal(none.called('saveWorldInfo').length, 0);
 });
 

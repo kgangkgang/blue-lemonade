@@ -9,8 +9,8 @@
 //     쓰는 곳은 그 확장이 화면 체크 칸으로 바꾸는 것과 같은 설정 값 하나씩뿐이에요(그 확장 파일 · 채팅 자료는 안 건드려요).
 //   시험: tools/tests/mb-upstream.mjs
 import { setHanded, syncOffAttr, offAttrValue } from './mb-switch-core.js';
+import { ctx } from './mb-util.js';   // 1.9.2 공용 맥락 읽기
 const META = 'statussim';
-const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 
 /**
  * 원작에 맡긴 기능 표. 열쇠 = 테마 스위치 열쇠(src/mb-switch.js) · key = 그 확장 설정 키 · on = 그 값이 「켜짐」인가

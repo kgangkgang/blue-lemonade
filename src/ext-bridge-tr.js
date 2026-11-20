@@ -61,6 +61,18 @@ export function skipPart(part) {
     return false;
 }
 /**
+ * 1.9.2 번역기에 물을 낱말이 없는 글 — 라틴 글자 둘 미만 · 대문자 · 숫자 약어(HP · A1) · SNS 아이디(@이름 · 밑줄 · 점) · 주소.
+ *   번역기는 이런 글을 그대로 돌려줘요(값만 들어요). 칩 덩이(skipPart)뿐 아니라 상태 칸 · 지도 글을 고를 때도 빼요 — 예전엔 상태 칸의 「@아이디」 가
+ *   답마다 메우기 요청에 실렸어요(11-20 사용자 꼴 리그 · 그 확장 자동 번역은 같은 아이디를 코드로 보고 안 보내요)
+ */
+export function noWordsToAsk(part) {
+    const p = trimBlank(part);
+    if (p.replace(/\P{Script=Latin}/gu, '').length < 2) return true;
+    if (/^[A-Z0-9]{1,4}$/.test(p)) return true;
+    if (/^@?[A-Za-z0-9_.]{2,30}$/.test(p) && (p.startsWith('@') || /[_.]/.test(p))) return true;
+    return /^[a-z]+:\/\/\S*$/i.test(p);
+}
+/**
  * 화면에 보일 글 목록 → { list: 보낼 덩이(겹침 없음), owners: 덩이 → 원래 글들 }
  * shown(text): 그 확장 사전으로 바꾼 화면 글(trString) · has(part): 사전에 이미 있나 · tried: 이번 접속에 못 바꾼 덩이
  */
@@ -484,6 +496,41 @@ export function hideFixedKeys(dict, keep = new Set()) {
     }
     return n;
 }
+// ───── 1.9.2 번역 비용: 숨긴 고정 꼴 짝을 채팅에 따로 남겨요 ─────
+//   그 확장이 번역기(유료)로 받은 「March 20 → 3월 20일」 같은 짝도 열쇠가 고정 꼴(isFixedKey)이면 위에서 숨겨요(셀 수 없는 칸).
+//   숨긴 칸은 채팅 파일에 안 적혀서(JSON 이 안 씀) 다음에 페이지를 열면 사전에 없고, 그 확장이 같은 글을 또 번역 요청했어요
+//   (11-20 사용자 꼴 리그: 채팅을 열 때마다 1통 · 지시문 2천 자). 테마가 스스로 다시 만드는 짝(고정 낱말 규칙)은 빼고, 번역기가 준 값만
+//   실리태번 채팅 메타의 테마 칸(KEPT_KEY)에 적어 두었다가 채팅을 열면 숨긴 채로 되돌려요 — 값은 받은 그대로라 화면 글 · 번역은 전과 같아요.
+const MIND_BUSY = Symbol.for('blue-lemonade.mb-mind-tr.busy.v1');   // src/mb-mind-tr.js 가 걸어요(이 글을 지금 번역하는 중인가)
+const mindBusy = text => { try { const f = globalThis[MIND_BUSY]; return typeof f === 'function' && !!f(text); } catch { return false; } };
+export const KEPT_KEY = 'bl_mb_fixed_tr';
+export const KEPT_MAX = 300;
+/** 사전에 숨긴 고정 꼴 짝 가운데 own(테마가 만드는 짝)이 아닌 것을 store 에 적어요 — 바뀐 수 */
+export function keepHidden(dict, store, own = new Set(), max = KEPT_MAX) {
+    if (!isObj(dict) || !isObj(store)) return 0;
+    let n = 0;
+    for (const key of Object.getOwnPropertyNames(dict)) {
+        const desc = Object.getOwnPropertyDescriptor(dict, key);
+        if (!desc || desc.enumerable || !('value' in desc) || own.has(key) || !isFixedKey(key)) continue;
+        const value = desc.value;
+        if (typeof value !== 'string' || !value || value === key || store[key] === value) continue;
+        delete store[key]; store[key] = value; n++;
+    }
+    const keys = Object.keys(store);
+    for (const k of keys.slice(0, Math.max(0, keys.length - max))) { delete store[k]; n++; }
+    return n;
+}
+/** store 의 짝 가운데 사전에 없는 것을 숨긴 칸으로 되돌려요(📌 고정한 열쇠 · 이름은 그대로) — 되돌린 수 */
+export function restoreHidden(dict, store, keep = new Set()) {
+    if (!isObj(dict) || !isObj(store)) return 0;
+    let n = 0;
+    for (const [key, value] of Object.entries(store)) {
+        if (typeof value !== 'string' || !value || keep.has(key) || Object.hasOwn(dict, key) || !isFixedKey(key)) continue;
+        Object.defineProperty(dict, key, { value, enumerable: false, writable: true, configurable: true });
+        n++;
+    }
+    return n;
+}
 /**
  * 정해진 자리 열쇠(AI 0): 상태 칸에서 요일(week) · 시간대(times · time) · 달(month) · 일과(sched)를 보고
  *   「(Sat)」→「(토)」 · 「(Sat) Morning」→「(토) 아침」(띠 · 머리 날짜 줄 dateShort + 시간대) · 「(Morning)」→「(아침)」 · 「년 April」→「년 4월」 · 「Morning:Front Desk」→「아침:Front Desk」 · 「· Clear」→「· 맑음」(1.7.8 날씨 · 계절).
@@ -710,8 +757,11 @@ async function loadTarget(doc) {
     const base = await findBase(doc);
     if (!base) return null;
     const [tr, core, prompts] = await Promise.all(['src/translate.js', 'src/core.js', 'src/prompts.js'].map(file => { const url = new URL(file, base).href; return import(url); }));
-    const need = [tr.translateView, tr.trJSON, tr.addPairs, tr.pairsOf, tr.trString, tr.missingTr, core.getMeta, core.viewTr, core.settings];
-    if (need.some(fn => typeof fn !== 'function') || !isObj(core.app)) return null;
+    // 실제로 부르는 것만 봐요(예전엔 안 쓰는 pairsOf 까지 봐서, 원작이 그것 하나만 없애도 칩 번역 · 메우기 · 고르개 번역이 말없이 통째로 멈췄어요)
+    const need = { 'translate.translateView': tr.translateView, 'translate.trJSON': tr.trJSON, 'translate.addPairs': tr.addPairs, 'translate.trString': tr.trString, 'translate.missingTr': tr.missingTr, 'core.getMeta': core.getMeta, 'core.viewTr': core.viewTr, 'core.settings': core.settings };
+    const missing = Object.keys(need).filter(name => typeof need[name] !== 'function');
+    if (!isObj(core.app)) missing.push('core.app');
+    if (missing.length) { console.warn(`[Blue Lemonade] 미트볼 번역 다리를 쉬어요 — 원작에 없는 것: ${missing.join(', ')}`); return null; }
     return { tr, core, busy: typeof prompts.mainBusy === 'function' ? prompts.mainBusy : () => false };
 }
 
@@ -720,9 +770,27 @@ export const trRepairLog = [];
 try { globalThis.__blMbTrRepair = trRepairLog; } catch { /* 기록만 못 걸어요 */ }
 const stChatId = () => { try { return globalThis.SillyTavern?.getContext?.()?.getCurrentChatId?.() ?? null; } catch { return null; } };
 const stChat = () => { try { return globalThis.SillyTavern?.getContext?.()?.chat ?? []; } catch { return []; } };
-export function createTrFill(mb, { doc = globalThis.document, toast = globalThis.toastr, now = () => Date.now(), timers = globalThis, chatId = stChatId, faces = () => {}, chat = stChat } = {}) {
+/** 1.9.2 숨긴 고정 꼴 짝을 적어 둘 자리(실리태번 채팅 메타의 테마 칸) · 저장 예약 */
+const stKept = () => { try { const m = globalThis.SillyTavern?.getContext?.()?.chatMetadata; if (!isObj(m)) return null; if (!isObj(m[KEPT_KEY])) m[KEPT_KEY] = {}; return m[KEPT_KEY]; } catch { return null; } };
+const stSaveKept = () => { try { globalThis.SillyTavern?.getContext?.()?.saveMetadataDebounced?.(); } catch { /* 다음 저장 때 */ } };
+export function createTrFill(mb, { doc = globalThis.document, toast = globalThis.toastr, now = () => Date.now(), timers = globalThis, chatId = stChatId, faces = () => {}, chat = stChat, kept = stKept, saveKept = stSaveKept } = {}) {
     const { tr, core } = mb;
     const tried = new Set();
+    let pruneKept = false;   // 1.9.2 「번역 고치기」 창을 닫은 뒤 한 번 — 그 창에서 지운 짝은 적어 둔 것에서도 빼요(되살리지 않게)
+    /** 1.9.2 적어 둔 숨긴 짝을 사전에 되돌려요(채팅을 열 때 · 정리 때 · 그 확장이 번역할 글을 고르기 전에) — 되돌린 수 */
+    function restoreKept(dict = (() => { try { return core.getMeta()?.tr; } catch { return null; } })()) {
+        if (!view() || mbOff('trtidy', doc) || fixOpen || !isObj(dict)) return 0;
+        const store = kept();
+        if (!isObj(store)) return 0;
+        if (pruneKept) {
+            pruneKept = false;
+            let gone = 0; for (const k of Object.keys(store)) if (!Object.hasOwn(dict, k)) { delete store[k]; gone++; }
+            if (gone) saveKept();
+            return 0;
+        }
+        let lock = {}; try { lock = core.getMeta()?.trLock ?? {}; } catch { lock = {}; }
+        return restoreHidden(dict, store, new Set(Object.keys(lock).filter(k => lock[k])));
+    }
     let filling = false, watch = null, autoTimer = 0;
     const view = () => { try { return !!core.viewTr(); } catch { return false; } };
     const dictSize = () => { try { const d = core.getMeta()?.tr; return isObj(d) ? Object.keys(d).length : 0; } catch { return 0; } };
@@ -776,12 +844,13 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
     /** ⑤ AI 없이: 이어진 글의 조각 짝 + 고정 낱말 → 같은 사전(addPairs 한 번 = 채팅 메타 저장 한 번) */
     function tidy({ draw = true } = {}) {
         if (!view() || mbOff('trtidy', doc)) return 0;   // 1.7.3 끄면 사전(채팅 메타 tr)을 안 고쳐요
-        const state = core.app.current?.state;
-        if (!state) return 0;
+        if (fixOpen) return 0;   // 1.5.3: 「번역 고치기」 창이 열린 동안은 숨기지 않아요(창이 닫히면 다시)
         const meta = core.getMeta();
         const dict = isObj(meta?.tr) ? meta.tr : null;
         if (!dict) return 0;
-        if (fixOpen) return 0;   // 1.5.3: 「번역 고치기」 창이 열린 동안은 숨기지 않아요(창이 닫히면 다시)
+        const back = restoreKept(dict);   // 1.9.2 상태가 아직 없어도 먼저(그 확장이 채팅을 열고 번역할 글을 고르기 전에)
+        const state = core.app.current?.state;
+        if (!state) { if (back) bumpDict(); return 0; }
         const items = stateTexts(state, isOn);
         // 칩 · 기록 · 알림 · 앨범 글: 시간대 · 날씨 칩만 그 종류로(「🕐 …」 · 「날씨: …」) — 다른 칩(이름 · 장소 · 관계)은 고정 낱말 사전을 안 걸어요
         const shownTexts = visibleTexts(core.app.current, meta);
@@ -815,7 +884,9 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const n = pairs.length ? (tr.addPairs(pairs) || 0) : 0;
         // 고정 낱말 열쇠를 낱말 바꾸기에서 빼고, 그 확장 화면 번역이 목록을 새로 만들게 해요(사전 판 올리기)
         const hidden = hideFixedKeys(dict, keep);
-        if ((hidden || fixed.removed.length) && !n) bumpDict();
+        // 1.9.2 숨긴 짝 가운데 번역기가 준 값(테마가 이번에 만든 짝 base 가 아닌 것)을 채팅 메타 테마 칸에 — 다음에 열 때 되돌려요(같은 글을 또 요청하지 않게)
+        try { const store = kept(); if (isObj(store) && keepHidden(dict, store, new Set(base.keys()))) saveKept(); } catch { /* 이번 접속 동안만 */ }
+        if ((hidden || back || fixed.removed.length) && !n) bumpDict();
         if (repaired) { try { core.saveMeta?.(); } catch { /* 다음 저장 때 */ } }
         if ((n || hidden || repaired) && draw) repaint();
         return n;
@@ -849,7 +920,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
             fixOpen++;
             reveal();
             try { return await open.apply(this, args); }
-            finally { fixOpen = Math.max(0, fixOpen - 1); if (!fixOpen) tidySoon(0); }
+            finally { fixOpen = Math.max(0, fixOpen - 1); if (!fixOpen) { pruneKept = true; tidySoon(0); } }   // 1.9.2 그 창에서 지운 짝은 적어 둔 것에서도
         };
         wrapped.__blTrGuard = true;
         app.openTrFix = wrapped;
@@ -863,6 +934,8 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         for (const { text, key } of stateTexts(state, isOn)) {
             const k = text.trim();
             if (!k || k.length > 4000 || tried.has(k) || fixedValue(k, key)) continue;   // 고정 낱말은 사전으로 — 번역 요청에 싣지 않아요
+            if (!Object.hasOwn(dict, k) && noWordsToAsk(k)) continue;   // 1.9.2 물을 낱말이 없는 글(아이디 · 주소 · 약어)은 안 실어요
+            if (!Object.hasOwn(dict, k) && mindBusy(k)) continue;   // 1.9.2 속마음 번역(src/mb-mind-tr.js)이 지금 보내는 글 — 오면 그쪽이 이 사전에도 넣어요
             // 1.8.8 이름만 한국어인 섞인 값도 반쯤 번역 — AI 없이 못 고친 것만 여기 남아요(tidy 가 먼저 고쳐요) · 이번 접속에 한 번(tried)
             if (Object.hasOwn(dict, k)) { if (!lock[k] && (halfValue(k, dict[k]) || nameOnlyValue(k, dict[k]) || reversedValue(k, dict[k]))) half.add(k); continue; }
             let shown = text;
@@ -881,7 +954,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         let items = []; try { const get = globalThis[UNVISITED]; items = typeof get === 'function' ? get() : []; } catch { items = []; }
         for (const it of Array.isArray(items) ? items : []) for (const [raw, soft] of [[it?.name, false], [it?.summary, true]]) {
             const k = String(raw ?? '').trim();
-            if (!k || k.length > 600 || tried.has(k) || Object.hasOwn(dict, k) || names.includes(k) || sums.includes(k)) continue;
+            if (!k || k.length > 600 || tried.has(k) || Object.hasOwn(dict, k) || names.includes(k) || sums.includes(k) || noWordsToAsk(k)) continue;   // 1.9.2 물을 낱말 없는 글은 빼요
             let shown = k; try { shown = tr.trString(k); } catch { shown = k; }
             if (stillEnglish(shown, { soft })) (soft ? sums : names).push(k);
         }
@@ -1116,7 +1189,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
     function onKey(event) {
         if (watch && event?.isTrusted && event.key === 'Escape' && doc.querySelector?.('dialog[open] .popup-button-cancel')) watch.cancelled = true;
     }
-    return { paint, slotRecord, view, fill, tidy, tidySoon, stateGaps, arm, mbToast, afterReply, afterTranslate, onClick, onKey, autoOn, guardTrFix, reveal, _tried: tried, get watching() { return !!watch; }, get fixOpen() { return fixOpen; } };
+    return { paint, slotRecord, view, fill, tidy, tidySoon, restoreKept, stateGaps, arm, mbToast, afterReply, afterTranslate, onClick, onKey, autoOn, guardTrFix, reveal, _tried: tried, get watching() { return !!watch; }, get fixOpen() { return fixOpen; } };
 }
 
 let started = null;
@@ -1149,7 +1222,8 @@ export function startTrFill(doc = globalThis.document) {
             for (const type of [types?.MESSAGE_RECEIVED, types?.MESSAGE_EDITED, types?.MESSAGE_SWIPED]) if (type) eventSource.on(type, () => fill.tidySoon(TIDY_REPLY_MS));
             eventSource.on('EXTENSION_LLM_TRANSLATE_DONE', data => fill.afterTranslate(data));   // 1.5.8 테마 번역기가 답을 번역해 끝내면 그 답의 칩 · 새 상태 글도
             // 1.5.2: 고정 낱말 열쇠는 채팅 파일에 안 적혀서 열 때마다 다시 넣어요 — 상태가 늦게 계산돼도 되게 0.8초 · 3초 두 번(바뀐 게 없으면 아무것도 안 해요)
-            if (types?.CHAT_CHANGED) eventSource.on(types.CHAT_CHANGED, () => { fill.tidySoon(800); globalThis.setTimeout(() => fill.tidySoon(0), 3000); });
+            // 1.9.2 적어 둔 숨긴 짝은 곧바로 되돌려요(상태 계산 · 그 확장의 번역 고르기를 기다리지 않고)
+            if (types?.CHAT_CHANGED) eventSource.on(types.CHAT_CHANGED, () => { globalThis.setTimeout(() => { try { if (fill.restoreKept()) fill.tidySoon(0); } catch { /* 정리 때 */ } }, 0); fill.tidySoon(800); globalThis.setTimeout(() => fill.tidySoon(0), 3000); });
             for (const type of [types?.GENERATION_ENDED, types?.CHAT_CHANGED, 'EXTENSION_LLM_TRANSLATE_DONE']) if (type) eventSource.on(type, () => selectTr?.soon());
             if (types?.CHAT_CHANGED) eventSource.on(types.CHAT_CHANGED, () => welcome());
             fill.tidySoon();

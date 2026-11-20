@@ -17,7 +17,7 @@ import * as openai from '../../../../../../openai.js';
 import * as groupChats from '../../../../../../group-chats.js';
 import { createRecovery, asyncStacksWork, stackHas, bodyKey, liveChatFrom, MARKER, DROP_MESSAGE } from './recovery.js';
 import { createPromptDefer } from './promptdefer.js';
-import { listShown } from './shown.js';
+import { listShown, watchShown } from './shown.js';   // 1.9.2 두 파일에 글자 그대로 있던 watchShown 을 한곳에
 import { createSaveTimers, createSwitchFlush, matchSwitchEntry, SWITCH_ENTRIES } from './switchflush.js';
 import { createSwitchGuard, wrapCommands, DELETE_ENTRY, GUARD_COMMANDS } from './switchguard.js';
 import { createCodeGuard, isClickTrigger, CODE_SWITCH_KEYS } from './switchcode.js';
@@ -323,42 +323,13 @@ async function installRecovery() {
 
 // ── 닫힌 프롬프트 관리자 계산 미루기 ─────────────────────────────
 
-/** 목록이 그려지는지 (닫힌 서랍 · display:none 조상이면 false) */
-function isShown(el) {
-    // 4.2.2: 닫힌 서랍이면 물어볼 것도 없다. 8.0.5: 열린 서랍에서도 checkVisibility() 대신 조상의 class · 인라인 style 만 본다(shown.js) —
-    // 프리셋을 바꾸는 동안 부를 때마다 서랍 전체 스타일 계산을 강제했다 (PC 약 50ms · 폰 흉내 약 200ms × 4번 남짓)
-    return listShown(el);
-}
 
-/**
- * 목록이 보이기 시작할 수 있는 때를 알린다: 조상(서랍 · 설정 블록)의 class · style 이 바뀔 때, 그리고 화면에 들어올 때.
- * 미뤄 둔 것이 있는 동안만 본다.
- */
-function watchShown(el, onChange) {
-    const stops = [];
-    if (typeof MutationObserver === 'function') {
-        const mo = new MutationObserver(onChange);
-        for (let node = el.parentElement; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
-            mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
-        }
-        stops.push(() => mo.disconnect());
-    }
-    if (typeof IntersectionObserver === 'function') {
-        const io = new IntersectionObserver((entries) => {
-            if (entries.some(entry => entry.isIntersecting)) onChange();
-        });
-        io.observe(el);
-        stops.push(() => io.disconnect());
-    }
-    if (!stops.length) return null;
-    return () => stops.forEach(stop => stop());
-}
 
 function installPromptDefer() {
     promptDefer = createPromptDefer({
         manager: () => openai.promptManager ?? null,
         enabled: () => settings().deferPromptRender !== false,
-        visible: isShown,
+        visible: listShown,
         watch: watchShown,
         onChange: refreshStats,
     });

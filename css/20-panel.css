@@ -200,6 +200,7 @@ body.salty.salty-light { --bl-update-ink: #8a6400; --bl-update-glow: #ffc400; }
 .bl-update .bl-update-status.is-warn { color: var(--bl-update-ink); }
 /* 1.5.3 바뀐 내역을 못 받았을 때의 「다시 시도」 — 실리태번 .menu_button 은 width:min-content 라 한글 두 낱말이 두 줄로 꺾여요 */
 .bl-update .bl-update-retry { width: auto; white-space: nowrap; min-height: var(--bl-form-height, 36px); margin: 8px 4px 0; padding: 0 14px; }
+body.salty .bl-update .bl-update-retry { font-weight: 400; }   /* 1.9.2 화면 빚: 테마 글자 단추 굵기는 400 · 650 둘만 — 실리태번 단추 바탕 규칙(css/02-controls.css body.salty .menu_button 500)을 받아 「다시 시도」 만 500 이었어요 */
 /* 공지사항 팝업 (실리태번 팝업 안): 버전마다 한 칸, 맨 위만 펼침. <details> 대신 단추 — ▲ 접기 스크립트가 details 에 단추를 붙임 */
 .salty-notice {
   text-align: left;

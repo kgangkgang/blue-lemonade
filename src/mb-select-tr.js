@@ -27,8 +27,13 @@ export function trOptions(root, trs, on = true) {
 export function watchSelectTr(doc, { trs, on, timer = globalThis.setTimeout } = {}) {
     if (!doc?.addEventListener || typeof trs !== 'function') return () => 0;
     const run = () => { try { return trOptions(doc, trs, typeof on === 'function' ? !!on() : true); } catch { return 0; } };
-    let pending = 0;
-    const soon = () => { if (pending) return; pending = 1; timer(() => { pending = 0; run(); }, 80); timer(run, 500); };
+    let pending = 0, late = 0;
+    // 늦은 다시 훑기(0.5초)는 마지막 누름 것만 돌아요 — 예전엔 80ms 막이 밖이라 누를 때마다 전체 훑기가 하나씩 쌓였어요
+    const soon = () => {
+        const mineLate = ++late;
+        timer(() => { if (mineLate === late) run(); }, 500);
+        if (pending) return; pending = 1; timer(() => { pending = 0; run(); }, 80);
+    };
     const mine = e => { const t = e?.target; return !!t?.closest?.('dialog.ss-dlg, .ss-root, #ss-hud, #ss-settings'); };
     doc.addEventListener('click', e => { if (mine(e)) soon(); }, true);
     doc.addEventListener('change', e => { if (mine(e)) soon(); }, true);

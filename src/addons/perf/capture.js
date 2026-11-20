@@ -512,6 +512,9 @@ function prepare(input, init, body, caller) {
     return { context, marks };
 }
 
+// 기록 마무리(저장 · 가격 셈)가 던져도 요청 기록이 말없이 사라지지 않게 콘솔에 한 줄 남겨요(예전엔 잡히지 않은 거절)
+const warnFinish = error => console.warn('[요청 로그] 기록 마무리에 실패했어요', error);
+
 /** 요청 하나를 지켜본다. 원래 fetch의 결과는 그대로 돌려준다. */
 async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
     if (!PR) {
@@ -535,7 +538,7 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
         response = await nativeFetch(input, init);
     } catch (error) {
         context.aborted = !!(init?.signal?.aborted||input?.signal?.aborted||error?.name==='AbortError');
-        finishEntry(context, null, acc, marks, error);
+        finishEntry(context, null, acc, marks, error).catch(warnFinish);
         throw error;
     }
 
@@ -588,7 +591,7 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
             acc.finish = acc.finish || 'aborted';
         }
         await finishEntry(context, response, acc, marks, failure);
-    })();
+    })().catch(warnFinish);
 
     return response;
 }
@@ -628,17 +631,19 @@ export function installCapture() {
     globalThis[LOG_BRIDGE]={begin:attribution.begin,recent};   // 7.4.0 recent({ replies }) — 최근 답마다 용도별 요청 수
     const nativeFetch = window.fetch;
     window.fetch = function requestLogFetch(input, init) {
+        // 전송 흐름 줄(row)은 요청이 끝나면 걸린 시간을 채워요 — 기록하는 요청(watch)도 같게(예전엔 그 줄이 끝내 null 이라 「임베딩 검색 · 색인」 줄이 한 번도 안 나왔어요)
+        let row = null;
+        const started = performance.now();
+        const timed = (request) => {
+            if (row) { const stamp = () => { row.ms = Math.round(performance.now() - started); }; Promise.resolve(request).then(stamp, stamp); }
+            return request;
+        };
         try {
             const path=pathOf(input);
             const captureKind=requestKind(path);
-            const row = path ? traceFetchStart(path) : null;
+            row = path ? traceFetchStart(path) : null;
             const watching = settings().enabled || ledgerOn();   // 7.4.0
-            if (row && !(watching&&captureKind)) {
-                const started = performance.now();
-                const request = nativeFetch.call(this, input, init);
-                request.then(() => { row.ms = Math.round(performance.now() - started); }, () => { row.ms = Math.round(performance.now() - started); });
-                return request;
-            }
+            if (row && !(watching&&captureKind)) return timed(nativeFetch.call(this, input, init));
             if (watching && init && typeof init.body === 'string' && captureKind) {
                 let body = null;
                 try {
@@ -646,22 +651,22 @@ export function installCapture() {
                 } catch {
                     body = null;
                 }
-                if (body && typeof body === 'object') return watch(nativeFetch, input, init, body);
+                if (body && typeof body === 'object') return timed(watch(nativeFetch, input, init, body));
             }
             if(watching&&captureKind&&init?.body instanceof FormData) {
                 const body=Object.fromEntries([...init.body].filter(([,v])=>typeof v==='string'));
-                return watch(nativeFetch,input,init,body);
+                return timed(watch(nativeFetch,input,init,body));
             }
             if(watching&&captureKind&&input instanceof Request&&!init?.body) {
                 const caller=callerFromStack();
-                return input.clone().text().then(text=>{
+                return timed(input.clone().text().then(text=>{
                     let body;try{body=JSON.parse(text);}catch{return nativeFetch.call(this,input,init);}
                     return body&&typeof body==='object'?watch(nativeFetch,input,init,body,caller):nativeFetch.call(this,input,init);
-                },()=>nativeFetch.call(this,input,init));
+                },()=>nativeFetch.call(this,input,init)));
             }
         } catch (error) {
             console.warn('[요청 로그] 요청을 살피지 못했어요', error);
         }
-        return nativeFetch.call(this, input, init);
+        return timed(nativeFetch.call(this, input, init));
     };
 }

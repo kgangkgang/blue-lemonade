@@ -66,8 +66,8 @@ const PDOC = (function(p){ try { return p.document || document; } catch(e){ retu
 let getRequestHeaders, saveSettingsDebounced, eventSource, event_types,
     extension_settings, getContext,
     oai_settings, openai_settings, openai_setting_names,
-    getChatCompletionPreset, promptManager, stSettingsToUpdate,
-    characters, unshallowCharacter, world_names, world_info, getSortedEntries,
+    getChatCompletionPreset, stSettingsToUpdate, omMod, wiMod,
+    characters, unshallowCharacter, world_info, getSortedEntries,
     setWIOriginalDataValue;
 
 async function initImports() {
@@ -93,7 +93,8 @@ async function initImports() {
     // (same save path ST's own preset "update" button uses) instead of
     // downloading a file the person has to re-import by hand.
     getChatCompletionPreset = om.getChatCompletionPreset;
-    promptManager            = om.promptManager;
+    // promptManager · world_names 는 실리태번이 나중에 다시 대입해요 — 값으로 떠 두면 옛것이 남아(로어북을 만들거나 지운 뒤 목록 · 프리셋 고친 뒤 다시 그리기) 모듈 이름공간으로 읽어요
+    omMod                    = om;
     // 11-19 실리태번이 「연결 설정」으로 표시한 프리셋 칸 목록(넷째 값 true) — 공유용 내보내기가 빼는 칸을 넓혀요(presetConnectionKeys)
     stSettingsToUpdate      = om.settingsToUpdate;
 
@@ -103,7 +104,7 @@ async function initImports() {
 
     const wi = await import(base2 + 'world-info.js');
     getSortedEntries = wi.getSortedEntries;
-    world_names      = wi.world_names;
+    wiMod            = wi;
     world_info       = wi.world_info;
     // Used by applyWorldInfoLive() to keep a character-book's `originalData`
     // mirror in sync with the entries we rewrite (ST does the same on edit).
@@ -646,7 +647,7 @@ async function initTranslationCache() {
         }
         if (typeof toastr !== 'undefined') toastr.warning(localFallback
             ? '번역 캐시 파일을 읽지 못해 이번 세션의 번역은 이 브라우저에만 저장해요. 다음에 파일을 읽을 수 있으면 그리로 옮겨요.'
-            : '번역 캐시 파일을 읽지 못해 이번 세션에는 번역이 저장되지 않습니다.');
+            : '번역 캐시 파일을 읽지 못해 이번 세션에는 번역이 저장되지 않아요.');
         return;
     }
 
@@ -683,7 +684,7 @@ async function initTranslationCache() {
     if (brokenShards.size && typeof toastr !== 'undefined') {
         toastr.warning(hasLocalDB()
             ? `번역 캐시 파일 ${brokenShards.size}개를 읽지 못했어요. 해당 항목의 새 번역은 이 브라우저에 맡겨 두고, 파일을 읽을 수 있을 때 합쳐요.`
-            : `번역 캐시 파일 ${brokenShards.size}개를 읽지 못했습니다. 해당 항목의 번역은 이번 세션에 저장되지 않습니다.`);
+            : `번역 캐시 파일 ${brokenShards.size}개를 읽지 못했어요. 해당 항목의 번역은 이번 세션에 저장되지 않아요.`);
     }
     await adoptLocalEntries();   // 8.2.7 지난 세션에 이 브라우저에 맡겨 둔 번역을 서버로
     console.log(`[${EXT}] Translation cache loaded: ${translationMap.size} entries`);
@@ -904,12 +905,12 @@ async function runCompletionOnce(messages, tweak, via = null) {
 
     if (!via && usingStProfile()) {
         const svc = getConnSvc();
-        if (!svc?.sendRequest) throw new Error('이 SillyTavern 버전에서는 연결 프로필을 쓸 수 없습니다');
+        if (!svc?.sendRequest) throw new Error('이 SillyTavern 버전에서는 연결 프로필을 쓸 수 없어요');
         const profileId = c.stProfileId || '';
-        if (!profileId) throw new Error('ST 프로필이 선택되지 않았습니다 (확장 설정에서 선택하세요)');
+        if (!profileId) throw new Error('ST 프로필이 선택되지 않았어요 (확장 설정에서 선택하세요)');
         const known = listStProfiles();
         if (known.length && !known.some(pr => pr.id === profileId)) {
-            throw new Error('선택한 ST 프로필을 찾을 수 없습니다 (삭제되었거나 지원되지 않는 유형)');
+            throw new Error('선택한 ST 프로필을 찾을 수 없어요 (삭제되었거나 지원되지 않는 유형)');
         }
         // Chat-completion profiles take the messages as-is; text-completion ones
         // need them flattened through the profile's instruct template first.
@@ -1481,6 +1482,7 @@ const hiddenWorlds = () => { const c = cfg(); if (!Array.isArray(c.hiddenWorlds)
 function listAllWorldInfos() {
     const items=[];
     try {
+        const world_names = wiMod?.world_names;
         if (Array.isArray(world_names)&&world_names.length) world_names.forEach(n=>{if(n)items.push({id:n,name:n});});
         else {
             const sel=document.querySelector('#world_editor_select');
@@ -1732,13 +1734,13 @@ function makeBlockItem(block, ns, selectable, onEdited) {
 
     // Preset regex script: name is translatable, body is code (read-only).
     const regexBadge = block.isRegex
-        ? `<span class="pt-clip-badge" title="프리셋 정규식 — 제목만 번역됩니다"><i class="fa-solid fa-code"></i></span>` : '';
+        ? `<span class="pt-clip-badge" title="프리셋 정규식 — 제목만 번역돼요"><i class="fa-solid fa-code"></i></span>` : '';
 
     // Other extensions' labels that live in the preset — same title-only rule.
     const groupBadge = block.isGroup
-        ? `<span class="pt-clip-badge" title="프롬프트 그룹 (ST-BaiBai-Tools) — 제목만 번역됩니다"><i class="fa-solid fa-folder"></i></span>` : '';
+        ? `<span class="pt-clip-badge" title="프롬프트 그룹 (ST-BaiBai-Tools) — 제목만 번역돼요"><i class="fa-solid fa-folder"></i></span>` : '';
     const runnerBadge = block.isRunner
-        ? `<span class="pt-clip-badge" title="${block.isRunnerFolder ? 'JS러너 폴더' : 'JS러너 스크립트'} — 제목만 번역됩니다"><i class="fa-solid fa-${block.isRunnerFolder ? 'folder-tree' : 'scroll'}"></i></span>` : '';
+        ? `<span class="pt-clip-badge" title="${block.isRunnerFolder ? 'JS러너 폴더' : 'JS러너 스크립트'} — 제목만 번역돼요"><i class="fa-solid fa-${block.isRunnerFolder ? 'folder-tree' : 'scroll'}"></i></span>` : '';
 
     // Character cards: no ON/OFF badge
     const statusBadge = block.isChar
@@ -1950,8 +1952,8 @@ async function runTranslation({ items, list, ns, pBar, pLabel, pWrap, btnStop, f
     if (!targets.length) {
         if (typeof toastr!=='undefined') {
             toastr.info(skipped
-                ? '정규식 · 그룹 · JS러너 항목은  제목 버튼으로만 번역됩니다'
-                : '번역할 항목이 없습니다');
+                ? '정규식 · 그룹 · JS러너 항목은  제목 버튼으로만 번역돼요'
+                : '번역할 항목이 없어요');
         }
         return;
     }
@@ -2350,13 +2352,13 @@ const UI = {
   fabTitle: "프롬프트 제목 번역 적용",
   fabIcon: "fa-language",
   targetLabel: "현재 프리셋",
-  empty: "이 프리셋에서 일치하는 프롬프트가 없습니다",
-  sourceWarn: "이 스크립트는 '" + SOURCE_NAME + "' 프리셋용입니다. 이름이 다른 항목은 기본으로 선택하지 않았으니 확인 후 적용하세요.",
+  empty: "이 프리셋에서 일치하는 프롬프트가 없어요",
+  sourceWarn: "이 스크립트는 '" + SOURCE_NAME + "' 프리셋용이에요. 이름이 다른 항목은 기본으로 선택하지 않았으니 확인 후 적용하세요.",
 };
 
 function presetManager(ctx) {
   const pm = ctx.getPresetManager ? ctx.getPresetManager("openai") : null;
-  if (!pm || !ctx.chatCompletionSettings) throw new Error("SillyTavern 프리셋 정보를 찾을 수 없습니다");
+  if (!pm || !ctx.chatCompletionSettings) throw new Error("SillyTavern 프리셋 정보를 찾을 수 없어요");
   return pm;
 }
 
@@ -2412,7 +2414,7 @@ function patchDom(picks) {
 async function saveNames(target, picks) {
   const ctx = stContext();
   const pm = presetManager(ctx);
-  if (pm.getSelectedPresetName() !== target) throw new Error("그 사이 프리셋이 바뀌었습니다. 다시 열어주세요.");
+  if (pm.getSelectedPresetName() !== target) throw new Error("그 사이 프리셋이 바뀌었어요. 다시 열어주세요.");
   let stored = null;
   try { stored = pm.getCompletionPresetByName(target); } catch (e) {}
   let saved = false;
@@ -2432,7 +2434,7 @@ async function saveNames(target, picks) {
   patchDom(picks);
   return saved
     ? { saved: true }
-    : { saved: false, note: "프리셋 파일은 저장하지 못했습니다. 프리셋 저장 버튼을 눌러주세요." };
+    : { saved: false, note: "프리셋 파일은 저장하지 못했어요. 프리셋 저장 버튼을 눌러주세요." };
 }
 `;
 
@@ -2447,8 +2449,8 @@ const UI = {
   fabTitle: "월드인포 제목 번역 적용",
   fabIcon: "fa-book-atlas",
   targetLabel: "대상 월드인포",
-  empty: "이 월드인포에서 일치하는 항목이 없습니다",
-  sourceWarn: "이 스크립트는 '" + SOURCE_NAME + "' 월드인포용입니다. 다른 월드인포에서는 제목이 정확히 같은 항목만 찾습니다.",
+  empty: "이 월드인포에서 일치하는 항목이 없어요",
+  sourceWarn: "이 스크립트는 '" + SOURCE_NAME + "' 월드인포용이에요. 다른 월드인포에서는 제목이 정확히 같은 항목만 찾아요.",
 };
 
 function listTargets() {
@@ -2460,10 +2462,10 @@ function listTargets() {
 async function loadBook(target) {
   const ctx = stContext();
   if (typeof ctx.loadWorldInfo !== "function" || typeof ctx.saveWorldInfo !== "function") {
-    throw new Error("월드인포 저장 함수를 찾을 수 없습니다");
+    throw new Error("월드인포 저장 함수를 찾을 수 없어요");
   }
   const book = await ctx.loadWorldInfo(target);
-  if (!book || !book.entries) throw new Error("월드인포 '" + target + "'를 불러오지 못했습니다");
+  if (!book || !book.entries) throw new Error("월드인포 '" + target + "'를 불러오지 못했어요");
   return book;
 }
 
@@ -2525,7 +2527,7 @@ function toast(type, msg) {
 function stContext() {
   const st = pwin.SillyTavern;
   const ctx = st && typeof st.getContext === "function" ? st.getContext() : null;
-  if (!ctx) throw new Error("SillyTavern 정보를 찾을 수 없습니다");
+  if (!ctx) throw new Error("SillyTavern 정보를 찾을 수 없어요");
   return ctx;
 }
 
@@ -2746,8 +2748,8 @@ function openModal() {
       // "원래대로" stays available by turning the script back on.
       if (mode === "apply") {
         teardown();
-        if (disableSelf()) toast("info", "제목 적용이 끝나서 JS러너에서 이 스크립트를 껐습니다");
-        else toast("info", "JS러너에서 이 스크립트를 직접 꺼주세요 (자동으로 끄지 못했습니다)");
+        if (disableSelf()) toast("info", "제목 적용이 끝나서 JS러너에서 이 스크립트를 껐어요");
+        else toast("info", "JS러너에서 이 스크립트를 직접 꺼주세요 (자동으로 끄지 못했어요)");
       }
     } catch (err) {
       console.error("[ppt-title-apply]", err);
@@ -2944,7 +2946,7 @@ function exportTitleScript(kind, srcName, items, ns) {
 
     const count = entries.length;
     if (!count) {
-        throw new Error('번역된 제목이 없습니다. 먼저 번역 또는 "제목만" 번역을 실행하세요.');
+        throw new Error('번역된 제목이 없어요. 먼저 번역 또는 "제목만" 번역을 실행하세요.');
     }
 
     const label = targetName || (kind === 'wi' ? 'World Info' : 'Preset');
@@ -3009,7 +3011,7 @@ function exportPresetJSON(presetName) {
     const targetName = presetName === '__cur__' || !presetName
         ? (oai_settings?.preset_settings_openai || '')
         : presetName;
-    if (!targetName) throw new Error('프리셋을 찾을 수 없습니다');
+    if (!targetName) throw new Error('프리셋을 찾을 수 없어요');
 
     // Match readPresetBlocks(): for the preset that is currently loaded, ST's
     // live working state lives in oai_settings, while openai_settings[] holds
@@ -3025,7 +3027,7 @@ function exportPresetJSON(presetName) {
         const presetIndex = openai_setting_names?.[targetName];
         presetObj = presetIndex !== undefined ? openai_settings[presetIndex] : null;
     }
-    if (!presetObj) throw new Error('프리셋 객체를 찾을 수 없습니다');
+    if (!presetObj) throw new Error('프리셋 객체를 찾을 수 없어요');
 
     const cloned = deepClone(presetObj);
     const ns = presetNs(presetName);
@@ -3117,9 +3119,9 @@ async function applyPresetLive(presetName, titlesOnly) {
     const targetName = presetName === '__cur__' || !presetName
         ? (oai_settings?.preset_settings_openai || '')
         : presetName;
-    if (!targetName) throw new Error('프리셋을 찾을 수 없습니다');
+    if (!targetName) throw new Error('프리셋을 찾을 수 없어요');
     if (typeof getChatCompletionPreset !== 'function') {
-        throw new Error('프리셋 저장 함수를 찾을 수 없습니다 (ST 버전이 호환되지 않을 수 있습니다)');
+        throw new Error('프리셋 저장 함수를 찾을 수 없어요 (ST 버전이 호환되지 않을 수 있어요)');
     }
 
     const cur = getCurrentPresetName();
@@ -3133,7 +3135,7 @@ async function applyPresetLive(presetName, titlesOnly) {
         // succeeded, so a failed save leaves its in-memory list untouched.
         presetObj = presetIndex !== undefined && openai_settings[presetIndex] ? deepClone(openai_settings[presetIndex]) : null;
     }
-    if (!presetObj) throw new Error('프리셋 객체를 찾을 수 없습니다');
+    if (!presetObj) throw new Error('프리셋 객체를 찾을 수 없어요');
 
     // Same ns readPresetBlocks()/exportPresetJSON() use, so this picks up
     // whatever was already translated in the panel for this preset.
@@ -3171,8 +3173,8 @@ async function applyPresetLive(presetName, titlesOnly) {
     applied += groupRenamed + runnerRenamed;
 
     if (!applied) throw new Error(titlesOnly
-        ? '적용할 제목 번역이 없습니다. 먼저  제목 번역을 실행하세요.'
-        : '적용할 번역이 없습니다. 먼저 번역을 실행하세요.');
+        ? '적용할 제목 번역이 없어요. 먼저  제목 번역을 실행하세요.'
+        : '적용할 번역이 없어요. 먼저 번역을 실행하세요.');
 
     // getChatCompletionPreset() pulls the full field set (all of
     // settingsToUpdate, including prompts/prompt_order) off the object we
@@ -3219,7 +3221,7 @@ async function applyPresetLive(presetName, titlesOnly) {
     // editing an inactive preset just updates its in-memory copy + the
     // file on disk, and will show correctly next time it's loaded.
     if (isCurrent) {
-        try { promptManager?.render?.(false); } catch (e) { console.warn(`[${EXT}] promptManager render failed`, e); }
+        try { omMod?.promptManager?.render?.(false); } catch (e) { console.warn(`[${EXT}] promptManager render failed`, e); }
         // For the loaded preset, ST's regex engine reads the scripts off the
         // live oai_settings we just mutated — persist that to settings.json too
         // so the rename survives a reload without re-selecting the preset.
@@ -3295,9 +3297,9 @@ function applyWiEntryTranslation(entry, ns, entryId, titlesOnly) {
 // selectedIds: null = all entries, Set = only those entries (others stay original)
 async function exportWorldInfoJSON(worldName, selectedIds) {
     const ctx = SillyTavern?.getContext?.() || getContext?.();
-    if (!ctx?.loadWorldInfo) throw new Error('WI 로드 함수를 찾을 수 없습니다');
+    if (!ctx?.loadWorldInfo) throw new Error('WI 로드 함수를 찾을 수 없어요');
     const wi = await ctx.loadWorldInfo(worldName);
-    if (!wi || !wi.entries) throw new Error('WI 데이터를 찾을 수 없습니다');
+    if (!wi || !wi.entries) throw new Error('WI 데이터를 찾을 수 없어요');
 
     const cloned = deepClone(wi);
     const ns = `pt-wi::${worldName}`;
@@ -3347,13 +3349,13 @@ async function exportWorldInfoJSON(worldName, selectedIds) {
 // rewritten and every other entry is left exactly as it was (this never
 // deletes entries, unlike the partial JSON *export* which filters them out).
 async function applyWorldInfoLive(worldName, selectedIds, titlesOnly) {
-    if (!worldName) throw new Error('월드인포를 찾을 수 없습니다');
+    if (!worldName) throw new Error('월드인포를 찾을 수 없어요');
     const ctx = SillyTavern?.getContext?.() || getContext?.();
     if (!ctx?.loadWorldInfo || !ctx?.saveWorldInfo) {
-        throw new Error('월드인포 저장 함수를 찾을 수 없습니다 (ST 버전이 호환되지 않을 수 있습니다)');
+        throw new Error('월드인포 저장 함수를 찾을 수 없어요 (ST 버전이 호환되지 않을 수 있어요)');
     }
     const wi = await ctx.loadWorldInfo(worldName);
-    if (!wi || !wi.entries) throw new Error('월드인포 데이터를 찾을 수 없습니다');
+    if (!wi || !wi.entries) throw new Error('월드인포 데이터를 찾을 수 없어요');
 
     // Same ns readWorldInfo()/exportWorldInfoJSON() use.
     const ns = `pt-wi::${worldName}`;
@@ -3390,8 +3392,8 @@ async function applyWorldInfoLive(worldName, selectedIds, titlesOnly) {
         }
     }
     if (!applied) throw new Error(titlesOnly
-        ? '적용할 제목 번역이 없습니다. 먼저  제목 번역을 실행하세요.'
-        : '적용할 번역이 없습니다. 먼저 번역을 실행하세요.');
+        ? '적용할 제목 번역이 없어요. 먼저  제목 번역을 실행하세요.'
+        : '적용할 번역이 없어요. 먼저 번역을 실행하세요.');
 
     await writeWorldInfo(worldName, wi);   // 7.0.1 원본으로 되돌리기도 같은 길
     return { targetName: worldName, applied, entries: touched };
@@ -3414,7 +3416,7 @@ async function exportCharacterJSON(charIdRaw, opts, selectedIds) {
     } else {
         idx = findCharIndex(charIdRaw);
     }
-    if (idx < 0 || !characters?.[idx]) throw new Error('캐릭터를 찾을 수 없습니다');
+    if (idx < 0 || !characters?.[idx]) throw new Error('캐릭터를 찾을 수 없어요');
 
     try { await unshallowCharacter?.(idx); } catch(e) {}
     const char = characters[idx];
@@ -3574,7 +3576,7 @@ async function restoreOriginal(record) {
             await writePresetBody(record.name, deepClone(record.data), isCurrent);
             if (isCurrent) {
                 try { if (eventSource?.emit && event_types?.OAI_PRESET_IMPORT_READY) await eventSource.emit(event_types.OAI_PRESET_IMPORT_READY, { presetName: record.name }); } catch (e) { console.warn(`[${EXT}] group cache reload failed`, e); }
-                try { promptManager?.render?.(false); } catch (e) { console.warn(`[${EXT}] promptManager render failed`, e); }
+                try { omMod?.promptManager?.render?.(false); } catch (e) { console.warn(`[${EXT}] promptManager render failed`, e); }
             }
         } else if (record.kind === 'wi') {
             await writeWorldInfo(record.name, deepClone(record.data));
@@ -3603,14 +3605,14 @@ async function characterUpdate(charIdRaw, selectedIds) {
     } else {
         idx = findCharIndex(charIdRaw);
     }
-    if (idx < 0 || !characters?.[idx]) throw new Error('캐릭터를 찾을 수 없습니다');
+    if (idx < 0 || !characters?.[idx]) throw new Error('캐릭터를 찾을 수 없어요');
 
     try { await unshallowCharacter?.(idx); } catch (e) {}
     const char = characters[idx];
     if (!char) throw new Error('캐릭터 데이터 없음');
     // The endpoint identifies the target card by its avatar filename, so a card
     // without one can't be written to safely.
-    if (!char.avatar) throw new Error('아바타 파일명이 없어 저장 대상을 특정할 수 없습니다');
+    if (!char.avatar) throw new Error('아바타 파일명이 없어 저장 대상을 특정할 수 없어요');
 
     // Namespace matches page load: pt-char::{avatar}
     const ns = `pt-char::${char.avatar}`;
@@ -3673,7 +3675,7 @@ async function characterUpdate(charIdRaw, selectedIds) {
 
 async function applyCharacterLive(charIdRaw, selectedIds) {
     const { idx, char, update, applied } = await characterUpdate(charIdRaw, selectedIds);
-    if (!applied) throw new Error('적용할 번역이 없습니다. 먼저 번역을 실행하세요.');
+    if (!applied) throw new Error('적용할 번역이 없어요. 먼저 번역을 실행하세요.');
     const isCurrent = await writeCharacterUpdate(idx, char, update);
     return { targetName: char.name || `#${idx}`, applied, isCurrent };
 }
@@ -3801,7 +3803,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
             return;
         }
         // Everything already has a title — offer a redo rather than refusing.
-        const redo = await ask(`제목 ${already.length}개가 이미 번역되어 있습니다. 다시 번역할까요? 기존 제목 번역을 덮어써요.\n\n※ 본문 번역 데이터는 영향을 받지 않습니다.`, { ok: '다시 번역', cancel: '취소' });
+        const redo = await ask(`제목 ${already.length}개가 이미 번역되어 있어요. 다시 번역할까요? 기존 제목 번역을 덮어써요.\n\n※ 본문 번역 데이터는 영향을 받지 않아요.`, { ok: '다시 번역', cancel: '취소' });
         if (!redo) return;
         targets = already;
     }
@@ -4296,7 +4298,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const loadedName=sel.options[sel.selectedIndex]?.textContent || val;
         // Character tab: require explicit selection (no implicit "current character" fallback)
         if ((kind === 'char' || kind === 'persona') && !val) {
-            showEmpty('불러올 데이터가 없습니다.');
+            showEmpty('불러올 데이터가 없어요.');
             return;
         }
         const mine=++loadSeq;
@@ -4340,7 +4342,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
         const selChip = page.querySelector('.pt-selected-chip');
         if (selChip) { selChip.style.display = 'none'; selChip.textContent = ''; }
 
-        if (!items.length) { showEmpty('불러올 데이터가 없습니다.'); return; }
+        if (!items.length) { showEmpty('불러올 데이터가 없어요.'); return; }
         hideEmpty();
         const totalTkn=items.reduce((s,i)=>s+estimateTokens(i.content||''),0);
         const cntEl=page.querySelector(`#${idPfx}-cnt`);
@@ -4400,7 +4402,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     });
     page.querySelector(`#${idPfx}-retr`).addEventListener('click',async()=>{
         const mode=await askTransMode(); if(!mode) return;
-        if(!await ask(mode==='note'?'주석을 다시 번역할까요? (본문 번역은 유지됩니다)':'본문을 재번역할까요? (주석은 유지됩니다)', { ok: '다시 번역', cancel: '취소' })) return;
+        if(!await ask(mode==='note'?'주석을 다시 번역할까요? (본문 번역은 유지돼요)':'본문을 재번역할까요? (주석은 유지돼요)', { ok: '다시 번역', cancel: '취소' })) return;
         await runHere(()=>runTranslation(mkArgs(true,mode)));
     });
     page.querySelector(`#${idPfx}-titles`)?.addEventListener('click',async()=>{
@@ -4510,7 +4512,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 result = await exportWorldInfoJSON(srcVal, checkedIds);
             } else if (kind === 'char') {
                 // Character: partial field selection supported
-                const includeCB = await ask('캐릭터 카드에 임베디드 월드북(character_book)이 있으면 JSON 에 함께 넣을까요? (원문 그대로) \n\n※ 임베디드 월드북의 내용은 번역되지 않고 원문 그대로 저장됩니다.', { ok: '포함', cancel: '제외' });
+                const includeCB = await ask('캐릭터 카드에 임베디드 월드북(character_book)이 있으면 JSON 에 함께 넣을까요? (원문 그대로) \n\n※ 임베디드 월드북의 내용은 번역되지 않고 원문 그대로 저장돼요.', { ok: '포함', cancel: '제외' });
                 result = await exportCharacterJSON(srcVal, { includeCharacterBook: includeCB }, checkedIds);
             } else if (kind === 'persona') {
                 const update = personaUpdate(srcVal, checkedIds, field => getTranslatedBody(ns, field), items);
@@ -4790,7 +4792,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             ? '본문'
             : (titlesOnly ? '제목만 (본문 원문 유지)' : '제목 + 본문');
         const ok = await ask(
-            `"${label}" ${kindLabel}에 번역을 적용합니다.\n\n` +
+            `"${label}" ${kindLabel}에 번역을 적용해요.\n\n` +
             `적용 대상: ${whatLine}\n` +
             `범위: ${scopeLine}\n\n` +
             `파일을 덮어쓰기 전에 지금 원본을 백업해 둬요. 알림의 ↶ 이나 더보기 「원본으로 되돌리기」로 돌아갈 수 있어요.`,
@@ -4813,7 +4815,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             if (kind === 'preset') {
                 const r = await applyPresetLive(srcVal, titlesOnly);
                 if (typeof toastr!=='undefined') {
-                    const note = r.isCurrent ? '' : ' — 현재 로드된 프리셋이 아니라 화면엔 반영되지 않음, 다음에 불러올 때 적용된 내용이 보입니다';
+                    const note = r.isCurrent ? '' : ' — 현재 로드된 프리셋이 아니라 화면엔 반영되지 않음, 다음에 불러올 때 적용된 내용이 보여요';
                     const extras = [
                         r.regexRenamed  ? `정규식 ${r.regexRenamed}개`  : '',
                         r.groupRenamed  ? `그룹 ${r.groupRenamed}개`    : '',
@@ -4829,7 +4831,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     // preset is re-selected.
                     if (r.groupReloadFailed) {
                         toastr.warning(
-                            '그룹명을 저장했지만 ST-BaiBai-Tools 캐시를 새로 읽게 하지 못했습니다. ' +
+                            '그룹명을 저장했지만 ST-BaiBai-Tools 캐시를 새로 읽게 하지 못했어요. ' +
                             '되돌아갈 수 있으니, 그 프리셋을 선택하지 않은 상태에서 다시 적용하세요.',
                             '', { timeOut: 12000 }
                         );
@@ -5470,7 +5472,7 @@ function mountUi(addForm) {
             if (typeof toastr !== 'undefined') toastr.info('지울 번역 캐시가 없어요');
             return;
         }
-        const msg = `번역 데이터가 전부 삭제됩니다.\n\n현재 저장된 번역: ${count}개 (${sizeStr})\n\n이 작업은 되돌릴 수 없습니다. 정말 삭제할까요?`;
+        const msg = `번역 데이터가 전부 삭제돼요.\n\n현재 저장된 번역: ${count}개 (${sizeStr})\n\n이 작업은 되돌릴 수 없어요. 정말 삭제할까요?`;
         if (!await ask(msg, { ok: '전부 지우기', cancel: '취소', danger: true })) return;
         await clearTranslationCache();
         if (typeof toastr !== 'undefined') toastr.success(`번역 캐시 ${count}개를 지웠어요`);

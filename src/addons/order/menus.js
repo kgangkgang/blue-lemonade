@@ -26,7 +26,8 @@ export function applyMenuOrders(){if(booting()){afterBoot(applyMenuOrders);retur
  const rank=key=>{const i=order.indexOf(key);return i<0?order.length:i;};
  const sorted=[...rows].sort((a,b)=>rank(a.key)-rank(b.key));
  if(kind==='wand'){
-  const root=document.querySelector(targets.wand[1]);root.style.flexDirection='column';
+  // 값이 다를 때만 써요 — 아래 감시자가 style 변화에 다시 예약하니, 같은 값을 매번 쓰면 브라우저에 따라 80ms 마다 되풀이될 수 있어요
+  const root=document.querySelector(targets.wand[1]);if(root.style.flexDirection!=='column')root.style.flexDirection='column';
   if(getComputedStyle(root).display!=='none'&&root.style.display!=='flex')root.style.display='flex';
   for(const box of root.querySelectorAll(':scope > .extension_container'))if(box.style.display!=='none'&&box.style.display!=='contents')box.style.display='contents';
   // 2026-10-06: 저장한 순서가 없으면 order 를 비워 원래 자리대로 둔다. 처음 훑은 순서를 걸면 나중에 붙은 항목(메모·북마크 등)이 맨 아래로 밀렸다.

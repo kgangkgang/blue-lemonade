@@ -16,7 +16,7 @@ import * as chats from '../../../../../../chats.js';
 import { morphdom } from '../../../../../../../lib.js';
 import { createStreamMorph, SELF_TEST_STEPS } from './morph.js';
 import { createPromptListDefer } from './promptlist.js';
-import { listShown } from './shown.js';
+import { listShown, watchShown } from './shown.js';   // 1.9.2 두 파일에 글자 그대로 있던 watchShown 을 한곳에
 import { createSaveSender } from './savesend.js';
 import { createStyleDedupe } from './styledup.js';
 import { createStyleOnce, installStyleOnce } from './styleonce.js';
@@ -86,32 +86,7 @@ function installMorph() {
 
 // ── 2. 닫힌 프롬프트 목록은 열 때 그리기 ─────────────────────
 
-function isShown(el) {
-    // 4.2.2: 닫힌 서랍이면 물어볼 것도 없다. 8.0.5: 열린 서랍에서도 checkVisibility() 대신 조상의 class · 인라인 style 만 본다(shown.js) —
-    // 프리셋을 바꾸는 동안 부를 때마다 서랍 전체 스타일 계산을 강제했다 (PC 약 50ms · 폰 흉내 약 200ms × 4번 남짓)
-    return listShown(el);
-}
 
-/** 목록이 보이기 시작할 수 있을 때: 조상(서랍 · 설정 블록)의 class · style · hidden 이 바뀔 때, 화면에 들어올 때 */
-function watchShown(el, onChange) {
-    const stops = [];
-    if (typeof MutationObserver === 'function') {
-        const mo = new MutationObserver(onChange);
-        for (let node = el.parentElement; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
-            mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
-        }
-        stops.push(() => mo.disconnect());
-    }
-    if (typeof IntersectionObserver === 'function') {
-        const io = new IntersectionObserver((entries) => {
-            if (entries.some(entry => entry.isIntersecting)) onChange();
-        });
-        io.observe(el);
-        stops.push(() => io.disconnect());
-    }
-    if (!stops.length) return null;
-    return () => stops.forEach(stop => stop());
-}
 
 // 토글을 누른 직후의 render(true) 만 묶는다 — 실리태번 handleToggle 은 누름 처리(거품 단계) 안에서 바로 render() 를 부른다.
 // 지우기 · 끼우기 · 편집 저장 · 끌어 옮기기 뒤의 그리기는 예전처럼 바로 보낸다(보이는 결과가 늦어지지 않게).
@@ -126,7 +101,7 @@ if (typeof document?.addEventListener === 'function') {   // 시험은 document 
 const promptList = createPromptListDefer({
     manager: () => openai.promptManager ?? null,
     enabled: () => settings().deferPromptList !== false,
-    visible: isShown,
+    visible: listShown,
     watch: watchShown,
     peer: () => window.SaveDedupe?.promptDefer ?? null,
     coalesceMs: 300,   // 8.0.5 토글을 잇달아 누를 때 미리 돌려 보기 · 목록 그리기를 마지막 한 번으로 — 8.2.5 첫 번째는 바로, 300ms 안의 뒤따르는 것만 묶는다

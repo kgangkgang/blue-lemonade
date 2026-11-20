@@ -14,6 +14,7 @@
 import { mbOff } from './mb-switch-core.js';
 import * as Sub from './mb-autosub.js';
 import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { ctx, chatMark, serialQueue, mbImport } from './mb-util.js';   // 1.9.2 공용 도우미
 
 export const KEY = 'namekey';
 export const STATE = 'bl_mbnamekey';   // 메시지 extra 칸: { [스와이프]: [[원래 키, 원래 값], …] }
@@ -22,7 +23,6 @@ const PERSON = new Set(['aff', 'trust']);
 const nm = s => foldBlank(String(s ?? '').normalize('NFC')).replace(/\*\*|__|`/g, '').trim().toLowerCase();
 /** 버그 사냥 6 줄 하나의 점자 빈칸(U+2800) → 띄어쓰기 · 이어진 띄어쓰기 하나로 · 앞뒤 다듬기(나눔표 둘레는 그 확장이 조각마다 다듬어요) */
 export const blankLine = s => foldBlank(s).replace(/ {2,}/g, ' ').trim();
-const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 export const active = (doc = globalThis.document) => !mbOff(KEY, doc);
 
 /** 상태창 인물 표의 이름 · 별칭(소문자) — 사용자(role user · 내 이름)는 빼요 */
@@ -132,27 +132,21 @@ export function fixMessage(m, keyOf, names, { hasStatus = null } = {}) {
 }
 
 // 그 확장 core(지금 상태 · 새로고침) — mb-editsync.js 와 같은 찾기(스크립트 주소로)
-async function mbCore(doc = globalThis.document) {
-    try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;
-        return await import(new URL('./src/core.js', src).href);
-    } catch { return null; }
-}
+async function mbCore(doc = globalThis.document) { return mbImport('./src/core.js', doc); }   // 1.9.2 공용 찾기(src/mb-util.js)
 let testCore = undefined;
 /** 시험용: 그 확장 core 대신 넣기 */
 export const useCore = k => { testCore = k; };
 const core = async () => (testCore !== undefined ? testCore : mbCore());
 const sheet = c => { const meta = c?.chatMetadata?.[META]; return meta && typeof meta === 'object' && meta.base && !meta.off && c?.extensionSettings?.[META]?.enabled !== false ? meta : null; };
-let queue = Promise.resolve();
-const serial = fn => (queue = queue.then(fn, fn));
+const serial = serialQueue();
 /** 지금 채팅을 훑어 고쳐요(from 번 메시지부터) → 바꾼 서랍 수. eng = 그 확장 계산 모듈(시험용) */
 export function sweep(c = ctx(), { from = 0, eng = undefined, doc = globalThis.document } = {}) {
+    const still = chatMark(c);   // 1.9.2 그 확장 모듈을 처음 받는 사이 채팅이 바뀌면 옛 채팅 인물 이름으로 새 채팅 서랍 줄을 고치고 저장하지 않게
     return serial(async () => {
         if (!active(doc) || !Array.isArray(c?.chat) || !sheet(c)) return 0;
         const e = eng ?? await Sub.engine(); if (!e || typeof e.opInfo !== 'function') return 0;
         const k = await core();
+        if (!still()) return 0;
         let state = null; try { state = k?.app?.current?.state ?? null; } catch { state = null; }   // 지금 상태(인물 표 · 수치 칸) — 없으면 처음 상태
         state ??= sheet(c).base;
         const names = personNames(state, c.name1);   // 버그 사냥 6 인물 표가 비어도 점자 빈칸 줄은 고쳐요

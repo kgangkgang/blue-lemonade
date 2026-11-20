@@ -49,6 +49,9 @@ const LLM_INCOMING = new Set(['all', 'ai']);
 const LLM_OUTGOING = new Set(['all', 'user']);
 const LLM_FOLDER = /llm-translator/i;             // 단독 확장 폴더 (llm-translator-custom · llm-translator)
 const BL_FOLDER = /blue-?lemonade|salty/i;         // 블루 레몬에이드 테마 폴더
+// 1.9.2 폴더 이름을 바꿔 깐 사람도: 이 파일이 실린 테마 폴더 이름(import.meta.url)과도 맞대요 — 예전엔 이름 꼴이 다르면 내장 번역을 「없음」으로 봐 원문부터 읽었어요
+const OWN_FOLDER = (() => { try { const m = /\/extensions\/third-party\/([^/?#]+)\//.exec(import.meta.url); return m ? 'third-party/' + decodeURIComponent(m[1]) : ''; } catch { return ''; } })();
+const isTheme = n => BL_FOLDER.test(n) || (!!OWN_FOLDER && n === OWN_FOLDER);
 const ST_KEY = 'translate';
 const ST_INCOMING = new Set(['responses', 'both']);
 const ST_OUTGOING = new Set(['inputs', 'both']);
@@ -74,8 +77,8 @@ function llmTranslator() {
     const installed = installedList();
     const known = installed.length > 0;
     const builtin = !!extension_settings.salty?.addons?.translator
-        && !disabled.some(n => BL_FOLDER.test(n))
-        && (!known || installed.some(n => BL_FOLDER.test(n)));
+        && !disabled.some(isTheme)
+        && (!known || installed.some(isTheme));
     const standalone = known
         ? installed.some(n => LLM_FOLDER.test(n) && !disabled.includes(n))
         : !disabled.some(n => LLM_FOLDER.test(n));

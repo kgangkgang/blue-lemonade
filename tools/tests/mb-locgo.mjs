@@ -81,10 +81,17 @@ function winner(tail, prop, off, { coarse = false } = {}) {
     }
     return val;
 }
-await ok('켬(기본): 갈 곳 줄이 격자 칸으로 풀려 보이고 · 칸 테두리 없음 · 「이 탭 열기」는 머리 줄 오른쪽 끝', () => {
+await ok('켬(기본): 갈 곳 줄이 격자 칸으로 풀려 보이고 · 상자 · 머리 줄 · 「이 탭 열기 ›」 글 링크는 날짜 펼침과 같은 공용 꼴(11-20)', () => {
     assert.equal(winner(' > .ss-loc-row', 'display', []), 'contents');
-    assert.equal(winner('', 'display', []), 'grid'); assert.equal(winner('', 'border', []), '0');
+    assert.equal(winner('', 'display', []), 'grid');
+    // 11-20 사용자 「날짜 쪽 디자인으로 통일 · 글자 크기도」: 테두리 · 둥근 모서리 · 글자 크기는 덮지 않고(공용 .ss-t-det) · 안여백은 공용과 같은 5 / 8
+    for (const prop of ['border', 'border-radius', 'font-size', 'line-height']) assert.equal(winner('', prop, []), undefined, `상자 ${prop} 를 덮지 않아요`);
+    assert.equal(winner('', 'padding', []), '5px 8px');
     assert.equal(winner(' > .go', 'grid-column', []), '3'); assert.equal(winner(' > .go', 'grid-row', []), '1');
+    for (const prop of ['border', 'height', 'padding', 'font-size', 'display', 'border-radius']) assert.equal(winner(' > .go', prop, []), undefined, `「이 탭 열기」 ${prop} 는 공용 글 링크 꼴 그대로`);
+    assert.equal(winner(' > .ss-mini-line', 'min-height', []), undefined, '머리 줄 높이는 날짜 줄과 같게');
+    assert.equal(winner(' > .ss-mini-line > span', 'color', []), undefined, '글 색은 날짜 줄과 같게');
+    for (const tail of [' > .ss-loc-row > small', ' .ss-loc-go']) assert.equal(winner(tail, 'font-size', []), '.92em', `${tail} 글자 = 머리 줄 글자 크기`);
     assert.equal(winner(' > .ss-mini-line > span', 'font-size', []), 'inherit', '장소 설명도 보여요');
     assert.equal(winner(' .ss-loc-go', 'height', []), '26px', '칩 높이 = 띠 칸 높이');
 });

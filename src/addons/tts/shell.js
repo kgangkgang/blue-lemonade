@@ -171,6 +171,7 @@ function syncWand() { if (runtimeEnabled() && settings().wand_menu !== false) ad
 function addSlashCommands() {
     const run = (name) => (args, value) => {
         if (name === 'lv-stop') { stopPlayback(); return ''; }
+        if (!runtimeEnabled()) return '';   // 꺼져 있으면 본체도 아무것도 안 해요 — 본체(약 1.2MB)를 받지 않아요
         const play = playbackEpoch;
         return ensureBody(`/${name}`).then(m => {
             if ((name === 'lv' || name === 'lv-read') && play !== playbackEpoch) return '';
@@ -200,6 +201,8 @@ function addSlashCommands() {
 function installApi() {
     const real = () => { const api = window.LemonVoice; return api && !api.blShell ? api : null; };
     const later = (name) => (...args) => {
+        // 꺼져 있으면 본체와 같은 답(읽기 false · 소리 만들기는 code 'disabled')을 본체 없이 돌려줘요
+        if (!runtimeEnabled()) return name === 'synth' ? Promise.reject(Object.assign(new Error('TTS 가 꺼져 있어요'), { code: 'disabled' })) : Promise.resolve(false);
         const play = playbackEpoch;
         return ensureBody('LemonVoice').then(() => {
             if ((name === 'speakText' || name === 'readText') && play !== playbackEpoch) return;

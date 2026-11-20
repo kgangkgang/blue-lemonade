@@ -12,6 +12,7 @@ import { onMbAdded } from './mb-arrow.js';   // 1.7.8 화살표 모듈의 채팅
 import { addMessageDecorator } from './message-decor.js';
 import { mbOff } from './mb-switch-core.js';
 import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { mbImport } from './mb-util.js';   // 1.9.2 미트볼 폴더 찾기 공용
 
 export const ATTR = 'data-bl-mb-diary';
 const WARN = String.fromCodePoint(0x26A0);   // 그 확장 ⚠ 칩의 첫 글자(화면에 그리는 글이 아니라 견주기만 해요)
@@ -66,14 +67,7 @@ export function pipLines(snap, title = '') {
 export function pipIndex(text) { const m = /\/ss-pip\s+(\d+)/.exec(String(text ?? '')); return m ? Number(m[1]) : null; }
 
 // ── 실리태번 · 그 확장과 잇기 ─────────────────────────
-async function mbCore(doc) {
-    try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
-        const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
-        if (!src || src.includes('?')) return null;
-        return await import(new URL('./src/core.js', src).href);
-    } catch { return null; }
-}
+async function mbCore(doc) { return mbImport('./src/core.js', doc); }   // 1.9.2 공용 찾기(src/mb-util.js)
 /** 칩 점검 창 하나: 넘어간 줄 칸을 원문으로(그 확장 번역이 건너뛰게 감쌈) */
 function rawPip(box, snapOf) {
     const p = box?.querySelector?.('.ss-pip-res .ss-pre'); if (!p || p.querySelector('.ss-notr')) return false;

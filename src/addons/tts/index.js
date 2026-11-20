@@ -274,10 +274,12 @@ function onSwiped(mesId) {
     if (!runtimeEnabled()) return;
     player.stop();
     const at = Date.now();
+    const mes0 = msgOf(mesId);   // 그사이 채팅이 바뀌거나 메시지가 지워지면 같은 번호의 다른 메시지를 읽지 않게
     // 400 ms 안에 생성이 시작되면 새 스와이프 → 답장이 그려질 때 읽음 (미리 만들기도 그때)
     setTimeout(() => {
         if (!runtimeEnabled()) return;
         if (genStartedAt >= at) return;
+        if (!mes0 || msgOf(mesId) !== mes0) return;
         // 있는 스와이프로 넘김: 미리 만들기 (대개 캐시에 있음, 자동 읽기와 상관없이)
         try { pregen.onSwipedExisting(mesId); }
         catch (e) { log('err', `미리 만들기 실패: ${e.message}`); }
