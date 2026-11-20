@@ -2,7 +2,7 @@ import { getSettings } from '../../settings.js';
 import { addonsEnabled } from '../../usage-mode.js';
 import { verifyAddonCss } from '../../addon-files-check.js';
 import { blocked, check as checkItem, duplicates, gather, installAll, isZip, ready, tooBig } from './batch.js';
-const VERSION = '1.1.2';
+const VERSION = '1.1.3';
 const HELPER_VERSION = '1.1.0';
 const API = '/api/plugins/blue-lemonade-zip';
 const views = new Set();

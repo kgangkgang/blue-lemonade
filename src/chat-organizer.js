@@ -253,7 +253,7 @@ function rowHtml(r, { entry = null, missing = false } = {}) {
     const check = picking ? `<input type="checkbox" class="bl-co-check" tabindex="-1" aria-hidden="true"${picked ? ' checked' : ''}${cur ? ' disabled' : ''}>` : '';
     const time = r.last ? `<small class="bl-co-time" title="${esc(core.fullTime(r.last))}">${esc(core.shortTime(r.last))}</small>` : '';
     const label = `${name} · ${r.f}${cur ? ' · 지금 채팅' : ''}${missing ? ' · 파일 확인 필요' : ''}`;
-    return `<div class="bl-co-row${cur ? ' bl-co-current' : ''}${missing ? ' bl-co-missing' : ''}${picked ? ' bl-co-picked' : ''}" role="listitem" data-key="${esc(encodeURIComponent(key))}">`
+    return `<div translate="no" class="bl-co-row${cur ? ' bl-co-current' : ''}${missing ? ' bl-co-missing' : ''}${picked ? ' bl-co-picked' : ''}" role="listitem" data-key="${esc(encodeURIComponent(key))}">`
         + `<button type="button" class="bl-co-open" data-co-act="open" aria-label="${esc(label)}"${picking ? ` aria-pressed="${!!picked}"${cur ? ' aria-disabled="true"' : ''}` : ''}>${check}${img}`
         + `<span class="bl-co-text"><span class="bl-co-who"><b>${esc(name)}</b>${r.k === 'g' ? '<i class="fa-solid fa-users" aria-hidden="true" title="그룹"></i>' : ''}${pinned ? '<i class="fa-solid fa-thumbtack bl-co-pin" aria-hidden="true" title="고정"></i>' : ''}</span>`
         + `<small class="bl-co-file">${esc(r.f)}</small>${r.mes ? `<span class="bl-co-mes">${esc(r.mes)}</span>` : ''}</span>${time}</button>`

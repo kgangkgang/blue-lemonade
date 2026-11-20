@@ -106,6 +106,7 @@ function lazyPanel() {
     if (!container) return;
     const stub = document.createElement('div');
     stub.className = 'eh-root';
+    stub.translate = false; // 1.9.2: 사용자가 정한 이름은 번역에서 빼요(panel.js 와 같음)
     stub.dataset.ehStub = ''; // 머리줄만 있는 동안은 테마 색 계산(ui.js refreshThemeVars)에서 건너뛴다
     drawer = stub;
     stub.innerHTML = `<div class="inline-drawer"><div class="inline-drawer-toggle inline-drawer-header">`
@@ -194,6 +195,7 @@ export async function openPanel() {
     content.style.display = 'block';
     const opened = dialog = document.createElement('dialog');
     dialog.className = 'bl-assets-dialog';
+    dialog.translate = false; // 1.9.2: 그림 이름표 'Foo_shy_surprise' 가 'Foo_shy_놀람' 으로 바뀌지 않게(translate="no")
     dialog.setAttribute('aria-label', TITLE);
     dialog.innerHTML = `<header><b><i class="fa-solid fa-images" aria-hidden="true"></i> 캐릭터 에셋 <span class="ext-version">v${VERSION}</span></b><button type="button" aria-label="캐릭터 에셋 닫기">×</button></header><div class="bl-assets-body"></div>`;
     document.body.append(dialog);

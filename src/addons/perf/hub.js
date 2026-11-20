@@ -10,7 +10,7 @@ import { perfErrorText } from './start-error.js';
 import { loadOn } from './load-defaults.js';
 
 export const SUITE_TITLE = '성능 보조';   // 7.0.3 창 제목이 「설정」이라 무슨 창인지 몰랐다 — 애드온 이름으로
-export const SUITE_VERSION = '2.3.4';
+export const SUITE_VERSION = '2.3.5';
 const BUTTON_ID = 'pa-hub-open';
 const TAB_KEY = 'pa_hub_tab';
 

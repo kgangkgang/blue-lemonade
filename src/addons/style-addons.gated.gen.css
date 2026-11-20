@@ -593,7 +593,7 @@
     color: color-mix(in srgb, var(--SmartThemeBodyColor, #e8e8ec) 62%, transparent);
     line-height: 1.4;
 }
-:root:where(.bl-asc-0) { --pa-hub-css-version: "2.3.4"; }
+:root:where(.bl-asc-0) { --pa-hub-css-version: "2.3.5"; }
 :where(html.bl-asc-0) .pa-hub-open {
     display: inline-flex;
     align-items: center;
@@ -797,7 +797,7 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
   :where(html.bl-asc-0) .rl-settings .rl-price-head:has(> .rl-unit) > small { order: 2; flex: 1 1 100%; min-width: 0; }
 }
 :root:where(.bl-asc-1) {
-    --po-css-version: "1.2.5";
+    --po-css-version: "1.2.6";
 }
 :where(html.bl-asc-1) .po-open {
     display: inline-flex;
@@ -953,7 +953,7 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
 :where(html.bl-asc-1) .po-list .po-item .po-label {flex:1 1 8em;min-width:0;white-space:normal;word-break:keep-all;overflow-wrap:break-word;}
 :where(html.bl-asc-1) .po-list .po-item.is-hidden .po-label {opacity:.5;}
 :where(html.bl-asc-2) .mr-settings {
-    --mr-css-version: "1.1.9";
+    --mr-css-version: "1.2.0";
 }
 :where(html.bl-asc-2) .mr-body {
     display: flex;
@@ -1066,7 +1066,7 @@ html:where(.bl-asc-0) body.salty .pa-hub .pa-hub-tab.active { background: var(--
 :where(html.bl-asc-2) .mr-offer-group { display: flex; flex-direction: column; gap: 2px; }
 :where(html.bl-asc-2) .mr-offer-source { color: var(--salty-muted, inherit); font-size: var(--bl-ts-meta, 12.5px); }
 :where(html.bl-asc-2) .mr-offer-row { gap: 8px; overflow-wrap: anywhere; }
-:where(html.bl-asc-3) #model-switch-settings {--ms-version:"1.2.2"}
+:where(html.bl-asc-3) #model-switch-settings {--ms-version:"1.2.3"}
 :where(html.bl-asc-3) #model-switch-settings .inline-drawer-content {display:flex;flex-direction:column;gap:12px;text-align:left}
 :where(html.bl-asc-3) .ms-presets {display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
 :where(html.bl-asc-3) .ms-presets:empty {display:none}
@@ -1197,7 +1197,7 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :where(.ms-ro
 :where(html.bl-asc-3) #model-switch-settings .ms-fallback-actions {display:flex;justify-content:flex-end;gap:8px}
 :where(html.bl-asc-3) #model-switch-settings .ms-fallback-actions {flex-wrap:wrap}
 :where(html.bl-asc-3) #model-switch-settings .ms-fallback-actions .menu_button {flex:0 0 auto;width:auto;min-width:0;max-width:100%;min-height:max(36px,var(--bl-h-ctl,36px));margin:0;align-items:center;justify-content:center;border-radius:var(--bl-r-sm,8px)!important;white-space:nowrap;word-break:keep-all}
-:where(html.bl-asc-4) #regex-link-settings {--rl-version:"1.2.0"}
+:where(html.bl-asc-4) #regex-link-settings {--rl-version:"1.2.1"}
 :where(html.bl-asc-4) #regex-link-settings .inline-drawer-content {display:flex;flex-direction:column;gap:12px;text-align:left}
 :where(html.bl-asc-4) .rl-summary {margin:0}
 :where(html.bl-asc-4) .rlk-empty {margin:0;opacity:.75}
@@ -1245,7 +1245,7 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :where(.ms-ro
     --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent));
     --bwr-danger: #e5484d;
-    --bwr-css-version: "2.2.0";
+    --bwr-css-version: "2.2.1";
 }
 :where(html.bl-asc-5) .bwr_settings .bwr_body {
     display: flex;
@@ -1859,7 +1859,7 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :where(.ms-ro
 :where(html.bl-asc-5) body.salty .bwr_settings #bwr_fallback_field .bl-fb-note { color: var(--salty-muted); font-size: var(--bl-ts-meta, 12.5px); opacity: 1; }
 :root:where(.bl-asc-6) {
     --jj-on: var(--jj-on-color, var(--SmartThemeQuoteColor, #e18a24));
-    --jj-css-version: "1.4.4";
+    --jj-css-version: "1.4.5";
 }
 :where(html.bl-asc-6) #jj-button {
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
@@ -2693,7 +2693,7 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-6) .jj-tr.is-stale .jj-tr-text { color: var(--jj-tr-muted); }
 :where(html.bl-asc-6) .jj-prompt-actions { align-items: center; gap: 8px; }
 :where(html.bl-asc-6) #jj-settings .jj-prompt-actions > .jj-tr-btn { margin: 0 auto 0 0; }
-:root:where(.bl-asc-7) { --cg-css-version: "1.7.6"; }
+:root:where(.bl-asc-7) { --cg-css-version: "1.7.7"; }
 :where(html.bl-asc-7) .cg-root {
     --cg-accent-fallback: #a98bd9;
     --cg-text: var(--SmartThemeBodyColor, #e8e4ef);
@@ -4601,7 +4601,7 @@ html:where(.bl-asc-6) body.salty #jj-settings label.jj-swatch > input[type="colo
 :where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc > :not(.cg-setting-text) { order: 1; flex: 0 1 auto; margin-left: auto; }
 :where(html.bl-asc-7) body.salty .cg-root div.cg-setting.cg-setting-desc > .cg-setting-text > small { order: 2; flex: 1 1 100%; min-width: 0; }
 :root:where(.bl-asc-8) {
-    --bl-notes-css-version: "1.3.8";
+    --bl-notes-css-version: "1.3.9";
     --bl-notes-surface: var(--salty-surface, var(--bl-opaque-tint, var(--SmartThemeBlurTintColor, #25262a)));
     --bl-notes-card: var(--bl-card, var(--salty-card, rgba(255, 255, 255, .04)));
     --bl-notes-text: var(--salty-text, var(--SmartThemeBodyColor, #eee));
@@ -5376,7 +5376,7 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-look-off) body.salty .
 html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-look-off) body.salty .bl-notes-look .bl-look-fontbtn { box-sizing: border-box !important; height: var(--bl-ui-ctl, 36px) !important; min-height: var(--bl-ui-ctl, 36px) !important; padding: 0 10px !important; border: 1px solid var(--bl-ui-line) !important; border-radius: var(--bl-ui-radius, 8px) !important; background: var(--salty-raised, var(--bl-control)) !important; font-size: var(--bl-ui-btn-fs, 14px) !important; }
 html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-look-off) body.salty .bl-notes-look .bl-look-fontbtn > i { font-size: var(--bl-ui-ink-fa, 12.5px) !important; color: inherit !important; }
 html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:not(#bl-h3) dialog.bl-notes-dialog > header > b > .bl-notes-guide { margin-left: calc(var(--bl-help-gap, 6px) - 8px) !important; }
-:where(html.bl-asc-9) .blzi { --blzi-css-version:'1.1.2'; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; min-width:0; text-align:left; }
+:where(html.bl-asc-9) .blzi { --blzi-css-version:'1.1.3'; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; min-width:0; text-align:left; }
 :where(html.bl-asc-9) .blzi-dialog { width:min(640px, calc(100vw - 24px)); max-width:none; max-height:calc(100dvh - 24px); padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:20px; background:var(--salty-bg, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); box-shadow:0 18px 60px color-mix(in srgb, var(--salty-text, black) 18%, transparent); }
 :where(html.bl-asc-9) .blzi-dialog::backdrop { background:color-mix(in srgb, var(--salty-bg, black) 65%, transparent); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
 :where(html.bl-asc-9) .blzi-dialog > header { display:flex; align-items:center; gap:8px; padding:8px 8px 8px 12px; border-bottom:1px solid var(--salty-line, var(--SmartThemeBorderColor)); }
@@ -5420,7 +5420,7 @@ html:where(.bl-asc-8):not(#bl-ui-parts-off):not(#bl-notes-head-off) body.salty:n
 :where(html.bl-asc-9) .blzi-item small { font-size:var(--bl-ts-meta, 12.5px); overflow-wrap:anywhere; }
 :where(html.bl-asc-9) .blzi-tag { font-size:var(--bl-ts-meta, 12.5px); padding:0 6px; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-sm, 8px); color:var(--salty-muted, var(--SmartThemeBodyColor)); }
 :where(html.bl-asc-9) .blzi-bad .blzi-tag { color:var(--salty-accent-ink, var(--SmartThemeBodyColor)); border-color:currentColor; }
-:root:where(.bl-asc-10) { --eh-css-version: "1.7.7"; }
+:root:where(.bl-asc-10) { --eh-css-version: "1.7.8"; }
 :where(html.bl-asc-10) .eh-root {
     --eh-text: var(--SmartThemeBodyColor, #ccc);
     --eh-accent: var(--SmartThemeQuoteColor, #a98bd9);
@@ -7126,7 +7126,7 @@ html:where(.bl-asc-11) body.salty #pt-panel #pt-tabs,:where(html.bl-asc-11) body
 }
 :where(html.bl-asc-11) body .jj-tr-btn.bl-kt-btn.kt-cssrow > .kt-g::before { display: inline; vertical-align: baseline !important; font-size: inherit; line-height: 1; }
 :where(html.bl-asc-11) body .jj-tr-btn.bl-kt-btn.kt-cssrow > i.fa-spinner { position: static; display: inline-block; margin: 0; }
-:where(html.bl-asc-12) .blpt { --blpt-css-version:'1.0.4'; display:flex; flex-direction:column; gap:10px; min-width:0; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; text-align:left; }
+:where(html.bl-asc-12) .blpt { --blpt-css-version:'1.0.5'; display:flex; flex-direction:column; gap:10px; min-width:0; color:var(--salty-text, var(--SmartThemeBodyColor)); font-size:var(--bl-ts-ui, 14px); line-height:1.5; text-align:left; }
 :where(html.bl-asc-12) .blpt-status { margin:0; font-size:var(--fs-small, 13px); color:var(--salty-muted, var(--SmartThemeQuoteColor)); overflow-wrap:anywhere; }
 :where(html.bl-asc-12) .blpt-actions { display:flex; flex-wrap:wrap; gap:8px; }
 html:where(.bl-asc-12) body .blpt .blpt-btn { display:inline-flex; align-items:center; justify-content:center; flex:none; width:36px; height:36px; min-width:36px; min-height:36px; margin:0; padding:0; border:1px solid var(--salty-line, var(--SmartThemeBorderColor)); border-radius:var(--bl-r-sm, 8px); background:var(--salty-surface, var(--SmartThemeBlurTintColor)); color:var(--salty-text, var(--SmartThemeBodyColor)); font:inherit; font-size:14px; line-height:1; cursor:pointer; box-shadow:none; transition:background-color .15s ease, color .15s ease; }
@@ -7193,7 +7193,7 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 :where(html.bl-asc-15) #lv_settings .lv-settings-credits :where(summary):is(summary, a):focus-visible,
 :where(html.bl-asc-15) #lv_settings .lv-settings-credits :where(a):is(summary, a):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 3px; }
 :where(html.bl-asc-15) .lv-settings,:where(html.bl-asc-15) .lv-editor,:where(html.bl-asc-15) .lv-bar,:where(html.bl-asc-15) .lv-namevoice {
-  --lv-css-version: "2.0.6";
+  --lv-css-version: "2.1.0";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));

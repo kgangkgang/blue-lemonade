@@ -37,6 +37,9 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     '.llmt-gl-list',
     // 1.4.6: 미트볼 상태창은 칸 값 · 메신저 말풍선에 사용자 · AI 가 쓴 글이 그대로 들어가요(「Empty」 · 「Ready」 같은 한 낱말이 바뀌면 안 돼요). 그 창 UI 는 원래 한국어예요.
     '.ss-scope', '.ss-root', '.ss-panel', '.ss-phone', '.ss-dlg', '.ss-mbubble',
+    // BL 1.9.2: 공용 「번역 제외」 표시 — 사용자가 정한 이름(파일 · 프리셋 · 폴더 · 채팅 · 모델 이름)을 그리는 칸은 HTML 표준 translate="no"(브라우저 번역도 같이 멈춰요)나 .notranslate 를 달아요.
+    //   (폰 제보: 에셋 창 그림 이름표 'Foo_shy_surprise' 가 'Foo_shy_놀람' 으로 보였어요 — 사전의 표정 낱말 'surprise' 와 같은 조각이 바뀜.)
+    '[translate="no"]', '.notranslate',
   ].join(',');
   // 1.4.6: 흔한 한 낱말 열쇠 · 넓은 패턴은 실리태번이 그 글을 그리는 칸 안에서만 바꿔요 — 남의 확장이 그린 같은 낱말 · 사용자 글은 그대로 둬요.
   //   [칸 선택자(쉼표로 이은 단순 선택자), 열쇠(|로 이음)] — 열쇠는 정리한(normalize) 꼴이에요.
@@ -354,7 +357,20 @@ export default function blueLemonadeScript(BlueLemonade, window) {
     // SillyTavern reads some <option> texts back (preset names), so only its own i18n-tagged options are touched.
     if (element.tagName === 'OPTION' && !element.hasAttribute('data-i18n')) return;
     if (narrowed(value, element)) return;
+    if (wordPiece(node)) return;
     swapText(node, translate);
+  }
+  // BL 1.9.2: 사전은 「글 전체가 열쇠와 같을 때」만 바꿔요. 그런데 한 낱말이 <wbr>(줄바꿈 자리)이나 맞붙은 글자 노드로 쪼개지면
+  //   조각 하나가 열쇠와 같아져 낱말 일부만 바뀌었어요(에셋 이름표 'Foo_shy_<wbr>surprise' → 'Foo_shy_놀람'). 띄어 쓰지 않고 맞닿은 조각은 건너뛰어요.
+  //   요소(아이콘 · <b> 등)와 맞닿은 것은 예전 그대로 봐요 — 실리태번 단추 글이 아이콘 바로 뒤에 붙는 꼴이 흔해서요.
+  const WORD_END = /[\p{L}\p{N}_]$/u, WORD_START = /^[\p{L}\p{N}_]/u;
+  function wordPiece(node) {
+    const value = node.nodeValue;
+    const before = node.previousSibling, after = node.nextSibling;
+    // <wbr> 은 낱말 한가운데 두는 표시라 앞뒤가 띄어 있지 않으면 조각이에요. 맞붙은 글자 노드는 맞닿은 두 글자가 모두 낱말 글자(글자 · 숫자 · _)일 때만 — 'Tokens:' + '12' 같은 꼴은 예전처럼 바꿔요.
+    if (before && /^\S/.test(value) && (before.nodeName === 'WBR' ? true : before.nodeType === 3 && WORD_END.test(before.nodeValue) && WORD_START.test(value))) return true;
+    if (after && /\S$/.test(value) && (after.nodeName === 'WBR' ? true : after.nodeType === 3 && WORD_START.test(after.nodeValue) && WORD_END.test(value))) return true;
+    return false;
   }
 
   function swapText(node, lookup) {

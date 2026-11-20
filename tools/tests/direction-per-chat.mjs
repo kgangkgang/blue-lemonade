@@ -173,7 +173,7 @@ await test('창을 닫을 때 채팅 파일을 바로 저장 · 화면 · 도움
     assert.match(js, /setAttr\(settingsRoot\.querySelector\('#jj_per_chat_switch'\), 'aria-checked', String\(store\.perChat\)\);/);
     assert.match(js, /eventSource\.on\(event_types\.CHAT_CHANGED, \(\) => \{ if \(!perChatOn\(\)\) return; closePopup\(\); refreshButton\(\); \}\);/, 'chat change: nothing when off');
     assert.match(js, /<p><b>채팅방마다 따로<\/b>\(확장 설정 카드, 처음엔 꺼짐\)를 켜면 전개 지시 · 항상 지시\(켜짐 · 글\)와/, 'help');
-    assert.match(js, /const VERSION = '1\.4\.4';/); assert.match(css, /--jj-css-version: "1\.4\.4";/);
+    assert.match(js, /const VERSION = '1\.4\.5';/); assert.match(css, /--jj-css-version: "1\.4\.5";/);
     assert.doesNotMatch(css, /jj_per_chat|per-chat/, 'no screen-only CSS for the new row');
     assert.match(await read('src/addons/direction/NOTICE.md'), /https:\/\/github\.com\/DenBzs\/Direction-Manager-DB.*가져오지 않고/, 'idea credit only');
     assert.match(await read('.github/workflows/release-check.yml'), /node tools\/tests\/direction-per-chat\.mjs \./, 'registered in CI');

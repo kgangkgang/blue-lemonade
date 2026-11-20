@@ -148,7 +148,7 @@ await test('model switch state chip: only the name is cut — the leading icon a
     assert.ok(!/ms-state-go > b[^{]*\{[^}]*!important/.test(css), 'no !important needed (specificity beats 0,2,3)');
     assert.ok(read('style.css').includes('.ms-chip.ms-state .ms-state-go > b > .ms-state-name'), 'style.css rebuilt');
     const ms = read('src/addons/modelswitch/index.js');
-    assert.ok(ms.includes('<b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> <span class="ms-state-name">${esc(state.name)}</span>${part(state.items)}</b>'), 'name wrapped in its own span, the half-circle after it');
+    assert.ok(ms.includes('<b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> <span class="ms-state-name" translate="no">${esc(state.name)}</span>${part(state.items)}</b>'), 'name wrapped (번역 제외 표시 포함) in its own span, the half-circle after it');
     assert.match(read('.github/workflows/release-check.yml'), /node tools\/tests\/order-menus\.mjs \./);
 });
 

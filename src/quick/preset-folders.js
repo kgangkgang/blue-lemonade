@@ -107,7 +107,7 @@ function open(sel) {
     layer.dataset.blPopup = 'pick';
     layer.style.cssText = 'top:0;left:0;width:100vw;height:100vh;height:100lvh';
     const search = sel.options.length > SEARCH_FROM;
-    layer.innerHTML = `<div class="salty-pick salty-pick-float bl-pfo-menu" role="listbox" aria-label="프리셋 고르기">${search ? '<div class="salty-pick-search"><input type="search" placeholder="찾기" autocomplete="off" spellcheck="false" aria-label="프리셋 찾기"></div>' : ''}<div class="salty-pick-rows">${rowsHtml(sel)}</div></div>`;
+    layer.innerHTML = `<div class="salty-pick salty-pick-float bl-pfo-menu" role="listbox" aria-label="프리셋 고르기">${search ? '<div class="salty-pick-search"><input type="search" placeholder="찾기" autocomplete="off" spellcheck="false" aria-label="프리셋 찾기"></div>' : ''}<div class="salty-pick-rows" translate="no">${rowsHtml(sel)}</div></div>`;
     const box = layer.firstElementChild, rows = box.querySelector('.salty-pick-rows'), input = box.querySelector('input');
     const redraw = () => { rows.innerHTML = rowsHtml(sel, input?.value || ''); };
     layer.addEventListener('pointerdown', event => { if (event.target === layer) { event.preventDefault(); close(); swallowNextClick(); } });   // 바깥을 눌러 닫은 손가락의 click 이 뒤 화면(서랍 안 단추 · 서랍 닫기)에 떨어지지 않게
@@ -201,7 +201,7 @@ async function openEditor(sel, id) {
             choice.type = 'button'; choice.className = 'bl-prompt-card-choice'; choice.dataset.v = preset;
             choice.setAttribute('aria-pressed', String(chosen.has(preset)));
             const copy = document.createElement('span'), title = document.createElement('b');
-            title.textContent = preset; copy.append(title);
+            title.translate = false; title.textContent = preset; copy.append(title);   // 1.9.2: 프리셋 이름은 번역 제외
             if (owner.has(preset)) { const small = document.createElement('small'); small.textContent = `지금 「${owner.get(preset)}」 폴더`; copy.append(small); }
             const check = document.createElement('i'); check.className = 'fa-solid fa-check'; check.setAttribute('aria-hidden', 'true'); check.hidden = !chosen.has(preset);
             choice.append(copy, check);

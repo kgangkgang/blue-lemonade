@@ -15,7 +15,7 @@ import { MAX_STATES, entryOf, captureState, changedSince, planRestore, isCurrent
 import { toggleGroup, groupOn, fallbackOnly, rowActive, isFallbackRow, displayGroups } from './rows.js';
 import { mountFallbackField } from './fallback-field.js';
 
-const VERSION = '1.2.2';
+const VERSION = '1.2.3';
 const MAX_PRESETS = 8;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const label = source => SOURCES.find(s => s.id === source)?.label || source;
@@ -174,7 +174,7 @@ function render() {
         const all = modelOptions(d.source, { url: d.url }), typed = d.model.trim().toLowerCase();
         const hit = typed && !all.includes(d.model.trim()) ? all.filter(name => name.toLowerCase().includes(typed)) : all;
         const list = hit.length ? hit : all;
-        box.innerHTML = list.length ? list.map(name => `<button type="button" class="ms-option ${name === d.model ? 'on' : ''}" data-model="${esc(name)}">${esc(name)}</button>`).join('')
+        box.innerHTML = list.length ? list.map(name => `<button type="button" translate="no" class="ms-option ${name === d.model ? 'on' : ''}" data-model="${esc(name)}">${esc(name)}</button>`).join('')
             : `<p class="ms-empty">${d.source === 'custom' ? '이 주소의 목록이 없어요. ↻ 로 불러오거나 직접 적어 주세요.' : LM.canList(d.source) ? '목록이 없어요. ↻ 로 불러오거나 직접 적어 주세요.' : '목록이 없어요. 직접 적어 주세요.'}</p>`;
     }
     root.querySelector('.ms-targets').innerHTML = targets.length ? displayGroups(targets).map(group => {
@@ -205,7 +205,7 @@ function renderStates(s, targets) {
     const part = items => limited(items) ? '<i class="fa-solid fa-circle-half-stroke ms-part" role="img" aria-label="공급자 · 모델만"></i>' : '';
     const off = busy ? ' disabled' : '';
     const last = s.last ? `<button type="button" class="ms-chip ms-last" data-state="last"${off}><b><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> 직전${part(s.last.items)}</b><small>${esc(summary(s.last.items))}</small></button>` : '';
-    root.querySelector('.ms-states').innerHTML = last + s.states.map((state, i) => `<div class="ms-chip ms-state ${isCurrent(state.items, targets) ? 'on' : ''}"><button type="button" class="ms-state-go" data-state="${i}"${off}><b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> <span class="ms-state-name">${esc(state.name)}</span>${part(state.items)}</b><small>${esc(summary(state.items))}</small></button><button type="button" class="ms-state-x" data-state-del="${i}" aria-label="${esc(state.name)} 지우기"${off}><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+    root.querySelector('.ms-states').innerHTML = last + s.states.map((state, i) => `<div class="ms-chip ms-state ${isCurrent(state.items, targets) ? 'on' : ''}"><button type="button" class="ms-state-go" data-state="${i}"${off}><b><i class="fa-solid fa-layer-group" aria-hidden="true"></i> <span class="ms-state-name" translate="no">${esc(state.name)}</span>${part(state.items)}</b><small>${esc(summary(state.items))}</small></button><button type="button" class="ms-state-x" data-state-del="${i}" aria-label="${esc(state.name)} 지우기"${off}><i class="fa-solid fa-xmark"></i></button></div>`).join('');
     const snap = root.querySelector('[data-act="snap"]');
     snap.hidden = s.states.length >= MAX_STATES; snap.disabled = busy;
 }

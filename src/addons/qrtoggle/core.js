@@ -1,6 +1,6 @@
 // 퀵 리플라이 줄 접기 — 순수 계산 (DOM · 실리태번 없음, tools/tests/qr-toggle.mjs 가 검사해요).
 // Based on Simple QR Bar Toggle — Copyright (c) 2025 IceFog72, MIT (src/addons/qrtoggle/LICENSE · NOTICE.md).
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';
 export const STATE_KEY = 'blue_lemonade_qrfold';
 /** 따로 깔아 쓰던 호환판 확장이 적어 둔 상태 — 처음 켤 때 한 번 이어받아요 */
 export const LEGACY_KEY = 'simple_qr_bar_toggle_bl';

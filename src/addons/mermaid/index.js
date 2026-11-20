@@ -1,6 +1,6 @@
 // Blue Lemonade 2026-10-14 · AGPL-3.0. Source, exact vendor patches and licenses: NOTICE.md.
 // No diagram => no vendor request. This wrapper is the only event/render owner.
-export const VERSION = '1.0.1';
+export const VERSION = '1.0.2';
 const BLOCK = '#chat pre code.language-mermaid, #chat pre code.custom-language-mermaid, #chat pre code.bl-mermaid-source';
 const EVENTS = ['CHARACTER_MESSAGE_RENDERED', 'USER_MESSAGE_RENDERED', 'CHAT_CHANGED', 'MESSAGE_SWIPED', 'MESSAGE_UPDATED', 'MORE_MESSAGES_LOADED'];
 const VENDOR = new URL('./vendor/', import.meta.url).href;

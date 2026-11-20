@@ -124,6 +124,7 @@ export function createChatGraph(popup, showList) {
         detail.hidden = !node;
         for (const button of nodesBox.children) button.setAttribute('aria-pressed', String(button.dataset.id === id));
         if (!node) return;
+        detail.querySelector('b').translate = false; // 1.9.2: 채팅 이름은 번역 제외
         detail.querySelector('b').textContent = node.label;
         detail.querySelector('b').title = id;
         const parent = node.parentId ? graph.nodes.find(n => n.id === node.parentId) : null;
@@ -176,7 +177,7 @@ export function createChatGraph(popup, showList) {
             button.classList.toggle('is-current', node.current); button.title = node.id;
             button.style.cssText = `left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px`;
             const badge = document.createElement('span'); badge.className = 'bl-chat-graph-node-badge'; badge.textContent = node.current ? '현재 채팅' : statusLabel[node.status] || '채팅';
-            const label = document.createElement('b'); label.textContent = node.label;
+            const label = document.createElement('b'); label.translate = false; label.textContent = node.label; // 1.9.2: 채팅 이름은 사용자 글 — 번역 제외
             const meta = document.createElement('span'); meta.className = 'bl-chat-graph-node-meta';
             meta.textContent = [Number.isFinite(node.messageCount) ? `${node.messageCount}개 메시지` : '', dateLabel(item?.lastMes)].filter(Boolean).join(' · ');
             button.append(badge, label, meta); fragment.append(button);

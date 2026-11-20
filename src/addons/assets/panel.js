@@ -478,12 +478,14 @@ export function buildPanel(stub) {
         root = stub;
         root.id = 'char_assets_settings';
         root.className = 'eh-root';
+        root.translate = false; // 1.9.2: 에셋 창은 처음부터 한국어 화면이고 파일 · 프리셋 · 폴더 이름은 사용자가 정한 글이라 한글화 스크립트 · 브라우저 번역에서 통째로 빼요(translate="no")
         applyThemeVars(root);
         root.querySelector('.inline-drawer-content').replaceChildren(...parsed.querySelector('.inline-drawer-content').childNodes);
     } else {
         root = document.createElement('div');
         root.id = 'char_assets_settings';
         root.className = 'eh-root';
+        root.translate = false; // 1.9.2: 에셋 창은 처음부터 한국어 화면이고 파일 · 프리셋 · 폴더 이름은 사용자가 정한 글이라 한글화 스크립트 · 브라우저 번역에서 통째로 빼요(translate="no")
         applyThemeVars(root);
         root.innerHTML = template();
         container.append(root);
@@ -1740,7 +1742,7 @@ export function showHelp() {
     guide.querySelector('summary')?.remove();
     guide.querySelectorAll('button').forEach(button => button.remove());
     const body = document.createElement('div');
-    body.className = 'eh-root'; applyThemeVars(body);
+    body.className = 'eh-root'; body.translate = false; applyThemeVars(body);
     body.innerHTML = '<h3>캐릭터 에셋 사용방법</h3>' + guide.innerHTML;
     return callGenericPopup(body, POPUP_TYPE.TEXT, '', {okButton:'닫기', wide:true});
 }

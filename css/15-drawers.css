@@ -408,6 +408,10 @@ body.salty #rm_extensions_block .extensions_block {
   align-items: flex-start;
   gap: 0 var(--bl-s4) !important;
 }
+/* 1.9.2 서랍 빈 여백: 확장 서랍은 마지막 접힌 줄(TTS 등) 밑에 칸 아래 틈(8px)과 시트 아래 여백(28px)이 겹쳐 빈 줄 하나만큼 비었어요 — 시트 아래 여백만 0(칸 아래 틈 8px 은 그대로) */
+html body.salty #rm_extensions_block.drawer-content:not(.fillLeft):not(.fillRight) {
+  padding-bottom: 0 !important;
+}
 /* 머리: 제목 → 버튼 둘 → 알림 스위치 카드 */
 body.salty #rm_extensions_block .extensions_block > .flex-container:first-child {
   flex-wrap: wrap !important;

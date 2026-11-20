@@ -23,7 +23,8 @@ import { createInlineTranslate, TR_ICON, TR_FAIL, trBoxInner as sharedTrBoxInner
 
 const MODULE = 'jeongaejisi';
 const OLD_MODULE = 'Direction-Manager-Lite';
-const VERSION = '1.4.4';
+const VERSION = '1.4.5';
+// 1.4.5: 테마 1.1.4 ~ 1.6.6 에서 고친 것(선 아이콘 · 두 열 · 숫자 칸 위쪽 상한 풀기 · 더 가볍게 · 버그 고침)을 판 번호에 반영.
 // 1.4.4: 「채팅방마다 따로」(기본 꺼짐) — 켜면 전개 지시 · 항상 지시(켜짐 · 글)와 프롬프트 줄 켜짐을 지금 채팅 파일(chat_metadata)에 따로 기억한다.
 //        처음 여는 채팅방은 마지막으로 쓴 상태에서 시작(전개 지시 글만 빈칸 — 이번 장면 지시라서). 넣는 곳 · 저장 · 최근 · 프롬프트 목록 자체는 모든 채팅방 공용.
 //        꺼져 있으면 chat_metadata 를 읽지 않는다(예전 그대로). 아이디어 참고: https://github.com/DenBzs/Direction-Manager-DB (채팅방 단위 저장 — 코드 · 글은 가져오지 않고 이 구조로 새로 씀)

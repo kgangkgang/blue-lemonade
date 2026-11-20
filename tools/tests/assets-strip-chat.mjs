@@ -113,8 +113,8 @@ await t('그림 파일은 건드리지 않음 · 배선 (창 머리 단추 「�
     assert.equal((fn.match(/await saveChatConditional\(\)/g) || []).length, 2, '떼기 한 번 · 되돌리기 한 번');
     assert.match(fn, /attachUndo\(done, async \(\) => \{/);
     assert.match(fn, /getCurrentChatId\?\.\(\) \?\? ''\) !== chatId\) \{ toast\('info', '채팅을 바꿔서 되돌리지 않았어요\.'\)/);
-    assert.match(read('src/addons/assets/state.js'), /VERSION = '1\.7\.7'/);
-    assert.match(read('src/addons/assets/style.css'), /--eh-css-version: "1\.7\.7"/);
+    assert.match(read('src/addons/assets/state.js'), /VERSION = '1\.7\.8'/);
+    assert.match(read('src/addons/assets/style.css'), /--eh-css-version: "1\.7\.8"/);
 });
 
 console.log(`assets-strip-chat: ${n} passed, 0 failed`);

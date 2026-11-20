@@ -167,9 +167,9 @@ await test('제로 판: 모듈을 받지 않고(호환판 확장을 그대로 �
     assert.equal(versions.versionFlags({ quick: { qrFold: true }, usageMode: 'zero' }).qrtoggle, false);
     assert.equal(versions.versionFlags({ quick: { qrFold: true }, usageMode: 'extensions' }).qrtoggle, false);
     assert.equal(versions.versionFlags(undefined).qrtoggle, false);
-    const list = await versions.addonVersions(versions.versionFlags({ quick: { qrFold: true } }), { fresh: true, fetcher: async url => ({ ok: true, text: async () => String(url).includes('qrtoggle') ? "export const VERSION = '1.0.0';" : '' }) });
+    const list = await versions.addonVersions(versions.versionFlags({ quick: { qrFold: true } }), { fresh: true, fetcher: async url => ({ ok: true, text: async () => String(url).includes('qrtoggle') ? "export const VERSION = '1.0.1';" : '' }) });
     const mine = list.find(item => item.id === 'qrtoggle');
-    assert.deepEqual(mine, { id: 'qrtoggle', label: '퀵 리플라이 줄 접기', version: '1.0.0', on: true });
+    assert.deepEqual(mine, { id: 'qrtoggle', label: '퀵 리플라이 줄 접기', version: '1.0.1', on: true });
     for (const file of ['src/diag-file.js', 'src/diagnose.js', 'src/theme-update.js']) assert.match(read(file), /versionFlags\(/, file);
 });
 

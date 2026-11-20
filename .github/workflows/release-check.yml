@@ -1096,6 +1096,7 @@ jobs:
           node tools/tests/trash-wrap-marks.mjs . tools
           node tools/tests/fruit-heart-scan.mjs . tools
           node tools/tests/korean-closed-late.mjs . tools
+          node tools/tests/korean-user-names.mjs . tools
           node tools/tests/squared-live-candidates.mjs . tools
           # 1.6.0 여기부터 · 여기까지: 시작 표시 · 범위 만들기 · 다시 그려진 메시지에서 자리 되찾기 · 거두기 (같은 jsdom · 실제 Selection)
           node tools/tests/sel-span.mjs . tools

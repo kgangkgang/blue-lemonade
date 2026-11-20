@@ -67,7 +67,7 @@ import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 import { foldBlank, squashBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
-const VERSION = '2.2.0';
+const VERSION = '2.2.1';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];

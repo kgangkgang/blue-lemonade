@@ -1,5 +1,5 @@
 /* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 style.css) */
-:root { --cg-css-version: "1.7.6"; }
+:root { --cg-css-version: "1.7.7"; }
 :is(.cg-list, .cg-chat-list, .cg-sheet-body, .cg-page-scroll) { scrollbar-gutter: stable both-edges; }
 @keyframes cg-chat-intro {
     0% { max-height: 2.5em; opacity: 0; visibility: visible; transform: translateY(-5px); }

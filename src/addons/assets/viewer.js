@@ -41,6 +41,7 @@ export function openViewer({ items, start = 0, slot = null }) {
 
     dialog = document.createElement('dialog');
     dialog.className = 'eh-root eh-viewer';
+    dialog.translate = false; // 1.9.2: 보는 그림의 파일 이름은 번역하지 않아요
     applyThemeVars(dialog);
     dialog.innerHTML = `
         <div class="eh-viewer-top">
