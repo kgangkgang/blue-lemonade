@@ -8,6 +8,7 @@
 // 감시자는 #chat 바로 아래 자식만 보는 것 하나(7.7.9) · 반복 타이머 없음. 새로 그려지는 data-i18n 요소는 실리태번 자기 감시자가 고친 표로 번역한다.
 import { ADD, FIX, TOASTS } from './ko-ui-data.js';
 import { onShowMoreButton } from './show-more-watch.js';
+import { BUILTIN_PAGE_SIZE_HOSTS, watchPageSize } from './page-size-watch.js';
 
 export const LOCALE = 'ko-kr';
 /** 7.7.9 한국어 화면인가: 실리태번은 언어를 고르지 않으면 브라우저 언어(navigator.language → 'ko' 또는 'ko-kr')를 그대로 쓰고,
@@ -239,6 +240,8 @@ export function startKoreanUi(ctx = SillyTavern.getContext()) {
         document.addEventListener('click', again, true);
         document.addEventListener('change', again, true);
     }
+    // 1.9.5 월드인포 항목 목록의 쪽수 고르기는 실리태번이 번역 없이 그려요(늘 「25 / page」) — 그 줄이 다시 그려질 때마다 고쳐요(page-size-watch.js)
+    for (const id of BUILTIN_PAGE_SIZE_HOSTS) watchPageSize(document.getElementById(id), host => relabelPageSize(host, translate));
     const t2 = performance.now();
     const result = { add: Object.keys(ADD).length, quiet, fix: map ? Object.keys(FIX).length : 0, changed, relabeled, pageSizes, msData: +(t1 - t0).toFixed(2), msVisible: +(t2 - t1).toFixed(2), msIdle: 0, done: false };
     inIdleSlices([...document.querySelectorAll('[data-i18n]')], (el) => {

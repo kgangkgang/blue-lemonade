@@ -1432,7 +1432,7 @@
         "workers"
       ],
       "contracts": {
-        "workers": "71a09a119b6393acddbc23fa618ec44a92722505b706c0d7f522b2f9c908334d"
+        "workers": "c8b163964a4e67a08d8231e0583363ebb3df4df629a9642e224c9a32e6e07d30"
       }
     },
     "together": {
@@ -1457,7 +1457,7 @@
         "fireworks-doc"
       ],
       "contracts": {
-        "fireworks-doc": "1a1af6b5c55ac77e5ee69d8a8b90631175dec7367392240ad8ccf8f1627e6efa"
+        "fireworks-doc": "185002a4bceb0253ca71c4eb6901954013f19fa1ebe48db2d6258be5ab06920b"
       }
     },
     "deepseek": {
@@ -1465,7 +1465,7 @@
         "deepseek"
       ],
       "contracts": {
-        "deepseek": "be769c6dda9dd980cabe680e0737b3290c09bf37ea3d6a65a6ce308731b03120"
+        "deepseek": "589722cef720eb562b5d51a379ca8e5a13224962b4cfa3f42c5908261e8db5a1"
       }
     },
     "ai21": {
@@ -1504,8 +1504,8 @@
         "minimax-cn"
       ],
       "contracts": {
-        "minimax-pay": "103a2eda2611413893bfe39a099e7b4309aaf974c586ad5973e18e737f100d8f",
-        "minimax-cn": "9a4892924a161df834f1e6d148dbabc1c699e2f0217fe484395ca946a87c4763"
+        "minimax-pay": "45afe85c4f505f9e452d3aea0a5cae7551e5945e3fcb51c8d791df6fad7cdc3a",
+        "minimax-cn": "9c75ac4d7ed9b86b227be931cf7804b29cdb2745b1537848549074a8a01f1abc"
       },
       "reviewed": {
         "removed": [
@@ -1525,8 +1525,8 @@
         "minimax-cn"
       ],
       "contracts": {
-        "minimax-pay": "103a2eda2611413893bfe39a099e7b4309aaf974c586ad5973e18e737f100d8f",
-        "minimax-cn": "9a4892924a161df834f1e6d148dbabc1c699e2f0217fe484395ca946a87c4763"
+        "minimax-pay": "45afe85c4f505f9e452d3aea0a5cae7551e5945e3fcb51c8d791df6fad7cdc3a",
+        "minimax-cn": "9c75ac4d7ed9b86b227be931cf7804b29cdb2745b1537848549074a8a01f1abc"
       },
       "reviewed": {
         "removed": [
@@ -1573,7 +1573,7 @@
         "gemini"
       ],
       "contracts": {
-        "gemini": "cf4149bd126797daef4714e2ed3e64346a8d0ad82e248481b30eef2c136acb19"
+        "gemini": "1e3d1417b9cbb9d40c586a832c52fe757ccc9877f1616348803ee6e59358ec4f"
       }
     },
     "vertex": {
@@ -1589,7 +1589,7 @@
         "siliconflow-cn"
       ],
       "contracts": {
-        "siliconflow-cn": "19b57f0756e24f742bfd1fa79927b51e156efedf2233437ca10e3ff10893195d"
+        "siliconflow-cn": "ed1939ed399cd8a3235acc824978e208f97b635e07208229f959c48b5abab056"
       }
     },
     "groq": {
@@ -1833,7 +1833,7 @@
         "openai"
       ],
       "contracts": {
-        "openai": "58d341927f42a4c76ebb17d4d3f3718f764fedba74222a58f5df34d9d0152631"
+        "openai": "12343b27ec854d4b2a905d7d0a5ce765245a0103c6366c4c15503ad0adb6d49e"
       },
       "reviewed": {
         "removed": [
@@ -1857,7 +1857,7 @@
         "anthropic"
       ],
       "contracts": {
-        "anthropic": "fdf5a3000f017af9a26f2c1d4946b4759a61b2b2b1d3328357d2e4a94ba6915c"
+        "anthropic": "d290ab6c8101eb19e64a2524095626b70a9ba3c49249b441912951e05d031f58"
       },
       "reviewed": {
         "removed": [

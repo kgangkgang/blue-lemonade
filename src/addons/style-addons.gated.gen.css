@@ -7081,6 +7081,9 @@ html:where(.bl-asc-11) body.salty #pt-panel #pt-tabs,:where(html.bl-asc-11) body
 :where(html.bl-asc-11) body .jj-tr-btn.bl-kt-btn[aria-busy="true"] { cursor: progress; }
 @media (hover: hover) { :where(html.bl-asc-11) body .jj-tr-btn.bl-kt-btn:hover { color: var(--salty-text, var(--SmartThemeBodyColor)); } }
 :where(html.bl-asc-11) body .jj-tr-btn.bl-kt-btn::after { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); }
+@media (pointer: coarse) {
+    html:where(.bl-asc-11) body.salty #rm_ch_create_block :is(#description_div, #first_message_div) .jj-tr-btn.bl-kt-btn ~ a.notes-link::before,html:where(.bl-asc-11) body.salty #character_popup :is(h4, h5) > .jj-tr-btn.bl-kt-btn ~ a.notes-link::before { left: -3px; transform: translate(0, -50%); }
+}
 :where(html.bl-asc-11) .jj-tr.bl-kt {
     --pt-text: var(--salty-text, var(--SmartThemeBodyColor)); --pt-text-dim: var(--salty-muted, var(--SmartThemeBodyColor));
     --pt-accent: var(--salty-accent, var(--SmartThemeQuoteColor)); --pt-border: var(--salty-line, var(--SmartThemeBorderColor));

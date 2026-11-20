@@ -63,7 +63,8 @@ export function tidyGreeting(el, message, greetings, format) {
     return 'fixed';
 }
 
-const TAG = /<\/?[A-Za-z][\w:-]*(?:\s[^<>]*)?\/?>/g;   // blank-ok: 태그만 떼요 · 점자 빈칸은 글자 그대로 둬요
+// 1.9.5 띄어쓰기를 점자 빈칸(U+2800)으로 쓰는 프리셋의 답은 태그 안 빈칸도 점자 빈칸이에요(`<span⠀style="color:#424C59">`) — `\s` 만 보면 태그로 안 읽혀 미리보기에 그대로 남았어요
+const TAG = /<\/?[A-Za-z][\w:-]*(?:[\s⠀][^<>]*)?\/?>/g;   // blank-ok: 태그만 떼요 · 태그 밖 점자 빈칸은 글자 그대로 둬요
 /** 미리보기 글에서 태그만 떼요. 태그가 없으면 그대로 돌려줘요(같은 문자열) */
 export function plainPreview(text) {
     if (typeof text !== 'string' || !/[<>]/.test(text)) return text;

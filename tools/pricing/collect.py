@@ -55,7 +55,7 @@ def digest(value):
 def text_contract(provider, name, raw):
     """Erase only parseable money amounts; keep all non-price billing semantics."""
     if provider == 'openai':
-        for tier in ['Standard','Batch','Fast','Ultrafast']:
+        for tier in ['Standard','Batch','Flex','Fast','Ultrafast']:   # Flex: own section since 2026-11-19
             pattern=r'(### '+tier+r' pricing data\n.*?)(?=\n### |\n## |\Z)'
             raw=re.sub(pattern, lambda m: re.sub(r'\$[\d,.]+', '$PRICE', m[0]), raw, flags=re.S)
     elif provider == 'anthropic':
@@ -96,14 +96,19 @@ OPENAI_WIDE=['Model','Short context input','Short context output','Short context
 OPENAI_NON_TEXT=re.compile(r'image|audio|realtime|transcribe|tts|whisper|dall-e|sora|search-preview|computer-use',re.I)
 OPENAI_WARNINGS=[]
 
+def openai_flex(raw,end):
+    """Flex rows: their own '### Flex pricing data' section (page since 2026-11-19), else the older '#### Flex' block under Batch."""
+    if '### Flex pricing data' in raw:return end(raw.split('### Flex pricing data',1)[1])
+    return end(raw.split('### Batch pricing data',1)[1]).split('#### Flex',1)[1].split('\n#### ',1)[0]
+
 def openai_rows(raw):
-    """Yield (tier, model, table head, amounts) for every OpenAI text price row; '-' is None. Flex sits under the Batch section.
+    """Yield (tier, model, table head, amounts) for every OpenAI text price row; '-' is None. Flex has its own section (older pages: under Batch).
     A section ends at the next '## ' or '### ' heading (same range as the contract text); image/audio rows are skipped;
     a model that appears twice in one tier keeps its first row and is reported in OPENAI_WARNINGS."""
     money=lambda x:None if x=='-' else float(x.replace('$','').replace(',',''))
     end=lambda text:re.split(r'\n#{2,3} ',text,1)[0]
     sections={'standard':end(raw.split('### Standard pricing data',1)[1]),
-              'flex':end(raw.split('### Batch pricing data',1)[1]).split('#### Flex',1)[1].split('\n#### ',1)[0],
+              'flex':openai_flex(raw,end),
               'fast':end(raw.split('### Fast pricing data',1)[1]),
               'ultrafast':end(raw.split('### Ultrafast pricing data',1)[1])}
     for tier,section in sections.items():

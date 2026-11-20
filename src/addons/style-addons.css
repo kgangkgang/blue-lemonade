@@ -7041,6 +7041,10 @@ body .jj-tr-btn.bl-kt-btn.is-failed { color: var(--bl-danger, var(--salty-danger
 body .jj-tr-btn.bl-kt-btn[aria-busy="true"] { cursor: progress; }
 @media (hover: hover) { body .jj-tr-btn.bl-kt-btn:hover { color: var(--salty-text, var(--SmartThemeBodyColor)); } }
 body .jj-tr-btn.bl-kt-btn::after { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); }
+@media (pointer: coarse) {
+    html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) .jj-tr-btn.bl-kt-btn ~ a.notes-link::before,
+    html body.salty #character_popup :is(h4, h5) > .jj-tr-btn.bl-kt-btn ~ a.notes-link::before { left: -3px; transform: translate(0, -50%); }
+}
 .jj-tr.bl-kt {
     --pt-text: var(--salty-text, var(--SmartThemeBodyColor)); --pt-text-dim: var(--salty-muted, var(--SmartThemeBodyColor));
     --pt-accent: var(--salty-accent, var(--SmartThemeQuoteColor)); --pt-border: var(--salty-line, var(--SmartThemeBorderColor));

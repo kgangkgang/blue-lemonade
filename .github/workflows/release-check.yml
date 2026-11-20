@@ -1082,6 +1082,8 @@ jobs:
           node tools/tests/mb-select-tr.mjs . tools
           # 버그 사냥 9: 번역 창 파라미터 이름표 · 번역 저장소 오류 글 한국어 · 작은 누를 자리 넷(소스 · 생성 CSS 계약)
           node tools/tests/hunt9-user-env.mjs .
+          # 버그 사냥 10: 월드인포 쪽수 고르기 한국어 · 번역 단추 옆 도움말 ? 누를 자리 · 환영 화면 미리보기의 점자 빈칸 태그(소스 · 생성 CSS 계약)
+          node tools/tests/hunt10-user-env.mjs .
           # 버그 사냥 7(1.8.7) 가운뎃점으로 이은 영문 덩어리(《L·E·M·O·N》)에 줄바꿈 자리 — 양쪽 정렬에서 앞 줄 낱말 사이가 크게 벌어지던 것(jsdom)
           node tools/tests/dot-run-wrap.mjs . tools
           # 1.7.6 미트볼 「간격 체계」(2.9.0 개편): 구조로 거는 넓은 규칙이 붙던 꼴에 걸리고 나란한 단추 · 띠는 안 건드림(jsdom 선택자 맞음)

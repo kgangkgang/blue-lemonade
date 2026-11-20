@@ -125,8 +125,8 @@ def parse_generic(target, source_dir):
    model='accounts/fireworks/models/'+a['href'].split('/')[-1]
    vals=dollars(c[1]);prio=dollars(c[2])
    if len(vals)!=3:continue
-   # Regional (US), Fast and Ultra-fast rows are separate deployments of the same linked model.
-   if '(US)' in c[0] or re.search(r'(?:^|[\s-])fast\b',c[0],re.I):continue
+   # Regional (US), Fast, Ultra-fast and (2026-11-20) Flex rows are separate deployments of the same linked model.
+   if '(US)' in c[0] or re.search(r'(?:^|[\s-])(?:fast|flex)\b',c[0],re.I):continue
    if model in DATA.get('fireworks',{}):raise ValueError('Fireworks deployment row needs review: '+c[0])
    add('fireworks',model,vals[0],vals[2],vals[1],tiers={'priority':{'input':prio[0],'cacheRead':prio[1],'output':prio[2]}} if len(prio)==3 else {})
  if target == 'xai':

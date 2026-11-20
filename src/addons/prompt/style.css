@@ -793,6 +793,13 @@ body .jj-tr-btn.bl-kt-btn.is-failed { color: var(--bl-danger, var(--salty-danger
 body .jj-tr-btn.bl-kt-btn[aria-busy="true"] { cursor: progress; }
 @media (hover: hover) { body .jj-tr-btn.bl-kt-btn:hover { color: var(--salty-text, var(--SmartThemeBodyColor)); } }
 body .jj-tr-btn.bl-kt-btn::after { content: ''; position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); }
+/* 1.9.5 캐릭터 편집의 「설명」 · 「첫 메시지」 줄: 번역 단추 바로 오른쪽에 실리태번 도움말 ? 가 있어요. 손가락 화면에서 ? 의 누를 자리(가운데 맞춘 44px · 56-control-consistency)가
+   번역 단추를 통째로 덮어, 번역을 누르면 도움말 문서가 열렸어요(사용자 환경 리그 384: 번역 단추 가운데가 ? 로 잡힘).
+   → 번역 단추 뒤에 오는 ? 만 누를 자리를 제 왼쪽 끝(사이 6px 의 절반)에서 오른쪽으로 펴요. 크기 44 · 보이는 모습은 그대로 */
+@media (pointer: coarse) {
+    html body.salty #rm_ch_create_block :is(#description_div, #first_message_div) .jj-tr-btn.bl-kt-btn ~ a.notes-link::before,
+    html body.salty #character_popup :is(h4, h5) > .jj-tr-btn.bl-kt-btn ~ a.notes-link::before { left: -3px; transform: translate(0, -50%); }
+}
 .jj-tr.bl-kt {
     --pt-text: var(--salty-text, var(--SmartThemeBodyColor)); --pt-text-dim: var(--salty-muted, var(--SmartThemeBodyColor));
     --pt-accent: var(--salty-accent, var(--SmartThemeQuoteColor)); --pt-border: var(--salty-line, var(--SmartThemeBorderColor));
