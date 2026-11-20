@@ -75,7 +75,10 @@ check('④ 「색 두기」: 그 확장의 색 변수 · 글꼴은 덮지 않고
     for (const kind of ['primary', 'danger', 'quiet']) assert.ok(el.rules.some(r => r.selectors.some(s => s.endsWith(`.lm-btn-${kind}`)) && /var\(--lm-/.test(r.body)), kind);
     assert.ok(!/salty-(accent|danger|text)\)/.test(el.rules.filter(r => r.selectors.some(s => /\.lm-btn/.test(s))).map(r => r.body).join('')), '단추에 테마 색을 쓰지 않아요');
     const mm = sheets['src/ext-memoria.css'];
-    assert.ok(mm.rules.some(r => /--SmartThemeBorderColor:\s*var\(--bl-ui-line, var\(--salty-line\)\)/.test(r.body)), '투명한 선 변수를 팔레트 선으로');
+    assert.ok(mm.rules.some(r => /--SmartThemeBorderColor:\s*var\(--ink-line, var\(--bl-ui-line, var\(--salty-line\)\)\)/.test(r.body)), '투명한 선 변수를 팔레트 선으로(2.5 는 원작 먹선 그대로)');
+    // 1.9.1 Memoria 2.5 는 제 종이 색을 정해요 — 종이 위 안내 한 줄은 원작의 흐린 글자 · 먹선을 먼저, 없으면(2.1 까지) 팔레트
+    const note = mm.rules.find(r => r.selectors.some(s => s.endsWith('small.bl-ext-compat')));
+    assert.ok(note && /color:\s*var\(--dim, var\(--salty-muted\)\)/.test(note.body) && /border-top:\s*1px solid var\(--ink-line, var\(--salty-line\)\)/.test(note.body), '안내 한 줄 색');
 });
 // ── 게시 뒤 화면 확인에서 나온 작은 고침
 const ruleFor = (file, ending) => sheets[file].rules.filter(r => r.selectors.some(s => s.endsWith(ending)));

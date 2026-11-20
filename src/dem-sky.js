@@ -125,10 +125,14 @@ function setStreaming(on) {
     if (on) streamEnd = setTimeout(() => setStreaming(false), 4000);   // 토큰이 4초 끊기면 끝난 것으로(끝 이벤트를 못 받는 경우의 안전장치)
     if (streaming === !!on) return;
     streaming = !!on; changed = new Set();
-    // 8.2.7: 표식은 html 에 — body class 를 바꾸면 기록마다 실리태번 keyboard.js 가 body 아래 전부(채팅 300개면 요소 3만 개 남짓)를 선택자 31개로 다시 훑고,
-    //   body 를 보는 테마 감시자(네모 단추 · 아이콘 글자 …)도 다시 돌았어요(답장마다 시작 · 끝 두 번). html 은 그 감시자들이 안 봐요. CSS(30-dem-skin)도 html 로 — 모양은 같아요
-    document.documentElement?.classList.toggle('salty-dem-streaming', streaming);
+    // 8.2.7: 표식을 body 대신 html 에 달았어요(body class 기록마다 실리태번 keyboard.js 가 body 아래 전부를 다시 훑었어요).
+    // 1.9.1(확장켠-스트리밍): 이제 문서에는 아무 표식도 안 달아요. 1.0.0 에서 그 표식을 보던 CSS(답장 중 비싼 층 쉬기)가 다 없어져 보는 규칙이 0개인데,
+    //   html class 를 바꾸면 브라우저가 문서 전체를 다시 계산했어요(추적: 「Invalidation set invalidates subtree」 HTML · 답장 시작 · 끝 두 번 ·
+    //   리그 폰 4배 300개 채팅 첫 토큰 요소 3,800 ~ 4,900개 · 긴 작업 1.2 ~ 1.7초). 「답장 받는 중」은 이 모듈 안의 streaming 하나로 충분해요(감시 · 다시 보기 차례).
+    //   다시 CSS 로 답장 중 모양을 바꿔야 하면 html class 대신 마지막 메시지 하나에 거는 쪽으로(tools/tests/dem-streaming-root.mjs 가 막아요).
 }
+/** 시험 · 다른 모듈용: 지금 답장을 받는 중으로 보고 있나 */
+export const demStreaming = () => streaming;
 // 9.0.4: 이벤트 없이 본문(.mes_text)이 통째로 바뀐 메시지(번역)는 메시지 꾸미기(src/message-decor.js)의 #chat 구독 하나가 적어 두었다가 0.4초 조용해진 뒤 그 메시지만.
 //   답이 오는 동안(streaming)의 변화는 예전처럼 버려요(끝 이벤트에 schedule 이 다시 봐요)
 const bodyReplaced = r => r.type === 'childList' && r.target.nodeType === 1 && r.target.classList.contains('mes_text');

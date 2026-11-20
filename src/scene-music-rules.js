@@ -4,6 +4,7 @@
 
 // 1.1.1 가볍게: 곡 표 · 기본값 · 설정 정리(tidyMusic)는 시작 그래프의 scene-sound-keys.js 에 — 여기서는 그대로 다시 내보내요 (판정 · 섞기 규칙은 장면 소리를 켤 때만 받아요)
 import { MOODS, TRACKS } from './scene-sound-keys.js';
+import { foldBlank } from './blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 export { MOODS, MOOD_LABELS, TRACKS, TRACK_IDS, MUSIC_DEFAULTS, tidyMusic } from './scene-sound-keys.js';
 
 // ───────── 판정 ─────────
@@ -63,7 +64,7 @@ const TAG_FIND = new RegExp(`<(${Object.keys(TAG_MOODS).join('|')})\\b`, 'gi');
 
 /** 판정에 쓸 글: 코드 블록 · HTML 태그 · 링크를 빼고(감정 태그는 따로 센다) 공백을 줄인다 */
 export function cleanText(raw) {
-    return String(raw || '')
+    return foldBlank(raw || '')   // 1.9.1 점자 빈칸 전수 2 — 빈칸 든 낱말 표 · 주소 뒤 낱말
         .replace(/```[\s\S]*?```/g, ' ')
         .replace(/<(style|script)\b[\s\S]*?<\/\1>/gi, ' ')
         .replace(/<[^>]{0,300}>/g, ' ')

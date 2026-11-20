@@ -1,5 +1,6 @@
 // Known prompt-card display values only. Raw markup, keys, code and hidden data stay local.
 // No DOM parsing/rendering and no preset contents or renderer code are included.
+import { foldBlank } from '../../blank-fold.js';   // 1.9.1 점자 빈칸 전수 2 — 카드는 접은 글로 훑어요(같은 길이라 자리 그대로)
 import { MODULE_CARDS, MODULE_SEPARATORS, isModuleCard, MODULE_KEY, moduleKeepsLocal, moduleLocalValue, moduleSafeValue } from './v3-modules.js';
 // 8.0.8 데우스 V3 바닥 모듈(<relationships> · <status> · <companions> …)도 카드 — 영어 열쇠 · 줄 · 기호는 두고 값만 보낸다 (v3-modules.js)
 const CARD_NAMES = new Set(['status_bar','tracker','novel_header','prologue','meow_fm','profile','branches','ccd','snow','角色状态面板',...MODULE_CARDS]);
@@ -75,7 +76,7 @@ const cardMemo = new Map();
 function outerCards(text) {
     const hit = cardMemo.get(text);
     if (hit) { cardMemo.delete(text); cardMemo.set(text, hit); return hit.map(card => ({ ...card })); }
-    const ranges = scanOuterCards(text);
+    const ranges = scanOuterCards(foldBlank(text));   // 1.9.1 `<status⠀class=…>` · `<div⠀style="display:none">` 도 태그 이름 · 숨김으로
     if (cardMemo.size >= 16) cardMemo.delete(cardMemo.keys().next().value);
     cardMemo.set(text, ranges.map(card => ({ ...card })));
     return ranges;
@@ -130,7 +131,9 @@ function scanOuterCards(text) {
     }
     return ranges.sort((a,b)=>a.start-b.start);
 }
-function visibleSpans(block, card) {
+function visibleSpans(source, card) {
+    // 1.9.1 칸 열쇠 · 나눔(`⠀|⠀Closeness:⠀50` · `Inner⠀state:` · `Main⠀Plot:`)을 접은 글로 가려요 — 보낼 글(text)은 원문 자리에서 그대로 떼요(아래 끝)
+    const block = foldBlank(source);
     if (card.partial || block.length > 524288) return [];
     // 8.0.6 감싼 코드칸(card.fenced)은 카드 바깥 껍데기라 안 본다 (안은 상태창 하나)
     const spans = [], fences = card.fenced ? [] : fenceRanges(block), stack = [], selectors = hiddenSelectors(block), tokens = new RegExp(TAG.source,'g'); let cursor = 0, match;
@@ -200,7 +203,8 @@ function visibleSpans(block, card) {
     // Code fences without tags still need to be removed from the eligible text ranges.
     const eligible = spans.filter(x => !fences.some(f => x.start < f.end && x.end > f.start && (f.kind !== 'html' || x.start < f.bodyStart || x.end > f.bodyEnd)));
     // Never silently translate only the first part of an excessive card.
-    return eligible.length > 2048 ? [] : eligible;
+    if (eligible.length > 2048) return [];
+    return source === block ? eligible : eligible.map(x => ({ ...x, text: source.slice(x.start, x.end) }));
 }
 function describe(text) {
     return outerCards(text).map(card => {

@@ -8,7 +8,7 @@
 import { watchDom } from './dom-watch.js';
 import { mbFit, onMbOff } from './mb-switch-core.js';
 import { dropLead, pinNodes } from './mb-place-mark.js';   // 버그 사냥 6 장소 이름 앞 기호 — 띠 · 지도 밖(상태 칸 · 갈 곳 · 검색 · 알림 · 기록)도
-import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { foldBlank, squashBlank, trimEdge, SP } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 export const FLOOR_ATTR = 'data-bl-mb-floors';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -158,10 +158,10 @@ export function annexMap(places, tr = null) {
     const byKey = new Map();
     for (const p of list) if (!wide(p)) for (const n of tx(p.name)) { const k = annexKey(n); if (k && !byKey.has(k)) byKey.set(k, p); }
     // 1.8.2 이름 앞뒤 표시 기호만 다른 곳(「@Lobby」 ↔ 「Lobby」 — 모델이 변화 줄에 「loc: @Lobby」 처럼 적으면 원작이 그대로 새 장소로 만들어요)은 기호 없는 쪽으로
-    const plain = new Map(); for (const p of list) if (stripMarks(p.name) === p.name.trim()) for (const n of tx(p.name)) { const k = n.trim().toLowerCase(); if (k && !plain.has(k)) plain.set(k, p); }
+    const plain = new Map(); for (const p of list) if (stripMarks(p.name) === trimEdge(p.name)) for (const n of tx(p.name)) { const k = squashBlank(n).toLowerCase(); if (k && !plain.has(k)) plain.set(k, p); }
     for (const p of list) {
-        if (stripMarks(p.name) !== p.name.trim()) {
-            const q = tx(p.name).map(n => plain.get(stripMarks(n).toLowerCase())).find(x => x && x !== p);
+        if (stripMarks(p.name) !== trimEdge(p.name)) {   // 1.9.1 앞뒤 점자 빈칸(`⠀Lobby⠀`)은 표시 기호가 아니에요
+            const q = tx(p.name).map(n => plain.get(squashBlank(stripMarks(n)).toLowerCase())).find(x => x && x !== p);
             const a = String(p.area ?? ''), b = String(q?.area ?? '');
             if (q && !(a && b && a !== b)) { out.set(p.name, q.name); continue; }
         }
@@ -176,7 +176,8 @@ export function annexMap(places, tr = null) {
     return out;
 }
 /** 1.8.2 이름 앞뒤의 표시 기호(@ · # · 전각 ＠ ＃)를 떼요 — 그 확장은 장소에 이 기호를 쓰지 않아요(SNS 아이디 「@이름」 만 따로). 다 떼서 빈 글이면 그대로 */
-export function stripMarks(s) { const t = String(s ?? '').trim(), u = t.replace(/^[@＠#＃]+\s*|\s*[@＠#＃]+$/gu, '').trim(); return u || t; }
+export function stripMarks(s) { const t = trimEdge(s), u = trimEdge(t.replace(MARK_EDGE, '')); return u || t; }   // 1.9.1 `@⠀Lobby` · `⠀@Lobby⠀`(점자 빈칸)도 — 가운데 글은 그대로
+const MARK_EDGE = new RegExp(`^[@＠#＃]+${SP}*|${SP}*[@＠#＃]+$`, 'gu');
 const normName = s => foldBlank(s).toLowerCase().replace(/[\s·・_\-.,'"()（）[\]]+/g, '');   // 버그 사냥 7 점자 빈칸도
 const simpleFind = (list, name) => { const k = normName(name); return list.find(p => normName(p.name) === k) || null; };
 const r1 = v => Math.round(v * 10) / 10;
@@ -450,14 +451,14 @@ const HANGUL = /[가-힯]/u, KANA = /[ぁ-ヿ一-鿿]/u;
 const clip = (s, n = 180) => { const t = MD(s); return [...t].length > n ? [...t].slice(0, n - 1).join('').trimEnd() + '…' : t; };
 /** 이름 비교 열쇠: 괄호 · 소유(「's」 · 「의」 · 「の」) · 앞 「the」 · 띄어쓰기 · 문장부호를 떼요 */
 export function placeNorm(s) {
-    let t = String(s ?? '').replace(/\([^)]*\)|（[^）]*）|\[[^\]]*\]|【[^】]*】/g, ' ').toLowerCase();
+    let t = foldBlank(s).replace(/\([^)]*\)|（[^）]*）|\[[^\]]*\]|【[^】]*】/g, ' ').toLowerCase();   // 1.9.1 `The⠀Lobby` · `Mira's⠀Estate`(점자 빈칸)도
     t = t.replace(/(\p{L})['’]s(?![\p{L}])/gu, '$1').replace(/(\p{L}{2,})의(?=\s|$)/gu, '$1').replace(/(\p{L})の(?=\p{L})/gu, '$1');
     t = t.replace(/^\s*(?:the|a|an)\s+/u, '');
     return t.replace(/[^\p{L}\p{N}]+/gu, '');
 }
 // 건물 · 본부 이름 꼬리(구역 이름 「Tower Headquarters」 ↔ 로어북 「Tower」)
 const GENERIC = /\s+(?:headquarters|hq|building|main\s+office|본부|본청|청사|본사|빌딩|本部|本庁|庁舎)$/iu;
-const noGeneric = s => { const t = String(s ?? '').replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(); const u = t.replace(GENERIC, '').trim(); return u && u !== t ? u : t; };
+const noGeneric = s => { const t = foldBlank(s).replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(); const u = t.replace(GENERIC, '').trim(); return u && u !== t ? u : t; };
 /** 사람 이름: 「Miro Vale (ミロ・ヴェイル)」 · 「ゴルム - Gorm」 · 「Tova / トヴァ」 → 조각들 */
 const nameParts = v => MD(v).split(/\s*(?:[/／(（)）,，]|\s[-–—]\s)\s*/u).map(s => s.trim()).filter(s => s && [...s].length >= 2 && [...s].length <= 30);
 /**
@@ -704,14 +705,15 @@ const PICTO = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
 const chars = t => (graphemer ? [...graphemer.segment(String(t ?? ''))].map(x => x.segment) : [...String(t ?? '')]);
 export const textW = t => chars(t).reduce((s, c) => s + (PICTO.test(c) ? 4.4 : /[ᄀ-ᇿ　-鿿가-힯＀-￯]/.test(c) ? 3.2 : c === ' ' ? 1 : 1.9), 0);
 /** 1.7.0 이름표에 쓸 이름: 「장소 — 설명」 · 「장소 | 설명」 꼴(지금 장소 줄이 그대로 장소 이름이 된 것)은 앞 조각만 */
+const LABEL_CUT = new RegExp(`${SP}+[—–|]${SP}+|,${SP}+`);
 export function labelOf(name) {
-    const t = stripMarks(name), head = t.split(/\s+[—–|]\s+|,\s+/)[0].trim();   // 1.7.0 쉼표 뒤 묘사도 떼요
+    const t = stripMarks(name), head = trimEdge(t.split(LABEL_CUT)[0]);   // 1.9.1 `Grand⠀Hotel⠀|⠀7F`(점자 빈칸)도   // 1.7.0 쉼표 뒤 묘사도 떼요
     return head && [...head].length >= 2 ? head : t;
 }
 /** 칸 너비 w 에 맞게 이름을 한 줄 또는 두 줄로 — 띄어쓰기에서 가운데 가까운 곳을 먼저, 없으면 글자 가운데에서 끊어요(줄임표 없이 전체 이름) */
 export function wrapLabel(text, w) {
     const t = labelOf(text); if (!t || textW(t) <= w) return [t];
-    const sp = [...t.matchAll(/ /g)].map(m => m.index);
+    const sp = [...t.matchAll(/[ \u2800]/g)].map(m => m.index);   // 1.9.1 점자 빈칸 자리에서도 끊어요
     if (!sp.length && textW(t) <= w * 1.35) return [t];   // 1.7.0 띄어쓰기 없는 한 낱말은 조금 넘쳐도 안 끊어요(「Secre / tariat」 처럼 낱말 가운데가 갈리지 않게)
     let lines;
     if (sp.length) { const cut = sp.reduce((b, i) => (Math.abs(textW(t.slice(0, i)) - textW(t.slice(i + 1))) < Math.abs(textW(t.slice(0, b)) - textW(t.slice(b + 1))) ? i : b)); lines = [t.slice(0, cut), t.slice(cut + 1)]; }
@@ -983,7 +985,7 @@ const rawView = doc => !!doc?.body?.hasAttribute?.('data-bl-ext-raw');
 const isOn = doc => doc?.body?.getAttribute?.(FLOOR_ATTR) === 'on' && !rawView(doc);
 async function mbCore(doc, load = url => import(url)) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
         return await load(new URL('./src/core.js', src).href);

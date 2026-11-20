@@ -13,7 +13,7 @@ const T = await import(pathToFileURL(path.join(root, 'src/ext-bridge-tr.js')).hr
 const C = await import(pathToFileURL(path.join(root, 'src/ext-bridge-core.js')).href);
 const BASE = 'http://127.0.0.1:8000/scripts/extensions/third-party';
 const docOf = (...folders) => ({ querySelectorAll: () => folders.map(f => ({ src: `${BASE}/${f}/index.js` })) });
-const MAIN = { display_name: '미트볼 상태창 (Meatball Stats)' }, LITE = { display_name: '미트볼 라이트 (Meatball Lite)' };
+const MAIN = { display_name: '미트볼 상태창 (Meatball Stats)' }, LITE = { display_name: '미트볼 라이트 (Meatball Lite)' }, PHONE = { display_name: '미트볼폰 (Meatball Phone)' };
 const withFetch = async (table, fn) => {
     const keep = globalThis.fetch; const asked = [];
     globalThis.fetch = async url => { const folder = /third-party\/([^/]+)\/manifest\.json/.exec(String(url))?.[1]; asked.push(folder); const m = table[folder]; return { ok: !!m, json: async () => m }; };
@@ -47,5 +47,18 @@ await test('④ 다리의 대상 판별 말: 가벼운 판 설치 정보는 건�
     assert.ok(C.TARGET.match.test(lite) && C.TARGET.skip.test(lite));
     assert.ok(C.TARGET.match.test(main) && !C.TARGET.skip.test(main));
     assert.ok(C.TARGET.skip.test('미트볼 라이트') && C.TARGET.skip.test('Meatball Lite') && !C.TARGET.skip.test('미트볼 상태창'));
+});
+// 1.9.1 가벼운 판이 「미트볼폰」(폴더 meatballphone)으로 이름을 바꿨어요 — 폴더 차례 · 설치 정보 이름 둘 다 본판으로 잡지 않아요
+await test('⑤ 미트볼폰이 먼저 와도 본판 폴더 · 미트볼폰만 있으면 빈 값', async () => {
+    const [url] = await withFetch({}, () => T.findBase(docOf('meatballphone', 'meatballphone-choices', 'meatballstats')));
+    assert.equal(url, `${BASE}/meatballstats/`);
+    const [none] = await withFetch({ meatballphone: PHONE, 'meatballphone-contacts': { display_name: '미트볼폰 연락 (Meatball Phone Contacts)' } }, () => T.findBase(docOf('meatballphone', 'meatballphone-contacts', 'blue-lemonade')));
+    assert.equal(none, '');
+});
+await test('⑥ 다리의 대상 판별 말: 미트볼폰 설치 정보 · 폴더는 건너뛰어요', () => {
+    const phone = [PHONE.display_name, 'https://example.invalid/x/meatballphone', 'Meatball'].join(' ');
+    assert.ok(C.TARGET.match.test(phone) && C.TARGET.skip.test(phone));
+    assert.ok(C.TARGET.skip.test('meatballphone') && C.TARGET.skip.test('meatballphone-choices') && C.TARGET.skip.test('미트볼폰'));
+    assert.ok(!C.TARGET.skip.test('meatballstats') && !C.TARGET.skip.test('미트볼 상태창 (Meatball Stats)'));
 });
 console.log(`mb-lite-coexist: ${passed} passed, 0 failed`);

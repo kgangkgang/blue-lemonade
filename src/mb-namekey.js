@@ -134,7 +134,7 @@ export function fixMessage(m, keyOf, names, { hasStatus = null } = {}) {
 // 그 확장 core(지금 상태 · 새로고침) — mb-editsync.js 와 같은 찾기(스크립트 주소로)
 async function mbCore(doc = globalThis.document) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
         return await import(new URL('./src/core.js', src).href);

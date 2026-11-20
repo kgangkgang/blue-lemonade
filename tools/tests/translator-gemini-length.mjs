@@ -56,7 +56,7 @@ check('the migration runs after parameters exist in the settings load', () => {
 });
 
 check('every Max Response Length field explains the split', () => {
-    const labels = html.match(/<small[^>]*>Max Response Length<\/small>/g) || [];
+    const labels = html.match(/<small[^>]*>최대 응답 길이<\/small>/g) || [];
     assert.ok(labels.length >= 5);
     for (const label of labels) assert.match(label, /title="작으면 긴 메시지를 여러 요청으로 나눠 보내요/);
 });

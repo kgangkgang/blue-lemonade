@@ -633,6 +633,7 @@ height: max(100%, var(--bl-ui-touch, 44px));
 transform: translate(-50%, -50%);
 }
 :where(:root:not([data-bl-mb-off~="touch"])) > body.salty .ss-scope .ss-ib[data-l]::after { content: attr(data-l); position: static; width: auto; height: auto; transform: none; }
+:where(:root:not([data-bl-mb-off~="touch"])) > body.salty .ss-scope .ss-tools > .ss-tool:last-child::after, :where(:root:not([data-bl-mb-off~="touch"])) > body.salty .ss-scope .ss-tools > .ss-tool-more:last-child > summary::after { left: auto; right: 0; transform: translateY(-50%); }
 :where(:root:not([data-bl-mb-off~="locgo"])) > body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-gos { flex-wrap: nowrap; margin-block: -9px; padding-block: 9px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
 :where(:root:not([data-bl-mb-off~="locgo"])) > body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-go::after, :where(:root:not([data-bl-mb-off~="locgo"])) > body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc > .go::after { content: ''; position: absolute; inset: -10px -1px; }
 :where(:root:not([data-bl-mb-off~="trend"])) > body.salty:not([data-bl-ext-raw]) .ss-scope .ss-trend-box > .ss-trend-legend.bl-tr-legend { row-gap: var(--bl-s4, 16px); }

@@ -1,6 +1,7 @@
 // Korean chat-input shortcuts. No model call, script evaluation or chat mutation.
 // Numbers match SillyTavern's visible #messageId, starting at #0.
 import { watchDom } from './dom-watch.js';
+import { squashBlank } from './blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 const EXAMPLE = '/240번 채팅으로 가기 · /맨 아래로 · /대화 검색 단어 · /생성 중지';
 const HELP = `${EXAMPLE} · 번호는 화면의 #0부터예요.`;
 const MOVE = '(?:가기|가|가줘|가주세요|이동|이동하기|이동해|이동해줘|이동해주세요|점프|보기|보여줘|보여주세요)?';
@@ -141,7 +142,7 @@ export function naturalSlashLabel(action, chatLength = 0) {
 }
 
 const chatIdentity = ctx => `${ctx.groupId ?? ''}/${ctx.characterId ?? ''}/${ctx.chatId ?? ctx.getCurrentChatId?.() ?? ''}`;
-const normalizeSearch = value => String(value ?? '').normalize('NFKC').toLocaleLowerCase();
+const normalizeSearch = value => squashBlank(String(value ?? '').normalize('NFKC')).toLocaleLowerCase();   // 1.9.1 점자 빈칸 전수 2 — 띄어 쓴 검색어가 점자 빈칸 원문에도
 
 /** Execute only fixed, read-only navigation / stop operations, never arbitrary STscript. */
 export async function runNaturalSlash(action, ctx, searchState = {}) {

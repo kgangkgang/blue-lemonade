@@ -109,7 +109,7 @@ export function loreAliases(entries) {
 /** 이름 하나의 여러 꼴: 그대로 · 괄호 뗀 것 · 띄어 쓴 조각(성 · 이름) · 관계 칸의 그 사람 이름 · 합친 이름(rel.alias) · 화면 번역 이름(tr) */
 export function formsOf(name, { rel = null, tr = null, find = null, lore = null } = {}) {
     const out = new Set(), add = s => { const v = String(s ?? '').trim(); if ([...v].length >= 2) out.add(v); };
-    const one = s => { const v = String(s ?? ''); add(v); const bare = v.replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(); add(bare); for (const w of bare.split(/[\s·・,，/]+/u)) add(w); for (const m of v.matchAll(/[(（]([^)）]+)[)）]/g)) add(m[1]); };
+    const one = s => { const v = String(s ?? ''); add(v); const bare = v.replace(/\([^)]*\)|（[^）]*）/g, ' ').trim(); add(bare); for (const w of foldBlank(bare).split(/[\s·・,，/]+/u)) add(w);   /* 1.9.1 `Mira⠀Lee` 도 성 · 이름으로 */ for (const m of v.matchAll(/[(（]([^)）]+)[)）]/g)) add(m[1]); };
     const names = [name];
     let who = null; try { who = find ? find(rel?.user ?? [], name) : (rel?.user ?? []).find(r => norm(r?.name) === norm(name)); } catch { who = null; }
     if (who?.name) names.push(who.name);
@@ -263,7 +263,7 @@ export function markChips(mesEl, forms) {
 // ── 실리태번 · 그 확장과 잇기 ─────────────────────────
 async function mbCore(doc = globalThis.document) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
         return await import(new URL('./src/core.js', src).href);

@@ -8,6 +8,7 @@
 //   · 링크 [글](주소) · 각주 [^1] · 번호 표시 [3] · 【3】 · 체크 [ ] [x] · 낱말 하나뿐인 표지([OOC] · [Image] · [CHAP]).
 //   · 이미 한글 · 가나 · 한자가 든 줄(번역됐거나 원래 다른 말).
 // 순수 함수 (시험: tools/tests/translator-rp-lines.mjs).
+import { foldBlank } from '../../blank-fold.js';   // 1.9.1 점자 빈칸 전수 2 — 줄 머리 · 끝 · 태그 속성 앞의 점자 빈칸(`⠀【…】⠀` · `<span⠀…>【…】`)도 꾸밈
 
 /** 요청에 붙이는 한 줄 — 방향(한↔영)과 무관한 말로 */
 export const NOTICE_NOTE = '[Bracketed lines such as 【 … 】 or [ … ] are part of the story (on-screen notices, game results, system messages, signs, text messages): translate their words too, keeping the brackets, markup and numbers.]';
@@ -39,7 +40,7 @@ const WORD = /[A-Za-z][A-Za-z'’]+/g;
 
 /** 한 줄이 이야기 속 알림 줄이면 괄호 안 글(앞뒤 빈칸 뺌), 아니면 null */
 export function noticeInner(line) {
-    const s = String(line ?? '');
+    const s = foldBlank(line);   // 판정용 접은 글(괄호 안 글도 접힌 채 — 견줌 열쇠 key() 가 어차피 빈칸을 접어요)
     if (!s.trim() || s.length > 400) return null;
     const lead = LEAD.exec(s)[0], tail = TAIL.exec(s.slice(lead.length))[0];
     const core = s.slice(lead.length, s.length - tail.length);

@@ -26,6 +26,7 @@ export let duplicate = false;
 let body = null, bodyPromise = null, started = false, observer = null;
 let bodyModule = null, importAttempts = 0, chatEpoch = 0, playbackEpoch = 0, draining = false;
 const queued = [];
+let failToldAt = -Infinity;   // 본체 받기 실패를 마지막으로 알린 때
 const shellListeners = [];
 const INTERACTIVE = 'a, button, input, textarea, select, img, video, audio, details, summary, code, pre, .mes_button, [contenteditable]';   // clickplay.js 와 같은 목록
 
@@ -70,7 +71,14 @@ export function ensureBody(reason = '?') {
             } finally { draining = false; }
             return m;
         }).catch(error => { bodyPromise = null; throw error; });
-    bodyPromise.catch(error => console.error('[tts] 본체를 불러오지 못했어요', error));
+    bodyPromise.catch(error => {
+        console.error('[tts] 본체를 불러오지 못했어요', error);
+        // 1.9.0 고침: 예전엔 콘솔에만 남아, 읽기 단추 · 대사 누름 · 요술봉 「TTS」 · 명령이 아무 반응 없이 끝났어요 — 1분에 한 번만 알려요(사건마다 다시 받기를 시도해요)
+        const now = Date.now();
+        if (now - failToldAt < 60000) return;
+        failToldAt = now;
+        try { globalThis.toastr?.warning?.('TTS 를 불러오지 못했어요. 새로고침한 뒤 다시 눌러 주세요.', 'TTS'); } catch { /* 알림 없이 */ }
+    });
     return bodyPromise;
 }
 const withBody = (reason, fn) => ensureBody(reason).then(fn).catch(() => {});

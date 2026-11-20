@@ -1123,8 +1123,14 @@ export async function translateLines(lines, target, { signal } = {}) {
 // ---------- 저장
 
 let saveTimer = 0;
+// 1.9.0 고침: 모아 둔 저장은 「예약한 그 채팅」에서만 해요. 예전엔 답이 온 뒤 5초(모으는 시간) 안에 다른 채팅을 열면, 여는 도중(실리태번이 채팅을 비우고 파일 이름만 바꾼 사이)
+//   이 타이머가 터져 새 채팅 파일을 메시지 0개로 저장하려 했어요(「빈 채팅 덮어쓰기 막기」가 꺼져 있으면 그 채팅이 비어요). 채팅이 바뀌었으면 그 저장은 버려요 —
+//   옛 채팅은 이미 닫혀 저장할 길이 없고(실리태번이 바꾸기 전에 저장해요), 값을 치른 분석은 보관함(keepAnalysis)에도 있어요
+let saveFor;   // 예약 때의 채팅 이름(undefined = 예약 없음 · 바로 저장)
+const chatKey = () => { try { return typeof ST.getCurrentChatId === 'function' ? ST.getCurrentChatId() : getContext()?.getCurrentChatId?.(); } catch { return undefined; } };
 function scheduleSave(ms = SAVE_MS) {
     clearTimeout(saveTimer);
+    if (saveFor === undefined) saveFor = { key: chatKey() };   // 이미 예약이 있으면 처음 예약한 채팅 그대로
     saveTimer = setTimeout(flushSave, ms);
 }
 if (typeof globalThis.document?.addEventListener === 'function' && typeof globalThis.window?.addEventListener === 'function') {   // 7.2.6 모아 둔 저장은 탭을 숨기거나 떠날 때 바로
@@ -1137,15 +1143,22 @@ function saveNow() {
     saveTimer = 0;
     flushSave();
 }
+/** 지금 채팅을 바로 저장 — 부른 쪽이 지금 채팅의 분석을 막 적은 것이라, 예약해 둔 옛 채팅 몫은 여기서 끝내요 */
+function saveHere() { saveFor = undefined; saveNow(); }
 function flushSave() {
     saveTimer = 0;
-    if (generating()) { scheduleSave(); return; }      // 생성 중엔 저장하지 않는다
+    const planned = saveFor;
+    saveFor = undefined;
+    if (planned && planned.key !== chatKey()) { log('info', '분석 저장 건너뜀 (그사이 채팅이 바뀜)'); return; }
+    if (generating()) { saveFor = planned ?? { key: chatKey() }; scheduleSave(); return; }      // 생성 중엔 저장하지 않는다
     try {
         const ctx = getContext();
         const p = ctx && typeof ctx.saveChat === 'function' ? ctx.saveChat() : null;
         if (p && typeof p.catch === 'function') p.catch(e => log('err', `분석 저장 실패: ${snip(e?.message, 30)}`));
     } catch (e) { log('err', `분석 저장 실패: ${snip(e?.message, 30)}`); }
 }
+/** 시험용: 모아 둔 저장 */
+export const _saveForTest = { schedule: scheduleSave, flush: () => { clearTimeout(saveTimer); flushSave(); }, now: saveHere, pending: () => !!saveTimer };
 function slot(mes, create) {
     if (!mes) return null;
     if (!isObj(mes.extra)) { if (!create) return null; mes.extra = {}; }
@@ -1617,7 +1630,7 @@ export function addManualSfx(mesId, after, id) {
     else if (!Number.isInteger(lv.manual.n) && Number.isInteger(n)) lv.manual = { ...lv.manual, n };   // 1.7.0 전 목록에 더 넣을 때 대화문 수를 적는다
     if (!lv.manual.cues.some(c => isObj(c) && c.after === after && c.id === id)) { lv.manual.cues.push({ after, id }); lv.manual.cues.sort((a, b) => a.after - b.after); }
     try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(Number(mesId)); } catch { /* 스와이프 정보 없음 */ }
-    saveNow();
+    saveHere();
     return true;
 }
 export function removeManualSfx(mesId, after, id) {
@@ -1627,7 +1640,7 @@ export function removeManualSfx(mesId, after, id) {
     if (left.length === m.cues.length) return false;
     if (left.length) lv.manual = { ...m, cues: left }; else { delete lv.manual; if (!Object.keys(lv).length) delete mes.extra.lemon_voice; }
     try { if (typeof ST.syncMesToSwipe === 'function') ST.syncMesToSwipe(Number(mesId)); } catch { /* 스와이프 정보 없음 */ }
-    saveNow();
+    saveHere();
     return true;
 }
 
@@ -1869,7 +1882,7 @@ async function doAnalyze(entry) {
         followRewrite(id, mes);
         result = slot(mes, false)?.analysis;
         if (!isObj(result) || result.hash !== textHash(mes)) { drop(id, mes, true); scheduleSave(); log('info', `대사 분석 버림 #${id} (다시 쓰기 뒤 대사 수가 달라짐)`); return null; }
-        saveNow();   // 값을 치른 답 — 1초 안에 채팅을 바꿔도 남게 (store 와 같은 이유; 다시 쓰기 뒤 옮긴 분석은 드물어 7.2.6 에도 바로)
+        saveHere();   // 값을 치른 답 — 1초 안에 채팅을 바꿔도 남게 (store 와 같은 이유; 다시 쓰기 뒤 옮긴 분석은 드물어 7.2.6 에도 바로)
     } else store(id, mes, analysis);
     log('info', `대사 분석 끝 #${id} · ${Math.round((Date.now() - t0) / 100) / 10}s`);
     if (people) {   // 1.3.7 엑스트라 표에 적고 그 엔진의 기본 목소리 목록을 채운 뒤 돌려준다 (첫 줄부터 그 목소리로 — 오래 걸리면 기다리지 않음)

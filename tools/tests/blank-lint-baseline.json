@@ -1,0 +1,2147 @@
+{
+ "note": "점자 빈칸 래칫 기준 — tools/tests/blank-lint.mjs 맨 위 설명. 손으로 늘리지 말고 --update 로(새 줄을 본 뒤)",
+ "files": {
+  "src/addons/assets/after-reply.js": [
+   "583803b54d"
+  ],
+  "src/addons/assets/assets.js": [
+   "75544eefd0",
+   "b0757e09b5"
+  ],
+  "src/addons/assets/from-pictures.js": [
+   "42f03d5a82",
+   "c986c3d9f0"
+  ],
+  "src/addons/assets/image-format.js": [
+   "6c7a8f1735",
+   "81b9b83f9d"
+  ],
+  "src/addons/assets/names.js": [
+   "6b35d3ded8",
+   "96667277ef"
+  ],
+  "src/addons/assets/panel.js": [
+   "a821971026",
+   "afbfcdc563",
+   "b1d08db0e7",
+   "ca49b9fa59",
+   "dd492bcc6d",
+   "ddfbfbca13",
+   "f2bb40ab97"
+  ],
+  "src/addons/assets/pick.js": [
+   "de71394029"
+  ],
+  "src/addons/assets/presets.js": [
+   "0f19425676",
+   "75544eefd0"
+  ],
+  "src/addons/assets/prompt.js": [
+   "9a5057c56b"
+  ],
+  "src/addons/assets/render.js": [
+   "0543837c12",
+   "3250832aba",
+   "47e5dbe55d",
+   "65f83d5f24",
+   "6c6acc6517",
+   "9ac8920b19"
+  ],
+  "src/addons/assets/slots.js": [
+   "06406748b9",
+   "2a9642ddc0",
+   "2e005644a0",
+   "2f203591b1",
+   "37cb6eb08e",
+   "4f6143b467",
+   "4ff4afaace",
+   "590dd3e068",
+   "5d1b9f3f02",
+   "75544eefd0",
+   "8d8ae7a4cb",
+   "950e67c970",
+   "9aa1801999",
+   "a8f8b21b73",
+   "b50ac60cbe",
+   "c616ee664f",
+   "d6e9459ed5",
+   "e154f18009",
+   "e54e21bff1",
+   "fd2dadc25d"
+  ],
+  "src/addons/assets/spellings.js": [
+   "291b31dbf0"
+  ],
+  "src/addons/assets/state.js": [
+   "1dba0cdc7e",
+   "b1e50c328c"
+  ],
+  "src/addons/assets/store.js": [
+   "239deb2729",
+   "5dacd90637"
+  ],
+  "src/addons/assets/strip-chat.js": [
+   "ea957d1a6f"
+  ],
+  "src/addons/assets/ui.js": [
+   "3639390ed5",
+   "3e46f612b4"
+  ],
+  "src/addons/bookmarks/alt-palette.js": [
+   "4fbc120e8d",
+   "9516ecfe5b"
+  ],
+  "src/addons/bookmarks/excerpt-capture.js": [
+   "062b712827",
+   "a90dcb6d97"
+  ],
+  "src/addons/bookmarks/excerpt-editor.js": [
+   "1adb6e7f08",
+   "2beccc3fe8",
+   "45ac49a72c"
+  ],
+  "src/addons/bookmarks/excerpts.js": [
+   "2c2573002f",
+   "3d2b25028b",
+   "52826a07a3",
+   "65fbc3b80a",
+   "6d1b1e6b6b",
+   "98747c81ba",
+   "a27182421f",
+   "a54019d1e2",
+   "ca9df6415c",
+   "cb82b5f017",
+   "db3649a7e6",
+   "f077bdb05d"
+  ],
+  "src/addons/bookmarks/image-viewer.js": [
+   "a3bbe03f92"
+  ],
+  "src/addons/bookmarks/images.js": [
+   "17f78f1bab",
+   "76e4029105",
+   "79f0917469",
+   "a2f2af673f",
+   "e89bfca838",
+   "fad19818b8"
+  ],
+  "src/addons/bookmarks/panel.js": [
+   "b71a9fc751"
+  ],
+  "src/addons/bookmarks/render.js": [
+   "1324ad6e80",
+   "2beccc3fe8",
+   "30995b44a9",
+   "45e17d834d",
+   "6840675782",
+   "7240493de7",
+   "78db4089b6",
+   "863c51a6f1",
+   "faa998c206"
+  ],
+  "src/addons/bookmarks/settings-view.js": [
+   "82f0df9a97"
+  ],
+  "src/addons/bookmarks/state.js": [
+   "3639390ed5",
+   "3e46f612b4",
+   "e7c20bd38d",
+   "f3b08f300b"
+  ],
+  "src/addons/bookmarks/tracker-spacing.js": [
+   "3674817caf",
+   "8de8267b2f"
+  ],
+  "src/addons/bookmarks/translate.js": [
+   "1db0bd2278",
+   "5fbfa81492",
+   "c7bdfe7d6f"
+  ],
+  "src/addons/bookmarks/ui-kit.js": [
+   "9f84eb79b1"
+  ],
+  "src/addons/bookmarks/view-mode.js": [
+   "d202a07127"
+  ],
+  "src/addons/bookmarks/viewers.js": [
+   "30ad14dcaf"
+  ],
+  "src/addons/direction/index.js": [
+   "13c9a1afbf",
+   "15d484dabd",
+   "16df28fb2b",
+   "1c761f24a8",
+   "23595e31b8",
+   "2a1e1bd68a",
+   "2f4ddbf8ab",
+   "3639390ed5",
+   "3e46f612b4",
+   "4e92b2899b",
+   "5380e89957",
+   "5780d7d575",
+   "58132347c9",
+   "64d8dccc34",
+   "69100b8fd4",
+   "80d5c7adb0",
+   "829df0cfd4",
+   "9d46879f7c",
+   "a1d87f8ce9",
+   "a6c403e7d2",
+   "b3e146e1b6",
+   "bbd459d50a",
+   "cdeccfe50b",
+   "dcde655cdb",
+   "f08f2e166c",
+   "f24a00a3ee",
+   "f609a960c6",
+   "f8a702e92e"
+  ],
+  "src/addons/perf/capture.js": [
+   "546efadeae",
+   "8e78f1b788",
+   "9fbe274ba0",
+   "df18c5127a",
+   "fc7a6795bd"
+  ],
+  "src/addons/perf/panel.js": [
+   "03472538c1",
+   "6722a906e3",
+   "736471a837",
+   "bc0403e4de",
+   "c95b7f2a00",
+   "f22245df10"
+  ],
+  "src/addons/prompt-template/index.js": [
+   "da4c712071"
+  ],
+  "src/addons/prompt/glossary.js": [
+   "04ceaf5a49",
+   "5c66118ff5"
+  ],
+  "src/addons/regexlink/index.js": [
+   "ce6bbec988",
+   "d5099e27a3"
+  ],
+  "src/addons/regexlink/regexperf-locale.js": [
+   "64f450f201",
+   "df8ffece1e"
+  ],
+  "src/addons/regexlink/regexperf.js": [
+   "070a33a26e",
+   "2b37da684c",
+   "340f65701f",
+   "5d87936c32",
+   "7ed7397b71",
+   "a96a1be551",
+   "f4b103e794",
+   "f9233407fb"
+  ],
+  "src/addons/rewrite/ai-rules.js": [
+   "3a0fa26b34",
+   "3c62ff6f40",
+   "452a4006e8",
+   "5447721222",
+   "665f3870b2",
+   "9a5bfb9d65",
+   "ae46b9c708",
+   "c0624444cc",
+   "d97b894856",
+   "fa7b67109c"
+  ],
+  "src/addons/rewrite/core.js": [
+   "04781cc9a8",
+   "04e9b40af2",
+   "0f19425676",
+   "12607b3b86",
+   "15cccb9a31",
+   "21c5cabfeb",
+   "32f7120c02",
+   "4905e3057b",
+   "4bb634206f",
+   "54c1c9a8b9",
+   "578308b7ed",
+   "5933cb8502",
+   "657b90f28a",
+   "75544eefd0",
+   "78b754fd13",
+   "791310d247",
+   "7c41d974af",
+   "8e78f1b788",
+   "8e979c9139",
+   "918ba316bf",
+   "97d9710a62",
+   "9ab871d857",
+   "a6b0aa07a7",
+   "b95cdd8ec7",
+   "bf954d2ec6",
+   "c01d2866d3",
+   "d1c89b195c",
+   "d51eefc3dd",
+   "d7973d3140",
+   "d7dc659b03",
+   "e04b729570",
+   "f70412ba30",
+   "fcca68da39"
+  ],
+  "src/addons/rewrite/defaults.js": [
+   "05c8770eb4",
+   "1357587162",
+   "17ff8a9fec",
+   "18a8e38b30",
+   "1d5b247961",
+   "21702adbac",
+   "23aaaafb27",
+   "275b605218",
+   "2c2bfc38a8",
+   "43a51e0b50",
+   "586f6f38fa",
+   "5bd33455cd",
+   "7617c4c918",
+   "8c9fca8c09",
+   "93a634cc0b",
+   "9f8c8216b3",
+   "a200613a26",
+   "a7c04e5d63",
+   "c08078c4c2",
+   "c0cb53a764",
+   "d4065e60f3",
+   "dbf19341cd"
+  ],
+  "src/addons/rewrite/index.js": [
+   "00b906fb9f",
+   "3859db7a1a",
+   "3d10f8259e",
+   "420e24f1cb",
+   "4f90eeca08",
+   "5c291e3464",
+   "679d5c829f",
+   "6f50c3f2e9",
+   "8af83fc20d",
+   "b9d32de5fd",
+   "c1cb0d42d7",
+   "c1f97f191d",
+   "c7ffd09ae5",
+   "ede3503cd1",
+   "f7a04eb586",
+   "ff8f83eb36"
+  ],
+  "src/addons/rewrite/multilingual.js": [
+   "01d0021819",
+   "099deae9a8",
+   "2b9852548d",
+   "343064cbbe",
+   "53f5d94aa7",
+   "55191bc62b",
+   "57bd92085c",
+   "83933b18d4",
+   "8907d24df7",
+   "8f40b9c96c",
+   "9519001739",
+   "b560de7a95",
+   "c3bb1d5f35",
+   "e16aafe4db",
+   "fd80b346a6"
+  ],
+  "src/addons/rewrite/providers.js": [
+   "52d82e62c3",
+   "a174871def",
+   "d75703f956"
+  ],
+  "src/addons/rewrite/quick-ban.js": [
+   "611511e6c1",
+   "be6556ae0e"
+  ],
+  "src/addons/rewrite/reroll.js": [
+   "14a36d814b",
+   "31bba82f2c",
+   "6b3826d4e9",
+   "adc781dbee",
+   "afda31ddfd",
+   "b459e6998d"
+  ],
+  "src/addons/rewrite/upgrades.js": [
+   "888023fed0",
+   "aadd269ff3",
+   "c6da7b76dc"
+  ],
+  "src/addons/translator/archive-bridge.js": [
+   "47d854205a",
+   "53fa64b405",
+   "8b2072e891",
+   "bd1166d4fe",
+   "daf035653b",
+   "e991b528d6"
+  ],
+  "src/addons/translator/book-transfer-core.js": [
+   "ae98585bb0"
+  ],
+  "src/addons/translator/card-values.js": [
+   "14908a275d",
+   "29788743ac",
+   "3e21886830",
+   "42e9d11199",
+   "4e0111597f",
+   "545259d0c4",
+   "63530dd1b6",
+   "6cc55bcc66",
+   "b33f6e7e8f",
+   "bee55474de",
+   "d946322089",
+   "e4d67e3564",
+   "f3b08f300b",
+   "f8fc7fcc09",
+   "f9f1a61756"
+  ],
+  "src/addons/translator/chat-glossary.js": [
+   "10060152b0",
+   "2b4e4278eb",
+   "882a6bddd2",
+   "ddb2dbad08"
+  ],
+  "src/addons/translator/check-board.js": [
+   "b5c4b71d96"
+  ],
+  "src/addons/translator/check-view.js": [
+   "6c8745276b"
+  ],
+  "src/addons/translator/code-fences.js": [
+   "62f73c7b7f",
+   "d19e8abc47"
+  ],
+  "src/addons/translator/context-auto.js": [
+   "166291517c",
+   "b1046bee0c",
+   "c5631a8dbc"
+  ],
+  "src/addons/translator/context-slot.js": [
+   "30c0a4fa7d"
+  ],
+  "src/addons/translator/current-connection.js": [
+   "84846f0149",
+   "a39447c947",
+   "ca999b3c42",
+   "e179960002",
+   "e4942285d1"
+  ],
+  "src/addons/translator/dem-labels.js": [
+   "0f81393b25",
+   "3a6c80432d",
+   "3dd08814fb",
+   "4fc8e82507",
+   "63bde6fda8",
+   "6ed442a77f",
+   "8dcddc89a2",
+   "acdfaaeb47",
+   "ba42ec485e",
+   "c2619f7210",
+   "f000ac867e",
+   "f96d97e8e6"
+  ],
+  "src/addons/translator/display-cards.js": [
+   "04a1aa01b6",
+   "07a12d0916",
+   "08ac94a71d",
+   "0ca8f478cf",
+   "16fa8b7f12",
+   "205fe6ab20",
+   "285395e644",
+   "2fa379a257",
+   "39fe483efb",
+   "3b5b78b3de",
+   "3ffff0a9f7",
+   "40c728104a",
+   "43af567b1a",
+   "5645ed889f",
+   "635be5413f",
+   "64d34333ac",
+   "66a3a5dff3",
+   "682e20d3ca",
+   "6bc8fa7c8b",
+   "6c9cdd6c70",
+   "6e552503eb",
+   "8050fcba1f",
+   "8151b9b4d3",
+   "8cca239b82",
+   "9142078119",
+   "91abacb2b5",
+   "93606ff078",
+   "98a4f01069",
+   "9b7b9a543f",
+   "abeb0ed461",
+   "afeb4a476f",
+   "b47030fedb",
+   "b6f956ad91",
+   "bad43c2a11",
+   "bc737c6d03",
+   "bf8965ff52",
+   "c18ea1a4a2",
+   "d7ea594004",
+   "ec3a1c0407",
+   "edc51c22ec",
+   "ef5070a1b9",
+   "f81d5fb3de",
+   "fa8d2af849",
+   "fb336c3dec"
+  ],
+  "src/addons/translator/glossary-match.js": [
+   "0e62e9b920",
+   "25fbf5266e",
+   "2dfe6ad932",
+   "3f9ccbab51",
+   "45fd941b50",
+   "491816b436",
+   "51e4841c5d",
+   "aa88982435",
+   "ab84ad866f",
+   "ca0de8b99b"
+  ],
+  "src/addons/translator/glossary-prompt.js": [
+   "d6ee746753"
+  ],
+  "src/addons/translator/glossary-suggest.js": [
+   "0764407f72",
+   "11d7529bdc",
+   "11e7c7a12d",
+   "226bfdd8fb",
+   "22a3763a52",
+   "4b02f20b14",
+   "5dcf2011ba",
+   "72ebbcc1ef",
+   "77bc2c69db",
+   "785849c290",
+   "941e81b28e",
+   "b8e935dd03",
+   "eb1ce79028"
+  ],
+  "src/addons/translator/hidden-blocks.js": [
+   "0735fbc038",
+   "07a251e259",
+   "5b90a74bdd",
+   "9b17c0e560",
+   "a8970a7a80",
+   "aeaaa0a50f",
+   "f7e36613ce"
+  ],
+  "src/addons/translator/index.js": [
+   "0090b83aeb",
+   "00d83e51a1",
+   "01b6a6a31e",
+   "0248bb56bf",
+   "0355691d4a",
+   "062a94d878",
+   "08acf2b90f",
+   "0d9e4a4d8c",
+   "117b7dbc5b",
+   "12b77744a2",
+   "15ad02e40b",
+   "15b353b34e",
+   "199b569cbb",
+   "19fb93751d",
+   "1cfa343b27",
+   "21c254daf1",
+   "2b67c74595",
+   "2e65c83b30",
+   "2ef673ba90",
+   "302fe58067",
+   "3586f1ac67",
+   "3792ac3da7",
+   "3bc6e1970b",
+   "4543812dfe",
+   "4720381983",
+   "4b24b0259f",
+   "4ed1b87ac5",
+   "535756eefd",
+   "552b8d60e7",
+   "562a5430c6",
+   "583a8ae952",
+   "58a6969102",
+   "58b3e9e1ba",
+   "5936e86db5",
+   "5d7b363d0a",
+   "5f845eeb5a",
+   "64fc536b6e",
+   "6508b148cb",
+   "656433b134",
+   "65824d7d38",
+   "66c09c2e0f",
+   "694fef6617",
+   "70cd9ab2ff",
+   "75723068d3",
+   "758fe7c109",
+   "76cd5705bf",
+   "76f99c5d29",
+   "79f476f79b",
+   "7a0a5cd9f9",
+   "7e39bef963",
+   "8124e9f470",
+   "81d105419f",
+   "84fff746e6",
+   "8633bcdcb7",
+   "86f3192d04",
+   "874b503f18",
+   "885ae5063c",
+   "88a6a88508",
+   "88fd879bf2",
+   "8b91881726",
+   "8c1aef023d",
+   "8c4fdcb400",
+   "8de5d405d3",
+   "8df5ae2bb6",
+   "941c859d35",
+   "9bbfa4fe93",
+   "9c1c03e93a",
+   "9ce9494b7e",
+   "9edfa9fc49",
+   "a115d6f9e6",
+   "a64258ca71",
+   "a6e46cf95d",
+   "a752bffd93",
+   "a88e7cbd6e",
+   "ad2c2f62a7",
+   "ad7ab97dff",
+   "ae3e900cf0",
+   "ae66afab73",
+   "b40b8cd60b",
+   "b464b9e871",
+   "b4cdcdfc50",
+   "b652171491",
+   "b818c11124",
+   "b87766b2cc",
+   "ba1d248c71",
+   "bf97dc74b0",
+   "bfc816d446",
+   "c01bee6922",
+   "c1295e27b9",
+   "c5ac579200",
+   "cbaf18f6bf",
+   "cbe7315c36",
+   "cc4059a534",
+   "cd94f00e22",
+   "cdd88c892c",
+   "ce1bd30376",
+   "cf86d47165",
+   "d0a4b7b691",
+   "d14983b651",
+   "d1861da04d",
+   "d2820661ea",
+   "d399d976f8",
+   "d5e384f623",
+   "d60dd954e7",
+   "d76e60ae2f",
+   "d8d4526383",
+   "dc1900840b",
+   "dec4475f34",
+   "df937e8095",
+   "ee997c334e",
+   "ef209f118f",
+   "f03020b1cc",
+   "f073df4769",
+   "f1483288b2",
+   "f1b3ba0bd7",
+   "f1b8afe574",
+   "f3cad87054",
+   "f4927b2a91",
+   "f4a279855d",
+   "f4ac49402b",
+   "f501cdea07",
+   "f518f1b5cd",
+   "f554cf676a",
+   "f6f17567d1",
+   "f80d1b5398",
+   "f8f7bf79a7",
+   "f9270d0a44",
+   "fb0d371366",
+   "fd02ef1b37",
+   "ff063edea5"
+  ],
+  "src/addons/translator/korean-keep.js": [
+   "5d926d1a9f",
+   "c914720b26"
+  ],
+  "src/addons/translator/leftover-fix.js": [
+   "1ebff1156d",
+   "21cc00ba3a",
+   "3270873ab8",
+   "451751e67e",
+   "85bdd3dabb",
+   "97b88f94ea",
+   "9df2c9b437",
+   "a90f7f66cd",
+   "ad4e4164bd",
+   "b5a86cdb11",
+   "b9e5949ff8",
+   "c30270f9c7",
+   "deae56918d",
+   "e4a1d51546",
+   "ec995565fc"
+  ],
+  "src/addons/translator/media-blocks.js": [
+   "0274e9ee2c",
+   "44955da28c"
+  ],
+  "src/addons/translator/names-bridge.js": [
+   "1769c28096",
+   "b077f7a6d7",
+   "bde469067f",
+   "ca48047e35"
+  ],
+  "src/addons/translator/persona-bridge.js": [
+   "1433fb0886",
+   "37d9dcf5ce",
+   "51dc905fac"
+  ],
+  "src/addons/translator/picture-swap.js": [
+   "1751f9c85e",
+   "393d5ae412",
+   "4de5b970c3",
+   "780854516b",
+   "8b846263b2",
+   "ac710c45b6",
+   "c32dfc151d",
+   "c778b2bef1",
+   "fac3372f70"
+  ],
+  "src/addons/translator/preview-frames.js": [
+   "ceda12748a",
+   "de5548bf95"
+  ],
+  "src/addons/translator/prompt-reset.js": [
+   "f3ec00150d"
+  ],
+  "src/addons/translator/reasoning-view.js": [
+   "48605d5fcd",
+   "ed771f06de"
+  ],
+  "src/addons/translator/reference-info.js": [
+   "0df60b852c",
+   "147c66947d",
+   "22390d83ab",
+   "33556aee46",
+   "50ea84199f",
+   "87a25ccca5",
+   "a422d3ba73",
+   "d57b6958d2",
+   "e5a6f1656d"
+  ],
+  "src/addons/translator/remote.js": [
+   "d48582c916"
+  ],
+  "src/addons/translator/rp-lines.js": [
+   "3edbe8c0e8",
+   "54821c55c3",
+   "5c243ea038",
+   "885092fc90",
+   "9f7e752442",
+   "e58eabafb4",
+   "e6bf1708e8",
+   "f845b78935"
+  ],
+  "src/addons/translator/selection/comparison.js": [
+   "d82ae80a91"
+  ],
+  "src/addons/translator/selection/core.js": [
+   "47b50c394e",
+   "8e1c0d8eab",
+   "c2cb0352a5",
+   "e90549527c"
+  ],
+  "src/addons/translator/selection/delete-core.js": [
+   "08473ea80d",
+   "0f61e7a9d8",
+   "2297d17df7",
+   "24e0180d73",
+   "2b02c496d8",
+   "30131b3b47",
+   "32ed9495b3",
+   "3988d9f0ee",
+   "4e97ee3bf6",
+   "4ff1a4b7fe",
+   "599d13db23",
+   "614797a8ba",
+   "685333972e",
+   "75808e75a6",
+   "7abc11a4c3",
+   "8d2e7206f8",
+   "a0a18627b0",
+   "a40f338d0f",
+   "b3bf181f2a",
+   "bc0af7ad91",
+   "c1f32e1e85",
+   "cb2bc3141d",
+   "d0a95af58c",
+   "e765698552",
+   "e9d3eafcc8",
+   "f4fb645b69",
+   "fe27d22874"
+  ],
+  "src/addons/translator/selection/delete.js": [
+   "06b04ccf61",
+   "22df9b539a",
+   "33dc301d49",
+   "7326b6929d",
+   "7966fe0255",
+   "82f66011a2",
+   "842a7168e6",
+   "9dcd58d436",
+   "a41a859b9d",
+   "b98d7112f2",
+   "bbd4bd9f13",
+   "ceaa2d630e",
+   "e7a1ac45c8",
+   "f4731a8950"
+  ],
+  "src/addons/translator/selection/term-memory.js": [
+   "5ed16b43aa"
+  ],
+  "src/addons/translator/selection/translation.js": [
+   "5a954ee77a",
+   "8be0a5f527",
+   "fc41a35992",
+   "ffdc89fef8"
+  ],
+  "src/addons/translator/sky-attrs.js": [
+   "00b34eb737",
+   "06ad98e6c5",
+   "1243d6dc0d",
+   "15e867d54f",
+   "333f868d66"
+  ],
+  "src/addons/translator/speech-translate.js": [
+   "2dbf60d54e",
+   "40569d0693",
+   "4c0f1af9a0",
+   "4d488c12a2",
+   "57bc63d205",
+   "5b81c731c0",
+   "6a75cdcb42",
+   "7a98072b2d",
+   "9329e1b09e",
+   "c0806c182a",
+   "d69b262806",
+   "dba97f9e83",
+   "e7f3015c33"
+  ],
+  "src/addons/translator/style-profile.js": [
+   "1b9266d4b7",
+   "3e8bd7f017",
+   "64c13eb3f6",
+   "811810ad22"
+  ],
+  "src/addons/translator/tag-compact.js": [
+   "2d275be14f",
+   "8f06b1068a",
+   "b496c9e517"
+  ],
+  "src/addons/translator/translation-check.js": [
+   "046c4bfe54",
+   "1d836a5794",
+   "1e3933f7af",
+   "3a713f81ac",
+   "3ceed28dbe",
+   "453995a70d",
+   "477f5e6ff8",
+   "5e7080cef3",
+   "60a0517bec",
+   "9931dc1631",
+   "9bf2e8fdf5",
+   "9ee4f9dcd1",
+   "9ef31e4116",
+   "a4a00c698e",
+   "a7f9270a5f",
+   "ba3cbab2ee",
+   "c968686477",
+   "d5a1dea505",
+   "d833e5a8c9"
+  ],
+  "src/addons/translator/translation-notes.js": [
+   "0b16ca4c29",
+   "125645407d",
+   "30385c534d",
+   "33aabad1fc",
+   "61b28011c9",
+   "824fdf2830",
+   "df9ed9da30",
+   "f1aa559774",
+   "f9f35e0973",
+   "fcda13edeb"
+  ],
+  "src/addons/translator/translation-segments.js": [
+   "029d5dd678",
+   "03d86962e9",
+   "0a225c659e",
+   "0d645df082",
+   "0e3864eae2",
+   "0ee152e7ab",
+   "0f27f41de3",
+   "0f561c6aa1",
+   "1019edfdf3",
+   "13721f2ce2",
+   "14164eacfc",
+   "1643f4dc2c",
+   "19fb93751d",
+   "1c9c8ecc12",
+   "1d2c879158",
+   "1e45746c33",
+   "209d4cb8bd",
+   "20e60af1a8",
+   "217d6ab6ef",
+   "21ecabaf27",
+   "224dccc60c",
+   "22e67bbfd7",
+   "240003e3aa",
+   "2499cff23f",
+   "24c6681a30",
+   "2a5361742b",
+   "2fd9c76e6c",
+   "309ffd2c0c",
+   "30e149ec99",
+   "31df2fa954",
+   "379a7bb796",
+   "37e8183c2c",
+   "39ff8532ac",
+   "3ab3f2889e",
+   "3ad945e8d4",
+   "3ba6932269",
+   "3d19ecbc2a",
+   "3d20389e78",
+   "40362cb59f",
+   "412367d492",
+   "4179272f78",
+   "423b10ed23",
+   "429a0ff70e",
+   "4377321995",
+   "4be5c6c87c",
+   "50b20999bf",
+   "56095caed5",
+   "5612856cf7",
+   "571ba7215a",
+   "577b48a6e0",
+   "5849fadfbb",
+   "58cf77aa64",
+   "5cccba2e87",
+   "5d2f8f2417",
+   "5f0fd49a76",
+   "61b87844d8",
+   "62d4cca62d",
+   "65297ea36c",
+   "68934ece5b",
+   "6add0687d3",
+   "6b274d40de",
+   "6b9108cd82",
+   "6c8cb774c1",
+   "6c97565312",
+   "716a91caeb",
+   "723f388fd3",
+   "7abacd1b6e",
+   "807332b4b9",
+   "80868a3549",
+   "83be587f8d",
+   "83ce5ba39f",
+   "866ba89179",
+   "8822e5bbfe",
+   "91f88396fb",
+   "938c063717",
+   "959aa4845d",
+   "986eb3629d",
+   "a3c13f7b78",
+   "a43083cd41",
+   "a491ef5bbd",
+   "ab9a9536c5",
+   "abd1cc13cf",
+   "ade304d5de",
+   "ae49bfa7cd",
+   "aedf641d76",
+   "b3f34cbd53",
+   "bab9c4b58d",
+   "bb715ebce0",
+   "be5aa1651e",
+   "c0f28b7110",
+   "c12b332dde",
+   "c4d07a0aaf",
+   "cc1fd66f1a",
+   "cf00c8f2d5",
+   "d1e97f9611",
+   "d4b4efa60c",
+   "d9ede4b628",
+   "dc902706b7",
+   "df0a6ac871",
+   "e1e2c31e3b",
+   "e2a4e8b06e",
+   "e344b1ac8e",
+   "e5916ec76f",
+   "e705c6a932",
+   "e72c15afa3",
+   "e7f861cce0",
+   "e933d54cdc",
+   "ed74cb3152",
+   "f111394cfd",
+   "f17319e8e5",
+   "f23a69d4ac",
+   "f7e302d414"
+  ],
+  "src/addons/translator/translation-source.js": [
+   "1aed912896",
+   "6383cd23dd",
+   "83bfbafafc",
+   "8eaf439817",
+   "9f1a147596",
+   "beb567379e"
+  ],
+  "src/addons/translator/translation-stream.js": [
+   "03a7a85cf6",
+   "4f15d15bf9",
+   "c191d02aba"
+  ],
+  "src/addons/translator/v3-modules.js": [
+   "336c5bf20b",
+   "3af801ea70",
+   "5dfe8effb3",
+   "6b4be5fcbc",
+   "739cee5d4b",
+   "74b9f5f9e5",
+   "972818ca68",
+   "e25c9ab5f2"
+  ],
+  "src/addons/tts/index.js": [
+   "01eaf02aee",
+   "0bb37b1bc2",
+   "2f45828b93",
+   "2fbf0a1966",
+   "6b3d734c0e",
+   "7471614e82",
+   "c517ff007e"
+  ],
+  "src/addons/tts/src/analysis.js": [
+   "05d20dbdca",
+   "066230bcb2",
+   "06b228cf55",
+   "0bb37b1bc2",
+   "10e29489ac",
+   "129d20a05a",
+   "12d1bec41f",
+   "169033c9f0",
+   "16acf16fee",
+   "1d5be0556d",
+   "1e35deba9e",
+   "1efa21ebdb",
+   "1f7736e95f",
+   "204b05add6",
+   "22f14bf7da",
+   "26bf735efe",
+   "2dac419bb1",
+   "3276839891",
+   "3cbc34b981",
+   "4a72030332",
+   "4a8494452d",
+   "518c4bb699",
+   "5344825617",
+   "5c88dd8d1b",
+   "61cef05a7d",
+   "69803acd44",
+   "7024d1f776",
+   "75544eefd0",
+   "77ee95e304",
+   "782d80b457",
+   "8a2c793b77",
+   "8c9afc4847",
+   "8cffe9dc59",
+   "8d8aa7fe78",
+   "8f4fa2458b",
+   "9049a5a218",
+   "a0e00f3089",
+   "a10fec8195",
+   "a14965c4e2",
+   "a4dc4537a1",
+   "b3fe27bf23",
+   "b6fbd119fd",
+   "c81f81dc45",
+   "cba9e012c6",
+   "d2f23a99be",
+   "d48459d9dc",
+   "d88c78a630",
+   "df039d97e0",
+   "e67bf2052f",
+   "ee5b844664",
+   "fccc1554c2",
+   "feab3f082f"
+  ],
+  "src/addons/tts/src/balance.js": [
+   "679eda7d69",
+   "6b491e42b2",
+   "e2255fba1d",
+   "f3549a351c"
+  ],
+  "src/addons/tts/src/block-fallback.js": [
+   "08fae247a3",
+   "50333bd9f7",
+   "52f7e08583",
+   "8dfcc57689",
+   "b0ce798d2e",
+   "ba1d248c71",
+   "ceaec9d97c"
+  ],
+  "src/addons/tts/src/clickplay.js": [
+   "0bb37b1bc2",
+   "0c5788a943",
+   "195cf49a67",
+   "1e7f20c47f",
+   "1ef3a715ed",
+   "1fe4b003b7",
+   "299e88efcb",
+   "54386529e7",
+   "5b9becfa75",
+   "5dc2091381",
+   "6b0828de75",
+   "6fd7b3f4e5",
+   "9649c29fbb",
+   "9a24135e8a",
+   "9bf89b11f2"
+  ],
+  "src/addons/tts/src/fx-call.js": [
+   "8499f290d9",
+   "dd55778ab7",
+   "fdf78b1b8e"
+  ],
+  "src/addons/tts/src/highlight-colors.js": [
+   "3bd6b55366",
+   "5ac080a3dc",
+   "6eb0cf8cf9",
+   "7ac1df074d",
+   "8acda83016",
+   "98747c81ba"
+  ],
+  "src/addons/tts/src/listen.js": [
+   "1e895ed676",
+   "5b9568d898",
+   "7b1a7be42e",
+   "8c21441837"
+  ],
+  "src/addons/tts/src/log.js": [
+   "253112b8b2",
+   "402b368247",
+   "75544eefd0"
+  ],
+  "src/addons/tts/src/media-card.js": [
+   "1e4cdb6d81",
+   "342b3663a7",
+   "688c9c36ad",
+   "80ac5a2d1b",
+   "83f78d8c3a",
+   "87eb69c0d8",
+   "d5f2c52da8"
+  ],
+  "src/addons/tts/src/message-segments.js": [
+   "28d7b55fac",
+   "4a72030332",
+   "a974424ad8",
+   "bdf2ac8e24",
+   "d8c88b6386",
+   "e502a6db85"
+  ],
+  "src/addons/tts/src/model-names.js": [
+   "366cab3bde",
+   "759e6b614a",
+   "9654ee6da7",
+   "9b24dae883"
+  ],
+  "src/addons/tts/src/modelswitch.js": [
+   "1eae154508",
+   "4bdd26fefc",
+   "c455c1d0aa",
+   "d5cf55f5e6"
+  ],
+  "src/addons/tts/src/mute.js": [
+   "1a94f81a04",
+   "736f8c5cd7",
+   "738886acbc",
+   "74a5d46610",
+   "b7f9f30711",
+   "c5d7d71130",
+   "e409fd697b",
+   "f18db4ffab"
+  ],
+  "src/addons/tts/src/name-voice-core.js": [
+   "95476b99af",
+   "d62b0b3052"
+  ],
+  "src/addons/tts/src/name-voice.js": [
+   "0275590c47",
+   "d7e0e60d8a"
+  ],
+  "src/addons/tts/src/paid.js": [
+   "884d18d11e"
+  ],
+  "src/addons/tts/src/paint-core.js": [
+   "29da3dc405",
+   "a07ed2a2d1"
+  ],
+  "src/addons/tts/src/paint.js": [
+   "3f6e3a5fea",
+   "76b9b3faad",
+   "9a97f20951",
+   "adc91153a4",
+   "ea217e89b2"
+  ],
+  "src/addons/tts/src/playback-details.js": [
+   "b9d1a077ad",
+   "c42ecd4d19",
+   "df4b6a79be",
+   "fdd641b465"
+  ],
+  "src/addons/tts/src/player.js": [
+   "014cdc5bec",
+   "032eab9ef0",
+   "1c7768baef",
+   "1ef4c759cc",
+   "2508a9e14c",
+   "271a7e07f7",
+   "291b947720",
+   "3902a1954f",
+   "4617fbe4b0",
+   "4aedcaa05d",
+   "57f616ec44",
+   "69f042070e",
+   "6c969aebf0",
+   "7614fc2a7f",
+   "7782a9c0f9",
+   "80f9737bd2",
+   "876f71a0c6",
+   "8aca11cdfa",
+   "8b592e7ab3",
+   "8d7ddea8d9",
+   "967395b518",
+   "972dae5c0e",
+   "9a405c0d7e",
+   "a92ee9ae3c",
+   "a9f170d7fc",
+   "a9f2bb4a1d",
+   "aa06d55fdb",
+   "b373a1df38",
+   "b3d10dc98a",
+   "b8fdbd8cf6",
+   "bdf2ac8e24",
+   "c13b90fb32",
+   "de99fd5e55",
+   "e26cb7d116",
+   "e6c1061542",
+   "ec86950945",
+   "ef45bf94c4",
+   "f482ffc451",
+   "f5d0ffb921"
+  ],
+  "src/addons/tts/src/pregen.js": [
+   "5911d20b31",
+   "c9a0b53386",
+   "d1df85267e",
+   "de99fd5e55"
+  ],
+  "src/addons/tts/src/providers/_http.js": [
+   "5baab1712b",
+   "6c19b305a1",
+   "d04c068be3",
+   "ec63985a05"
+  ],
+  "src/addons/tts/src/providers/_models.js": [
+   "0b4893daa8",
+   "c077aad1a9",
+   "d1be0141d4"
+  ],
+  "src/addons/tts/src/providers/azure.js": [
+   "4a720ad018"
+  ],
+  "src/addons/tts/src/providers/browser.js": [
+   "0cf0d89cc1",
+   "42a55405fb",
+   "669aab7b93",
+   "a7b9b3213b",
+   "d7e6edadb3"
+  ],
+  "src/addons/tts/src/providers/elevenlabs.js": [
+   "011c186abb",
+   "02a72ac9a1",
+   "40ed6ab533",
+   "52420f7d89",
+   "d0da4d6233",
+   "e6a8731b18",
+   "ea3e71df56"
+  ],
+  "src/addons/tts/src/providers/gemini.js": [
+   "67904768ce",
+   "82b8de6a40"
+  ],
+  "src/addons/tts/src/providers/gtranslate.js": [
+   "0b0456552e"
+  ],
+  "src/addons/tts/src/providers/minimax.js": [
+   "15b17ab518",
+   "312ed6d58a",
+   "496ffa6830",
+   "4c2e6bcdeb",
+   "4e684bc9f9",
+   "538d31b876"
+  ],
+  "src/addons/tts/src/providers/openai_compat.js": [
+   "0f6bb353ba",
+   "56b1566650",
+   "9b24178b22",
+   "ab144090cd",
+   "d22dce2447"
+  ],
+  "src/addons/tts/src/providers/openai.js": [
+   "04425b32e5",
+   "52a156c9c6",
+   "56b1566650",
+   "7ec43d6c55",
+   "ab144090cd"
+  ],
+  "src/addons/tts/src/providers/openrouter.js": [
+   "56b1566650",
+   "ab144090cd"
+  ],
+  "src/addons/tts/src/providers/typecast.js": [
+   "d8c3998ebd"
+  ],
+  "src/addons/tts/src/roster-core.js": [
+   "c684a87bbf"
+  ],
+  "src/addons/tts/src/script-editor.js": [
+   "7f7e769572",
+   "cfc0dcf06a",
+   "dca7c8cb5f"
+  ],
+  "src/addons/tts/src/settings.js": [
+   "1ef036b947",
+   "4d47904723",
+   "51f23b36bc",
+   "7ecadf593a",
+   "ab5657fbb6",
+   "b8bb5c29dc"
+  ],
+  "src/addons/tts/src/sfx-credits.js": [
+   "c93ec0fb31",
+   "d8b9fcac62"
+  ],
+  "src/addons/tts/src/sfx-library.js": [
+   "bd0421b2a1",
+   "e3904fb6aa"
+  ],
+  "src/addons/tts/src/speakers.js": [
+   "2a6dc9a090",
+   "2c13ec773b",
+   "31a44b27d1",
+   "3ce616ee46",
+   "3f9ce5a87b",
+   "46e40769b8",
+   "4ce586a222",
+   "4eabe0d6f7",
+   "5618652598",
+   "562a2b033e",
+   "72e2b3df7c",
+   "775e76b082",
+   "77864464fa",
+   "864a601ac9",
+   "9142e0b9ad",
+   "93efb101a7",
+   "9bd733ab95",
+   "a6a9f4e7d9",
+   "ad2948e9a9",
+   "ad5c5aa619",
+   "cc0ce67598",
+   "d26c8d2464",
+   "d7271ab238",
+   "dba9bc9619",
+   "e44d0b611c",
+   "e8734eaf18",
+   "f9b95c70ff",
+   "fc8c2c9188"
+  ],
+  "src/addons/tts/src/stapi.js": [
+   "0fbe9d4fd0",
+   "13b6348b86",
+   "24257ccf4b",
+   "2de2c17100",
+   "52382235a7",
+   "9f8165ce2c",
+   "b78fa64487",
+   "c2be111185",
+   "d3fafd1b4e"
+  ],
+  "src/addons/tts/src/text-index.js": [
+   "51c0fac1d6"
+  ],
+  "src/addons/tts/src/text.js": [
+   "012fef4dee",
+   "06c45410f0",
+   "0d9cd0c796",
+   "0ee5ac6289",
+   "1ae4f81692",
+   "1dd9a28878",
+   "26a3e91df3",
+   "2a68334e80",
+   "2d8ae0d42c",
+   "30b8d08022",
+   "3675472222",
+   "38c1992127",
+   "412fc95675",
+   "42410b12c3",
+   "531bad8dad",
+   "57319eab4d",
+   "5a8e74c3e7",
+   "5c178b5324",
+   "5f9a2ea101",
+   "60d9e6d313",
+   "61b1478a05",
+   "6b0828de75",
+   "6c4df9b7ea",
+   "78f3556db7",
+   "7e5e9ab33c",
+   "8ab5a518ca",
+   "8f1aeefd60",
+   "8fce9a908e",
+   "9519e1ada1",
+   "9835d3ac19",
+   "9a35cf8cb3",
+   "9c27ba38bf",
+   "9d756f2424",
+   "a49576d0f1",
+   "ad8c59be46",
+   "b3f5721103",
+   "ba56bbbde6",
+   "ba5d62fc75",
+   "bc9beec8cb",
+   "bf7f389e6f",
+   "c1104e5df0",
+   "d0edfb7552",
+   "df97073866",
+   "e7cec2a28b",
+   "f5f91382f8",
+   "f7f95dcd96",
+   "f846109748",
+   "fa9e182f7d"
+  ],
+  "src/addons/tts/src/translation.js": [
+   "24190c7169",
+   "412ecb8b11",
+   "5b98c35afb",
+   "6b88a49b99",
+   "769cf107dc",
+   "e9de121d9f"
+  ],
+  "src/addons/tts/src/ui.js": [
+   "02de044965",
+   "038b9b68fb",
+   "07a364091a",
+   "0df575e231",
+   "116751074c",
+   "43b4dd14d3",
+   "45492982a1",
+   "4f0f6f367c",
+   "5a5e06fa4e",
+   "60cb87f4ff",
+   "62fdd1e3a9",
+   "65c2e96367",
+   "702216fde5",
+   "7e2a8c97d8",
+   "857a760377",
+   "9005a873fc",
+   "9f573a969e",
+   "b289857ebf",
+   "b2c742f4ab",
+   "c500d4cd2d",
+   "c9245053c3",
+   "cb7a5fd6c2",
+   "cba0b5c4dd",
+   "d3b4c5c91b",
+   "d7e0e60d8a",
+   "d9f665d889",
+   "dbc417fa7c",
+   "e26cb7d116",
+   "e4fd0c26a3",
+   "e9da4319d9",
+   "f234495639",
+   "f38dc38ab7",
+   "f806cd838a",
+   "fae1d30a70"
+  ],
+  "src/addons/tts/src/voice-names.js": [
+   "a2efa5a70b",
+   "becd178c45",
+   "e9966e04ea"
+  ],
+  "src/addons/tts/src/voice-public.js": [
+   "67d8d7f783"
+  ],
+  "src/addons/tts/src/voices.js": [
+   "17bacf156a",
+   "31a44b27d1",
+   "31dd52be81",
+   "41176d782f",
+   "48fae446c5",
+   "5d9a4af4a8",
+   "67f53af624",
+   "894fa052e3",
+   "9142e0b9ad",
+   "a2efa5a70b",
+   "a4a9104b8d",
+   "ab608c8ce6",
+   "db9b734ee7"
+  ],
+  "src/addons/tts/src/word-chips.js": [
+   "339976cb8f",
+   "5145dfc7fd",
+   "b5a6e1c897"
+  ],
+  "src/an-anchor.js": [
+   "012baf3fa9",
+   "a64fadd5a1"
+  ],
+  "src/an-keep.js": [
+   "1ff1a5be96",
+   "284309934b",
+   "65680dbad2",
+   "6c19b305a1",
+   "7a6b18b06c",
+   "9a6dae20e4"
+  ],
+  "src/assets.js": [
+   "4d0fad7b02",
+   "5705dad35f"
+  ],
+  "src/background-window.js": [
+   "21522bae30",
+   "3680d26216"
+  ],
+  "src/capture-editor.js": [
+   "9084f20d87",
+   "cb0b11ff26",
+   "dd895b35c2"
+  ],
+  "src/capture-layout.js": [
+   "1d0b6700c2",
+   "6625f31118",
+   "7972fd456c",
+   "ccc7e89051"
+  ],
+  "src/capture-options.js": [
+   "0e6218684e",
+   "17e5def92e",
+   "46b8c5f3be",
+   "490eac1d3a",
+   "820c6e6e24"
+  ],
+  "src/cardink.js": [
+   "d321cea9e7"
+  ],
+  "src/chat-capture.js": [
+   "4644cf762d",
+   "57d8515292",
+   "a846b7146f",
+   "adc8d0608f",
+   "c7841160c5"
+  ],
+  "src/chat-graph.js": [
+   "bf3f42fda1"
+  ],
+  "src/chat-library-data.js": [
+   "44c6289b3c"
+  ],
+  "src/chat-library.js": [
+   "6d147f6eb1"
+  ],
+  "src/chat-light.js": [
+   "1075172525",
+   "17fd5217dd"
+  ],
+  "src/chat-organizer-core.js": [
+   "396cacafa5",
+   "44e8c8c00b",
+   "c517ff007e"
+  ],
+  "src/chat-organizer.js": [
+   "84c1da564c"
+  ],
+  "src/dem-expressive.js": [
+   "7e6d8e56d0",
+   "b2f8b3bfe3",
+   "cc6adeddf1",
+   "d1fdfd885b",
+   "d5db1879d4",
+   "e7f9de6b8b"
+  ],
+  "src/dem-sky.js": [
+   "15f8538028",
+   "1726bcd9cf",
+   "281a3b35c4",
+   "4e1241b300",
+   "6244b7f5d2",
+   "86c2094a1d",
+   "d8937409cc",
+   "decc773589"
+  ],
+  "src/diag-file.js": [
+   "016e8e0abc",
+   "549478d5f7",
+   "9422ed830b"
+  ],
+  "src/diagnose.js": [
+   "68bff50f61",
+   "6ccf21cff2",
+   "8bcd9eaef3",
+   "c190d8e671"
+  ],
+  "src/dialogue-lines.js": [
+   "696209e550",
+   "afe934228e",
+   "b52019037a"
+  ],
+  "src/dialogue-span.js": [
+   "147671bafa",
+   "27b7bdd919",
+   "481c8c8afa",
+   "50e5c0b536",
+   "583ef4fd47",
+   "5c09d65124",
+   "b62c26ba18",
+   "b7904f66e8",
+   "cb4df31cd0"
+  ],
+  "src/dialogue-tildes.js": [
+   "eb8596638e"
+  ],
+  "src/dialogue-view.js": [
+   "34f673ff51",
+   "d1ce76e61f"
+  ],
+  "src/ext-bridge-core.js": [
+   "0b8d946fa4",
+   "541268a62f",
+   "78d11eeb39",
+   "854600b23e",
+   "9ca63e4845",
+   "de96711b07",
+   "df0fcf567d",
+   "f35d5060b3",
+   "f3ebfdce96",
+   "f708739347"
+  ],
+  "src/ext-bridge-tr.js": [
+   "0c875a2870",
+   "0d78979718",
+   "0eb5026a1e",
+   "1003f056c9",
+   "1e81bf1fce",
+   "214476fa9a",
+   "28bc95b8ce",
+   "2d12d04fbc",
+   "3121575b8f",
+   "34ffbba8d7",
+   "3a9ba61072",
+   "3d2f3afa61",
+   "3e720e4f8f",
+   "419a232f90",
+   "421125af87",
+   "44ed2c24c8",
+   "459eaf45c3",
+   "47b0af4e13",
+   "49330a8e72",
+   "4ce70c1ae4",
+   "4d3dcd9fb2",
+   "5393c1d635",
+   "56c8c7b747",
+   "584ee9c7f4",
+   "635de79d4e",
+   "6b411cfd16",
+   "6d7987b9f3",
+   "6f2d24a399",
+   "7006663e0b",
+   "71802de3c6",
+   "72979084bf",
+   "825bf51cbc",
+   "8ce8a31ac0",
+   "8efd9a3dcb",
+   "8ff9447820",
+   "903a22e96a",
+   "907ea7c103",
+   "94b8c618c9",
+   "97dd07ed87",
+   "9a271755fb",
+   "9bb5e40305",
+   "a5ffa1a9cd",
+   "a9d732acbe",
+   "ac1736b54d",
+   "af4dad84ff",
+   "b3944ec1dd",
+   "b3fa285dca",
+   "b53931bcf0",
+   "b578523fbb",
+   "bfdf600edf",
+   "c249a8766f",
+   "c51309b29f",
+   "cdcbd6afb3",
+   "d6010e48f6",
+   "d644faf43f",
+   "d782ce7d6d",
+   "e752e5c183",
+   "f0f68ab90f",
+   "f3b08f300b",
+   "fc7bf1abed"
+  ],
+  "src/ext-bridge-ui.js": [
+   "0f482ef29d"
+  ],
+  "src/ext-bridge.js": [
+   "5debc92b88",
+   "7bfcf90862"
+  ],
+  "src/fruit-type-ui.js": [
+   "ccf5e08667"
+  ],
+  "src/gloss-fold.js": [
+   "05267c9775",
+   "af261ad781"
+  ],
+  "src/icon-text.js": [
+   "7f5fe73ae8"
+  ],
+  "src/layout.js": [
+   "278d09f1bf",
+   "715615c46d",
+   "9b26cc0341",
+   "c12c0c93c8"
+  ],
+  "src/lite.js": [
+   "63033b77a9",
+   "f85969dfb5"
+  ],
+  "src/log-copy-capture.js": [
+   "170990c6c1",
+   "2350d5395d",
+   "3e6aaf59a7",
+   "476504a69d",
+   "4ab8a02bc7",
+   "596828ddbb",
+   "82c3e6d9f8",
+   "8db55dede3",
+   "9025e9a811",
+   "a90dcb6d97",
+   "a944d7c566",
+   "bc29e85b52",
+   "f0c37359e8",
+   "f39f046258",
+   "f5de0ff777",
+   "ff3ab26d1e"
+  ],
+  "src/longpress-help.js": [
+   "3aa2c01f63",
+   "7d0c537b52"
+  ],
+  "src/mb-auto-en.js": [
+   "8336aa1140",
+   "ce86b2f4f8",
+   "e3b6964e21"
+  ],
+  "src/mb-diary.js": [
+   "695dd453dc",
+   "85b24c422a",
+   "9edd9ee0ac",
+   "e1096ed9cc",
+   "eb48491149"
+  ],
+  "src/mb-editsync.js": [
+   "0a7b65ea94",
+   "21e770ff29",
+   "245b3dbf7d",
+   "551076cdae",
+   "630ff05d77",
+   "7d1f228a6d",
+   "8d74a0732b",
+   "a5d9493c36",
+   "cdbfd347b7",
+   "d2e34dc7fb",
+   "ddbab47fb3",
+   "e0acb0400e"
+  ],
+  "src/mb-hidden.js": [
+   "dfaeeb1409"
+  ],
+  "src/mb-leftover.js": [
+   "78d3b6318a",
+   "7b1f298ef0",
+   "fd57faba86"
+  ],
+  "src/mb-map-floors.js": [
+   "017a8e1cb4",
+   "0471f239d9",
+   "06f2c2b405",
+   "097aecc54d",
+   "0aca16a5bb",
+   "10d96e7db7",
+   "11f27f3b9f",
+   "16f38ead7b",
+   "1b433b56ae",
+   "1c9f3c200f",
+   "1f00a35e00",
+   "28acc45cab",
+   "28dce921e3",
+   "2e6c5dd395",
+   "2ea09cbc20",
+   "2f1caf5bcc",
+   "418f090bb9",
+   "48e47d2aa6",
+   "540cc498f1",
+   "5c66a04a8e",
+   "5f79df964f",
+   "66ecd8ab1e",
+   "6f343fc2f9",
+   "6f65160993",
+   "73b6b1afd3",
+   "78bcad934d",
+   "830d2ce37a",
+   "86253e51c4",
+   "870cacf144",
+   "87a2c749bf",
+   "8ab61d8e0e",
+   "8b444a71bc",
+   "983e2665c5",
+   "98b470716d",
+   "9937ff07c0",
+   "99d59c9064",
+   "9c0495a58f",
+   "a1cf4f1897",
+   "a2f1b2b6fc",
+   "a5a96be4f5",
+   "af2b4c3d88",
+   "b21b490286",
+   "ba354fdd67",
+   "bf1af94d9f",
+   "c111e6263b",
+   "c15e17dad0",
+   "c25e124d20",
+   "c3b86134aa",
+   "ca912aa664",
+   "d19962c0db",
+   "dee86033b9",
+   "e66ce0f96e",
+   "eb519772b5",
+   "ecbc017e6f",
+   "efecc683eb",
+   "f113453f45",
+   "f1fae3f1ea",
+   "f315a37850",
+   "f7225b9b05",
+   "fb8f1136c4",
+   "fdd40b7f28",
+   "ff3e1377ed",
+   "ffc1ac82c9"
+  ],
+  "src/mb-mind-tr.js": [
+   "01270c9304",
+   "56c8c7b747",
+   "64dc9d68e4",
+   "65770d73fa",
+   "672be6c237",
+   "681ea1eaf8",
+   "7b6e63fe83",
+   "824eb8fbf7",
+   "9e0c252fe5",
+   "b0fb1f0ab8",
+   "b266bd1f08",
+   "c5dedbe506",
+   "cf2eda843e",
+   "e0d9aec5a3",
+   "ecf9526378"
+  ],
+  "src/mb-namekey.js": [
+   "26e0f21477",
+   "4e720c989c",
+   "54f12da1a2",
+   "683c2c0468",
+   "72ac71d70e",
+   "9bd3a76807",
+   "d28f5d2677",
+   "d327b77338",
+   "e4a6e4ab4e"
+  ],
+  "src/mb-note.js": [
+   "0a340de8c3",
+   "3148dd0ab6",
+   "8a1a8b41c8",
+   "dce1ec337e",
+   "ea54f07399"
+  ],
+  "src/mb-place-mark.js": [
+   "28ed7bcdfe",
+   "4dc9a4d2e8"
+  ],
+  "src/mb-prompt.js": [
+   "06dfb2111f",
+   "0edb2d9474",
+   "141739eb51",
+   "243442e180",
+   "2f0acbcc5f",
+   "3365b163f1",
+   "3d39f49a8f",
+   "426e3f25d1",
+   "4619cc008b",
+   "46968fb485",
+   "47feeecbd5",
+   "4a467b6ba8",
+   "4dc065f53c",
+   "59ef8e042f",
+   "5d2b993f38",
+   "6c9c73681a",
+   "727824d930",
+   "7288053c1d",
+   "79fe2fbbf5",
+   "8499358dfc",
+   "985feee737",
+   "99b185b9ab",
+   "b82e81e34b",
+   "c50c57f7b3",
+   "d9ac6015cb",
+   "df72ae27a8",
+   "ee52f39036"
+  ],
+  "src/mb-read.js": [
+   "0d737df6fa",
+   "cd83a468e9"
+  ],
+  "src/mb-switch-core.js": [
+   "d5d30ea162"
+  ],
+  "src/mb-trend.js": [
+   "0ecd303c45",
+   "3aac400b60",
+   "475f1a8c2d",
+   "712dc689ab",
+   "8237abed70",
+   "a52f637bed",
+   "cf7dad4d50",
+   "d8d48c7b8a",
+   "e9037b6d81"
+  ],
+  "src/mes-pins.js": [
+   "05db8d342c"
+  ],
+  "src/message-work.js": [
+   "017ec8e0a3",
+   "080af62625",
+   "849be738c3"
+  ],
+  "src/name-aliases.js": [
+   "0c3ec9cfd1",
+   "0f49eef4a3",
+   "8342b63732",
+   "aa93c1f45a",
+   "f39c7c1586"
+  ],
+  "src/name-people.js": [
+   "3a6e5f88fe",
+   "95476b99af"
+  ],
+  "src/natural-slash.js": [
+   "0f01f9914d",
+   "10ff60f575",
+   "4e11ad8d0e",
+   "6331f13971",
+   "837585baa2",
+   "aacdb96d66",
+   "b65f5f58cb",
+   "bde515ec0b",
+   "cae7f9a8aa",
+   "e2966c6fe1",
+   "ec01dbd4c5",
+   "f27c25caf9"
+  ],
+  "src/panel.js": [
+   "2c8167904f",
+   "3594aa4f4c",
+   "42cf5888af",
+   "4cf3ac279d",
+   "580bd6f503",
+   "6f887ad40f",
+   "78f090868a",
+   "9b5b5c7365",
+   "c2c58b5244",
+   "e23a567419",
+   "f281128ced"
+  ],
+  "src/people.js": [
+   "013af264c0",
+   "55333d51a4",
+   "8ebb64996a"
+  ],
+  "src/prompt-history-label.js": [
+   "197c381374",
+   "605f0ee6d0",
+   "d25a0d3f9d"
+  ],
+  "src/qr-shelf-keep.js": [
+   "ad39da2c97",
+   "cc9e878856"
+  ],
+  "src/quick/sel-edit.js": [
+   "f107429214"
+  ],
+  "src/quick/sel-span.js": [
+   "0a21ad1f8c",
+   "80757b290a",
+   "d57c2b83a1"
+  ],
+  "src/quick/shared.js": [
+   "da2a9521f2"
+  ],
+  "src/reader.js": [
+   "278714f584"
+  ],
+  "src/reading-resume-anchor.js": [
+   "2f03294dc6"
+  ],
+  "src/reply-notify.js": [
+   "232846d1ef",
+   "a2788bbf6b"
+  ],
+  "src/role-icons-pick.js": [
+   "cdc5d47a4d"
+  ],
+  "src/scene-music-rules.js": [
+   "079931cf68",
+   "0f19425676",
+   "243c47af41",
+   "2ab4d9a6d2",
+   "75544eefd0"
+  ],
+  "src/scene-music.js": [
+   "360c775257"
+  ],
+  "src/scripts/plain/korean.js": [
+   "186e4f4381",
+   "47335da787",
+   "8fe345c8f5",
+   "dc53eff2e7",
+   "e4859adb79",
+   "ee9f66aca1",
+   "eebaf98518"
+  ],
+  "src/scripts/scan.js": [
+   "4a46490d2c"
+  ],
+  "src/selection-bar.js": [
+   "d5077779f9",
+   "f4b06c5373"
+  ],
+  "src/sent-tokens.js": [
+   "e5b4c39984"
+  ],
+  "src/settings.js": [
+   "0a3f20d1d3",
+   "241ba69fef",
+   "2fa00082f4",
+   "3c4908efa9",
+   "526f08def7",
+   "5e18c104f5",
+   "653108fbae",
+   "664434de06",
+   "6e229a13e0",
+   "a299c92618",
+   "b293c90544",
+   "c5d54616c7",
+   "c9593bf5a6",
+   "cba7c8e6bf",
+   "dba9f22ed3",
+   "ed9ff5898c",
+   "f493d061e4"
+  ],
+  "src/squared-buttons.js": [
+   "08f90a2e0c",
+   "1075172525",
+   "2cfe7c2a80",
+   "699605ef6b",
+   "6f1000342d",
+   "867eb97b82",
+   "ac493626fe"
+  ],
+  "src/styles.js": [
+   "1678f85711",
+   "398f1bc7f0",
+   "df7006cc12",
+   "fe69451377"
+  ],
+  "src/swipe-picker-translation.js": [
+   "1cb2ee5a7b",
+   "25d6f5630a",
+   "27ad67c360",
+   "357187ac04",
+   "597d3b04c9",
+   "718c3349f9",
+   "b9c71bd0f9",
+   "eb4999b7c0",
+   "f931898a50",
+   "f9da77313a"
+  ],
+  "src/typography.js": [
+   "0b09904c73",
+   "6b50470b6e"
+  ],
+  "src/weather-meatball.js": [
+   "1c763167c3",
+   "204db97f0d",
+   "29495a0433",
+   "94b23f6a70",
+   "a15de3ce60"
+  ],
+  "src/weather.js": [
+   "07ba91b7ec",
+   "2452904370",
+   "33e435ae6c",
+   "3e010cc279",
+   "5789ff44a6",
+   "59467c45a6",
+   "6186af899b",
+   "6747caf69e",
+   "6b21868e92",
+   "7dc7785b45",
+   "86824b770b",
+   "882af4fa49",
+   "a13c46f529",
+   "b661ffaf80",
+   "c8700f6cde",
+   "d7d6178a0f",
+   "eaafad02a0",
+   "f32000edf8"
+  ],
+  "src/websearch-core.js": [
+   "481de01cc5",
+   "67801b97d5",
+   "b30952ceaa",
+   "eebb3cc26a"
+  ],
+  "src/websearch.js": [
+   "23412cec62",
+   "3e69a3cc8b",
+   "46a9932fce"
+  ],
+  "src/wi-skip-core.js": [
+   "9f02baa5e7",
+   "b2b82c5668"
+  ],
+  "src/word-tools-core.js": [
+   "292b9f9e81",
+   "b299d513fd",
+   "e4ad2ac612"
+  ],
+  "src/word-tools.js": [
+   "01ca5466ba",
+   "16e72f71f9",
+   "1b106b237f",
+   "4d12fb269a",
+   "6aa671b020",
+   "b64625e757",
+   "f4e9f8f61f"
+  ],
+  "src/wordmask.js": [
+   "628e66a898",
+   "8137961ce8"
+  ]
+ }
+}

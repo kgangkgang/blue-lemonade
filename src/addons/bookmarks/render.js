@@ -1,5 +1,6 @@
 // 북마크 — 메시지·메모 렌더링, 날짜·이름 표시
 import { dressBody } from '../../dem-expressive.js';
+import { SP, HSP } from '../../blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 import { messageFormatting, getThumbnailUrl } from '../../../../../../../script.js';
 import { user_avatar } from '../../../../../../personas.js';
 import { timestampToMoment } from '../../../../../../utils.js';
@@ -49,8 +50,9 @@ export function messageText(message) {
  * 글자 그대로 둔다(채팅 화면도 마찬가지다). 접이 카드를 쓰는 프리셋에서 자주 나오니 줄만 띄워 제대로 보이게 한다.
  * 평범한 글이 이어지는 경우는 건드리지 않는다.
  */
-const MARKDOWN_AFTER_SUMMARY = /<\/summary>[ \t]*(?=(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>\s|\|))/gi;
+const MARKDOWN_AFTER_SUMMARY = new RegExp(`<\\/summary>${HSP}*(?=(?:#{1,6}${SP}|[-*+]${SP}|\\d+[.)]${SP}|>${SP}|\\|))`, 'gi');   // 1.9.1 점자 빈칸 전수 2
 
+const PROSE_HEAD = new RegExp(`(<prose\\b[^>]*>)${SP}+`, 'gi'), PROSE_TAIL = new RegExp(`${SP}+(<\\/prose\\s*>)`, 'gi');   // 1.9.1 점자 빈칸 전수 2
 function loosenMarkdown(text) {
     return String(text ?? '').replace(MARKDOWN_AFTER_SUMMARY, '</summary>\n\n');
 }
@@ -78,7 +80,7 @@ export function proseOf(text) {
     const rest = source.replace(DEUS_BLOCKS, '').trim();
     const prose = [...rest.matchAll(/<prose\b[^>]*>[\s\S]*?<\/prose\s*>/gi)].map(hit => hit[0]);
     // 태그 바로 안쪽의 빈 줄은 <br><br> 로 그려져 접힌 세 줄을 빈칸이 차지한다 → 붙여 준다
-    const body = (prose.length ? prose.join('\n\n') : rest).replace(/(<prose\b[^>]*>)\s+/gi, '$1').replace(/\s+(<\/prose\s*>)/gi, '$1');
+    const body = (prose.length ? prose.join('\n\n') : rest).replace(PROSE_HEAD, '$1').replace(PROSE_TAIL, '$1');
     return body || source; // 덩어리뿐인 답이면 원래대로
 }
 

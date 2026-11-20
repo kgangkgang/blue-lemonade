@@ -51,6 +51,9 @@
   html body .salty-panel, html body .salty-panel.bl-editor { --num-h: max(var(--bl-ui-ctl, 36px), calc(1.5em + 12px)); }
   /* 전개 지시 창의 「깊이」 숫자 칸(폭 35) */
   html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings) .jj-stepper input[data-field="depth"] { min-width: 44px; }
+  /* 버그 사냥 9: 깊이 − · + 단추(34)의 44 상자가 묶음(.jj-stepper)의 overflow:hidden 에 잘려 누를 자리가 39 × 36 이었어요(사용자 환경 리그 384 · 412 · 디자인 관문 「차」).
+     묶음 안 칸은 바탕이 투명하고 단추 모서리는 제 둥글기(88-ui-parts)라 자르지 않아도 보이는 모습이 같아요 — 손가락 화면에서만 풀어요 */
+  html body :is(.bl-direction-dialog, .jj-settings-body, #jj-settings, #jj-popup) .jj-stepper { overflow: visible; }
   /* 1.7.5 데우스/솔라 탭 줄 위 여백 4: 탭(36)의 44 상자 위쪽 4px 가 탭 줄의 overflow-y:hidden 에 잘리지 않게(아래는 탭 줄의 아래 여백 8 안) */
   html body.salty #bl-deus-popover .dq-tabs { padding-top: 4px; }
   /* 1.7.5 과일의 마음 칩 줄 틈: 줄 사이만 넓혀요 — 꼬리표 · 칩(높이 34) 6 → 10 · 단추 줄(높이 36) 6 → 8. 가로 틈 · 칩 크기 · 글자는 그대로 */

@@ -7008,7 +7008,7 @@ function openDB() {
         const request = indexedDB.open(DB_NAME, 1);
 
         request.onerror = (event) => {
-            reject(new Error("indexedDB open error"));
+            reject(new Error("번역 저장소(IndexedDB)를 열지 못했어요"));
         };
 
         request.onsuccess = (event) => {
@@ -7108,11 +7108,11 @@ async function addTranslationToDB(originalText, translation, cacheContext = {}) 
                 resolve("add success");
             };
             request.onerror = (event) => {
-                reject(new Error("add error"));
+                reject(new Error("번역 저장소에 넣지 못했어요"));
             };
         };
         lookup.onerror = () => {
-            reject(new Error("add error"));
+            reject(new Error("번역 저장소에 넣지 못했어요"));
         };
         transaction.oncomplete = function () {
             db.close();
@@ -7133,7 +7133,7 @@ async function getAllTranslationsFromDB() {
             resolve(event.target.result);
         };
         request.onerror = (event) => {
-            reject(new Error("get all error"));
+            reject(new Error("번역 저장소를 읽지 못했어요"));
         };
 
         transaction.oncomplete = function () {
@@ -7238,14 +7238,14 @@ async function updateTranslationByOriginalText(originalText, newTranslation) {
         resolve();
                 };
                 updateRequest.onerror = (e) => {
-                    reject(new Error('put error'));
+                    reject(new Error("번역 저장소를 고치지 못했어요"));
                 };
             } else {
                 reject(new Error('no matching data'));
             }
         };
         request.onerror = (e) => {
-            reject(new Error('get error'));
+            reject(new Error("번역 저장소를 읽지 못했어요"));
         };
         transaction.oncomplete = function () {
             db.close();
@@ -7483,7 +7483,7 @@ async function getTranslationFromDB(originalText, { anySig = false } = {}) {
             resolve(record ? record.translation : null);
         };
         request.onerror = (e) => {
-            reject(new Error("get error"));
+            reject(new Error("번역 저장소를 읽지 못했어요"));
         };
         transaction.oncomplete = function () {
             db.close();
@@ -7515,7 +7515,7 @@ async function deleteDB() {
         };
         request.onerror = (event) => {
             toastr.error('데이터 삭제에 실패했어요.');
-            reject(new Error("db delete error"));
+            reject(new Error("번역 저장소를 지우지 못했어요"));
         };
     });
 }
@@ -7541,14 +7541,14 @@ async function deleteTranslationByOriginalText(originalText) {
         resolve();
                 }
                 deleteRequest.onerror = (e) => {
-                    reject(new Error('delete error'));
+                    reject(new Error("번역을 지우지 못했어요"));
                 }
             } else {
                 reject(new Error('no matching data'));
             }
         }
         request.onerror = (e) => {
-            reject(new Error('get error'));
+            reject(new Error("번역 저장소를 읽지 못했어요"));
         };
         transaction.oncomplete = function () {
             db.close();

@@ -964,6 +964,9 @@ body.salty:not([data-bl-ext-raw]) .ss-scope .ss-pills > small { align-self: cent
   }
   /* 2.8 준비 갈래의 이름 붙은 아이콘 단추(data-l · 「속마음」 「연락」 …)는 이름을 ::after 로 그려요 — 위의 누를 자리 상자(같은 ::after)가 그 글자를 지우지 않게 */
   body.salty .ss-scope .ss-ib[data-l]::after { content: attr(data-l); position: static; width: auto; height: auto; transform: none; }
+  /* 버그 사냥 9(사용자 환경 리그 384 · 412): 도구 줄 오른쪽 끝 단추(「더보기」)는 판(.ss-root)의 가로 자름(위 버그 사냥 7)에 상자 오른쪽 5px 가 잘려 누를 자리가 39 였어요
+     → 그 단추만 상자를 제 오른쪽 끝에 맞춰 왼쪽으로 넓혀요(44 × 44 그대로 · 보이는 모습 같음) */
+  body.salty .ss-scope .ss-tools > .ss-tool:last-child::after, body.salty .ss-scope .ss-tools > .ss-tool-more:last-child > summary::after { left: auto; right: 0; transform: translateY(-50%); }
   /* @mb locgo */
   /* 위치 칸 펼침의 갈 곳 칩 줄(2.9.0): 한 줄 가로 밀기(줄 위아래 9 씩은 누를 자리 몫 — 굴리는 상자가 칩의 누를 자리를 자르지 않게 안쪽 여백으로 두고 같은 만큼 바깥 여백을 당겨 줄 높이는 26 그대로) · 칩 · 「이 탭 열기」 누를 자리 44 */
   body.salty:not([data-bl-ext-raw]) .ss-tb .ss-t-det.loc .ss-loc-gos { flex-wrap: nowrap; margin-block: -9px; padding-block: 9px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }

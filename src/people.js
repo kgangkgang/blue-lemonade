@@ -7,12 +7,13 @@
 //   }
 // 표기(names)는 이름 다리(번역 용어집의 이름 짝)와 공급자가 아는 별명을 합친 것이다. 색 · 목소리는 공급자(지금은 TTS 애드온)가 준다 —
 //   TTS 가 꺼져 있으면 color · voice 는 null. 돌려준 객체는 얼려 있다(고쳐도 원본은 그대로). 순수 모듈 (시험: tools/tests/people.mjs)
+import { foldBlank, trimEdge } from './blank-fold.js';   // 1.9.1 점자 빈칸 전수 2(순수 모듈끼리)
 export const PEOPLE_VERSION = 1;
 export const PEOPLE_EVENT = 'bl:people-changed';
 const NAMES_KEY = Symbol.for('blue-lemonade.names');   // names-bridge.js 와 같은 열쇠 (서로 부르지 않게 여기서도 만든다)
 const NAMES_EVENT = 'bl:names-changed';
 
-const fold = s => String(s ?? '').normalize('NFKC').trim().toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ');
+const fold = s => foldBlank(String(s ?? '').normalize('NFKC')).trim().toLowerCase().replace(/[\s\-‐‑–—_·・]+/g, ' ');
 const sources = new Map();   // id → { person(names) → { names?, color?, voice? } | null, names() → string[], stamp?() → 값 | 배열 }
 const ranks = new Map();     // 1.5.5 id → 차례(작을수록 먼저 · 기본 0). 같은 차례는 등록 차례 — 프리셋 색(preset)은 TTS 뒤
 const ordered = () => [...sources.entries()].sort((a, b) => (ranks.get(a[0]) || 0) - (ranks.get(b[0]) || 0));
@@ -70,7 +71,7 @@ function memoReady() {
     return true;
 }
 function get(name) {
-    const n = String(name ?? '').trim();
+    const n = trimEdge(name);   // 1.9.1 점자 빈칸 전수 2 — `⠀Tobin⠀` 로 물어도
     if (!n) return null;
     const useMemo = memoReady();
     if (useMemo && memo.has(n)) return memo.get(n);

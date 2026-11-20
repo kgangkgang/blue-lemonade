@@ -396,14 +396,14 @@
                             <div class="parameter-group openai_params">
                                 <div class="parameter-row">
                                     <div class="parameterbox flex-container gap0">
-                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
+                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">최대 응답 길이</small>
                                         <input type="range" id="max_length_openai_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
                                         <input type="number" id="max_length_openai" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Temperature</small>
+                                        <small>온도</small>
                                         <input type="range" id="temperature_openai_slider" class="neo-range-slider" min="0" max="2"
                                             step="0.01">
                                         <input type="number" id="temperature_openai" class="neo-range-input" min="0" max="2"
@@ -412,14 +412,14 @@
                                 </div>
                                 <div class="parameter-row">
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Frequency Penalty</small>
+                                        <small>빈도 페널티</small>
                                         <input type="range" id="frequency_penalty_slider" class="neo-range-slider" min="-2" max="2"
                                             step="0.01">
                                         <input type="number" id="frequency_penalty" class="neo-range-input" min="-2" max="2"
                                             step="0.01">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Presence Penalty</small>
+                                        <small>존재 페널티</small>
                                         <input type="range" id="presence_penalty_slider" class="neo-range-slider" min="-2" max="2"
                                             step="0.01">
                                         <input type="number" id="presence_penalty" class="neo-range-input" min="-2" max="2"
@@ -440,14 +440,14 @@
                             <div class="parameter-group claude_params">
                                 <div class="parameter-row">
                                     <div class="parameterbox flex-container gap0">
-                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
+                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">최대 응답 길이</small>
                                         <input type="range" id="max_length_claude_slider" class="neo-range-slider" min="1"
                                             max="160000" step="1">
                                         <input type="number" id="max_length_claude" class="neo-range-input" min="1" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Temperature</small>
+                                        <small>온도</small>
                                         <input type="range" id="temperature_claude_slider" class="neo-range-slider" min="0" max="2"
                                             step="0.01">
                                         <input type="number" id="temperature_claude" class="neo-range-input" min="0" max="2"
@@ -474,14 +474,14 @@
                             <div class="parameter-group cohere_params">
                                 <div class="parameter-row">
                                     <div class="parameterbox flex-container gap0">
-                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
+                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">최대 응답 길이</small>
                                         <input type="range" id="max_length_cohere_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
                                         <input type="number" id="max_length_cohere" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Temperature</small>
+                                        <small>온도</small>
                                         <input type="range" id="temperature_cohere_slider" class="neo-range-slider" min="0" max="2"
                                             step="0.01">
                                         <input type="number" id="temperature_cohere" class="neo-range-input" min="0" max="2"
@@ -490,14 +490,14 @@
                                 </div>
                                 <div class="parameter-row">
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Frequency Penalty</small>
+                                        <small>빈도 페널티</small>
                                         <input type="range" id="frequency_penalty_cohere_slider" class="neo-range-slider" min="-2"
                                             max="2" step="0.01">
                                         <input type="number" id="frequency_penalty_cohere" class="neo-range-input" min="-2" max="2"
                                             step="0.01">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Presence Penalty</small>
+                                        <small>존재 페널티</small>
                                         <input type="range" id="presence_penalty_cohere_slider" class="neo-range-slider" min="-2"
                                             max="2" step="0.01">
                                         <input type="number" id="presence_penalty_cohere" class="neo-range-input" min="-2" max="2"
@@ -524,14 +524,14 @@
                             <div class="parameter-group google_params">
                                 <div class="parameter-row">
                                     <div class="parameterbox flex-container gap0">
-                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
+                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">최대 응답 길이</small>
                                         <input type="range" id="max_length_google_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
                                         <input type="number" id="max_length_google" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Temperature</small>
+                                        <small>온도</small>
                                         <input type="range" id="temperature_google_slider" class="neo-range-slider" min="0" max="2"
                                             step="0.01">
                                         <input type="number" id="temperature_google" class="neo-range-input" min="0" max="2"
@@ -558,14 +558,14 @@
                             <div class="parameter-group vertexai_params" style="display: none;">
                                 <div class="parameter-row">
                                     <div class="parameterbox flex-container gap0">
-                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">Max Response Length</small>
+                                        <small title="작으면 긴 메시지를 여러 요청으로 나눠 보내요 (요청마다 프롬프트 · 문맥이 다시 들어가요). 응답 길이 × 1.2자까지 한 번에 묶여요 (예: 24000 이면 약 28800자).">최대 응답 길이</small>
                                         <input type="range" id="max_length_vertexai_slider" class="neo-range-slider" min="0"
                                             max="160000" step="1">
                                         <input type="number" id="max_length_vertexai" class="neo-range-input" min="0" max="Infinity"
                                             step="1">
                                     </div>
                                     <div class="parameterbox flex-container gap0">
-                                        <small>Temperature</small>
+                                        <small>온도</small>
                                         <input type="range" id="temperature_vertexai_slider" class="neo-range-slider" min="0"
                                             max="2" step="0.01">
                                         <input type="number" id="temperature_vertexai" class="neo-range-input" min="0" max="2"
@@ -589,7 +589,7 @@
                                 </div>
                             </div>
                         </div>
-                        <small id="llm_max_length_warn" class="llmt-desc" style="display:none">Max Response Length 가 160000 을 넘었어요. 막지는 않지만, 모델 한도보다 크면 공급자가 요청을 거절할 수 있어요.</small>
+                        <small id="llm_max_length_warn" class="llmt-desc" style="display:none">최대 응답 길이가 160000 을 넘었어요. 막지는 않지만, 모델 한도보다 크면 공급자가 요청을 거절할 수 있어요.</small>
                     </div>
                 </section>
 

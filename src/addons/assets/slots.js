@@ -103,10 +103,10 @@ export function paragraphBoundaries(text) {
         }
         const before = region.slice(last, m.index);
         last = m.index + token.length;
-        if (stack.length || !stripSlots(before).trim()) continue;
+        if (stack.length || !foldBlank(stripSlots(before)).trim()) continue;   // 1.9.1 점자 빈칸 전수 2
         const after = region.slice(last);
         const next = after.split(/\r?\n[ \t\r]*\n/)[0];
-        if (!stripSlots(next).trim() || /^\s*<\/(?:prose|content)\b/i.test(after)) continue;
+        if (!foldBlank(stripSlots(next)).trim() || /^\s*<\/(?:prose|content)\b/i.test(foldBlank(after))) continue;
         out.push({ at: start + m.index, next });
     }
     return out;

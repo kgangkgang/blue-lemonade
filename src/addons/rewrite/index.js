@@ -65,7 +65,7 @@ import { createRewriteUndo } from './undo.js';   // 7.0.1 ↶ 되돌리기 (채�
 import { attachUndo } from '../../ask.js';
 import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
-import { foldBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { foldBlank, squashBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 const VERSION = '2.2.0';
 const MODULE = 'ban_word_rewrite';
@@ -687,7 +687,7 @@ function showReport({ fixed, failed, error, left = [] }, total, manual, undo = n
 function recentText(chat, messageId) {
     return chat
         .slice(Math.max(0, messageId - settings.lookback), messageId + 1)
-        .map(message => `${message.name}\n${message.mes}`)
+        .map(message => `${message.name}\n${foldBlank(message.mes)}`)   // 1.9.1 점자 빈칸 전수 2 — 「이 캐릭터에게만」 · 예외 인물 `Mira Lee` 가 원문 `Mira⠀Lee` 에도
         .join('\n');
 }
 
@@ -2032,7 +2032,7 @@ function quickRuleWords(word) {
 
 /** 1.9.0 — 고른 글 그대로를 낱말로 하는 규칙 하나. 같은 낱말의 규칙이 있으면 만들지 않는다. */
 export function addQuickRule(text) {
-    const word = String(text || '').replace(/\s+/g, ' ').trim();
+    const word = squashBlank(text);   // 1.9.1 점자 빈칸 전수 2 — 고른 글 `pocket⠀watch` 도 보통 빈칸 낱말로
     if (!word) return false;
     // 쉼표로 이어 쓴 줄도 낱말 단위로 견준다 (기본 규칙의 목록은 한 줄에 여러 낱말)
     const words = quickRuleWords(word);

@@ -5,10 +5,11 @@
    · 시험: tools/tests/ext-memory-css.mjs */
 
 /* ---------- 선: 그 확장이 --SmartThemeBorderColor 를 직접 쓰는 곳(검토 창 줄 · 편집 기록 상자) — 테마는 그 값을 투명으로 둬요 ---------- */
-body.salty :is(#memoria_settings.memoria[data-bl-ext], .memoria-review) { --SmartThemeBorderColor: var(--bl-ui-line, var(--salty-line)); }
+/* 1.9.1 Memoria 2.5(「서고의 얼굴」)부터 원작이 제 종이 색 두 벌(밝은 · 어두운)을 정하고 선 변수도 제 먹선(--ink-line)으로 바꿔 끼워요 — 그 판에서는 원작 선을 그대로 두고(밤 팔레트 선이 밝은 종이에서 안 보였어요), 2.1 까지는 전처럼 팔레트 선 */
+body.salty :is(#memoria_settings.memoria[data-bl-ext], .memoria-review) { --SmartThemeBorderColor: var(--ink-line, var(--bl-ui-line, var(--salty-line))); }
 
 /* ---------- 맞춘 판 안내 한 줄(src/ext-compat.js) — 제 스타일로 숨겨 두고 테마가 켜져 있을 때만 보여요 ---------- */
-body.salty #memoria_settings.memoria[data-bl-ext] .inline-drawer-content > small.bl-ext-compat { display: block !important; margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s3, 12px); border-top: 1px solid var(--salty-line); font-size: var(--bl-ts-micro, 11.5px); line-height: 1.5; color: var(--salty-muted); }
+body.salty #memoria_settings.memoria[data-bl-ext] .inline-drawer-content > small.bl-ext-compat { display: block !important; margin: var(--bl-s5, 20px) 0 0; padding-top: var(--bl-s3, 12px); border-top: 1px solid var(--ink-line, var(--salty-line)); font-size: var(--bl-ts-micro, 11.5px); line-height: 1.5; color: var(--dim, var(--salty-muted)); }   /* 1.9.1 Memoria 2.5 종이 위에서는 원작의 흐린 글자 · 먹선(밤 팔레트 흐린 글자가 밝은 종이에서 안 읽혔어요) */
 
 /* ---------- 찾기 칸: 찾기 틀 안에 테마 입력칸이 한 겹 더 보였어요 — 안쪽 칸은 틀 면 그대로 ---------- */
 html:not(#bl-i2-off) body.salty #memoria_settings.memoria[data-bl-ext] .memoria__search input { border: 0 !important; background: transparent !important; box-shadow: none !important; outline: 0 !important; }

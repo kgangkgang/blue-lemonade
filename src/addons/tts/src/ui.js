@@ -22,6 +22,7 @@ import { ttsCreditsHtml } from '../credits.js';
 import { booting } from '../../../boot-gate.js';   // 7.7.4 시작 덮개 동안엔 엔진 카드가 보일 수 없다 — 크기를 재지 않는다
 import { people } from '../../../people.js';   // 1.5.9 「이 채팅의 캐릭터」 줄에 인물표 명단
 import { rosterSpeakers } from './roster-core.js';
+import { foldBlank } from '../../../blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 
 const TEST_LINE = { ko: '안녕, 잘 부탁해.', ja: 'こんにちは、よろしくね。', en: 'Hi there, nice to meet you.', zh: '你好，请多关照。' };
 const TAB_IDS = ['read', 'voices', 'engine', 'data'];   // 탭 버튼은 settings.html 에 고정
@@ -1625,7 +1626,7 @@ function chatSpeakers(s, taken) {
             for (const g of Array.isArray(a.segs) ? a.segs : []) if (g && g.speaker) add(g.speaker, 3);
             for (const n of Object.keys(a.people && typeof a.people === 'object' ? a.people : {})) add(n, 2);
         }
-        const text = `${m.extra && typeof m.extra.display_text === 'string' ? m.extra.display_text : ''}\n${String(m.mes || '')}`;
+        const text = foldBlank(`${m.extra && typeof m.extra.display_text === 'string' ? m.extra.display_text : ''}\n${String(m.mes || '')}`);   // 1.9.1 점자 빈칸 전수 2 — `이름:⠀「` 이름표 · 띄어 쓴 이름
         for (const mm of text.matchAll(PREFIX_RE)) add(mm[1], 3);
         const ft = foldName(text);
         for (const [k, n] of known) if (k.length >= 2 && startsWord(ft, k)) add(n, 1);

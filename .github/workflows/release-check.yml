@@ -439,6 +439,8 @@ jobs:
           node tools/tests/dialogue-only.mjs .
           node tools/tests/ko-ui.mjs .
           node tools/tests/ko-locale-quiet.mjs .
+          # 1.9.1 실리태번 staging 의 새 화면 글(채팅 완성 소스 묶음 이름 · Custom 공급자 칸)이 한국어로
+          node tools/tests/ko-staging-1120.mjs .
           node tools/tests/ko-locale-bridge.mjs .
           node tools/tests/chat-like-alias.mjs .
           node tools/tests/preview-park.mjs .
@@ -1061,6 +1063,9 @@ jobs:
           node tools/tests/mb-place-mark.mjs . tools
           # 버그 사냥 7 점자 빈칸(U+2800) 전수: 용어집 · 남은 영어 · 카드 값 · 고른 글 자리 · 책갈피 검색 · 변화 줄 이름 · 지도 층 · 날씨 · 단어 치환 · 대사 판정(공용 src/blank-fold.js)
           node tools/tests/blank-fold.mjs . tools
+          # 1.9.1 점자 빈칸 전수 2: 태그 속성 앞(<span⠀style) · 상태 카드 열쇠 · 칩 사전 열쇠 · 지도 이름 · 인물 열쇠 · 검색 · 그림 자리 · 감정 대사 + 새 맨 \s · trim() 줄 막기(래칫)
+          node tools/tests/blank-fold-2.mjs . tools
+          node tools/tests/blank-lint.mjs .
           # 버그 사냥 7 사용자 환경 리그에서 찾은 화면 고침: 탭 창 머리 제목의 ✕ 자리 · 창 안 판 가로 넘침 자르기(소스 · 생성 CSS 계약)
           node tools/tests/hunt7-user-env.mjs .
           # 버그 사냥 8: 음성 색 표에 다른 인물 표가 섞이던 것(잠긴 색과 어긋나는 표)
@@ -1071,6 +1076,8 @@ jobs:
           node tools/tests/hunt8-user-env.mjs .
           # 버그 사냥 8: 미트볼 닫힌 고르개의 고른 값 글(화면만 번역) · 설명 글 안 단추 위 간격(jsdom)
           node tools/tests/mb-select-tr.mjs . tools
+          # 버그 사냥 9: 번역 창 파라미터 이름표 · 번역 저장소 오류 글 한국어 · 작은 누를 자리 넷(소스 · 생성 CSS 계약)
+          node tools/tests/hunt9-user-env.mjs .
           # 버그 사냥 7(1.8.7) 가운뎃점으로 이은 영문 덩어리(《L·E·M·O·N》)에 줄바꿈 자리 — 양쪽 정렬에서 앞 줄 낱말 사이가 크게 벌어지던 것(jsdom)
           node tools/tests/dot-run-wrap.mjs . tools
           # 1.7.6 미트볼 「간격 체계」(2.9.0 개편): 구조로 거는 넓은 규칙이 붙던 꼴에 걸리고 나란한 단추 · 띠는 안 건드림(jsdom 선택자 맞음)

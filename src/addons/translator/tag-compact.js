@@ -4,8 +4,9 @@
 //   같은 속성은 같은 이름(a1)이라 대사색처럼 되풀이되는 태그가 짧아진다. 번역에 도움이 되는 속성(character · title · alt …)이 있는 태그는 그대로.
 //   모델이 이름(a1)을 빠뜨린 맨 태그 <span> 은, 원문에 그 이름의 맨 태그가 없을 때만 빠진 이름을 차례대로 채운다 — 못 채우면 맨 태그 그대로(색만 빠짐).
 //   실리태번 모듈을 import 하지 않아요 (node 시험: tools/tests/translator-preset-compat.mjs).
-const OPEN = /<([A-Za-z][\w:-]*)((?:\s+(?:[^\s<>"'=/]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s<>"']+))?)+)\s*(\/?)>/g;
-const KEEP_ATTR = /(?:^|\s)(?:character|name|title|alt|aria-label|placeholder|label|value|summary|lang)\s*=/i;
+import { SP, foldBlank, trimBlank } from '../../blank-fold.js';   // 1.9.1 점자 빈칸 전수 2 — 원문 태그 `<span⠀style="…">`(속성 앞 점자 빈칸)도 태그로
+const OPEN = new RegExp(`<([A-Za-z][\\w:-]*)((?:${SP}+(?:[^\\s\\u2800<>"'=/]+)(?:${SP}*=${SP}*(?:"[^"]*"|'[^']*'|[^\\s\\u2800<>"']+))?)+)${SP}*(\\/?)>`, 'g');
+const KEEP_ATTR = /(?:^|\s)(?:character|name|title|alt|aria-label|placeholder|label|value|summary|lang)\s*=/i;   // 접은 속성 글(foldBlank)에 맞춰요
 const ALIAS = /<([A-Za-z][\w:-]*)\s+a(\d+)\s*(\/?)>/g;
 const MIN_SAVING = 4;
 
@@ -16,8 +17,8 @@ export function compactTags(text) {
     if (!source.includes('<') || new RegExp(ALIAS.source).test(source)) return same;   // 원문에 이미 a1 꼴 태그가 있으면 손대지 않는다
     const list = [], byKey = new Map();
     const out = source.replace(OPEN, (tag, name, attrs, self) => {
-        if (KEEP_ATTR.test(attrs) || attrs.trim().length < MIN_SAVING) return tag;
-        const key = name.toLowerCase() + '\u0000' + attrs.trim();
+        if (KEEP_ATTR.test(foldBlank(attrs)) || trimBlank(attrs).length < MIN_SAVING) return tag;
+        const key = name.toLowerCase() + '\u0000' + trimBlank(attrs);   // 점자 빈칸 하나 차이로 다른 이름(a1 · a2)이 되지 않게
         let n = byKey.get(key);
         if (n === undefined) { list.push({ name: name.toLowerCase(), tag }); n = list.length; byKey.set(key, n); }
         return `<${name} a${n}${self ? ' /' : ''}>`;

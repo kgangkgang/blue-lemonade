@@ -1,7 +1,7 @@
 import { maskTranslatorNotes } from './translation-notes.js';
 export { maskTranslatorNotes } from './translation-notes.js';
 import { checkpointKey } from './resume-loader.js';
-import { BLANK } from '../../blank-fold.js';   // 줄 머리 · 끝 껍데기의 점자 빈칸(U+2800) — 공백 대신 점자 빈칸을 쓰는 프리셋의 원문 줄
+import { BLANK, SP, foldBlank } from '../../blank-fold.js';   // 줄 머리 · 끝 껍데기의 점자 빈칸(U+2800) — 공백 대신 점자 빈칸을 쓰는 프리셋의 원문 줄
 
 // 7.3.1 문단 캐시 크기: 400문단은 70~90문단 답 4~5개뿐이라 조금 전 채팅도 밀려나 처음부터 다시 번역했다.
 //   저장소는 4000문단 · 글자 200만 자(어느 쪽이든 먼저 닿는 쪽) 안에서 최근에 쓴 것부터 남긴다(LRU — 꺼내 쓴 문단도 시각을 새로).
@@ -939,7 +939,7 @@ export function echoesSource(answer, source) {
     const sourceKey = echoKey(source);
     if (sourceKey.length < 40) return false;
     let rest = echoKey(answer), copied = 0;
-    for (const sentence of String(source).split(/(?<=[.!?。！？…」』"”)])\s+|\n+/)) {
+    for (const sentence of foldBlank(source).split(/(?<=[.!?。！？…」』"”)])\s+|\n+/)) {   // 1.9.1 점자 빈칸 전수 2 — `.⠀다음` 에서도 문장을 나눠요(원문 베낌 판정)
         const key = echoKey(sentence);
         if (key.length >= 12 && rest.includes(key)) { copied += key.length; rest = rest.replace(key, ''); }
     }
@@ -1523,8 +1523,8 @@ function wellFormed(tags) {
 }
 /** 문단 앞머리 태그 줄(글자 앞 · 공백만 사이에 둔 태그들) */
 function leadingTags(text, tags) {
-    const run = []; let at = /^\s*/.exec(text)[0].length;
-    for (const t of tags) { if (t.at !== at) break; run.push(t); at = t.end + /^\s*/.exec(text.slice(t.end))[0].length; }
+    const flat = foldBlank(text), run = []; let at = /^\s*/.exec(flat)[0].length;   // 1.9.1 점자 빈칸 전수 2 — `⠀<span⠀…>` 로 여는 문단
+    for (const t of tags) { if (t.at !== at) break; run.push(t); at = t.end + /^\s*/.exec(flat.slice(t.end))[0].length; }
     return run;
 }
 /** 번역 문단 하나를 고친다. stack: 앞 문단에서 열린 채 넘어온 태그(고친다) · src: 같은 자리 원문 문단(문단 수가 같을 때) · spanning: 원문에서 문단을 넘는 태그 이름 */
@@ -1537,7 +1537,7 @@ function repairBody(body, stack, src, spanning) {
             if (t.close || have.get(t.name)) return;
             const lead = leadingTags(text, tagTokens(text)), before = srcLead[p - 1];
             const anchor = before ? lead.find(x => x.name === before.name && x.close === before.close) : null;
-            const at = anchor ? anchor.end : /^\s*/.exec(text)[0].length;
+            const at = anchor ? anchor.end : /^\s*/.exec(foldBlank(text))[0].length;
             text = text.slice(0, at) + t.raw + text.slice(at);
             have.set(t.name, 1);
         });
@@ -1585,11 +1585,11 @@ function repairTruncatedColourTags(sourceTags, output) {
     const openers = new Map();
     for (const tag of sourceTags) {
         if (tag.close || tag.name !== 'span') continue;
-        const match = /^(<span\s+style=["']color:\s*#[\da-f]{3,8})(["']>)$/i.exec(tag.raw);
+        const match = /^(<span\s+style=["']color:\s*#[\da-f]{3,8})(["']>)$/i.exec(foldBlank(tag.raw));   // 1.9.1 점자 빈칸 전수 2 — `<span⠀style=…`
         if (match) openers.set(match[1].toLowerCase(), tag.raw);
     }
-    return output.replace(/<span\s+style=["']color:\s*#[\da-f]{3,8}(?=[「『])/gi, (prefix, at, text) => {
-        const opener = openers.get(prefix.toLowerCase());
+    return output.replace(new RegExp(`<span${SP}+style=["']color:${SP}*#[\\da-f]{3,8}(?=[「『])`, 'gi'), (prefix, at, text) => {
+        const opener = openers.get(foldBlank(prefix).toLowerCase());
         if (!opener) return prefix;
         // Do not leave two opens around a single translated dialogue.
         return text.slice(0, at).endsWith(opener) ? '' : opener;

@@ -16,6 +16,7 @@
 //   스위치: 미트볼 맞춤 「데이터를 고치는 것」 › 「눈 감기 · 삭제 바로 반영」(열쇠 autosub · 기본 켬). 끄면 더는 안 끼우고 1.7.3 알림만 띄워요(이미 끼운 기록은 그대로 · 되돌리기는 원작).
 //   시험: tools/tests/mb-autosub.mjs
 import { mbOff } from './mb-switch-core.js';
+import { foldBlank } from './blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 
 export const KEY = 'autosub';
 export const TAG = 'bl_sub';
@@ -23,7 +24,7 @@ export const REC = 'bl_mbsub';
 const META = 'statussim';
 const MARK = 'bl-hidden';   // src/mb-hidden.js 의 표식(서로 부르지 않게 같은 글을 둬요)
 const SUB_MODS = new Set(['rel', 'wallet', 'stats']);
-const norm = x => String(x ?? '').replace(/\s+/g, '').toLowerCase();
+const norm = x => foldBlank(x).replace(/\s+/g, '').toLowerCase();   // 1.9.1 점자 빈칸 전수 2 — `⠀Tobin⠀` 과 `Tobin` 이 같은 열쇠
 const ctx = () => { try { return globalThis.SillyTavern?.getContext?.() ?? null; } catch { return null; } };
 
 export const isOurs = a => !!a && typeof a === 'object' && !!a[TAG] && typeof a[TAG] === 'object';
@@ -263,7 +264,7 @@ export function remember(chat, meta = null) {
 // ── 실리태번 · 그 확장과 잇기 ─────────────────────────
 async function mbMod(file, doc = globalThis.document) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
         return await import(new URL(file, src).href);

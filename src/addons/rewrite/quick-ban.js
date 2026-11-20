@@ -1,4 +1,5 @@
 import { booting } from '../../boot-gate.js';
+import { squashBlank } from '../../blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 // 1.9.0 — 채팅에서 낱말을 고르면(길게 눌러 선택 · 드래그) 그 옆에 작은 금지 칩이 뜬다. 누르면 그 말이 규칙이 된다.
 // 설정 창을 열지 않고도 "이 말 그만"을 그 자리에서 — 규칙 이름 · 낱말은 고른 글 그대로, 설명은 core 가 프롬프트에 쓸 한 줄.
 // 선택은 브라우저에 맡긴다(폰은 길게 누르면 낱말이 골라진다): 우리는 selectionchange 만 듣고, 칩은 선택 아래에 둔다(안드로이드 선택 메뉴는 위에 뜬다).
@@ -30,7 +31,7 @@ function selectedText() {
     if (translated(range.startContainer) || translated(range.endContainer)) return null;
     // 앞뒤 따옴표 · 괄호 · 문장부호는 낱말이 아니다 (폰이 길게 눌러 고른 낱말에는 따옴표가 딸려 온다)
     const EDGE = /^[\s"'“”‘’「」『』()\[\]{}<>,.!?…:;~*_-]+|[\s"'“”‘’「」『』()\[\]{}<>,.!?…:;~*_-]+$/g;
-    const text = selection.toString().replace(/\s+/g, ' ').trim().replace(EDGE, '');
+    const text = squashBlank(selection.toString()).replace(EDGE, '');   // 1.9.1 점자 빈칸 전수 2
     if (!text || text.length > MAX || /\n/.test(selection.toString().trim())) return null;
     if (!canSelect(container, text)) return null;
     const lines = [...range.getClientRects()].filter(r => r.width || r.height);

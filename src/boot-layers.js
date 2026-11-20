@@ -122,7 +122,14 @@ function listeners(es, type) {
 }
 const replayed = new WeakSet();   // 층이 겹쳐 끝나도 한 리스너에 한 번만
 const currentChat = c => { try { return c?.getCurrentChatId?.() ?? c?.chatId; } catch { return c?.chatId; } };
-const isOnceWrapper = fn => fn?.name === 'g';   // 실리태번 eventSource.once 의 감싸개 — 「다음 사건 한 번」이라 지금 상태로 부르지 않아요
+// 실리태번 eventSource.once 의 감싸개 — 「다음 사건 한 번」이라 지금 상태로 부르지 않아요.
+//   1.9.0 고침: 이름(g)만 보면 묶음 판에서 이름이 g 로 줄어든 테마 듣개까지 걸러져 「지금 채팅으로 한 번」을 못 받았어요(빌드마다 걸리는 듣개가 달라요).
+//   이름에 더해 그 감싸개의 꼴(인자 0개 · 제 자신을 떼고 · 받은 인자 그대로 넘김 — lib/eventemitter.js once)까지 봐요
+const ONCE_SHAPE = /this\.removeListener\(/, ONCE_PASS = /\.apply\(this,\s*arguments\)/;
+export const isOnceWrapper = fn => {
+    if (typeof fn !== 'function' || fn.name !== 'g' || fn.length !== 0) return false;
+    try { const text = Function.prototype.toString.call(fn); return ONCE_SHAPE.test(text) && ONCE_PASS.test(text); } catch { return true; }
+};
 /**
  * batch() 동안 새로 걸린 CHAT_CHANGED 리스너를, 채팅이 열려 있으면 지금 채팅 id 로 한 번 불러요.
  * batch 도중 진짜 CHAT_CHANGED 가 오면 그때 걸려 있던 리스너는 이미 받았으니 다시 부르지 않아요.

@@ -23,7 +23,7 @@
 //     둘 다 있으면 턴마다 쪼갠 쪽(memoria)만 — 같은 이야기를 두 번 싣지 않게. 짧은 전체 요약(줄거리 한 덩이 · 실리태번 기본 요약)은 안 써요.
 //   · 본문의 U+2800(점자 빈칸 — 일부 프리셋이 띄어쓰기 대신 씀)은 보통 띄어쓰기로 바꿔 실어요(읽기 쉽고 토큰이 덜 들어요).
 import { mbOff } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치(줄 꼴 규칙 · 변화 장부 · 만든 뒤 바로잡기 · 프로필 채우기 · 직함 이름 · 합치기 · 중복 정리 — 끈 것은 더는 고치지 않아요)
-import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { foldBlank, trimBlank, squashBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 const swOn = (key, doc = globalThis.document) => !mbOff(key, doc);
 /** 줄 꼴 규칙을 붙일 때인가 — 단계가 「적용 안 함」 이 아니고 스위치 「줄 꼴 규칙 덧붙이기」 가 켜져 있을 때 */
 export const rulesOn = (lv, doc = globalThis.document) => lv !== 'off' && swOn('rules', doc);
@@ -99,7 +99,7 @@ export function levelOf(text) {
 /** 그 확장의 기본 문구를 그 확장에게서 읽어요(같은 모듈 주소 — 새로 띄우지 않아요). 못 찾으면 null */
 export async function readDefault(doc = globalThis.document, load = url => import(url)) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;   // 주소가 다르면 모듈이 한 벌 더 떠요 — 그럴 바엔 안 읽어요
         const mod = await load(new URL('./src/prompts.js', src).href);
@@ -111,7 +111,7 @@ export async function readDefault(doc = globalThis.document, load = url => impor
 /** 그 확장의 기본 문구 여러 칸을 한 번에 읽어요 → { 칸: 글 } (없는 칸은 빠져요) · 못 읽으면 null */
 export async function readDefaults(keys, doc = globalThis.document, load = url => import(url)) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
         const map = (await load(new URL('./src/prompts.js', src).href))?.PROMPT_MAP;
@@ -327,7 +327,7 @@ export function memoText(c = ctx(), cap = DEFAULT_CAP) {
 //   그래서 ① 변화 장에 「이름 (적힌 직함)」 짝을 분명히 적어 넘기고(한 사람에게만 속할 때) · 여럿이면 후보를 다 적고 AI 가 고르게 하고
 //   ② 만든 뒤에는 그 직함이 **정확히 한 사람에게만** 속하고 그 사람 칸이 따로 없을 때만 이름으로 바꿔요. 둘 이상 · 모르는 항목이 섞이면 손대지 않아요.
 //   「속한다」 = 로어북 항목의 열쇠(또는 상태창 한 사람의 이름 · 별칭 묶음)에 그 낱말과 그 사람 이름이 같이 있어요. 그 낱말이 든 항목에 아는 이름이 없으면(설정 항목 등) 「모름」 으로 세어 바꾸지 않아요.
-const nmKey = s => String(s ?? '').normalize('NFC').trim().toLowerCase();
+const nmKey = s => squashBlank(s).normalize('NFC').toLowerCase();   // 1.9.1 상태창 이름 `⠀이름⠀`(점자 빈칸)도 로어북 열쇠와 같은 열쇠로
 const panelRows = base => [...(base?.data?.rel?.user || []), ...(base?.data?.profile?.list || [])].filter(r => r && typeof r === 'object' && r.role !== 'user');
 /** 이 채팅의 카드(그룹이면 사람마다) */
 function cardsOf(c) {
@@ -611,17 +611,18 @@ export const baseRef = (c = ctx()) => metaMb(c)?.base || null;
 const clampRel = n => Math.max(-100, Math.min(100, Math.round(n)));
 const words = s => String(s ?? '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 /** 관계 한 사람에 맞는 변화 합(없으면 null) */
-const namesOf = r => [String(r?.name ?? '').toLowerCase(), ...(Array.isArray(r?.aliases) ? r.aliases : []).map(a => String(a).toLowerCase())].filter(Boolean);
+const lk = s => squashBlank(s).toLowerCase();   // 1.9.1 점자 빈칸 · 앞뒤 빈칸을 접은 이름 열쇠(`Mira⠀Lee` = `Mira Lee`)
+const namesOf = r => [lk(r?.name), ...(Array.isArray(r?.aliases) ? r.aliases : []).map(lk)].filter(Boolean);
 export function sumFor(r, sums, list = [r]) {
     if (!r?.name || !sums?.size) return null;
     const mine = namesOf(r);
-    for (const [k, v] of sums) if (mine.includes(String(k).toLowerCase())) return v;
-    if ([...sums.keys()].some(k => mine.includes(String(k).toLowerCase()))) return null;
+    for (const [k, v] of sums) if (mine.includes(lk(k))) return v;
+    if ([...sums.keys()].some(k => mine.includes(lk(k)))) return null;
     // 이름표의 낱말(직함)로 맞추기는 아주 좁게: 그 낱말이 누구의 이름 · 별칭도 아니고, 이름표에 그 낱말이 든 사람이 딱 한 명일 때만
     //   (진짜 모델 다시 넣기에서 「the very first Captain」 같은 다른 사람 이름표에 걸려 엉뚱한 사람이 올라간 것을 막아요)
     const all = Array.isArray(list) && list.length ? list : [r];
     for (const [k, v] of sums) {
-        const kk = String(k).toLowerCase(); if (kk.includes(' ')) continue;
+        const kk = lk(k); if (kk.includes(' ')) continue;
         if (all.some(p => namesOf(p).includes(kk))) continue;
         const holders = all.filter(p => words(p?.label).includes(kk));
         if (holders.length === 1 && holders[0] === r) return v;
@@ -934,7 +935,7 @@ export function renameTitles(c = ctx(), { before = null, books = booksFor(c) } =
 }
 async function mbCore(doc = globalThis.document, load = url => import(url), file = './src/core.js') {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
         return await load(new URL(file, src).href);

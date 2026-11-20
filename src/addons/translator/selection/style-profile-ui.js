@@ -10,7 +10,7 @@ export function attachStyleProfiles(body,selection,closed){
  const render=()=>{
   const list=box.querySelector('[data-style-list]');list.replaceChildren();
   const priority=document.createElement('p');priority.textContent='적용 순서: 특정 상대에게 하는 말 → 두 사람의 상호 지침 → 인물의 일반 말투. 이름만 나온 서술이나 화자가 모호한 대사는 바꾸도록 지시하지 않아요.';list.append(priority);
-  if(!job.entries.length){list.textContent='기억한 말투 지침이 없어요.';return;}
+  if(!job.entries.length){const empty=document.createElement('p');empty.textContent='기억한 말투 지침이 없어요.';list.append(empty);return;}
   for(const entry of job.entries){const row=document.createElement('p'),label=document.createElement('span'),remove=document.createElement('button');row.className='llmt-rule-row';label.textContent=entry.speaker+(entry.listener?(entry.mutual?' ↔ ':' → ')+entry.listener:'')+' · '+({polite:'존댓말',casual:'반말',custom:'직접 지침'}[entry.mode])+(entry.note?' · '+entry.note:'')+' ';remove.type='button';remove.textContent='지우기';remove.onclick=()=>act(()=>removeStyleProfile(job,entry.id));row.append(label,remove);list.append(row);}
   for(const overlap of styleProfileOverlaps(job.metadata)){const note=document.createElement('p'),label=e=>e.speaker+(e.listener?(e.mutual?' ↔ ':' → ')+e.listener:' (일반 말투)');const labels=overlap.ids.map(id=>label(job.entries.find(e=>e.id===id))),preferred=job.entries.find(e=>e.id===overlap.preferred);note.textContent=labels.join(' · ')+' — '+overlap.text+(preferred?' 우선: '+label(preferred):'');list.append(note);}
  };

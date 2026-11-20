@@ -523,7 +523,7 @@ async function doFlushLocked() {
         failed.forEach(f => dirtyShards.add(f));
         if (!saveErrorShown && typeof toastr !== 'undefined') {
             saveErrorShown = true;
-            toastr.error('번역 캐시를 파일로 저장하지 못했습니다. 잠시 후 다시 시도합니다.');
+            toastr.error('번역 캐시를 파일로 저장하지 못했어요. 잠시 뒤 다시 해 볼게요.');
         }
         clearTimeout(saveTimer);
         saveRetryMs = Math.min(Math.max(saveRetryMs * 2, 10000), 5 * 60 * 1000);   // 7.2.4 10초 → 20 → 40 … 5분 까지 늘려 가며 (전엔 10초마다 끝없이) (api-audit)
@@ -1881,7 +1881,7 @@ function makeBlockItem(block, ns, selectable, onEdited) {
 
             try { updateCacheStatsUI(); } catch(e) {}
             if (typeof onEdited === 'function') onEdited(id);
-            if (typeof toastr !== 'undefined') toastr.success('번역이 저장되었습니다');
+            if (typeof toastr !== 'undefined') toastr.success('번역을 저장했어요');
         });
     });
     if (selectable) {
@@ -3797,7 +3797,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
     let targets = fresh;
     if (!fresh.length) {
         if (!already.length) {
-            if (typeof toastr !== 'undefined') toastr.info('번역할 제목이 없습니다');
+            if (typeof toastr !== 'undefined') toastr.info('번역할 제목이 없어요');
             return;
         }
         // Everything already has a title — offer a redo rather than refusing.
@@ -3807,7 +3807,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
     }
 
     if (!targets.length) {
-        if (typeof toastr !== 'undefined') toastr.info('번역할 제목이 없습니다');
+        if (typeof toastr !== 'undefined') toastr.info('번역할 제목이 없어요');
         return;
     }
 
@@ -3902,7 +3902,7 @@ async function runTitleTranslation({ items, list, ns, pBar, pLabel, pWrap, btnSt
         // 세 배치 연속으로 하나도 못 받으면 연결·모델 문제다 — 나머지를 돌려 봐야 요청만 쌓인다.
         deadBatches = batchOk ? 0 : deadBatches + 1;
         if (!stopReq && deadBatches >= 3 && done < targets.length) {
-            if (typeof toastr !== 'undefined') toastr.error('제목 번역이 3배치 연속 실패해 중단했습니다. 연결·모델 설정을 확인해 주세요.');
+            if (typeof toastr !== 'undefined') toastr.error('제목 번역이 3배치 연속 실패해 멈췄어요. 연결·모델 설정을 확인해 주세요.');
             stopReq = true;
             break;
         }
@@ -4435,7 +4435,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
 
     // ── Export: Copy ──────────────────────────────────────────────────
     page.querySelector(`#${idPfx}-copy`)?.addEventListener('click', async () => {
-        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
+        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('불러온 자료가 없어요'); return; }
         const checkedCount = page.querySelectorAll('.pt-block-item.selected').length;
         if (checkedCount === 0) {
             if (typeof toastr!=='undefined') toastr.warning('복사할 항목을 먼저 선택해주세요');
@@ -4453,7 +4453,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
 
     // ── Export: TXT ───────────────────────────────────────────────────
     page.querySelector(`#${idPfx}-txt`)?.addEventListener('click', async () => {
-        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
+        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('불러온 자료가 없어요'); return; }
         const checkedCount = page.querySelectorAll('.pt-block-item.selected').length;
         if (checkedCount === 0) {
             if (typeof toastr!=='undefined') toastr.warning('내보낼 항목을 먼저 선택해주세요');
@@ -4472,7 +4472,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
 
     // ── Export: JSON ──────────────────────────────────────────────────
     page.querySelector(`#${idPfx}-json`)?.addEventListener('click', async () => {
-        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
+        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('불러온 자료가 없어요'); return; }
         try {
             const srcSel = page.querySelector(`#${idPfx}-sel`);
             const srcVal = loadedVal;
@@ -4543,7 +4543,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
     //                  남겨두되 contentTranslated는 절대 쓰지 않는다.
     async function exportTM(scope) {
         const titleOnlyExport = scope === 'title';
-        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
+        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('불러온 자료가 없어요'); return; }
         const entries = [];
         for (const it of items) {
             const name = (it.name || '').trim();
@@ -4573,7 +4573,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             entries.push(entry);
         }
         if (!entries.length) {
-            if (typeof toastr!=='undefined') toastr.warning(titleOnlyExport ? '내보낼 제목 번역이 없습니다' : '내보낼 번역이 없습니다');
+            if (typeof toastr!=='undefined') toastr.warning(titleOnlyExport ? '내보낼 제목 번역이 없어요' : '내보낼 번역이 없어요');
             return;
         }
         // 8.2.7 전체 내보내기는 원문 본문을 대조 열쇠로 함께 담는다 — 나누기 전에 알린다 (제목만 내보내기는 원문 본문을 넣지 않아 묻지 않는다)
@@ -4716,7 +4716,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                 const dupNote = (dupContent.size || dupName.size) ? ' (중복된 원문/제목 일부는 안전을 위해 건너뜀)' : '';
                 const staleNote = staleBody ? ` · 원문이 달라 본문 번역 ${staleBody}개는 적용하지 않음` : '';
                 if (applied) toastr.success(`번역 메모리 적용: ${applied}개 매칭, ${skipped}개 매칭 실패${staleNote}${dupNote}`);
-                else toastr.warning(`매칭되는 항목이 없습니다 (${skipped}개 미매칭)${staleNote}${dupNote}`);
+                else toastr.warning(`맞는 항목이 없어요 (${skipped}개 미매칭)${staleNote}${dupNote}`);
             }
         } catch (err) {
             if (!current()) return;
@@ -4754,7 +4754,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
             finally{applying=false;button.disabled=false;}
             return;
         }
-        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('로드된 데이터가 없습니다'); return; }
+        if (!items.length) { if (typeof toastr!=='undefined') toastr.warning('불러온 자료가 없어요'); return; }
         const srcSel = page.querySelector(`#${idPfx}-sel`);
         const srcVal = loadedVal;
         const label = getSourceName(kind, page, idPfx);
@@ -4822,7 +4822,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                     const rx = extras ? ` · ${extras}` : '';
                     doneToast = toastr.success(`"${r.targetName}"에 적용됨 (${r.applied}개 필드${rx})${note}`, '', LONG);
                     if (r.regexRenamed) {
-                        toastr.info('정규식 이름은 확장 > 정규식 창을 다시 열면 새 이름으로 보입니다');
+                        toastr.info('정규식 이름은 확장 > 정규식 창을 다시 열면 새 이름으로 보여요');
                     }
                     // These belong to other extensions, which cache their own
                     // copy keyed by preset name — they re-read it when the
@@ -4834,7 +4834,7 @@ function buildPage({ page, idPfx, listFn, loadFn, selectable, icon, hint, isAsyn
                             '', { timeOut: 12000 }
                         );
                     } else if (r.isCurrent && r.runnerRenamed && !r.runnerLiveUpdated) {
-                        toastr.info('JS러너 이름은 프리셋을 바꿨다 돌아오면 새 이름으로 보입니다');
+                        toastr.info('JS러너 이름은 프리셋을 바꿨다 돌아오면 새 이름으로 보여요');
                     }
                 }
             } else if (kind === 'wi') {
@@ -5153,7 +5153,7 @@ function buildPanel() {
             // Same refill each page runs on build (keeps the selection, re-syncs the combo).
             await Promise.all(['pt-preset', 'pt-wi', 'pt-char', 'pt-persona']
                 .map(idPfx => panel.querySelector(`#${idPfx}-sel`)?._ptRefill?.()));
-            if (typeof toastr !== 'undefined') toastr.success('목록을 새로고침했습니다');
+            if (typeof toastr !== 'undefined') toastr.success('목록을 새로고침했어요');
         } catch (e) {
             console.error(`[${EXT}] refresh failed`, e);
             if (typeof toastr !== 'undefined') toastr.error('새로고침 실패');
@@ -5467,13 +5467,13 @@ function mountUi(addForm) {
     $('#pt-clear-cache-btn').on('click', async () => {
         const { count, sizeStr } = getCacheStats();
         if (count === 0) {
-            if (typeof toastr !== 'undefined') toastr.info('삭제할 번역 캐시가 없습니다');
+            if (typeof toastr !== 'undefined') toastr.info('지울 번역 캐시가 없어요');
             return;
         }
         const msg = `번역 데이터가 전부 삭제됩니다.\n\n현재 저장된 번역: ${count}개 (${sizeStr})\n\n이 작업은 되돌릴 수 없습니다. 정말 삭제할까요?`;
         if (!await ask(msg, { ok: '전부 지우기', cancel: '취소', danger: true })) return;
         await clearTranslationCache();
-        if (typeof toastr !== 'undefined') toastr.success(`번역 캐시 ${count}개가 삭제되었습니다`);
+        if (typeof toastr !== 'undefined') toastr.success(`번역 캐시 ${count}개를 지웠어요`);
         updateCacheStatsUI();
     });
 

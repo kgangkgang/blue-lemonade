@@ -80,7 +80,7 @@ import { createKeepAlive } from './keep-alive.js';   // 1.9.9 (7.0.2) 숨었을 
 import { paintColorHighlights, clearColorHighlights, piecesOf, speakerColor, colorKey, barNameChoice, alphaOf, luminance } from './highlight-colors.js';
 import { widenToQuotes } from './highlight-colors.js';   // 1.9.1 읽는 대사 강조를 따옴표부터 따옴표까지 (findRange)
 import { msg, chatCtx, sourcesOf, nameKey, sameOwner, lenOf, alignSeq, alignLists, analysisCfg, analysisReady, cachedAnalysis, normText, looseText, analysisLookup, dialogueSpeakers, safeResolve, bindAnalysis } from './message-segments.js';   // 1.0.0 극한 최적화: 채팅 맥락 · 조각 짝 · 저장된 분석 조회 · 화자(paint.js 가 재생기 없이도 씀)
-import { isSpace } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { isSpace, SP } from '../../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 export { alignSeq, sameOwner, dialogueSpeakers };
 bindAnalysis(analysis);   // 저장된 분석 · 바깥 메시지 · 기울임은 analysis.js 가 있을 때만(화자 색만 쓰는 가벼운 길은 없이)
 
@@ -88,6 +88,7 @@ const TITLE = 'TTS';
 // 7.0.2 비 세 단계(1.9.8)의 가랑비 · 장대비(daily_rain_light · daily_rain_heavy)도 다리에는 빗소리(daily_rain)로 한 번 더 묻는다 — 테마 쪽 표가 새 id 를 몰라도 겹치지 않게
 export const ambientIdOf = sfxId => (/^daily_rain_/.test(String(sfxId || '')) ? 'daily_rain' : sfxId);
 const ambientCovers = sfxId => { try { const bridge = globalThis[Symbol.for('blue-lemonade.ambient')]; if (bridge?.covers?.(sfxId) === true) return true; const base = ambientIdOf(sfxId); return base !== sfxId && bridge?.covers?.(base) === true; } catch { return false; } };   // 6.9.8 테마 장면 소리 다리 (scene-sound.js) — 빗소리 · 바람 · 물결 · 천둥이 돌고 있으면 같은 종류의 효과음은 내지 않는다
+const LINE_DONE = new RegExp(`\n${SP}*$`);   // 1.9.1 점자 빈칸 전수 2
 const MAX_CONC = 2;                 // 동시 합성 요청
 const RETRY_MS = [1500, 4000];      // e.retry 재시도 간격
 const MERGE_SOFT = 600;             // 합친 글 한 덩이 최대 글자 (첫 소리가 빨리 나오도록)
@@ -2825,7 +2826,7 @@ export function onStreamProgress(mesId, text) {
     const { orig } = sourcesOf(mes, s, { final: false, text: src });
     let n = orig.length;
     // 마지막 세그먼트: 서술·행동은 줄이 끝났을 때만 (대화문은 닫힌 것만 나오니 그대로)
-    if (n && orig[n - 1].kind !== 'dialogue' && !/\n\s*$/.test(src)) n--;
+    if (n && orig[n - 1].kind !== 'dialogue' && !LINE_DONE.test(src)) n--;   // 1.9.1 점자 빈칸 전수 2 — 다음 줄 머리 `\n⠀` 까지 받은 때도 줄 끝
     if (n <= stream.queued) return;
     const built = buildJobs(mesId, mes, { orig: orig.slice(0, n), disp: null }, { startSeg: stream.queued, final: false });
     const jobs = streamJobs(stream, built.jobs, s);   // 6.4.2 줄마다

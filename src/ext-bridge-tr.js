@@ -19,11 +19,12 @@ import { addMessageDecorator } from './message-decor.js';
 import { ruleValue } from './addons/translator/card-values.js';
 import { pinText, pinNodes, blankText } from './mb-place-mark.js';   // 버그 사냥 6 답 아래 변동 칩 「📍 @Lobby」 의 장소 앞 기호(표시만)
 import { mbOff, mbFit } from './mb-switch-core.js';   // 1.7.3 미트볼 맞춤 스위치 — 칩 번역 다시 적기(trchip) · 알림 번역(trtoast) · 사전에 고정 낱말(trtidy) · 남은 영어 메우기(trfill)   // 1.5.1 고정 낱말(요일 · 달 · 계절 · 시간대 · 날씨 · 날짜 꼴) — 테마 사전 한 곳
-import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { foldBlank, trimBlank, blankKey, SP } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 const FOLDER = /meatball|statussim|미트볼/i;
 // 1.9.0 같은 작가의 가벼운 판(이름에 lite · 라이트)은 다른 확장이에요 — 구조(src/translate.js · core.js)가 달라 본판 자리에 잡히면 번역 메우기 · 속마음 번역이 통째로 멈춰요(둘을 같이 깔면 폴더 이름 차례로 가벼운 판이 먼저 잡혔어요)
-const NOT_TARGET = /lite|라이트/i;
+//   1.9.1 가벼운 판이 「미트볼폰(Meatball Phone)」으로 이름 · 폴더(meatballphone)를 바꿨어요 — 그 이름 · 딸린 앱(meatballphone-*)도 본판이 아니에요
+const NOT_TARGET = /lite|라이트|phone|미트볼\s*폰/i; // blank-ok: 확장 설치 이름 판별(채팅 글 아님)
 const isTargetName = name => FOLDER.test(name) && !NOT_TARGET.test(name);
 const TRIGGER = '[data-act="trsheet"], [data-s-act="trsheet"], .ss-trf-go';
 const SLOT = 'custom-ss-slot';
@@ -63,6 +64,7 @@ export function skipPart(part) {
  * 화면에 보일 글 목록 → { list: 보낼 덩이(겹침 없음), owners: 덩이 → 원래 글들 }
  * shown(text): 그 확장 사전으로 바꾼 화면 글(trString) · has(part): 사전에 이미 있나 · tried: 이번 접속에 못 바꾼 덩이
  */
+const CHIP_CUT = new RegExp(`${SP}+=${SP}+|:${SP}+|↔`), CHIP_CUT_KEEP = new RegExp(`(${SP}+=${SP}+|:${SP}+|↔)`);   // 1.9.1 점자 빈칸 전수 2
 export function collectGaps(texts, { shown = t => t, has = () => false, tried = new Set(), full = () => null, pin = false } = {}) {
     const owners = new Map();
     for (const raw of texts) {
@@ -74,7 +76,7 @@ export function collectGaps(texts, { shown = t => t, has = () => false, tried = 
         // 덩이는 원래 글에서 — 화면 글에서 자르면 이름만 바뀐 「카이's Blue …」처럼 반쪽이 돼요. 아는 이름이 든 덩이도 통째로 보내요(번역 지시에 그 이름이 실려요)
         // 1.5.2: 「💞 이름 = 관계 이름」 · 「🗺️ 새 장소: 장소」처럼 나눔표가 있으면 덩이를 나눠요 — 이름은 이미 사전에 있고, 뒤 글만 보내요(상태창 본체와 같은 열쇠)
         // 버그 사냥 6 「📍 #Lobby」 · 「🗺️ 새 장소: #Lobby」 의 덩이는 「Lobby」 — 기호가 붙은 열쇠(「#Lobby」)로 따로 번역 · 저장하지 않아요(스위치 annex · 「@」 는 원래도 덩이 밖) · 원래 글(owners)은 그대로
-        for (const piece of (pin ? pinText(text) : text).split(/\s+=\s+|:\s+|↔/)) {
+        for (const piece of (pin ? pinText(text) : text).split(CHIP_CUT)) {   // 1.9.1 점자 빈칸 전수 2 — `이름:⠀값` · `A⠀=⠀B`
             const part = englishPart(piece);
             if (!part || skipPart(part) || has(part) || tried.has(part) || fixedValue(part, chipSlot(text))) continue;   // 1.5.3: 시간대 · 날씨 칩만 사전으로   // 1.5.1 고정 낱말은 사전으로(번역 요청에 안 실어요)
             (owners.get(part) ?? owners.set(part, []).get(part)).push(text);
@@ -90,7 +92,7 @@ export function collectGaps(texts, { shown = t => t, has = () => false, tried = 
  */
 const SEP_QUOTE = /\s*「\s*\/?\s*」\s*/g;
 export function sepQuoteValue(en, ko) {
-    const src = String(en ?? ''), value = String(ko ?? '');
+    const src = foldBlank(en), value = String(ko ?? '');   // 1.9.1 원문 `A⠀/⠀B`(점자 빈칸)도 나눔표 — src 는 판정에만 써요
     if (/[「」『』]/.test(src) || !/\s\/\s/.test(src) || !value.includes('「')) return null;
     const fixed = value.replace(SEP_QUOTE, ' / ');
     if (fixed === value || /[「」]/.test(fixed)) return null;
@@ -487,6 +489,7 @@ export function hideFixedKeys(dict, keep = new Set()) {
  *   「(Sat)」→「(토)」 · 「(Sat) Morning」→「(토) 아침」(띠 · 머리 날짜 줄 dateShort + 시간대) · 「(Morning)」→「(아침)」 · 「년 April」→「년 4월」 · 「Morning:Front Desk」→「아침:Front Desk」 · 「· Clear」→「· 맑음」(1.7.8 날씨 · 계절).
  * ko(word, key): 그 낱말의 한국어(사전 값이 먼저) — 없으면 그 자리는 안 넣어요.
  */
+const SCHED_COMMA = new RegExp(`${SP}*,${SP}*`);
 export function slotPairs(items, ko) {
     const week = new Set(), times = new Set(), months = new Set(), tails = new Map(), out = new Map();
     for (const { text, key } of items) {
@@ -494,8 +497,8 @@ export function slotPairs(items, ko) {
         if (!t || !/[A-Za-z]/.test(t)) continue;
         if (key === 'week') week.add(t); else if (key === 'times' || key === 'time') times.add(t); else if (key === 'month') months.add(t);
         else if (key === 'weather' || key === 'season') tails.set(t, key);
-        else if (key === 'sched') for (const piece of t.split(/\s*,\s*/)) {
-            const m = /^([A-Za-z][A-Za-z -]{1,18}?)\s*:\s*(.+)$/.exec(piece);
+        else if (key === 'sched') for (const piece of t.split(SCHED_COMMA)) {
+            const m = /^([A-Za-z][A-Za-z -]{1,18}?)\s*:\s*(.+)$/.exec(trimBlank(piece));   // 1.9.1 `Morning:⠀Desk,⠀Late⠀Night:⠀…` (점자 빈칸) 도 — 열쇠(piece)는 원래 글 그대로
             const k = m && ko(m[1].trim(), 'slot');
             if (k && piece.length <= 40) out.set(piece, `${k}:${m[2]}`);
         }
@@ -579,12 +582,13 @@ export function chipSlotPairs(texts, dict = {}) {
  */
 export function chipShown(label, dict = {}, trs = t => t) {
     const raw = String(label ?? '');
-    const parts = raw.split(/(\s+=\s+|:\s+|↔)/);
+    const parts = raw.split(CHIP_CUT_KEEP);
     const out = parts.map((piece, i) => {
         if (i % 2) return piece;
         const part = englishPart(piece);
         if (!part) return piece;
-        if (Object.hasOwn(dict, part) && typeof dict[part] === 'string') return piece.replace(part, () => dict[part]);
+        const hit = blankKey(dict, part);   // 1.9.1 사전 열쇠가 `⠀글⠀` 꼴이어도(englishPart 가 앞뒤 점자 빈칸을 떼요)
+        if (hit !== undefined && typeof dict[hit] === 'string') return piece.replace(part, () => dict[hit]);
         if (latinWords(part) >= 3) return piece;
         try { return trs(piece); } catch { return piece; }
     });
@@ -941,7 +945,7 @@ export function createTrFill(mb, { doc = globalThis.document, toast = globalThis
         const dict = isObj(meta?.tr) ? meta.tr : {};
         const longs = stateTexts(current.state, isOn).map(x => x.text.replace(/\s+/g, ' ').trim()).filter(t => t.length >= 12);
         const full = pre => longs.find(t => t.length > pre.length && t.startsWith(pre)) ?? null;   // 잘린 알림 글 → 상태의 원문(화면 밖 기록 rel.life 등)
-        const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => Object.hasOwn(dict, part), tried, full, pin: mbFit('annex', doc) });
+        const { list: chipList, owners } = collectGaps(visibleTexts(current, meta), { shown: text => tr.trString(text), has: part => blankKey(dict, part) !== undefined, tried, full, pin: mbFit('annex', doc) });
         // early 는 상태 칸(그 확장이 지금 번역하는 글)을 건드리지 않아요 — 반쯤 번역 짝 되돌리기도 그 확장 번역이 끝난 뒤에만
         const { miss, half } = early ? { miss: [], half: [] } : stateGaps(current.state, dict);
         // 1.7.6 지도 「아직 안 가 본 곳」(src/mb-map-floors.js 가 로어북에서 고른 곳)의 이름 · 설명은 그 확장 상태에 없어 번역 요청에 안 실렸어요 → 같은 길 · 같은 사전으로.

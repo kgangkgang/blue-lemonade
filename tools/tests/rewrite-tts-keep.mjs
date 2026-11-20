@@ -341,5 +341,20 @@ await test('version stamps agree (rewrite index/css, TTS)', () => {
     assert.ok(read('src/addons/tts/README.md').startsWith(`# TTS ${tv}\n`));
 });
 
+await test('1.9.0 모아 둔 분석 저장은 예약한 채팅에서만 — 그사이 채팅이 바뀌면 버리고(새 채팅을 빈 채로 저장하지 않게), 바로 저장은 지금 채팅으로', async () => {
+    let id = 'chat-a'; T.ctx.getCurrentChatId = () => id;
+    try {
+        const before = T.saves;
+        A._saveForTest.schedule(60000); id = 'chat-b'; A._saveForTest.flush();
+        assert.equal(T.saves, before, '채팅이 바뀐 뒤 터진 예약 저장은 버려요');
+        assert.equal(A._saveForTest.pending(), false);
+        A._saveForTest.schedule(60000); A._saveForTest.flush();
+        assert.equal(T.saves, before + 1, '같은 채팅이면 예전처럼 저장');
+        A._saveForTest.schedule(60000); A._saveForTest.schedule(60000); id = 'chat-c'; A._saveForTest.now();
+        assert.equal(T.saves, before + 2, '바로 저장(saveNow)은 지금 채팅을 저장해요');
+        assert.equal(A._saveForTest.pending(), false);
+    } finally { delete T.ctx.getCurrentChatId; }
+});
+
 console.log(JSON.stringify({ passed, failed, mockOnly: true }, null, 2));
 process.exitCode = failed ? 1 : 0;

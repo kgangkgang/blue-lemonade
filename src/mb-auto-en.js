@@ -55,7 +55,7 @@ const defaultSkip = text => { try { globalThis.toastr?.info?.(text, TITLE, { tim
 /** 그 확장이 바꿀 칸(koPanels)과 칸마다 한글 든 글 — 못 읽으면 null */
 async function defaultPanels(doc = globalThis.document) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || '')));
         if (!tag) return null;
         const [tr, core] = await Promise.all(['./src/translate.js', './src/core.js'].map(f => import(new URL(f, tag.src).href)));
         const st = core?.app?.current?.state; if (!st || typeof tr?.koPanels !== 'function') return null;

@@ -100,7 +100,7 @@ await test('번역: Max Response Length 다섯 칸 — 숫자 칸은 max="Infini
     assert.equal(clip('1600000', '0', 'Infinity'), 1600000); assert.equal(clip('4000', '0', 'Infinity'), 4000, '옛 값 그대로'); assert.equal(clip('0', '1', 'Infinity'), 1, 'Claude 아래쪽 1 그대로');
     assert.equal(clip('3', '0', '2'), 2, 'Temperature 같은 정의 범위 칸은 그대로 잘라요');
     assert.match(js, /if \(Number\.isFinite\(hi\) && value > hi\) value = hi;/);
-    assert.match(html, /<small id="llm_max_length_warn" class="llmt-desc" style="display:none">Max Response Length 가 160000 을 넘었어요\./);
+    assert.match(html, /<small id="llm_max_length_warn" class="llmt-desc" style="display:none">최대 응답 길이가 160000 을 넘었어요./);
     assert.match(js, /\$\('#llm_max_length_warn'\)\.toggle\(Number\(\$\(`#max_length_\$\{suffix\}`\)\.val\(\)\) > MAX_LENGTH_WARN_AT\);/);
     assert.match(js, /const MAX_LENGTH_WARN_AT = 160000;/);
     assert.match(inputWith(html, 'id="temperature_openai"'), /max="2"/, 'Temperature 는 그대로');

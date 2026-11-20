@@ -30,6 +30,7 @@ function displayedSource(node) {
 // 버그 사냥 2: 대사 안인지를 <q> 조상으로만 보면, 실리태번이 q 로 안 감싸는 대사(줄을 넘는 대사 · 섞인 따옴표 — dialogue-span.js 가 나중에 감싸요)
 //   안의 늘임표 「응~~~, 그래~~~!」 가 취소선으로 남았어요. 그 문단에서 del 앞까지 닫히지 않은 여는 따옴표가 있으면 대사 안으로 봐요.
 const CLOSER = { '“': '”', '「': '」', '『': '』', '«': '»', '„': '“' };
+import { foldBlank } from './blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 const STRAIGHT = new Set(['"', '＂']);
 const SCAN_MAX = 4000;   // 문단 앞쪽 이만큼까지만
 export function quoteOpenedBefore(del) {
@@ -49,7 +50,7 @@ export function quoteOpenedBefore(del) {
     }
     return stack.length > 0;
 }
-export const hasDialogueTildeSource =(raw, content) => typeof raw==='string' && !/<del\b/i.test(raw) && raw.includes(`~~${content}~~`);
+export const hasDialogueTildeSource =(raw, content) => typeof raw==='string' && !/<del\b/i.test(raw) && foldBlank(raw).includes(`~~${foldBlank(content)}~~`);   // 1.9.1 점자 빈칸 전수 2 — 원문 `⠀음` 과 화면 ` 음`
 export function restoreDialogueTildes(root, { sourceText = displayedSource } = {}) {
     for (const del of root.querySelectorAll('.mes_text del, .salty-sample del')) {
         if (del.attributes.length || del.closest('pre, code')) continue;

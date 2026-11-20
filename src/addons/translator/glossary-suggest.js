@@ -9,6 +9,7 @@
 // 1.5.9 인물표의 표기 짝(rosterPairs)도 칩으로 — 프리셋 색 표에 한글 이름이 적혀 있으면 번역 전에도.
 // 순수 함수 (시험: tools/tests/glossary-suggest.mjs)
 import { leftoverEnglish } from './leftover-fix.js';
+import { foldBlank } from '../../blank-fold.js';   // 1.9.1 점자 빈칸 전수 2
 import { isNameLike, nameFold } from './names-bridge.js';
 
 const HANGUL = /[가-힣]/;
@@ -148,7 +149,7 @@ function nameKeys(name) {
  * 돌려줌: [{ src, strong, persona }]
  */
 export function leftoverNameWords(text, source, { persona = '', character = '' } = {}) {
-    const src = withoutCodeBlocks(source);
+    const src = foldBlank(withoutCodeBlocks(source));   // 1.9.1 점자 빈칸 전수 2 — 원문 `Mina⠀Park` 에서도 두 낱말 이름을 찾아요
     if (!src) return [];
     const me = nameKeys(persona), them = nameKeys(character);
     const out = new Map();

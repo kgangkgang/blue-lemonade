@@ -480,16 +480,8 @@ function modelFromPath(path) {
     try { return decodeURIComponent(model); } catch { return model; }
 }
 
-/** 요청 하나를 지켜본다. 원래 fetch의 결과는 그대로 돌려준다. */
-async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
-    if (!PR) {
-        try { await ensurePricing(); }
-        catch (error) {
-            // 부가 기록기의 파일을 못 받아도 원래 생성 요청은 한 번 그대로 보내요. 다음 요청에서 다시 받아요.
-            console.warn('[요청 로그] 가격 모듈을 받지 못해 이번 요청은 기록하지 않아요', error);
-            return nativeFetch(input, init);
-        }
-    }
+/** 기록할 요청의 문맥을 만든다 — 기록하지 않는 호출자면 null. 던질 수 있어요(부르는 쪽이 받아 요청만 보내요) */
+function prepare(input, init, body, caller) {
     const at = Date.now();
     const endpoint=pathOf(input),kind=requestKind(endpoint);
     const marks = { start: performance.now(), firstByte: null };
@@ -516,7 +508,26 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
     if (context.caller === 'chat') context.type = (/\/chat-completions\/generate$/.test(endpoint) && ['normal', 'regenerate', 'swipe', 'continue', 'impersonate', 'quiet'].includes(body.type) ? body.type : null) ?? generationType ?? 'quiet';
     Object.assign(context,attribution.resolve({explicit:init?.requestLog,caller:context.caller,type:context.type,kind,body}));
     if (context.caller === 'chat' && !NOT_SEND_TYPES.includes(context.type)) context.sendTrace = takeSendTrace();
-    if (settings().ignoreCallers.includes(context.caller)) return nativeFetch(input, init);
+    if (settings().ignoreCallers.includes(context.caller)) return null;
+    return { context, marks };
+}
+
+/** 요청 하나를 지켜본다. 원래 fetch의 결과는 그대로 돌려준다. */
+async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
+    if (!PR) {
+        try { await ensurePricing(); }
+        catch (error) {
+            // 부가 기록기의 파일을 못 받아도 원래 생성 요청은 한 번 그대로 보내요. 다음 요청에서 다시 받아요.
+            console.warn('[요청 로그] 가격 모듈을 받지 못해 이번 요청은 기록하지 않아요', error);
+            return nativeFetch(input, init);
+        }
+    }
+    // 1.9.0 고침: 기록 준비(본문 정리 · 가격 · 용도 추정)가 던져도 요청은 그대로 보내요 — 예전엔 이 함수가 async 라 바깥 try 가 못 잡아, 기록기 탓에 생성 · 번역 요청이 보내지지도 않고 실패했어요
+    let prepared;
+    try { prepared = prepare(input, init, body, caller); }
+    catch (error) { console.warn('[요청 로그] 기록 준비에 실패해 이번 요청은 기록하지 않아요', error); return nativeFetch(input, init); }
+    if (!prepared) return nativeFetch(input, init);   // 기록하지 않는 호출자
+    const { context, marks } = prepared;
 
     const acc = makeAccumulator();
     let response;
@@ -557,7 +568,7 @@ async function watch(nativeFetch, input, init, body, caller=callerFromStack()) {
                     absorbChunk(data, acc);
                     noteWebSearch(data, acc);
                 } catch {
-                    acc.text = kind==='text'?text:'';
+                    acc.text = context.kind==='text'?text:'';
                 }
             }
         } catch (error) {

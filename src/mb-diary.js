@@ -68,7 +68,7 @@ export function pipIndex(text) { const m = /\/ss-pip\s+(\d+)/.exec(String(text ?
 // ── 실리태번 · 그 확장과 잇기 ─────────────────────────
 async function mbCore(doc) {
     try {
-        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/.test(String(s.src || s.getAttribute?.('src') || '')));
+        const tag = [...(doc?.querySelectorAll?.('script[src]') ?? [])].find(s => /\/meatballstats\/index\.js(?:$|\?)/i.test(String(s.src || s.getAttribute?.('src') || '')));
         const src = tag ? String(tag.src || tag.getAttribute('src')) : '';
         if (!src || src.includes('?')) return null;
         return await import(new URL('./src/core.js', src).href);
