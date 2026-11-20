@@ -38,21 +38,24 @@ const fam = () => { const id = S.getSettings().palette; return id === 'salt' ? '
 S.getSettings();
 hooks.applyAll(); await dom.clock.advance(1);
 await chatChanged(0);
+// 1.9.4: 「오늘의 에이드」는 날짜로 골라요 — 오늘 기본 에이드가 라벤더인 날(2026-11-21)엔 첫 시험의 전제(기본 ≠ 스타일 팔레트)가 깨져 날짜 따라 실패했어요.
+//   그런 날엔 스타일 팔레트를 뒤 시험에서 안 쓰는 다른 가족으로 바꿔요.
+const STY = ade.adeBase() !== 'lavender' ? 'lavender' : ade.families().find(f => !['lavender', 'peach', 'melon', 'strawberry', 'blue'].includes(f));
 {
     const s = S.getSettings();
-    s.styles = [{ id: 'st1', name: '라벤더 스타일', data: { ...ST.captureStyle(s), palette: 'lavender' } }];
+    s.styles = [{ id: 'st1', name: '라벤더 스타일', data: { ...ST.captureStyle(s), palette: STY } }];
     s.charStyles = { 'c:b.png': 'st1' };
     CS.startCharStyles(hooks.applyAll, hooks.refreshPanels);
 }
 
 await test('A3 오늘의 에이드만: 캐릭터별 스타일이 칠한 팔레트는 기본 에이드로 적지 않고, 그 방은 스타일 팔레트 그대로', async () => {
     const base = ade.adeBase();
-    assert.ok(base && base !== 'lavender', `기본 에이드 ${base}`);
+    assert.ok(base && base !== STY, `기본 에이드 ${base}`);
     await chatChanged(1);
     assert.equal(ade.adeBase(), base, '스타일이 칠한 라벤더가 기본 에이드로 적혔어요');
-    assert.equal(fam(), 'lavender', '스타일이 이어진 방은 스타일 팔레트 그대로');
+    assert.equal(fam(), STY, '스타일이 이어진 방은 스타일 팔레트 그대로');
     await dom.clock.advance(700);
-    assert.equal(style('st1').palette, 'lavender');
+    assert.equal(style('st1').palette, STY);
     await chatChanged(0);
     assert.equal(ade.adeBase(), base);
     assert.equal(fam(), base, '나오면 기본 에이드');
@@ -70,7 +73,7 @@ await test('A2 채팅방 에이드가 스타일을 이긴 뒤에도 저장된 �
     await chatChanged(1);
     assert.equal(fam(), 'melon', '채팅방 에이드가 이겨요');
     await dom.clock.advance(700);   // charstyle.js noteChange → commit(600ms)
-    assert.equal(style('st1').palette, 'lavender', '에이드가 칠한 멜론이 스타일 자료에 적혔어요');
+    assert.equal(style('st1').palette, STY, '에이드가 칠한 멜론이 스타일 자료에 적혔어요');
 });
 
 await test('A2 에이드가 칠한 채로 다른 모습을 바꾸면 그 값만 스타일에 적히고 팔레트는 그대로', async () => {
@@ -78,9 +81,9 @@ await test('A2 에이드가 칠한 채로 다른 모습을 바꾸면 그 값만 
     const was = s.chat.fontSize;
     s.chat.fontSize = was + 1; hooks.applyAll(); await dom.clock.advance(700);
     assert.equal(style('st1').chat.fontSize, was + 1, '스타일 편집은 예전처럼 적혀요');
-    assert.equal(style('st1').palette, 'lavender');
+    assert.equal(style('st1').palette, STY);
     await chatChanged(0);   // 나갈 때의 commit 도 같아요
-    assert.equal(style('st1').palette, 'lavender');
+    assert.equal(style('st1').palette, STY);
     assert.notEqual(fam(), 'melon');
 });
 

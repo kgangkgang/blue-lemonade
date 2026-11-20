@@ -1051,6 +1051,8 @@ jobs:
           node tools/tests/prompt-engine-inside-once.mjs . tools
           # 1.5.3 작가 노트 안전망: 새 채팅에 직전 노트 묻기 · 지우기 경고 한 줄 · 마지막 노트 불러오기 (같은 jsdom · 가짜 새 채팅 · 지우기 길)
           node tools/tests/an-keep.mjs . tools
+          # 1.9.4 환영 화면 다듬기: 프리셋 줄 잇기 정규식에 깨진 기본 인사 → 문단 · 가로줄 · 굵은 「팁:」 · 일반 메시지 본문은 그대로 · 최근 채팅 미리보기 태그 떼기(jsdom)
+          node tools/tests/welcome-tidy.mjs . tools
           # 1.7.4 미트볼 설정 칸의 「블루레몬」 레몬 탭: 탭 줄 끝 · 머리 레몬 단추 · 맞춤을 다 꺼도 남음 · 설정 찾기 → 그 탭(jsdom)
           node tools/tests/mb-lemon-tab.mjs . tools
           # 1.7.10 미트볼 2.9.1(d61af0b1) 서랍 새 겹(.ss-set-body · 원작 설정 찾기): 분류 탭 줄 · 레몬 탭 · 정리한 보기가 다시 걸림 · 찾는 동안 가림 풀기(jsdom)

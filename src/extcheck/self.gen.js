@@ -262,7 +262,7 @@ export const SELF_ROWS = [
 ["id","bl-lt-style","src/log-copy-sheet.js",267,"","guarded",0],
 ["id","bl-mart-style","src/mart-import-ui.js",143,"","guarded",0],
 ["id","bl-mart-title","src/mart-import-ui.js",74,"","",0],
-["id","bl-mav-button","src/features.js",258,"","guarded",0],
+["id","bl-mav-button","src/features.js",260,"","guarded",0],
 ["id","bl-mav-title","src/multi-avatar/dialog.js",41,"","",0],
 ["id","bl-natural-slash","src/natural-slash.js",199,"","",0],
 ["id","bl-note-keep-style","src/an-keep.js",356,"","",0],

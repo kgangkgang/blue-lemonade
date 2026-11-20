@@ -162,6 +162,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (on || modules.showmoretap) load('showmoretap', './show-more-tap.js').then(m => (on ? m?.installShowMoreTap() : m?.uninstallShowMoreTap()));
     // 1.5.1 단추 지키기 (show-more-keep.js, 테마가 켜져 있을 때) — 다른 확장이 화면 메시지를 줄이며 단추를 안 붙이거나 아래에 붙이면 맨 위로 되돌린다
     if (on || modules.showmorekeep) load('showmorekeep', './show-more-keep.js').then(m => (on ? m?.installShowMoreKeep() : m?.uninstallShowMoreKeep()));
+    // 1.9.4 환영 화면 다듬기 (welcome-tidy.js, 테마가 켜져 있을 때) — 프리셋 줄 잇기 정규식에 깨진 기본 인사를 원래 꼴로 · 최근 채팅 미리보기의 HTML 태그 떼기(보이는 것만)
+    if (on || modules.welcometidy) load('welcometidy', './welcome-tidy.js').then(m => (on ? m?.installWelcomeTidy() : m?.uninstallWelcomeTidy()));
     // 아바타는 가까워질 때 받기 (lazy-avatars.js, 기본 켬) — 캐릭터 · 페르소나 목록의 화면 밖 썸네일을 미룬다
     const lazyAvatars = on && s.chat?.lazyAvatars !== false && !restingFor('lazyAvatars');
     if (lazyAvatars || modules.lazyavatars) load('lazyavatars', './lazy-avatars.js').then(m => m?.syncLazyAvatars(lazyAvatars));
