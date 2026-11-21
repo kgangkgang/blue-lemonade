@@ -13,7 +13,11 @@ const root = path.resolve(process.argv[2] || fileURLToPath(new URL('../..', impo
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
 const src = read('css/06-chat-text.css');
-assert.match(src, /:is\(em, i\) q:not\(q q\)::after \{\s*content: '';\s*padding-inline-end: 0\.15em;\s*\}/, '늘림은 q::after 에');
+assert.match(src, /salty-dlg-marker\) :is\(em, i\) q:not\(q q\)::after \{\s*content: '';\s*padding-inline-end: 0\.15em;\s*\}/, '형광펜 늘림은 q::after 에');
+// 1.9.8 전체 칠은 줄 조각마다 띠 색 그림자 0.15em(가운데 줄 끝 글자도 안 잘림 · 자리를 안 차지 · 폭 0 시작 조각엔 안 보임) — 사용자 「기울여진 글자 좀 잘리는 것 같음」
+assert.match(src, /salty-dlg-full\) :is\(em, i\) q:not\(q q\) \{\s*box-shadow: 0\.15em 0 0 var\(--salty-marker\), -0\.05em 0 0 var\(--salty-marker\);/, '전체 칠은 줄마다 그림자 늘림');
+assert.match(src, /:is\(em, i\) q:not\(q q\) \{\s*box-shadow[^}]*\}/);
+assert.match(src, /\) q \{\s*color: var\(--salty-dialogue\);[\s\S]*?box-decoration-break: clone;/, '대사는 줄 조각마다(clone)');
 // 기울임 대사 q 자체에는 늘림 · 음수 margin 이 없어야 해요 (clone 이 모든 조각에 붙여요)
 const ON_Q = /:is\(em, i\) q:not\(q q\)[^:{]*\{[^}]*(padding-inline-end|margin-inline-end)/;
 for (const f of ['css/06-chat-text.css', 'css/23-preview.gen.css', 'style.css', 'style-ext.css', 'src/preview.gen.css', 'src/style-lazy.gen.css']) {

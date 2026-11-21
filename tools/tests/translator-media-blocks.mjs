@@ -26,7 +26,8 @@ await test('조각 하나 전체만 그림 · 영상으로 본다', () => {
 });
 
 await test('숨김 블록 목록 맨 뒤에 붙는다 (앞 규칙 번호 그대로)', () => {
-    const tail = HIDDEN_BLOCKS.slice(-MEDIA_BLOCKS.length).map(r => r.source);
+    // 1.9.8 글자 없는 문단 규칙이 그 뒤 맨 끝에 하나 더(translator-no-letter.mjs)
+    const tail = HIDDEN_BLOCKS.slice(-MEDIA_BLOCKS.length - 1, -1).map(r => r.source);
     assert.deepEqual(tail, MEDIA_BLOCKS.map(r => r.source));
     assert.ok(HIDDEN_BLOCKS[0].source.includes('Context'), '데우스 생각 줄 규칙이 여전히 맨 앞');
 });

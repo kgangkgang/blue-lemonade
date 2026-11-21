@@ -1,8 +1,8 @@
-/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1782 · 뺀 규칙 3860 (style.css 3fcb739b6b05) */
-/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 15641f18f82b) */
+/* Blue Lemonade style-ext.css — 「확장만」 · 테마 끔에서 style.css 대신 켜는 가벼운 사본(tools/build-css.cjs extText · src/theme-sheet.js). 고치지 말 것. 남은 규칙 1783 · 뺀 규칙 3862 (style.css be6dd358aaea) */
+/* src/style-lazy.gen.css — 원래 모듈 순서 전체예요. 처음 사용하면 첫 시트를 끄고 이 시트를 켜요. 99꼬리는 원문 그대로 별도 제어해요 (build 8a6bf92dc9ec) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"e9231a23d5141227"}
 /* css/00-base.css */
-:root{--bl-release:"1.9.7";}
+:root{--bl-release:"1.9.8";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)) {
 :root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}
@@ -110,10 +110,12 @@ html[data-bl-pull-refresh] { overscroll-behavior-y: contain; }
   border-radius: 5px;
   padding: 0.04em 0;
 }
-.salty-sample.salty-dlg-marker :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after,
-.salty-sample.salty-dlg-full :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
+.salty-sample.salty-dlg-marker :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *)::after {
   content: '';
   padding-inline-end: 0.15em;
+}
+.salty-sample.salty-dlg-full :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
+  box-shadow: 0.15em 0 0 var(--salty-marker), -0.05em 0 0 var(--salty-marker);
 }
 .salty-sample.salty-dlg-marker q.bl-q-inked:not(#salty-none):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
 .salty-sample.salty-dlg-full q.bl-q-inked:not(#salty-none):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {

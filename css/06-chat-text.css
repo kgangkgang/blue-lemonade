@@ -149,10 +149,15 @@ body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, de
    · 대사가 줄 끝 공백 뒤에서 시작해 통째로 아랫줄로 넘어갈 때 브라우저가 윗줄 끝에 남기는 글자 없는 시작 조각에도 0.15em 띠가 칠해졌고(세로 실금),
    · 음수 margin 이 다음 글자를 당겨 『…』『…』 처럼 맞붙은 대사는 늘린 0.15em 이 다음 띠 위에 겹쳐 그 자리만 진했다.
    대신 기울임 대사 뒤 글자가 0.15em 밀린다(삐져나온 닫는 따옴표 획 몫 — 그만큼 비어 보이지 않는다) */
-:is(body.salty.salty-dlg-marker #chat .mes .mes_text, .salty-sample.salty-dlg-marker,
-  body.salty.salty-dlg-full #chat .mes .mes_text, .salty-sample.salty-dlg-full) :is(em, i) q:not(q q)::after {
+:is(body.salty.salty-dlg-marker #chat .mes .mes_text, .salty-sample.salty-dlg-marker) :is(em, i) q:not(q q)::after {
   content: '';
   padding-inline-end: 0.15em;
+}
+/* 1.9.8 전체 칠은 대사가 여러 줄이면 줄 끝마다 기울어진 끝 글자가 띠 오른쪽 밖으로 나가 잘려 보였다(사용자 사진 「…무스카랑」의 「랑」 — 「기울여진 글자 좀 잘리는 것 같음」).
+   ::after 는 마지막 조각에만 붙어 가운데 줄 끝을 못 늘린다. padding 으로 늘리면 1.6.8 의 실금(글자 없는 시작 조각)이 돌아온다 →
+   띠 색 그림자를 오른쪽으로 0.15em(clone 이라 줄 조각마다 · 자리를 안 차지해 글자를 밀지 않음 · 폭 0 인 시작 조각엔 안 보임). 마지막 조각도 같은 그림자라 ::after 늘림은 형광펜에만. */
+:is(body.salty.salty-dlg-full #chat .mes .mes_text, .salty-sample.salty-dlg-full) :is(em, i) q:not(q q) {
+  box-shadow: 0.15em 0 0 var(--salty-marker), -0.05em 0 0 var(--salty-marker);   /* 줄 처음 아래쪽으로 기우는 획도 */
 }
 /* 1.7.4 이미 글자색 · 강조가 입혀진 구간(속마음 · 인물색 · 굵게 — 그 구간에 대사 말고 다른 글이 있을 때) 안의 대사(조판이 q.bl-q-inked 를 붙인다,
    src/quote-inked.js)는 형광펜 · 전체 칠을 또 칠하지 않고 둘레 글자색을 따른다 — 「이미 글자색 들어갔는데 또 형광펜이 들어가네」.

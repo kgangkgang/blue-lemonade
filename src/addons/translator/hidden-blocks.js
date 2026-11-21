@@ -2,6 +2,10 @@
 //   번역기 보호 규칙 목록 맨 뒤에 붙어서, 이 블록이 없는 답의 [[__VAR_n__]] 번호 · 문단 캐시 키는 예전 그대로예요.
 //   실리태번 모듈을 import 하지 않아요 (node 시험: tools/tests/translator-preset-compat.mjs).
 import { MEDIA_BLOCKS, isMediaBlock } from './media-blocks.js';
+/** 1.9.8 옮길 글자가 하나도 없는 문단(숫자 · 시각 · 기호 · 이모지만 — 「11:59:53. 11:59:54.」 · 「★★★」 · 「---」)은 보내지 않고 제자리에 원문 그대로.
+ *  글자(\p{L} · 한글 포함)가 하나라도 있으면 그대로 보내요 — 한글만 있는 문단도 입력 번역(한국어 → 다른 말)에선 옮길 글이라서요.
+ *  태그(< >) · 자리표시(\[\[__VAR_n__\]\])가 낀 문단은 안 건드려요. 빈 줄로 나눈 문단 하나 통째일 때만(점자 빈칸 U+2800 도 빈칸) — 문단 수 · 번호는 그대로예요. */
+export const NO_LETTER_PARAGRAPH = /(?:(?<![\s\S])|(?<=\n[\t \u2800]*\n))(?=[\t \u2800]*[^\s\u2800])(?:(?!\n[\t \u2800]*\n)[^\p{L}\p{M}<>[\]])+(?=\n[\t \u2800]*\n|(?![\s\S]))/gu;
 const ROW = String.raw`[ \t]*(?:(?:[-*•·]|\d+[.)])[ \t]*)?(?:\*{1,2}|_{1,2})?@?`;
 export const HIDDEN_BLOCKS = Object.freeze([
     // 데우스 V3 「! Thinking ! (FALLBACK)」: 모델이 <think> 없이 생각 줄(Context: … Knowledge: … Prose Length:)을 답 머리에 쓴 것.
@@ -17,6 +21,8 @@ export const HIDDEN_BLOCKS = Object.freeze([
     /<(style|script)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
     // 1.1.3 영상 · 소리 · svg · iframe 태그 · 마크다운 그림 · 맨몸 base64 그림 (media-blocks.js) — 맨 뒤라 이런 조각이 없는 답의 번호 · 캐시 키는 그대로
     ...MEDIA_BLOCKS,
+    // 1.9.8 옮길 글자가 없는 문단 — 맨 뒤라 이런 문단이 없는 답의 번호 · 캐시 키는 그대로
+    NO_LETTER_PARAGRAPH,
 ]);
 /** 글 전체가 위 블록 하나인가 — 모델이 자리표시를 빠뜨려도 제자리에 되돌릴 블록 (index.js droppedPlaceholders).
  *  1.1.3 그림(<img> · 그림 요청 태그 포함) · 영상 조각도 — 예전엔 모델이 <img> 자리표시를 빠뜨리면 그림이 번역문에서 사라졌어요 */

@@ -137,7 +137,7 @@ await test('the rewrite add-on rebases instead of discarding, and still writes a
     const src = read('src/addons/rewrite/index.js');
     const check = src.indexOf('if (current !== message || current.mes !== original) {');
     const rebase = src.indexOf('rebaseSlotLines(original, current.mes, replacement)', check);
-    const warn = src.indexOf("toastr.warning('고치는 동안 메시지가 바뀌어서 적용하지 않았어요.', TITLE);", check);
+    const warn = src.indexOf("say('warning', '고치는 동안 메시지가 바뀌어서 적용하지 않았어요.');", check);   // 1.9.8 자동 검사는 알림 한 장(say)
     const write = src.indexOf('            message.mes = replacement;\n', check);
     const mark = src.indexOf('markRewrite(message, original, replacement);', write);
     assert.ok(check > 0 && rebase > check && warn > rebase && write > warn && mark > write, 'rebase → (else warn) → write → mark');

@@ -210,4 +210,27 @@ await test('1.5.2 받침이 없는 서랍 꼴 창(프롬프트 편집 창 · 이
     assert.ok(css.indexOf(':not(#top-settings-holder .drawer-content)') > css.indexOf('[data-bl-fade-y="both"]'), '흐림 규칙 뒤에 와야 이겨요');
     assert.match(css, /#top-settings-holder > \.bl-drawer-backing/, '받침은 위 막대 묶음 안 서랍에만');
 });
+await test('1.9.8 폰 위 서랍 아래끝 · 전개 지시 창 위끝 가림은 채팅 위 상태 띠와 같은 꼴(바탕색 → 투명 16px · 흐림(backdrop) · 가상 요소 없음)', () => {
+    const bare = fs.readFileSync(path.join(root, 'css/73-scroll-fade.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const sup = bare.indexOf('@supports (anchor-name: --bl-drawer)'), nsup = bare.indexOf('@supports not ((anchor-name: --bl-drawer)');
+    const media = bare.indexOf('@media screen and (max-width: 1000px)');
+    assert.ok(media > sup && media < nsup, '폰 묶음은 앵커 @supports 안');
+    const block = bare.slice(media, nsup);
+    assert.match(block, /#top-settings-holder \.drawer-content\.openDrawer:not\(\.fillLeft, \.fillRight\) \{ anchor-name: --bl-drawer; \}/, '열린 위 서랍은 넘치지 않아도 받침');
+    const scrim = /#top-settings-holder > \.bl-drawer-backing \{([^}]*)\}/.exec(block);
+    assert.ok(scrim, '폰 받침 규칙');
+    assert.match(scrim[1], /height: calc\(anchor-size\(--bl-drawer height, 0px\) \+ 16px\); max-height: calc\(100dvh - var\(--topBarBlockSize, 40px\)\)/, '서랍 아래끝에서 16px 더 · 화면 밑은 안 넘음(넘으면 문서가 11px 굴렀어요)');
+    assert.match(scrim[1], /background: linear-gradient\(to bottom, var\(--bl-page\) calc\(100% - 16px\), transparent\)/, '띠와 같은 꼴: 바탕색 그대로 → 끝 16px 투명');
+    assert.doesNotMatch(scrim[1], /backdrop|box-shadow|transition|will-change/);
+    assert.ok(!bare.includes('#bl-tab-scroll-off) body.salty #top-settings-holder .drawer-content.openDrawer'), '끄기 길은 탭 줄 흐림과 따로');
+    const send = fs.readFileSync(path.join(root, 'css/04-send-form.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const sel of ['body.salty #jj-popup {', 'body.salty.salty-dark #jj-popup {']) {
+        const at = send.indexOf(sel); assert.ok(at >= 0, sel);
+        const body = send.slice(at, send.indexOf('}', at));
+        const shadows = body.match(/box-shadow:[^;]*;/g) || [];
+        assert.ok(shadows.length === 2, sel + ' 그림자 두 줄(상대 색 못 읽는 브라우저 줄 + 띠 색 식)');
+        for (const s of shadows) { assert.match(s, /0 -8px 8px 0 var\(--bl-page\) !important;$/, sel + ' 마지막은 바탕색 가림'); assert.doesNotMatch(s, /var\(--salty-shadow[,)]/, sel + ' 글자 그림자 꼴 --salty-shadow 를 색 자리에 쓰지 않아요(선언 무효 → none)'); }
+        assert.doesNotMatch(body, /backdrop-filter:(?!\s*none)/);
+    }
+});
 console.log(`스크롤 흐림: ${pass}개 통과했어요.`);

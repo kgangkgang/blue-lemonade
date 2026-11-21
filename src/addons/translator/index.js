@@ -102,6 +102,7 @@ import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../po
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../../../slash-commands/SlashCommandArgument.js';
+import { flowToast } from '../../flow-toast.js';   // 1.9.8 자동 다시 쓰기 → 번역 알림을 답마다 한 장으로 (자동 번역만)
 import { ask, attachUndo } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신) · 3.1.6 알림 끝 되돌리기 단추
 import { canResetPrompt, resetButtonState, resetPrompt, undoPromptReset } from './prompt-reset.js';   // 3.1.6 프롬프트 「기본값으로」
 import { DB_QR_LABEL, applyDbQrVisibility, dbQrSets } from './db-tool-qr.js';   // 3.1.6 「입력창에 DB 관리 단추 두기」
@@ -2756,6 +2757,11 @@ function progressLabel(stage, started, note = null) {
     return `번역 중${tail}`;
 }
 /** 7.3.1 번역 시작 알림 문구 — 번역의 첫 진행 알림(stage)을 보고 고른다. null = 알리지 않음 (보낼 문단 없이 캐시로 끝남 — 뒤에 캐시 알림이 따로 뜬다) */
+/** 1.9.8 한 장 알림의 번역 시작 글 — 메시지 번호 꼬리를 떼고 「번역하는 중…」 꼴로 */
+function flowStartText(text) {
+    const s = String(text).replace(/\s*#\d+$/, '');   // blank-ok 테마 알림 글(채팅 글 아님)
+    return s === '번역을 시작해요' ? '번역하는 중…' : s.replace(/번역해요$/, '번역하는 중…');
+}
 function startNotice(stage, messageId) {
     if (stage?.stage === 'segments' && !stage.pending) return null;
     if (stage?.stage === 'segments' && stage.reused > 0 && (stage.resumed || stage.edited)) return stage.resumed ? `남은 문단 ${stage.pending}개를 이어서 번역해요 #${messageId}` : `바뀐 문단 ${stage.pending}개만 다시 번역해요 #${messageId}`;   // 3.0.0 첫 번역은 아래 예전 문구
@@ -3608,7 +3614,16 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
 
         // 7.3.1 시작 알림은 번역의 첫 진행 알림을 본 뒤에 고른다 (아래 translate 의 onProgress · startNotice) — 문단 캐시가 대부분을 채우면
         //   「바뀐 문단 n개만 다시 번역해요」, 보낼 문단이 없으면 알리지 않는다. 번역문 캐시 · 번역하지 않는 길이거나 1.5초 안에 진행 알림이 없으면 예전 문구
-        let startToast = showStartToast ? (text = `번역을 시작해요 #${messageId}`) => { startToast = null; if (text) toastr.info(text); } : null;
+        // 1.9.8 자동 번역은 시작 · 끝을 답마다 한 장 알림으로(flow-toast.js) — 앞에서 다시 쓰기가 같은 답을 고쳤으면 그 알림을 이어 받아 글만 바꿔요
+        const flowApi = typeof flowToast === 'function' ? flowToast() : null;   // typeof: 이 함수만 잘라 도는 시험
+        const flowing = source === 'auto' && !!flowApi;
+        let startToast = showStartToast ? (text = `번역을 시작해요 #${messageId}`) => {
+            startToast = null; if (!text) return;
+            if (flowing) { runToken.flow = message; runToken.flowApi = flowApi; flowApi.step(message, 'translate', { title: '번역', text: flowStartText(text) }); }
+            else toastr.info(text);
+        } : null;
+        // 다시 쓰기가 이 답의 알림을 들고 기다리는 중이면 바로 이어 받아요(시작 알림이 늦게 뜨는 사이 「번역을 시작해요」에 머물지 않게)
+        if (flowing && startToast && flowApi.has(message)) startToast();
 
         // 강제 번역이거나 번역문이 없는 경우, 또는 자동 번역시 원문이 바뀐 경우
         // 5.3.4: 전체 번역은 실패 표시가 남은 메시지도 다시 보낸다 (된 문단은 문단 캐시에서, 실패한 문단만 요청)
@@ -3729,6 +3744,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             runToken.guard.assert();
             syncMesToSwipe(targetId);
             await context.saveChat();
+            if (runToken.flow) runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: '번역했어요.', kind: 'success' });
         } else startToast?.();
         // 같은 채팅이 제자리에서 다시 불렸으면 원래 객체는 배열에 없어요 — 옮겨 탄 대상으로 알려요(재번역과 같게)
         const published = runToken.guard.target?.() || message;
@@ -3758,7 +3774,9 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                     if (target === editedTarget) { (target.is_user ? translateOutgoingMessage : translateIncomingMessage)(id); return; }
                     translateMessage(id, false, 'auto').catch(() => {});
                 });
-            } else toastr.info(error.message, '번역 중단', { timeOut: 4000 });
+            } else if (runToken.flow) runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: `번역을 멈췄어요. ${error.message}`, kind: 'info' });
+            else toastr.info(error.message, '번역 중단', { timeOut: 4000 });
+            if (again && runToken.flow) runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: '글이 바뀌어 번역을 다시 해요…', kind: 'info' });
             return;
         }
         (error?.refused ? console.warn : console.error)('Translation error:', error);
@@ -3769,8 +3787,12 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
             errorMessage = error.message;
         }
 
-        toastr.error(`메시지 #${messageId} ${errorMessage}`, '번역 실패', { timeOut: 10000 });
+        if (runToken.flow) {   // 1.9.8 그 한 장에서 까닭 · 다시
+            const el = runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: `번역에 실패했어요. ${errorMessage}`, kind: 'error', sticky: true });
+            attachUndo(el, () => translateMessage(messageId, true, 'handleTranslateButtonClick'), { label: '다시 번역', icon: 'fa-rotate-right' });
+        } else toastr.error(`메시지 #${messageId} ${errorMessage}`, '번역 실패', { timeOut: 10000 });
     } finally {
+        if (runToken.flow) runToken.flowApi.settle(runToken.flow, 'translate', { title: '번역', text: '번역했어요.', kind: 'success' });   // 1.9.8 어느 길로 끝나도 「하는 중」에 남지 않게
         endTranslation(messageId, runToken);
     }
 }
@@ -10354,6 +10376,12 @@ class PresetManager {
     }
 }
 
+
+// 1.9.8 자동 다시 쓰기가 끝날 때 이 답을 이어서 번역할지 — 「할 거예요」 면 다시 쓰기 알림이 닫히지 않고 「번역을 시작해요」로 기다려요(flow-toast.js)
+if (!duplicate) flowToast().follow('translate', message => {
+    if (!shouldTranslate(incomingTypes) || !message || typeof message !== 'object' || message.is_user) return false;
+    try { return !autoSkipReason(message); } catch { return true; }
+});
 
 // Archive integration is local and optional. Concurrent callers share the existing job.
 if (!duplicate) globalThis[Symbol.for('st.llm-translator.archive.v1')] = {

@@ -1233,7 +1233,7 @@ dialog.popup :not(.bl-addon-inline-content) > #model-switch-settings .ms-presets
     --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent));
     --bwr-danger: #e5484d;
-    --bwr-css-version: "2.2.1";
+    --bwr-css-version: "2.2.2";
 }
 .bwr_settings .bwr_body {
     display: flex;

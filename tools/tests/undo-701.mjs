@@ -94,7 +94,7 @@ await t('② 배선: 고칠 때 기록 → 알림에 ↶ · 되돌리기 차례(
     const src = read('src/addons/rewrite/index.js');
     assert.match(src, /undo = rewriteUndo\.remember\(\{ chatId: getContext\(\)\.getCurrentChatId\?\.\(\) \?\? '', messageId, message, before: message\.mes, after: replacement,/);
     assert.ok(src.indexOf('undo = rewriteUndo.remember(') < src.indexOf("messageWork().noteWrite(message, { by: 'rewrite', before: message.mes, after: replacement });"));
-    assert.match(src, /report\(result, spans\.length, manual, undo(?:, retry)?\);/);   // 1.8.7 남은 금지어 다시 보내기(retry)가 뒤에 붙어요
+    assert.match(src, /report\(result, spans\.length, manual, undo(?:, retry)?(?:, flow)?\);/);   // 1.9.8 자동 검사는 알림 한 장(flow)   // 1.8.7 남은 금지어 다시 보내기(retry)가 뒤에 붙어요
     assert.equal((src.match(/if \(undo && fixed > 0\) attachUndo\(toast, \(\) => undoRewrite\(undo\)\);/g) || []).length, 2, '고친 알림 · 일부 실패 알림');
     const body = src.slice(src.indexOf('async function undoRewrite(rec) {'), src.indexOf('\nfunction showReport('));
     const order = ['rewriteUndo.check(', 'messageWork().noteWrite(', 'markRewrite(message, rec.after, rec.before);', 'rewriteUndo.restore(rec);', 'updateMessageBlock(messageId, message)', 'await notifyTextChanged(messageId);', 'await saveChatConditional();'].map(x => body.indexOf(x));

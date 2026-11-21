@@ -418,11 +418,18 @@ body.salty #jj-popup {
   background: var(--bl-fill-overlay, var(--bl-overlay)) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  box-shadow: 0 -1px 5px -2px color-mix(in srgb, var(--salty-shadow, var(--bl-fb-rgb-15-34-56-0p14)) 60%, transparent), 0 -8px 24px -12px var(--salty-shadow, var(--bl-fb-rgb-15-34-56-0p14)), 0 -18px 48px -24px var(--salty-shadow, var(--bl-fb-rgb-15-34-56-0p14)) !important;
+  /* 1.9.8 위끝 가림을 채팅 위 상태 띠와 같은 꼴로(사용자 11-21 「패널 열었을 때 흐려지는 건 다 상태창 쪽에 맞춰 줘」):
+     띠는 칩 막대에 얕은 그림자 둘(1/2 · 4/10/−2) + 막대 밖 16px 를 바탕색 → 투명으로 옅게 해 굴린 본문이 사라져요(흐림(backdrop) 없음).
+     창은 위로 떠서 그 거울 꼴 — 얕은 그림자 둘은 위로, 마지막 바탕색 그림자(위 8 · 흐림 8)가 창 윗면 바로 위 16px 를 바탕색 → 투명으로 덮어요.
+     창이 overflow: hidden 이라 가상 요소 대신 그림자로 · 요소 · 층을 더하지 않아요.
+     예전 값은 실리태번 --salty-shadow(글자 그림자 꼴 「x y 흐림 색」)를 색 자리에 넣어 선언 전체가 무효 → 그림자 없음(none)이었어요. 색은 띠와 같은 식(--salty-shadow-50 의 투명도 × 2 의 55% · 50%) */
+  box-shadow: 0 -1px 2px var(--bl-fb-rgb-15-34-56-0p14), 0 -4px 10px -2px var(--bl-fb-rgb-15-34-56-0p14), 0 -8px 8px 0 var(--bl-page) !important;
+  box-shadow: 0 -1px 2px rgb(from var(--salty-shadow-50, rgba(35, 62, 92, 0.06)) r g b / calc(alpha * 1.1)), 0 -4px 10px -2px rgb(from var(--salty-shadow-50, rgba(35, 62, 92, 0.06)) r g b / calc(alpha * 1)), 0 -8px 8px 0 var(--bl-page) !important;
   color: var(--salty-text) !important;
 }
 body.salty.salty-dark #jj-popup {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 6px -2px color-mix(in srgb, var(--salty-shadow, var(--bl-fb-rgb-1-8-16-0p72)) 55%, transparent), 0 -10px 30px -14px var(--salty-shadow, var(--bl-fb-rgb-1-8-16-0p72)), 0 -22px 56px -28px var(--salty-shadow, var(--bl-fb-rgb-1-8-16-0p72)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 2px var(--bl-fb-rgb-1-8-16-0p72), 0 -4px 10px -2px var(--bl-fb-rgb-1-8-16-0p72), 0 -8px 8px 0 var(--bl-page) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 -1px 2px rgb(from var(--salty-shadow-50, rgba(0, 0, 0, 0.3)) r g b / calc(alpha * 1.1)), 0 -4px 10px -2px rgb(from var(--salty-shadow-50, rgba(0, 0, 0, 0.3)) r g b / calc(alpha * 1)), 0 -8px 8px 0 var(--bl-page) !important;
 }
 body.salty #jj-popup .jj-popup-head {
   border: 0 !important;

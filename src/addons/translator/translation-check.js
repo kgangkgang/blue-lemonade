@@ -52,6 +52,13 @@ function scriptOf(text) {
     for (const [name, pattern] of SCRIPTS) { const n = (String(text).match(pattern) || []).length; if (n > most) { best = name; most = n; } }
     return best;
 }
+/** 1.9.8 옮길 낱말이 있나 — 라틴 · 키릴 낱말 둘 이상, 또는 가나(히라가나)가 든 한 덩이(일본어 문장). 숫자 · 시각 · 기호 · 이모지 · 한글뿐인 문단과
+ *  고유 이름 한 낱말(「Sora」 · 「佐藤」 · 「サクラ」)뿐인 문단은 원문 그대로가 맞아 「원문 그대로」로 보지 않아요(사용자 11-21 「번역할 것도 없는데 왜 삼각형 뜸」) */
+const FOREIGN_WORD = /[\p{Script=Latin}\p{Script=Cyrillic}][\p{Script=Latin}\p{Script=Cyrillic}\p{M}'’-]*|[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々]+/gu;
+export const needsTranslation = text => {
+    const words = letters(text).match(FOREIGN_WORD) || [];
+    return words.length >= 2 || (words.length === 1 && /\p{Script=Hiragana}/u.test(words[0]));
+};
 const weightOf = text => {
     const plain = letters(text), latin = (plain.match(/\p{Script=Latin}/gu) || []).length, all = (plain.match(/[\p{L}\p{N}]/gu) || []).length;
     return all - latin + latin * 0.4;
@@ -167,7 +174,7 @@ export function checkTranslation(source, translation, { protect = [] } = {}) {
                 if (rawSrc && (rawSrc.includes(rawOut) || rawOut.includes(rawSrc))) {
                     target ??= scriptOf(keyOf(unprotected(withoutDisplayCards(out), protect)));
                     const bare = unprotected(withoutDisplayCards(srcBody), protect);
-                    if (weightOf(withoutCode(bare)) >= 12 && target && scriptOf(keyOf(bare)) !== target && keyOf(unprotected(withoutDisplayCards(body), protect)) === keyOf(bare)) add('same');
+                    if (weightOf(withoutCode(bare)) >= 12 && target && needsTranslation(withoutCode(bare)) && scriptOf(keyOf(bare)) !== target && keyOf(unprotected(withoutDisplayCards(body), protect)) === keyOf(bare)) add('same');
                 }
             }
         }

@@ -63,11 +63,12 @@ import { messageWork, dropThinkingHead } from '../../message-work.js';   // 6.5.
 import { applyUpgrades } from './upgrades.js';
 import { createRewriteUndo } from './undo.js';   // 7.0.1 ↶ 되돌리기 (채팅마다 마지막 하나, 메모리)
 import { attachUndo } from '../../ask.js';
+import { flowToast } from '../../flow-toast.js';   // 1.9.8 자동 다시 쓰기 → 번역 알림을 답마다 한 장으로
 import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 import { foldBlank, squashBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
-const VERSION = '2.2.1';
+const VERSION = '2.2.2';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -619,8 +620,28 @@ function friendlyError(error) {
     return text;
 }
 
-function report(result, total, manual, undo = null, retry = null) {
-    afterPaint().then(() => showReport(result, total, manual, undo, retry));
+function report(result, total, manual, undo = null, retry = null, flow = null) {
+    afterPaint().then(() => (flow ? flowReport(flow, result, total, undo, retry) : showReport(result, total, manual, undo, retry)));
+}
+/** 1.9.8 자동 다시 쓰기의 결과를 진행 알림 그 한 장에 — 번역이 이어지면 닫지 않고 「번역을 시작해요」로 넘겨요(flow-toast.js) */
+function flowReport(message, { fixed, failed, error, left = [] }, total, undo = null, retry = null) {
+    const flow = flowToast(), kept = total - fixed - failed;
+    if (failed > 0) {
+        if (error) console.warn(`[${TITLE}] 고쳐 쓰기 실패:`, error);
+        const friendly = friendlyError(error);
+        const names = [...new Set(left.flatMap(span => span.rules ?? []).filter(rule => !rule.repeat).map(rule => rule.name).filter(Boolean))].slice(0, 3);
+        const text = `${failed}곳은 못 고쳐서 원문 그대로 뒀어요${fixed > 0 ? ` (${fixed}곳은 고침)` : ''}.${names.length > 0 ? ` 남은 것: ${names.join(' · ')}.` : ''}${friendly ? ` ${friendly}` : ''}`;
+        const el = flow.end(message, 'rewrite', { title: TITLE, text, kind: 'warning', sticky: true });
+        if (retry) attachUndo(el, retry, { label: '남은 문장만 다시 고치기', icon: 'fa-rotate-right' });
+        if (undo && fixed > 0) attachUndo(el, () => undoRewrite(undo));
+        return;
+    }
+    const parts = [];
+    if (fixed > 0) parts.push(`${fixed}곳 고쳤어요`);
+    if (kept > 0) parts.push(`${kept}곳은 그대로 뒀어요`);
+    const said = parts.length ? parts.join(' · ') : '고칠 곳이 없었어요';
+    const el = flow.end(message, 'rewrite', { title: TITLE, text: `${said}.`, kind: 'success', next: 'translate', meta: { fixed }, waitText: `${said} · 번역을 시작해요` });
+    if (undo && fixed > 0) { attachUndo(el, () => undoRewrite(undo)); flow.withActions(message); }   // 7.0.1 ↶ — 닫힘을 늦춰 누를 틈을
 }
 
 /** 7.0.2 금지 묘사 · 예외를 고친 시각을 적고 저장 (기기 간 합치기가 늦은 쪽을 받게) */
@@ -774,9 +795,13 @@ async function cleanMessage(messageId, manual, signal) {
         return;
     }
 
-    const clearProgress = settings.notify || manual
+    // 1.9.8 자동 검사는 진행 · 결과 · 이어지는 번역을 알림 한 장으로(flow-toast.js) — 손으로 누른 검사는 예전처럼 따로
+    const flow = !manual && settings.notify ? message : null;
+    if (flow) afterPaint().then(() => { if (busy.has(key)) flowToast().step(flow, 'rewrite', { title: TITLE, text: `${spans.length}곳 다시 쓰는 중…` }); });
+    const clearProgress = manual
         ? laterToast(() => toastr.info(`${spans.length}곳 확인하는 중…`, TITLE, { timeOut: 0, extendedTimeOut: 0 }))
         : null;
+    const say = (kind, text, opts = {}) => (flow ? flowToast().end(flow, 'rewrite', { title: TITLE, text, kind, next: 'translate', ...opts }) : toastr[kind](text, TITLE));
     // 1.8.8 자동 검사는 실리태번이 이 답을 저장하기 전에 돈다. 고쳐 쓰는 동안 탭이 죽거나 새로 고치면 답이 통째로 사라지니
     // 요청과 함께 먼저 저장해 둔다. 스와이프 사본이 아직 안 맞으면(스트리밍 끔 · 끊긴 스트림) 덜 만든 답이라 저장하지 않는다.
     const preSave = !manual && (!Array.isArray(message.swipes) || message.swipes[message.swipe_id ?? 0] === message.mes)
@@ -796,7 +821,7 @@ async function cleanMessage(messageId, manual, signal) {
         await preSave;
         // 멈춤 = 이 답변은 그대로 둔다 (리롤을 멈출 때와 같다). 앞선 시도에서 고친 곳도 넣지 않는다.
         if (signal?.aborted) {
-            toastr.info('고쳐 쓰기를 멈췄어요. 답변을 그대로 뒀어요.', TITLE);
+            say('info', '고쳐 쓰기를 멈췄어요. 답변을 그대로 뒀어요.');
             return;
         }
         if (result.error) console.warn(`[${TITLE}] 요청 실패:`, result.error);
@@ -823,7 +848,7 @@ async function cleanMessage(messageId, manual, signal) {
                     ? (rebaseSlotLines(original, current.mes, replacement) ?? reanchorRewrite(current.mes, visibleText(current), visible, result.text))
                     : null;
                 if (rebased === null) {
-                    toastr.warning('고치는 동안 메시지가 바뀌어서 적용하지 않았어요.', TITLE);
+                    say('warning', '고치는 동안 메시지가 바뀌어서 적용하지 않았어요.');
                     return;
                 }
                 original = current.mes;
@@ -871,10 +896,10 @@ async function cleanMessage(messageId, manual, signal) {
                 return cleanMessage(messageId, true);
             }
             : null;
-        report(result, spans.length, manual, undo, retry);
+        report(result, spans.length, manual, undo, retry, flow);
     } catch (error) {
         console.error(`[${TITLE}]`, error);
-        toastr.error(`고쳐 쓰다가 오류가 났어요: ${friendlyError(error)}`, TITLE);
+        say('error', `고쳐 쓰다가 오류가 났어요: ${friendlyError(error)}`, { sticky: true, next: null });
     } finally {
         // 실리태번의 저장(이 리스너가 끝난 뒤)이 겹쳐 버려지지 않게 끝까지 기다린다
         await preSave;

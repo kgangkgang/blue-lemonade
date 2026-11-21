@@ -35,6 +35,18 @@ html:not(#bl-tab-scroll-off) body.salty dialog.ss-dlg .popup-content[data-bl-fad
 @supports (anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)) {
   html:not(#bl-tab-scroll-off) body.salty #top-settings-holder .drawer-content:is([data-bl-fade-y="top"], [data-bl-fade-y="bottom"], [data-bl-fade-y="both"]) { anchor-name: --bl-drawer; }
   html:not(#bl-tab-scroll-off) body.salty #top-settings-holder > .bl-drawer-backing { display: block; position: fixed; z-index: -1; pointer-events: none; top: anchor(--bl-drawer top, 0px); left: anchor(--bl-drawer left, 0px); width: anchor-size(--bl-drawer width, 0px); height: anchor-size(--bl-drawer height, 0px); background: var(--bl-fill-page, var(--bl-page)); border-radius: 0 0 var(--bl-r-lg) var(--bl-r-lg); }
+  /* 1.9.8 폰 서랍 아래끝 가림(사용자 11-21 「패널 열었을 때 흐려지는 건 다 상태창 쪽에 맞춰 줘 · 확장 쪽 패널은 별로 안 흐려서 입체감 없음」):
+     채팅 위 상태 띠는 띠 높이까지 바탕색 그대로, 그 아래 16px 를 바탕색 → 투명으로 옅게 해 굴린 본문이 띠 밑으로 사라져요(그림자 · 흐림(backdrop) 없음 · 굴림 값 0).
+     서랍도 같은 꼴로: 열린 위 서랍은 넘치지 않아도 받침을 깔고, 받침을 서랍 아래끝에서 16px 더 내려 그 16px 를 바탕색 → 투명으로 옅게 해요.
+     넘친 서랍의 아래 mask(28px)는 그대로라 넘친 서랍은 서랍 안 끝 28px + 서랍 밖 16px 가 이어져 사라져요. 넘친 서랍은 mask 가 서랍 그림자까지 잘라 아래끝에 층이 없었던 것도 이 받침이 채워요.
+     받침 아래끝은 화면 밑을 넘지 않게(max-height = 화면 − 위 막대 · 폰 서랍 위끝은 위 막대 밑) — 높이 + 16px 만 두면 화면 끝까지 내려온 서랍에선 받침이 화면 밖 11px 를 넘어 문서가 그만큼 굴렀어요(관문 kt-wi 표시 상자 7px 어긋남).
+     받침의 기준 상자는 html(변형이 걸려 있어 높이 0)이라 bottom 앵커 식으로는 화면 밑을 못 잡아요(리그: bottom 이 −827px 로 풀림).
+     서랍 안에는 아무것도 안 더해요(가상 요소 · 사용자 속성 없음 — ① ③) · 받침은 이미 있는 실제 요소 하나 · 꾸밈은 바탕 그라데이션뿐.
+     폰(1000px 아래)만 — PC 서랍은 떠 있는 카드라 가로 전체 가림이 어울리지 않아요. 끄기 길은 탭 줄 흐림과 따로(#bl-drawer-scrim-off). */
+  @media screen and (max-width: 1000px) {
+    html:not(#bl-drawer-scrim-off) body.salty #top-settings-holder .drawer-content.openDrawer:not(.fillLeft, .fillRight) { anchor-name: --bl-drawer; }
+    html:not(#bl-drawer-scrim-off) body.salty #top-settings-holder > .bl-drawer-backing { display: block; position: fixed; z-index: -1; pointer-events: none; top: anchor(--bl-drawer top, 0px); left: anchor(--bl-drawer left, 0px); width: anchor-size(--bl-drawer width, 0px); height: calc(anchor-size(--bl-drawer height, 0px) + 16px); max-height: calc(100dvh - var(--topBarBlockSize, 40px)); background: linear-gradient(to bottom, var(--bl-page) calc(100% - 16px), transparent); border-radius: 0; }
+  }
 }
 @supports not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px))) {
   html:not(#bl-tab-scroll-off) body.salty .drawer-content[data-bl-fade-y] { -webkit-mask-image: none; mask-image: none; }

@@ -1245,7 +1245,7 @@ html:where(.bl-asc-3) body.salty #model-switch-settings .ms-form > :where(.ms-ro
     --bwr-accent-soft: color-mix(in srgb, var(--bwr-accent) 18%, transparent);
     --bwr-accent-ink: var(--salty-accent-ink, var(--bwr-accent));
     --bwr-danger: #e5484d;
-    --bwr-css-version: "2.2.1";
+    --bwr-css-version: "2.2.2";
 }
 :where(html.bl-asc-5) .bwr_settings .bwr_body {
     display: flex;
