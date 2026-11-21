@@ -50,3 +50,22 @@ export function needsSpeakers(quotes, speakers) {
     const match = matchQuotes(quotes, speakers);
     return match.some((si, qi) => si >= 0 && !quotes[qi].colored && !speakers[si].color && speakers[si].source === 'sender');
 }
+
+// 2.0.1 「누구 것도 아닌 인용」(사용자 11-21 「저건 누구 색이냐 첨 보는디」): 서술 줄 가운데에 든 인용(같은 줄 앞에 서술 글자가 있음) ·
+//   화면에 색 없음 · 화자를 색 · 이름표 · 분석 · 보낸 사람 단서로 못 정함(보낸 쪽으로 떨어짐 'sender' · 문단 짐작 'paragraph')이면
+//   테마 기본 대사 색(강조색) 그대로 두고 표시만 달아요(q.bl-q-nobody — css/06-chat-text.css 색 없는 옅은 밑줄)
+export const NOBODY = 'bl-q-nobody';
+export const NOBODY_SOURCES = new Set(['sender', 'paragraph']);
+/** quotes: [{ d: { start }, colored }] · flat: 화면 글 → 표시할 대사 번호들 */
+export function nobodyPlan(quotes, speakers, flat) {
+    const match = matchQuotes(quotes, speakers), text = String(flat || ''), out = [];
+    match.forEach((si, qi) => {
+        const q = quotes[qi], sp = si >= 0 ? speakers[si] : null;
+        if (!q || q.colored || !sp || sp.color || !NOBODY_SOURCES.has(sp.source)) return;
+        const at = Number(q.d?.start);
+        if (!Number.isInteger(at)) return;
+        const line = text.slice(text.lastIndexOf('\n', at - 1) + 1, at);
+        if (/[\p{L}\p{N}]/u.test(line)) out.push(qi);
+    });
+    return out;
+}

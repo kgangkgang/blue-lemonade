@@ -20,7 +20,7 @@ import { textIndex, scanDialogue, colorFromBareHex, previewing } from './text-in
 import { colorOfPerson, normColor } from './speakers.js';
 import { dialogueSpeakers, analysisCfg, analysisBound } from './message-segments.js';   // 1.0.0 극한 최적화: 재생기 280KB 없이 같은 화자 판단 — 대사 분석 요청(analyzeForPaint)만 그때 재생기를 받아요
 import { log } from './log.js';
-import { PAINT_ATTR, planPaint, needsSpeakers } from './paint-core.js';
+import { PAINT_ATTR, planPaint, needsSpeakers, nobodyPlan, NOBODY } from './paint-core.js';
 import { watchDom } from '../../../dom-watch.js';
 
 const DEBOUNCE_MS = 300;
@@ -85,6 +85,18 @@ function paintedSpan(nodes, d, root) {
     return null;
 }
 
+/** 그 대사를 담은 q 요소 (없으면 null) */
+function quoteEl(nodes, d, root) {
+    const n = firstNode(nodes, d);
+    const q = n?.parentElement?.closest?.('q');
+    return q && root.contains(q) ? q : null;
+}
+/** 2.0.1 q.bl-q-nobody 를 want 와 같게 — 바뀐 것만 고쳐요 */
+function markNobody(root, want) {
+    for (const q of root.querySelectorAll(`q.${NOBODY}`)) if (!want.has(q)) q.classList.remove(NOBODY);
+    for (const q of want) if (!q.classList.contains(NOBODY)) q.classList.add(NOBODY);
+}
+
 function paintSpan(color, name) {
     const span = document.createElement('span');
     span.setAttribute('style', `color: ${color}`);
@@ -135,15 +147,17 @@ export function paintMessage(mesId, el = null) {
     const mes = chat[mesId];
     const skip = !enabled() || !mes || mes.is_user || mes.is_system || (generating && isLast(mesId))
         || !!box.querySelector('.edit_textarea') || root.isContentEditable || !QUOTE_OPENERS.test(root.textContent || '');
-    if (skip) { if (had.length) unwrap(root); return 0; }
+    if (skip) { if (had.length) unwrap(root); markNobody(root, new Set()); return 0; }
     let { nodes, flat, list } = quotesOf(root);
-    if (!list.some(q => !q.colored)) { if (had.length) unwrap(root); return 0; }   // 색 없는 대사가 없으면 화자를 구하지 않는다
+    if (!list.some(q => !q.colored)) { if (had.length) unwrap(root); markNobody(root, new Set()); return 0; }   // 색 없는 대사가 없으면 화자를 구하지 않는다
     let speakers = [];
     try { speakers = dialogueSpeakers(mesId); } catch (e) { log('err', `화자 색: 화자 구하기 실패 ${String(e?.message || e).slice(0, 40)}`); return 0; }
     let userName = '';
     try { userName = String(getContext()?.name1 || ''); } catch { userName = ''; }
     const colorOf = (name) => colorOfPerson(name, { userName });   // 1.5.9 이 채팅에서 쓴 색 → 카드별 색 기억 → 프리셋에 정해 둔 색
     let plan = speakers.length ? planPaint(list, speakers, colorOf) : [];
+    // 2.0.1 누구 것도 아닌 서술 속 인용 표시(칠할 줄과 겹치지 않음 · 클래스만 — #chat 관찰자는 childList 만 봐요)
+    markNobody(root, new Set(speakers.length ? nobodyPlan(list, speakers, flat).map(i => quoteEl(nodes, list[i].d, root)).filter(Boolean) : []));
     // 이미 그대로 칠해져 있으면 DOM 을 건드리지 않는다 (다시 그리지 않은 메시지 · 같은 결과)
     if (had.length === plan.length && plan.every(p => {
         const sp = paintedSpan(nodes, list[p.index].d, root);

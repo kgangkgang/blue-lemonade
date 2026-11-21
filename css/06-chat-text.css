@@ -187,6 +187,15 @@ body.salty.salty-indent #chat .mes :is(details.custom-llm-translator-details, de
 :is(body.salty.salty-dlg-tint #chat .mes .mes_text, .salty-sample.salty-dlg-tint) q {
   color: var(--salty-accent-dlg);
 }
+/* 2.0.1 누구 것도 아닌 서술 속 인용(서술 줄 가운데의 『…』 · "…" 인데 화자를 못 정함 — src/addons/tts/src/paint-core.js NOBODY · 사용자 11-21 「저건 누구 색이냐」):
+   대사 기본 색 · 형광펜은 그대로 두고 색 없는 옅은 점선 밑줄 하나 — 인물 대사가 아니라는 표시. 보낸 사람을 알면 그 인물 색으로 칠해져 이 표시가 안 붙어요 */
+:is(body.salty #chat .mes .mes_text, .salty-sample) q.bl-q-nobody {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--salty-faint);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28em;
+}
 
 /* 속마음 · 강조 · 기타 */
 /* 5.3.2 취소선: 글꼴에 따라 line-through 가 글자 아래에 그어져 거의 안 보였다 → 선을 배경으로 글자 가운데에 직접 긋는다.

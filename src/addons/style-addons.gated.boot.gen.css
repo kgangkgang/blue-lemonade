@@ -888,7 +888,7 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 :where(html.bl-asc-14) .bl-mermaid-stage {position:fixed;left:-100000px;top:0;visibility:hidden;pointer-events:none;width:1000px}
 
 :where(html.bl-asc-15) .lv-settings,:where(html.bl-asc-15) .lv-editor,:where(html.bl-asc-15) .lv-bar,:where(html.bl-asc-15) .lv-namevoice {
-  --lv-css-version: "2.1.0";
+  --lv-css-version: "2.1.1";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));

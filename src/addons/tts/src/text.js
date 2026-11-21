@@ -644,6 +644,58 @@ export const innerLike = (text) => INNER_RE.test(String(text || '').trim());
 // 1.7.8 메신저 · 문자 머리 줄(【발신자: 부서・이름】 · From: 이름 · 送信者: …): 그 문단의 이름은 짐작이 아니라 보낸 사람이에요 — 화면 화자 색(paint)도 그 이름으로 칠해요(paraHead)
 const SENDER_HEAD = /^[\s*_~>]*[[【(〔<「『]?\s*(?:발신자|발신인|보낸\s*사람|송신자|from|sender|送信者|差出人|発信者)\s*[:：]/iu;
 export const senderHead = (text) => SENDER_HEAD.test(String(text || ''));
+/**
+ * 2.0.1 서술 속 인용의 보낸 사람 단서(사용자 11-21 「저 X 대사는 왜 X 색 아님」):
+ *   「X (부서)에게서 온 … 『…』」 · 「X의 메시지 … 『…』」 · 「X가 보낸 …」 · 「X: "…"」 · from X · X's message · X texted · Xからの · Xのメッセージ —
+ *   인용 바로 앞 두 문장(before)과 인용 뒤 같은 문장(after)에서 아는 이름 뒤에 「보낸 쪽」 꼴이 붙은 것만 · 여럿이면 인용에 가장 가까운 것 하나.
+ *   「X에게 보낸」 · 「X한테」 · to X(받는 쪽)는 보낸 사람이 아니에요. 못 찾으면 null(예전처럼 문단 짐작 · 안 칠함)
+ */
+const CUE_NAME_TAIL = String.raw`(?:\s*[(（][^()（）\n]{0,24}[)）])?`;   // 「X (부서)」 의 괄호 덧말   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+const CUE_AFTER_NAME = [
+    String.raw`\s*(?:에게서|한테서|께서|(?:으)?로부터)(?![가-힣])`,                 // …에게서 온 · …로부터   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`\s*의\s*(?:새\s*)?(?:메시지|메세지|문자|답장|답|톡|카톡|DM|메일|편지|쪽지|알림|글|말|음성\s*메모|보이스)`,   // …의 메시지   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`(?:이|가|은|는)?\s+(?:[^\s.!?。！？]{1,12}\s+){0,2}?(?:보낸|보내온|남긴|적은|쓴|전한)(?![가-힣])`,   // …가 (방금) 보낸 · 「쓴웃음」 아님   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`(?:이|가)\s*(?:보낸|보내온|남긴|적은|쓴|전한)(?![가-힣])`,   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`\s*[:：]\s*$`,                                                         // 「X: "…"」 (인용 바로 앞)   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`\s*(?:からの|から)`,                                                    // Xからの(メッセージ)   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`\s*の\s*(?:メッセージ|メール|返信|LINE|通知|DM|手紙)`,   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`\s*(?:が|は)\s*送`,   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`['’]s\s+(?:new\s+)?(?:message|text|dm|reply|email|note|voicemail)`,   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    String.raw`\s+(?:sent|texted|wrote|messaged|replied)`,   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+];
+const CUE_BEFORE_NAME = [String.raw`\bfrom\s+$`];                                   // from X   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+function cueIn(text, names, { tail = false } = {}) {
+    const hay = String(text || '');
+    if (!hay.trim()) return null;   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+    let best = null, at = -1;
+    const seen = new Set();
+    for (const n of names || []) {
+        const name = String(n || '').trim(), key = name.toLowerCase();   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+        if ((key.match(/[\p{L}\p{N}]/gu) || []).length < 2 || seen.has(key)) continue;
+        seen.add(key);
+        const low = hay.toLowerCase();
+        for (let i = low.indexOf(key); i >= 0; i = low.indexOf(key, i + 1)) {
+            if (LETTER.test(low[i - 1] || '') && !/[가-힣]/.test(low[i - 1] || '')) continue;
+            if (/[가-힣]/.test(low[i - 1] || '') && !/[\s(（「『"“]/.test(hay[i - 1] || '')) continue;   // 「하은하」 속 「은하」 아님   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+            if (/[a-z0-9]$/.test(key) && /[a-z0-9]/.test(low[i + key.length] || '')) continue;
+            const rest = hay.slice(i + name.length).replace(new RegExp(`^${CUE_NAME_TAIL}`), '');
+            const head = hay.slice(0, i);
+            const sender = CUE_AFTER_NAME.some(p => new RegExp(`^(?:${p})`, 'iu').test(rest)) || CUE_BEFORE_NAME.some(p => new RegExp(p, 'i').test(head));
+            if (!sender || /^\s*(?:에게|한테|께)(?!서)/.test(rest) || /\bto\s+$/i.test(head)) continue;   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+            // 가까움: 앞 글이면 뒤쪽일수록(인용에 가까움) · 뒤 글이면 앞쪽일수록
+            const near = tail ? -i : i;
+            if (near > at || best === null) { best = name; at = near; }
+        }
+    }
+    return best;
+}
+/** 인용 앞 글에서 바로 앞 두 문장 · 뒤 글에서 같은 문장 */
+const lastSentences = (s, n = 2) => { const parts = String(s || '').split(/(?<=[.!?。！？])\s+/u); return parts.slice(-n).join(' '); };   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+const firstSentence = (s) => String(s || '').split(/(?<=[.!?。！？])\s+/u)[0] || '';   // blank-ok: senderCue 가 foldBlank 한 글만 봐요
+export function senderCue(before, after, names) {
+    before = foldBlank(before); after = foldBlank(after);   // 점자 빈칸(U+2800)도 빈칸으로
+    return cueIn(lastSentences(before), names) || cueIn(firstSentence(after), names, { tail: true });
+}
 function markParagraphs(segs, names) {
     const byPara = new Map();
     for (const g of segs) { if (!byPara.has(g.para)) byPara.set(g.para, []); byPara.get(g.para).push(g); }
@@ -663,6 +715,15 @@ function markParagraphs(segs, names) {
         const heads = own ? narration.flatMap(g => String(g.raw || g.text || '').split('\n')).filter(senderHead) : [];
         const sender = heads.length ? firstNameIn(heads.map(l => l.replace(SENDER_HEAD, '')).join('\n'), names) : null;
         if (sender) for (const g of list) if (g.paraName) { g.paraName = sender; g.paraHead = true; }
+        // 2.0.1 머리 줄이 없으면 인용마다 앞뒤 서술의 보낸 사람 단서(senderCue) — 찾으면 머리 줄과 같이 칠해요(paraHead · source 'header') · 표시 paraCue
+        if (!sender && narration.length && hasDialogue) {
+            list.forEach((g, i) => {
+                if (g.kind !== 'dialogue' || !g.text) return;
+                const near = (from, to, step) => { const out = []; for (let k = from; k !== to; k += step) { const x = list[k]; if (x.kind === 'dialogue') break; if (x.kind === 'narration') out.push(x.raw || x.text || ''); } return step < 0 ? out.reverse().join(' ') : out.join(' '); };
+                const cue = senderCue(near(i - 1, -1, -1), near(i + 1, list.length, 1), names);
+                if (cue) { g.paraName = cue; g.paraHead = true; g.paraCue = true; }
+            });
+        }
         if (!narration.length && lastName) for (const g of list) if (g.inner) g.paraName = lastName;   // 문단 전체 기울임 속마음 — 앞 서술 문단의 이름
         const pov = own || lastName;
         if (pov) for (const g of list) if (g.kind === 'action' && g.text) g.povName = pov;
