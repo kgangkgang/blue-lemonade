@@ -6983,5 +6983,130 @@
     "len": 1315
    }
   ]
+ },
+ "v50": {
+  "about": "11-21 청과 헤스페리데스 V5(파일 이름 V5.0 · 안 설명 V5.1) — 새 항목 14개와 이름이 바뀐 6개. id · 이름 · 본문 지문 · 글자 수만(원문 본문 없음).",
+  "items": [
+   {
+    "id": "810a046a-0096-4caa-a2d8-ca00a55dbda5",
+    "name": "🍏 青果·赫斯帕里得斯 V5.1（前底盘+后战术分层版）说明｜别开",
+    "hash": "5e69730d213138a59fbe8713326db86e754c453747b9203e09e8ea05a111f5e1",
+    "len": 3510
+   },
+   {
+    "id": "fruit-v45-anti-routing-chit",
+    "name": "🛡️ 果园物候单据｜防路由1（按需选开）",
+    "hash": "8ed7295e250a9a0a03868625aec39f53523c0bed081e264aee4b5be922100df9",
+    "len": 2003
+   },
+   {
+    "id": "fruit-v45-anti-routing-entropy",
+    "name": "🛡️ 果园高熵混淆池｜防路由2（加强备用·按需开）",
+    "hash": "def5a1d9500919ebdd48b019871e43a3eaf591505ac987bbed5882c93b194e4f",
+    "len": 1302
+   },
+   {
+    "id": "fruit-v21-jb-kunlun-ide",
+    "name": "🏔️ 加强破甲｜虚构契约（现代版） @从前跟你一样 #GEMINI #CLAUDE",
+    "hash": "9c92dded60ff22b8af44c15a81c51d18e78b95cc7ba37f18734531232bf0a725",
+    "len": 1048
+   },
+   {
+    "id": "fruit-v5-custom-vol1",
+    "name": "🧩 自定义缝合·剧情与步调｜选开",
+    "hash": "b4339c136f0e91a45778275869ad66f5af44273d4c4cb39044cfdfcf2b7008e8",
+    "len": 92
+   },
+   {
+    "id": "fruit-v5-custom-vol3",
+    "name": "🧩 自定义缝合·角色与互动｜选开",
+    "hash": "b8b2fe4be178ccc5b0ad862225e854228e40a8e9bc1dc2a10c62ee8e96ed7101",
+    "len": 94
+   },
+   {
+    "id": "fruit-v5-custom-vol4",
+    "name": "🧩 自定义缝合·写作与文风｜选开",
+    "hash": "6f0fb796a25fc808bb1cf127a449023c57a61c068305fb2778b3bf6196dd344f",
+    "len": 94
+   },
+   {
+    "id": "fruit-v45-nsfw-dispatch-full",
+    "name": "🥵 全量交织（同场拉满）｜NSFW调度单选",
+    "hash": "7a4305ad8175a7d731024467545c0628c0467aee6786796fdc97ad25151c89f9",
+    "len": 648
+   },
+   {
+    "id": "fruit-v45-nsfw-dispatch-smart",
+    "name": "🥵 随境选镜（一主一辅·自由智能）｜NSFW调度单选",
+    "hash": "d8f59059ce4f6dcf37e87dfdfebba0d6af77ff7de5e6ebd2f7447a7dff78fd04",
+    "len": 877
+   },
+   {
+    "id": "fruit-v51-post-tactical-compile",
+    "name": "📌 临场编译（卷一+卷三+NSFW）｜必开·别动位置",
+    "hash": "0f26770d48e43fc2b889c64aede42f88aa5f3ca6aa3d7e0a3a73819cb4d2f1f8",
+    "len": 173
+   },
+   {
+    "id": "fruit-v5-display-section-custom",
+    "name": "━━ 🧩 自定义缝合区（后置高权重｜直接粘贴）━━",
+    "hash": "c9c78cb4aa8c7d80004adaf88df350de5d1a2c3be9329587deccbd1437d8a2bc",
+    "len": 61
+   },
+   {
+    "id": "fruit-v5-custom-direct-1",
+    "name": "🧩 自定义缝合·1（直出高权重｜直接粘贴）",
+    "hash": "5f5ee29634d7387ee7a3cf05011a07526a6a14441de9b94b130c6f1b451f5547",
+    "len": 66
+   },
+   {
+    "id": "fruit-v5-custom-direct-2",
+    "name": "🧩 自定义缝合·2（直出高权重｜直接粘贴）",
+    "hash": "5b30c045473a1492824717b22e43b76bc718202530d59240e246b43020a2bac8",
+    "len": 60
+   },
+   {
+    "id": "fruit-v5-custom-output",
+    "name": "🍏 自定义缝合·状态栏/输出格式｜选开",
+    "hash": "25de1d2d04384898974ffaffa3f3d96cf733a75fc2c84540a65085bbeb755703",
+    "len": 65
+   },
+   {
+    "id": "c579184c-2871-4c35-a941-848cf31a3451",
+    "name": "🌙 加强破甲｜防回避与防切走 #GEMINI FLASH",
+    "hash": "16b2ad74ef4bd5ba82cc1bb617374ab2cd2544f80cd1e2c3f6b8aea09fe3d0bf",
+    "len": 767
+   },
+   {
+    "id": "fruit-v66-cot-inline-tasting",
+    "name": "🧠 修枝微检｜段间防衰减自检｜V5.0默认开",
+    "hash": "729adaea9e71507d533d7cc490f8e008cf8685ab5bae5f075a3f88dd9cbd4ec0",
+    "len": 581
+   },
+   {
+    "id": "fruit-v5-farmer-editor",
+    "name": "🌱 职业编辑果农（默认轻量）｜果农单选",
+    "hash": "ff04b8b03ce7061308e32548ba77e94b97a3298c6e50189fc9f9472d43f55bd8",
+    "len": 223
+   },
+   {
+    "id": "fruit-heart-tail3-4hn",
+    "name": "🔌尾3｜4H/4N 卡原生思考 #GEMINI 4H #GEMINI 4N",
+    "hash": "fe91ec6409a4a4dba5da01f5d6ffb91401c5f3448abc45bff179c83ba7e98aea",
+    "len": 385
+   },
+   {
+    "id": "prompt_1792821576575_44uqg5y",
+    "name": "📌 字数·自定义定制（兼容果实之心改字数）｜正文格式单选｜必开",
+    "hash": "81fc1c4a2099b295a029772652f84df5821290637aae9f47d7bb3413187dea6f",
+    "len": 439
+   },
+   {
+    "id": "jailbreak",
+    "name": "🔌尾2 #GEMINI 3.7F #GEMINI 3.8F #CLAUDE #GEMINI 4A #GEMINI 4C",
+    "hash": "d181cf63a1db9d65b50dedab4cb6cbdaa77e65b002d636a8d4250c5c6be22a2c",
+    "len": 76
+   }
+  ]
  }
 }

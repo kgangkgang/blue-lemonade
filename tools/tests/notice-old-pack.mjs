@@ -27,7 +27,11 @@ const OLD_SHA = '4ba7c517f1f114bd54111f2fd50734584ea9dee70753f71bc73678211f92ab2
 // 1.7.8 최근 구간에서 옮겨 온 판(새 판 → 옛 판 차례) · v1.7.7 src/notice-data.js 의 그 여섯 판을 JSON.stringify 한 것의 sha256
 const MOVED = ['1.0.5', '1.0.4', '1.0.3', '1.0.2', '1.0.1', '1.0.0'];
 const MOVED_SHA = '415143aca354bfbff257179dfeb6b4db30bc7af5290b155e3eff861d22839ecb';
-const OLD_COUNT = 465 + MOVED.length;
+// 1.9.6 최근 구간에서 또 옮겨 온 판(새 판 → 옛 판 차례 · 1.7.8 에 옮긴 여섯보다 앞) · v1.9.5 src/notice-data.js 의 그 네 판을 JSON.stringify 한 것의 sha256
+const MOVED2 = ['1.0.9', '1.0.8', '1.0.7', '1.0.6'];
+const MOVED2_SHA = 'b650f0b997d1f4f72391a2889930874808d907464a803e5265461a3923071fd9';
+const OLD_COUNT = 465 + MOVED.length + MOVED2.length;
+const M2 = MOVED2.length;
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 
 const { RECENT, OLD_NOTICES, NOTICES: ALL } = await load('tools/notice-all.mjs');
@@ -38,14 +42,16 @@ await test('① 생성물 = 원본에서 다시 뜬 것(node tools/notice-old-ge
     assert.match(read('src/notice-old.gen.js'), /^export const OLD_NOTICES_Z = "[A-Za-z0-9+/=]+";$/m);
 });
 
-await test('② 원본 지문 · 풀린 목록 = 원본 · 경계(1.0.6 | 1.0.5)는 다른 날 · 계열 1 은 8.2.5 부터', async () => {
+await test('② 원본 지문 · 풀린 목록 = 원본 · 경계(1.1.0 | 1.0.9)는 다른 날 · 계열 1 은 8.2.5 부터', async () => {
     assert.equal(OLD_NOTICES.length, OLD_COUNT);
-    assert.deepEqual(OLD_NOTICES.slice(0, MOVED.length).map(n => n.version), MOVED, '1.7.8 에 옮긴 판이 옛 구간 맨 앞에');
-    assert.equal(sha(JSON.stringify(OLD_NOTICES.slice(0, MOVED.length))), MOVED_SHA, '옮긴 판 공지 글이 v1.7.7 과 달라요');
-    assert.equal(sha(JSON.stringify(OLD_NOTICES.slice(MOVED.length))), OLD_SHA, '옛 판 공지 글이 1.2.0 과 달라요');
-    assert.equal(RECENT.at(-1).version, '1.0.6'); assert.equal(RECENT.at(-1).series, 2);
-    assert.ok(OLD_NOTICES.slice(0, MOVED.length).every(n => n.series === 2), '옮긴 판은 계열 2 그대로');
-    assert.equal(OLD_NOTICES[MOVED.length].version, '8.2.5'); assert.equal(OLD_NOTICES[MOVED.length].series, undefined, '그 뒤는 계열 1');
+    assert.deepEqual(OLD_NOTICES.slice(0, M2).map(n => n.version), MOVED2, '1.9.6 에 옮긴 판이 옛 구간 맨 앞에');
+    assert.equal(sha(JSON.stringify(OLD_NOTICES.slice(0, M2))), MOVED2_SHA, '1.9.6 에 옮긴 판 공지 글이 v1.9.5 와 달라요');
+    assert.deepEqual(OLD_NOTICES.slice(M2, M2 + MOVED.length).map(n => n.version), MOVED, '1.7.8 에 옮긴 판이 그다음에');
+    assert.equal(sha(JSON.stringify(OLD_NOTICES.slice(M2, M2 + MOVED.length))), MOVED_SHA, '옮긴 판 공지 글이 v1.7.7 과 달라요');
+    assert.equal(sha(JSON.stringify(OLD_NOTICES.slice(M2 + MOVED.length))), OLD_SHA, '옛 판 공지 글이 1.2.0 과 달라요');
+    assert.equal(RECENT.at(-1).version, '1.1.0'); assert.equal(RECENT.at(-1).series, 2);
+    assert.ok(OLD_NOTICES.slice(0, M2 + MOVED.length).every(n => n.series === 2), '옮긴 판은 계열 2 그대로');
+    assert.equal(OLD_NOTICES[M2 + MOVED.length].version, '8.2.5'); assert.equal(OLD_NOTICES[M2 + MOVED.length].series, undefined, '그 뒤는 계열 1');
     assert.ok(RECENT.every(n => n.series === 2), '최근 구간은 계열 2 만');
     assert.notEqual(RECENT.at(-1).date, OLD_NOTICES[0].date, '같은 날을 가르면 날짜 장이 쪼개져요');
     const { loadOldNotices } = await load('src/notice.js');
@@ -171,7 +177,7 @@ await test('⑥ 옛 공지 조각을 한 번 못 받아도 다음에 다시 받�
     assert.deepEqual(await fresh.loadOldNotices(), [], '못 받으면 옛 구간 없이(창은 최근 구간으로 열려요)');
     const again = await fresh.loadOldNotices();
     assert.equal(again.length, OLD_COUNT, '다음에 열 때 다시 받아요');
-    assert.equal(sha(JSON.stringify(again.slice(MOVED.length))), OLD_SHA); assert.equal(sha(JSON.stringify(again.slice(0, MOVED.length))), MOVED_SHA);
+    assert.equal(sha(JSON.stringify(again.slice(M2 + MOVED.length))), OLD_SHA); assert.equal(sha(JSON.stringify(again.slice(M2, M2 + MOVED.length))), MOVED_SHA); assert.equal(sha(JSON.stringify(again.slice(0, M2))), MOVED2_SHA);
     assert.equal(await fresh.loadOldNotices(), again, '받은 뒤로는 한 번 푼 것을 다시 써요');
     assert.match(read('src/notice.js'), /await \(oldTry \? import\(`\.\/notice-old\.gen\.js\?retry=\$\{oldTry\}`\) : import\('\.\/notice-old\.gen\.js'\)\)/);
     assert.match(read('tools/build-bundle.mjs'), /'src\/notice\.js': \['src\/notice-old\.gen\.js', /, '묶음에서도 다시 받는 주소가 달라요(RETRY_IMPORT)');

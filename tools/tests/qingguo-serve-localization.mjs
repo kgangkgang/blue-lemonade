@@ -506,4 +506,19 @@ await test('1.5 알림 · 헬퍼 목록 이름 · 옛 1.4 창은 그대로', () 
     assert.deepEqual(data.helpers.find(([name]) => name === '拉刻西斯-出杯·工具调用1.5（果心内嵌UI版）'), ['拉刻西斯-出杯·工具调用1.5（果心内嵌UI版）', '라케시스 · 도구 호출 1.5 (과일의 마음 내장판)']);
 });
 
+await test('1.6 탭 · 알림 · 헬퍼 이름: 새 문구가 한글로 보여요', () => {
+    const body = boot();
+    const { heart, main } = heartIn(body);
+    const view = main.childNodes[0];
+    const zh = ['✓ 抗截断（流式出酒口）', '强制非流式（兼容兜底）', '出杯 v1.6 更新说明（点开查看）', '流式出酒口（防 gg 124s 断流）：', '关（建议开）', '优先gg / 反代', '已强制「OpenAI 兼容」：抗截断默认流式出酒口，全部防护与反路由伪装均可自由组合。', '要求模型调用 serve 函数完整装入 <ECoT> 与 <content> 正文；OpenAI 兼容默认走真流式出酒口，防 124 秒断流。', '正文已被读过：'];
+    const nodes = zh.map(text => view.append(new El('span', {}, text)));
+    const toasts = ['已开启抗截断（默认流式出酒口）', '已关闭「强制非流式」，恢复默认流式出酒口', '已切到工具模式。抗截断开着（流式出酒口）。'].map(text => toastIn(body, '出杯·工具调用', text));
+    install();
+    for (const [i, node] of nodes.entries()) assert.ok(!HAN.test(node.shown), `${zh[i]} → ${node.shown}`);
+    assert.equal(nodes[0].shown, '✓ 끊김 방지 (스트리밍)');
+    for (const t of toasts) { assert.equal(t.title.shown, '도구 호출'); assert.ok(!HAN.test(t.message.shown), t.message.shown); }
+    assert.deepEqual(data.helpers.find(([name]) => name === '拉刻西斯-出杯·工具调用1.6（果心内嵌UI版）'), ['拉刻西斯-出杯·工具调用1.6（果心内嵌UI版）', '라케시스 · 도구 호출 1.6 (과일의 마음 내장판)']);
+    void heart;
+});
+
 done();

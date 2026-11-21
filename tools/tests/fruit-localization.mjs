@@ -111,6 +111,29 @@ check('청과 V4.4C 프롬프트 · 정규식 이름이 모두 한글 제목에 
   // V4.0C 고정물의 이름은 지금도 모두 걸려요
   for(const row of qingguoV40C.prompts)assert.ok(dictionary.prompts.some(p=>same(p.name)===same(row.name)),row.name);
 });
+// 11-21 청과 헤스페리데스 V5(파일 이름 V5.0 · 안 설명 V5.1 · 도구 호출 1.6): 프롬프트 343개 · 정규식 24개가 모두 한글 제목에 걸리고, 이름이 바뀐 여섯의 V4.4C 이름도 계속 걸려요.
+const qingguoV50=JSON.parse(fs.readFileSync(path.join(root,'tools/tests/fixtures/qingguo-hesperides-v50-names.json'),'utf8'));
+check('청과 V5 프롬프트 · 정규식 이름이 모두 한글 제목에 걸려요 (남은 중국어 0 · 옛 V4.4C 이름도 그대로)',()=>{
+  assert.equal(qingguoV50.prompts.length,343);assert.equal(qingguoV50.regex.length,24);
+  const same=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
+  const marks=s=>[...String(s).matchAll(/#[^#｜]+/gu)].map(m=>m[0].trim());
+  const bare=s=>String(s).replace(/@[^\s@｜#]+/gu,'').replace(/#[^#｜]*/gu,'');
+  const missing=[];
+  for(const kind of ['prompts','regex'])for(const row of qingguoV50[kind]){
+    const list=dictionary[kind],key=same(row.name);
+    const entry=list.find(p=>p.id===row.id&&same(p.name)===key)||list.find(p=>same(p.name)===key);
+    if(!entry){missing.push(`${kind}: ${row.name}`);continue;}
+    if(/\p{Script=Han}/u.test(bare(entry.title)))missing.push(`${kind}: ${row.name} → ${entry.title} (중국어가 남았어요)`);
+    for(const m of marks(row.name))if(!entry.title.includes(m))missing.push(`${kind}: ${row.name} → ${entry.title} (${m} 표시가 빠졌어요)`);
+    if(kind==='prompts'&&entry.title.split('｜').length!==row.name.split('｜').length)missing.push(`${kind}: ${row.name} → ${entry.title} (｜ 칸 수)`);
+  }
+  assert.deepEqual(missing,[],`한글 제목이 없는 V5 이름 ${missing.length}개`);
+  // 새 항목 열넷은 길게 누르기 설명(desc)까지
+  for(const id of ['fruit-v45-anti-routing-chit','fruit-v45-anti-routing-entropy','fruit-v5-custom-vol1','fruit-v5-custom-vol3','fruit-v5-custom-vol4','fruit-v45-nsfw-dispatch-full','fruit-v45-nsfw-dispatch-smart','fruit-v51-post-tactical-compile','fruit-v5-display-section-custom','fruit-v5-custom-direct-1','fruit-v5-custom-direct-2','fruit-v5-custom-output','fruit-v5-farmer-editor','fruit-heart-tail3-4hn'])assert.ok(dictionary.prompts.find(p=>p.id===id)?.desc,id);
+  // V4.4C 고정물의 이름은 지금도 모두 걸려요(옛 판 호환)
+  for(const row of qingguoV44C.prompts)assert.ok(dictionary.prompts.some(p=>same(p.name)===same(row.name)),row.name);
+  assert.ok(qingguoV50.scripts.includes('拉刻西斯-出杯·工具调用1.6（果心内嵌UI版）'));
+});
 {const src=path.join(root,'tools/scripts-src/fruit-family'),read=n=>JSON.parse(fs.readFileSync(path.join(src,n),'utf8'));
  const parts=['common','fruit','qingguo','sese'].map(n=>read(`prompts-${n}.json`)),norm=v=>String(v||'').normalize('NFKC').replace(/[︎️\s]/g,'');
  check('family dictionary: priority 20, partial, at least 460 prompt and 48 regex titles',()=>{assert.equal(dictionary.priority,20);assert.equal(dictionary.partial,true);assert.ok(dictionary.prompts.length>=460);assert.ok(dictionary.regex.length>=48)});
