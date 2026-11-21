@@ -251,6 +251,7 @@ jobs:
           node tools/tests/weather-status.mjs .
           node tools/tests/weather-status-ko.mjs .
           node tools/tests/weather-meatball.mjs .
+          node tools/tests/weather-status-window.mjs .
           node tools/tests/mb-dot-seen.mjs .
           node tools/tests/mb-hidden.mjs .
           node tools/tests/mb-autosub.mjs .

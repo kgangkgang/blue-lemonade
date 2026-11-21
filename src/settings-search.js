@@ -100,7 +100,7 @@ const rows = [
  ['chat','screen','미트볼 문구: 채팅 전체 요청 1회 상한','미트볼 문구 블루레몬 추천 채팅 전체 요청 1회 상한 토큰 한도 줄이기 meatball prompt all cap limit','','chat.mbPromptCap'],
  ['chat','screen','미트볼 문구: 앞 메시지마다 읽을 글자 수','미트볼 문구 블루레몬 추천 최근 답 여러 개 앞 메시지마다 읽을 글자 수 몇 자 토큰 meatball prompt recent chars','','chat.mbPromptChars'],
  ['chat','screen','미트볼 상태창 편의 기능','미트볼 상태창 편의 기능 설정 찾기 검색 맨 위로 단추 끄기 meatball helpers find top','','chat.mbHelpers'],
- ['chat','screen','날씨 따라가기: 미트볼 상태창','미트볼 상태창 달력 오늘 날씨 따라가기 트래커 따라 비 눈 맑음 날씨 효과 연결 meatball weather','','chat.weatherFollowMeatball'],
+ ['chat','screen','날씨 따라가기: 상태창','상태창 미트볼 상태창 달력 오늘 날씨 따라가기 트래커 따라 비 눈 맑음 날씨 효과 연결 meatball weather','','chat.weatherFollowMeatball'],
  ['chat','screen','날씨 · 내 메시지 비침','날씨 내 메시지 농도 비침 비치기 내 말 위 날씨','','chat.weatherBubble'],
  ['chat','screen','장면 소리','장면 소리 배경 소리 빗소리 비 소리 바람 소리 천둥 물결 파도 환경음 앰비언트 ambient 날씨 소리 소리 크기 볼륨 내 소리 파일 화면 밖에서도 TTS 효과음 겹침','','sceneSound.on'],
  ['chat','screen','분위기 음악','분위기 음악 배경 음악 BGM 브금 음악 크기 일상 긴장 전투 로맨스 슬픔 신비 축제 분위기 고정 내 곡 덕킹','','sceneSound.music.on'],

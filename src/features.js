@@ -4,7 +4,7 @@ import { frameReady, trackLate, onGate } from './boot-layers.js';
 import { startPresence, onPresenceChange, restingFor } from './ext-presence.js';
 import { trackerWeatherOn } from './weather-readability.js';
 import { zeroMode, zeroSkips } from './usage-mode.js';   // 1.0.2 제로: ZERO_LOOK 밖의 기능 모듈은 받지 않아요
-let presenceBound = false, zeroNow = null;
+let presenceBound = false, zeroNow = null, statusWeatherBound = false;
 
 const modules = {};
 const ready = {};   // 받아 둔 모듈(이름 → 모듈) — 설정 적용(apply.js)이 그 자리에서 바로 부를 것만
@@ -189,6 +189,8 @@ export function syncFeatures(s, addonsOn = !!s.enabled) {
     if (onehand || modules.onehand) load('onehand', './onehand.js').then(m => m?.syncOneHand(onehand, s.onehand));
     // 3.3.0 날씨 효과 (weather.js — 그리기는 워커)
     // 트래커 따라는 데우스 호환이 켜졌거나(3.4.0) 미트볼 상태창이 켜졌을 때만(1.4.x) — 데우스 호환이 꺼져 있으면 미트볼 날씨만 따라가요(weatherDeusRead: false)
+    // 1.9.9 상태창 날씨 창구가 테마보다 늦게 서면(그 확장은 첫 화면 뒤 한가할 때 실려요) 「트래커 따라」가 끔으로 남지 않게 한 번 다시 적용해요
+    if (s.chat?.weather === 'tracker' && !trackerWeatherOn(s) && !statusWeatherBound) { statusWeatherBound = true; document.addEventListener('blue-lemonade:status-weather', () => { hooks.applyAll?.(); hooks.refreshPanels?.(); }, { once: true }); }
     const weatherChat = s.chat?.weather !== 'tracker' ? s.chat : trackerWeatherOn(s) ? { ...s.chat, weatherDeusRead: !!s.deus?.on } : { ...s.chat, weather: 'off' };
     const weather = on && !!weatherChat?.weather && weatherChat.weather !== 'off';
     if (weather || modules.weather) load('weather', './weather.js').then(m => m?.syncWeather(weather, weatherChat));

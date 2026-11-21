@@ -4,7 +4,7 @@
 //   · 달력이 꺼진 채팅(chatMetadata.statussim.mods.calendar === false) · 이 채팅에서 끈 상태창 · 확장이 없거나 꺼짐 → null(예전 소스 그대로).
 //   · 언제 읽나: weather.js 가 사건(답 · 스와이프 · 채팅 바꾸기 · 그 확장 화면에서 누름 · 머리 띠 바뀜) 뒤 한 번 — 프레임마다 읽지 않아요.
 //   화면 없이 도는 순수 부분이에요(tools/tests/weather-meatball.mjs 가 그대로 불러요).
-import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
+import { foldBlank, trimBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 export const MEATBALL_MODULE = 'statussim';
 
 /** 그 확장 날씨 표(engine.js WEATHER · skeleton_en.js)의 모든 값 + 자주 쓰는 자유 글 → 테마 날씨 종류. 빈 배열 = 아는 말인데 그릴 것 없음(흐림 · 구름 → 끔) */
@@ -113,6 +113,29 @@ function macro(ctx, names) {
         return value.trim();
     }
     return null;
+}
+
+/**
+ * 1.9.9 상태창 날씨 창구 — 원작 상태창이 없어도 상태창(달력)을 맡은 다른 확장이 오늘 날씨 · 때를 여기에 내줘요.
+ *   globalThis[Symbol.for('blue-lemonade.status-weather.v1')] = { version, read() → { text, time } | null, on(fn) → 해제 }
+ *   다 실린 뒤엔 document 에 'blue-lemonade:status-weather' 사건을 한 번 내요(테마가 먼저 실렸을 때 알아채게).
+ *   원작 매크로를 못 읽을 때만 봐요(원작이 먼저).
+ */
+export const STATUS_WEATHER = Symbol.for('blue-lemonade.status-weather.v1');
+export const STATUS_WEATHER_EVENT = 'blue-lemonade:status-weather';
+/** 창구가 있나 */
+export function statusWeatherSource(globals = globalThis) {
+    try { const w = globals?.[STATUS_WEATHER]; return w && typeof w.read === 'function' ? w : null; } catch { return null; }
+}
+/** 창구의 지금 날씨 → { text, time } · 없음 · 빈 글 · 오류면 null */
+export function readStatusWeather(globals = globalThis) {
+    const w = statusWeatherSource(globals);
+    if (!w) return null;
+    let got;
+    try { got = w.read(); } catch { return null; }
+    const text = typeof got?.text === 'string' ? trimBlank(got.text) : '';
+    if (!text) return null;
+    return { text, time: typeof got.time === 'string' ? trimBlank(got.time) : '' };
 }
 
 /**

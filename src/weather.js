@@ -13,7 +13,7 @@ import { weatherAmount, weatherPixelRatio, activeWeather } from './weather-optio
 import { parseColor } from './palettes.js';
 import { getSettings, saveSettings } from './settings.js';
 import { loadWeatherModule } from './weather-load.js';
-import { readMeatballWeather, meatballWeatherModes } from './weather-meatball.js';
+import { readMeatballWeather, meatballWeatherModes, readStatusWeather, statusWeatherSource, STATUS_WEATHER_EVENT } from './weather-meatball.js';
 import { foldBlank } from './blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
 // 코드 정리(버그 사냥 2): syncWeather · previewWeather 가 따로 적던 효과 이름 목록 하나로(weather-profiles.js WEATHER_MODES 와 같은 값)
@@ -319,21 +319,25 @@ function recoveryWeatherText(value) {
 }
 // 미트볼 상태창 날씨(달력)가 먼저 — 그 확장은 답 끝 상태 줄을 본문에서 떼어 보관해서 본문만 보던 트래커 따라에는 날씨가 안 보였어요.
 //   모르는 글이면 끄지 않아요: 이 채팅에서 마지막으로 알아들은 미트볼 날씨를 두고, 그것도 없으면 예전 소스(트래커 · 상태창 글)를 봐요.
-let meatballLast = null, trackerFrom = 'tracker', meatballText = '';
+//   1.9.9: 원작 매크로를 못 읽으면(원작이 없음 · 설정만 남음) 상태창 창구(weather-meatball.js readStatusWeather)를 봐요 — 원작 > 창구 > 트래커.
+let meatballLast = null, trackerFrom = 'tracker', meatballText = '', followFrom = '';
 function meatballFollow(chat) {
+    followFrom = '';
     if (chat?.weatherFollowMeatball === false) return null;
     const ctx = SillyTavern.getContext();
-    const read = readMeatballWeather(ctx);
+    let read = readMeatballWeather(ctx), from = 'meatball';
+    if (!read) { read = readStatusWeather(); from = 'status'; }
     meatballText = read?.text || '';
     if (!read) return null;
     const id = ctx.getCurrentChatId?.() ?? '';
     const found = meatballWeatherModes(read.text, read.time, detectWeatherAll);
-    if (found.known) { meatballLast = { id, found }; return found; }
-    return meatballLast?.id === id ? meatballLast.found : null;
+    if (found.known) { meatballLast = { id, found, from }; followFrom = from; return found; }
+    if (meatballLast?.id === id) { followFrom = meatballLast.from; return meatballLast.found; }
+    return null;
 }
 function trackerSource(chat) {
     const found = meatballFollow(chat);
-    trackerFrom = found ? 'meatball' : 'tracker';
+    trackerFrom = found ? followFrom : 'tracker';
     // 데우스 호환이 꺼진 채 미트볼 상태창으로 고른 「트래커 따라」는 미트볼 날씨만 — 데우스 칸 · 상태창 글은 읽지 않아요(features.js weatherDeusRead)
     if (!found && chat?.weatherDeusRead === false) return NO_WEATHER;
     return found || trackerWeather();
@@ -410,6 +414,16 @@ function listen() {
     if (event_types.CHARACTER_MESSAGE_RENDERED) eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, afterReply);
     document.addEventListener?.('click', onMeatballPress, { capture: true, passive: true });
     document.addEventListener?.('keydown', onMeatballSend, { capture: true, passive: true });
+    // 1.9.9 상태창 창구: 그 확장이 날씨 · 때를 바꿀 때(답 · 하루 넘기기 · 날씨 바꾸기 · 채팅 바꾸기) 다시 봐요 · 늦게 실리면 사건 한 번에 구독
+    document.addEventListener?.(STATUS_WEATHER_EVENT, () => { hookStatusWeather(); scheduleTracker(); });
+    hookStatusWeather();
+}
+let statusHooked = null;
+function hookStatusWeather() {
+    const source = statusWeatherSource();
+    if (!source || source === statusHooked || typeof source.on !== 'function') return;
+    statusHooked = source;
+    try { source.on(() => { if (followsMeatball()) scheduleTracker(); }); } catch { statusHooked = null; }
 }
 
 /** features.js 가 설정이 바뀔 때마다 부른다 */
