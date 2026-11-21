@@ -2000,6 +2000,21 @@ async function translate(text, options = {}) {
     // 1.0.1 진행 표시에 지금 무엇을 기다리는지 (options.onStreamNote — 메시지 위 배지): 생각 중 · 첫 글 기다림 · 흘려받기 안 됨 → 통째로 · 번호 없이 통째로 다시.
     //   흘려받는 요청(onStream)에만 붙고, 요청이 끝나면 지운다 (진행 알림 onProgress 의 차례 · 횟수는 그대로)
     const streamNote = typeof options.onStreamNote === 'function' ? note => { try { options.onStreamNote(note); } catch { /* 표시용 */ } } : null;
+    // 1.9.7 본문 번역에 얹기(ride) — 함께 쓰는 확장이 창구(Symbol.for('blue-lemonade.translator.ride.v1'))를 열어 두고 같은 답의 짧은 조각(상태 줄 · 속마음 …)을 내면,
+    //   이 메시지 번역이 **한 요청으로 끝날 때 그 본문 요청 하나**의 끝 칸에 실어 한 번에 번역해요(사용자 11-21 「본문 AI 번역할 때 한 번에 · 모델이 같으면」 — 같은 모델 판정은 창구 쪽).
+    //   메시지 번역(options.ride = 메시지 번호)이고 목표어가 한국어일 때만. 다시 보내기(배치 바꾸기 · 통짜 · 반 나누기 · 다른 모델 · 남은 글자) · 여러 요청으로 나눈 번역 ·
+    //   캐시만 쓰는 번역(요청 0)에는 안 얹어요. 창구가 없거나 낼 조각이 없으면 요청 · 답 모두 예전과 같아요. 칸은 본문 뒤라 캐시 앞부분(cacheHeads)은 그대로예요.
+    let rideArmed = false, rideSpent = !Number.isInteger(options.ride);
+    const openRide = () => {
+        rideArmed = false;
+        if (rideSpent) return null;
+        rideSpent = true;
+        try {
+            const hub = globalThis[Symbol.for('blue-lemonade.translator.ride.v1')];
+            const offer = typeof hub?.offer === 'function' ? hub.offer({ messageId: options.ride, modelTag: typeof speechModelTag === 'function' ? speechModelTag() : '', target: 'ko' }) : null;
+            return offer && typeof offer.block === 'string' && offer.block.length > 0 && typeof offer.take === 'function' && typeof offer.view === 'function' ? offer : null;
+        } catch { return null; }   // 창구 쪽 오류는 번역을 막지 않아요(예전 그대로)
+    };
     const request = async (prompt, extra = {}) => {
         watcher.check();
         autoContextGuard?.assert();
@@ -2007,11 +2022,16 @@ async function translate(text, options = {}) {
         // [BL 7.4.0] 요청 로그 · 사용량 장부의 용도: 화살표 다시 번역(교정)과 보낼 글 번역을 채팅 번역과 따로 센다
         const purpose = options.requestPurpose || (options.isRetranslation ? 'translation.retranslate' : options.isInputTranslation ? 'translation.input' : undefined);
         const untag = tagRestores.get(prompt);   // 8.0.6 짧게 보낸 태그를 흘려받는 글 · 다 받은 답 모두에서 원래 태그로
-        const sendExtra = { ...(streamNote && typeof extra.onStream === 'function' ? { onStreamState: streamNote } : {}), ...(requestLabel ? { requestLabel } : {}),
-            ...(untag && typeof extra.onStream === 'function' ? { ...extra, onStream: (text, ...rest) => extra.onStream(untag(text), ...rest) } : extra) };
+        const ride = rideArmed ? openRide() : null;   // 1.9.7 얹을 차례인 요청 하나만
+        const streamTo = typeof extra.onStream === 'function' ? extra.onStream : null;
+        const shown = streamTo && (untag || ride) ? (text, ...rest) => { const seen = ride ? ride.view(text) : text; return streamTo(untag ? untag(seen) : seen, ...rest); } : null;   // 1.9.7 칸은 미리 보기에 안 보여요
+        const sendExtra = { ...(streamNote && streamTo ? { onStreamState: streamNote } : {}), ...(requestLabel ? { requestLabel } : {}),
+            ...(shown ? { ...extra, onStream: shown } : extra) };
         let raw;
-        try { raw = await callLLMAPI(prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...(cacheHeads.has(prompt) ? { promptCache: cacheHeads.get(prompt) } : {}), ...sendExtra }); }
+        try { raw = await callLLMAPI(ride ? `${prompt}\n\n${ride.block}` : prompt, { signal: watcher.signal, ...(purpose ? { requestPurpose: purpose } : {}), ...(cacheHeads.has(prompt) ? { promptCache: cacheHeads.get(prompt) } : {}), ...sendExtra }); }
+        catch (error) { ride?.drop(); throw error; }
         finally { streamNote?.(null); }
+        if (ride) { if (typeof raw === 'string') { try { raw = ride.take(raw); } catch { ride.drop(); try { raw = ride.view(raw); } catch { /* 그대로 */ } } } else ride.drop(); }   // 1.9.7 문단 번호 읽기 전에 칸을 떼요
         const result = untag && typeof raw === 'string' ? untag(raw) : raw;
         watcher.check(); autoContextGuard?.assert(); return result;
     };
@@ -2048,6 +2068,9 @@ async function translate(text, options = {}) {
         const koreanKept = extensionSettings.keep_korean_source !== false && !options.isInputTranslation && !options.isRetranslation && options.checkSource === undefined
             && KOREAN_TARGET.test(String(koreanTarget ?? '')) ? keepKorean(maskedText, block => { const token = createPlaceholder(protectedBlocks.length); protectedBlocks.push(block); return token; }) : null;
         if (koreanKept) maskedText = koreanKept.text;
+        // 1.9.7 얹기는 한국어로 옮기는 메시지 번역만 (다시 번역 · 입력 번역 · 점검 원문 견주기 · 따로 준 프롬프트 · 지우기 · TTS 같은 다른 용도는 예전 그대로)
+        if (options.isInputTranslation || options.isRetranslation || options.checkSource !== undefined || options.forget !== undefined || options.requestPurpose
+            || (options.prompt !== undefined && options.prompt !== extensionSettings.llm_prompt_chat) || !KOREAN_TARGET.test(String(koreanTarget ?? ''))) rideSpent = true;
         const keptFrom = koreanKept ? protectedBlocks.length - koreanKept.blocks.length : protectedBlocks.length, keptTo = protectedBlocks.length;   // 1.5.3 한국어 남김 자리표시자 번호 범위 (문단 캐시 조각 f)
         // 3.1.4 한국어로 옮길 때 원문 그대로 온 알림 줄도 남은 원문 다시 번역 · 문단 캐시에서 빼기 (rp-lines.js — 입력 번역 · 다른 말로 옮길 때는 예전처럼)
         //   목표 말은 「into Korean」뿐 아니라 「into natural, fluent Korean」 같은 꾸밈말이 낀 꼴도 (사용자 지시문이 이 꼴 — KOREAN_TARGET 은 못 알아봤다)
@@ -2397,7 +2420,8 @@ async function translate(text, options = {}) {
                             const meta = {};
                             let answer;
                             batchStream = watch ? () => watch.follow(group, at) : null;   // 2.6.2
-                            try { answer = await callWithLayouts(batchPayload(group), layouts); } finally { batchStream = null; }
+                            rideArmed = group === rideGroup && !retried && !lean;   // 1.9.7 한 묶음뿐인 번역의 첫 요청만 (다시 보내는 요청은 openRide 가 한 번만 열어 안 얹혀요)
+                            try { answer = await callWithLayouts(batchPayload(group), layouts); } finally { batchStream = null; rideArmed = false; }
                             const out = parseBatchResult(answer, group.length, meta, group).map(tidyKana); // 5.3.7: 원문 문단과 견줘 꼬리 메모를 걷는다
                             // 2026-10-06: 묶음 중 한 문단만 거절문으로 와도 거절로 — 통짜 재시도 · 반 나누기를 거쳐 끝내 막히면 차단 표시.
                             //             전엔 거절문이 그 문단 번역으로 붙고 메시지 캐시에 들어가 다시 번역해도 거절문이 돌아왔다 (문단 캐시만 막았다)
@@ -2466,8 +2490,10 @@ async function translate(text, options = {}) {
                         }
                     };
                     let requestDown = null, blockedOnce = false;   // 7.7.4 위 catch · 아래 묶음 돌기
+                    const groups = batchGroups(bodies, groupLimit);
+                    const rideGroup = groups.length === 1 ? groups[0] : null;   // 1.9.7 묶음이 여럿이면(나눈 요청) 안 얹어요
                     try {
-                        for (const group of batchGroups(bodies, groupLimit)) {
+                        for (const group of groups) {
                             if (requestDown) { for (const body of group) failReasons.set(body, requestDown); translated.push(...group.map(() => null)); continue; }
                             // 7.7.4 앞 묶음 하나가 배치 바꾸기 · 통짜 · 반 나누기를 다 거치고도 통째로 막혔으면, 남은 묶음은 배치 하나로 한 번씩만 보낸다.
                             //       전엔 묶음마다 같은 단계를 되풀이해 맨 400 · 안전 차단이면 4묶음 답 하나에 요청 40~60번이었다
@@ -2550,6 +2576,7 @@ async function translate(text, options = {}) {
             };
             const wantStream = (showPreview || onProgress) && wholeParas.length > 1;
             if (wantStream) batchStream = () => { closed = []; return wholeStream; };
+            rideArmed = true;   // 1.9.7 통째로 한 번 보내는 요청 — 끊겨서 덩이로 다시 보내는 요청에는 안 얹어요
             try {
                 const out = await callWithLayouts(wholeBody, PROMPT_LAYOUTS);
                 whole = restoreParagraphBreaks(isRetranslation ? compareText : maskedText, head.length ? [...head, out].join('\n\n') : out); // 5.2.4 빠진 문단 빈 줄 되살리기
@@ -2561,7 +2588,7 @@ async function translate(text, options = {}) {
                     if (kept.length) try { await writeCheckpoint({ key: wholeKey, parts: [...head, ...kept], total: wholeParas.length }); } catch { /* 남기기 실패는 원래 오류를 바꾸지 않는다 */ }
                 }
                 if (!error?.refused || chunks.length < 2) throw error;
-            } finally { if (wantStream) batchStream = null; }
+            } finally { if (wantStream) batchStream = null; rideArmed = false; }
             // 2.5.1 통짜 답이 중간에 끊겼으면 덩이로 나눠 다시 (덩이가 하나뿐이면 붙이지 않고 오류 — 남은 문단을 조용히 잃지 않게)
             if (whole !== null && !isRetranslation && looksCutShort(maskedText, whole)) {
                 if (chunks.length < 2) throw cutError();
@@ -3627,7 +3654,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                 const onProgress = stage => { const info = stage && typeof stage === 'object' ? { ...stage, edited } : stage; if (startToast) { clearTimeout(startTimer); startToast(startNotice(info, messageId)); } badge.update(info); };   // 7.3.1
                 try {
                     // 6.5.2 같은 채팅을 다시 불러오는 사이(배열이 빈 순간)는 「바뀜」이 아니다 — 가라앉은 뒤에 판단한다
-                    translation = await translate(originalText, { segmentCache, prior: segmentCache ? prior : null, collectNames: true, auto: source === 'auto', contextAt: Number(messageId), assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onStreamNote: badge.note, onProgress, onPreview: preview.show, report });
+                    translation = await translate(originalText, { segmentCache, prior: segmentCache ? prior : null, collectNames: true, auto: source === 'auto', contextAt: Number(messageId), ride: Number(messageId), assertValid: () => { if (runToken.guard.settled()) runToken.guard.assert(); }, onStreamNote: badge.note, onProgress, onPreview: preview.show, report });
                 } finally {
                     clearTimeout(startTimer); startToast = null; preview.stop(); badge.remove();
                 }
