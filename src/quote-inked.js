@@ -63,3 +63,20 @@ export function inkedQuote(q, seen = null) {
     }
     return false;
 }
+
+// 2.0.2 대사 글이 통째로 기울임인 대사(`"*…*"` → <q><em>…</em></q>) — 전체 칠의 줄 끝 기울어진 획 늘림(css/06-chat-text.css)을 이 q 에도 걸어요.
+//   1.9.8 늘림은 기울임 안의 대사(<em><q>)만 봐서, 대사 안이 기울임인 꼴은 줄이 꺾이는 곳마다 끝 글자가 띠 밖으로 잘렸어요(사용자 11-21 「신입 할 때 ㅣ 좀 짤리는데」)
+export const ITALIC_Q = 'bl-q-em';
+/** q 의 글자 · 숫자가 모두 그 안 기울임(em · i) 안에 있나 (안의 대사는 건너뜀) */
+export function italicInsideQuote(q) {
+    const own = q.textContent;
+    if (!WORD.test(own)) return false;
+    let italic = '';
+    const walk = el => { for (const k of el.children || []) { if (k.nodeName === 'Q') continue; if (k.nodeName === 'EM' || k.nodeName === 'I') italic += k.textContent; else walk(k); } };
+    walk(q);
+    if (!italic) return false;
+    // 기울임 밖 글 = 전체에서 기울임 글을 뺀 나머지(같은 글이 앞뒤로 되풀이돼도 글자 수로)
+    let rest = own;
+    for (const ch of italic) { const i = rest.indexOf(ch); if (i >= 0) rest = rest.slice(0, i) + rest.slice(i + 1); }
+    return !WORD.test(rest);
+}

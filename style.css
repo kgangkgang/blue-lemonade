@@ -1,7 +1,7 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build e1ce2175009a) */
-:root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"e9231a23d5141227"}
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 3109274cdd06) */
+:root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"9649ddc0c88522ab"}
 /* css/00-base.css */
-:root{--bl-release:"2.0.1";}
+:root{--bl-release:"2.0.2";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -2927,7 +2927,8 @@ body.salty.salty-dlg-marker :is(#chat,.bl-chat-like) .mes .mes_text q,
 }
 body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text q,
 .salty-sample.salty-dlg-full q:is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
-  background: var(--salty-fill-marker, var(--salty-marker));
+  --bl-q-band: var(--salty-fill-marker, var(--salty-marker));
+  background: var(--bl-q-band);
   border-radius: 5px;
   padding: 0.04em 0;
 }
@@ -2936,15 +2937,18 @@ body.salty.salty-dlg-marker :is(#chat,.bl-chat-like) .mes .mes_text :is(em, i) q
   content: '';
   padding-inline-end: 0.15em;
 }
-body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text :is(em, i) q:not(q q),
-.salty-sample.salty-dlg-full :is(em, i) q:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
-  box-shadow: 0.15em 0 0 var(--salty-marker), -0.05em 0 0 var(--salty-marker);
+body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text :where(q):where(:is(em, i) q:not(q q)):is(.bl-s, *):is(bl-s, *):is(bl-s, *):is(bl-s, *),
+.salty-sample.salty-dlg-full :where(q):where(:is(em, i) q:not(q q)):is(.bl-s, *):is(bl-s, *):is(bl-s, *):is(bl-s, *):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
+body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text q.bl-q-em:not(q q),
+.salty-sample.salty-dlg-full q.bl-q-em:not(q q):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
+  box-shadow: 0.15em 0 0 var(--bl-q-band, var(--salty-marker)), -0.05em 0 0 var(--bl-q-band, var(--salty-marker));
 }
 body.salty.salty-dlg-marker :is(#chat,.bl-chat-like) .mes .mes_text q.bl-q-inked:not(#salty-none),
 .salty-sample.salty-dlg-marker q.bl-q-inked:not(#salty-none):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *),
 body.salty.salty-dlg-full :is(#chat,.bl-chat-like) .mes .mes_text q.bl-q-inked:not(#salty-none),
 .salty-sample.salty-dlg-full q.bl-q-inked:not(#salty-none):is(#bl-s, *):is(.bl-s, *):is(.bl-s, *):is(bl-s, *) {
   background: none !important;
+  --bl-q-band: transparent;
   -webkit-mask: none !important;
   mask: none !important;
   padding: 0;
@@ -7204,12 +7208,12 @@ body.salty.salty-qr-top #send_form > #qr--bar {
   padding-bottom: 4px;
 }
 /* css/37-prompt-ink.css */
-@media not all {#bl-dem-slot-boot-9-afb1843dc8673e2a{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-boot-9-801e484e2065b4f3{--bl-dem-slot:0}}
 @supports (-webkit-mask-clip: text) {
 @media not all {#bl-dem-slot-boot-10-1983615fa160bf7f{--bl-dem-slot:0}}
 }
 
-@media not all {#bl-dem-slot-boot-11-5acefa5a122ef22f{--bl-dem-slot:0}}
+@media not all {#bl-dem-slot-boot-11-f7a7f5cff7327c6f{--bl-dem-slot:0}}
 /* css/38-outline.css */
 /* css/40-profile.css */
 body.salty.salty-profile-mode-none :is(#chat,.bl-chat-like) .mes:not([is_user="true"]):not([is_system="true"]) > .mesAvatarWrapper > .avatar { display: none !important; }

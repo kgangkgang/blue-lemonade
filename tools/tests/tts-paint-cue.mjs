@@ -36,6 +36,30 @@ await test('단서가 없으면 예전처럼(문단 짐작 · 안 칠함) — �
     assert.deepEqual(dial('그녀는 "하람의 여동생"이라는 말을 떠올렸다.'), [['하람의 여동생', '', false]]);
     assert.deepEqual(dial('미나의 메시지가 왔다.\n\n렉스는 고개를 들었다. 「뭐래?」'), [['뭐래?', '렉스', false]], '다른 문단의 단서는 안 봐요');
 });
+// 2.0.2(사용자 제보 11-21 「타자는 왜 그 인물 대사 색 아님 ㅜ」) — 넓힌 꼴 · 인용만 있는 문단 · 내가 보낸 메시지
+const dial2 = s => X.segmentMessage(s, { knownNames: NAMES, userName: '하람', charName: '렉스', paragraphs: true }).filter(g => g.kind === 'dialogue').map(g => [g.text.slice(0, 6), g.paraName || '', !!g.paraHead]);
+await test('2.0.2 「X 특유의 … 답장」 · 「X의 회신」 · 「X가 쳐낸」 · X 의 reply · X texted back — 인용만 있는 다음 문단도', () => {
+    assert.deepEqual(dial2('하람은 휴대폰을 주머니에 넣었다. 진동이 울렸다.\n\n꺼내 보니, 렉스 특유의 분당 200단어짜리 타자 속도로 쳐낸 답장이 와 있다.\n\n『17:08에 최종 배치 확인.』'), [['17:08에', '렉스', true]]);
+    assert.deepEqual(dial2('미나의 회신이 떴다. 『확인』'), [['확인', '미나', true]]);
+    assert.deepEqual(dial2('미나가 쳐낸 답장은 짧았다. 『응』'), [['응', '미나', true]]);
+    assert.deepEqual(dial2("Tavi's reply came fast: \"Got it.\""), [['Got it', 'Tavi', true]]);
+    assert.deepEqual(dial2('Tavi texted back: "Sure."'), [['Sure.', 'Tavi', true]]);
+    assert.deepEqual(dial2('미나에게서 답장이 와 있다.\n\n\n\n『곧 가』'),[['곧 가', '미나', true]], '빈 문단 하나 건너');
+});
+await test('2.0.2 내가 보낸 메시지: 「(나는) X(직함)과의 대화창을 열고 … 입력한다」 · 「私はXに送る」 · 대명사는 앞 문장 주어가 나일 때만', () => {
+    assert.deepEqual(dial2('하람은 휴대폰을 들었다. 그녀는 렉스(기획부 부장)과의 개인 대화창을 열고, 감정을 지운 채 철저히 사무적인 메시지를 입력한다.\n\n『렉스 부장님, 배치 결과 보고드립니다.』'), [['렉스 부장님', '하람', true]]);
+    assert.deepEqual(dial2('하람이 보낸 메시지였다. 『곧 갈게』'), [['곧 갈게', '하람', true]], '내 이름 + 보낸');
+    assert.deepEqual(dial2('私はミナに送る。「今行く」'), [['今行く', '하람', true]]);
+    assert.deepEqual(dial2('하람은 숨을 골랐다. 그녀가 입력한 문장은 짧았다. 『알겠어요』'), [['알겠어요', '하람', true]]);
+    assert.deepEqual(dial2('렉스는 미나와의 대화창을 열고 메시지를 보낸다. 『지금 와』'), [['지금 와', '렉스', true]], '주어가 다른 아는 이름이면 그 사람');
+});
+await test('2.0.2 못 가리면 그대로(오판보다 못 가림): 앞 문장 없는 대명사 · 보내는 말 없는 대화창 · 다른 이름 주어 대명사', () => {
+    assert.deepEqual(dial2('그녀는 렉스(기획부 부장)과의 개인 대화창을 열고 메시지를 입력한다.\n\n『렉스 부장님, 보고드립니다.』'), [['렉스 부장님', '', false]]);
+    assert.deepEqual(dial2('그녀가 입력한 문장은 짧았다. 『알겠어요』'), [['알겠어요', '', false]]);
+    assert.deepEqual(dial2('하람은 렉스와의 대화창을 열어 둔 채 창밖을 봤다. 『비가 오네』'), [['비가 오네', '하람', false]], '보내는 말이 없으면 받는 쪽 꼴이 아니에요(예전 문단 짐작)');
+    assert.deepEqual(dial2('미나는 고개를 들었다. 그녀는 렉스와의 대화창을 열고 입력한다. 『응』'), [['응', '미나', false]], '대명사의 앞 주어가 내가 아님');
+});
+
 await test('발신자 머리 줄이 있으면 그것이 먼저(1.7.8 그대로)', () => {
     assert.deepEqual(dial('렉스의 메시지 다음.\n【발신자: 미나】\n『확인했어.』'), [['확인했어.', '미나', true]]);
 });

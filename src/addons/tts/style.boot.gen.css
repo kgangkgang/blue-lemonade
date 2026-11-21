@@ -1,7 +1,7 @@
 /* 생성 파일 — tools/build-addon-css.mjs (애드온 창 밖 규칙만 · 전체는 style.css) */
 
 .lv-settings, .lv-editor, .lv-bar, .lv-namevoice {
-  --lv-css-version: "2.1.1";
+  --lv-css-version: "2.1.2";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));

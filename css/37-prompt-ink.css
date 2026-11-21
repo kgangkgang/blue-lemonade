@@ -17,6 +17,7 @@ body.salty.salty-dem-ink :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-pre
 /* 글자 색 (기본): 대사 글자에 프롬프트 색, 형광펜 · 전체 칠은 그 대사에만 끔 */
 body.salty.salty-dem-ink:not(.salty-dem-ink-marker) :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
   background: none !important;
+  --bl-q-band: transparent;   /* 2.0.2 띠가 없으면 줄 끝 늘림 그림자도 없음(css/06) */
   padding: 0;
 }
 
@@ -35,6 +36,7 @@ body.salty.salty-dem-ink:not(.salty-dem-ink-marker) :is(#chat .mes, .cg-root, :i
 body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]) q {
   -webkit-text-fill-color: var(--salty-marker-ink, var(--salty-dialogue));
   background-color: currentColor !important;
+  --bl-q-band: currentColor;   /* 2.0.2 전체 칠 줄 끝 늘림도 이 띠 색(css/06) */
   background-image: none !important;
 }
 @supports (-webkit-mask-clip: text) {
@@ -61,6 +63,7 @@ body.salty.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#sal
   -webkit-mask: none !important;
   mask: none !important;
   background-color: color-mix(in srgb, currentColor 34%, transparent) !important;
+  --bl-q-band: color-mix(in srgb, currentColor 34%, transparent);
   background-image: none !important;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -79,10 +82,12 @@ body.salty.salty-dlg-full.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg
    너무 짙어서 띠 전용 값(--bl-mtone-*, apply.js ← chat.markerTone). 회색끼 색(bl-tone-grey)은 --bl-hue 가 없어 그대로. */
 body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"])[style*="--bl-hue"] q:not(q q) {
   background-color: hsl(var(--bl-hue) var(--bl-mtone-s) var(--bl-mtone-l)) !important;
+  --bl-q-band: hsl(var(--bl-hue) var(--bl-mtone-s) var(--bl-mtone-l));   /* 2.0.2 전체 칠 줄 끝 늘림도 이 색(css/06) */
 }
 /* 회색끼 색은 톤을 맞추면 글자가 테마 글자색이 되는데, 띠까지 그 색(currentColor)이면 짙은 띠 위 짙은 글자가 된다 → 테마 형광펜 그대로 (마스크 없이 원래 띠 그림) */
 body.salty.salty-tone.salty-dem-ink.salty-dem-ink-marker :is(#chat .mes, .cg-root, :is(#salty-nochat, .salty-preview) .mes) .mes_text :is(font[color], [style*="color"]).bl-tone-grey q:not(q q) {
   background: var(--salty-marker-bg) !important; /* 줄임 값(그림 · 위치 · 크기)이라 background 로 받는다 */
+  --bl-q-band: var(--salty-marker);
   -webkit-mask: none;
   mask: none;
 }

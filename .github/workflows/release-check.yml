@@ -477,6 +477,7 @@ jobs:
           # 1.7.8 메신저 장면 『…』 이 강조 노랑으로 보이던 것: 발신자 머리 줄 화자 색 · 대사만 감싼 굵게는 대사 모습
           node tools/tests/tts-paint-sender-line.mjs .
           node tools/tests/tts-paint-cue.mjs .
+          node tools/tests/quote-italic-tail.mjs .
           node tools/tests/translator-speech.mjs .
           node tools/tests/bookmark-excerpts.mjs .
           node tools/tests/bookmark-images.mjs .

@@ -64,7 +64,7 @@ console.log(`판정 ${n}개 통과`);
 
 // 조판이 q 마다 표시를 붙이고 떼요 (같은 상태면 다시 쓰지 않음 · 조판을 끄면 뗌)
 const typo = read('src/typography.js');
-assert.match(typo, /import \{ ?inkedQuote, ?INKED(?:, ?strongOnlyQuote, ?STRONG_Q)? ?\} from '\.\/quote-inked\.js'/, 'typography.js 가 판정을 가져와요');   // 1.7.8 대사만 감싼 굵게(STRONG_Q)도
+assert.match(typo, /import \{ ?inkedQuote, ?INKED(?:, ?strongOnlyQuote, ?STRONG_Q)?(?:, ?italicInsideQuote, ?ITALIC_Q)? ?\} from '\.\/quote-inked\.js'/, 'typography.js 가 판정을 가져와요');   // 1.7.8 대사만 감싼 굵게(STRONG_Q)도 · 2.0.2 대사 안 통째 기울임(ITALIC_Q)도
 assert.match(typo, /inkedQuote\(q/, 'writeRoot 에서 q 마다 판정');
 assert.match(typo, /querySelectorAll\(`\.\$\{INKED\}`\)/, '조판을 끄면 표시를 떼요');
 

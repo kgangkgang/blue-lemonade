@@ -7196,7 +7196,7 @@ html:where(.bl-asc-13) body.salty .bl-ctsi-dialog #ctsi-drawer-content :is(#cts-
 :where(html.bl-asc-15) #lv_settings .lv-settings-credits :where(summary):is(summary, a):focus-visible,
 :where(html.bl-asc-15) #lv_settings .lv-settings-credits :where(a):is(summary, a):focus-visible { outline: 2px solid var(--lv-accent); outline-offset: 3px; }
 :where(html.bl-asc-15) .lv-settings,:where(html.bl-asc-15) .lv-editor,:where(html.bl-asc-15) .lv-bar,:where(html.bl-asc-15) .lv-namevoice {
-  --lv-css-version: "2.1.1";
+  --lv-css-version: "2.1.2";
   --lv-accent: var(--salty-accent, var(--SmartThemeQuoteColor, #51a0de));
   --lv-text: var(--SmartThemeBodyColor, #dcdcd2);
   --lv-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .15));

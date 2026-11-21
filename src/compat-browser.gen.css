@@ -1,4 +1,4 @@
-/* src/compat-browser.gen.css — tools/build-css.cjs 가 css/ 에서 크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 60개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build e1ce2175009a) */
+/* src/compat-browser.gen.css — tools/build-css.cjs 가 css/ 에서 크로미움 밖 브라우저 · 강제 색 · 옛 크로미움용 규칙 60개만 떼어 적은 것(고치지 말 것 · tools/css-compat.cjs). src/lite.js loadCompatCss 가 조건이 맞을 때만 테마 시트 뒤에 붙인다 (build 3109274cdd06) */
 body.salty input[type="range"]:where(:not(.salty-panel:not(*)))::-moz-range-thumb {
 width:var(--bl-knob-size);
 height:var(--bl-knob-size);
@@ -67,6 +67,7 @@ body.salty.salty-dem-ink.salty-dem-ink-marker:not(.salty-dlg-full) :is(:is(#chat
   -webkit-mask: none !important;
   mask: none !important;
   background-color: color-mix(in srgb, currentColor 34%, transparent) !important;
+  --bl-q-band: color-mix(in srgb, currentColor 34%, transparent);
   background-image: none !important;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
