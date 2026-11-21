@@ -178,6 +178,71 @@ body.salty #toast-container .toast-close-button:active {
   background: var(--bl-fill-press-bg, var(--bl-press-bg));
   color: var(--salty-text);
 }
+/* 2.0.0 다시 쓰기 · 번역 알림 한 장(src/flow-toast.js) — 한 꼴: 아이콘 · 제목 · 한 줄 · 오른쪽 끝 ↻ · ×
+   사용자 11-21 「번역 알림 왜 저래 왤케 커」: × 가 맨 위에 따로 줄을 만들고 실패 글이 세 줄이라 채팅 첫 줄까지 덮었어요.
+   · 낮게: 최소 높이 0 · 위아래 7px · 제목은 작은 글씨 한 줄 · 글은 한 줄(넘치면 말줄임) → 384 · 360 폭에서 두 줄(제목 + 글)
+   · 너비 · 여백 · 그림자는 1.9.8 상태 띠 · 전개 지시 창 꼴: 화면 양옆 8px · 큰 모서리 · 얕은 그림자 둘(무거운 --bl-e4 대신)
+   · 까닭은 누르면 펼침(.bl-flow-open) — 그때만 여러 줄 */
+body.salty #toast-container > div.bl-flow-toast {
+  width: min(420px, calc(100vw - 16px)) !important;
+  min-height: 0;
+  padding: 7px 4px 7px 42px !important;
+  gap: 1px !important;
+  border-radius: var(--bl-r-lg) !important;
+  box-shadow: 0 1px 2px var(--bl-fb-rgb-15-34-56-0p14), 0 4px 10px -2px var(--bl-fb-rgb-15-34-56-0p14), inset 4px 0 0 var(--bl-tone) !important;
+  box-shadow: 0 1px 2px rgb(from var(--salty-shadow-50, rgba(35, 62, 92, 0.06)) r g b / calc(alpha * 1.1)), 0 4px 10px -2px rgb(from var(--salty-shadow-50, rgba(35, 62, 92, 0.06)) r g b / calc(alpha * 1)), inset 4px 0 0 var(--bl-tone) !important;
+}
+body.salty #toast-container > div.bl-flow-toast::before,
+body.salty #toast-container > div.bl-flow-toast::after { left: 12px; }
+body.salty #toast-container > div.bl-flow-toast .toast-title {
+  margin: 0 !important;
+  padding-right: 8px;
+  color: var(--salty-faint);
+  font-size: calc(var(--bl-fs-ctl) * 0.86);
+  font-weight: 600;
+  line-height: 1.25 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.salty #toast-container > div.bl-flow-toast .toast-message {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  line-height: 1.3 !important;
+}
+body.salty #toast-container > div.bl-flow-toast .bl-flow-text { flex: 1 1 auto; min-width: 0; order: 0; }
+body.salty #toast-container > div.bl-flow-toast .bl-flow-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.salty #toast-container > div.bl-flow-toast .bl-flow-more { display: none; }
+body.salty #toast-container > div.bl-flow-toast.bl-flow-open .bl-flow-line { white-space: normal; }
+body.salty #toast-container > div.bl-flow-toast.bl-flow-open .bl-flow-more {
+  display: block;
+  margin-top: 3px;
+  color: var(--salty-faint);
+  font-size: calc(var(--bl-fs-ctl) * 0.9);
+  white-space: normal;
+}
+body.salty #toast-container > div.bl-flow-toast .bl-toast-undo { flex: none; order: 1; margin-left: 0 !important; }
+body.salty #toast-container > div.bl-flow-toast .bl-flow-close {
+  flex: none;
+  order: 2;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--salty-faint);
+  font-size: 0.9em;
+  line-height: 1;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  body.salty #toast-container > div.bl-flow-toast .bl-flow-close:hover { background: var(--bl-fill-hover, var(--bl-hover)); color: var(--salty-text); }
+}
+body.salty #toast-container > div.bl-flow-toast .bl-flow-close:active { background: var(--bl-fill-press-bg, var(--bl-press-bg)); color: var(--salty-text); }
+
 /* 남은 시간 띠: 상태 색 얇은 선 */
 body.salty #toast-container .toast-progress {
   height: 3px;

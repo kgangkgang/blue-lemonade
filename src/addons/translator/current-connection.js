@@ -62,7 +62,7 @@ export async function requestCurrentConnection({context,messages,overrides={},ma
     }catch(error){
         if(error?.name==='ContextSelectionError')throw error;
         if(overrides.signal?.aborted)throw overrides.signal.reason;
-        if(controller.signal.aborted)throw Object.assign(new Error(idle?`${Math.round(timeout/1000)}초 동안 번역 글이 더 오지 않아 끊었어요. 받은 문단은 남아 있어요 — 다시 누르면 나머지만 보내요.`:`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`),{timeout:true});
+        if(controller.signal.aborted)throw Object.assign(new Error(idle?`${Math.round(timeout/1000)}초 동안 번역 글이 더 오지 않아 끊었어요. 받은 문단은 남아 있어요 — 다시 누르면 나머지만 보내요.`:`${Math.round(timeout/1000)}초 안에 번역 답이 오지 않았어요.`),{timeout:true,idle});
         if(/^bad request$/i.test(String(error?.message||'').trim())){
             const rejected=new Error('요청이 거절됐어요 (400 Bad Request). 내용 차단(PROHIBITED_CONTENT) 또는 현재 연결의 요청 설정을 확인해 주세요. 원문은 그대로예요.');
             rejected.refused=true;throw rejected;

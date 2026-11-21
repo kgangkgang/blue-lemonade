@@ -8,9 +8,53 @@
 export const BRIDGE = Symbol.for('blue-lemonade.flow-toast');
 const KINDS = ['success', 'info', 'warning', 'error'];
 const RANK = { success: 0, info: 1, warning: 2, error: 3 };
+// 2.0.0 완료 알림은 짧게(사용자 11-21 「팝업 너무 오래 떠 있는당 번역됐다는 거」) — 예전 3초 · 되돌리기 단추가 붙으면 9초 → 2초 · 단추가 붙으면 3초.
+//   손가락이 닿아 있거나 마우스가 올라가 있는 동안은 멈추고 떼면 1.5초 뒤 · 옆으로 쓸면 바로 닫혀요. 진행 중 · 실패 · 멈춤 알림은 예전 그대로예요.
+export const DONE_MS = 2000, DONE_ACTION_MS = 3000, RESUME_MS = 1500, SWIPE_PX = 48;
+/** 완료 알림(일반 toastr) 옵션 — 다시 쓰기 · 번역 애드온의 「…했어요」 알림이 같은 기준을 써요 */
+export const doneOptions = (actions = false, extra = {}) => ({ timeOut: actions ? DONE_ACTION_MS : DONE_MS, extendedTimeOut: RESUME_MS, ...extra });
+/**
+ * 알림 요소에 「닿는 동안 멈춤 · 옆으로 쓸면 닫힘」 — hold() · release() · dismiss() 는 부르는 쪽이 정해요.
+ *   mouse: 일반 toastr 는 스스로 마우스 올림을 멈추니 opts.mouse === false 로 손가락 · 펜만 받아요(두 번 멈추지 않게).
+ */
+export function holdAndSwipe(toast, { hold, release, dismiss, mouse = true } = {}) {
+    const el = toast?.[0] ?? toast;
+    if (!el?.addEventListener || el.dataset?.blHold) return el ?? null;
+    if (el.dataset) el.dataset.blHold = '1';
+    if (el.style) el.style.touchAction = 'pan-y';   // 세로 굴림은 그대로 · 가로 쓸기는 우리가 받아요
+    let start = null, holding = false;
+    const mine = e => mouse || e.pointerType !== 'mouse';
+    const on = e => { if (!mine(e) || holding) return; holding = true; hold?.(); };
+    const off = e => { if (!mine(e) || !holding) return; holding = false; release?.(); };
+    const reset = () => { start = null; if (el.style) { el.style.transform = ''; el.style.opacity = ''; } };
+    el.addEventListener('pointerenter', on);
+    el.addEventListener('pointerdown', e => { on(e); start = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
+    el.addEventListener('pointermove', e => {
+        if (!start || e.pointerId !== start.id) return;
+        const dx = e.clientX - start.x, dy = e.clientY - start.y;
+        if (Math.abs(dx) < Math.abs(dy)) return;
+        if (el.style) { el.style.transform = `translateX(${dx}px)`; el.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 160)); }
+        if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.5) { start = null; holding = false; dismiss?.(); }
+    });
+    for (const type of ['pointerup', 'pointercancel']) el.addEventListener(type, e => { if (start) reset(); if (e.pointerType !== 'mouse') off(e); });
+    el.addEventListener('pointerleave', e => { if (start) reset(); off(e); });
+    return el;
+}
+
+/** 일반 toastr 완료 알림에 같은 손길 — 손가락이 닿으면 toastr 의 마우스 올림 멈춤을 그대로 부르고 · 옆으로 쓸면 닫아요 → 그 알림 */
+export function doneToast(toast, toastr = () => globalThis.toastr) {
+    if (!toast) return toast;
+    holdAndSwipe(toast, {
+        mouse: false,
+        hold() { toast.trigger?.('mouseenter'); },
+        release() { toast.trigger?.('mouseleave'); },
+        dismiss() { try { toastr()?.clear?.(toast, { force: true }); } catch { /* 이미 닫힘 */ } },
+    });
+    return toast;
+}
 
 /** 장치 하나 — deps: toastr(함수 · 호출 때 읽음) · timers · 기다림 · 닫힘 시간 */
-export function createFlowToast({ toastr = () => globalThis.toastr, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = id => clearTimeout(id), waitMs = 4000, hideMs = 3000, actionHideMs = 9000 } = {}) {
+export function createFlowToast({ toastr = () => globalThis.toastr, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = id => clearTimeout(id), waitMs = 4000, hideMs = 3000, actionHideMs = 9000, doneMs = DONE_MS, doneActionMs = DONE_ACTION_MS, resumeMs = RESUME_MS } = {}) {
     const cards = new Map();   // key → { el, lines: Map(stage → { text, kind, sticky, done }), order: [], hide, wait, actions }
     const followers = new Map();   // stage → (key, meta) → bool (이 답을 이어서 할 것인가)
     const objKeys = new WeakMap(); let seq = 0;
@@ -23,25 +67,57 @@ export function createFlowToast({ toastr = () => globalThis.toastr, setTimer = (
         return card.order.filter(s => s === last || card.lines.get(s).sticky).map(s => card.lines.get(s));
     };
     const kindOf = lines => lines.reduce((k, l) => (RANK[l.kind] > RANK[k] ? l.kind : k), lines.length ? lines[lines.length - 1].kind : 'info');
+    // 2.0.0 한 꼴(사용자 11-21 「번역 알림 왜 저래 왤케 커」): 아이콘 · 제목 · 한 줄 · 오른쪽 끝 ↻ · × — 보이는 줄이 여럿이면 「 · 」 로 이어 한 줄(넘치면 말줄임),
+    //   자세한 까닭(detail)은 알림을 누르면 펼쳐져요(한 번 더 누르면 닫힘). × 는 toastr 닫기 단추 대신 글 줄 끝에 붙여 따로 줄을 만들지 않아요.
+    const body = lines => {
+        const line = lines.map(l => esc(l.text)).join(' · ');
+        const more = lines.map(l => l.detail).filter(Boolean).map(esc).join('<br>');
+        return `<span class="bl-flow-line">${line}</span>${more ? `<span class="bl-flow-more">${more}</span>` : ''}`;
+    };
     function paint(card) {
         const lines = shown(card), kind = kindOf(lines), t = toastr();
-        const text = lines.map(l => l.text).join('\n');
+        card.more = lines.some(l => l.detail);
         if (!alive(card.el)) {
             if (!t) return;
-            card.el = t[kind](`<span class="bl-flow-text">${esc(text).replace(/\n/g, '<br>')}</span>`, title(card), { timeOut: 0, extendedTimeOut: 0, closeButton: lines.some(l => l.sticky), escapeHtml: false });
+            card.el = t[kind](`<span class="bl-flow-text">${body(lines)}</span>`, title(card), { timeOut: 0, extendedTimeOut: 0, closeButton: false, tapToDismiss: false, escapeHtml: false });
             card.el?.addClass?.('bl-flow-toast');
+            const c = card;
+            addClose(c);
+            if (c.more) c.el?.addClass?.('bl-flow-has-more');
+            const node = c.el?.[0] ?? c.el;
+            node?.addEventListener?.('click', event => {   // 누르면: 펼칠 까닭이 있고 아직 접혀 있으면 펼침 · 아니면 닫음(예전 「눌러서 닫기」 그대로)
+                if (event?.defaultPrevented) return;
+                if (c.more && !c.open) { c.open = true; c.el?.addClass?.('bl-flow-open'); if (c.hide) { clearTimer(c.hide); c.hide = 0; } return; }
+                close(c.k);
+            });
+            holdAndSwipe(card.el, {
+                hold() { c.held = true; if (c.hide) { clearTimer(c.hide); c.hide = 0; c.resume = true; } },
+                release() { c.held = false; if (c.resume) { c.resume = false; c.hide = setTimer(() => close(c.k), resumeMs); } },
+                dismiss() { close(c.k); },
+            });
             return;
         }
         const el = card.el;
         el.removeClass?.(KINDS.map(k => `toast-${k}`).join(' '));
         el.addClass?.(`toast-${kind}`);
-        el.find?.('.bl-flow-text').first().html(esc(text).replace(/\n/g, '<br>'));   // 글 칸만 — 붙인 단추(되돌리기 · 다시)는 그대로
+        el.find?.('.bl-flow-text').first().html(body(lines));   // 글 칸만 — 붙인 단추(되돌리기 · 다시 · 닫기)는 그대로
         const head = el.find?.('.toast-title');
         if (head?.length) head.first().text(title(card));
+        if (card.more) el.addClass?.('bl-flow-has-more'); else { el.removeClass?.('bl-flow-has-more bl-flow-open'); card.open = false; }
+    }
+    /** × — 글 줄 끝(↻ 옆)에 · 누르면 닫기(알림 누름 펼치기로 안 번짐) */
+    function addClose(c) {
+        const node = c.el?.[0] ?? c.el, host = node?.querySelector?.('.toast-message') || null, doc = globalThis.document;
+        if (!host?.append || !doc?.createElement) return;
+        const b = doc.createElement('button');
+        b.type = 'button'; b.className = 'bl-flow-close'; b.setAttribute('aria-label', '닫기');
+        b.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+        b.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); close(c.k); });
+        host.append(b);
     }
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-    function card(key) { const k = keyOf(key); let c = cards.get(k); if (!c) { c = { el: null, lines: new Map(), order: [], hide: 0, wait: 0, actions: false }; cards.set(k, c); } return [k, c]; }
-    function stopTimers(c) { if (c.hide) clearTimer(c.hide); if (c.wait) clearTimer(c.wait); c.hide = c.wait = 0; }
+    function card(key) { const k = keyOf(key); let c = cards.get(k); if (!c) { c = { k, el: null, lines: new Map(), order: [], hide: 0, wait: 0, actions: false, held: false, resume: false, more: false, open: false }; cards.set(k, c); } return [k, c]; }
+    function stopTimers(c) { if (c.hide) clearTimer(c.hide); if (c.wait) clearTimer(c.wait); c.hide = c.wait = 0; c.resume = false; }
     function close(k) {
         const c = cards.get(k); if (!c) return;
         stopTimers(c); cards.delete(k);
@@ -49,12 +125,16 @@ export function createFlowToast({ toastr = () => globalThis.toastr, setTimer = (
     }
     function scheduleClose(k, c) {
         if ([...c.lines.values()].some(l => l.sticky)) return;   // 실패 · 멈춤은 사용자가 닫아요
-        c.hide = setTimer(() => close(k), c.actions ? actionHideMs : hideMs);
+        if (c.held) { c.resume = true; return; }   // 닿아 있는 동안은 멈춤 — 떼면 resumeMs 뒤
+        if (c.open) return;   // 2.0.0 까닭을 펼쳐 읽는 동안은 안 닫혀요(× · 다시 누름 · 쓸기로 닫음)
+        // 2.0.0 보이는 줄이 다 잘 끝났으면(완료) 짧게 · 그 밖(멈춤 안내 등)은 예전 길이
+        const done = shown(c).every(l => l.kind === 'success');
+        c.hide = setTimer(() => close(k), done ? (c.actions ? doneActionMs : doneMs) : (c.actions ? actionHideMs : hideMs));
     }
-    function put(key, stage, { text, kind = 'info', title: head = '', sticky = false, done = false }) {
+    function put(key, stage, { text, detail = '', kind = 'info', title: head = '', sticky = false, done = false }) {
         const [k, c] = card(key); stopTimers(c); c.pending = null;
         c.order = c.order.filter(s => s !== stage).concat(stage);
-        c.lines.set(stage, { text, kind, title: head, sticky, done });
+        c.lines.set(stage, { text, detail, kind, title: head, sticky, done });
         paint(c);
         return [k, c];
     }

@@ -63,12 +63,12 @@ import { messageWork, dropThinkingHead } from '../../message-work.js';   // 6.5.
 import { applyUpgrades } from './upgrades.js';
 import { createRewriteUndo } from './undo.js';   // 7.0.1 ↶ 되돌리기 (채팅마다 마지막 하나, 메모리)
 import { attachUndo } from '../../ask.js';
-import { flowToast } from '../../flow-toast.js';   // 1.9.8 자동 다시 쓰기 → 번역 알림을 답마다 한 장으로
+import { flowToast, doneToast, doneOptions } from '../../flow-toast.js';   // 1.9.8 자동 다시 쓰기 → 번역 알림을 답마다 한 장으로
 import { touch, listGone, registerAddonMerge } from '../list-sync.js';   // 7.0.2 기기 간 합치기   // 7.0.1 알림 끝 ↶ 단추
 import { startQuickBan, setQuickBanEnabled } from './quick-ban.js';
 import { foldBlank, squashBlank } from '../../blank-fold.js';   // 버그 사냥 7 점자 빈칸 공용 정규화
 
-const VERSION = '2.2.2';
+const VERSION = '2.2.3';
 const MODULE = 'ban_word_rewrite';
 // Rules shipped before offeredRules existed (v1.6.0); installs from then already have or deleted them.
 const FIRST_RULE_IDS = ['glasses', 'beard', 'tan', 'cane', 'ears'];
@@ -631,7 +631,7 @@ function flowReport(message, { fixed, failed, error, left = [] }, total, undo = 
         const friendly = friendlyError(error);
         const names = [...new Set(left.flatMap(span => span.rules ?? []).filter(rule => !rule.repeat).map(rule => rule.name).filter(Boolean))].slice(0, 3);
         const text = `${failed}곳은 못 고쳐서 원문 그대로 뒀어요${fixed > 0 ? ` (${fixed}곳은 고침)` : ''}.${names.length > 0 ? ` 남은 것: ${names.join(' · ')}.` : ''}${friendly ? ` ${friendly}` : ''}`;
-        const el = flow.end(message, 'rewrite', { title: TITLE, text, kind: 'warning', sticky: true });
+        const el = flow.end(message, 'rewrite', { title: TITLE, text: `${failed}곳은 못 고쳐 원문 그대로예요${fixed > 0 ? ` · ${fixed}곳은 고침` : ''}`, detail: text, kind: 'warning', sticky: true });   // 2.0.0 한 줄 + 누르면 까닭
         if (retry) attachUndo(el, retry, { label: '남은 문장만 다시 고치기', icon: 'fa-rotate-right' });
         if (undo && fixed > 0) attachUndo(el, () => undoRewrite(undo));
         return;
@@ -675,7 +675,8 @@ async function undoRewrite(rec) {
     if ($(`#chat .mes[mesid="${messageId}"]`).length > 0 && !isEditingMessage(document, messageId)) updateMessageBlock(messageId, message);
     await notifyTextChanged(messageId);
     await saveChatConditional();
-    toastr.success('고치기 전으로 되돌렸어요.', TITLE);
+    const doneShown = toastr.success('고치기 전으로 되돌렸어요.', TITLE, typeof doneOptions === 'function' ? doneOptions() : undefined);
+    if (typeof doneToast === 'function') doneToast(doneShown);   // 2.0.0 완료 알림 같은 기준 · typeof: 이 함수만 잘라 도는 시험
     return true;
 }
 
@@ -700,7 +701,8 @@ function showReport({ fixed, failed, error, left = [] }, total, manual, undo = n
         const parts = [];
         if (fixed > 0) parts.push(`${fixed}곳 고쳤어요`);
         if (kept > 0) parts.push(`${kept}곳은 다른 캐릭터의 특징이거나 외모 묘사가 아니라서 그대로 뒀어요`);
-        const toast = toastr.success(`${parts.join(', ')}.`, TITLE, undo && fixed > 0 ? { timeOut: 9000, extendedTimeOut: 4000 } : undefined);
+        const toast = toastr.success(`${parts.join(', ')}.`, TITLE, typeof doneOptions === 'function' ? doneOptions(undo && fixed > 0) : undefined);
+        if (typeof doneToast === 'function') doneToast(toast);   // 2.0.0 완료는 2초 · ↶ 가 붙으면 3초(예전 9초) · 닿으면 멈춤 · 쓸면 닫힘
         if (undo && fixed > 0) attachUndo(toast, () => undoRewrite(undo));   // 7.0.1 ↶
     }
 }

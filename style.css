@@ -1,7 +1,7 @@
-/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build 61cfb6ff5eed) */
+/* Blue Lemonade style.css — tools/build-css.cjs 가 css/ 의 모듈 52개를 이어 붙여 만든 파일(설명 주석은 css/ 에만 · --split: 나머지 45개는 src/style-lazy.gen.css). 여기서 고치지 말고 css/ 를 고친 뒤 node tools/build-css.cjs (build cfe86a975b18) */
 :root{--bl-css-split:1;--bl-compat-supports:"not ((anchor-name: --bl-drawer) and (width: anchor-size(--bl-drawer width, 0px)))|not ((scrollbar-width: none) and (not (font: -apple-system-body)))|not (-webkit-mask-clip: text)|not (container-type: inline-size)|not (font-synthesis: style)|not (grid-template-rows: subgrid)|not (scrollbar-gutter: stable)|not selector(:has(a))";--bl-compat-media:"(max-width:360px)|screen and (max-width: 1000px) and (hover: hover)|screen and (max-width: 380px)";--bl-dem-style-key:"e9231a23d5141227"}
 /* css/00-base.css */
-:root{--bl-release:"1.9.9";}
+:root{--bl-release:"2.0.0";}
 :root{--bl-opaque-tint:var(--SmartThemeBlurTintColor);}
 @supports (color: rgb(from red r g b)){:root{--bl-opaque-tint:rgb(from var(--SmartThemeBlurTintColor) r g b / 1);}}
 body.salty {
@@ -5601,6 +5601,85 @@ color:var(--salty-text);
 }
 }
 body.salty #toast-container .toast-close-button:active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
+background:var(--bl-fill-press-bg, var(--bl-press-bg));
+color:var(--salty-text);
+}
+body.salty #toast-container > div.bl-flow-toast {
+width:min(420px, calc(100vw - 16px)) !important;
+min-height:0;
+padding:7px 4px 7px 42px !important;
+gap:1px !important;
+border-radius:var(--bl-r-lg) !important;
+}
+body.salty #toast-container > div.bl-flow-toast:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
+box-shadow:0 1px 2px var(--bl-fb-rgb-15-34-56-0p14), 0 4px 10px -2px var(--bl-fb-rgb-15-34-56-0p14), inset 4px 0 0 var(--bl-tone) !important;
+box-shadow:0 1px 2px rgb(from var(--salty-shadow-50, rgba(35, 62, 92, 0.06)) r g b / calc(alpha * 1.1)), 0 4px 10px -2px rgb(from var(--salty-shadow-50, rgba(35, 62, 92, 0.06)) r g b / calc(alpha * 1)), inset 4px 0 0 var(--bl-tone) !important;
+}
+body.salty #toast-container > div.bl-flow-toast::before,
+body.salty #toast-container > div.bl-flow-toast::after { left: 12px; }
+body.salty #toast-container > div.bl-flow-toast .toast-title {
+margin:0 !important;
+padding-right:8px;
+}
+body.salty #toast-container > div.bl-flow-toast .toast-title:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
+color:var(--salty-faint);
+}
+body.salty #toast-container > div.bl-flow-toast .toast-title {
+font-size:calc(var(--bl-fs-ctl) * 0.86);
+font-weight:600;
+line-height:1.25 !important;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+body.salty #toast-container > div.bl-flow-toast .toast-message {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  line-height: 1.3 !important;
+}
+body.salty #toast-container > div.bl-flow-toast .bl-flow-text { flex: 1 1 auto; min-width: 0; order: 0; }
+body.salty #toast-container > div.bl-flow-toast .bl-flow-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.salty #toast-container > div.bl-flow-toast .bl-flow-more { display: none; }
+body.salty #toast-container > div.bl-flow-toast.bl-flow-open .bl-flow-line { white-space: normal; }
+body.salty #toast-container > div.bl-flow-toast.bl-flow-open .bl-flow-more {
+display:block;
+margin-top:3px;
+}
+body.salty #toast-container > div.bl-flow-toast.bl-flow-open .bl-flow-more:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
+color:var(--salty-faint);
+}
+body.salty #toast-container > div.bl-flow-toast.bl-flow-open .bl-flow-more {
+font-size:calc(var(--bl-fs-ctl) * 0.9);
+white-space:normal;
+}
+body.salty #toast-container > div.bl-flow-toast .bl-toast-undo { flex: none; order: 1; margin-left: 0 !important; }
+body.salty #toast-container > div.bl-flow-toast .bl-flow-close {
+flex:none;
+order:2;
+min-width:28px;
+min-height:28px;
+padding:2px 6px;
+border:0;
+border-radius:8px;
+}
+body.salty #toast-container > div.bl-flow-toast .bl-flow-close:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
+background:none;
+color:var(--salty-faint);
+}
+body.salty #toast-container > div.bl-flow-toast .bl-flow-close {
+font-size:0.9em;
+line-height:1;
+cursor:pointer;
+}
+@media (hover: hover) {
+  body.salty #toast-container > div.bl-flow-toast .bl-flow-close:hover:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
+background:var(--bl-fill-hover, var(--bl-hover));
+color:var(--salty-text);
+}
+}
+body.salty #toast-container > div.bl-flow-toast .bl-flow-close:active:where(:not([data-bl-native-ext-colors],[data-bl-native-ext-colors]:not(*))) {
 background:var(--bl-fill-press-bg, var(--bl-press-bg));
 color:var(--salty-text);
 }

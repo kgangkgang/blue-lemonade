@@ -102,7 +102,7 @@ import { POPUP_TYPE, POPUP_RESULT, callGenericPopup } from '../../../../../../po
 import { SlashCommandParser } from '../../../../../../slash-commands/SlashCommandParser.js';
 import { SlashCommand } from '../../../../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../../../../slash-commands/SlashCommandArgument.js';
-import { flowToast } from '../../flow-toast.js';   // 1.9.8 자동 다시 쓰기 → 번역 알림을 답마다 한 장으로 (자동 번역만)
+import { flowToast, doneToast, doneOptions } from '../../flow-toast.js';   // 1.9.8 자동 다시 쓰기 → 번역 알림을 답마다 한 장으로 (자동 번역만)
 import { ask, attachUndo } from '../../ask.js';   // 7.0.1 테마 확인 창 (기본 confirm 대신) · 3.1.6 알림 끝 되돌리기 단추
 import { canResetPrompt, resetButtonState, resetPrompt, undoPromptReset } from './prompt-reset.js';   // 3.1.6 프롬프트 「기본값으로」
 import { DB_QR_LABEL, applyDbQrVisibility, dbQrSets } from './db-tool-qr.js';   // 3.1.6 「입력창에 DB 관리 단추 두기」
@@ -1514,7 +1514,7 @@ const STREAM_IDLE_MS = 90000;   // 7.1.2 흘려받는 번역: 글이 오다가 �
  *   { phase: 'waiting', since } 첫 글을 기다림 · { phase: 'thinking', since } 모델이 생각 중(글 없음) · { phase: 'writing', since, last } 글이 옴(last = 마지막 글 시각) ·
  *   { phase: 'fallback', reason } 흘려받지 못해 예전 요청(통째)으로 받는 중
  */
-async function streamedReply({ body, source, onText, onState = null, signal = null, timeoutMs = 0, idleMs = 0, timedOut = null, purpose = null, label = '' }) {
+async function streamedReply({ body, source, onText, onState = null, onAlive = null, signal = null, timeoutMs = 0, idleMs = 0, timedOut = null, purpose = null, label = '' }) {
     if (typeof onText !== 'function') return null;
     const tell = state => { try { onState?.(state); } catch { /* 보여 주기는 받기를 막지 않는다 */ } };
     try { streamParts ??= await import('./translation-stream.js'); } catch { tell({ phase: 'fallback', reason: '흘려받기 모듈을 못 불러왔어요' }); return null; }
@@ -1547,6 +1547,8 @@ async function streamedReply({ body, source, onText, onState = null, signal = nu
         else { writing = { phase: 'writing', since, last: Date.now() }; tell(writing); }
         return onText(text);
     };
+    // 2.0.0 글이 온 뒤 모델이 다시 생각하는 조각도 「일하는 중」 — 멈춤 시계를 다시 세요(글만 세면 답 중간에 생각하는 모델이 idleMs 에 끊겼어요)
+    const watchAlive = () => { if (!writing) return; if (idleMs > 0) arm(idleMs, true); writing.last = Date.now(); try { onAlive?.(); } catch { /* 시계 다시 세기는 받기를 막지 않는다 */ } };
     try {
         const response = await fetch(new Request('/api/backends/chat-completions/generate', { method: 'POST', headers: { ...getRequestHeaders(), 'Content-Type': 'application/json' },
             cache: 'no-cache', body: JSON.stringify({ ...body, stream: true }), signal: controller.signal }), purpose ? { requestLog: { caller: 'llm-translator-custom', purpose, ...(label ? { label } : {}) } } : undefined);
@@ -1560,7 +1562,7 @@ async function streamedReply({ body, source, onText, onState = null, signal = nu
             trouble(unsupported ? `서버가 흘려받기를 못 한대요 (${response.status})` : `서버가 흘려받기 요청을 받지 않았어요 (${response.status})`, { lock: unsupported });
             return null;
         }
-        const read = await streamParts.readStream(response, { family, source, onText: watchText, onThinking });
+        const read = await streamParts.readStream(response, { family, source, onText: watchText, onThinking, onAlive: watchAlive });
         // 1.0.1 서버가 stream 을 무시하고 통째로 준 본문은 그대로 읽는다 — 다시 보내지 않으니 값이 들지 않아, 다음 번역도 흘려받기를 다시 해 본다 (전엔 세션 내내 껐다)
         if ('raw' in read) { trouble('서버가 흘려받기 없이 한꺼번에 줬어요'); return { replay: { ok: true, status: response.status, statusText: response.statusText, text: async () => read.raw } }; }
         streamTrouble.delete(key);
@@ -1624,7 +1626,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
             // 2.6.2 묶음 번역 흘려받기 — 실리태번 ChatCompletionService 와 같은 본문 · 같은 오류 (null = 예전 요청 그대로)
             stream: typeof overrides.onStream === 'function' ? async (live, payload, signal, touch) => {   // 7.1.3 touch: 글이 올 때마다 현재 연결의 제한 시간을 다시 센다
                 const body = typeof live.ChatCompletionService?.createRequestData === 'function' ? live.ChatCompletionService.createRequestData(payload) : payload;
-                const reply = await streamedReply({ body, source: body.chat_completion_source, onText: text => { touch?.(); return overrides.onStream(text); }, onState: overrides.onStreamState, signal });
+                const reply = await streamedReply({ body, source: body.chat_completion_source, onText: text => { touch?.(); return overrides.onStream(text); }, onAlive: () => touch?.(), onState: overrides.onStreamState, signal });
                 if (!reply) return null;
                 // 7.7.4 흘려받기가 받은 오류는 상태 코드를 문구 앞에 붙여 던진다 — current-connection 이 문구로 429 · 5xx 를 가려 한 번 더 보낸다.
                 //       전엔 공급자 문구만 남아(예: 429 의 'rate limited by upstream' 아닌 다른 말) 다시 안 보냈고, HTML 502 페이지는 SyntaxError 원문이 떴다
@@ -1761,7 +1763,7 @@ async function callLLMAPI(fullPrompt, overrides = {}) {
     //        90초 + 응답 토큰당 10ms (초당 100토큰보다 느린 모델도 버티게), 10분까지. 흘려받기는 글이 오는 동안 끊지 않고 90초 멈출 때만 (STREAM_IDLE_MS)
     const replyTokens = Number(preparedParameters.max_completion_tokens ?? preparedParameters.max_tokens) || 0;
     const timeoutMs = overrides.timeoutMs > 0 ? overrides.timeoutMs : Math.min(600000, 90000 + Math.max(0, replyTokens) * 10);
-    const timedOut = (ms = timeoutMs, idle = false) => Object.assign(new Error(idle ? `${Math.round(ms / 1000)}초 동안 번역 글이 더 오지 않아 끊었어요. 받은 문단은 남아 있어요 — 다시 누르면 나머지만 보내요.` : `${Math.round(ms / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true });
+    const timedOut = (ms = timeoutMs, idle = false) => Object.assign(new Error(idle ? `${Math.round(ms / 1000)}초 동안 번역 글이 더 오지 않아 끊었어요. 받은 문단은 남아 있어요 — 다시 누르면 나머지만 보내요.` : `${Math.round(ms / 1000)}초 안에 답이 없어 끊었어요. 요청을 더 작게 나누거나 잠시 뒤 다시 해 주세요.`), { timeout: true, idle }   /* 2.0.0 알림이 「멈췄어요 · 받은 문단은 남겨 뒀어요」를 고르게 */);
     // 2.6.2 묶음 번역은 되면 흘려받는다 — 못 쓰는 공급자 · 실패 · 중간에 끊김이면 아래 예전 요청 그대로 (묶음 끝에 한꺼번에)
     const streamed = typeof overrides.onStream === 'function' ? await streamedReply({ body: preparedParameters, source: chatCompletionSource, onText: overrides.onStream, onState: overrides.onStreamState,
         signal: overrides.signal, timeoutMs, idleMs: STREAM_IDLE_MS, timedOut, purpose: overrides.requestPurpose || 'translation.chat', label: overrides.requestLabel }) : null;
@@ -2757,6 +2759,10 @@ function progressLabel(stage, started, note = null) {
     return `번역 중${tail}`;
 }
 /** 7.3.1 번역 시작 알림 문구 — 번역의 첫 진행 알림(stage)을 보고 고른다. null = 알리지 않음 (보낼 문단 없이 캐시로 끝남 — 뒤에 캐시 알림이 따로 뜬다) */
+/** 2.0.0 그 메시지 칸이 채팅에 그려져 있나 — 그러면 진행 줄(progressBadge)이 메시지 맨 위에 보여요(번역 중 알림 줄은 안 띄움) */
+function flowBadgeShown(messageId) {
+    try { return !!globalThis.document?.querySelector?.(`#chat .mes[mesid="${Number(messageId)}"] .mes_text`); } catch { return false; }
+}
 /** 1.9.8 한 장 알림의 번역 시작 글 — 메시지 번호 꼬리를 떼고 「번역하는 중…」 꼴로 */
 function flowStartText(text) {
     const s = String(text).replace(/\s*#\d+$/, '');   // blank-ok 테마 알림 글(채팅 글 아님)
@@ -3510,7 +3516,8 @@ async function runCheckAction(kind, id, index, row, { auto = false, expectedStat
         const next = kind === 'fill' ? insertAfterParagraph(state.translation, index, out, state.protect) : replaceParagraph(state.translation, index, out, state.protect);
         if (!next) throw new Error('번역 답이 비어 있어요.');
         await saveCheckedTranslation(id, message, state, next, { cache: !report.restoredBlocks && !report.cardFallback, guard: reviewGuard });
-        toastr.success(kind === 'fill' ? `빠진 문단을 ${auto ? '자동으로 ' : ''}번역해 넣었어요.` : auto ? `이상한 ${index + 1}번째 문단을 자동으로 다시 번역했어요.` : '이 문단을 다시 번역했어요.', '번역 점검');
+        const doneShown = toastr.success(kind === 'fill' ? `빠진 문단을 ${auto ? '자동으로 ' : ''}번역해 넣었어요.` : auto ? `이상한 ${index + 1}번째 문단을 자동으로 다시 번역했어요.` : '이 문단을 다시 번역했어요.', '번역 점검', typeof doneOptions === 'function' ? doneOptions() : undefined);
+        if (typeof doneToast === 'function') doneToast(doneShown);   // 2.0.0 완료 알림 같은 기준(2초 · 닿으면 멈춤 · 쓸면 닫힘) · typeof: 이 함수만 잘라 도는 시험
     } catch (error) {
         runToken.error = error;
         if (error?.cancelled) { toastr.info(error.message, '번역 점검'); return; }
@@ -3619,7 +3626,9 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         const flowing = source === 'auto' && !!flowApi;
         let startToast = showStartToast ? (text = `번역을 시작해요 #${messageId}`) => {
             startToast = null; if (!text) return;
-            if (flowing) { runToken.flow = message; runToken.flowApi = flowApi; flowApi.step(message, 'translate', { title: '번역', text: flowStartText(text) }); }
+            // 2.0.0 그 답이 화면에 있으면 메시지 맨 위 진행 줄(「번역 중 · 문단 2/6」 · progressBadge)이 보이니 「번역하는 중」 줄은 알림에 안 띄워요
+            //   (사용자 11-21 「번역 중일 때는 알림 안 뜨는 게 맞지 않냐 · 채팅창 제일 위에 몇 문단인지 다 뜨잖아」) — 끝 · 실패 줄은 그대로 알림에(runToken.flow)
+            if (flowing) { runToken.flow = message; runToken.flowApi = flowApi; if (!(typeof flowBadgeShown === 'function' && flowBadgeShown(messageId))) flowApi.step(message, 'translate', { title: '번역', text: flowStartText(text) }); }
             else toastr.info(text);
         } : null;
         // 다시 쓰기가 이 답의 알림을 들고 기다리는 중이면 바로 이어 받아요(시작 알림이 늦게 뜨는 사이 「번역을 시작해요」에 머물지 않게)
@@ -3774,7 +3783,7 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
                     if (target === editedTarget) { (target.is_user ? translateOutgoingMessage : translateIncomingMessage)(id); return; }
                     translateMessage(id, false, 'auto').catch(() => {});
                 });
-            } else if (runToken.flow) runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: `번역을 멈췄어요. ${error.message}`, kind: 'info' });
+            } else if (runToken.flow) runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: '번역을 멈췄어요', detail: error.message, kind: 'info' });   // 2.0.0 한 줄 + 누르면 까닭
             else toastr.info(error.message, '번역 중단', { timeOut: 4000 });
             if (again && runToken.flow) runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: '글이 바뀌어 번역을 다시 해요…', kind: 'info' });
             return;
@@ -3788,7 +3797,9 @@ async function translateMessage(messageId, forceTranslate = false, source = 'man
         }
 
         if (runToken.flow) {   // 1.9.8 그 한 장에서 까닭 · 다시
-            const el = runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: `번역에 실패했어요. ${errorMessage}`, kind: 'error', sticky: true });
+            // 2.0.0 한 줄 + 누르면 까닭(사용자 11-21 「왤케 커」) — 흘려받다 멈춘 것(idle)은 받은 문단을 남겨 두니(이어 하기) 그렇게 말해요
+            const short = error?.idle || /더 오지 않아 끊었어요/.test(errorMessage) ? '번역이 멈췄어요 · 받은 문단은 남겨 뒀어요' : error?.refused ? '번역이 거절됐어요 · 원문 그대로예요' : '번역에 실패했어요 · 원문 그대로예요';
+            const el = runToken.flowApi.end(runToken.flow, 'translate', { title: '번역', text: short, detail: errorMessage, kind: 'error', sticky: true });
             attachUndo(el, () => translateMessage(messageId, true, 'handleTranslateButtonClick'), { label: '다시 번역', icon: 'fa-rotate-right' });
         } else toastr.error(`메시지 #${messageId} ${errorMessage}`, '번역 실패', { timeOut: 10000 });
     } finally {
@@ -4125,7 +4136,8 @@ async function onTranslateInputMessageClick() {
         assertInput();
         textarea.value = translatedText;
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        toastr.success('입력창의 글을 번역했어요. 확인하고 보내세요.', '입력 번역 완료', { timeOut: 2500 });
+        const doneShown = toastr.success('입력창의 글을 번역했어요. 확인하고 보내세요.', '입력 번역 완료', typeof doneOptions === 'function' ? doneOptions() : { timeOut: 2500 });
+        if (typeof doneToast === 'function') doneToast(doneShown);   // 2.0.0 완료 알림 같은 기준(예전 2.5초) · typeof: 이 함수만 잘라 도는 시험
     } catch (error) {
         if (error?.cancelled) { toastr.info(error.message); return; }
         console.error('Input translation error:', error);

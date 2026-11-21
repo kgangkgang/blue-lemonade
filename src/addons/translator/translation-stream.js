@@ -40,8 +40,8 @@ function take(json, state) {
             const delta = json.delta ?? {}, kind = delta.type === 'text_delta' ? 'text' : /^(?:thinking|signature)_delta$/.test(String(delta.type)) ? 'thinking' : '';
             const block = state.blocks[json.index] ?? (kind ? (state.blocks[json.index] = { type: kind }) : null);
             if (delta.type === 'text_delta') { if (block) block.text = (block.text ?? '') + (delta.text ?? ''); state.text += delta.text ?? ''; }
-            else if (delta.type === 'thinking_delta') { if (block) block.thinking = (block.thinking ?? '') + (delta.thinking ?? ''); state.thinking = true; }
-            else if (kind === 'thinking') state.thinking = true;
+            else if (delta.type === 'thinking_delta') { if (block) block.thinking = (block.thinking ?? '') + (delta.thinking ?? ''); state.thinking = true; state.ticks++; }
+            else if (kind === 'thinking') { state.thinking = true; state.ticks++; }
             return true;
         }
         if (json?.type === 'message_stop') { state.done = true; return true; }
@@ -54,7 +54,7 @@ function take(json, state) {
         const candidate = json.candidates?.[0];
         if (Array.isArray(json.candidates) && json.candidates.length) state.candidates = true;
         for (const part of candidate?.content?.parts ?? []) {
-            if (part?.thought) { state.thinking = true; continue; }
+            if (part?.thought) { state.thinking = true; state.ticks++; continue; }
             if (typeof part?.text === 'string') state.text += part.text;
         }
         if (candidate?.finishReason) state.done = true;
@@ -71,7 +71,7 @@ function take(json, state) {
     const choice = json?.choices?.[0];
     if (!choice) return Array.isArray(json?.choices);
     const piece = choice.delta ? choice.delta.content : choice.message?.content ?? choice.text;
-    if (choice.delta && (choice.delta.reasoning_content || choice.delta.reasoning || choice.delta.reasoning_details?.length)) state.thinking = true;   // 중계 · DeepSeek · OpenRouter 의 생각 글
+    if (choice.delta && (choice.delta.reasoning_content || choice.delta.reasoning || choice.delta.reasoning_details?.length)) { state.thinking = true; state.ticks++; }   // 중계 · DeepSeek · OpenRouter 의 생각 글
     state.text += textOf(piece);
     if (choice.finish_reason) { state.finish = choice.finish_reason; state.done = true; }
     return true;
@@ -97,12 +97,14 @@ function replyOf(state, source) {
  * 응답 본문을 읽는다 (response.ok 일 때). 돌려줌: { data } = 실리태번이 stream:false 로 줬을 꼴 · { raw } = 흘려받기 대신 통째로 온 본문(서버가 stream 을 무시함).
  * onText(지금까지 모인 글) — 글이 는 네트워크 조각마다 한 번 (부르는 쪽이 문단이 닫혔을 때만 일한다).
  * 1.0.1 onThinking() — 글이 오기 전에 모델이 생각하는 표시(생각 칸 · 생각 글)가 처음 왔을 때 한 번 (진행 표시의 「생각 중 n초」).
+ * 2.0.0 onAlive() — 글이 온 뒤에 모델이 다시 생각하는 조각(생각 글 · 서명 · 추론 글)이 온 네트워크 조각마다 한 번. 글은 안 늘어도 모델이 일하는 중이라
+ *       부르는 쪽이 「글이 멈춤」 시계를 다시 세요(예전엔 글 조각만 셌어서 답 중간에 생각하는 모델이 90초 「멈춤」으로 끊겼어요). keep-alive · ping 은 안 셈.
  */
-export async function readStream(response, { family, source, onText, onThinking }) {
+export async function readStream(response, { family, source, onText, onThinking, onAlive }) {
     const reader = response?.body?.getReader?.();
     if (!reader) throw streamFailed('본문이 없어요', true);
     const decoder = new TextDecoder();
-    const state = { family, text: '', blocks: [], done: false, finish: null, error: null, candidates: false, blockReason: '', known: 0, junk: 0, thinking: false };
+    const state = { family, text: '', blocks: [], done: false, finish: null, error: null, candidates: false, blockReason: '', known: 0, junk: 0, thinking: false, ticks: 0 };
     let mode = null, buffer = '', whole = '', told = false;
     const event = block => {
         const data = block.split(/\r\n|\r|\n/).filter(line => line.startsWith('data:')).map(line => line.slice(line.startsWith('data: ') ? 6 : 5)).join('\n');
@@ -131,7 +133,7 @@ export async function readStream(response, { family, source, onText, onThinking 
                 if (mode !== 'sse') { if (done) break; continue; }
                 chunk = whole; whole = '';
             }
-            const before = state.text.length;
+            const before = state.text.length, ticked = state.ticks;
             buffer += chunk;
             for (let cut = /\r\n\r\n|\n\n|\r\r/.exec(buffer); cut; cut = /\r\n\r\n|\n\n|\r\r/.exec(buffer)) {
                 event(buffer.slice(0, cut.index));
@@ -140,6 +142,7 @@ export async function readStream(response, { family, source, onText, onThinking 
             if (done) { event(buffer); break; }
             if (state.thinking && !told && !state.text) { told = true; try { onThinking?.(); } catch { /* 보여 주기는 받기를 막지 않는다 */ } }
             if (state.text.length > before) try { onText?.(state.text); } catch { /* 보여 주기는 받기를 막지 않는다 */ }
+            else if (state.ticks > ticked && state.text) try { onAlive?.(); } catch { /* 시계 다시 세기는 받기를 막지 않는다 */ }
         }
     } catch (error) {
         reader.cancel?.().catch?.(() => {});

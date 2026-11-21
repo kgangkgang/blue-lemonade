@@ -34,6 +34,18 @@ assert.equal(releaseString({ version: '1.0.0', bl_series: 2 }), 's2:1.0.0');
 assert.ok(releaseString({ version: '9.9.9', bl_series: 2 }).length <= 20, '설정 noticeSeen 은 20자까지 저장');
 assert.equal(releaseString('엉뚱'), '');
 
+// 2.0.0(계열 2 · 1.9.9 다음 — 10 금지 자리 올림): 옛 계열 1 의 2.x 와 섞이지 않고 1.9.9 보다 새것 · 공지 맨 위 줄도 계열 2
+assert.ok(compareRelease({ version: '2.0.0', bl_series: 2 }, { version: '1.9.9', bl_series: 2 }) > 0, '2.0.0 > 1.9.9(계열 2)');
+assert.ok(compareRelease({ version: '2.0.0', series: 2 }, 's2:1.9.9') > 0);
+assert.ok(compareRelease({ version: '2.0.0', bl_series: 2 }, '8.2.5') > 0, '계열 2 의 2.0.0 은 옛 계열 1 마지막 판보다 새것');
+assert.equal(releaseString({ version: '2.0.0', bl_series: 2 }), 's2:2.0.0');
+{
+    const notes = fs.readFileSync(path.join(root, 'src/notice-data.js'), 'utf8').match(/^\{"version": "[^"]+"(?:, "series": \d+)?/gm) || [];
+    const top = notes.slice(0, 3).map(l => ({ version: /"version": "([^"]+)"/.exec(l)[1], series: Number(/"series": (\d+)/.exec(l)?.[1] ?? 1) }));
+    for (let i = 0; i + 1 < top.length; i++) assert.ok(compareRelease(top[i], top[i + 1]) > 0, `공지 줄은 새 판이 위: ${top[i].version} > ${top[i + 1].version}`);
+    assert.ok(top.every(n => n.series === 2), '공지 맨 위 줄들은 계열 2');
+}
+
 // 지금 manifest 는 계열 칸이 없거나 올바른 정수여야 해요(release_gate.py 와 같은 규칙)
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
 assert.ok(!('bl_series' in manifest) || (Number.isInteger(manifest.bl_series) && manifest.bl_series >= 1), 'manifest bl_series');

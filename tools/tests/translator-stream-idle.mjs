@@ -80,11 +80,31 @@ await test('현재 연결: 흘려받는 동안 touch 로 다시 세서 제한 �
         await new Promise((_, rej) => signal.addEventListener('abort', () => rej(Object.assign(Error('aborted'), { name: 'AbortError' })), { once: true }));
     } }), e => e.timeout && /초 안에 번역 답이 오지 않았어요/.test(e.message));
 });
+// 2.0.0 답 중간에 다시 생각하는 모델(글 몇 문단 → 생각 조각만 한참 → 다시 글): 생각 조각도 「일하는 중」 이라 멈춤으로 안 끊어요 · 빈 keep-alive 만 오면 예전처럼 끊어요
+const mixed = ({ text, thinkFor, every, keepAlive = false }) => {
+    const enc = new TextEncoder(), put = (c, o) => c.enqueue(enc.encode(`data: ${JSON.stringify(o)}\n\n`));
+    return new ReadableStream({ async start(ctrl) {
+        for (const t of text.slice(0, 2)) { put(ctrl, { choices: [{ index: 0, delta: { content: t } }] }); await sleep(every); }
+        for (let at = 0; at < thinkFor; at += every) { if (keepAlive) ctrl.enqueue(enc.encode(': keep-alive\n\n')); else put(ctrl, { choices: [{ index: 0, delta: { reasoning_content: '…' } }] }); await sleep(every); }
+        for (const t of text.slice(2)) { put(ctrl, { choices: [{ index: 0, delta: { content: t } }] }); await sleep(every); }
+        put(ctrl, { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] }); ctrl.enqueue(enc.encode('data: [DONE]\n\n')); ctrl.close();
+    } });
+};
+await test('2.0.0 글 뒤 생각 조각이 idle 시간(250ms)의 세 배 넘게 와도 끊지 않고 나머지 글까지 받는다 · onAlive 로 알림', async () => {
+    let alive = 0;
+    const env = makeEnv(() => mixed({ text: pieces(4), thinkFor: 800, every: 80 }));
+    const out = await env.streamedReply({ body: {}, source: 'custom', onText: () => {}, onAlive: () => alive++, timeoutMs: 5000, idleMs: 250, timedOut });
+    assert.match(out.data.choices[0].message.content, /번역 4문단/); assert.ok(alive >= 5, 'alive ' + alive);
+});
+await test('2.0.0 글 뒤 빈 keep-alive 만 오면(모델이 멈춤) 예전처럼 idle 시간 뒤 끊는다', async () => {
+    const env = makeEnv(() => mixed({ text: pieces(4), thinkFor: 1500, every: 80, keepAlive: true }));
+    await assert.rejects(env.streamedReply({ body: {}, source: 'custom', onText: () => {}, timeoutMs: 5000, idleMs: 250, timedOut }), e => e.timeout && e.idle);
+});
 await test('배선: 제한 시간 = 90초 + 응답 토큰당 10ms, 10분까지 · 흘려받기 idle 90초 · 현재 연결 stream 에 touch', () => {
     assert.match(source, /const STREAM_IDLE_MS = 90000;/);
     assert.match(source, /Math\.min\(600000, 90000 \+ Math\.max\(0, replyTokens\) \* 10\)/);
     assert.match(source, /idleMs: STREAM_IDLE_MS, timedOut/);
-    assert.match(source, /onText: text => \{ touch\?\.\(\); return overrides\.onStream\(text\); \}/);
+    assert.match(source, /onText: text => \{ touch\?\.\(\); return overrides\.onStream\(text\); \}, onAlive: \(\) => touch\?\.\(\)/);
     const cc = fs.readFileSync(path.join(dir, 'current-connection.js'), 'utf8');
     assert.match(cc, /const IDLE=90000;/);
     assert.match(cc, /Math\.min\(600000,90000\+Math\.max\(0,Number\(tokens\)\|\|0\)\*10\)/);
